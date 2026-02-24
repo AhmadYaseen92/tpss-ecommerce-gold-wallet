@@ -1,8 +1,23 @@
-import 'package:bloc/bloc.dart';
-import 'package:meta/meta.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 
 part 'product_state.dart';
 
 class ProductCubit extends Cubit<ProductState> {
   ProductCubit() : super(ProductInitial());
+
+  void loadProducts() async {
+    emit(ProductLoading());
+    try {
+      // Simulate a delay for loading products
+      await Future.delayed(const Duration(milliseconds: 500));
+      // Load dummy products (replace with actual data fetching logic)
+      final products = dummyProducts;
+      emit(ProductLoaded(products));
+    } catch (e) {
+      emit(ProductError('Failed to load products: $e'));
+    }
+  }
+
+  
 }
