@@ -7,15 +7,12 @@ class ProductPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Products')),
-      body: ListView.builder(
-        itemCount: dummyProducts.length,
-        itemBuilder: (context, index) {
-          final product = dummyProducts[index];
-          return ProductItemWidget(product: product);
-        },
-      ),
+    return ListView.builder(
+      itemCount: dummyProducts.length,
+      itemBuilder: (context, index) {
+        final product = dummyProducts[index];
+        return ProductItemWidget(product: product);
+      },
     );
   }
 }
