@@ -38,7 +38,7 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
         backgroundColor: AppColors.backgroundColor,
         title: Center(
           child: Text(
-            'Gold Wallet',
+            'Wallet',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.primaryColor,
@@ -106,7 +106,7 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
             screen: GoldWalletPage(),
             item: ItemConfig(
               icon: Icon(CupertinoIcons.gift),
-              title: "Gold Wallet",
+              title: "Wallet",
               textStyle: TextStyle(fontWeight: FontWeight.w600),
               activeForegroundColor: AppColors.primaryColor,
               inactiveForegroundColor: AppColors.grey,
