@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/pages/product_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_router.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,6 +11,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Flutter Demo', home: ProductPage());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'ECommerse Gold Wallet APP',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryColor),
+      ),
+      onGenerateRoute: AppRouter.onGenerateRoute,
+    );
   }
 }
