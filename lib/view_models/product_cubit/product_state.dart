@@ -17,3 +17,9 @@ final class ProductError extends ProductState {
 
   ProductError(this.message);
 }
+
+final class ProductFiltered extends ProductState {
+  final List<ProductItemModel> filteredProducts;
+
+  ProductFiltered(this.filteredProducts);
+}
