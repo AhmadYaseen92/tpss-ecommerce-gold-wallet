@@ -13,53 +13,46 @@ class ProductPage extends StatelessWidget {
     return BlocProvider(
       create: (context) {
         ProductCubit productCubit = ProductCubit();
-        productCubit.loadProducts(); // Load products when the cubit is created
+        productCubit.loadProducts();
         return productCubit;
       },
       child: BlocBuilder<ProductCubit, ProductState>(
         builder: (context, state) {
           if (state is ProductInitial || state is ProductLoading) {
-            return Scaffold(
-              appBar: AppBar(title: const Text("Products")),
-              body: const Center(child: CircularProgressIndicator(
-                color: AppColors.darkGold,
-              )),
+            return const Center(
+              child: CircularProgressIndicator.adaptive(
+                backgroundColor: AppColors.darkGold,
+              ),
             );
           } else if (state is ProductLoaded) {
-            return Scaffold(
-              appBar: AppBar(title: const Text("Products")),
-              body: Column(
-                children: [
-                  ProductFilterBar(),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: state.products.length,
-                      itemBuilder: (context, index) {
-                        return ProductItemWidget(product: state.products[index]);
-                      },
-                    ),
+            return Column(
+              children: [
+                ProductFilterBar(),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: state.products.length,
+                    itemBuilder: (context, index) {
+                      return ProductItemWidget(product: state.products[index]);
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           } else if (state is ProductFiltered) {
-            return Scaffold(
-              appBar: AppBar(title: const Text("Products")),
-              body: Column(
-                children: [
-                  ProductFilterBar(),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: state.filteredProducts.length,
-                      itemBuilder: (context, index) {
-                        return ProductItemWidget(
-                          product: state.filteredProducts[index],
-                        );
-                      },
-                    ),
+            return Column(
+              children: [
+                ProductFilterBar(),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: state.filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      return ProductItemWidget(
+                        product: state.filteredProducts[index],
+                      );
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           } else if (state is ProductError) {
             return Scaffold(

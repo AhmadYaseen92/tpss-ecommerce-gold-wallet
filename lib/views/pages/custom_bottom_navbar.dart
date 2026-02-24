@@ -38,7 +38,7 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
         backgroundColor: AppColors.backgroundColor,
         title: Center(
           child: Text(
-            'Wallet',
+            'Gold Wallet',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.primaryColor,

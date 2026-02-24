@@ -23,10 +23,7 @@ class PortfolioCardWidget extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            AppColors.luxuryIvory, // light gold
-            AppColors.white,
-          ],
+          colors: [AppColors.luxuryIvory, AppColors.white],
         ),
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(color: AppColors.primaryColor),

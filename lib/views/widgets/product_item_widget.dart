@@ -15,30 +15,23 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(13.0),
-      child: SizedBox(
-        height: 120,
-        child: Card(
-          color: AppColors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+      child: Card(
+        color: AppColors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              Container(
-                margin: const EdgeInsets.all(15),
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: AppColors.greyShade2,
-                ),
-                child: CachedNetworkImage(
-                  imageUrl: widget.product.imageUrl,
-                  fit: BoxFit.cover,
-                ),
+              CachedNetworkImage(
+                imageUrl: widget.product.imageUrl,
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 4),
               Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(

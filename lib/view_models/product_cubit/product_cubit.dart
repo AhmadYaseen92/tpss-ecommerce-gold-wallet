@@ -12,7 +12,7 @@ class ProductCubit extends Cubit<ProductState> {
     emit(ProductLoading());
     try {
       // Simulate a delay for loading products
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 1000));
       // Load dummy products (replace with actual data fetching logic)
       allProducts = dummyProducts; // Store all products
       emit(ProductLoaded(allProducts));
