@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 
@@ -17,7 +18,7 @@ class ProductCubit extends Cubit<ProductState> {
       // Load dummy products (replace with actual data fetching logic)
       allProducts = dummyProducts; // Store all products
       selectedCategory = 'All';
-      emit(ProductLoaded(allProducts));
+      emit(ProductLoaded(products: allProducts,category: selectedCategory));
     } catch (e) {
       emit(ProductError('Failed to load products: $e'));
     }
@@ -28,7 +29,7 @@ class ProductCubit extends Cubit<ProductState> {
     final filteredProducts = allProducts
         .where((product) => product.category == category)
         .toList();
-    emit(ProductFiltered(filteredProducts: filteredProducts,category: category));
+    emit(ProductLoaded(products: filteredProducts,category: selectedCategory));
   }
 
   void toggleFavorite(String productId) {
@@ -41,12 +42,12 @@ class ProductCubit extends Cubit<ProductState> {
 
       // Re-apply the active filter so the view doesn't reset to all products
       if (selectedCategory == 'All') {
-        emit(ProductLoaded(allProducts));
+        emit(ProductLoaded(products: allProducts,category: selectedCategory));
       } else {
         final filtered = allProducts
              .where((p) => p.category == selectedCategory)
            .toList();
-       emit(ProductFiltered(filteredProducts: filtered,category: selectedCategory));
+      emit(ProductLoaded(products: filtered,category: selectedCategory));
       }
     }
   }

@@ -8,8 +8,9 @@ final class ProductLoading extends ProductState {}
 
 final class ProductLoaded extends ProductState {
   final List<ProductItemModel> products;
+    final String category;
 
-  ProductLoaded(this.products);
+  ProductLoaded({ required this.products,required this.category});
 }
 
 final class ProductError extends ProductState {
@@ -18,9 +19,3 @@ final class ProductError extends ProductState {
   ProductError(this.message);
 }
 
-final class ProductFiltered extends ProductState {
-  final List<ProductItemModel> filteredProducts;
-  final String category;
-
-  ProductFiltered({required this.filteredProducts,required this.category});
-}

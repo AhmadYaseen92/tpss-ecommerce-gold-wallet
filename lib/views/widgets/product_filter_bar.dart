@@ -21,7 +21,7 @@ class ProductFilterBar extends StatelessWidget {
     String selectedCategory = "All";
     return BlocBuilder<ProductCubit, ProductState>(
       builder: (context, state) {
-        if (state is ProductFiltered ) {
+        if (state is ProductLoaded ) {
            selectedCategory = state.category;}
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
