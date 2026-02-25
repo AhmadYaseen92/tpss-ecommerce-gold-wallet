@@ -2,16 +2,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
 
-class ProductItemWidget extends StatefulWidget {
+class ProductItemWidget extends StatelessWidget {
+  final ProductCubit productCubit;
   final ProductItemModel product;
-  const ProductItemWidget({super.key, required this.product});
+  const ProductItemWidget({super.key, required this.productCubit, required this.product});
 
-  @override
-  State<ProductItemWidget> createState() => _ProductItemWidgetState();
-}
-
-class _ProductItemWidgetState extends State<ProductItemWidget> {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -23,7 +20,7 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
           child: Row(
             children: [
               CachedNetworkImage(
-                imageUrl: widget.product.imageUrl,
+                imageUrl: product.imageUrl,
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,
@@ -35,7 +32,7 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.product.name,
+                      product.name,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -43,14 +40,14 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      widget.product.description,
+                      product.description,
                       style: TextStyle(fontSize: 13, color: AppColors.grey),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '\$${widget.product.price.toStringAsFixed(2)}',
+                      '\$${product.price.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -62,14 +59,10 @@ class _ProductItemWidgetState extends State<ProductItemWidget> {
               ),
               IconButton(
                 onPressed: () {
-                  setState(() {
-                    widget.product.isFavorite = !widget.product.isFavorite;
-                  });
+                  productCubit.toggleFavorite(product.id);
                 },
                 icon: Icon(
-                  widget.product.isFavorite
-                      ? Icons.favorite
-                      : Icons.favorite_border,
+                  product.isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: AppColors.darkGold,
                 ),
               ),
