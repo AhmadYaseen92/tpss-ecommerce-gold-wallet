@@ -82,6 +82,16 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
             ),
           ),
           PersistentTabConfig(
+            screen: GoldWalletPage(),
+            item: ItemConfig(
+              icon: Icon(CupertinoIcons.gift),
+              title: "Wallet",
+              textStyle: TextStyle(fontWeight: FontWeight.w600),
+              activeForegroundColor: AppColors.gold,
+              inactiveForegroundColor: AppColors.grey,
+            ),
+          ),
+          PersistentTabConfig(
             screen: CartPage(),
             item: ItemConfig(
               icon: Icon(CupertinoIcons.shopping_cart),
@@ -101,20 +111,10 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
               inactiveForegroundColor: AppColors.grey,
             ),
           ),
-          PersistentTabConfig(
-            screen: GoldWalletPage(),
-            item: ItemConfig(
-              icon: Icon(CupertinoIcons.gift),
-              title: "Wallet",
-              textStyle: TextStyle(fontWeight: FontWeight.w600),
-              activeForegroundColor: AppColors.primaryColor,
-              inactiveForegroundColor: AppColors.grey,
-            ),
-          ),
         ],
         stateManagement: true,
         navBarBuilder: (navBarConfig) =>
-            Style6BottomNavBar(navBarConfig: navBarConfig),
+            Style13BottomNavBar(navBarConfig: navBarConfig),
       ),
     );
   }
