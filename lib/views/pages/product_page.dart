@@ -55,7 +55,7 @@ class ProductPage extends StatelessWidget {
                 ),
               ],
             );
-          } else if (state is ProductFiltered) {
+          } else if (state is ProductLoaded) {
             return Column(
               children: [
                 ProductFilterBar(
@@ -63,12 +63,12 @@ class ProductPage extends StatelessWidget {
                 ),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: state.filteredProducts.length,
+                    itemCount: state.products.length,
                     itemBuilder: (context, index) {
                       return GestureDetector(
                         child: ProductItemWidget(
                           productCubit: BlocProvider.of<ProductCubit>(context),
-                          product: state.filteredProducts[index],
+                          product: state.products[index],
                         ),
                         onTap: () {
                           /*Navigator.push(
