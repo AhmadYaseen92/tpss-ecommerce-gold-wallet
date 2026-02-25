@@ -20,6 +20,7 @@ final class ProductError extends ProductState {
 
 final class ProductFiltered extends ProductState {
   final List<ProductItemModel> filteredProducts;
+  final String category;
 
-  ProductFiltered(this.filteredProducts);
+  ProductFiltered({required this.filteredProducts,required this.category});
 }

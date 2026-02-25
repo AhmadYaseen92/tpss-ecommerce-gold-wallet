@@ -27,12 +27,29 @@ class ProductPage extends StatelessWidget {
           } else if (state is ProductLoaded) {
             return Column(
               children: [
-                ProductFilterBar(),
+                ProductFilterBar(
+                  productCubit: BlocProvider.of<ProductCubit>(context),
+                ),
                 Expanded(
                   child: ListView.builder(
                     itemCount: state.products.length,
                     itemBuilder: (context, index) {
-                      return ProductItemWidget(product: state.products[index]);
+                      return GestureDetector(
+                        child: ProductItemWidget(
+                          productCubit: BlocProvider.of<ProductCubit>(context),
+                          product: state.products[index],
+                        ),
+                        onTap: () {
+                          /*Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailPage(
+                                product: state.products[index],
+                              ),
+                            ),
+                          );*/
+                        },
+                      );
                     },
                   ),
                 ),
@@ -41,13 +58,29 @@ class ProductPage extends StatelessWidget {
           } else if (state is ProductFiltered) {
             return Column(
               children: [
-                ProductFilterBar(),
+                ProductFilterBar(
+                  productCubit: BlocProvider.of<ProductCubit>(context),
+                ),
                 Expanded(
                   child: ListView.builder(
                     itemCount: state.filteredProducts.length,
                     itemBuilder: (context, index) {
-                      return ProductItemWidget(
-                        product: state.filteredProducts[index],
+                      return GestureDetector(
+                        child: ProductItemWidget(
+                          productCubit: BlocProvider.of<ProductCubit>(context),
+                          product: state.filteredProducts[index],
+                        ),
+                        onTap: () {
+                          /*Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailPage(
+                                product: state.filteredProducts[index],
+                              ),
+                            ),
+                        );
+                        */
+                        },
                       );
                     },
                   ),

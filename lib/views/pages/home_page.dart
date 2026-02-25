@@ -18,7 +18,7 @@ class HomePage extends StatelessWidget {
             SizedBox(height: 20),
             PortfolioCardWidget(
               title: 'Total Portfolio Value',
-              value: '\$ 1,50,000',
+              value: '\$ 1,500,000',
               change: '+5.2%',
             ),
             const SizedBox(height: 20),
