@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/widgets/product_item_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/widgets/product_filter_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -40,46 +41,11 @@ class ProductPage extends StatelessWidget {
                           product: state.products[index],
                         ),
                         onTap: () {
-                          /*Navigator.push(
+                          Navigator.pushNamed(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => ProductDetailPage(
-                                product: state.products[index],
-                              ),
-                            ),
-                          );*/
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          } else if (state is ProductLoaded) {
-            return Column(
-              children: [
-                ProductFilterBar(
-                  productCubit: BlocProvider.of<ProductCubit>(context),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: state.products.length,
-                    itemBuilder: (context, index) {
-                      return GestureDetector(
-                        child: ProductItemWidget(
-                          productCubit: BlocProvider.of<ProductCubit>(context),
-                          product: state.products[index],
-                        ),
-                        onTap: () {
-                          /*Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProductDetailPage(
-                                product: state.filteredProducts[index],
-                              ),
-                            ),
-                        );
-                        */
+                            AppRoutes.productDetailsRoute,
+                            arguments: state.products[index],
+                          );
                         },
                       );
                     },
