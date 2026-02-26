@@ -19,3 +19,25 @@ final class ProductError extends ProductState {
   ProductError(this.message);
 }
 
+final class ProductDetailLoading extends ProductState {}
+
+final class ProductDetailLoaded extends ProductState {
+  final ProductItemModel product;
+
+  ProductDetailLoaded(this.product);
+}
+
+final class ProductQuantityChanged extends ProductState {
+  final int quantity;
+
+
+  ProductQuantityChanged(this.quantity);
+}
+
+final class ProductDetailError extends ProductState {
+  final String message;
+
+  ProductDetailError(this.message);
+}
+
+

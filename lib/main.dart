@@ -19,5 +19,6 @@ class MyApp extends StatelessWidget {
       ),
       onGenerateRoute: AppRouter.onGenerateRoute,
     );
+
   }
 }
