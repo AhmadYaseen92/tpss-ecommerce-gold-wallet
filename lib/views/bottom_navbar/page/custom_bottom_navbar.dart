@@ -2,12 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
-import 'package:tpss_ecommerce_gold_wallet/utils/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/pages/cart_page.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/pages/favorite_page.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/pages/gold_wallet_page.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/pages/home_page.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/pages/product_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/cart/page/cart_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/favorite/page/favorite_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/gold_wallet_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/home/page/home_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/product/page/product_page.dart';
 
 class CustomeBottomNavbar extends StatefulWidget {
   const CustomeBottomNavbar({super.key});

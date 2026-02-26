@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
-import 'package:tpss_ecommerce_gold_wallet/utils/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
 import '../widgets/product_detail_widget.dart';
 
@@ -27,14 +27,18 @@ class ProductDetailPage extends StatelessWidget {
               ),
             );
           } else if (state is ProductDetailLoaded) {
-            return ProductDetailWidget(
-              product: product,
-              productCubit: BlocProvider.of<ProductCubit>(context),
+            return Scaffold(
+              body: ProductDetailWidget(
+                product: product,
+                productCubit: BlocProvider.of<ProductCubit>(context),
+              ),
             );
           } else if (state is ProductQuantityChanged) {
-            return ProductDetailWidget(
-              product: product,
-              productCubit: BlocProvider.of<ProductCubit>(context),
+            return Scaffold(
+              body: ProductDetailWidget(
+                product: product,
+                productCubit: BlocProvider.of<ProductCubit>(context),
+              ),
             );
           } else if (state is ProductDetailError) {
             return Scaffold(

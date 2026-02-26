@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/pages/custom_bottom_navbar.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/pages/product_detail_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/bottom_navbar/page/custom_bottom_navbar.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/product_details/page/product_detail_page.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
