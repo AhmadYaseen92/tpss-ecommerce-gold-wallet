@@ -40,4 +40,9 @@ final class ProductDetailError extends ProductState {
   ProductDetailError(this.message);
 }
 
+final class ProductCartLoaded extends ProductState {
+  final List<ProductItemModel> cartProducts;
+
+  ProductCartLoaded({required this.cartProducts});
+}
 

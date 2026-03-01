@@ -1,13 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
 
 class ProductItemWidget extends StatelessWidget {
-  final ProductCubit productCubit;
+  final Cubit cubit;
   final ProductItemModel product;
-  const ProductItemWidget({super.key, required this.productCubit, required this.product});
+  const ProductItemWidget({super.key, required this.cubit, required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +60,7 @@ class ProductItemWidget extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () {
-                  productCubit.toggleFavorite(product.id);
+                  BlocProvider.of<ProductCubit>(context).toggleFavorite(product.id);
                 },
                 icon: Icon(
                   product.isFavorite ? Icons.favorite : Icons.favorite_border,

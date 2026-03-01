@@ -89,8 +89,6 @@ class BottomBar extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Action buttons
           Row(
             children: [
               Expanded(
@@ -103,7 +101,7 @@ class BottomBar extends StatelessWidget {
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.black,
-                    side:  BorderSide(color: AppColors.grey),
+                    side: BorderSide(color: AppColors.grey),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -125,14 +123,12 @@ class BottomBar extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text(
-                    'Buy Now',
-                    style: TextStyle( fontSize: 13),
-                  ),
+                  child: const Text('Buy Now', style: TextStyle(fontSize: 13)),
                 ),
               ),
             ],
           ),
+          SizedBox(height: 15),
         ],
       ),
     );

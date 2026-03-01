@@ -113,6 +113,7 @@ class ProductDetailWidget extends StatelessWidget {
                 ),
               ),
             );
+            productCubit.addCart(product);
           },
           onBuyNow: () {
             ScaffoldMessenger.of(context).showSnackBar(

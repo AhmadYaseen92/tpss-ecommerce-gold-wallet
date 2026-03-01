@@ -59,9 +59,21 @@ class ProductCubit extends Cubit<ProductState> {
       await Future.delayed(const Duration(milliseconds: 1000));
       // Load product detail (replace with actual data fetching logic)
       final product = dummyProducts.firstWhere((p) => p.id == productId);
+      allProducts = [product]; // keep reference for toggleDetailFavorite
       emit(ProductDetailLoaded(product));
     } catch (e) {
       emit(ProductDetailError('Failed to load product detail: $e'));
+    }
+  }
+
+  void toggleDetailFavorite(String productId) {
+    final index = allProducts.indexWhere((p) => p.id == productId);
+    if (index != -1) {
+      final updatedProduct = allProducts[index].copyWith(
+        isFavorite: !allProducts[index].isFavorite,
+      );
+      allProducts[index] = updatedProduct;
+      emit(ProductDetailLoaded(updatedProduct));
     }
   }
 
@@ -79,5 +91,21 @@ class ProductCubit extends Cubit<ProductState> {
     return quantity;
   }
 
+  void addCart(ProductItemModel product) {
+    // Add to global cart but merge with existing items by id using the
+    // currently selected `quantity` from this cubit.
+    final qtyToAdd = quantity;
+    final idx = dummycartProducts.indexWhere((p) => p.id == product.id);
+    if (idx != -1) {
+      final existing = dummycartProducts[idx];
+      dummycartProducts[idx] = existing.copyWith(
+        quantity: existing.quantity + qtyToAdd,
+      );
+    } else {
+      dummycartProducts.add(
+        product.copyWith(quantity: qtyToAdd, isInCart: true),
+      );
+    }
+  }
 
 }
