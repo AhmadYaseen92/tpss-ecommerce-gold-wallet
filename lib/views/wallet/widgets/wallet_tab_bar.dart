@@ -18,7 +18,7 @@ class WalletTabBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(50.0),
       ),
       child: Row(
-        children: wallets.asMap().entries.map((entry) {
+        children: dummyWallets.asMap().entries.map((entry) {
           final index = entry.key;
           final wallet = entry.value;
           final isSelected = index == selectedIndex;

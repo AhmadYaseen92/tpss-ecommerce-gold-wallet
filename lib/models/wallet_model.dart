@@ -1,4 +1,3 @@
-// Wallet data model
 import 'package:flutter/material.dart';
 
 class WalletModel {
@@ -43,7 +42,7 @@ class WalletTransaction {
   });
 }
 
-const wallets = [
+List<WalletModel> dummyWallets = [
   WalletModel(
     tabLabel: 'Gold',
     walletName: 'Gold Wallet',

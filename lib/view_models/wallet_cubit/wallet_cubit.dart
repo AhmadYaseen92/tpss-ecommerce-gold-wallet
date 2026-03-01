@@ -10,16 +10,13 @@ class WalletCubit extends Cubit<WalletState> {
     emit(WalletLoading());
     try {
       await Future.delayed(const Duration(milliseconds: 1000));
-      emit(WalletLoaded(wallets: wallets, selectedIndex: 0));
+      emit(WalletLoaded(wallets: dummyWallets, selectedIndex: 0));
     } catch (e) {
       emit(WalletError('Failed to load wallets: $e'));
     }
   }
 
   void selectTab(int index) {
-    if (state is WalletLoaded) {
-      final currentState = state as WalletLoaded;
-      emit(WalletLoaded(wallets: currentState.wallets, selectedIndex: index));
-    }
+      emit(WalletLoaded(wallets: dummyWallets, selectedIndex: index));
   }
 }
