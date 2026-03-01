@@ -9,6 +9,8 @@ class ProductItemModel {
   final String purity;
   final String weight;
   final String metal;
+  final bool isInCart; // Added cart state
+  final int quantity; // Added quantity for cart
 
   ProductItemModel({
     required this.id,
@@ -21,6 +23,8 @@ class ProductItemModel {
     this.purity = '',
     this.weight = '',
     this.metal = '',
+    this.isInCart = false,
+    this.quantity = 1,
   });
 
   ProductItemModel copyWith({
@@ -34,6 +38,8 @@ class ProductItemModel {
     String? purity,
     String? weight,
     String? metal,
+    bool? isInCart,
+    int? quantity,
   }) {
     return ProductItemModel(
       id: id ?? this.id,
@@ -46,6 +52,8 @@ class ProductItemModel {
       purity: purity ?? this.purity,
       weight: weight ?? this.weight,
       metal: metal ?? this.metal,
+      isInCart: isInCart ?? this.isInCart,
+      quantity: quantity ?? this.quantity,
     );
   }
 }
@@ -261,3 +269,5 @@ List<ProductItemModel> dummyProducts = [
     metal: 'Emerald',
   ),
 ];
+
+List<ProductItemModel> dummycartProducts = [];

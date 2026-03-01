@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 
 class HomeQuickActionsWidget extends StatelessWidget {
   const HomeQuickActionsWidget({super.key});
@@ -25,42 +26,65 @@ class HomeQuickActionsWidget extends StatelessWidget {
               context,
               Icons.wallet_sharp,
               'Buy',
-            ), //Icons.add_box
+              AppRoutes.buyGoldRoute,
+            ),
             _buildActionItem(
               context,
               Icons.sell_outlined,
               'Sell',
-            ), //indeterminate_check_box
-            _buildActionItem(context, Icons.swap_horiz, 'Transfer'),
-            _buildActionItem(context, Icons.attach_money, 'Convert'),
+              AppRoutes.sellGoldRoute,
+            ),
+            _buildActionItem(
+              context,
+              Icons.swap_horiz,
+              'Transfer',
+              AppRoutes.transferGiftRoute,
+            ),
+            _buildActionItem(
+              context,
+              Icons.attach_money,
+              'Convert',
+              AppRoutes.convertRoute,
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildActionItem(BuildContext context, IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 14.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12.0),
-            border: Border.all(color: AppColors.primaryColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(10),
-                blurRadius: 4.0,
-                offset: const Offset(0, 2),
-              ),
-            ],
+  Widget _buildActionItem(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String route,
+  ) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(route),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(
+              vertical: 10.0,
+              horizontal: 14.0,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.0),
+              border: Border.all(color: AppColors.primaryColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(10),
+                  blurRadius: 4.0,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(icon, size: 32.0),
           ),
-          child: Icon(icon, size: 32.0),
-        ),
-        const SizedBox(height: 4.0),
-        Text(label, style: Theme.of(context).textTheme.bodyLarge),
-      ],
+          const SizedBox(height: 4.0),
+          Text(label, style: Theme.of(context).textTheme.bodyLarge),
+        ],
+      ),
     );
   }
 }

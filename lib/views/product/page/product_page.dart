@@ -37,12 +37,11 @@ class ProductPage extends StatelessWidget {
                     itemBuilder: (context, index) {
                       return GestureDetector(
                         child: ProductItemWidget(
-                          productCubit: BlocProvider.of<ProductCubit>(context),
+                          cubit: BlocProvider.of<ProductCubit>(context),
                           product: state.products[index],
                         ),
                         onTap: () {
-                          Navigator.pushNamed(
-                            context,
+                          Navigator.of(context, rootNavigator: true).pushNamed(
                             AppRoutes.productDetailsRoute,
                             arguments: state.products[index],
                           );
