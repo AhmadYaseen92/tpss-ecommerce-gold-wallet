@@ -73,7 +73,9 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
               icon: Icon(Icons.person_outline),
             ),
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).pushNamed(AppRoutes.notificationRoute);
+              },
               icon: Icon(Icons.notifications_outlined),
             ),
           ],

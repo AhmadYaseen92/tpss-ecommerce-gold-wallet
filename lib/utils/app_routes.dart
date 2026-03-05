@@ -10,6 +10,8 @@ class AppRoutes {
   static const String transferGiftRoute = '/transfer-gift';
 
   static const String convertRoute = '/convert';
+
+  static const String notificationRoute = '/notifications';
   static const String profileRoute = '/profile';
   static const String personalInformationRoute = '/personal-information';
   static const String securitySettingsRoute = '/security-settings';

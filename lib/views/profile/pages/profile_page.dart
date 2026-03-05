@@ -3,7 +3,6 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/account_settings_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/main_profile_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/preferences_widget.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/profile_item_widget.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});

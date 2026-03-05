@@ -21,4 +21,11 @@ class AppColors {
   static const Color luxuryIvory = Color(0xFFFDF6E9); // Luxury beige color
   static const Color darkBrown = Color(0xFF201D12); // Dark brown color
   static const Color lightOrange = Color(0xFFFFF3E0); // Light orange color
+  static const Color transparent = Colors.transparent; // Transparent
+  static const Color greyShade400 = Color(0xFFBDBDBD); // Grey shade 400
+  static const Color greyShade500 = Color(0xFF9E9E9E); // Grey shade 500
+  static const Color greyShade600 = Color(0xFF757575); // Grey shade 600
+  static Color shadowBlack = Colors.black.withOpacity(0.04); // Shadow black
+  static Color greyBorder = Colors.grey.withOpacity(0.12); // Grey border
+  static Color greyBorderLight = Colors.grey.withOpacity(0.18); // Grey border light
 }
