@@ -5,7 +5,7 @@ class AppColors {
   static const Color darkGold = Color(0xFFB8860B); // Dark golden color
   static const Color grey = Colors.grey; // Grey color
   static const Color darkGrey = Color.fromARGB(255, 83, 83, 83); // Grey color
-  static Color greyShade2 = Colors.grey.shade200; // Grey color
+  static Color greyShade2 = Colors.grey.shade200; // Grey shade 2 color
   static const Color white = Colors.white; // White color
   static const Color black = Colors.black; // Black color
   static const Color primaryColor = Color(0xFFC9A227); // Gold color

@@ -63,7 +63,15 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
             ),
           ),
           actions: [
-            IconButton(onPressed: () {}, icon: Icon(Icons.person_outline)),
+            IconButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).pushNamed(AppRoutes.profileRoute);
+              },
+              icon: Icon(Icons.person_outline),
+            ),
             IconButton(
               onPressed: () {
                 Navigator.of(context).pushNamed(AppRoutes.notificationRoute);
