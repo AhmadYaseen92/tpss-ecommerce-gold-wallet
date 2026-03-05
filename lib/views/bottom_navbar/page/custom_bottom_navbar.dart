@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/cart_cubit/cart_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/cart/page/cart_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transaction/page/transaction_page.dart';
@@ -62,7 +63,15 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
             ),
           ),
           actions: [
-            IconButton(onPressed: () {}, icon: Icon(Icons.person_outline)),
+            IconButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).pushNamed(AppRoutes.profileRoute);
+              },
+              icon: Icon(Icons.person_outline),
+            ),
             IconButton(
               onPressed: () {},
               icon: Icon(Icons.notifications_outlined),

@@ -16,9 +16,18 @@ class MyApp extends StatelessWidget {
       title: 'ECommerse Gold Wallet APP',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryColor),
+        scaffoldBackgroundColor: AppColors.backgroundColor,
+        appBarTheme: AppBarTheme(
+          backgroundColor: AppColors.backgroundColor,
+          elevation: 0,
+          titleTextStyle: TextStyle(
+            color: AppColors.primaryColor,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       onGenerateRoute: AppRouter.onGenerateRoute,
     );
-
   }
 }
