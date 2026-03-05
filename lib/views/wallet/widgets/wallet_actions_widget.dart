@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 
@@ -12,14 +13,18 @@ class WalletActionsWidget extends StatelessWidget {
       children: [
         Expanded(
           child: _buildActionItem(
-              context, Icons.sell_outlined, 'Sell', AppRoutes.sellGoldRoute),
+              context, Icons.sell_outlined, 'Sell', AppRoutes.sellRoute),
         ),
         Expanded(
-          child: _buildActionItem(context, Icons.send_outlined, 'Transfer / Gift',
+          child: _buildActionItem(context, Icons.wallet_giftcard, 'Transfer / Gift',
               AppRoutes.transferGiftRoute),
         ),
         Expanded(
-          child: _buildActionItem(context, Icons.swap_horiz, 'Convert to Cash',
+          child: _buildActionItem(context, CupertinoIcons.money_dollar, 'Convert ',
+              AppRoutes.convertRoute),
+        ),
+         Expanded(
+          child: _buildActionItem(context, CupertinoIcons.bitcoin, 'Convert ',
               AppRoutes.convertRoute),
         ),
       ],
@@ -55,6 +60,8 @@ class WalletActionsWidget extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

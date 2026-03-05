@@ -26,13 +26,13 @@ class HomeQuickActionsWidget extends StatelessWidget {
               context,
               Icons.wallet_sharp,
               'Buy',
-              AppRoutes.buyGoldRoute,
+              AppRoutes.productRoute,
             ),
             _buildActionItem(
               context,
               Icons.sell_outlined,
               'Sell',
-              AppRoutes.sellGoldRoute,
+              AppRoutes.sellRoute,
             ),
             _buildActionItem(
               context,
@@ -59,7 +59,14 @@ class HomeQuickActionsWidget extends StatelessWidget {
     String route,
   ) {
     return GestureDetector(
-      onTap: () => Navigator.of(context, rootNavigator: true).pushNamed(route),
+      onTap: () {
+        if (AppRoutes.productRoute == route) {
+          Navigator.pushNamed(context, route);
+        } else {
+          Navigator.of(context, rootNavigator: true).pushNamed(route);
+        }
+      },
+
       child: Column(
         children: [
           Container(
