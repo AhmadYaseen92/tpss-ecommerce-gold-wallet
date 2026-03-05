@@ -14,9 +14,9 @@ class ProductDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) {
-        ProductCubit productCubit = ProductCubit();
-        productCubit.loadProductDetail(product.id);
-        return productCubit;
+        final cubit = ProductCubit();
+        cubit.loadProductDetail(product.id);
+        return cubit;
       },
       child: BlocBuilder<ProductCubit, ProductState>(
         builder: (context, state) {
@@ -25,53 +25,73 @@ class ProductDetailPage extends StatelessWidget {
               ? state.product.isFavorite
               : product.isFavorite;
 
-          return Scaffold(
-            backgroundColor: AppColors.backgroundColor,
-            appBar: AppBar(
-              centerTitle: true,
-              title: const Text("Product Detail"),
+          if (state is ProductDetailLoading) {
+            return Scaffold(
               backgroundColor: AppColors.backgroundColor,
-              titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.primaryColor,
+              appBar: AppBar(
+                centerTitle: true,
+                title: const Text('Product Detail'),
+                backgroundColor: AppColors.backgroundColor,
+                titleTextStyle:
+                    Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryColor,
+                        ),
               ),
-              actions: [
-                IconButton(
-                  onPressed: () => cubit.toggleDetailFavorite(product.id),
-                  icon: Icon(
-                    isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: isFavorite ? AppColors.darkGold : AppColors.darkGold,
-                  ),
+              body: const Center(
+                child: CircularProgressIndicator.adaptive(
+                  backgroundColor: AppColors.darkGold,
                 ),
-              ],
-            ),
-            body: Builder(
-              builder: (context) {
-                if (state is ProductDetailLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator.adaptive(
-                      backgroundColor: AppColors.darkGold,
+              ),
+            );
+          } else if (state is ProductDetailLoaded ||
+              state is ProductQuantityChanged) {
+            return Scaffold(
+              backgroundColor: AppColors.backgroundColor,
+              appBar: AppBar(
+                centerTitle: true,
+                title: const Text('Product Detail'),
+                backgroundColor: AppColors.backgroundColor,
+                titleTextStyle:
+                    Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryColor,
+                        ),
+                actions: [
+                  IconButton(
+                    onPressed: () => cubit.toggleDetailFavorite(product.id),
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: AppColors.darkGold,
                     ),
-                  );
-                } else if (state is ProductDetailLoaded) {
-                  return ProductDetailWidget(
-                    product: product,
-                    productCubit: cubit,
-                  );
-                } else if (state is ProductQuantityChanged) {
-                  return ProductDetailWidget(
-                    product: product,
-                    productCubit: cubit,
-                  );
-                } else if (state is ProductDetailError) {
-                  return Center(child: Text(state.message));
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          );
+                  ),
+                ],
+              ),
+              body: ProductDetailWidget(
+                product: product,
+                productCubit: cubit,
+              ),
+            );
+          } else if (state is ProductDetailError) {
+            return Scaffold(
+              backgroundColor: AppColors.backgroundColor,
+              appBar: AppBar(
+                centerTitle: true,
+                title: const Text('Product Detail'),
+                backgroundColor: AppColors.backgroundColor,
+                titleTextStyle:
+                    Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryColor,
+                        ),
+              ),
+              body: Center(child: Text(state.message)),
+            );
+          }
+          return const SizedBox.shrink();
         },
       ),
     );
   }
 }
+
