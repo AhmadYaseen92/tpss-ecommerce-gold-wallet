@@ -15,7 +15,10 @@ class AppColors {
   static const Color textColor = Color(0xFF000000); // Black color
   static const Color greysShade2 = Color(0xFFEEEEEE); // Grey shade 2 color
   static const Color green = Color(0xFF4CAF50); // Green color
+  static const Color lightGreen = Color(0xFFC8E6C9); // Light green color
   static const Color red = Color(0xFFF44336); // Red color
+  static const Color lightRed = Color(0xFFFFCDD2); // Light red color
   static const Color luxuryIvory = Color(0xFFFDF6E9); // Luxury beige color
   static const Color darkBrown = Color(0xFF201D12); // Dark brown color
+  static const Color lightOrange = Color(0xFFFFF3E0); // Light orange color
 }

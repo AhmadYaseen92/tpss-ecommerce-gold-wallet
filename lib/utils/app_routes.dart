@@ -5,9 +5,7 @@ class AppRoutes {
 
   static const String productRoute = '/products';
 
-  static const String buyGoldRoute = '/buy-gold';
-
-  static const String sellGoldRoute = '/sell-gold';
+  static const String sellRoute = '/sell';
 
   static const String transferGiftRoute = '/transfer-gift';
 

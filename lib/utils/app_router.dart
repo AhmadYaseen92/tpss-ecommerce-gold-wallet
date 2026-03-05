@@ -25,7 +25,7 @@ class AppRouter {
           builder: (_) => const ProductPage(),
         );
 
-      case AppRoutes.sellGoldRoute:
+      case AppRoutes.sellRoute:
         return MaterialPageRoute(
           builder: (_) => const SellGoldPage(),
         );
