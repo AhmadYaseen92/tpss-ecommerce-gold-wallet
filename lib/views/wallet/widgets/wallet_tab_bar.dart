@@ -30,12 +30,12 @@ class WalletTabBar extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
+                  color: isSelected ? AppColors.white : AppColors.transparent,
                   borderRadius: BorderRadius.circular(50.0),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: Colors.black.withAlpha(18),
+                            color: AppColors.shadowBlack18,
                             blurRadius: 4.0,
                             offset: const Offset(0, 2),
                           ),

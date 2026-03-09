@@ -39,6 +39,7 @@ class GoldWalletPage extends StatelessWidget {
                     title: 'Total Portfolio Value',
                     value: '\$12,450.00',
                     change: '+\$125 (1.01%)',
+                    availableCash: '\$2,000.00',
                   ),
                   const SizedBox(height: 20.0),
                   WalletTabBar(selectedIndex: state.selectedIndex),

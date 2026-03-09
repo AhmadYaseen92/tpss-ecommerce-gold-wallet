@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/cart_cubit/cart_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 
 class CartSummary extends StatelessWidget {
   final CartCubit cartCubit;
@@ -15,7 +16,7 @@ class CartSummary extends StatelessWidget {
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
         ),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
+        boxShadow: [BoxShadow(color: AppColors.black12, blurRadius: 8)],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Column(
@@ -25,7 +26,7 @@ class CartSummary extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Opacity(opacity: 0.8, child: const Text('Subtotal')),
-               Text(
+              Text(
                 '\$${cartCubit.subtotal.toStringAsFixed(2)}',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
@@ -50,7 +51,7 @@ class CartSummary extends StatelessWidget {
                 children: [
                   Opacity(opacity: 0.8, child: const Text('Fee')),
                   const SizedBox(width: 6),
-                  const Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                  const Icon(Icons.info_outline, size: 16, color: AppColors.grey),
                 ],
               ),
               Container(
@@ -59,7 +60,7 @@ class CartSummary extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
+                  color: AppColors.greenShade50,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -99,27 +100,10 @@ class CartSummary extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             height: 56,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.darkGold,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () {
-                // proceed to checkout
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text(
-                    'Proceed to Checkout',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700,color: AppColors.white),
-                  ),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward, color: AppColors.white),
-                ],
-              ),
+            child: AppButton(
+              label: 'Proceed to Checkout',
+              cubit: cartCubit,
+              onPressed: () {},
             ),
           ),
         ],

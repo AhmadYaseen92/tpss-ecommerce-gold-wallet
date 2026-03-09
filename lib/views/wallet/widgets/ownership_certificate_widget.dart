@@ -9,7 +9,7 @@ class OwnershipCertificateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.transparent,
       child: InkWell(
         onTap: () {},
         borderRadius: BorderRadius.circular(16.0),
@@ -24,7 +24,7 @@ class OwnershipCertificateWidget extends StatelessWidget {
             border: Border.all(color: accentColor, width: 1.4),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha(12),
+                color: AppColors.shadowBlack12,
                 blurRadius: 8.0,
                 offset: const Offset(0, 3),
               ),
@@ -43,7 +43,7 @@ class OwnershipCertificateWidget extends StatelessWidget {
                   ),
                   child: const Icon(
                     Icons.shield_rounded,
-                    color: Colors.white,
+                    color: AppColors.white,
                     size: 24.0,
                   ),
                 ),

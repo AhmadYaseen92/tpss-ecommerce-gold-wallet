@@ -102,7 +102,7 @@ class CartItemWidget extends StatelessWidget {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
+                        color: AppColors.greyShade100,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

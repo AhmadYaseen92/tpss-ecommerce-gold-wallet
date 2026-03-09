@@ -11,12 +11,12 @@ class SummaryTransactionWidget extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(color: AppColors.primaryColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(10),
+            color: AppColors.shadowBlack,
             blurRadius: 8.0,
             offset: const Offset(0, 4),
           ),
@@ -66,7 +66,7 @@ class SummaryTransactionWidget extends StatelessWidget {
           amount.startsWith('-')
               ? CupertinoIcons.arrow_down
               : CupertinoIcons.arrow_up,
-          color: amount.startsWith('-') ? Colors.red : Colors.green,
+          color: amount.startsWith('-') ? AppColors.red : AppColors.green,
         ),
         const SizedBox(width: 8.0),
         Text(title),
@@ -74,7 +74,7 @@ class SummaryTransactionWidget extends StatelessWidget {
         Text(
           amount,
           style: TextStyle(
-            color: amount.startsWith('-') ? Colors.red : Colors.green,
+            color: amount.startsWith('-') ? AppColors.red : AppColors.green,
           ),
         ),
       ],

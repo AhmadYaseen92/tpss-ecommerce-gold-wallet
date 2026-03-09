@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/bottom_navbar/page/custom_bottom_navbar.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/login/page/login_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/signup/page/signup_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/convert/page/convert_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/notification/page/notification_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product/page/product_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product_details/page/product_detail_page.dart';
@@ -12,6 +15,12 @@ import 'package:tpss_ecommerce_gold_wallet/views/sell/page/sell_page.dart';
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case AppRoutes.loginRoute:
+        return MaterialPageRoute(builder: (_) => const LoginPage());
+
+      case AppRoutes.signupRoute:
+        return MaterialPageRoute(builder: (_) => const SignupPage());
+
       case AppRoutes.homeRoute:
         return MaterialPageRoute(builder: (_) => const CustomeBottomNavbar());
 
@@ -51,6 +60,12 @@ class AppRouter {
       //   return MaterialPageRoute(builder: (_) => const LanguageSettingsPage());
       // case AppRoutes.themeRoute:
       //   return MaterialPageRoute(builder: (_) => const ThemeSettingsPage());
+
+      case AppRoutes.convertRoute:
+        return MaterialPageRoute(builder: (_) => const ConvertPage());
+
+      
+        
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
