@@ -20,6 +20,7 @@ class HomePage extends StatelessWidget {
               title: 'Total Portfolio Value',
               value: '\$ 1,500,000',
               change: '+5.2%',
+              availableCash: '\$ 200,000',
             ),
             const SizedBox(height: 20),
             SummaryTransactionWidget(),

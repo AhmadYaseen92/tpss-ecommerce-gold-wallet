@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 
 class WalletActionsWidget extends StatelessWidget {
@@ -42,12 +43,12 @@ class WalletActionsWidget extends StatelessWidget {
             padding: const EdgeInsets.symmetric(
                 vertical: 10.0, horizontal: 14.0),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(12.0),
               border: Border.all(color: accentColor),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withAlpha(10),
+                  color: AppColors.shadowBlack,
                   blurRadius: 4.0,
                   offset: const Offset(0, 2),
                 ),

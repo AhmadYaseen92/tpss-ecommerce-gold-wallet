@@ -66,8 +66,7 @@ List<ProductItemModel> dummyProducts = [
     description:
         'This 1 ounce gold bar is made from pure 24-karat gold with an exceptional 999.9 purity level. It is globally recognized and highly liquid, making it a reliable choice for investors seeking long-term wealth preservation and physical ownership of precious metals.',
     price: 1950.00,
-    imageUrl:
-        'https://bfasset.costco-static.com/U447IH35/as/9tnb5fqxj5gtkn5sg8jrh/4000364603-894__1?auto=webp&format=jpg&width=600&height=600&fit=bounds&canvas=600,600',
+    imageUrl: 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png',
     category: 'Bullion',
     purity: '24k',
     weight: '1 oz',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 
 Widget infoCard(
   BuildContext context, {
@@ -9,9 +10,9 @@ Widget infoCard(
   return Container(
     padding: const EdgeInsets.all(14.0),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(12.0),
-      border: Border.all(color: Colors.grey.shade200),
+      border: Border.all(color: AppColors.greyShade2),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -20,7 +21,7 @@ Widget infoCard(
           label,
           style: Theme.of(
             context,
-          ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.grey),
         ),
         const SizedBox(height: 6.0),
         Text(

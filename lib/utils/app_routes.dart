@@ -1,5 +1,9 @@
 class AppRoutes {
-  static const String homeRoute = '/';
+  static const String homeRoute = '/home';
+
+  static const String loginRoute = '/';
+
+  static const String signupRoute = '/signup';
 
   static const String productDetailsRoute = '/product-details';
 
@@ -19,4 +23,5 @@ class AppRoutes {
   static const String paymentMethodsRoute = '/payment-methods';
   static const String languageRoute = '/language';
   static const String themeRoute = '/theme';
+
 }

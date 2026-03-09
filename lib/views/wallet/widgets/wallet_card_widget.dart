@@ -38,7 +38,7 @@ class WalletCardWidget extends StatelessWidget {
         border: Border.all(color: AppColors.primaryColor, width: 1.4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(15),
+            color: AppColors.shadowBlack15,
             blurRadius: 10.0,
             offset: const Offset(0, 4),
           ),
@@ -55,7 +55,7 @@ class WalletCardWidget extends StatelessWidget {
                   color: AppColors.primaryColor,
                   borderRadius: BorderRadius.circular(10.0),
                 ),
-                child: Icon(icon, color: Colors.white, size: 20.0),
+                child: Icon(icon, color: AppColors.white, size: 20.0),
               ),
               const SizedBox(width: 10.0),
               Column(

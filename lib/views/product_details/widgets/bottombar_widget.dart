@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 
 class BottomBar extends StatelessWidget {
   final int quantity;
@@ -20,7 +21,7 @@ class BottomBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         border: const Border(top: BorderSide(color: AppColors.white, width: 1)),
         boxShadow: [
           BoxShadow(
@@ -92,43 +93,40 @@ class BottomBar extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onAddToCart,
-                  icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                  label: const Text(
-                    'Add to Cart',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.black,
-                    side: BorderSide(color: AppColors.grey),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: onAddToCart,
+                    icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+                    label: const Text(
+                      'Add to Cart',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.black,
+                      side: BorderSide(color: AppColors.grey),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(
-                  onPressed: onBuyNow,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkGold,
-                    foregroundColor: AppColors.white,
-                    elevation: 4,
-                    shadowColor: AppColors.darkGold.withOpacity(0.4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                child: SizedBox(
+                  height: 48,
+                  child: AppButton(
+                    label: 'Buy Now',
+                    cubit: productCubit,
+                    onPressed: onBuyNow,
                   ),
-                  child: const Text('Buy Now', style: TextStyle(fontSize: 13)),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 15),
+          const SizedBox(height: 15),
         ],
       ),
     );

@@ -36,7 +36,7 @@ class HomeQuickActionsWidget extends StatelessWidget {
             ),
             _buildActionItem(
               context,
-              Icons.swap_horiz,
+              Icons.wallet_giftcard,
               'Transfer',
               AppRoutes.transferGiftRoute,
             ),
@@ -75,12 +75,12 @@ class HomeQuickActionsWidget extends StatelessWidget {
               horizontal: 14.0,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(12.0),
               border: Border.all(color: AppColors.primaryColor),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withAlpha(10),
+                  color: AppColors.shadowBlack,
                   blurRadius: 4.0,
                   offset: const Offset(0, 2),
                 ),

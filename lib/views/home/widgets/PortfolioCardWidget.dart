@@ -8,11 +8,13 @@ class PortfolioCardWidget extends StatelessWidget {
     required this.title,
     required this.value,
     required this.change,
+    required this.availableCash,
   });
 
   final String title;
   final String value;
   final String change;
+  final String? availableCash;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,7 @@ class PortfolioCardWidget extends StatelessWidget {
         border: Border.all(color: AppColors.primaryColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(10),
+            color: AppColors.shadowBlack,
             blurRadius: 8.0,
             offset: const Offset(0, 4),
           ),
@@ -38,27 +40,75 @@ class PortfolioCardWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title+": ",
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryColor,
+                  fontSize: 20
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8.0),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryColor,
+          if (availableCash != null && availableCash!.isNotEmpty) ...[
+            const SizedBox(height: 8.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Available Cash:',
+                ),
+                Text(
+                  availableCash!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.green,
+                    fontSize: 17
+                  ),
+                ),
+              ],
             ),
+          ],
+          SizedBox(height: 8.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Gold Investment: ",
+              ),
+              Text(
+                change,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: change.startsWith('+') ? AppColors.green : AppColors.red,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4.0),
-          Text(
-            change,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: change.startsWith('+') ? AppColors.green : AppColors.red,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Silver Investment: ",
+              ),
+              Text(
+                change,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color:  AppColors.red,
+                ),
+              ),
+            ],
           ),
+        
         ],
       ),
     );

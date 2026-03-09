@@ -19,7 +19,7 @@ class StatusBadge extends StatelessWidget {
         label = 'Completed';
         break;
       case 'pending':
-        dotColor = const Color(0xFFFFA726);
+        dotColor = AppColors.pendingOrange;
         bgColor = AppColors.lightOrange;
         label = 'Pending';
         break;

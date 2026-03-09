@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/sell_cubit/sell_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/sell/widgets/info_card_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/sell/widgets/summary_row_widget.dart';
 
@@ -105,7 +106,7 @@ class SellWidget extends StatelessWidget {
                                 decoration: const InputDecoration(
                                   hintText: '0',
                                   hintStyle: TextStyle(
-                                    color: Colors.grey,
+                                    color: AppColors.grey,
                                     fontSize: 22.0,
                                   ),
                                   border: InputBorder.none,
@@ -128,9 +129,8 @@ class SellWidget extends StatelessWidget {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Available: ${sellCubit.selectedAsset.availableUnits.toStringAsFixed(0)} gram',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodySmall?.copyWith(color: AppColors.grey),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.grey),
                           ),
                         ),
                       ],
@@ -246,7 +246,8 @@ class SellWidget extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'I agree to the terms and conditions for trading this asset. The transaction is final once confirmed.',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.grey),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.grey),
                         ),
                       ),
                     ],
@@ -254,32 +255,16 @@ class SellWidget extends StatelessWidget {
                 ],
               ),
             ),
-          ),
+          ), 
           Padding(
-            padding: const EdgeInsets.symmetric(
+             padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
               vertical: 12.0,
             ),
-            child: SizedBox(
-              width: double.infinity,
-              height: 52.0,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.0),
-                  ),
-                ),
-                onPressed: (){},
-                child: const Text(
-                  'Confirm Trade',
-                  style: TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
+            child: AppButton(
+              cubit: sellCubit,
+              label: 'Confirm Trade',
+              onPressed: () {},
             ),
           ),
         ],

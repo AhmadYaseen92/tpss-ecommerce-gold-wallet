@@ -18,11 +18,11 @@ class WalletTransactionsWidget extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withAlpha(15),
+            color: AppColors.shadowBlack15,
             blurRadius: 8.0,
             offset: const Offset(0, 3),
           ),
@@ -94,10 +94,10 @@ class WalletTransactionsWidget extends StatelessWidget {
               width: 44.0,
               height: 44.0,
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: AppColors.greyShade2,
                 borderRadius: BorderRadius.circular(10.0),
               ),
-              child: const Icon(Icons.image_not_supported_outlined, size: 22.0, color: Colors.grey),
+              child: const Icon(Icons.image_not_supported_outlined, size: 22.0, color: AppColors.grey),
             ),
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
@@ -105,7 +105,7 @@ class WalletTransactionsWidget extends StatelessWidget {
                 width: 44.0,
                 height: 44.0,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: AppColors.greyShade2,
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 child: const Center(

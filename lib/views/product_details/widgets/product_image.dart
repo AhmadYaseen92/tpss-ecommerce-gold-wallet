@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 
 class ProductImage extends StatelessWidget {
   final String imageUrl;
@@ -17,7 +18,7 @@ class ProductImage extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 300,
-      color: Colors.white,
+      color: AppColors.white,
       child:
           // is3D
           //     ? ModelViewer(
