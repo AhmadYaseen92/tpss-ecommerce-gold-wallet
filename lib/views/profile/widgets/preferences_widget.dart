@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/profile_item_widget.dart';
 
 class PreferencesWidget extends StatelessWidget {
@@ -28,7 +29,7 @@ class PreferencesWidget extends StatelessWidget {
             title: 'Language',
             subtitle: 'English, Arabic, Turkish',
             onTap: () {
-              // Handle language selection action
+              Navigator.of(context).pushNamed(AppRoutes.languageRoute);
             },
           ),
           ProfileItemWidget(
@@ -36,7 +37,7 @@ class PreferencesWidget extends StatelessWidget {
             title: 'Theme',
             subtitle: 'Light, Dark, System default',
             onTap: () {
-              // Handle theme selection action
+              Navigator.of(context).pushNamed(AppRoutes.themeRoute);
             },
           ),
         ],
