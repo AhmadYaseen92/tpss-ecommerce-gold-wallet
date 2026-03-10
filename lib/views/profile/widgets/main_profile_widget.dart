@@ -17,7 +17,7 @@ class MainProfileWidget extends StatelessWidget {
           CircleAvatar(
             radius: 55,
             backgroundImage: NetworkImage(
-              'https://avatars.githubusercontent.com/u/101969698?s=400&u=b8497709786defd11e42da8b60cbdefbf2ff7a69&v=4',
+              'https://avatars.githubusercontent.com/u/172558196?v=4',
             ),
           ),
           SizedBox(height: 8),
@@ -25,7 +25,7 @@ class MainProfileWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Ahmad Yaseen',
+                'Omar Khader',
                 style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -57,7 +57,7 @@ class MainProfileWidget extends StatelessWidget {
           ),
           SizedBox(height: 4),
           Text(
-            'AhmadYaseen@TradePSS.com',
+            'OmarKhader@TradePSS.com',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           SizedBox(height: 4),

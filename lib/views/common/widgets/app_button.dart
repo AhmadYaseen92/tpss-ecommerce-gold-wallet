@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 
 class AppButton extends StatelessWidget {
-  final Cubit cubit;
+  final Cubit? cubit;
   final String label;
   final Function()? onPressed;
   final IconData? icon;
@@ -12,7 +12,7 @@ class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
     required this.label,
-    required this.cubit,
+    this.cubit,
     this.onPressed,
     this.icon,
     this.width,

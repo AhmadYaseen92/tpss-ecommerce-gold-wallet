@@ -117,10 +117,10 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
             PersistentTabConfig(
               screen: GoldWalletPage(),
               item: ItemConfig(
-                icon: Icon(CupertinoIcons.creditcard),
+                icon: Icon(CupertinoIcons.creditcard,color: AppColors.white,),
                 title: "Wallet",
-                textStyle: TextStyle(fontWeight: FontWeight.w600),
-                activeForegroundColor: AppColors.gold,
+                textStyle: TextStyle(fontWeight: FontWeight.w600,color: AppColors.grey),
+                activeForegroundColor: AppColors.primaryColor,
                 inactiveForegroundColor: AppColors.grey,
               ),
             ),
