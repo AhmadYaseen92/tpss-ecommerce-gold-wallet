@@ -45,6 +45,8 @@ class CurrencyCard extends StatelessWidget {
               Expanded(
                 child: currencies != null
                     ? DropdownButton<String>(
+                      borderRadius: BorderRadius.circular(12.0),
+                      dropdownColor: AppColors.white,
                         value: selectedCurrency,
                         isExpanded: true,
                         underline: const SizedBox.shrink(),

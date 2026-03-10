@@ -40,12 +40,15 @@ class SellWidget extends StatelessWidget {
                       border: Border.all(color: AppColors.greysShade2),
                     ),
                     child: DropdownButton<int>(
+                      borderRadius: BorderRadius.circular(12.0),
+                      dropdownColor: AppColors.white,
                       value: sellCubit.selectedAssetIndex,
                       isExpanded: true,
                       underline: const SizedBox.shrink(),
                       items: List.generate(
                         Asset.assets.length,
                         (i) => DropdownMenuItem(
+                          
                           value: i,
                           child: Row(
                             children: [

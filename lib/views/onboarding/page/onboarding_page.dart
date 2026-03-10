@@ -1,0 +1,86 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/view_models/onboarding_cubit/onboarding_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/step_indicator_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/onboarding/widgets/onboarding_buy_sell.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/onboarding/widgets/onboarding_digital_wallet.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/onboarding/widgets/onboarding_transfer_and_gift.dart';
+
+class OnboardingPage extends StatelessWidget {
+  const OnboardingPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) {
+        return OnboardingCubit()..loadOnboarding();
+      },
+      child: BlocBuilder<OnboardingCubit, OnboardingState>(
+        builder: (context, state) {
+          final onboardingCubit = BlocProvider.of<OnboardingCubit>(context);
+          if (state is OnboardingLoading) {
+            return const Scaffold(
+              backgroundColor: AppColors.backgroundColor,
+              body: Center(
+                child: CircularProgressIndicator.adaptive(
+                  backgroundColor: AppColors.darkGold,
+                ),
+              ),
+            );
+          } else if (state is OnboardingLoaded || state is OnboardingPageChanged) {
+            {
+              if (onboardingCubit.currentPage == 1) {
+                return Scaffold(
+                  backgroundColor: AppColors.backgroundColor,
+                  body: Column(
+                    children: [
+                      OnboardingBuySellPage(cubit: onboardingCubit),
+                      const Spacer(),
+                      StepIndicator(currentStep: onboardingCubit.currentPage, totalSteps:3),
+                      const SizedBox(height: 50),
+                    ],
+                  ),
+                );
+              } else if (onboardingCubit.currentPage == 2) {
+                return Scaffold(
+                  backgroundColor: AppColors.backgroundColor,
+                  body: Column(
+                    children: [
+                      OnboardingDigitalWalletPage(cubit: onboardingCubit),
+                      const Spacer(),
+                      StepIndicator(currentStep: onboardingCubit.currentPage, totalSteps:3),
+                      const SizedBox(height: 50),
+                    ],
+                  ),
+                );
+              }
+              if (onboardingCubit.currentPage == 3) {
+                return Scaffold(
+                  backgroundColor: AppColors.backgroundColor,
+                  body: Column(
+                    children: [
+                      OnboardingTransferAndGiftPage(cubit: onboardingCubit),
+                      const Spacer(),
+                      StepIndicator(currentStep: onboardingCubit.currentPage, totalSteps:3),
+                      const SizedBox(height: 50),
+                    ],
+                  ),
+                );
+              }
+            }
+          } else if (state is OnboardingError) {
+            return Scaffold(
+              backgroundColor: AppColors.backgroundColor,
+              body: Center(child: Text('Error: ${state.message}')),
+            );
+          }
+          return const Scaffold(
+            backgroundColor: AppColors.backgroundColor,
+            body: SizedBox.shrink(),
+          );
+        },
+      ),
+    );
+  }
+}
