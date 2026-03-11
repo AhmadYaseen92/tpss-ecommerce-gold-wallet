@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/profile_item_widget.dart';
 
 class AccountSettingsWidget extends StatelessWidget {
@@ -28,7 +29,7 @@ class AccountSettingsWidget extends StatelessWidget {
             title: 'Personal Information',
             subtitle: 'Name, email, phone',
             onTap: () {
-              Navigator.of(context).pushNamed('/personal-information');
+              Navigator.of(context).pushNamed(AppRoutes.personalInformationRoute);
             },
           ),
           ProfileItemWidget(
@@ -36,7 +37,7 @@ class AccountSettingsWidget extends StatelessWidget {
             title: 'Security Settings',
             subtitle: 'Password, Face ID, 2FA',
             onTap: () {
-              // Handle security settings action
+              Navigator.of(context).pushNamed(AppRoutes.securitySettingsRoute);
             },
           ),
           ProfileItemWidget(
@@ -44,7 +45,9 @@ class AccountSettingsWidget extends StatelessWidget {
             title: 'Linked Bank Accounts',
             subtitle: 'Banks accounts details',
             onTap: () {
-              // Handle linked bank accounts action
+              Navigator.of(
+                context,
+              ).pushNamed(AppRoutes.linkedBankAccountsRoute);
             },
           ),
           ProfileItemWidget(
@@ -52,7 +55,7 @@ class AccountSettingsWidget extends StatelessWidget {
             title: 'Payment Methods',
             subtitle: 'Credit/debit cards, PayPal, Wallets',
             onTap: () {
-              // Handle payment methods action
+              Navigator.of(context).pushNamed(AppRoutes.paymentMethodsRoute);
             },
           ),
         ],
