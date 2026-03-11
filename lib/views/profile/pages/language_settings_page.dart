@@ -8,16 +8,17 @@ class LanguageSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ProfileSectionFormPage(
       title: 'Language',
-      fields: [
-        ProfileSectionField(
+      subtitle: 'Choose one language for app content and notifications.',
+      selectionGroups: [
+        ProfileSelectionGroup(
           label: 'Application Language',
-          initialValue: 'English',
           icon: Icons.language_outlined,
-        ),
-        ProfileSectionField(
-          label: 'Secondary Language',
-          initialValue: 'Arabic',
-          icon: Icons.translate_outlined,
+          selectedValue: 'English',
+          options: [
+            ProfileSelectionOption(title: 'English'),
+            ProfileSelectionOption(title: 'العربية'),
+            ProfileSelectionOption(title: 'Türkçe'),
+          ],
         ),
       ],
     );

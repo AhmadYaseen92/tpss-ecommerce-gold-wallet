@@ -8,21 +8,49 @@ class SecuritySettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ProfileSectionFormPage(
       title: 'Security Settings',
+      subtitle: 'Manage credentials and account protection preferences.',
       fields: [
         ProfileSectionField(
           label: 'Password',
+          hint: 'Password',
           initialValue: '********',
           icon: Icons.lock_outline,
         ),
         ProfileSectionField(
-          label: 'Two-Factor Authentication',
-          initialValue: 'Enabled',
-          icon: Icons.verified_user_outlined,
+          label: 'Backup Email',
+          hint: 'Backup Email',
+          initialValue: 'Ahmad.backup@TradePSS.com',
+          icon: Icons.alternate_email,
+          keyboardType: TextInputType.emailAddress,
         ),
         ProfileSectionField(
-          label: 'Face ID',
-          initialValue: 'Enabled',
-          icon: Icons.face_outlined,
+          label: 'Recovery Phone',
+          hint: 'Recovery Phone',
+          initialValue: '+962 78 555 9988',
+          icon: Icons.phone_in_talk_outlined,
+          keyboardType: TextInputType.phone,
+        ),
+      ],
+      selectionGroups: [
+        ProfileSelectionGroup(
+          label: 'Two-Factor Authentication',
+          icon: Icons.verified_user_outlined,
+          selectedValue: 'Authenticator App',
+          options: [
+            ProfileSelectionOption(title: 'Authenticator App'),
+            ProfileSelectionOption(title: 'SMS Code'),
+            ProfileSelectionOption(title: 'Disabled'),
+          ],
+        ),
+        ProfileSelectionGroup(
+          label: 'Biometric Login',
+          icon: Icons.fingerprint,
+          selectedValue: 'Face ID',
+          options: [
+            ProfileSelectionOption(title: 'Face ID'),
+            ProfileSelectionOption(title: 'Fingerprint'),
+            ProfileSelectionOption(title: 'Disabled'),
+          ],
         ),
       ],
     );

@@ -8,16 +8,27 @@ class ThemeSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ProfileSectionFormPage(
       title: 'Theme',
-      fields: [
-        ProfileSectionField(
-          label: 'Mode',
-          initialValue: 'System default',
+      subtitle: 'Select one theme mode and one accent style.',
+      selectionGroups: [
+        ProfileSelectionGroup(
+          label: 'Theme Mode',
           icon: Icons.brightness_6_outlined,
+          selectedValue: 'System Default',
+          options: [
+            ProfileSelectionOption(title: 'Light'),
+            ProfileSelectionOption(title: 'Dark'),
+            ProfileSelectionOption(title: 'System Default'),
+          ],
         ),
-        ProfileSectionField(
-          label: 'Accent Color',
-          initialValue: 'Gold',
+        ProfileSelectionGroup(
+          label: 'Accent Style',
           icon: Icons.palette_outlined,
+          selectedValue: 'Gold',
+          options: [
+            ProfileSelectionOption(title: 'Gold'),
+            ProfileSelectionOption(title: 'Emerald'),
+            ProfileSelectionOption(title: 'Sapphire'),
+          ],
         ),
       ],
     );

@@ -13,6 +13,8 @@ class AppTextField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onChanged;
   final String initialValue;
+  final TextEditingController? controller;
+  final bool enabled;
 
   const AppTextField({
     super.key,
@@ -26,18 +28,24 @@ class AppTextField extends StatelessWidget {
     this.keyboardType,
     this.textInputAction,
     this.onChanged,
-    required this.initialValue,
-  });
+    this.initialValue = '',
+    this.controller,
+    this.enabled = true,
+  }) : assert(
+         controller == null || initialValue == '',
+         'Provide either controller or initialValue, not both.',
+       );
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         const SizedBox(height: 8),
         TextFormField(
-          initialValue: initialValue,
+          controller: controller,
+          initialValue: controller == null ? initialValue : null,
+          enabled: enabled,
           obscureText: isPassword && obscureText,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
@@ -62,7 +70,7 @@ class AppTextField extends StatelessWidget {
                   )
                 : null,
             filled: true,
-            fillColor: AppColors.white,
+            fillColor: enabled ? AppColors.white : AppColors.greyShade100,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
