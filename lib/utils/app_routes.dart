@@ -28,4 +28,6 @@ class AppRoutes {
   static const String languageRoute = '/language';
   static const String themeRoute = '/theme';
 
+  static const String forgotPasswordRoute = '/forgot-password';
 }
+

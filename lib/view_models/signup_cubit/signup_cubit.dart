@@ -71,6 +71,13 @@ class SignupCubit extends Cubit<SignupState> {
 
   void updatePassword(String value) {
     password = value;
+    final result = calculateStrength(value);
+    passwordStrength = result.strength;
+    passwordStrengthLabel = result.label;
+    emit(SignupPasswordStrengthChanged(
+      strength: result.strength,
+      strengthLabel: result.label,
+    ));
   }
 
   void updateConfirmPassword(String value) => confirmPassword = value;
@@ -123,9 +130,6 @@ class SignupCubit extends Cubit<SignupState> {
     }
   }
 
-   void onNext(GlobalKey<FormState> formKey) {
-     
-  }
 
 void pickDate(BuildContext context) async {
   final picked = await showDatePicker(

@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 
-class SignupHeader extends StatelessWidget {
+class FormHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const SignupHeader({
-    super.key,
-    required this.title,
-    required this.subtitle,
-  });
+  const FormHeader({super.key, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +23,7 @@ class SignupHeader extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           subtitle,
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.greyShade600,
-          ),
+          style: const TextStyle(fontSize: 14, color: AppColors.greyShade600),
         ),
       ],
     );
