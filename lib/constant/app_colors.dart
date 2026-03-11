@@ -28,7 +28,6 @@ class AppColors {
   static Color shadowBlack = Colors.black.withOpacity(0.04); // Shadow black
   static Color greyBorder = Colors.grey.withOpacity(0.12); // Grey border
   static Color greyBorderLight = Colors.grey.withOpacity(0.18); // Grey border light
-  // Additional colors
   static const Color amber = Color(0xFFFFC107); // Amber color
   static const Color teal = Color(0xFF009688); // Teal color
   static const Color blue = Color(0xFF2196F3); // Blue color

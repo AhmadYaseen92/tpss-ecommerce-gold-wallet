@@ -12,24 +12,16 @@ class ProfilePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
+        centerTitle: true,
         backgroundColor: AppColors.backgroundColor,
-        title: Center(
-          child: Text(
+        title:Text(
             'My Profile',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.primaryColor,
             ),
           ),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              // Handle edit profile action
-            },
-            icon: Icon(Icons.notifications),
-          ),
-        ],
+
       ),
       body: SingleChildScrollView(
         child: Padding(

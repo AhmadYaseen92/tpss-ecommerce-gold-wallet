@@ -5,7 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/signup_cubit/signup_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_step1_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_step2_form.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/step_indicator_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/step_indicator_widget.dart';
 
 class SignupPage extends StatelessWidget {
   const SignupPage({super.key});

@@ -34,8 +34,13 @@ class RememberMeRow extends StatelessWidget {
                 ),
               ],
             ),
-            GestureDetector(
-              onTap: () {
+            TextButton(
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(50, 30),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () {
               },
               child: const Text(
                 'Forgot Password?',
