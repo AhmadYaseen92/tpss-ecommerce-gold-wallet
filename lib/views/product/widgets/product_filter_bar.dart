@@ -96,16 +96,8 @@ class ProductFilterBar extends StatelessWidget {
                       shape: const CircleBorder(),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      // The Algorithm for sorting products
-                    },
-                    icon: const Icon(Icons.sort),
-                    style: IconButton.styleFrom(
-                      backgroundColor: AppColors.white,
-                      shape: const CircleBorder(),
-                    ),
-                  ),
+                 
+  
                 ],
               ),
             ],

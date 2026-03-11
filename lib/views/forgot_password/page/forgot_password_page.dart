@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/view_models/forgot_password_cubit/forgot_password_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/widgets/reset_password_form.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/widgets/set_new_password_form.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/widgets/verify_otp_form.dart';
+
+class ForgotPasswordPage extends StatelessWidget {
+  const ForgotPasswordPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => ForgotPasswordCubit(),
+      child: BlocConsumer<ForgotPasswordCubit, ForgotPasswordState>(
+        listener: (context, state) {
+          if (state is ForgotPasswordSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Password reset successfully!'),
+                backgroundColor: AppColors.green,
+              ),
+            );
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.loginRoute,
+              (route) => false,
+            );
+          } else if (state is ForgotPasswordError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.red,
+              ),
+            );
+          }
+        },
+        
+        builder: (context, state) {
+          final cubit = BlocProvider.of<ForgotPasswordCubit>(context);
+
+          if (state is ForgotPasswordLoading) {
+            return const Scaffold(
+              backgroundColor: AppColors.backgroundColor,
+              body: Center(
+                child: CircularProgressIndicator.adaptive(
+                  backgroundColor: AppColors.darkGold,
+                ),
+              ),
+            );
+          }
+
+          return Scaffold(
+            backgroundColor: AppColors.backgroundColor,
+            appBar: AppBar(
+              backgroundColor: AppColors.backgroundColor,
+              scrolledUnderElevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (cubit.currentStep > 1) {
+                    cubit.goBack();
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ),
+            body: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (cubit.currentStep == 1) ResetPasswordForm(cubit: cubit),
+                    if (cubit.currentStep == 2) VerifyOtpForm(cubit: cubit),
+                    if (cubit.currentStep == 3)
+                      SetNewPasswordForm(cubit: cubit),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

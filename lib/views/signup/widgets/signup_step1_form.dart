@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/signup_cubit/signup_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/phone_field_widget.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_header_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/form_header.dart';
 
 class SignupStep1Form extends StatelessWidget {
   SignupStep1Form({super.key, required this.cubit});
@@ -19,7 +20,7 @@ class SignupStep1Form extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SignupHeader(
+          const FormHeader(
             title: 'Create Your Account',
             subtitle: "Let's start with your personal details.",
           ),
@@ -74,55 +75,59 @@ class SignupStep1Form extends StatelessWidget {
             },
           ),
           const SizedBox(height: 12),
-          PhoneField(
-            selectedCode: cubit.phoneCode,
-            onCodeChanged: cubit.updatePhoneCode,
-            onPhoneChanged: cubit.updatePhoneNumber,
-            initialPhone: cubit.phoneNumber,
-            validator: (v) =>
-                (v == null || v.isEmpty) ? 'Phone number is required.' : null,
+          BlocBuilder<SignupCubit, SignupState>(
+            builder: (context, state) => PhoneField(
+              selectedCode: cubit.phoneCode,
+              onCodeChanged: cubit.updatePhoneCode,
+              onPhoneChanged: cubit.updatePhoneNumber,
+              initialPhone: cubit.phoneNumber,
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Phone number is required.' : null,
+            ),
           ),
           const SizedBox(height: 24),
           const SignupSectionLabel(label: 'DATE OF BIRTH'),
           const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => cubit.pickDate(context),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.greyBorder, width: 1),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.calendar_today_outlined,
-                    color: AppColors.primaryColor,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      cubit.dateOfBirth != null
-                          ? '${cubit.dateOfBirth!.day.toString().padLeft(2, '0')}/'
-                                '${cubit.dateOfBirth!.month.toString().padLeft(2, '0')}/'
-                                '${cubit.dateOfBirth!.year}'
-                          : 'dd/mm/yyyy',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: cubit.dateOfBirth != null
-                            ? AppColors.textColor
-                            : AppColors.greyShade400,
+          BlocBuilder<SignupCubit, SignupState>(
+            builder: (context, state) => GestureDetector(
+              onTap: () => cubit.pickDate(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.greyBorder, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      color: AppColors.primaryColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        cubit.dateOfBirth != null
+                            ? '${cubit.dateOfBirth!.day.toString().padLeft(2, '0')}/'
+                                  '${cubit.dateOfBirth!.month.toString().padLeft(2, '0')}/'
+                                  '${cubit.dateOfBirth!.year}'
+                            : 'dd/mm/yyyy',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: cubit.dateOfBirth != null
+                              ? AppColors.textColor
+                              : AppColors.greyShade400,
+                        ),
                       ),
                     ),
-                  ),
-                  const Icon(
-                    Icons.calendar_month_outlined,
-                    color: AppColors.greyShade500,
-                    size: 20,
-                  ),
-                ],
+                    const Icon(
+                      Icons.calendar_month_outlined,
+                      color: AppColors.greyShade500,
+                      size: 20,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

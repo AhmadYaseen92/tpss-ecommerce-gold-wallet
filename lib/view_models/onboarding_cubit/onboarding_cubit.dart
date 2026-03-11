@@ -1,5 +1,4 @@
 import 'package:bloc/bloc.dart';
-import 'package:meta/meta.dart';
 
 part 'onboarding_state.dart';
 
@@ -9,7 +8,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
   void loadOnboarding() {
     emit(OnboardingLoading());
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(seconds: 0), () {
       emit(OnboardingLoaded(currentPage: currentPage));
     });
   }

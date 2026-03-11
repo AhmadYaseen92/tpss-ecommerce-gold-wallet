@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/login_cubit/login_cubit.dart';
 
 class RememberMeRow extends StatelessWidget {
@@ -41,6 +42,7 @@ class RememberMeRow extends StatelessWidget {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.forgotPasswordRoute);
               },
               child: const Text(
                 'Forgot Password?',
