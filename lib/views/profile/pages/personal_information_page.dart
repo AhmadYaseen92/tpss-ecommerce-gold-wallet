@@ -50,8 +50,9 @@ class PersonalInformationPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SignupHeader(
-                      title: 'Create Your Account',
-                      subtitle: "Let's start with your personal details.",
+                      title: 'Account Information',
+                      subtitle:
+                          "Manage your personal details and identity verification information.",
                     ),
                     const SizedBox(height: 24),
                     const SignupSectionLabel(label: 'FULL NAME'),
@@ -106,7 +107,10 @@ class PersonalInformationPage extends StatelessWidget {
                     const SizedBox(height: 14),
                     const Text(
                       'Identity Verification',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     const SignupSectionLabel(label: 'NATIONALITY'),
@@ -152,7 +156,9 @@ class PersonalInformationPage extends StatelessWidget {
                           cubit.save();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Personal information saved successfully'),
+                              content: Text(
+                                'Personal information saved successfully',
+                              ),
                             ),
                           );
                         },
