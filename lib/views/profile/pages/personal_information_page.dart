@@ -4,9 +4,9 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/form_header.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/document_type_toggle_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/nationality_dropdown_widget.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_header_widget.dart';
 
 class PersonalInformationPage extends StatelessWidget {
   const PersonalInformationPage({super.key});
@@ -17,11 +17,12 @@ class PersonalInformationPage extends StatelessWidget {
       create: (_) => ProfileCubit(),
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
-          final cubit = context.read<ProfileCubit>();
+          final cubit = BlocProvider.of<ProfileCubit>(context);
 
           return Scaffold(
             backgroundColor: AppColors.backgroundColor,
             appBar: AppBar(
+              centerTitle: true,
               backgroundColor: AppColors.backgroundColor,
               title: Text(
                 'Personal Information',
@@ -49,12 +50,12 @@ class PersonalInformationPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SignupHeader(
+                    const FormHeader(
                       title: 'Create Your Account',
                       subtitle: "Let's start with your personal details.",
                     ),
                     const SizedBox(height: 24),
-                    const SignupSectionLabel(label: 'FULL NAME'),
+                    const FormSectionLabel(label: 'FULL NAME'),
                     AppTextField(
                       label: 'First Name',
                       hint: 'First Name',
@@ -77,7 +78,7 @@ class PersonalInformationPage extends StatelessWidget {
                       enabled: cubit.isEditing,
                     ),
                     const SizedBox(height: 16),
-                    const SignupSectionLabel(label: 'CONTACT'),
+                    const FormSectionLabel(label: 'CONTACT'),
                     AppTextField(
                       label: 'Email Address',
                       hint: 'Email Address',
@@ -93,7 +94,7 @@ class PersonalInformationPage extends StatelessWidget {
                       enabled: cubit.isEditing,
                     ),
                     const SizedBox(height: 16),
-                    const SignupSectionLabel(label: 'DATE OF BIRTH'),
+                    const FormSectionLabel(label: 'DATE OF BIRTH'),
                     AppTextField(
                       label: 'Date of Birth',
                       hint: 'dd/mm/yyyy',
@@ -106,10 +107,13 @@ class PersonalInformationPage extends StatelessWidget {
                     const SizedBox(height: 14),
                     const Text(
                       'Identity Verification',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    const SignupSectionLabel(label: 'NATIONALITY'),
+                    const FormSectionLabel(label: 'NATIONALITY'),
                     const SizedBox(height: 8),
                     IgnorePointer(
                       ignoring: !cubit.isEditing,
@@ -122,7 +126,7 @@ class PersonalInformationPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const SignupSectionLabel(label: 'DOCUMENT TYPE'),
+                    const FormSectionLabel(label: 'DOCUMENT TYPE'),
                     const SizedBox(height: 8),
                     IgnorePointer(
                       ignoring: !cubit.isEditing,
@@ -135,7 +139,7 @@ class PersonalInformationPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const SignupSectionLabel(label: 'ID NUMBER'),
+                    const FormSectionLabel(label: 'ID NUMBER'),
                     AppTextField(
                       label: 'ID Number',
                       hint: 'Enter ID Number',
@@ -152,7 +156,9 @@ class PersonalInformationPage extends StatelessWidget {
                           cubit.save();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Personal information saved successfully'),
+                              content: Text(
+                                'Personal information saved successfully',
+                              ),
                             ),
                           );
                         },

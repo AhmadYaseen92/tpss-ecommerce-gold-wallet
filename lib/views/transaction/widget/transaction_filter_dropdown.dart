@@ -21,19 +21,22 @@ class FilterDropdown extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 0, 7, 0),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.darkGold : AppColors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.greysShade2),
+          color: isActive ? AppColors.luxuryIvory : AppColors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isActive ? AppColors.primaryColor : AppColors.greysShade2,
+            width: isActive ? 1.5 : 1.0,
+          ),
         ),
         child: DropdownButton<String>(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           underline: const SizedBox(),
           value: value,
           isExpanded: true,
           icon: Icon(
             Icons.keyboard_arrow_down,
             size: 18,
-            color: AppColors.black,
+            color: isActive ? AppColors.primaryColor : AppColors.black,
           ),
           dropdownColor: AppColors.white,
           items: items.map(
@@ -41,9 +44,10 @@ class FilterDropdown extends StatelessWidget {
                   value: item,
                   child: Text(
                     item,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       color: AppColors.black,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
                     ),
                   ),
                 ),

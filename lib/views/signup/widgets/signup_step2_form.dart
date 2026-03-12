@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/view_models/signup_cubit/signup_cubit
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/password_requirements_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/terms_row.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/document_type_toggle_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/nationality_dropdown_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/form_header.dart';
@@ -36,7 +37,7 @@ class SignupStep2Form extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const SignupSectionLabel(label: 'NATIONALITY'),
+          const FormSectionLabel(label: 'NATIONALITY'),
           const SizedBox(height: 8),
           BlocBuilder<SignupCubit, SignupState>(
             builder: (context, state) => NationalityDropdown(
@@ -46,7 +47,7 @@ class SignupStep2Form extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
-          const SignupSectionLabel(label: 'DOCUMENT TYPE'),
+          const FormSectionLabel(label: 'DOCUMENT TYPE'),
           const SizedBox(height: 8),
           BlocBuilder<SignupCubit, SignupState>(
             builder: (context, state) => DocumentTypeToggle(
@@ -55,7 +56,7 @@ class SignupStep2Form extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const SignupSectionLabel(label: 'ID NUMBER'),
+          const FormSectionLabel(label: 'ID NUMBER'),
           const SizedBox(height: 8),
           AppTextField(
             initialValue: cubit.idNumber,
@@ -137,53 +138,13 @@ class SignupStep2Form extends StatelessWidget {
           const SizedBox(height: 16),
           BlocBuilder<SignupCubit, SignupState>(
             builder: (context, state) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: Checkbox(
-                      value: cubit.termsAgreed,
-                      onChanged: (val) => cubit.toggleTerms(val ?? false),
-                      activeColor: AppColors.primaryColor,
-                      side: BorderSide(color: AppColors.greyShade400),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.greyShade600,
-                        ),
-                        children: [
-                          TextSpan(text: 'I agree to the '),
-                          TextSpan(
-                            text: 'Terms & Conditions',
-                            style: TextStyle(
-                              color: AppColors.primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          TextSpan(text: ' and '),
-                          TextSpan(
-                            text: 'Privacy Policy',
-                            style: TextStyle(
-                              color: AppColors.primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          TextSpan(text: '.'),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              return TermsRow(
+                value: cubit.termsAgreed,
+                onChanged: (val) => cubit.toggleTerms(val ?? false),
+                prefixText: 'I have read and agree to the ',
+                connectorText: ' and ',
+                secondHighlightedText: 'Privacy Policy',
+                suffixText: '.',
               );
             },
           ),

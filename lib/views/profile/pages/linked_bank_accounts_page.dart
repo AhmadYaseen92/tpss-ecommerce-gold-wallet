@@ -4,7 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_header_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/form_header.dart';
 
 class LinkedBankAccountsPage extends StatelessWidget {
   const LinkedBankAccountsPage({super.key});
@@ -15,12 +15,13 @@ class LinkedBankAccountsPage extends StatelessWidget {
       create: (_) => ProfileCubit(),
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
-          final cubit = context.read<ProfileCubit>();
+          final cubit = BlocProvider.of<ProfileCubit>(context);
           final selectedBank = cubit.bankAccounts[cubit.selectedBankIndex];
 
           return Scaffold(
             backgroundColor: AppColors.backgroundColor,
             appBar: AppBar(
+              centerTitle: true,
               backgroundColor: AppColors.backgroundColor,
               title: Text(
                 'Linked Bank Accounts',
@@ -48,18 +49,21 @@ class LinkedBankAccountsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SignupHeader(
+                    const FormHeader(
                       title: 'Bank Information',
                       subtitle: 'Select bank account then edit its fields.',
                     ),
                     const SizedBox(height: 20),
-                    const SignupSectionLabel(label: 'SELECT BANK ACCOUNT'),
+                    const FormSectionLabel(label: 'SELECT BANK ACCOUNT'),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int>(
+                      borderRadius: BorderRadius.circular(12),
+                      dropdownColor: AppColors.white,
                       value: cubit.selectedBankIndex,
                       items: List.generate(
                         cubit.bankAccounts.length,
                         (index) => DropdownMenuItem(
+                          
                           value: index,
                           child: Text(cubit.bankAccounts[index].name),
                         ),
@@ -78,7 +82,7 @@ class LinkedBankAccountsPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const SignupSectionLabel(label: 'ACCOUNT FIELDS'),
+                    const FormSectionLabel(label: 'ACCOUNT FIELDS'),
                     ...List.generate(selectedBank.fields.length, (index) {
                       final field = selectedBank.fields[index];
                       return AppTextField(
@@ -99,7 +103,9 @@ class LinkedBankAccountsPage extends StatelessWidget {
                           cubit.save();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Bank account details saved successfully'),
+                              content: Text(
+                                'Bank account details saved successfully',
+                              ),
                             ),
                           );
                         },

@@ -52,14 +52,13 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
       value: cartCubit,
       child: Scaffold(
         appBar: AppBar(
+          centerTitle: true,
           backgroundColor: AppColors.backgroundColor,
-          title: Center(
-            child: Text(
-              _tabTitles[_currentTabIndex],
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.primaryColor,
-              ),
+          title: Text(
+            _tabTitles[_currentTabIndex],
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryColor,
             ),
           ),
           actions: [
@@ -79,10 +78,6 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
               icon: Icon(Icons.notifications_outlined),
             ),
           ],
-        ),
-        drawer: Drawer(
-          backgroundColor: AppColors.greysShade2,
-          child: Center(child: Text('Navigation Drawer')),
         ),
         body: PersistentTabView(
           onTabChanged: (index) {

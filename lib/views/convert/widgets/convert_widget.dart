@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/convert_cubit/convert_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/terms_row.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/convert/widgets/convert_card_widget.dart';
 
 class ConvertWidget extends StatelessWidget {
@@ -181,22 +182,13 @@ class ConvertWidget extends StatelessWidget {
                   const SizedBox(height: 16.0),
 
                   // Terms checkbox
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: convertCubit.agreedToTerms,
-                        activeColor: AppColors.primaryColor,
-                        onChanged: convertCubit.toggleTerms,
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Conversion is final and cannot be undone.',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.grey),
-                        ),
-                      ),
-                    ],
-                  ),
+                   TermsRow(
+                   value: convertCubit.agreedToTerms,
+                   onChanged: convertCubit.toggleTerms,
+                    connectorText: 'I agree to the ',
+                    highlightedText: 'Terms & Conditions',
+                    suffixText: ' for this conversion. Once confirmed, this action cannot be undone.',
+                 ),
                 ],
               ),
             ),

@@ -4,8 +4,9 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/sell_cubit/sell_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/terms_row.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/sell/widgets/info_card_widget.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/sell/widgets/summary_row_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/summary_row_widget.dart';
 
 class SellWidget extends StatelessWidget {
   final SellCubit sellCubit;
@@ -73,7 +74,7 @@ class SellWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 12.0),
                   Text(
-                    'How much to trade?',
+                    'How much to sell?',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -239,21 +240,12 @@ class SellWidget extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20.0),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: sellCubit.agreedToTerms,
-                        activeColor: AppColors.primaryColor,
-                        onChanged: sellCubit.toggleTerms,
-                      ),
-                      Expanded(
-                        child: Text(
-                          'I agree to the terms and conditions for trading this asset. The transaction is final once confirmed.',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.grey),
-                        ),
-                      ),
-                    ],
+                  TermsRow(
+                    value: sellCubit.agreedToTerms,
+                    onChanged: sellCubit.toggleTerms,
+                    connectorText: 'I agree to the ',
+                    highlightedText: 'Terms & Conditions',
+                    suffixText: ' for selling this asset. The transaction is final once confirmed.',
                   ),
                 ],
               ),

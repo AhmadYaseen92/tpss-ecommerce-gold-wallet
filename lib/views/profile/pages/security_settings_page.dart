@@ -4,7 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_header_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/form_header.dart';
 
 class SecuritySettingsPage extends StatelessWidget {
   const SecuritySettingsPage({super.key});
@@ -15,11 +15,12 @@ class SecuritySettingsPage extends StatelessWidget {
       create: (_) => ProfileCubit(),
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
-          final cubit = context.read<ProfileCubit>();
+          final cubit = BlocProvider.of<ProfileCubit>(context);
 
           return Scaffold(
             backgroundColor: AppColors.backgroundColor,
             appBar: AppBar(
+              centerTitle: true,
               backgroundColor: AppColors.backgroundColor,
               title: Text(
                 'Security Settings',
@@ -47,12 +48,12 @@ class SecuritySettingsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SignupHeader(
+                    const FormHeader(
                       title: 'Security',
                       subtitle: 'Change password and select biometric login.',
                     ),
                     const SizedBox(height: 20),
-                    const SignupSectionLabel(label: 'CHANGE PASSWORD'),
+                    const FormSectionLabel(label: 'CHANGE PASSWORD'),
                     AppTextField(
                       label: 'Current Password',
                       hint: 'Current Password',
@@ -71,13 +72,14 @@ class SecuritySettingsPage extends StatelessWidget {
                       label: 'Confirm New Password',
                       hint: 'Confirm New Password',
                       prefixIcon: Icons.lock_open_outlined,
-                      controller: cubit.securityControllers['Confirm New Password'],
+                      controller:
+                          cubit.securityControllers['Confirm New Password'],
                       enabled: cubit.isEditing,
                     ),
                     const SizedBox(height: 14),
                     const Divider(color: AppColors.greyShade400),
                     const SizedBox(height: 14),
-                    const SignupSectionLabel(label: 'SELECT BIOMETRIC'),
+                    const FormSectionLabel(label: 'SELECT BIOMETRIC'),
                     ...['Face ID', 'Fingerprint', 'Disabled'].map((item) {
                       return RadioListTile<String>(
                         value: item,
@@ -100,7 +102,9 @@ class SecuritySettingsPage extends StatelessWidget {
                           cubit.save();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Security settings updated successfully'),
+                              content: Text(
+                                'Security settings updated successfully',
+                              ),
                             ),
                           );
                         },
