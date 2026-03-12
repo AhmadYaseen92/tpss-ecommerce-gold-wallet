@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_header_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/form_header.dart';
 
 class ThemeSettingsPage extends StatelessWidget {
   const ThemeSettingsPage({super.key});
@@ -14,12 +14,13 @@ class ThemeSettingsPage extends StatelessWidget {
       create: (_) => ProfileCubit(),
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
-          final cubit = context.read<ProfileCubit>();
+          final cubit = BlocProvider.of<ProfileCubit>(context);
           final options = ['Light', 'Dark', 'System Default'];
 
           return Scaffold(
             backgroundColor: AppColors.backgroundColor,
             appBar: AppBar(
+              centerTitle: true,
               backgroundColor: AppColors.backgroundColor,
               title: Text(
                 'Theme',
@@ -47,12 +48,12 @@ class ThemeSettingsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SignupHeader(
+                    const FormHeader(
                       title: 'Theme Settings',
                       subtitle: 'Choose one theme mode.',
                     ),
                     const SizedBox(height: 16),
-                    const SignupSectionLabel(label: 'THEME MODE'),
+                    const FormSectionLabel(label: 'THEME MODE'),
                     ...options.map(
                       (option) => RadioListTile<String>(
                         value: option,
@@ -74,7 +75,9 @@ class ThemeSettingsPage extends StatelessWidget {
                         onPressed: () {
                           cubit.save();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Theme updated successfully')),
+                            const SnackBar(
+                              content: Text('Theme updated successfully'),
+                            ),
                           );
                         },
                       ),

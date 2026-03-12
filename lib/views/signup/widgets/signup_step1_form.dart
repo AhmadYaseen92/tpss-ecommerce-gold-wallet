@@ -25,7 +25,7 @@ class SignupStep1Form extends StatelessWidget {
             subtitle: "Let's start with your personal details.",
           ),
           const SizedBox(height: 28),
-          const SignupSectionLabel(label: 'FULL NAME'),
+          const FormSectionLabel(label: 'FULL NAME'),
           AppTextField(
             initialValue: cubit.firstName,
             label: '',
@@ -57,7 +57,7 @@ class SignupStep1Form extends StatelessWidget {
                 : null,
           ),
           const SizedBox(height: 24),
-          const SignupSectionLabel(label: 'CONTACT'),
+          const FormSectionLabel(label: 'CONTACT'),
           AppTextField(
             initialValue: cubit.email,
             label: '',
@@ -86,7 +86,7 @@ class SignupStep1Form extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const SignupSectionLabel(label: 'DATE OF BIRTH'),
+          const FormSectionLabel(label: 'DATE OF BIRTH'),
           const SizedBox(height: 12),
           BlocBuilder<SignupCubit, SignupState>(
             builder: (context, state) => GestureDetector(

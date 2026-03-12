@@ -4,7 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_header_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/form_header.dart';
 
 class PaymentMethodsPage extends StatelessWidget {
   const PaymentMethodsPage({super.key});
@@ -15,12 +15,14 @@ class PaymentMethodsPage extends StatelessWidget {
       create: (_) => ProfileCubit(),
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
-          final cubit = context.read<ProfileCubit>();
-          final selectedMethod = cubit.paymentMethods[cubit.selectedPaymentIndex];
+          final cubit = BlocProvider.of<ProfileCubit>(context);
+          final selectedMethod =
+              cubit.paymentMethods[cubit.selectedPaymentIndex];
 
           return Scaffold(
             backgroundColor: AppColors.backgroundColor,
             appBar: AppBar(
+              centerTitle: true,
               backgroundColor: AppColors.backgroundColor,
               title: Text(
                 'Payment Methods',
@@ -49,12 +51,13 @@ class PaymentMethodsPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SignupHeader(
+                      const FormHeader(
                         title: 'Payment Method Selection',
-                        subtitle: 'Choose method, then edit only its own fields.',
+                        subtitle:
+                            'Choose method, then edit only its own fields.',
                       ),
                       const SizedBox(height: 16),
-                      const SignupSectionLabel(label: 'SELECT PAYMENT METHOD'),
+                      const FormSectionLabel(label: 'SELECT PAYMENT METHOD'),
                       const SizedBox(height: 10),
                       SizedBox(
                         height: 44,
@@ -64,10 +67,12 @@ class PaymentMethodsPage extends StatelessWidget {
                           separatorBuilder: (_, __) => const SizedBox(width: 8),
                           itemBuilder: (context, index) {
                             final method = cubit.paymentMethods[index];
-                            final selected = index == cubit.selectedPaymentIndex;
+                            final selected =
+                                index == cubit.selectedPaymentIndex;
                             return ChoiceChip(
                               label: Text(method.name),
                               selected: selected,
+                              showCheckmark: false,
                               avatar: Icon(
                                 method.icon,
                                 size: 18,
@@ -75,7 +80,8 @@ class PaymentMethodsPage extends StatelessWidget {
                                     ? AppColors.primaryColor
                                     : AppColors.greyShade600,
                               ),
-                              onSelected: (_) => cubit.selectPaymentMethod(index),
+                              onSelected: (_) =>
+                                  cubit.selectPaymentMethod(index),
                               selectedColor: AppColors.luxuryIvory,
                               side: BorderSide(
                                 color: selected
@@ -101,24 +107,25 @@ class PaymentMethodsPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      const SignupSectionLabel(label: 'METHOD FIELDS'),
+                      const FormSectionLabel(label: 'METHOD FIELDS'),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 220),
                         child: Column(
                           key: ValueKey(selectedMethod.name),
-                          children: List.generate(selectedMethod.fields.length, (
-                            index,
-                          ) {
-                            final field = selectedMethod.fields[index];
-                            return AppTextField(
-                              label: field.label,
-                              hint: field.label,
-                              prefixIcon: field.icon,
-                              keyboardType: field.keyboardType,
-                              controller: cubit.paymentControllers[index],
-                              enabled: cubit.isEditing,
-                            );
-                          }),
+                          children: List.generate(
+                            selectedMethod.fields.length,
+                            (index) {
+                              final field = selectedMethod.fields[index];
+                              return AppTextField(
+                                label: field.label,
+                                hint: field.label,
+                                prefixIcon: field.icon,
+                                keyboardType: field.keyboardType,
+                                controller: cubit.paymentControllers[index],
+                                enabled: cubit.isEditing,
+                              );
+                            },
+                          ),
                         ),
                       ),
                       if (cubit.isEditing) ...[

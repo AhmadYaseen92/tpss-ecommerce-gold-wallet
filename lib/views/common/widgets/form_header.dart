@@ -30,10 +30,10 @@ class FormHeader extends StatelessWidget {
   }
 }
 
-class SignupSectionLabel extends StatelessWidget {
+class FormSectionLabel extends StatelessWidget {
   final String label;
 
-  const SignupSectionLabel({super.key, required this.label});
+  const FormSectionLabel({super.key, required this.label});
 
   @override
   Widget build(BuildContext context) {

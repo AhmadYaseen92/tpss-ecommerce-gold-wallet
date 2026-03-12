@@ -17,6 +17,7 @@ import 'package:tpss_ecommerce_gold_wallet/views/profile/pages/profile_page.dart
 import 'package:tpss_ecommerce_gold_wallet/views/profile/pages/security_settings_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/pages/theme_settings_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/sell/page/sell_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/transfer/page/transfer_gift_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/page/forgot_password_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/splash/page/splash_page.dart';
 
@@ -50,6 +51,9 @@ class AppRouter {
 
       case AppRoutes.sellRoute:
         return MaterialPageRoute(builder: (_) => const SellGoldPage());
+
+      case AppRoutes.transferGiftRoute:
+        return MaterialPageRoute(builder: (_) => const TransferGiftPage());
 
       case AppRoutes.notificationRoute:
         return MaterialPageRoute(builder: (_) => const NotificationPage());

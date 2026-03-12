@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_header_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/form_header.dart';
 
 class LanguageSettingsPage extends StatelessWidget {
   const LanguageSettingsPage({super.key});
@@ -14,12 +14,13 @@ class LanguageSettingsPage extends StatelessWidget {
       create: (_) => ProfileCubit(),
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
-          final cubit = context.read<ProfileCubit>();
+          final cubit = BlocProvider.of<ProfileCubit>(context);
           final options = ['English', 'العربية', 'Türkçe'];
 
           return Scaffold(
             backgroundColor: AppColors.backgroundColor,
             appBar: AppBar(
+              centerTitle: true,
               backgroundColor: AppColors.backgroundColor,
               title: Text(
                 'Language',
@@ -47,12 +48,12 @@ class LanguageSettingsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SignupHeader(
+                    const FormHeader(
                       title: 'Language Settings',
                       subtitle: 'Select your app language.',
                     ),
                     const SizedBox(height: 16),
-                    const SignupSectionLabel(label: 'APPLICATION LANGUAGE'),
+                    const FormSectionLabel(label: 'APPLICATION LANGUAGE'),
                     ...options.map(
                       (option) => RadioListTile<String>(
                         value: option,
@@ -74,7 +75,9 @@ class LanguageSettingsPage extends StatelessWidget {
                         onPressed: () {
                           cubit.save();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Language updated successfully')),
+                            const SnackBar(
+                              content: Text('Language updated successfully'),
+                            ),
                           );
                         },
                       ),

@@ -34,48 +34,27 @@ class ProductFilterBar extends StatelessWidget {
                       final isSelected = selectedCategory == category;
                       return Padding(
                         padding: const EdgeInsets.only(right: 8.0),
-                        child: TextButton(
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                              isSelected
-                                  ? AppColors.primaryColor
-                                  : AppColors.luxuryIvory,
-                            ),
-                            side: WidgetStateProperty.all(
-                              const BorderSide(
-                                color: AppColors.primaryColor,
-                                width: 1.5,
-                              ),
-                            ),
-                            padding: WidgetStateProperty.all(
-                              const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                            ),
-                            shape: WidgetStateProperty.all(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                          ),
-                          onPressed: () {
+                        child: ChoiceChip(
+                          label: Text(category),
+                          selected: isSelected,
+                          onSelected: (_) {
                             if (category == 'All') {
                               productCubit.loadProducts();
                             } else {
                               productCubit.filterProducts(category);
                             }
                           },
-                          child: Text(
-                            category,
-                            style: TextStyle(
-                              color: isSelected
-                                  ? AppColors.white
-                                  : AppColors.primaryColor,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.2,
-                            ),
+                          selectedColor: AppColors.luxuryIvory,
+                          side: BorderSide(
+                            color: isSelected
+                                ? AppColors.primaryColor
+                                : AppColors.greyBorder,
+                          ),
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? AppColors.primaryColor
+                                : AppColors.greyShade600,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       );
