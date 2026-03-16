@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 
 part 'wallet_state.dart';
@@ -17,6 +17,6 @@ class WalletCubit extends Cubit<WalletState> {
   }
 
   void selectTab(int index) {
-      emit(WalletLoaded(wallets: dummyWallets, selectedIndex: index));
+    emit(WalletLoaded(wallets: dummyWallets, selectedIndex: index));
   }
 }

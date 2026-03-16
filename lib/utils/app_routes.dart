@@ -29,5 +29,10 @@ class AppRoutes {
   static const String themeRoute = '/theme';
 
   static const String forgotPasswordRoute = '/forgot-password';
-}
 
+  static const String walletItemsRoute = '/wallet-items';
+
+  static const String walletAssetSellRoute = '/wallet-asset-sell';
+  static const String walletAssetTransferRoute = '/wallet-asset-transfer';
+  static const String walletAssetConvertRoute = '/wallet-asset-convert';
+}

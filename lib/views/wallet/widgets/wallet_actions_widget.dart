@@ -20,10 +20,10 @@ class WalletActionsWidget extends StatelessWidget {
           child: _buildActionItem(context, Icons.wallet_giftcard, 'Transfer / Gift',
               AppRoutes.transferGiftRoute),
         ),
-        Expanded(
-          child: _buildActionItem(context, CupertinoIcons.money_dollar, 'Convert ',
-              AppRoutes.convertRoute),
-        ),
+        // Expanded(
+        //   child: _buildActionItem(context, CupertinoIcons.money_dollar, 'Convert ',
+        //       AppRoutes.convertRoute),
+        // ),
          Expanded(
           child: _buildActionItem(context, CupertinoIcons.bitcoin, 'Convert ',
               AppRoutes.convertRoute),

@@ -51,11 +51,11 @@ class WalletTransactionsWidget extends StatelessWidget {
                 child: Text(
                   'View All ',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: accentColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    color: accentColor,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+              ),
             ],
           ),
           const SizedBox(height: 14.0),
@@ -97,7 +97,11 @@ class WalletTransactionsWidget extends StatelessWidget {
                 color: AppColors.greyShade2,
                 borderRadius: BorderRadius.circular(10.0),
               ),
-              child: const Icon(Icons.image_not_supported_outlined, size: 22.0, color: AppColors.grey),
+              child: const Icon(
+                Icons.image_not_supported_outlined,
+                size: 22.0,
+                color: AppColors.grey,
+              ),
             ),
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
@@ -134,9 +138,9 @@ class WalletTransactionsWidget extends StatelessWidget {
               const SizedBox(height: 2.0),
               Text(
                 tx.subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.darkGrey,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.darkGrey),
               ),
             ],
           ),
@@ -145,7 +149,7 @@ class WalletTransactionsWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              tx.value,
+              tx.marketValue,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.darkBrown,
@@ -165,5 +169,3 @@ class WalletTransactionsWidget extends StatelessWidget {
     );
   }
 }
-
-

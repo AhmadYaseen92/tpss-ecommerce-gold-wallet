@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 
@@ -44,7 +43,7 @@ class PortfolioCardWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                title+": ",
+                title + ": ",
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -55,7 +54,7 @@ class PortfolioCardWidget extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: AppColors.primaryColor,
-                  fontSize: 20
+                  fontSize: 20,
                 ),
               ),
             ],
@@ -65,15 +64,13 @@ class PortfolioCardWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Available Cash:',
-                ),
+                Text('Available Cash:'),
                 Text(
                   availableCash!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.green,
-                    fontSize: 17
+                    fontSize: 17,
                   ),
                 ),
               ],
@@ -83,32 +80,30 @@ class PortfolioCardWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "Gold Investment: ",
-              ),
+              Text("Gold Investment: "),
               Text(
                 change,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: change.startsWith('+') ? AppColors.green : AppColors.red,
+                  color: change.startsWith('+')
+                      ? AppColors.green
+                      : AppColors.red,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 8.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "Silver Investment: ",
-              ),
+              Text("Silver Investment: "),
               Text(
                 change,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color:  AppColors.red,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.red),
               ),
             ],
           ),
-        
         ],
       ),
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/bottom_navbar/page/custom_bottom_navbar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/login/page/login_page.dart';
@@ -20,6 +22,8 @@ import 'package:tpss_ecommerce_gold_wallet/views/sell/page/sell_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transfer/page/transfer_gift_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/page/forgot_password_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/splash/page/splash_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/sell_asset_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_items_page.dart';
 
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -88,6 +92,18 @@ class AppRouter {
 
       case AppRoutes.convertRoute:
         return MaterialPageRoute(builder: (_) => const ConvertPage());
+
+      case AppRoutes.walletItemsRoute:
+        final transactions = settings.arguments as List<WalletTransaction>;
+        return MaterialPageRoute(
+          builder: (_) => WalletItemsPage(transactions: transactions),
+        );
+
+      case AppRoutes.walletAssetSellRoute:
+        final transaction = settings.arguments as WalletActionSummary;
+        return MaterialPageRoute(
+          builder: (_) => SellAssetPage(asset: transaction),
+        );
 
       default:
         return MaterialPageRoute(
