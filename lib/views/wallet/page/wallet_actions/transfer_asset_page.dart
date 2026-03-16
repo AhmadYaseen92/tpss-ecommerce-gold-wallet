@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/action_review_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_bottom_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_text_field.dart';
@@ -28,6 +29,50 @@ class _TransferAssetPageState extends State<TransferAssetPage> {
   final messageController = TextEditingController();
 
   @override
+  void dispose() {
+    recipientNameController.dispose();
+    recipientContactController.dispose();
+    quantityController.dispose();
+    weightController.dispose();
+    messageController.dispose();
+    super.dispose();
+  }
+
+  String get _amountLabel {
+    switch (selectedMode) {
+      case AmountInputMode.quantity:
+        return '${quantityController.text.trim().isEmpty ? widget.asset.quantity : quantityController.text.trim()} Units';
+      case AmountInputMode.weight:
+        return '${weightController.text.trim().isEmpty ? widget.asset.weightInGrams.toStringAsFixed(2) : weightController.text.trim()} g';
+      case AmountInputMode.all:
+        return 'All Holdings';
+    }
+  }
+
+  void _reviewTransfer() {
+    final isGift = transferType == WalletActionType.gift;
+    final summary = WalletActionSummary(
+      asset: widget.asset,
+      actionType: transferType,
+      title: isGift ? 'Gift Asset' : 'Transfer Asset',
+      primaryValue: _amountLabel,
+      feeValue: '\$10.00',
+      totalValue: '\$6,490.00',
+      destinationLabel: isGift ? 'Recipient Contact' : 'Wallet ID / Contact',
+      destinationValue: recipientContactController.text.trim(),
+      note: messageController.text.trim(),
+      referenceNumber: 'TRX-${DateTime.now().millisecondsSinceEpoch}',
+      createdAt: DateTime.now(),
+      isPending: true,
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ActionReviewPage(summary: summary)),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isGift = transferType == WalletActionType.gift;
 
@@ -37,7 +82,7 @@ class _TransferAssetPageState extends State<TransferAssetPage> {
         summaryLabel: 'Transfer Amount',
         summaryValue: '5 Units',
         buttonText: isGift ? 'Review Gift' : 'Review Transfer',
-        onPressed: () {},
+        onPressed: _reviewTransfer,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

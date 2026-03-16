@@ -58,14 +58,7 @@ class GoldWalletPage extends StatelessWidget {
                     note: wallet.note,
                   ),
 
-                  // const SizedBox(height: 20.0),
-                  // WalletActionsWidget(accentColor: AppColors.primaryColor),
                   const SizedBox(height: 20.0),
-
-                  // OwnershipCertificateWidget(
-                  //   accentColor: AppColors.primaryColor,
-                  // ),
-                  // const SizedBox(height: 20.0),
                   if (wallet.transactions.isNotEmpty)
                     WalletTransactionsWidget(
                       transactions: wallet.transactions,

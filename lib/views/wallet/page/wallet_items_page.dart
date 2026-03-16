@@ -14,12 +14,9 @@ class WalletItemsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Wallet Items')),
       body: ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
         itemCount: transactions.length,
         itemBuilder: (context, index) {
           final item = transactions[index];
-
           return WalletHoldingItemWidget(
             item: item,
             onSell: () {
@@ -27,11 +24,11 @@ class WalletItemsPage extends StatelessWidget {
                 asset: item,
                 actionType: WalletActionType.sell,
                 title: "Sell Gold",
-                primaryValue: "2 Units",
+                primaryValue: '${item.quantity} Units',
                 feeValue: "\$25",
-                totalValue: "\$6,250",
+                totalValue: item.marketValue,
                 destinationLabel: "Payout",
-                destinationValue: "",
+                destinationValue: 'Wallet Cash',
                 note: "",
                 referenceNumber: "",
                 createdAt: DateTime.now(),
@@ -43,10 +40,18 @@ class WalletItemsPage extends StatelessWidget {
               );
             },
             onGiftTransfer: () {
-              // navigate to gift / transfer page
+              Navigator.pushNamed(
+                context,
+                AppRoutes.walletAssetTransferRoute,
+                arguments: item,
+              );
             },
             onConvert: () {
-              // navigate to convert page
+              Navigator.pushNamed(
+                context,
+                AppRoutes.walletAssetConvertRoute,
+                arguments: item,
+              );
             },
           );
         },

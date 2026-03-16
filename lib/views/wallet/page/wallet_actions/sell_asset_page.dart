@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/action_review_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_bottom_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_text_field.dart';
@@ -24,6 +25,47 @@ class _SellAssetPageState extends State<SellAssetPage> {
   String payoutMethod = 'Wallet Cash';
 
   @override
+  void dispose() {
+    quantityController.dispose();
+    weightController.dispose();
+    noteController.dispose();
+    super.dispose();
+  }
+
+  String get _amountLabel {
+    switch (selectedMode) {
+      case AmountInputMode.quantity:
+        return '${quantityController.text.trim().isEmpty ? widget.asset.asset.quantity : quantityController.text.trim()} Units';
+      case AmountInputMode.weight:
+        return '${weightController.text.trim().isEmpty ? widget.asset.asset.weightInGrams.toStringAsFixed(2) : weightController.text.trim()} g';
+      case AmountInputMode.all:
+        return 'All Holdings';
+    }
+  }
+
+  void _reviewSell() {
+    final summary = WalletActionSummary(
+      asset: widget.asset.asset,
+      actionType: WalletActionType.sell,
+      title: 'Sell Asset',
+      primaryValue: _amountLabel,
+      feeValue: '\$50.00',
+      totalValue: '\$6,250.00',
+      destinationLabel: 'Payout Method',
+      destinationValue: payoutMethod,
+      note: noteController.text.trim(),
+      referenceNumber: 'SELL-${DateTime.now().millisecondsSinceEpoch}',
+      createdAt: DateTime.now(),
+      isPending: true,
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ActionReviewPage(summary: summary)),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Sell Asset')),
@@ -31,7 +73,7 @@ class _SellAssetPageState extends State<SellAssetPage> {
         summaryLabel: 'Estimated Receive',
         summaryValue: '\$6,250.00',
         buttonText: 'Review Sell',
-        onPressed: () {},
+        onPressed: _reviewSell,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
