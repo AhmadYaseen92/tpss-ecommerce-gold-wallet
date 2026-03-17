@@ -25,14 +25,18 @@ class AppColors {
   static const Color greyShade400 = Color(0xFFBDBDBD); // Grey shade 400
   static const Color greyShade500 = Color(0xFF9E9E9E); // Grey shade 500
   static const Color greyShade600 = Color(0xFF757575); // Grey shade 600
-  static Color shadowBlack = Colors.black.withOpacity(0.04); // Shadow black
-  static Color greyBorder = Colors.grey.withOpacity(0.12); // Grey border
-  static Color greyBorderLight = Colors.grey.withOpacity(0.18); // Grey border light
+  static Color shadowBlack = Colors.black.withAlpha(100); // Shadow black
+  static Color greyBorder = Colors.grey.withAlpha(100); // Grey border
+  static Color greyBorderLight = Colors.grey.withAlpha(
+    100,
+  ); // Grey border light
   static const Color amber = Color(0xFFFFC107); // Amber color
   static const Color teal = Color(0xFF009688); // Teal color
   static const Color blue = Color(0xFF2196F3); // Blue color
   static const Color orange = Color(0xFFFF9800); // Orange color
-  static const Color pendingOrange = Color(0xFFFFA726); // Pending/amber orange color
+  static const Color pendingOrange = Color(
+    0xFFFFA726,
+  ); // Pending/amber orange color
   static const Color black12 = Color(0x1F000000); // Black with ~12% opacity
   static const Color greenShade50 = Color(0xFFE8F5E9); // Green shade 50
   static const Color greyShade100 = Color(0xFFF5F5F5); // Grey shade 100

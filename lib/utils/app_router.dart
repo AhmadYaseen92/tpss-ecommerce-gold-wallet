@@ -23,6 +23,8 @@ import 'package:tpss_ecommerce_gold_wallet/views/transfer/page/transfer_gift_pag
 import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/page/forgot_password_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/splash/page/splash_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/sell_asset_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/transfer_asset_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/convert_asset_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_items_page.dart';
 
 class AppRouter {
@@ -103,6 +105,18 @@ class AppRouter {
         final transaction = settings.arguments as WalletActionSummary;
         return MaterialPageRoute(
           builder: (_) => SellAssetPage(asset: transaction),
+        );
+
+      case AppRoutes.walletAssetTransferRoute:
+        final transaction = settings.arguments as WalletTransaction;
+        return MaterialPageRoute(
+          builder: (_) => TransferAssetPage(asset: transaction),
+        );
+
+      case AppRoutes.walletAssetConvertRoute:
+        final transaction = settings.arguments as WalletTransaction;
+        return MaterialPageRoute(
+          builder: (_) => ConvertAssetPage(asset: transaction),
         );
 
       default:
