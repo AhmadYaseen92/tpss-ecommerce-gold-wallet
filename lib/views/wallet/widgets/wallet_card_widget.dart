@@ -1,24 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 
 class WalletCardWidget extends StatelessWidget {
   final String walletName;
   final bool isVerified;
-  final String weight;
-  final String weightLabel;
-  final String value;
+  final double totalWeightInGrams;
+  final double totalWeightInKg;
+  final double totalWeightInOz;
+  final String totalMarketValue;
+  final int totalHoldings;
   final String change;
   final IconData icon;
+  final List transactions;
+  final String? note;
 
   const WalletCardWidget({
     super.key,
     required this.walletName,
     required this.isVerified,
-    required this.weight,
-    required this.weightLabel,
-    required this.value,
+    required this.totalWeightInGrams,
+    required this.totalWeightInKg,
+    required this.totalWeightInOz,
+    required this.totalMarketValue,
+    required this.totalHoldings,
     required this.change,
     required this.icon,
+    required this.transactions,
+    this.note,
   });
 
   bool get _isPositive => change.startsWith('+');
@@ -47,6 +56,7 @@ class WalletCardWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          /// Header
           Row(
             children: [
               Container(
@@ -58,164 +68,204 @@ class WalletCardWidget extends StatelessWidget {
                 child: Icon(icon, color: AppColors.white, size: 20.0),
               ),
               const SizedBox(width: 10.0),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    walletName,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (isVerified)
-                    Container(
-                      margin: const EdgeInsets.only(top: 2.0),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6.0,
-                        vertical: 2.0,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.green.withAlpha(30),
-                        borderRadius: BorderRadius.circular(4.0),
-                        border: Border.all(
-                          color: AppColors.green.withAlpha(100),
-                        ),
-                      ),
-                      child: Text(
-                        'VERIFIED',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.green,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      walletName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                ],
-              ),
-              const Spacer(),
-              Icon(Icons.more_vert, color: AppColors.darkGrey),
-            ],
-          ),
-          const SizedBox(height: 16.0),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: weight,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primaryColor,
-                  ),
+                    if (isVerified)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(
+                          'Verified',
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: AppColors.green,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                  ],
                 ),
-                TextSpan(
-                  text: '  $weightLabel',
-                  style: Theme.of(
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(
                     context,
-                  ).textTheme.bodyMedium?.copyWith(color: AppColors.darkGrey),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6.0),
-          Row(
-            children: [
-              Text(
-                value,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.darkBrown,
-                ),
-              ),
-              const SizedBox(width: 10.0),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8.0,
-                  vertical: 3.0,
-                ),
-                decoration: BoxDecoration(
-                  color: (_isPositive ? AppColors.green : AppColors.red)
-                      .withAlpha(25),
-                  borderRadius: BorderRadius.circular(6.0),
-                  border: Border.all(
-                    color: (_isPositive ? AppColors.green : AppColors.red)
-                        .withAlpha(80),
-                  ),
-                ),
+                    rootNavigator: true,
+                  ).pushNamed(
+                    AppRoutes.walletItemsRoute,
+                    arguments: transactions, // Pass the list of WalletTransaction here
+                  );
+                },
                 child: Text(
-                  change,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _isPositive ? AppColors.green : AppColors.red,
+                  'View Details',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.darkGold,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14.0),
-          SizedBox(
-            height: 42.0,
-            child: CustomPaint(
-              size: const Size(double.infinity, 42),
-              painter: _WalletChartPainter(color: AppColors.primaryColor),
+
+          const SizedBox(height: 16.0),
+
+          /// Total Weight
+          Text(
+            'Total Weight',
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: AppColors.darkGrey),
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            '${totalWeightInGrams.toStringAsFixed(2)} g',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryColor,
             ),
           ),
+
+          const SizedBox(height: 12),
+
+          /// Units row
+          Row(
+            children: [
+              _unitBox(context, 'g', totalWeightInGrams.toStringAsFixed(2)),
+              const SizedBox(width: 10),
+              _unitBox(context, 'kg', totalWeightInKg.toStringAsFixed(2)),
+              const SizedBox(width: 10),
+              _unitBox(context, 'oz', totalWeightInOz.toStringAsFixed(2)),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          /// Market value
+          _infoRow(context, 'Total Market Value', totalMarketValue),
+
+          const SizedBox(height: 10),
+
+          /// Holdings
+          _infoRow(context, 'Total Holdings', '$totalHoldings Assets'),
+
+          const SizedBox(height: 10),
+
+          /// Change
+          Row(
+            children: [
+              Text(
+                '24h Change',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(color: AppColors.darkGrey),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
+                ),
+                decoration: BoxDecoration(
+                  color: (_isPositive ? AppColors.green : AppColors.red)
+                      .withAlpha(20),
+                  borderRadius: BorderRadius.circular(8.0),
+                  border: Border.all(
+                    color: (_isPositive ? AppColors.green : AppColors.red)
+                        .withAlpha(70),
+                  ),
+                ),
+                child: Text(
+                  change,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: _isPositive ? AppColors.green : AppColors.red,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          if (note != null && note!.trim().isNotEmpty) ...[
+            const SizedBox(height: 14.0),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(10.0),
+                border: Border.all(color: AppColors.primaryColor.withAlpha(40)),
+              ),
+              child: Text(
+                note!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.darkGrey,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
-}
 
-class _WalletChartPainter extends CustomPainter {
-  final Color color;
-
-  const _WalletChartPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color.withAlpha(180)
-      ..strokeWidth = 2.2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-    path.moveTo(0, size.height * 0.55);
-    path.cubicTo(
-      size.width * 0.15,
-      size.height * 0.85,
-      size.width * 0.25,
-      size.height * 0.9,
-      size.width * 0.38,
-      size.height * 0.45,
+  Widget _unitBox(BuildContext context, String unit, String value) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.luxuryIvory,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.primaryColor.withAlpha(60)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              unit,
+              style: Theme.of(
+                context,
+              ).textTheme.labelMedium?.copyWith(color: AppColors.darkGrey),
+            ),
+          ],
+        ),
+      ),
     );
-    path.cubicTo(
-      size.width * 0.50,
-      size.height * 0.05,
-      size.width * 0.58,
-      size.height * 0.2,
-      size.width * 0.65,
-      size.height * 0.38,
-    );
-    path.cubicTo(
-      size.width * 0.72,
-      size.height * 0.55,
-      size.width * 0.80,
-      size.height * 0.75,
-      size.width * 0.88,
-      size.height * 0.5,
-    );
-    path.cubicTo(
-      size.width * 0.93,
-      size.height * 0.35,
-      size.width * 0.97,
-      size.height * 0.25,
-      size.width,
-      size.height * 0.28,
-    );
-
-    canvas.drawPath(path, paint);
   }
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget _infoRow(BuildContext context, String title, String value) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: AppColors.darkGrey),
+          ),
+        ),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.black,
+          ),
+        ),
+      ],
+    );
+  }
 }

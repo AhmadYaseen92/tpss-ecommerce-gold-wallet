@@ -15,17 +15,35 @@ class SellCubit extends Cubit<SellState> {
 
   void updateUnits(String value) {
     units = double.tryParse(value) ?? 0.0;
-    emit(SellDataChanged(units: units, agreedToTerms: agreedToTerms, selectedAssetIndex: selectedAssetIndex));
+    emit(
+      SellDataChanged(
+        units: units,
+        agreedToTerms: agreedToTerms,
+        selectedAssetIndex: selectedAssetIndex,
+      ),
+    );
   }
 
   void toggleTerms(bool? value) {
     agreedToTerms = value ?? false;
-    emit(SellDataChanged(units: units, agreedToTerms: agreedToTerms, selectedAssetIndex: selectedAssetIndex));
+    emit(
+      SellDataChanged(
+        units: units,
+        agreedToTerms: agreedToTerms,
+        selectedAssetIndex: selectedAssetIndex,
+      ),
+    );
   }
 
   void selectAsset(int index) {
     selectedAssetIndex = index;
-    emit(SellDataChanged(units: units, agreedToTerms: agreedToTerms, selectedAssetIndex: selectedAssetIndex));
+    emit(
+      SellDataChanged(
+        units: units,
+        agreedToTerms: agreedToTerms,
+        selectedAssetIndex: selectedAssetIndex,
+      ),
+    );
   }
 
   void submit() async {
@@ -35,20 +53,25 @@ class SellCubit extends Cubit<SellState> {
       emit(SellSuccess());
     } catch (e) {
       emit(SellError('Failed to process sale: $e'));
-    } 
+    }
   }
 
   void loadSellData() async {
     emit(SellLoading());
     try {
       await Future.delayed(const Duration(milliseconds: 600));
-      emit(SellDataChanged(units: units, agreedToTerms: agreedToTerms, selectedAssetIndex: selectedAssetIndex));
+      emit(
+        SellDataChanged(
+          units: units,
+          agreedToTerms: agreedToTerms,
+          selectedAssetIndex: selectedAssetIndex,
+        ),
+      );
     } catch (e) {
       emit(SellError('Failed to load sell data: $e'));
     }
   }
 
-  
   Asset get selectedAsset => Asset.assets[selectedAssetIndex];
   double get subtotal => units * selectedAsset.pricePerUnit;
   double get fee => subtotal * SellState.feePercent;
