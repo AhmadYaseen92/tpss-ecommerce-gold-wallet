@@ -36,7 +36,8 @@ class SellAssetPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ActionReviewPage(summary: cubit.buildSummary()),
+                    builder: (_) =>
+                        ActionReviewPage(summary: cubit.buildSummary()),
                   ),
                 );
               },
@@ -53,7 +54,8 @@ class SellAssetPage extends StatelessWidget {
                       child: Column(
                         children: [
                           ActionTextField(
-                            label: 'Quantity to Sell (Max ${cubit.maxQuantity})',
+                            label:
+                                'Quantity to Sell (Max ${cubit.maxQuantity})',
                             hintText: 'Enter quantity',
                             controller: cubit.quantityController,
                             keyboardType: TextInputType.number,
@@ -63,8 +65,14 @@ class SellAssetPage extends StatelessWidget {
                           DropdownButtonFormField<String>(
                             value: cubit.payoutMethod,
                             items: const [
-                              DropdownMenuItem(value: 'Wallet Cash', child: Text('Wallet Cash')),
-                              DropdownMenuItem(value: 'Bank Account', child: Text('Bank Account')),
+                              DropdownMenuItem(
+                                value: 'Wallet Cash',
+                                child: Text('Wallet Cash'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Bank Account',
+                                child: Text('Bank Account'),
+                              ),
                             ],
                             onChanged: cubit.updatePayoutMethod,
                             decoration: const InputDecoration(
