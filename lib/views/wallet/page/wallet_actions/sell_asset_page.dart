@@ -80,6 +80,25 @@ class SellAssetPage extends StatelessWidget {
                               border: OutlineInputBorder(),
                             ),
                           ),
+                          if (cubit.isBankPayout) ...[
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<int>(
+                              value: cubit.selectedBankAccountIndex,
+                              items: List.generate(
+                                cubit.predefinedBankAccounts.length,
+                                (index) => DropdownMenuItem(
+                                  value: index,
+                                  child: Text(cubit.predefinedBankAccounts[index]),
+                                ),
+                              ),
+                              onChanged: cubit.updateBankAccount,
+                              decoration: const InputDecoration(
+                                labelText: 'Select Linked Bank Account',
+                                helperText: 'From your profile linked bank accounts.',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           ActionTextField(
                             label: 'Note',
