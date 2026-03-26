@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product_details/widgets/authenticity_button_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product_details/widgets/badge_rating_row_widget.dart';
@@ -116,16 +117,8 @@ class ProductDetailWidget extends StatelessWidget {
             productCubit.addCart(product);
           },
           onBuyNow: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Purchasing x${productCubit.quantity} ${product.name}…'),
-                backgroundColor: AppColors.darkBrown,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            );
+            productCubit.addCart(product.copyWith(quantity: productCubit.quantity));
+            Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.checkoutRoute);
           },
           productCubit: productCubit,
           quantity: productCubit.quantity,

@@ -1,6 +1,6 @@
 part of 'transfer_cubit.dart';
 
-enum RecipientMode { email, phone }
+enum RecipientMode { email, phone, account }
 
 class TransferState {
   static const double feePercent = 0.01;
@@ -15,12 +15,14 @@ final class TransferDataChanged extends TransferState {
   final int selectedAssetIndex;
   final RecipientMode recipientMode;
   final bool agreedToTerms;
+  final bool isAccountVerified;
 
   TransferDataChanged({
     required this.units,
     required this.selectedAssetIndex,
     required this.recipientMode,
     required this.agreedToTerms,
+    required this.isAccountVerified,
   });
 }
 

@@ -7,77 +7,66 @@ class ProductFilterBar extends StatelessWidget {
   final ProductCubit productCubit;
   const ProductFilterBar({super.key, required this.productCubit});
 
-  static const List<String> categories = [
-    'All',
-    'Bullion',
-    'Jewellery',
-    'Coins',
-  ];
+  static const List<String> categories = ['All', 'Bullion', 'Jewellery', 'Coins'];
+  static const List<String> sellers = ['All Sellers', 'Imseeh', 'Sakkejha', 'Da’naa'];
 
   @override
   Widget build(BuildContext context) {
-    String selectedCategory = "All";
     return BlocBuilder<ProductCubit, ProductState>(
+      bloc: productCubit,
       builder: (context, state) {
+        var selectedCategory = productCubit.selectedCategory;
+        var selectedSeller = productCubit.selectedSeller;
         if (state is ProductLoaded) {
           selectedCategory = state.category;
+          selectedSeller = state.seller;
         }
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: categories.map((category) {
-                      final isSelected = selectedCategory == category;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ChoiceChip(
-                          label: Text(category),
-                          selected: isSelected,
-                          onSelected: (_) {
-                            if (category == 'All') {
-                              productCubit.loadProducts();
-                            } else {
-                              productCubit.filterProducts(category);
-                            }
-                          },
-                          selectedColor: AppColors.luxuryIvory,
-                          side: BorderSide(
-                            color: isSelected
-                                ? AppColors.primaryColor
-                                : AppColors.greyBorder,
-                          ),
-                          labelStyle: TextStyle(
-                            color: isSelected
-                                ? AppColors.primaryColor
-                                : AppColors.greyShade600,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: categories.map((category) {
+                    final isSelected = selectedCategory == category;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ChoiceChip(
+                        label: Text(category),
+                        selected: isSelected,
+                        onSelected: (_) => productCubit.applyFilters(category: category),
+                        selectedColor: AppColors.luxuryIvory,
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
-              Row(
-                children: [
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () {
-                      // The Algorithm for filtering products
-                    },
-                    icon: const Icon(Icons.tune),
-                    style: IconButton.styleFrom(
-                      backgroundColor: AppColors.white,
-                      shape: const CircleBorder(),
-                    ),
-                  ),
-                 
-  
-                ],
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: sellers.map((seller) {
+                    final isSelected = selectedSeller == seller;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ChoiceChip(
+                        label: Text(seller),
+                        selected: isSelected,
+                        onSelected: (_) => productCubit.applyFilters(seller: seller),
+                        selectedColor: AppColors.white,
+                        side: BorderSide(
+                          color: isSelected ? AppColors.primaryColor : AppColors.greyBorder,
+                        ),
+                        labelStyle: TextStyle(
+                          color: isSelected ? AppColors.primaryColor : AppColors.greyShade600,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
             ],
           ),

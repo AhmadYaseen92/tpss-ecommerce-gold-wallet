@@ -8,6 +8,12 @@ class SellCubit extends Cubit<SellState> {
   double units = 0.0;
   bool agreedToTerms = false;
   int selectedAssetIndex = 0;
+  int selectedBankAccountIndex = 0;
+
+  final List<String> predefinedBankAccounts = const [
+    'Main Account •••• 1234',
+    'Savings Account •••• 7788',
+  ];
 
   SellCubit() : super(SellInitial());
 
@@ -15,28 +21,38 @@ class SellCubit extends Cubit<SellState> {
 
   void updateUnits(String value) {
     units = double.tryParse(value) ?? 0.0;
-    emit(
-      SellDataChanged(
-        units: units,
-        agreedToTerms: agreedToTerms,
-        selectedAssetIndex: selectedAssetIndex,
-      ),
-    );
+    _emitChanged();
   }
 
   void toggleTerms(bool? value) {
     agreedToTerms = value ?? false;
-    emit(
-      SellDataChanged(
-        units: units,
-        agreedToTerms: agreedToTerms,
-        selectedAssetIndex: selectedAssetIndex,
-      ),
-    );
+    _emitChanged();
   }
 
   void selectAsset(int index) {
     selectedAssetIndex = index;
+    _emitChanged();
+  }
+
+  void selectBankAccount(int index) {
+    selectedBankAccountIndex = index;
+    _emitChanged();
+  }
+
+  void submit() async {
+    emit(SellLoading());
+    await Future.delayed(const Duration(milliseconds: 1000));
+    emit(SellSuccess());
+    _emitChanged();
+  }
+
+  void loadSellData() async {
+    emit(SellLoading());
+    await Future.delayed(const Duration(milliseconds: 600));
+    _emitChanged();
+  }
+
+  void _emitChanged() {
     emit(
       SellDataChanged(
         units: units,
@@ -44,32 +60,6 @@ class SellCubit extends Cubit<SellState> {
         selectedAssetIndex: selectedAssetIndex,
       ),
     );
-  }
-
-  void submit() async {
-    emit(SellLoading());
-    try {
-      await Future.delayed(const Duration(milliseconds: 1000));
-      emit(SellSuccess());
-    } catch (e) {
-      emit(SellError('Failed to process sale: $e'));
-    }
-  }
-
-  void loadSellData() async {
-    emit(SellLoading());
-    try {
-      await Future.delayed(const Duration(milliseconds: 600));
-      emit(
-        SellDataChanged(
-          units: units,
-          agreedToTerms: agreedToTerms,
-          selectedAssetIndex: selectedAssetIndex,
-        ),
-      );
-    } catch (e) {
-      emit(SellError('Failed to load sell data: $e'));
-    }
   }
 
   Asset get selectedAsset => Asset.assets[selectedAssetIndex];

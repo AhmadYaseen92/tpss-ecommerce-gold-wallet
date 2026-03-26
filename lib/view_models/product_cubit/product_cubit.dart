@@ -4,8 +4,9 @@ import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 part 'product_state.dart';
 
 class ProductCubit extends Cubit<ProductState> {
-  List<ProductItemModel> allProducts = []; // Keep reference to all products
+  List<ProductItemModel> allProducts = [];
   String selectedCategory = 'All';
+  String selectedSeller = 'All Sellers';
   int quantity = 1;
 
   ProductCubit() : super(ProductInitial());
@@ -13,53 +14,51 @@ class ProductCubit extends Cubit<ProductState> {
   void loadProducts() async {
     emit(ProductLoading());
     try {
-      // Simulate a delay for loading products
-      await Future.delayed(const Duration(milliseconds: 1000));
-      // Load dummy products (replace with actual data fetching logic)
-      allProducts = dummyProducts; // Store all products
+      await Future.delayed(const Duration(milliseconds: 400));
+      allProducts = dummyProducts;
       selectedCategory = 'All';
-      emit(ProductLoaded(products: allProducts, category: selectedCategory));
+      selectedSeller = 'All Sellers';
+      emit(
+        ProductLoaded(
+          products: allProducts,
+          category: selectedCategory,
+          seller: selectedSeller,
+        ),
+      );
     } catch (e) {
       emit(ProductError('Failed to load products: $e'));
     }
   }
 
-  void filterProducts(String category) {
-    selectedCategory = category;
-    final filteredProducts = allProducts
-        .where((product) => product.category == category)
-        .toList();
-    emit(ProductLoaded(products: filteredProducts, category: selectedCategory));
+  void applyFilters({String? category, String? seller}) {
+    selectedCategory = category ?? selectedCategory;
+    selectedSeller = seller ?? selectedSeller;
+
+    var filtered = allProducts.where((product) {
+      final categoryOk = selectedCategory == 'All' || product.category == selectedCategory;
+      final sellerOk = selectedSeller == 'All Sellers' || product.sellerName == selectedSeller;
+      return categoryOk && sellerOk;
+    }).toList();
+
+    emit(ProductLoaded(products: filtered, category: selectedCategory, seller: selectedSeller));
   }
 
   void toggleFavorite(String productId) {
     final index = allProducts.indexWhere((p) => p.id == productId);
     if (index != -1) {
-      final updatedProduct = allProducts[index].copyWith(
+      allProducts[index] = allProducts[index].copyWith(
         isFavorite: !allProducts[index].isFavorite,
       );
-      allProducts[index] = updatedProduct;
-
-      // Re-apply the active filter so the view doesn't reset to all products
-      if (selectedCategory == 'All') {
-        emit(ProductLoaded(products: allProducts, category: selectedCategory));
-      } else {
-        final filtered = allProducts
-            .where((p) => p.category == selectedCategory)
-            .toList();
-        emit(ProductLoaded(products: filtered, category: selectedCategory));
-      }
+      applyFilters();
     }
   }
 
   void loadProductDetail(String productId) async {
     emit(ProductDetailLoading());
     try {
-      // Simulate a delay for loading product detail
       await Future.delayed(const Duration(milliseconds: 1000));
-      // Load product detail (replace with actual data fetching logic)
       final product = dummyProducts.firstWhere((p) => p.id == productId);
-      allProducts = [product]; // keep reference for toggleDetailFavorite
+      allProducts = [product];
       emit(ProductDetailLoaded(product));
     } catch (e) {
       emit(ProductDetailError('Failed to load product detail: $e'));
@@ -92,8 +91,6 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   void addCart(ProductItemModel product) {
-    // Add to global cart but merge with existing items by id using the
-    // currently selected `quantity` from this cubit.
     final qtyToAdd = quantity;
     final idx = dummycartProducts.indexWhere((p) => p.id == product.id);
     if (idx != -1) {
@@ -102,10 +99,7 @@ class ProductCubit extends Cubit<ProductState> {
         quantity: existing.quantity + qtyToAdd,
       );
     } else {
-      dummycartProducts.add(
-        product.copyWith(quantity: qtyToAdd, isInCart: true),
-      );
+      dummycartProducts.add(product.copyWith(quantity: qtyToAdd, isInCart: true));
     }
   }
-
 }

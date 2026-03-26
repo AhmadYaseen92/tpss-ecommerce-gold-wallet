@@ -46,10 +46,17 @@ class WalletItemsPage extends StatelessWidget {
                 arguments: item,
               );
             },
-            onConvert: () {
+            onGenerateTaxInvoice: () {
               Navigator.pushNamed(
                 context,
-                AppRoutes.walletAssetConvertRoute,
+                AppRoutes.walletTaxInvoiceRoute,
+                arguments: item,
+              );
+            },
+            onPickup: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.walletPickupRoute,
                 arguments: item,
               );
             },

@@ -7,11 +7,14 @@ part 'transfer_state.dart';
 class TransferCubit extends Cubit<TransferState> {
   double units = 0.0;
   int selectedAssetIndex = 0;
-  RecipientMode recipientMode = RecipientMode.email;
+  RecipientMode recipientMode = RecipientMode.account;
   bool agreedToTerms = false;
+  bool isAccountVerified = false;
 
   final TextEditingController amountController = TextEditingController();
   final TextEditingController recipientController = TextEditingController();
+
+  final Set<String> _registeredAccounts = {'10001', '10002', '20011', '77889'};
 
   TransferCubit() : super(TransferInitial());
 
@@ -34,6 +37,13 @@ class TransferCubit extends Cubit<TransferState> {
   void setRecipientMode(RecipientMode mode) {
     recipientMode = mode;
     recipientController.clear();
+    isAccountVerified = false;
+    _emitChanged();
+  }
+
+  void verifyAccount() {
+    final accountNo = recipientController.text.trim();
+    isAccountVerified = _registeredAccounts.contains(accountNo);
     _emitChanged();
   }
 
@@ -55,9 +65,12 @@ class TransferCubit extends Cubit<TransferState> {
       return;
     }
     if (recipient.isEmpty) {
-      final label =
-          recipientMode == RecipientMode.email ? 'email' : 'phone number';
-      emit(TransferError('Please enter the recipient\'s $label.'));
+      emit(TransferError('Please enter recipient details.'));
+      _emitChanged();
+      return;
+    }
+    if (recipientMode == RecipientMode.account && !isAccountVerified) {
+      emit(TransferError('Recipient account must exist and be verified.'));
       _emitChanged();
       return;
     }
@@ -67,31 +80,20 @@ class TransferCubit extends Cubit<TransferState> {
       return;
     }
     emit(TransferLoading());
-    try {
-      await Future.delayed(const Duration(milliseconds: 1000));
-      emit(TransferSuccess());
-    } catch (e) {
-      emit(TransferError('Transfer failed: $e'));
-    }
-  }
-
-  void reset() {
-    units = 0.0;
-    selectedAssetIndex = 0;
-    recipientMode = RecipientMode.email;
-    agreedToTerms = false;
-    amountController.clear();
-    recipientController.clear();
-    _emitChanged();
+    await Future.delayed(const Duration(milliseconds: 1000));
+    emit(TransferSuccess());
   }
 
   void _emitChanged() {
-    emit(TransferDataChanged(
-      units: units,
-      selectedAssetIndex: selectedAssetIndex,
-      recipientMode: recipientMode,
-      agreedToTerms: agreedToTerms,
-    ));
+    emit(
+      TransferDataChanged(
+        units: units,
+        selectedAssetIndex: selectedAssetIndex,
+        recipientMode: recipientMode,
+        agreedToTerms: agreedToTerms,
+        isAccountVerified: isAccountVerified,
+      ),
+    );
   }
 
   Asset get selectedAsset => Asset.assets[selectedAssetIndex];

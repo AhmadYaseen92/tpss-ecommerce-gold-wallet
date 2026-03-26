@@ -35,4 +35,9 @@ class AppRoutes {
   static const String walletAssetSellRoute = '/wallet-asset-sell';
   static const String walletAssetTransferRoute = '/wallet-asset-transfer';
   static const String walletAssetConvertRoute = '/wallet-asset-convert';
+  static const String walletTaxInvoiceRoute = '/wallet-tax-invoice';
+  static const String walletPickupRoute = '/wallet-pickup';
+
+  static const String accountSummaryRoute = '/account-summary';
+  static const String checkoutRoute = '/checkout';
 }
