@@ -7,6 +7,7 @@ import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/a
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/fee_summary_card.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/wallet_asset_summary_card.dart';
 
 class SellAssetPage extends StatelessWidget {
@@ -82,21 +83,12 @@ class SellAssetPage extends StatelessWidget {
                           ),
                           if (cubit.isBankPayout) ...[
                             const SizedBox(height: 12),
-                            DropdownButtonFormField<int>(
-                              value: cubit.selectedBankAccountIndex,
-                              items: List.generate(
-                                cubit.predefinedBankAccounts.length,
-                                (index) => DropdownMenuItem(
-                                  value: index,
-                                  child: Text(cubit.predefinedBankAccounts[index]),
-                                ),
-                              ),
+                            PredefinedAccountSelector(
+                              label: 'Select Linked Bank Account',
+                              accounts: cubit.predefinedBankAccounts,
+                              selectedIndex: cubit.selectedBankAccountIndex,
+                              icon: Icons.account_balance_outlined,
                               onChanged: cubit.updateBankAccount,
-                              decoration: const InputDecoration(
-                                labelText: 'Select Linked Bank Account',
-                                helperText: 'From your profile linked bank accounts.',
-                                border: OutlineInputBorder(),
-                              ),
                             ),
                           ],
                           const SizedBox(height: 12),

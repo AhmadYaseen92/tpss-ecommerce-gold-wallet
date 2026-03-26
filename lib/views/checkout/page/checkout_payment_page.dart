@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/checkout_cubit/checkout_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 
-class CheckoutPaymentPage extends StatelessWidget {
+class CheckoutPaymentPage extends StatefulWidget {
   const CheckoutPaymentPage({super.key});
+
+  @override
+  State<CheckoutPaymentPage> createState() => _CheckoutPaymentPageState();
+}
+
+class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
+  int selectedBankIndex = 0;
+  int selectedPaymentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +34,7 @@ class CheckoutPaymentPage extends StatelessWidget {
           final cubit = context.read<CheckoutCubit>();
           return Scaffold(
             backgroundColor: AppColors.backgroundColor,
-            appBar: AppBar(
-              title: const Text('Process Checkout'),
-              centerTitle: true,
-            ),
+            appBar: AppBar(title: const Text('Process Checkout'), centerTitle: true),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -46,27 +53,47 @@ class CheckoutPaymentPage extends StatelessWidget {
                       }).toList(),
                     ),
                   ),
+                  if (cubit.selectedPaymentType == CheckoutPaymentType.bank)
+                    ActionSectionCard(
+                      title: 'Select Linked Bank Account',
+                      child: PredefinedAccountSelector(
+                        label: 'Bank Account',
+                        accounts: PredefinedAccountsData.bankAccounts,
+                        selectedIndex: selectedBankIndex,
+                        icon: Icons.account_balance_outlined,
+                        onChanged: (index) {
+                          if (index == null) return;
+                          setState(() => selectedBankIndex = index);
+                        },
+                      ),
+                    ),
+                  if (cubit.selectedPaymentType == CheckoutPaymentType.card)
+                    ActionSectionCard(
+                      title: 'Select Predefined Payment Method',
+                      child: PredefinedAccountSelector(
+                        label: 'Payment Method',
+                        accounts: PredefinedAccountsData.paymentMethods,
+                        selectedIndex: selectedPaymentIndex,
+                        icon: Icons.credit_card_outlined,
+                        onChanged: (index) {
+                          if (index == null) return;
+                          setState(() => selectedPaymentIndex = index);
+                        },
+                      ),
+                    ),
                   ActionSectionCard(
                     title: 'Review Summary',
                     child: Column(
                       children: [
                         _row('Payment', _label(cubit.selectedPaymentType)),
+                        if (cubit.selectedPaymentType == CheckoutPaymentType.bank)
+                          _row('Account', PredefinedAccountsData.bankAccounts[selectedBankIndex].name),
+                        if (cubit.selectedPaymentType == CheckoutPaymentType.card)
+                          _row('Method', PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name),
                         _row('Amount', '\$1,250.00'),
                         _row('Fee', '\$0.00'),
                         const Divider(),
                         _row('Total', '\$1,250.00', bold: true),
-                      ],
-                    ),
-                  ),
-                  ActionSectionCard(
-                    title: 'Confirm with OTP',
-                    child: Row(
-                      children: const [
-                        Icon(Icons.verified_user_outlined, color: AppColors.primaryColor),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text('OTP will be sent via WhatsApp to complete this checkout securely.'),
-                        ),
                       ],
                     ),
                   ),
@@ -123,11 +150,11 @@ class CheckoutPaymentPage extends StatelessWidget {
   String _subtitle(CheckoutPaymentType type) {
     switch (type) {
       case CheckoutPaymentType.bank:
-        return 'Transfer from linked bank account';
+        return 'Pay from linked bank account';
       case CheckoutPaymentType.card:
-        return 'Pay using your saved credit card';
+        return 'Pay using predefined payment method';
       case CheckoutPaymentType.cash:
-        return 'Use available wallet cash balance';
+        return 'Use wallet cash balance';
     }
   }
 

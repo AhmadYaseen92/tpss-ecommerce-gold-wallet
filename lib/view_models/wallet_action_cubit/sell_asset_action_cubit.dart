@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_action_models.dart';
 
 part 'sell_asset_action_state.dart';
@@ -20,10 +21,7 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
   String payoutMethod = 'Wallet Cash';
   int selectedBankAccountIndex = 0;
 
-  final List<String> predefinedBankAccounts = const [
-    'Jordan Islamic Bank ••••6789',
-    'Arab Bank ••••1140',
-  ];
+  List<PredefinedAccount> get predefinedBankAccounts => PredefinedAccountsData.bankAccounts;
 
   int get maxQuantity => initialAsset.asset.quantity;
 
@@ -66,7 +64,7 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
 
   WalletActionSummary buildSummary() {
     final payout = isBankPayout
-        ? 'Bank Account - ${predefinedBankAccounts[selectedBankAccountIndex]}'
+        ? 'Bank Account - ${predefinedBankAccounts[selectedBankAccountIndex].name}'
         : payoutMethod;
 
     return WalletActionSummary(

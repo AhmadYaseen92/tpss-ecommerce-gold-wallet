@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 
 part 'profile_state.dart';
 
@@ -46,8 +47,8 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   final List<ProfileOption> paymentMethods = const [
     ProfileOption(
-      name: 'Card Payment',
-      subtitle: 'Visa / MasterCard',
+      name: PredefinedAccountsData.paymentMethods[0].name,
+      subtitle: PredefinedAccountsData.paymentMethods[0].subtitle,
       icon: Icons.credit_card,
       fields: [
         ProfileField('Card Holder Name', Icons.person_outline),
@@ -58,8 +59,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       ],
     ),
     ProfileOption(
-      name: 'Apple Pay',
-      subtitle: 'Face ID / Touch ID / Passcode',
+      name: PredefinedAccountsData.paymentMethods[1].name,
+      subtitle: PredefinedAccountsData.paymentMethods[1].subtitle,
       icon: Icons.phone_iphone_outlined,
       fields: [
         ProfileField('Apple ID Email', Icons.alternate_email, TextInputType.emailAddress),
@@ -69,8 +70,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       ],
     ),
     ProfileOption(
-      name: 'ZainCash',
-      subtitle: 'Wallet + OTP',
+      name: PredefinedAccountsData.paymentMethods[2].name,
+      subtitle: PredefinedAccountsData.paymentMethods[2].subtitle,
       icon: Icons.account_balance_wallet_outlined,
       fields: [
         ProfileField('Wallet Number', Icons.phone_android_outlined, TextInputType.phone),
@@ -116,8 +117,8 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   final List<ProfileOption> bankAccounts = const [
     ProfileOption(
-      name: 'Jordan Islamic Bank ••••6789',
-      subtitle: 'Primary Account',
+      name: PredefinedAccountsData.bankAccounts[0].name,
+      subtitle: PredefinedAccountsData.bankAccounts[0].subtitle,
       icon: Icons.account_balance_outlined,
       fields: [
         ProfileField('Account Holder Name', Icons.badge_outlined),
@@ -127,8 +128,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       ],
     ),
     ProfileOption(
-      name: 'Arab Bank ••••1140',
-      subtitle: 'Secondary Account',
+      name: PredefinedAccountsData.bankAccounts[1].name,
+      subtitle: PredefinedAccountsData.bankAccounts[1].subtitle,
       icon: Icons.account_balance_outlined,
       fields: [
         ProfileField('Account Holder Name', Icons.badge_outlined),
