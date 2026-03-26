@@ -20,41 +20,23 @@ class ProductItemWidget extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              CachedNetworkImage(
-                imageUrl: product.imageUrl,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-              ),
+              CachedNetworkImage(imageUrl: product.imageUrl, width: 80, height: 80, fit: BoxFit.cover),
               const SizedBox(width: 4),
               Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      product.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text(product.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text('Seller: ${product.sellerName}', style: const TextStyle(fontSize: 12, color: AppColors.darkGold)),
                     const SizedBox(height: 6),
                     Text(
                       product.description,
-                      style: TextStyle(fontSize: 13, color: AppColors.grey),
+                      style: const TextStyle(fontSize: 13, color: AppColors.grey),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      '\$${product.price.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.black,
-                      ),
-                    ),
+                    Text('\$${product.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -62,10 +44,7 @@ class ProductItemWidget extends StatelessWidget {
                 onPressed: () {
                   BlocProvider.of<ProductCubit>(context).toggleFavorite(product.id);
                 },
-                icon: Icon(
-                  product.isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: AppColors.darkGold,
-                ),
+                icon: Icon(product.isFavorite ? Icons.favorite : Icons.favorite_border, color: AppColors.darkGold),
               ),
             ],
           ),

@@ -8,9 +8,14 @@ final class ProductLoading extends ProductState {}
 
 final class ProductLoaded extends ProductState {
   final List<ProductItemModel> products;
-    final String category;
+  final String category;
+  final String seller;
 
-  ProductLoaded({ required this.products,required this.category});
+  ProductLoaded({
+    required this.products,
+    required this.category,
+    required this.seller,
+  });
 }
 
 final class ProductError extends ProductState {
@@ -30,7 +35,6 @@ final class ProductDetailLoaded extends ProductState {
 final class ProductQuantityChanged extends ProductState {
   final int quantity;
 
-
   ProductQuantityChanged(this.quantity);
 }
 
@@ -45,4 +49,3 @@ final class ProductCartLoaded extends ProductState {
 
   ProductCartLoaded({required this.cartProducts});
 }
-

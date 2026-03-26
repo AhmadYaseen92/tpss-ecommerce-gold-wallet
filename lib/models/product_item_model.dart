@@ -11,6 +11,7 @@ class ProductItemModel {
   final String metal;
   final bool isInCart; // Added cart state
   final int quantity; // Added quantity for cart
+  final String sellerName;
 
   ProductItemModel({
     required this.id,
@@ -25,6 +26,7 @@ class ProductItemModel {
     this.metal = '',
     this.isInCart = false,
     this.quantity = 1,
+    this.sellerName = 'Imseeh',
   });
 
   ProductItemModel copyWith({
@@ -40,6 +42,7 @@ class ProductItemModel {
     String? metal,
     bool? isInCart,
     int? quantity,
+    String? sellerName,
   }) {
     return ProductItemModel(
       id: id ?? this.id,
@@ -54,6 +57,7 @@ class ProductItemModel {
       metal: metal ?? this.metal,
       isInCart: isInCart ?? this.isInCart,
       quantity: quantity ?? this.quantity,
+      sellerName: sellerName ?? this.sellerName,
     );
   }
 }
@@ -68,6 +72,7 @@ List<ProductItemModel> dummyProducts = [
     price: 1950.00,
     imageUrl: 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png',
     category: 'Bullion',
+    sellerName: 'Imseeh',
     purity: '24k',
     weight: '1 oz',
     metal: 'Gold',
@@ -81,6 +86,7 @@ List<ProductItemModel> dummyProducts = [
     price: 620.00,
     imageUrl: 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png',
     category: 'Bullion',
+    sellerName: 'Sakkejha',
     purity: '24k',
     weight: '10 g',
     metal: 'Gold',
@@ -95,6 +101,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png',
     category: 'Bullion',
+    sellerName: 'Da’naa',
     purity: '999.0',
     weight: '1 oz',
     metal: 'Silver',
@@ -109,6 +116,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://static.jmbullion.com/image/upload/q_auto,f_auto,w_202,h_202/v1761337031/SRSUNMERCURY1_4_obverse',
     category: 'Coins',
+    sellerName: 'Imseeh',
     purity: '999.0',
     weight: '1 oz',
     metal: 'Silver',
@@ -123,6 +131,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMuutlptbB5vglIH1XrZZaI8nRKwO_Z_zr3g&s',
     category: 'Coins',
+    sellerName: 'Sakkejha',
     purity: '22k',
     weight: '1 oz',
     metal: 'Gold',
@@ -137,6 +146,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://www.pamp.com/sites/pamp/files/2022-02/1oz_platinum_sfondo_lucido_obv.png',
     category: 'Bullion',
+    sellerName: 'Da’naa',
     purity: '999.0',
     weight: '1 oz',
     metal: 'Platinum',
@@ -151,6 +161,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://www.indigopreciousmetals.com/media/catalog/product/cache/1/main/450x450/9df78eab33525d08d6e5fb8d27136e95/s/c/screenshot_2023-02-09_at_5.29.34_pm-removebg-preview.png',
     category: 'Bullion',
+    sellerName: 'Imseeh',
     purity: '999.0',
     weight: '1 oz',
     metal: 'Palladium',
@@ -165,6 +176,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://res.cloudinary.com/duk8bjkwn/image/upload/v1670842538/arjrzytvyxkfnaqfntbu.png',
     category: 'Bullion',
+    sellerName: 'Sakkejha',
     purity: '24k',
     weight: '100 g',
     metal: 'Gold',
@@ -179,6 +191,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://www.serendipitydiamonds.com/blog/wp-content/uploads/2021/11/kensington-engagement-ring-side-view.jpg',
     category: 'Jewellery',
+    sellerName: 'Da’naa',
     purity: '18k',
     weight: '1.0 ct',
     metal: 'Gold',
@@ -193,6 +206,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://www.baublebar.com/cdn/shop/files/64317_G_01.jpg?v=1746637318&width=1512',
     category: 'Jewellery',
+    sellerName: 'Imseeh',
     purity: '18k',
     weight: '1 oz',
     metal: 'Gold',
@@ -207,6 +221,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://www.simoncurwood.com.au/cdn/shop/files/169504_3-2.jpg?v=1699504242&width=713',
     category: 'Jewellery',
+    sellerName: 'Sakkejha',
     purity: '18k',
     weight: '1 oz',
     metal: 'Gold',
@@ -221,6 +236,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://www.garrard.com/cdn/shop/files/Garrard-1735-jewellery-collection-Sapphire-Double-Cluster-Pendant-in-Platinum-with-Diamonds-JP17PT11-Hero-View.png?v=1755187464&width=1200',
     category: 'Jewellery',
+    sellerName: 'Da’naa',
     purity: '18k',
     weight: '1 oz',
     metal: 'Gold',
@@ -235,6 +251,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://cdn11.bigcommerce.com/s-9b8niz/images/stencil/1100w/products/5478/27911/hammered-950-platinum-wedding-band__18289.1764670069.jpg?c=2',
     category: 'Jewellery',
+    sellerName: 'Imseeh',
     purity: '18k',
     weight: '1 oz',
     metal: 'Gold',
@@ -249,6 +266,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://img01.ztat.net/article/spp-media-p1/222bfc5d7d1b496f8c3a3dcbd176614e/5ea201ae03b141e3bf485e7129cc63d8.jpg?imwidth=1800',
     category: 'Jewellery',
+    sellerName: 'Sakkejha',
     purity: '18k',
     weight: '1 oz',
     metal: 'Gold',
@@ -263,6 +281,7 @@ List<ProductItemModel> dummyProducts = [
     imageUrl:
         'https://glennbradford.com/cdn/shop/products/EmeraldAndDiamondRing-singleweb_540x.jpg?v=1616012868',
     category: 'Jewellery',
+    sellerName: 'Da’naa',
     purity: '18k',
     weight: '1 oz',
     metal: 'Emerald',

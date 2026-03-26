@@ -27,6 +27,11 @@ import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/tran
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/convert_asset_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_items_page.dart';
 
+import 'package:tpss_ecommerce_gold_wallet/views/account_summary/page/account_summary_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/checkout/page/checkout_payment_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/generate_tax_invoice_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/pickup_request_page.dart';
+
 class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -118,6 +123,24 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => ConvertAssetPage(asset: transaction),
         );
+
+      case AppRoutes.walletTaxInvoiceRoute:
+        final transaction = settings.arguments as WalletTransaction;
+        return MaterialPageRoute(
+          builder: (_) => GenerateTaxInvoicePage(asset: transaction),
+        );
+
+      case AppRoutes.walletPickupRoute:
+        final transaction = settings.arguments as WalletTransaction;
+        return MaterialPageRoute(
+          builder: (_) => PickupRequestPage(asset: transaction),
+        );
+
+      case AppRoutes.accountSummaryRoute:
+        return MaterialPageRoute(builder: (_) => const AccountSummaryPage());
+
+      case AppRoutes.checkoutRoute:
+        return MaterialPageRoute(builder: (_) => const CheckoutPaymentPage());
 
       default:
         return MaterialPageRoute(

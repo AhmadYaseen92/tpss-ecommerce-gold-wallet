@@ -7,14 +7,16 @@ class WalletHoldingItemWidget extends StatelessWidget {
   final WalletTransaction item;
   final VoidCallback onSell;
   final VoidCallback onGiftTransfer;
-  final VoidCallback onConvert;
+  final VoidCallback onGenerateTaxInvoice;
+  final VoidCallback onPickup;
 
   const WalletHoldingItemWidget({
     super.key,
     required this.item,
     required this.onSell,
     required this.onGiftTransfer,
-    required this.onConvert,
+    required this.onGenerateTaxInvoice,
+    required this.onPickup,
   });
 
   @override
@@ -175,8 +177,17 @@ class WalletHoldingItemWidget extends StatelessWidget {
                     child: _actionButton(
                       context,
                       icon: Icons.currency_bitcoin,
-                      label: 'Convert',
-                      onTap: onConvert,
+                      label: 'Tax Invoice',
+                      onTap: onGenerateTaxInvoice,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _actionButton(
+                      context,
+                      icon: Icons.local_shipping_outlined,
+                      label: 'Pickup',
+                      onTap: onPickup,
                     ),
                   ),
                 ],

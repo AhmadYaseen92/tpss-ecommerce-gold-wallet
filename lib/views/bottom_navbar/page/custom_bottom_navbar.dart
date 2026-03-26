@@ -66,9 +66,19 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
                 Navigator.of(
                   context,
                   rootNavigator: true,
+                ).pushNamed(AppRoutes.accountSummaryRoute);
+              },
+              icon: const Icon(Icons.account_balance_wallet_outlined),
+              tooltip: 'My Account Summary',
+            ),
+            IconButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                  rootNavigator: true,
                 ).pushNamed(AppRoutes.profileRoute);
               },
-              icon: Icon(Icons.person_outline),
+              icon: const Icon(Icons.person_outline),
             ),
             IconButton(
               onPressed: () {

@@ -207,38 +207,46 @@ class SellWidget extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12.0),
                       border: Border.all(color: AppColors.greysShade2),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.account_balance,
-                          color: AppColors.primaryColor,
-                          size: 28.0,
+                        Text(
+                          'Select Payout Bank Account',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
-                        const SizedBox(width: 12.0),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Bank Account',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                '**** 1234',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: AppColors.grey),
-                              ),
-                            ],
+                        const SizedBox(height: 8),
+                        DropdownButton<int>(
+                          value: sellCubit.selectedBankAccountIndex,
+                          isExpanded: true,
+                          underline: const SizedBox.shrink(),
+                          items: List.generate(
+                            sellCubit.predefinedBankAccounts.length,
+                            (index) => DropdownMenuItem(
+                              value: index,
+                              child: Text(sellCubit.predefinedBankAccounts[index]),
+                            ),
                           ),
+                          onChanged: (value) {
+                            if (value != null) {
+                              sellCubit.selectBankAccount(value);
+                            }
+                          },
                         ),
-                        const Icon(
-                          Icons.check_circle_outline,
-                          color: AppColors.primaryColor,
+                        const SizedBox(height: 4),
+                        Text(
+                          'A new invoice will be generated from client to seller after confirmation.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: AppColors.grey),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 20.0),
                   const SizedBox(height: 20.0),
                   TermsRow(
                     value: sellCubit.agreedToTerms,
@@ -259,7 +267,12 @@ class SellWidget extends StatelessWidget {
             child: AppButton(
               cubit: sellCubit,
               label: 'Confirm Trade',
-              onPressed: () {},
+              onPressed: () {
+                sellCubit.submit();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Sell confirmed. Tax invoice has been generated.')),
+                );
+              },
             ),
           ),
         ],
