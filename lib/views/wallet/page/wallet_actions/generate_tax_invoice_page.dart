@@ -9,7 +9,8 @@ class GenerateTaxInvoicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reference = 'INV-${asset.id}-${DateTime.now().millisecondsSinceEpoch}';
+    final refKey = asset.name.replaceAll(' ', '').toUpperCase();
+    final reference = 'INV-$refKey-${DateTime.now().millisecondsSinceEpoch}';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,

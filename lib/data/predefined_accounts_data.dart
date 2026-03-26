@@ -12,12 +12,12 @@ class PredefinedAccount {
 
 class PredefinedAccountsData {
   static const List<PredefinedAccount> bankAccounts = [
-    PredefinedAccount(
+    const PredefinedAccount(
       id: 'bank_1',
       name: 'Jordan Islamic Bank ••••6789',
       subtitle: 'Primary Account',
     ),
-    PredefinedAccount(
+    const PredefinedAccount(
       id: 'bank_2',
       name: 'Arab Bank ••••1140',
       subtitle: 'Secondary Account',
@@ -25,17 +25,17 @@ class PredefinedAccountsData {
   ];
 
   static const List<PredefinedAccount> paymentMethods = [
-    PredefinedAccount(
+    const PredefinedAccount(
       id: 'card_1',
       name: 'Visa •••• 9281',
       subtitle: 'Default Card',
     ),
-    PredefinedAccount(
+    const PredefinedAccount(
       id: 'apple_pay',
       name: 'Apple Pay',
       subtitle: 'Face ID / Touch ID',
     ),
-    PredefinedAccount(
+    const PredefinedAccount(
       id: 'zaincash',
       name: 'ZainCash',
       subtitle: 'Wallet + OTP',

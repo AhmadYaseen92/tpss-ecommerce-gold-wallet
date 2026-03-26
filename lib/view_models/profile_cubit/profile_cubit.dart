@@ -45,7 +45,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   String selectedNationality = 'Jordanian';
   String selectedDocumentType = 'National ID';
 
-  final List<ProfileOption> paymentMethods = const [
+  final List<ProfileOption> paymentMethods = [
     ProfileOption(
       name: PredefinedAccountsData.paymentMethods[0].name,
       subtitle: PredefinedAccountsData.paymentMethods[0].subtitle,
@@ -115,7 +115,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     ),
   ];
 
-  final List<ProfileOption> bankAccounts = const [
+  final List<ProfileOption> bankAccounts = [
     ProfileOption(
       name: PredefinedAccountsData.bankAccounts[0].name,
       subtitle: PredefinedAccountsData.bankAccounts[0].subtitle,
