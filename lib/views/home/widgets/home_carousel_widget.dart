@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/home_carousel_Item_model.dart';
@@ -26,9 +25,10 @@ class HomeCarouselWidget extends StatelessWidget {
             ),
           ),
       options: FlutterCarouselOptions(
-        height: 200.0,
+        height: 220.0,
         autoPlay: true,
-        showIndicator: true,
+        showIndicator: false,
+        enlargeCenterPage: true,
         slideIndicator: CircularSlideIndicator(),
       ),
     );

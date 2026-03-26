@@ -50,6 +50,8 @@ class SummaryTransactionWidget extends StatelessWidget {
           _buildTransactionItem(context, 'Sell Gold', '- \$200'),
           Divider(height: 20.0, thickness: 1.0, color: AppColors.greysShade2),
           _buildTransactionItem(context, 'Transfer to Omar', '- \$100'),
+          Divider(height: 20.0, thickness: 1.0, color: AppColors.greysShade2),
+          _buildTransactionItem(context, 'Transfer to Omar', '- \$100'),
         ],
       ),
     );

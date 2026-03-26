@@ -9,13 +9,14 @@ environment:
 
 dependencies:
   cached_network_image: ^3.4.1
+  carousel_slider: ^5.1.2
   cupertino_icons: ^1.0.8
-
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
   flutter_carousel_widget: ^3.1.0
   flutter_dash: ^1.0.0
+  flutter_launcher_icons: ^0.14.4
   intl: ^0.20.2
   persistent_bottom_nav_bar_v2: 6.2.0
 
@@ -30,3 +31,7 @@ flutter:
   assets:
     - assets/gold1.jpeg
 
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/gold1.jpeg"

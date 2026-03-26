@@ -9,22 +9,22 @@ List<HomeCarsouleItemModel> dummyCarsouleItems = [
   HomeCarsouleItemModel(
     id: '1',
     imgUrl:
-        'https://c8.alamy.com/comp/2PH5A74/expensive-jewellery-shop-amman-jordan-2PH5A74.jpg',
+        'https://urdu.bharatexpress.com/wp-content/uploads/2025/12/collage-67.webp',
   ),
 
   HomeCarsouleItemModel(
     id: '2',
     imgUrl:
-        'https://kayalijewelry.com/cdn/shop/files/kayali_banners_1445x.jpg?v=1766574888',
+        'https://nygoldco.com/wp-content/uploads/2026/01/Exchange-Old-Jewellery-For-24k-Gold-Silver-Bar-NYGOLD-Banner-2.jpg',
   ),
   HomeCarsouleItemModel(
     id: '3',
     imgUrl:
-        'https://www.darjewellery.com/_next/image?url=%2FDar%2FproductDetails%2FHomeBanners%2FMobile%2Fmb5.jpg&w=3840&q=75',
+        'https://www.goldmarket.fr/wp-content/uploads/2025/09/84fbec39thumbnail-1110x550.jpeg.webp',
   ),
   HomeCarsouleItemModel(
     id: '4',
     imgUrl:
-        'https://imseeh.com/wp-content/uploads/2024/12/main-noelcollection.jpg',
+        'https://summitmetals.com/cdn/shop/articles/4ce621b98e385ee578e60830620883bccafe5f44.jpg?v=1773745763',
   ),
 ];
