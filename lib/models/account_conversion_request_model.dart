@@ -1,29 +1,20 @@
 enum ConvertMethod {
-  cashSettlement,
-  toUsdt,
-  toEDirham,
+  transferToBank,
+  transferToCard,
+  transferToUsdt,
+  transferToEDirham,
 }
 
 class AccountConversionRequest {
   final ConvertMethod method;
-  final String? bankAccount;
-  final String? paymentMethod;
-  final String? targetWallet;
-  final double bankAmount;
-  final double cardAmount;
-  final double convertAmount;
+  final String targetAccount;
+  final double amount;
   final String note;
 
   const AccountConversionRequest({
     required this.method,
-    this.bankAccount,
-    this.paymentMethod,
-    this.targetWallet,
-    this.bankAmount = 0,
-    this.cardAmount = 0,
-    this.convertAmount = 0,
+    required this.targetAccount,
+    required this.amount,
     this.note = '',
   });
-
-  double get total => method == ConvertMethod.cashSettlement ? bankAmount + cardAmount : convertAmount;
 }

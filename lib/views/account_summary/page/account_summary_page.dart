@@ -17,32 +17,20 @@ class AccountSummaryPage extends StatefulWidget {
 class _AccountSummaryPageState extends State<AccountSummaryPage> {
   final _formKey = GlobalKey<FormState>();
 
-  ConvertMethod selectedMethod = ConvertMethod.cashSettlement;
+  ConvertMethod selectedMethod = ConvertMethod.transferToBank;
   int selectedBankIndex = 0;
   int selectedPaymentIndex = 0;
   int selectedUsdtIndex = 0;
   int selectedEDirhamIndex = 0;
 
   final amountController = TextEditingController();
-  final bankAmountController = TextEditingController();
-  final cardAmountController = TextEditingController();
   final noteController = TextEditingController();
 
   static const double totalPortfolio = 12450.0;
 
-  double get amount => double.tryParse(amountController.text.trim()) ?? 0;
-  double get bankAmount => double.tryParse(bankAmountController.text.trim()) ?? 0;
-  double get cardAmount => double.tryParse(cardAmountController.text.trim()) ?? 0;
-
-  bool get isCashSettlement => selectedMethod == ConvertMethod.cashSettlement;
-  bool get isToUsdt => selectedMethod == ConvertMethod.toUsdt;
-  bool get isToEDirham => selectedMethod == ConvertMethod.toEDirham;
-
   @override
   void dispose() {
     amountController.dispose();
-    bankAmountController.dispose();
-    cardAmountController.dispose();
     noteController.dispose();
     super.dispose();
   }
@@ -79,7 +67,7 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
               ),
             ),
             ActionSectionCard(
-              title: 'Convert / Settle',
+              title: 'Transfer / Convert Method',
               child: Column(
                 children: [
                   DropdownButtonFormField<ConvertMethod>(
@@ -90,28 +78,18 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                       border: OutlineInputBorder(),
                     ),
                     items: const [
-                      DropdownMenuItem(
-                        value: ConvertMethod.cashSettlement,
-                        child: Text('Cash to Bank/Card'),
-                      ),
-                      DropdownMenuItem(
-                        value: ConvertMethod.toUsdt,
-                        child: Text('Cash to USDT'),
-                      ),
-                      DropdownMenuItem(
-                        value: ConvertMethod.toEDirham,
-                        child: Text('Cash to EDirham'),
-                      ),
+                      DropdownMenuItem(value: ConvertMethod.transferToBank, child: Text('Transfer To Bank Account')),
+                      DropdownMenuItem(value: ConvertMethod.transferToCard, child: Text('Transfer To Card Account')),
+                      DropdownMenuItem(value: ConvertMethod.transferToUsdt, child: Text('Transfer To USDT Account')),
+                      DropdownMenuItem(value: ConvertMethod.transferToEDirham, child: Text('Transfer To E-Dirham Account')),
                     ],
                     onChanged: (value) {
                       if (value == null) return;
-                      setState(() {
-                        selectedMethod = value;
-                        bankAmountController.clear();
-                        cardAmountController.clear();
-                      });
+                      setState(() => selectedMethod = value);
                     },
                   ),
+                  const SizedBox(height: 12),
+                  _methodSelector(),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: amountController,
@@ -129,104 +107,14 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                     },
                   ),
                   const SizedBox(height: 12),
-
-                  if (isCashSettlement) ...[
-                    PredefinedAccountSelector(
-                      label: 'Bank Account',
-                      accounts: PredefinedAccountsData.bankAccounts,
-                      selectedIndex: selectedBankIndex,
-                      icon: Icons.account_balance_outlined,
-                      onChanged: (index) {
-                        if (index == null) return;
-                        setState(() => selectedBankIndex = index);
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: bankAmountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: 'Amount to Bank',
-                        prefixText: '\$',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) {
-                        if (!isCashSettlement) return null;
-                        final bank = double.tryParse((v ?? '').trim()) ?? 0;
-                        if (bank < 0) return 'Amount cannot be negative.';
-                        if ((bank + cardAmount) > amount) {
-                          return 'Bank + Card must be <= amount.';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    PredefinedAccountSelector(
-                      label: 'Card / Payment Method',
-                      accounts: PredefinedAccountsData.paymentMethods,
-                      selectedIndex: selectedPaymentIndex,
-                      icon: Icons.credit_card_outlined,
-                      onChanged: (index) {
-                        if (index == null) return;
-                        setState(() => selectedPaymentIndex = index);
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: cardAmountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: 'Amount to Card',
-                        prefixText: '\$',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) {
-                        if (!isCashSettlement) return null;
-                        final card = double.tryParse((v ?? '').trim()) ?? 0;
-                        if (card < 0) return 'Amount cannot be negative.';
-                        if ((card + bankAmount) <= 0) return 'Enter bank/card amount.';
-                        if ((card + bankAmount) > amount) {
-                          return 'Bank + Card must be <= amount.';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-
-                  if (isToUsdt)
-                    PredefinedAccountSelector(
-                      label: 'USDT Account (from Profile)',
-                      accounts: PredefinedAccountsData.usdtAccounts,
-                      selectedIndex: selectedUsdtIndex,
-                      icon: Icons.currency_bitcoin,
-                      onChanged: (index) {
-                        if (index == null) return;
-                        setState(() => selectedUsdtIndex = index);
-                      },
-                    ),
-                  if (isToEDirham)
-                    PredefinedAccountSelector(
-                      label: 'eDirham Account (from Profile)',
-                      accounts: PredefinedAccountsData.eDirhamAccounts,
-                      selectedIndex: selectedEDirhamIndex,
-                      icon: Icons.account_balance_wallet_outlined,
-                      onChanged: (index) {
-                        if (index == null) return;
-                        setState(() => selectedEDirhamIndex = index);
-                      },
-                    ),
-
-                  const SizedBox(height: 12),
                   TextFormField(
                     controller: noteController,
                     maxLines: 2,
                     decoration: const InputDecoration(
                       labelText: 'Note (Optional)',
-                      hintText: 'Any notes for this conversion/settlement',
                       border: OutlineInputBorder(),
                     ),
                   ),
-
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
@@ -245,21 +133,63 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
     );
   }
 
+  Widget _methodSelector() {
+    switch (selectedMethod) {
+      case ConvertMethod.transferToBank:
+        return PredefinedAccountSelector(
+          label: 'Bank Account',
+          accounts: PredefinedAccountsData.bankAccounts,
+          selectedIndex: selectedBankIndex,
+          icon: Icons.account_balance_outlined,
+          onChanged: (index) {
+            if (index == null) return;
+            setState(() => selectedBankIndex = index);
+          },
+        );
+      case ConvertMethod.transferToCard:
+        return PredefinedAccountSelector(
+          label: 'Card Account',
+          accounts: PredefinedAccountsData.paymentMethods,
+          selectedIndex: selectedPaymentIndex,
+          icon: Icons.credit_card_outlined,
+          onChanged: (index) {
+            if (index == null) return;
+            setState(() => selectedPaymentIndex = index);
+          },
+        );
+      case ConvertMethod.transferToUsdt:
+        return PredefinedAccountSelector(
+          label: 'USDT Account',
+          accounts: PredefinedAccountsData.usdtAccounts,
+          selectedIndex: selectedUsdtIndex,
+          icon: Icons.currency_bitcoin,
+          onChanged: (index) {
+            if (index == null) return;
+            setState(() => selectedUsdtIndex = index);
+          },
+        );
+      case ConvertMethod.transferToEDirham:
+        return PredefinedAccountSelector(
+          label: 'E-Dirham Account',
+          accounts: PredefinedAccountsData.eDirhamAccounts,
+          selectedIndex: selectedEDirhamIndex,
+          icon: Icons.account_balance_wallet_outlined,
+          onChanged: (index) {
+            if (index == null) return;
+            setState(() => selectedEDirhamIndex = index);
+          },
+        );
+    }
+  }
+
   void _onReview() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    final amount = double.tryParse(amountController.text.trim()) ?? 0;
     final request = AccountConversionRequest(
       method: selectedMethod,
-      bankAccount: isCashSettlement ? PredefinedAccountsData.bankAccounts[selectedBankIndex].name : null,
-      paymentMethod: isCashSettlement ? PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name : null,
-      targetWallet: isToUsdt
-          ? PredefinedAccountsData.usdtAccounts[selectedUsdtIndex].name
-          : isToEDirham
-              ? PredefinedAccountsData.eDirhamAccounts[selectedEDirhamIndex].name
-              : null,
-      bankAmount: bankAmount,
-      cardAmount: cardAmount,
-      convertAmount: amount,
+      targetAccount: _targetAccountName(),
+      amount: amount,
       note: noteController.text.trim(),
     );
 
@@ -272,6 +202,19 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
         ),
       ),
     );
+  }
+
+  String _targetAccountName() {
+    switch (selectedMethod) {
+      case ConvertMethod.transferToBank:
+        return PredefinedAccountsData.bankAccounts[selectedBankIndex].name;
+      case ConvertMethod.transferToCard:
+        return PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name;
+      case ConvertMethod.transferToUsdt:
+        return PredefinedAccountsData.usdtAccounts[selectedUsdtIndex].name;
+      case ConvertMethod.transferToEDirham:
+        return PredefinedAccountsData.eDirhamAccounts[selectedEDirhamIndex].name;
+    }
   }
 
   Widget _row(String key, String value, {bool bold = false}) {

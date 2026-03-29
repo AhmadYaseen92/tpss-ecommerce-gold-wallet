@@ -24,18 +24,10 @@ class AccountSummaryConfirmationPage extends StatelessWidget {
             child: Column(
               children: [
                 _row('Method', _methodLabel(request.method)),
-                if (request.method == ConvertMethod.cashSettlement) ...[
-                  _row('Bank Account', request.bankAccount ?? '-'),
-                  _row('Amount to Bank', '\$${request.bankAmount.toStringAsFixed(2)}'),
-                  _row('Payment Method', request.paymentMethod ?? '-'),
-                  _row('Amount to Card', '\$${request.cardAmount.toStringAsFixed(2)}'),
-                ] else ...[
-                  _row('Target Account', request.targetWallet ?? '-'),
-                  _row('Convert Amount', '\$${request.convertAmount.toStringAsFixed(2)}'),
-                ],
+                _row('Target Account', request.targetAccount),
+                _row('Amount', '\$${request.amount.toStringAsFixed(2)}'),
                 _row('Note', request.note.isEmpty ? 'No note' : request.note),
                 const Divider(),
-                _row('Total', '\$${request.total.toStringAsFixed(2)}', bold: true),
                 _row('Portfolio Limit', '\$${totalPortfolio.toStringAsFixed(2)}'),
               ],
             ),
@@ -56,12 +48,14 @@ class AccountSummaryConfirmationPage extends StatelessWidget {
 
   String _methodLabel(ConvertMethod method) {
     switch (method) {
-      case ConvertMethod.cashSettlement:
-        return 'Cash to Bank/Card';
-      case ConvertMethod.toUsdt:
-        return 'Cash to USDT';
-      case ConvertMethod.toEDirham:
-        return 'Cash to EDirham';
+      case ConvertMethod.transferToBank:
+        return 'Transfer To Bank Account';
+      case ConvertMethod.transferToCard:
+        return 'Transfer To Card Account';
+      case ConvertMethod.transferToUsdt:
+        return 'Transfer To USDT Account';
+      case ConvertMethod.transferToEDirham:
+        return 'Transfer To E-Dirham Account';
     }
   }
 
