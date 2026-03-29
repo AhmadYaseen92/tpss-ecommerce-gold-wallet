@@ -1,0 +1,71 @@
+import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/account_conversion_request_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
+
+class AccountSummaryConfirmationPage extends StatelessWidget {
+  final AccountConversionRequest request;
+  final double totalPortfolio;
+
+  const AccountSummaryConfirmationPage({
+    super.key,
+    required this.request,
+    required this.totalPortfolio,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Review Conversion')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          ActionSectionCard(
+            title: 'Summary',
+            child: Column(
+              children: [
+                _row('Method', _methodLabel(request.method)),
+                _row('Target Account', request.targetAccount),
+                _row('Amount', '\$${request.amount.toStringAsFixed(2)}'),
+                _row('Note', request.note.isEmpty ? 'No note' : request.note),
+                const Divider(),
+                _row('Portfolio Limit', '\$${totalPortfolio.toStringAsFixed(2)}'),
+              ],
+            ),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('OTP sent to WhatsApp. Confirm to complete operation.')),
+              );
+            },
+            icon: const Icon(Icons.verified_user_outlined),
+            label: const Text('Confirm with OTP'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _methodLabel(ConvertMethod method) {
+    switch (method) {
+      case ConvertMethod.transferToBank:
+        return 'Transfer To Bank Account';
+      case ConvertMethod.transferToCard:
+        return 'Transfer To Card Account';
+      case ConvertMethod.transferToUsdt:
+        return 'Transfer To USDT Account';
+      case ConvertMethod.transferToEDirham:
+        return 'Transfer To E-Dirham Account';
+    }
+  }
+
+  Widget _row(String key, String value, {bool bold = false}) {
+    final style = TextStyle(fontWeight: bold ? FontWeight.w700 : FontWeight.w500);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [Expanded(child: Text(key, style: style)), Text(value, style: style)],
+      ),
+    );
+  }
+}

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_action_models.dart';
 
 part 'sell_asset_action_state.dart';
 
 class SellAssetActionCubit extends Cubit<SellAssetActionState> {
   SellAssetActionCubit({required this.initialAsset})
-    : quantityController = TextEditingController(text: '1'),
-      noteController = TextEditingController(),
-      super(SellAssetActionInitial()) {
+      : quantityController = TextEditingController(text: '1'),
+        noteController = TextEditingController(),
+        super(SellAssetActionInitial()) {
     quantityController.addListener(_emitUpdated);
   }
 
@@ -17,7 +18,12 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
   final TextEditingController quantityController;
   final TextEditingController noteController;
 
-  String payoutMethod = 'Wallet Cash';
+  String payoutMethod = 'Bank Account';
+  int selectedBankAccountIndex = 0;
+  int selectedPaymentMethodIndex = 0;
+
+  List<PredefinedAccount> get predefinedBankAccounts => PredefinedAccountsData.bankAccounts;
+  List<PredefinedAccount> get predefinedPaymentMethods => PredefinedAccountsData.paymentMethods;
 
   int get maxQuantity => initialAsset.asset.quantity;
 
@@ -29,6 +35,9 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
     if (parsed > maxQuantity) return maxQuantity;
     return parsed;
   }
+
+  bool get isBankPayout => payoutMethod == 'Bank Account';
+  bool get isPaymentMethodPayout => payoutMethod == 'Payment Method';
 
   double get grossAmount => unitPrice * quantity;
   double get feeAmount => grossAmount * 0.008;
@@ -50,7 +59,23 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
     _emitUpdated();
   }
 
+  void updateBankAccount(int? index) {
+    if (index == null) return;
+    selectedBankAccountIndex = index;
+    _emitUpdated();
+  }
+
+  void updatePaymentMethod(int? index) {
+    if (index == null) return;
+    selectedPaymentMethodIndex = index;
+    _emitUpdated();
+  }
+
   WalletActionSummary buildSummary() {
+    final payout = isBankPayout
+        ? 'Bank - ${predefinedBankAccounts[selectedBankAccountIndex].name}'
+        : 'Payment - ${predefinedPaymentMethods[selectedPaymentMethodIndex].name}';
+
     return WalletActionSummary(
       asset: initialAsset.asset,
       actionType: WalletActionType.sell,
@@ -59,7 +84,7 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
       feeValue: formatCurrency(feeAmount),
       totalValue: formatCurrency(receivedAmount),
       destinationLabel: 'Payout Method',
-      destinationValue: payoutMethod,
+      destinationValue: payout,
       note: noteController.text.trim(),
       referenceNumber: 'SELL-${DateTime.now().millisecondsSinceEpoch}',
       createdAt: DateTime.now(),
