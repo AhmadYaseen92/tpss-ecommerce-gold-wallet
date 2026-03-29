@@ -10,6 +10,7 @@ part 'product_state.dart';
 class ProductCubit extends Cubit<ProductState> {
   List<ProductItemModel> allProducts = [];
   List<MarketSymbolModel> marketSymbols = initialMarketSymbols;
+  List<ProductItemModel> visibleCatalogProducts = [];
   String selectedCategory = 'All';
   String activeSeller = 'All Sellers';
   int quantity = 1;
@@ -42,13 +43,13 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   void _emitCatalog() {
-    final filtered = allProducts.where((product) {
+    visibleCatalogProducts = allProducts.where((product) {
       final categoryOk = selectedCategory == 'All' || product.category == selectedCategory;
       final sellerOk = activeSeller == 'All Sellers' || product.sellerName == activeSeller;
       return categoryOk && sellerOk;
     }).toList();
 
-    emit(ProductLoaded(products: filtered, category: selectedCategory, seller: activeSeller));
+    emit(ProductLoaded(products: visibleCatalogProducts, category: selectedCategory, seller: activeSeller));
   }
 
   void toggleFavorite(String productId) {

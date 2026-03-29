@@ -39,6 +39,11 @@ class TransactionItemWidget extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
+                          'Seller: ${transaction.sellerName}',
+                          style: const TextStyle(fontSize: 11, color: AppColors.darkGold),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
                           DateFormat('MMM dd, hh:mm a').format(transaction.date),
                           style: const TextStyle(
                             fontSize: 12,

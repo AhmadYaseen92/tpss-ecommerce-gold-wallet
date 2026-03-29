@@ -137,6 +137,14 @@ class WalletTransactionsWidget extends StatelessWidget {
               ),
               const SizedBox(height: 2.0),
               Text(
+                'Seller: ${tx.sellerName}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.darkGold,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2.0),
+              Text(
                 tx.subtitle,
                 style: Theme.of(
                   context,

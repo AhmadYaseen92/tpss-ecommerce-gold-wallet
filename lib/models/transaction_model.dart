@@ -5,6 +5,7 @@ class TransactionModel {
   final String status;
   final DateTime date;
   final String amount;
+  final String sellerName;
   final String? secondaryAmount;
 
   const TransactionModel({
@@ -14,6 +15,7 @@ class TransactionModel {
     required this.status,
     required this.date,
     required this.amount,
+    this.sellerName = 'Imseeh',
     this.secondaryAmount,
   });
 
@@ -24,6 +26,7 @@ class TransactionModel {
     String? status,
     DateTime? date,
     String? amount,
+    String? sellerName,
     String? secondaryAmount,
     String? secondaryLabel,
   }) {
@@ -34,6 +37,7 @@ class TransactionModel {
       status: status ?? this.status,
       date: date ?? this.date,
       amount: amount ?? this.amount,
+      sellerName: sellerName ?? this.sellerName,
       secondaryAmount: secondaryAmount ?? this.secondaryAmount,
     );
   }
@@ -48,6 +52,7 @@ final List<TransactionModel> dummyTransactions = [
     status: 'completed',
     date: DateTime.now().subtract(const Duration(days: 2)),
     amount: '+ 10g',
+    sellerName: 'Imseeh',
     secondaryAmount: '- \$650.00',
   ),
 
@@ -59,6 +64,7 @@ final List<TransactionModel> dummyTransactions = [
     status: 'completed',
     date: DateTime.now().subtract(const Duration(days: 5)),
     amount: '+ \$1000.00',
+    sellerName: 'Sakkejha',
     secondaryAmount: null,
   ),
 
@@ -70,6 +76,7 @@ final List<TransactionModel> dummyTransactions = [
     status: 'pending',
     date: DateTime.now().subtract(const Duration(days: 15)),
     amount: '+ \$420.00',
+    sellerName: 'Da’naa',
     secondaryAmount: '- 500g',
   ),
 
@@ -81,6 +88,7 @@ final List<TransactionModel> dummyTransactions = [
     status: 'completed',
     date: DateTime.now().subtract(const Duration(days: 45)),
     amount: '+ \$320.00',
+    sellerName: 'Imseeh',
     secondaryAmount: '- 5g',
   ),
 
@@ -92,6 +100,7 @@ final List<TransactionModel> dummyTransactions = [
     status: 'failed',
     date: DateTime.now().subtract(const Duration(days: 60)),
     amount: '- \$200.00',
+    sellerName: 'Sakkejha',
     secondaryAmount: null,
   ),
 
@@ -103,6 +112,7 @@ final List<TransactionModel> dummyTransactions = [
     status: 'completed',
     date: DateTime.now().subtract(const Duration(days: 120)),
     amount: '+ 200g',
+    sellerName: 'Da’naa',
     secondaryAmount: '- \$180.00',
   ),
 ];

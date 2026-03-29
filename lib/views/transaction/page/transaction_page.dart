@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/transaction_cubit/transaction_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transaction/widget/transaction_filter_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transaction/widget/transaction_item_widget.dart';
@@ -10,13 +12,19 @@ class TransactionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final seller = context.watch<AppCubit>().state.selectedSeller;
     return BlocProvider(
       create: (context) {
         final cubit = TransactionCubit();
-        cubit.loadTransactions();
+        cubit.loadTransactions(seller: seller);
         return cubit;
       },
-      child: BlocBuilder<TransactionCubit, TransactionState>(
+      child: BlocListener<AppCubit, AppState>(
+        listenWhen: (previous, current) => previous.selectedSeller != current.selectedSeller,
+        listener: (context, state) {
+          context.read<TransactionCubit>().onGlobalSellerChanged(state.selectedSeller);
+        },
+        child: BlocBuilder<TransactionCubit, TransactionState>(
         builder: (context, state) {
           if (state is TransactionInitial || state is TransactionLoading) {
             return const Center(
@@ -28,6 +36,15 @@ class TransactionPage extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  width: double.infinity,
+                  color: AppColors.luxuryIvory,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Text(
+                    seller == 'All Sellers' ? 'Transactions scope: all sellers' : 'Transactions scope: $seller',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   child: Align(
@@ -75,6 +92,7 @@ class TransactionPage extends StatelessWidget {
           }
           return const SizedBox.shrink();
         },
+        ),
       ),
     );
   }

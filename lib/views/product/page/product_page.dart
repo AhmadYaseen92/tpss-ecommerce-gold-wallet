@@ -29,7 +29,7 @@ class ProductPage extends StatelessWidget {
           },
           child: Column(
             children: const [
-              _ProductPageSellerHeader(),
+              _SellerFilterBar(),
               TabBar(
                 labelColor: AppColors.primaryColor,
                 unselectedLabelColor: AppColors.grey,
@@ -49,19 +49,33 @@ class ProductPage extends StatelessWidget {
   }
 }
 
-class _ProductPageSellerHeader extends StatelessWidget {
-  const _ProductPageSellerHeader();
+class _SellerFilterBar extends StatelessWidget {
+  const _SellerFilterBar();
 
   @override
   Widget build(BuildContext context) {
-    final seller = context.watch<AppCubit>().state.selectedSeller;
-    return Container(
-      width: double.infinity,
-      color: AppColors.luxuryIvory,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Text(
-        seller == 'All Sellers' ? 'Showing products from all sellers' : 'Seller scope: $seller',
-        style: const TextStyle(fontWeight: FontWeight.w600),
+    final selectedSeller = context.watch<AppCubit>().state.selectedSeller;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: AppCubit.supportedSellers.map((seller) {
+            final isSelected = seller == selectedSeller;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(seller),
+                selected: isSelected,
+                onSelected: (_) => context.read<AppCubit>().setSeller(seller),
+                selectedColor: AppColors.luxuryIvory,
+                side: BorderSide(
+                  color: isSelected ? AppColors.primaryColor : AppColors.greyBorder,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -73,6 +87,11 @@ class _CatalogTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ProductCubit, ProductState>(
+      buildWhen: (_, current) =>
+          current is ProductInitial ||
+          current is ProductLoading ||
+          current is ProductLoaded ||
+          current is ProductError,
       builder: (context, state) {
         if (state is ProductInitial || state is ProductLoading) {
           return const Center(
@@ -80,7 +99,10 @@ class _CatalogTab extends StatelessWidget {
               backgroundColor: AppColors.darkGold,
             ),
           );
-        } else if (state is ProductLoaded) {
+        } else if (state is ProductLoaded || state is ProductMarketWatchLoaded) {
+          final products = state is ProductLoaded
+              ? state.products
+              : context.read<ProductCubit>().visibleCatalogProducts;
           return Column(
             children: [
               ProductFilterBar(
@@ -88,17 +110,17 @@ class _CatalogTab extends StatelessWidget {
               ),
               Expanded(
                 child: ListView.builder(
-                  itemCount: state.products.length,
+                  itemCount: products.length,
                   itemBuilder: (context, index) {
                     return GestureDetector(
                       child: ProductItemWidget(
                         cubit: BlocProvider.of<ProductCubit>(context),
-                        product: state.products[index],
+                        product: products[index],
                       ),
                       onTap: () {
                         Navigator.of(context, rootNavigator: true).pushNamed(
                           AppRoutes.productDetailsRoute,
-                          arguments: state.products[index],
+                          arguments: products[index],
                         );
                       },
                     );
