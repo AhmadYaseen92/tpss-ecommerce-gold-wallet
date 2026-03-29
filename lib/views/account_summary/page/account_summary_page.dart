@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/account_conversion_request_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/account_summary_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/account_summary/page/account_summary_confirmation_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
-
-enum ConvertMethod {
-  cashSettlement,
-  toUsdt,
-  toEDirham,
-}
 
 class AccountSummaryPage extends StatefulWidget {
   const AccountSummaryPage({super.key});
@@ -113,7 +109,6 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                         selectedMethod = value;
                         bankAmountController.clear();
                         cardAmountController.clear();
-                        noteController.clear();
                       });
                     },
                   ),
@@ -131,15 +126,6 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                       if (value == null || value <= 0) return 'Enter a valid amount.';
                       if (value > totalPortfolio) return 'Amount must be <= total portfolio.';
                       return null;
-                    },
-                    onChanged: (v) {
-                      if (isCashSettlement) {
-                        final parsed = double.tryParse(v) ?? 0;
-                        final half = parsed / 2;
-                        bankAmountController.text = half > 0 ? half.toStringAsFixed(2) : '';
-                        cardAmountController.text = half > 0 ? half.toStringAsFixed(2) : '';
-                      }
-                      setState(() {});
                     },
                   ),
                   const SizedBox(height: 12),
@@ -230,33 +216,24 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                       },
                     ),
 
-                  if (isToUsdt || isToEDirham) ...[
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: noteController,
-                      maxLines: 2,
-                      decoration: const InputDecoration(
-                        labelText: 'Conversion Note',
-                        hintText: 'Reason / remarks for conversion',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) {
-                        if (!(isToUsdt || isToEDirham)) return null;
-                        if (v == null || v.trim().isEmpty) {
-                          return 'Note is required for USDT / EDirham conversion.';
-                        }
-                        return null;
-                      },
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: noteController,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Note (Optional)',
+                      hintText: 'Any notes for this conversion/settlement',
+                      border: OutlineInputBorder(),
                     ),
-                  ],
+                  ),
 
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _onConfirm,
-                      icon: const Icon(Icons.verified_user_outlined),
-                      label: const Text('Confirm with OTP'),
+                    child: OutlinedButton.icon(
+                      onPressed: _onReview,
+                      icon: const Icon(Icons.summarize_outlined),
+                      label: const Text('Review Summary'),
                     ),
                   ),
                 ],
@@ -268,13 +245,33 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
     );
   }
 
-  void _onConfirm() {
+  void _onReview() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    _showMsg('OTP sent to WhatsApp. Confirm to complete operation.');
-  }
 
-  void _showMsg(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    final request = AccountConversionRequest(
+      method: selectedMethod,
+      bankAccount: isCashSettlement ? PredefinedAccountsData.bankAccounts[selectedBankIndex].name : null,
+      paymentMethod: isCashSettlement ? PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name : null,
+      targetWallet: isToUsdt
+          ? PredefinedAccountsData.usdtAccounts[selectedUsdtIndex].name
+          : isToEDirham
+              ? PredefinedAccountsData.eDirhamAccounts[selectedEDirhamIndex].name
+              : null,
+      bankAmount: bankAmount,
+      cardAmount: cardAmount,
+      convertAmount: amount,
+      note: noteController.text.trim(),
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AccountSummaryConfirmationPage(
+          request: request,
+          totalPortfolio: totalPortfolio,
+        ),
+      ),
+    );
   }
 
   Widget _row(String key, String value, {bool bold = false}) {
