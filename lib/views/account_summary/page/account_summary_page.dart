@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/view_models/account_summary_cubit/acc
 import 'package:tpss_ecommerce_gold_wallet/views/account_summary/page/account_summary_confirmation_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/account_summary/widgets/account_method_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/account_summary/widgets/account_portfolio_card.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 
 class AccountSummaryPage extends StatelessWidget {
   const AccountSummaryPage({super.key});
@@ -45,25 +46,22 @@ class AccountSummaryPage extends StatelessWidget {
                 ),
                 const AccountMethodForm(),
                 const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      final request = cubit.buildRequest();
-                      if (request == null) return;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AccountSummaryConfirmationPage(
-                            request: request,
-                            totalPortfolio: AccountSummaryCubit.totalPortfolio,
-                          ),
+                AppButton(
+                  label: 'Review Summary',
+                  icon: Icons.summarize_outlined,
+                  onPressed: () {
+                    final request = cubit.buildRequest();
+                    if (request == null) return;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AccountSummaryConfirmationPage(
+                          request: request,
+                          totalPortfolio: AccountSummaryCubit.totalPortfolio,
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.summarize_outlined),
-                    label: const Text('Review Summary'),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

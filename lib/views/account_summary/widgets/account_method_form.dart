@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/account_conversion_request_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/account_summary_cubit/account_summary_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_form_dropdown.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 
@@ -14,51 +16,67 @@ class AccountMethodForm extends StatelessWidget {
     return BlocBuilder<AccountSummaryCubit, AccountSummaryState>(
       builder: (context, state) {
         final cubit = context.read<AccountSummaryCubit>();
+
         return ActionSectionCard(
           title: 'Transfer / Convert Method',
-          child: Column(
-            children: [
-              DropdownButtonFormField<ConvertMethod>(
-                value: state.selectedMethod,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Method',
-                  border: OutlineInputBorder(),
+          child: Form(
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: Column(
+              children: [
+                AppFormDropdown<ConvertMethod>(
+                  label: 'Method',
+                  value: state.selectedMethod,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  items: const [
+                    DropdownMenuItem(
+                      value: ConvertMethod.transferToBank,
+                      child: Text('Transfer To Bank Account'),
+                    ),
+                    DropdownMenuItem(
+                      value: ConvertMethod.transferToCard,
+                      child: Text('Transfer To Card Account'),
+                    ),
+                    DropdownMenuItem(
+                      value: ConvertMethod.transferToUsdt,
+                      child: Text('Transfer To USDT Account'),
+                    ),
+                    DropdownMenuItem(
+                      value: ConvertMethod.transferToEDirham,
+                      child: Text('Transfer To E-Dirham Account'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) cubit.setMethod(value);
+                  },
                 ),
-                items: const [
-                  DropdownMenuItem(value: ConvertMethod.transferToBank, child: Text('Transfer To Bank Account')),
-                  DropdownMenuItem(value: ConvertMethod.transferToCard, child: Text('Transfer To Card Account')),
-                  DropdownMenuItem(value: ConvertMethod.transferToUsdt, child: Text('Transfer To USDT Account')),
-                  DropdownMenuItem(value: ConvertMethod.transferToEDirham, child: Text('Transfer To E-Dirham Account')),
-                ],
-                onChanged: (value) {
-                  if (value != null) cubit.setMethod(value);
-                },
-              ),
-              const SizedBox(height: 12),
-              _selectorByMethod(cubit, state),
-              const SizedBox(height: 12),
-              TextFormField(
-                initialValue: state.amount,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Amount',
-                  prefixText: '\$',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                _selectorByMethod(cubit, state),
+                const SizedBox(height: 12),
+                AppTextField(
+                  label: 'Amount',
+                  hint: 'Amount',
+                  initialValue: state.amount,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: cubit.setAmount,
+                  validator: (value) {
+                    final amountText = (value ?? '').trim();
+                    final amount = double.tryParse(amountText);
+                    if (amount == null || amount <= 0) return 'Enter a valid amount.';
+                    if (amount > AccountSummaryCubit.totalPortfolio) {
+                      return 'Amount must be <= total portfolio.';
+                    }
+                    return null;
+                  },
                 ),
-                onChanged: cubit.setAmount,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                initialValue: state.note,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Note (Optional)',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                AppTextField(
+                  label: 'Note',
+                  hint: 'Note (Optional)',
+                  initialValue: state.note,
+                  onChanged: cubit.setNote,
                 ),
-                onChanged: cubit.setNote,
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
