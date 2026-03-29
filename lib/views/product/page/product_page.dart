@@ -6,6 +6,7 @@ import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_filter_chip.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product/widgets/product_filter_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product/widgets/product_item_widget.dart';
 
@@ -60,12 +61,10 @@ class _SellerFilterBar extends StatelessWidget {
             final isSelected = seller == selectedSeller;
             return Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(seller),
+              child: AppFilterChip(
+                label: seller,
                 selected: isSelected,
-                onSelected: (_) => context.read<AppCubit>().setSeller(seller),
-                selectedColor: AppColors.luxuryIvory,
-                side: BorderSide(color: isSelected ? AppColors.primaryColor : AppColors.greyBorder),
+                onTap: () => context.read<AppCubit>().setSeller(seller),
               ),
             );
           }).toList(),
