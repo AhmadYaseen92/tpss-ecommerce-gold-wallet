@@ -67,12 +67,12 @@ class SellAssetPage extends StatelessWidget {
                             value: cubit.payoutMethod,
                             items: const [
                               DropdownMenuItem(
-                                value: 'Wallet Cash',
-                                child: Text('Wallet Cash'),
-                              ),
-                              DropdownMenuItem(
                                 value: 'Bank Account',
                                 child: Text('Bank Account'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Payment Method',
+                                child: Text('Payment Method (Cards/Wallets)'),
                               ),
                             ],
                             onChanged: cubit.updatePayoutMethod,
@@ -89,6 +89,16 @@ class SellAssetPage extends StatelessWidget {
                               selectedIndex: cubit.selectedBankAccountIndex,
                               icon: Icons.account_balance_outlined,
                               onChanged: cubit.updateBankAccount,
+                            ),
+                          ],
+                          if (cubit.isPaymentMethodPayout) ...[
+                            const SizedBox(height: 12),
+                            PredefinedAccountSelector(
+                              label: 'Select Payment Method',
+                              accounts: cubit.predefinedPaymentMethods,
+                              selectedIndex: cubit.selectedPaymentMethodIndex,
+                              icon: Icons.credit_card_outlined,
+                              onChanged: cubit.updatePaymentMethod,
                             ),
                           ],
                           const SizedBox(height: 12),

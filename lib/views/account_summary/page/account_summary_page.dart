@@ -19,12 +19,12 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
   final bankAmountController = TextEditingController();
   final cardAmountController = TextEditingController();
 
-  static const double availableCash = 2000.0;
+  static const double transferableAmount = 2000.0;
 
   double get bankAmount => double.tryParse(bankAmountController.text.trim()) ?? 0;
   double get cardAmount => double.tryParse(cardAmountController.text.trim()) ?? 0;
   double get allocatedTotal => bankAmount + cardAmount;
-  double get remaining => availableCash - allocatedTotal;
+  double get remaining => transferableAmount - allocatedTotal;
 
   @override
   void dispose() {
@@ -65,15 +65,21 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
           ActionSectionCard(
             title: 'Available Balances',
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _row('Cash Balance', summary.availableCash),
+                _row('Transferable Amount', '\$${transferableAmount.toStringAsFixed(2)}'),
                 _row('USDT Balance', summary.usdtBalance),
                 _row('EDirham Balance', summary.eDirhamBalance),
+                const SizedBox(height: 6),
+                const Text(
+                  'Note: Users do not keep cash balance inside app. Transfers settle to bank/card methods.',
+                  style: TextStyle(fontSize: 12, color: AppColors.greyShade600),
+                ),
               ],
             ),
           ),
           ActionSectionCard(
-            title: 'Allocate Available Cash (Bank + Card)',
+            title: 'Allocate Transferable Amount (Bank + Card)',
             child: Column(
               children: [
                 PredefinedAccountSelector(
@@ -92,7 +98,7 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(
-                    labelText: 'Amount to transfer to Bank',
+                    labelText: 'Amount to Bank',
                     prefixText: '\$',
                     border: OutlineInputBorder(),
                   ),
@@ -114,7 +120,7 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(
-                    labelText: 'Amount to transfer to Card',
+                    labelText: 'Amount to Card',
                     prefixText: '\$',
                     border: OutlineInputBorder(),
                   ),
@@ -134,7 +140,7 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _row('Allocated', '\$${allocatedTotal.toStringAsFixed(2)}'),
-                      _row('Remaining from available', '\$${remaining.toStringAsFixed(2)}', bold: true),
+                      _row('Remaining', '\$${remaining.toStringAsFixed(2)}', bold: true),
                     ],
                   ),
                 ),
@@ -142,17 +148,7 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () {
-                      if (allocatedTotal <= 0) {
-                        _showMsg('Please enter allocation amounts.');
-                        return;
-                      }
-                      if (remaining < 0) {
-                        _showMsg('Allocated amount exceeds available cash balance.');
-                        return;
-                      }
-                      _showMsg('Allocation confirmed with OTP via WhatsApp.');
-                    },
+                    onPressed: _confirmOtp,
                     icon: const Icon(Icons.verified_user_outlined),
                     label: const Text('Confirm with OTP'),
                   ),
@@ -160,8 +156,41 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
               ],
             ),
           ),
+          ActionSectionCard(
+            title: 'Convert Actions',
+            child: Column(
+              children: [
+                _convertRow('Cash to USDT', 'From transferable amount'),
+                _convertRow('USDT to Cash', 'To linked bank/card settlement'),
+                _convertRow('Cash to EDirham', 'From transferable amount'),
+                _convertRow('EDirham to Cash', 'To linked bank/card settlement'),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  void _confirmOtp() {
+    if (allocatedTotal <= 0) {
+      _showMsg('Please enter allocation amounts.');
+      return;
+    }
+    if (remaining < 0) {
+      _showMsg('Allocated amount exceeds transferable amount.');
+      return;
+    }
+    _showMsg('Allocation confirmed with OTP via WhatsApp.');
+  }
+
+  Widget _convertRow(String title, String subtitle) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.swap_horiz, color: AppColors.primaryColor),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(subtitle),
+      trailing: TextButton(onPressed: () => _showMsg('$title selected'), child: const Text('Convert')),
     );
   }
 
