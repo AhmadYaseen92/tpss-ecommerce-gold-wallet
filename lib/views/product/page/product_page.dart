@@ -199,7 +199,7 @@ class _MarketWatchTab extends StatelessWidget {
                   onPressed: () {
                     Navigator.pop(ctx);
                     Navigator.of(context, rootNavigator: true).pushNamed(
-                      AppRoutes.checkoutRoute,
+                      AppRoutes.marketOrderCheckoutRoute,
                       arguments: {
                         'title': item.symbol,
                         'seller': item.sellerName,
