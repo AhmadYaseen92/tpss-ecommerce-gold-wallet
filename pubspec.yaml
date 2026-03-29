@@ -30,6 +30,7 @@ flutter:
 
   assets:
     - assets/gold1.jpeg
+    - assets/certificate_icon.png
 
 flutter_launcher_icons:
   android: true

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 
 class WalletHoldingItemWidget extends StatelessWidget {
@@ -31,7 +32,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
           side: BorderSide(color: AppColors.primaryColor.withAlpha(35)),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.all(10),
           child: Column(
             children: [
               /// Top content
@@ -71,12 +72,35 @@ class WalletHoldingItemWidget extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          item.name,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              item.name,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            // IconButton(
+                            //   onPressed: () {},
+                            //   icon: ClipRRect(
+                            //     borderRadius: BorderRadius.circular(6.0),
+                            //     child: Image.asset(
+                            //       'assets/certificate_icon.png',
+                            //       fit: BoxFit.cover,
+                            //       width: 35,
+                            //       height: 35,
+                            //     ),
+                            //   ),
+                            // ),
+                            // _actionButton(
+                            //   context,
+                            //   label: 'Certificate',
+                            //   icon: Icons.file_present,
+                            //   onTap: onGenerateTaxInvoice,
+                            // ),
+                          ],
                         ),
                         const SizedBox(height: 4),
 
@@ -154,6 +178,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
 
               /// Actions
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: _actionButton(
@@ -163,7 +188,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
                       onTap: onSell,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: _actionButton(
                       context,
@@ -172,21 +197,28 @@ class WalletHoldingItemWidget extends StatelessWidget {
                       onTap: onGiftTransfer,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _actionButton(
-                      context,
-                      icon: Icons.currency_bitcoin,
-                      label: 'Tax Invoice',
-                      onTap: onGenerateTaxInvoice,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Expanded(
                     child: _actionButton(
                       context,
                       icon: Icons.local_shipping_outlined,
                       label: 'Pickup',
+                      onTap: onPickup,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  Expanded(
+                    child: _actionButton(
+                      context,
+                      icon: Icons.file_present,
+                      label: 'Cirtificate',
                       onTap: onPickup,
                     ),
                   ),
@@ -219,23 +251,24 @@ class WalletHoldingItemWidget extends StatelessWidget {
 
   Widget _actionButton(
     BuildContext context, {
-    required String label,
     required IconData icon,
     required VoidCallback onTap,
+    String label = '',
+    Color iconColor = AppColors.primaryColor,
   }) {
     return SizedBox(
       height: 38,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: AppColors.primaryColor),
+          side: BorderSide(color: iconColor),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: EdgeInsets.all(8),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: AppColors.darkGold),
+            Icon(icon, size: 20, color: iconColor),
             const SizedBox(width: 4),
             Text(
               label,
