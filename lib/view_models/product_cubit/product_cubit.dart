@@ -47,12 +47,20 @@ class ProductCubit extends Cubit<ProductState> {
 
   void _emitCatalog() {
     visibleCatalogProducts = allProducts.where((product) {
-      final categoryOk = selectedCategory == 'All' || product.category == selectedCategory;
-      final sellerOk = activeSeller == 'All Sellers' || product.sellerName == activeSeller;
+      final categoryOk =
+          selectedCategory == 'All' || product.category == selectedCategory;
+      final sellerOk =
+          activeSeller == 'All Sellers' || product.sellerName == activeSeller;
       return categoryOk && sellerOk;
     }).toList();
 
-    emit(ProductLoaded(products: visibleCatalogProducts, category: selectedCategory, seller: activeSeller));
+    emit(
+      ProductLoaded(
+        products: visibleCatalogProducts,
+        category: selectedCategory,
+        seller: activeSeller,
+      ),
+    );
   }
 
   void toggleFavorite(String productId) {
@@ -92,13 +100,18 @@ class ProductCubit extends Cubit<ProductState> {
     visibleMarketSymbols = marketSymbols.where((symbol) {
       return activeSeller == 'All Sellers' || symbol.sellerName == activeSeller;
     }).toList();
-    emit(ProductMarketWatchLoaded(symbols: visibleMarketSymbols, seller: activeSeller));
+    emit(
+      ProductMarketWatchLoaded(
+        symbols: visibleMarketSymbols,
+        seller: activeSeller,
+      ),
+    );
   }
 
   void _startMarketFeed() {
     _marketTimer?.cancel();
     final random = Random();
-    _marketTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+    _marketTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       marketSymbols = marketSymbols.map((symbol) {
         final move = (random.nextDouble() - 0.5) * 0.01;
         final newPrice = symbol.price * (1 + move);
@@ -132,7 +145,9 @@ class ProductCubit extends Cubit<ProductState> {
         quantity: existing.quantity + qtyToAdd,
       );
     } else {
-      dummycartProducts.add(product.copyWith(quantity: qtyToAdd, isInCart: true));
+      dummycartProducts.add(
+        product.copyWith(quantity: qtyToAdd, isInCart: true),
+      );
     }
   }
 

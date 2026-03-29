@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/cart_cubit/cart_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/cart/widgets/cart_item_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/cart/widgets/cart_summary.dart';
@@ -11,18 +10,8 @@ class CartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final seller = context.watch<AppCubit>().state.selectedSeller;
     return Column(
       children: [
-        Container(
-          width: double.infinity,
-          color: AppColors.luxuryIvory,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(
-            seller == 'All Sellers' ? 'Cart scope: all sellers' : 'Cart scope: $seller',
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
         Expanded(
           child: BlocBuilder<CartCubit, CartState>(
             builder: (context, state) {
@@ -35,7 +24,9 @@ class CartPage extends StatelessWidget {
               } else if (state is CartLoaded) {
                 final cartProducts = state.cartProducts;
                 if (cartProducts.isEmpty) {
-                  return const Center(child: Text('Your cart is empty for selected seller'));
+                  return const Center(
+                    child: Text('Your cart is empty for selected seller'),
+                  );
                 }
                 return Column(
                   children: [

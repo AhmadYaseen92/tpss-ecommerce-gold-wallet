@@ -57,7 +57,11 @@ class ProductDetailWidget extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         'Seller: ${product.sellerName}',
-                        style: const TextStyle(fontSize: 13, color: AppColors.darkGold, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.darkGold,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Row(
@@ -92,12 +96,12 @@ class ProductDetailWidget extends StatelessWidget {
                         metal: product.metal,
                       ),
                       const SizedBox(height: 12),
-                      AuthenticityButton(
-                        color: AppColors.darkGold,
-                        textMuted: AppColors.darkGrey,
-                        productCubit: productCubit,
-                      ),
-                      const SizedBox(height: 12),
+                      // AuthenticityButton(
+                      //   color: AppColors.darkGold,
+                      //   textMuted: AppColors.darkGrey,
+                      //   productCubit: productCubit,
+                      // ),
+                      // const SizedBox(height: 12),
                       DescriptionWidget(product: product),
                       const SizedBox(height: 6),
                     ],
@@ -111,7 +115,9 @@ class ProductDetailWidget extends StatelessWidget {
           onAddToCart: () {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('${product.name} x${productCubit.quantity} added to cart'),
+                content: Text(
+                  '${product.name} x${productCubit.quantity} added to cart',
+                ),
                 backgroundColor: AppColors.darkGold,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -122,7 +128,9 @@ class ProductDetailWidget extends StatelessWidget {
             productCubit.addCart(product);
           },
           onBuyNow: () {
-            productCubit.addCart(product.copyWith(quantity: productCubit.quantity));
+            productCubit.addCart(
+              product.copyWith(quantity: productCubit.quantity),
+            );
             Navigator.of(context, rootNavigator: true).pushNamed(
               AppRoutes.checkoutRoute,
               arguments: {

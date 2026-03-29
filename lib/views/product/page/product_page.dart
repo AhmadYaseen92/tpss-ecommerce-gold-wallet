@@ -22,19 +22,33 @@ class ProductPage extends StatelessWidget {
       child: DefaultTabController(
         length: 2,
         child: BlocListener<AppCubit, AppState>(
-          listenWhen: (previous, current) => previous.selectedSeller != current.selectedSeller,
+          listenWhen: (previous, current) =>
+              previous.selectedSeller != current.selectedSeller,
           listener: (context, state) {
-            context.read<ProductCubit>().onGlobalSellerChanged(state.selectedSeller);
+            context.read<ProductCubit>().onGlobalSellerChanged(
+              state.selectedSeller,
+            );
           },
-          child: const Column(
+          child: Column(
             children: [
               TabBar(
+                labelStyle: Theme.of(
+                  context,
+                ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
                 labelColor: AppColors.primaryColor,
                 unselectedLabelColor: AppColors.grey,
                 indicatorColor: AppColors.primaryColor,
-                tabs: [Tab(text: 'Catalog'), Tab(text: 'Market Watch')],
+                tabs: [
+                  Tab(text: 'Catalog'),
+                  Tab(text: 'Market Watch'),
+                ],
               ),
-              Expanded(child: TabBarView(children: [CatalogTabWidget(), MarketWatchTabWidget()])),
+              const SizedBox(height: 10),
+              Expanded(
+                child: TabBarView(
+                  children: [CatalogTabWidget(), MarketWatchTabWidget()],
+                ),
+              ),
             ],
           ),
         ),

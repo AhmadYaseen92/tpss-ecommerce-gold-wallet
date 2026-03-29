@@ -33,30 +33,62 @@ class MarketWatchTabWidget extends StatelessWidget {
                   final isUp = item.change >= 0;
                   return Card(
                     color: AppColors.white,
-                    child: ListTile(
+                    child: GestureDetector(
                       onTap: () => _openMarketDetail(context, item),
-                      title: Text(
-                        item.symbol,
-                        style: Theme.of(context).textTheme.titleMedium!
-                            .copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text('${item.name} • ${item.sellerName}'),
-                      trailing: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '\$${item.price.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          Text(
-                            '${isUp ? '+' : ''}${item.change.toStringAsFixed(2)}%',
-                            style: Theme.of(context).textTheme.bodyMedium!
-                                .copyWith(
-                                  color: isUp ? Colors.green : Colors.red,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            /// LEFT SIDE (Title + Subtitle)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.symbol,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium!
+                                        .copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(item.name),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Seller: ${item.sellerName}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.darkGold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            /// RIGHT SIDE (Price + Change)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '\$${item.price.toStringAsFixed(2)}',
+                                  style: Theme.of(context).textTheme.bodyMedium,
                                 ),
-                          ),
-                        ],
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${isUp ? '+' : ''}${item.change.toStringAsFixed(2)}%',
+                                  style: Theme.of(context).textTheme.bodyMedium!
+                                      .copyWith(
+                                        color: isUp ? Colors.green : Colors.red,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );

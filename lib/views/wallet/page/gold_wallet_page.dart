@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/wallet_cubit/wallet_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/home/widgets/PortfolioCardWidget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_card_widget.dart';
@@ -29,24 +28,11 @@ class GoldWalletPage extends StatelessWidget {
             );
           } else if (state is WalletLoaded) {
             final wallet = state.wallets[state.selectedIndex];
-            final seller = context.watch<AppCubit>().state.selectedSeller;
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.luxuryIvory,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      seller == 'All Sellers' ? 'Wallet scope: all sellers' : 'Wallet scope: $seller',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
                   const SizedBox(height: 12),
                   PortfolioCardWidget(
                     title: 'Total Portfolio Value',
