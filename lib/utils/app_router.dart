@@ -29,6 +29,7 @@ import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_items_page.d
 
 import 'package:tpss_ecommerce_gold_wallet/views/account_summary/page/account_summary_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/checkout/page/checkout_payment_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/checkout/page/market_order_checkout_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/generate_tax_invoice_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/pickup_request_page.dart';
 
@@ -141,6 +142,9 @@ class AppRouter {
 
       case AppRoutes.checkoutRoute:
         return MaterialPageRoute(builder: (_) => const CheckoutPaymentPage());
+
+      case AppRoutes.marketOrderCheckoutRoute:
+        return MaterialPageRoute(builder: (_) => const MarketOrderCheckoutPage(), settings: settings);
 
       default:
         return MaterialPageRoute(

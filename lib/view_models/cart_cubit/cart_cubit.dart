@@ -6,24 +6,26 @@ part 'cart_state.dart';
 class CartCubit extends Cubit<CartState> {
   CartCubit() : super(CartInitial());
 
-  void loadCartProducts() async {
+  String _sellerFilter = 'All Sellers';
+
+  void loadCartProducts({String sellerFilter = 'All Sellers'}) async {
+    _sellerFilter = sellerFilter;
     emit(CartLoading());
     try {
-      // Simulate a delay for loading cart products
-      await Future.delayed(const Duration(milliseconds: 1000));
-      // Load cart products (replace with actual data fetching logic)
-      emit(
-        CartLoaded(cartProducts: dummycartProducts),
-      ); // Pass actual cart products here
+      await Future.delayed(const Duration(milliseconds: 300));
+      emit(CartLoaded(cartProducts: _filteredProducts));
     } catch (e) {
       emit(CartError('Failed to load cart products: $e'));
     }
   }
 
+  List<ProductItemModel> get _filteredProducts {
+    if (_sellerFilter == 'All Sellers') return List<ProductItemModel>.from(dummycartProducts);
+    return dummycartProducts.where((p) => p.sellerName == _sellerFilter).toList();
+  }
+
   void addProduct(ProductItemModel product) {
-    final existingIndex = dummycartProducts.indexWhere(
-      (item) => item.id == product.id,
-    );
+    final existingIndex = dummycartProducts.indexWhere((item) => item.id == product.id);
 
     if (existingIndex != -1) {
       final existing = dummycartProducts[existingIndex];
@@ -33,22 +35,20 @@ class CartCubit extends Cubit<CartState> {
     } else {
       dummycartProducts.add(product);
     }
-    emit(CartLoaded(cartProducts: dummycartProducts));
+    emit(CartLoaded(cartProducts: _filteredProducts));
   }
 
   void removeProduct(String id) {
     dummycartProducts.removeWhere((item) => item.id == id);
-    emit(CartLoaded(cartProducts: dummycartProducts));
+    emit(CartLoaded(cartProducts: _filteredProducts));
   }
 
   void updateProductQuantity(String id, int quantity) {
     final safeQty = quantity < 1 ? 1 : quantity;
     final index = dummycartProducts.indexWhere((item) => item.id == id);
     if (index != -1) {
-      dummycartProducts[index] = dummycartProducts[index].copyWith(
-        quantity: safeQty,
-      );
-      emit(CartLoaded(cartProducts: dummycartProducts));
+      dummycartProducts[index] = dummycartProducts[index].copyWith(quantity: safeQty);
+      emit(CartLoaded(cartProducts: _filteredProducts));
     }
   }
 

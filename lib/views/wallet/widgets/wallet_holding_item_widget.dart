@@ -111,6 +111,14 @@ class WalletHoldingItemWidget extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Seller: ${item.sellerName}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.darkGold,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         const SizedBox(height: 6),
 
                         Wrap(

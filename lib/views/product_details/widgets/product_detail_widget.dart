@@ -55,6 +55,11 @@ class ProductDetailWidget extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
+                      Text(
+                        'Seller: ${product.sellerName}',
+                        style: const TextStyle(fontSize: 13, color: AppColors.darkGold, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -118,7 +123,14 @@ class ProductDetailWidget extends StatelessWidget {
           },
           onBuyNow: () {
             productCubit.addCart(product.copyWith(quantity: productCubit.quantity));
-            Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.checkoutRoute);
+            Navigator.of(context, rootNavigator: true).pushNamed(
+              AppRoutes.checkoutRoute,
+              arguments: {
+                'title': product.name,
+                'seller': product.sellerName,
+                'amount': product.price * productCubit.quantity,
+              },
+            );
           },
           productCubit: productCubit,
           quantity: productCubit.quantity,

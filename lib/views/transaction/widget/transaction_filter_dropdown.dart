@@ -21,7 +21,7 @@ class FilterDropdown extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 0, 7, 0),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.luxuryIvory : AppColors.white,
+          color: isActive ? AppColors.primaryColor : AppColors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isActive ? AppColors.primaryColor : AppColors.greysShade2,
@@ -36,9 +36,29 @@ class FilterDropdown extends StatelessWidget {
           icon: Icon(
             Icons.keyboard_arrow_down,
             size: 18,
-            color: isActive ? AppColors.primaryColor : AppColors.black,
+            color: isActive ? AppColors.white : AppColors.grey,
           ),
           dropdownColor: AppColors.white,
+          selectedItemBuilder: (context) => items.map((item) {
+            final isCurrent = item == value;
+            return Row(
+              children: [
+                if (isCurrent && isActive) const Icon(Icons.check_circle, size: 14, color: AppColors.white),
+                if (isCurrent && isActive) const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    item,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isActive ? AppColors.white : AppColors.grey,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
           items: items.map(
                 (item) => DropdownMenuItem(
                   value: item,
@@ -47,7 +67,7 @@ class FilterDropdown extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       color: AppColors.black,
-                      fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
+                      fontWeight: item == value ? FontWeight.w700 : FontWeight.normal,
                     ),
                   ),
                 ),

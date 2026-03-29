@@ -18,6 +18,13 @@ final class ProductLoaded extends ProductState {
   });
 }
 
+final class ProductMarketWatchLoaded extends ProductState {
+  final List<MarketSymbolModel> symbols;
+  final String seller;
+
+  ProductMarketWatchLoaded({required this.symbols, required this.seller});
+}
+
 final class ProductError extends ProductState {
   final String message;
 

@@ -1,46 +1,58 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 
 part 'product_state.dart';
 
 class ProductCubit extends Cubit<ProductState> {
   List<ProductItemModel> allProducts = [];
+  List<MarketSymbolModel> marketSymbols = initialMarketSymbols;
+  List<ProductItemModel> visibleCatalogProducts = [];
+  List<MarketSymbolModel> visibleMarketSymbols = [];
   String selectedCategory = 'All';
-  String selectedSeller = 'All Sellers';
+  String activeSeller = 'All Sellers';
   int quantity = 1;
+  Timer? _marketTimer;
 
   ProductCubit() : super(ProductInitial());
 
-  void loadProducts() async {
+  void loadProducts({String seller = 'All Sellers'}) async {
     emit(ProductLoading());
     try {
       await Future.delayed(const Duration(milliseconds: 400));
       allProducts = dummyProducts;
       selectedCategory = 'All';
-      selectedSeller = 'All Sellers';
-      emit(
-        ProductLoaded(
-          products: allProducts,
-          category: selectedCategory,
-          seller: selectedSeller,
-        ),
-      );
+      activeSeller = seller;
+      _emitCatalog();
+      _emitMarketWatch();
+      _startMarketFeed();
     } catch (e) {
       emit(ProductError('Failed to load products: $e'));
     }
   }
 
-  void applyFilters({String? category, String? seller}) {
-    selectedCategory = category ?? selectedCategory;
-    selectedSeller = seller ?? selectedSeller;
+  void onGlobalSellerChanged(String seller) {
+    activeSeller = seller;
+    _emitCatalog();
+    _emitMarketWatch();
+  }
 
-    var filtered = allProducts.where((product) {
+  void applyCategoryFilter({required String category}) {
+    selectedCategory = category;
+    _emitCatalog();
+  }
+
+  void _emitCatalog() {
+    visibleCatalogProducts = allProducts.where((product) {
       final categoryOk = selectedCategory == 'All' || product.category == selectedCategory;
-      final sellerOk = selectedSeller == 'All Sellers' || product.sellerName == selectedSeller;
+      final sellerOk = activeSeller == 'All Sellers' || product.sellerName == activeSeller;
       return categoryOk && sellerOk;
     }).toList();
 
-    emit(ProductLoaded(products: filtered, category: selectedCategory, seller: selectedSeller));
+    emit(ProductLoaded(products: visibleCatalogProducts, category: selectedCategory, seller: activeSeller));
   }
 
   void toggleFavorite(String productId) {
@@ -49,14 +61,14 @@ class ProductCubit extends Cubit<ProductState> {
       allProducts[index] = allProducts[index].copyWith(
         isFavorite: !allProducts[index].isFavorite,
       );
-      applyFilters();
+      _emitCatalog();
     }
   }
 
   void loadProductDetail(String productId) async {
     emit(ProductDetailLoading());
     try {
-      await Future.delayed(const Duration(milliseconds: 1000));
+      await Future.delayed(const Duration(milliseconds: 600));
       final product = dummyProducts.firstWhere((p) => p.id == productId);
       allProducts = [product];
       emit(ProductDetailLoaded(product));
@@ -74,6 +86,27 @@ class ProductCubit extends Cubit<ProductState> {
       allProducts[index] = updatedProduct;
       emit(ProductDetailLoaded(updatedProduct));
     }
+  }
+
+  void _emitMarketWatch() {
+    visibleMarketSymbols = marketSymbols.where((symbol) {
+      return activeSeller == 'All Sellers' || symbol.sellerName == activeSeller;
+    }).toList();
+    emit(ProductMarketWatchLoaded(symbols: visibleMarketSymbols, seller: activeSeller));
+  }
+
+  void _startMarketFeed() {
+    _marketTimer?.cancel();
+    final random = Random();
+    _marketTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      marketSymbols = marketSymbols.map((symbol) {
+        final move = (random.nextDouble() - 0.5) * 0.01;
+        final newPrice = symbol.price * (1 + move);
+        final newChange = symbol.change + (move * 100);
+        return symbol.copyWith(price: newPrice, change: newChange);
+      }).toList();
+      _emitMarketWatch();
+    });
   }
 
   int increaseQuantity() {
@@ -101,5 +134,11 @@ class ProductCubit extends Cubit<ProductState> {
     } else {
       dummycartProducts.add(product.copyWith(quantity: qtyToAdd, isInCart: true));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _marketTimer?.cancel();
+    return super.close();
   }
 }

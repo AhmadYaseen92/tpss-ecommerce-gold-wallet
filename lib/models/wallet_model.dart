@@ -49,6 +49,7 @@ class WalletTransaction {
   final int quantity;
   final String marketValue;
   final String change;
+  final String sellerName;
   final String imageUrl;
   final String? certificateUrl;
 
@@ -62,6 +63,7 @@ class WalletTransaction {
     required this.quantity,
     required this.marketValue,
     required this.change,
+    this.sellerName = 'Imseeh',
     required this.imageUrl,
     this.certificateUrl,
   });
@@ -92,6 +94,7 @@ final List<WalletModel> dummyWallets = [
         quantity: 1,
         marketValue: '\$337,000.00',
         change: '+1.6%',
+        sellerName: 'Imseeh',
         imageUrl:
             'https://bfasset.costco-static.com/U447IH35/as/9tnb5fqxj5gtkn5sg8jrh/4000364603-894__1?auto=webp&format=jpg&width=600',
       ),
@@ -106,6 +109,7 @@ final List<WalletModel> dummyWallets = [
         quantity: 12,
         marketValue: '\$6,500.00',
         change: '+2.2%',
+        sellerName: 'Sakkejha',
         imageUrl:
             'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMuutlptbB5vglIH1XrZZaI8nRKwO_Z_zr3g&s',
       ),
@@ -120,6 +124,7 @@ final List<WalletModel> dummyWallets = [
         quantity: 20,
         marketValue: '\$1,700.00',
         change: '+1.3%',
+        sellerName: 'Da’naa',
         imageUrl:
             'https://images.unsplash.com/photo-1610375461246-83df859d849d?q=80&w=800',
       ),
@@ -134,6 +139,7 @@ final List<WalletModel> dummyWallets = [
         quantity: 2,
         marketValue: '\$5,000.00',
         change: '+1.5%',
+        sellerName: 'Imseeh',
         imageUrl:
             'https://images.unsplash.com/photo-1610375461246-83df859d849d?q=80&w=800',
       ),

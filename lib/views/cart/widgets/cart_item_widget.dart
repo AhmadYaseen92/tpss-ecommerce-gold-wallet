@@ -76,7 +76,12 @@ class CartItemWidget extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Seller: ${product.sellerName}',
+                        style: const TextStyle(fontSize: 12, color: AppColors.darkGold),
+                      ),
+                      const SizedBox(height: 4),
                       Opacity(
                         opacity: 0.7,
                         child: Text(

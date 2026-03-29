@@ -9,53 +9,66 @@ class TransactionCubit extends Cubit<TransactionState> {
   String selectedPeriod = 'All Periods';
   String selectedType = 'All Types';
   String selectedStatus = 'All Statuses';
+  String activeSeller = 'All Sellers';
 
   TransactionCubit() : super(TransactionInitial());
 
-  void loadTransactions() async {
+  void loadTransactions({String seller = 'All Sellers'}) async {
+    activeSeller = seller;
     emit(TransactionLoading());
     try {
       await Future.delayed(const Duration(milliseconds: 600));
-      filteredTransactions = dummyTransactions;
+      filteredTransactions = _applyAllFilters();
       emit(TransactionLoaded(transactions: filteredTransactions));
     } catch (e) {
       emit(TransactionError('Failed to load transactions: $e'));
     }
   }
 
-  void applyFilters(String period, String type, String status) {
+  List<TransactionModel> _applyAllFilters() {
     final now = DateTime.now();
-    filteredTransactions = dummyTransactions.where((transaction) {
+    return dummyTransactions.where((transaction) {
       final difference = now.difference(transaction.date).inDays;
 
       bool periodMatch = true;
-      if (period == 'Last 7 Days') {
+      if (selectedPeriod == 'Last 7 Days') {
         periodMatch = difference <= 7;
-      } else if (period == 'Last 30 Days')
+      } else if (selectedPeriod == 'Last 30 Days')
         periodMatch = difference <= 30;
-      else if (period == 'Last 90 Days')
+      else if (selectedPeriod == 'Last 90 Days')
         periodMatch = difference <= 90;
 
       bool typeMatch = true;
-      if (type == 'Buy') {
+      if (selectedType == 'Buy') {
         typeMatch = transaction.type.toLowerCase().contains('buy');
-      } else if (type == 'Sell')
+      } else if (selectedType == 'Sell')
         typeMatch = transaction.type.toLowerCase().contains('sell');
-      else if (type == 'Deposit')
+      else if (selectedType == 'Deposit')
         typeMatch = transaction.type.toLowerCase().contains('deposit');
-      else if (type == 'Withdraw')
+      else if (selectedType == 'Withdraw')
         typeMatch = transaction.type.toLowerCase().contains('withdraw');
 
       bool statusMatch = true;
-      if (status == 'Completed') {
+      if (selectedStatus == 'Completed') {
         statusMatch = transaction.status.toLowerCase() == 'completed';
-      } else if (status == 'Pending')
+      } else if (selectedStatus == 'Pending')
         statusMatch = transaction.status.toLowerCase() == 'pending';
-      else if (status == 'Failed')
+      else if (selectedStatus == 'Failed')
         statusMatch = transaction.status.toLowerCase() == 'failed';
 
-      return periodMatch && typeMatch && statusMatch;
+      final sellerMatch = activeSeller == 'All Sellers' || transaction.sellerName == activeSeller;
+      return periodMatch && typeMatch && statusMatch && sellerMatch;
     }).toList();
+  }
+
+  void applyFilters(String period, String type, String status) {
+    filteredTransactions = _applyAllFilters();
+  }
+
+  void onGlobalSellerChanged(String seller) {
+    activeSeller = seller;
+    filteredTransactions = _applyAllFilters();
+    emit(TransactionLoaded(transactions: filteredTransactions));
   }
 
   void filterByPeriod(String period) {
