@@ -5,23 +5,125 @@ import 'package:tpss_ecommerce_gold_wallet/models/account_conversion_request_mod
 part 'account_summary_state.dart';
 
 class AccountSummaryCubit extends Cubit<AccountSummaryState> {
-  AccountSummaryCubit() : super(AccountSummaryState.initial());
+  AccountSummaryCubit() : super(AccountSummaryFormState.initial());
 
   static const double totalPortfolio = 12450.0;
 
-  void setMethod(ConvertMethod method) {
-    emit(state.copyWith(selectedMethod: method, errorMessage: null));
+  AccountSummaryFormState get _formState {
+    if (state is AccountSummaryFormState) {
+      return state as AccountSummaryFormState;
+    }
+    return AccountSummaryFormState.initial();
   }
 
-  void setBankIndex(int index) => emit(state.copyWith(selectedBankIndex: index, errorMessage: null));
-  void setPaymentIndex(int index) => emit(state.copyWith(selectedPaymentIndex: index, errorMessage: null));
-  void setUsdtIndex(int index) => emit(state.copyWith(selectedUsdtIndex: index, errorMessage: null));
-  void setEDirhamIndex(int index) => emit(state.copyWith(selectedEDirhamIndex: index, errorMessage: null));
-  void setAmount(String value) => emit(state.copyWith(amount: value, errorMessage: null));
-  void setNote(String value) => emit(state.copyWith(note: value, errorMessage: null));
+  void setMethod(ConvertMethod method) {
+    final current = _formState;
+    emit(
+      AccountSummaryFormState(
+        selectedMethod: method,
+        selectedBankIndex: current.selectedBankIndex,
+        selectedPaymentIndex: current.selectedPaymentIndex,
+        selectedUsdtIndex: current.selectedUsdtIndex,
+        selectedEDirhamIndex: current.selectedEDirhamIndex,
+        amount: current.amount,
+        note: current.note,
+      ),
+    );
+  }
+
+  void setBankIndex(int index) {
+    final current = _formState;
+    emit(
+      AccountSummaryFormState(
+        selectedMethod: current.selectedMethod,
+        selectedBankIndex: index,
+        selectedPaymentIndex: current.selectedPaymentIndex,
+        selectedUsdtIndex: current.selectedUsdtIndex,
+        selectedEDirhamIndex: current.selectedEDirhamIndex,
+        amount: current.amount,
+        note: current.note,
+      ),
+    );
+  }
+
+  void setPaymentIndex(int index) {
+    final current = _formState;
+    emit(
+      AccountSummaryFormState(
+        selectedMethod: current.selectedMethod,
+        selectedBankIndex: current.selectedBankIndex,
+        selectedPaymentIndex: index,
+        selectedUsdtIndex: current.selectedUsdtIndex,
+        selectedEDirhamIndex: current.selectedEDirhamIndex,
+        amount: current.amount,
+        note: current.note,
+      ),
+    );
+  }
+
+  void setUsdtIndex(int index) {
+    final current = _formState;
+    emit(
+      AccountSummaryFormState(
+        selectedMethod: current.selectedMethod,
+        selectedBankIndex: current.selectedBankIndex,
+        selectedPaymentIndex: current.selectedPaymentIndex,
+        selectedUsdtIndex: index,
+        selectedEDirhamIndex: current.selectedEDirhamIndex,
+        amount: current.amount,
+        note: current.note,
+      ),
+    );
+  }
+
+  void setEDirhamIndex(int index) {
+    final current = _formState;
+    emit(
+      AccountSummaryFormState(
+        selectedMethod: current.selectedMethod,
+        selectedBankIndex: current.selectedBankIndex,
+        selectedPaymentIndex: current.selectedPaymentIndex,
+        selectedUsdtIndex: current.selectedUsdtIndex,
+        selectedEDirhamIndex: index,
+        amount: current.amount,
+        note: current.note,
+      ),
+    );
+  }
+
+  void setAmount(String value) {
+    final current = _formState;
+    emit(
+      AccountSummaryFormState(
+        selectedMethod: current.selectedMethod,
+        selectedBankIndex: current.selectedBankIndex,
+        selectedPaymentIndex: current.selectedPaymentIndex,
+        selectedUsdtIndex: current.selectedUsdtIndex,
+        selectedEDirhamIndex: current.selectedEDirhamIndex,
+        amount: value,
+        note: current.note,
+      ),
+    );
+  }
+
+  void setNote(String value) {
+    final current = _formState;
+    emit(
+      AccountSummaryFormState(
+        selectedMethod: current.selectedMethod,
+        selectedBankIndex: current.selectedBankIndex,
+        selectedPaymentIndex: current.selectedPaymentIndex,
+        selectedUsdtIndex: current.selectedUsdtIndex,
+        selectedEDirhamIndex: current.selectedEDirhamIndex,
+        amount: current.amount,
+        note: value,
+      ),
+    );
+  }
 
   String get methodLabel {
-    switch (state.selectedMethod) {
+    final current = _formState;
+    switch (current.selectedMethod) {
       case ConvertMethod.transferToBank:
         return 'Transfer To Bank Account';
       case ConvertMethod.transferToCard:
@@ -34,34 +136,52 @@ class AccountSummaryCubit extends Cubit<AccountSummaryState> {
   }
 
   String get targetAccount {
-    switch (state.selectedMethod) {
+    final current = _formState;
+    switch (current.selectedMethod) {
       case ConvertMethod.transferToBank:
-        return PredefinedAccountsData.bankAccounts[state.selectedBankIndex].name;
+        return PredefinedAccountsData.bankAccounts[current.selectedBankIndex].name;
       case ConvertMethod.transferToCard:
-        return PredefinedAccountsData.paymentMethods[state.selectedPaymentIndex].name;
+        return PredefinedAccountsData.paymentMethods[current.selectedPaymentIndex].name;
       case ConvertMethod.transferToUsdt:
-        return PredefinedAccountsData.usdtAccounts[state.selectedUsdtIndex].name;
+        return PredefinedAccountsData.usdtAccounts[current.selectedUsdtIndex].name;
       case ConvertMethod.transferToEDirham:
-        return PredefinedAccountsData.eDirhamAccounts[state.selectedEDirhamIndex].name;
+        return PredefinedAccountsData.eDirhamAccounts[current.selectedEDirhamIndex].name;
     }
   }
 
   AccountConversionRequest? buildRequest() {
-    final amount = double.tryParse(state.amount.trim());
+    final current = _formState;
+    final amount = double.tryParse(current.amount.trim());
     if (amount == null || amount <= 0) {
-      emit(state.copyWith(errorMessage: 'Enter a valid amount.'));
+      _emitWithError('Enter a valid amount.');
       return null;
     }
     if (amount > totalPortfolio) {
-      emit(state.copyWith(errorMessage: 'Amount must be <= total portfolio.'));
+      _emitWithError('Amount must be <= total portfolio.');
       return null;
     }
 
     return AccountConversionRequest(
-      method: state.selectedMethod,
+      method: current.selectedMethod,
       targetAccount: targetAccount,
       amount: amount,
-      note: state.note.trim(),
+      note: current.note.trim(),
+    );
+  }
+
+  void _emitWithError(String message) {
+    final current = _formState;
+    emit(
+      AccountSummaryFormState(
+        selectedMethod: current.selectedMethod,
+        selectedBankIndex: current.selectedBankIndex,
+        selectedPaymentIndex: current.selectedPaymentIndex,
+        selectedUsdtIndex: current.selectedUsdtIndex,
+        selectedEDirhamIndex: current.selectedEDirhamIndex,
+        amount: current.amount,
+        note: current.note,
+        errorMessage: message,
+      ),
     );
   }
 }

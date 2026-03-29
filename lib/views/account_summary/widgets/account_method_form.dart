@@ -16,6 +16,9 @@ class AccountMethodForm extends StatelessWidget {
     return BlocBuilder<AccountSummaryCubit, AccountSummaryState>(
       builder: (context, state) {
         final cubit = context.read<AccountSummaryCubit>();
+        final formState = state is AccountSummaryFormState
+            ? state
+            : AccountSummaryFormState.initial();
 
         return ActionSectionCard(
           title: 'Transfer / Convert Method',
@@ -25,7 +28,7 @@ class AccountMethodForm extends StatelessWidget {
               children: [
                 AppFormDropdown<ConvertMethod>(
                   label: 'Method',
-                  value: state.selectedMethod,
+                  value: formState.selectedMethod,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   items: const [
                     DropdownMenuItem(
@@ -50,12 +53,12 @@ class AccountMethodForm extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: 12),
-                _selectorByMethod(cubit, state),
+                _selectorByMethod(cubit, formState),
                 const SizedBox(height: 12),
                 AppTextField(
                   label: 'Amount',
                   hint: 'Amount',
-                  initialValue: state.amount,
+                  initialValue: formState.amount,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   onChanged: cubit.setAmount,
                   validator: (value) {
@@ -72,7 +75,7 @@ class AccountMethodForm extends StatelessWidget {
                 AppTextField(
                   label: 'Note',
                   hint: 'Note (Optional)',
-                  initialValue: state.note,
+                  initialValue: formState.note,
                   onChanged: cubit.setNote,
                 ),
               ],
@@ -83,7 +86,7 @@ class AccountMethodForm extends StatelessWidget {
     );
   }
 
-  Widget _selectorByMethod(AccountSummaryCubit cubit, AccountSummaryState state) {
+  Widget _selectorByMethod(AccountSummaryCubit cubit, AccountSummaryFormState state) {
     switch (state.selectedMethod) {
       case ConvertMethod.transferToBank:
         return PredefinedAccountSelector(

@@ -26,7 +26,9 @@ class AccountSummaryPage extends StatelessWidget {
       create: (_) => AccountSummaryCubit(),
       child: BlocConsumer<AccountSummaryCubit, AccountSummaryState>(
         listener: (context, state) {
-          if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+          if (state is AccountSummaryFormState &&
+              state.errorMessage != null &&
+              state.errorMessage!.isNotEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.errorMessage!)),
             );
