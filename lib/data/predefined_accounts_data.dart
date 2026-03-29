@@ -41,4 +41,20 @@ class PredefinedAccountsData {
       subtitle: 'Wallet + OTP',
     ),
   ];
+
+  static const List<PredefinedAccount> usdtAccounts = [
+    const PredefinedAccount(
+      id: 'usdt_1',
+      name: 'USDT Wallet • TRC20',
+      subtitle: 'TQ7A...91XK',
+    ),
+  ];
+
+  static const List<PredefinedAccount> eDirhamAccounts = [
+    const PredefinedAccount(
+      id: 'edirham_1',
+      name: 'eDirham Wallet',
+      subtitle: 'EDR-AHMAD-001',
+    ),
+  ];
 }
