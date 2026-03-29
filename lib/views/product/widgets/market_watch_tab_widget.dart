@@ -12,10 +12,13 @@ class MarketWatchTabWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ProductCubit, ProductState>(
-      buildWhen: (_, current) => current is ProductMarketWatchLoaded || current is ProductLoaded,
+      buildWhen: (_, current) =>
+          current is ProductMarketWatchLoaded || current is ProductLoaded,
       builder: (context, state) {
         final cubit = context.read<ProductCubit>();
-        final symbols = state is ProductMarketWatchLoaded ? state.symbols : cubit.visibleMarketSymbols;
+        final symbols = state is ProductMarketWatchLoaded
+            ? state.symbols
+            : cubit.visibleMarketSymbols;
 
         return Column(
           children: [
@@ -29,18 +32,29 @@ class MarketWatchTabWidget extends StatelessWidget {
                   final item = symbols[index];
                   final isUp = item.change >= 0;
                   return Card(
+                    color: AppColors.white,
                     child: ListTile(
                       onTap: () => _openMarketDetail(context, item),
-                      title: Text(item.symbol, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      title: Text(
+                        item.symbol,
+                        style: Theme.of(context).textTheme.titleMedium!
+                            .copyWith(fontWeight: FontWeight.bold),
+                      ),
                       subtitle: Text('${item.name} • ${item.sellerName}'),
                       trailing: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('\$${item.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                          Text(
+                            '\$${item.price.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                           Text(
                             '${isUp ? '+' : ''}${item.change.toStringAsFixed(2)}%',
-                            style: TextStyle(color: isUp ? Colors.green : Colors.red),
+                            style: Theme.of(context).textTheme.bodyMedium!
+                                .copyWith(
+                                  color: isUp ? Colors.green : Colors.red,
+                                ),
                           ),
                         ],
                       ),
@@ -70,11 +84,20 @@ class MarketWatchTabWidget extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item.symbol, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              Text(
+                item.symbol,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 4),
               Text('${item.name} • Seller: ${item.sellerName}'),
               const SizedBox(height: 12),
-              Text('Live Price: \$${item.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18)),
+              Text(
+                'Live Price: \$${item.price.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 18),
+              ),
               Text(
                 '24h: ${isUp ? '+' : ''}${item.change.toStringAsFixed(2)}%',
                 style: TextStyle(color: isUp ? Colors.green : Colors.red),
@@ -94,7 +117,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                       },
                     );
                   },
-                  child: const Text('Buy Now'),
+                  child: const Text('Continue'),
                 ),
               ),
             ],

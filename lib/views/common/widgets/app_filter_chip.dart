@@ -31,8 +31,10 @@ class AppFilterChip extends StatelessWidget {
           : null,
       selectedColor: AppColors.primaryColor,
       backgroundColor: AppColors.white,
-      side: BorderSide(color: selected ? AppColors.primaryColor : AppColors.greyBorder),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      side: BorderSide(
+        color: selected ? AppColors.primaryColor : AppColors.greyBorder,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
