@@ -18,6 +18,12 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   int selectedBankIndex = 0;
   int selectedPaymentIndex = 0;
 
+  Map<String, dynamic> get _checkoutArgs {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic>) return args;
+    return const {};
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -82,6 +88,15 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                       ),
                     ),
                   ActionSectionCard(
+                    title: 'Order Details',
+                    child: Column(
+                      children: [
+                        _row('Asset', (_checkoutArgs['title'] ?? 'Gold Asset').toString()),
+                        _row('Seller', (_checkoutArgs['seller'] ?? 'All Sellers').toString()),
+                      ],
+                    ),
+                  ),
+                  ActionSectionCard(
                     title: 'Review Summary',
                     child: Column(
                       children: [
@@ -90,10 +105,10 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                           _row('Account', PredefinedAccountsData.bankAccounts[selectedBankIndex].name),
                         if (cubit.selectedPaymentType == CheckoutPaymentType.card)
                           _row('Method', PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name),
-                        _row('Amount', '\$1,250.00'),
+                        _row('Amount', '\$${((_checkoutArgs['amount'] as num?) ?? 1250).toStringAsFixed(2)}'),
                         _row('Fee', '\$0.00'),
                         const Divider(),
-                        _row('Total', '\$1,250.00', bold: true),
+                        _row('Total', '\$${((_checkoutArgs['amount'] as num?) ?? 1250).toStringAsFixed(2)}', bold: true),
                       ],
                     ),
                   ),

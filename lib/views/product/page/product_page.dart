@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_state.dart';
@@ -29,18 +30,13 @@ class ProductPage extends StatelessWidget {
           },
           child: Column(
             children: const [
-              _SellerFilterBar(),
               TabBar(
                 labelColor: AppColors.primaryColor,
                 unselectedLabelColor: AppColors.grey,
                 indicatorColor: AppColors.primaryColor,
                 tabs: [Tab(text: 'Catalog'), Tab(text: 'Market Watch')],
               ),
-              Expanded(
-                child: TabBarView(
-                  children: [_CatalogTab(), _MarketWatchTab()],
-                ),
-              ),
+              Expanded(child: TabBarView(children: [_CatalogTab(), _MarketWatchTab()])),
             ],
           ),
         ),
@@ -69,9 +65,7 @@ class _SellerFilterBar extends StatelessWidget {
                 selected: isSelected,
                 onSelected: (_) => context.read<AppCubit>().setSeller(seller),
                 selectedColor: AppColors.luxuryIvory,
-                side: BorderSide(
-                  color: isSelected ? AppColors.primaryColor : AppColors.greyBorder,
-                ),
+                side: BorderSide(color: isSelected ? AppColors.primaryColor : AppColors.greyBorder),
               ),
             );
           }).toList(),
@@ -88,35 +82,22 @@ class _CatalogTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ProductCubit, ProductState>(
       buildWhen: (_, current) =>
-          current is ProductInitial ||
-          current is ProductLoading ||
-          current is ProductLoaded ||
-          current is ProductError,
+          current is ProductInitial || current is ProductLoading || current is ProductLoaded || current is ProductError,
       builder: (context, state) {
         if (state is ProductInitial || state is ProductLoading) {
-          return const Center(
-            child: CircularProgressIndicator.adaptive(
-              backgroundColor: AppColors.darkGold,
-            ),
-          );
+          return const Center(child: CircularProgressIndicator.adaptive(backgroundColor: AppColors.darkGold));
         } else if (state is ProductLoaded || state is ProductMarketWatchLoaded) {
-          final products = state is ProductLoaded
-              ? state.products
-              : context.read<ProductCubit>().visibleCatalogProducts;
+          final products = state is ProductLoaded ? state.products : context.read<ProductCubit>().visibleCatalogProducts;
           return Column(
             children: [
-              ProductFilterBar(
-                productCubit: BlocProvider.of<ProductCubit>(context),
-              ),
+              const _SellerFilterBar(),
+              ProductFilterBar(productCubit: BlocProvider.of<ProductCubit>(context)),
               Expanded(
                 child: ListView.builder(
                   itemCount: products.length,
                   itemBuilder: (context, index) {
                     return GestureDetector(
-                      child: ProductItemWidget(
-                        cubit: BlocProvider.of<ProductCubit>(context),
-                        product: products[index],
-                      ),
+                      child: ProductItemWidget(cubit: BlocProvider.of<ProductCubit>(context), product: products[index]),
                       onTap: () {
                         Navigator.of(context, rootNavigator: true).pushNamed(
                           AppRoutes.productDetailsRoute,
@@ -147,33 +128,90 @@ class _MarketWatchTab extends StatelessWidget {
       buildWhen: (_, current) => current is ProductMarketWatchLoaded || current is ProductLoaded,
       builder: (context, state) {
         final cubit = context.read<ProductCubit>();
-        final symbols = state is ProductMarketWatchLoaded ? state.symbols : cubit.marketSymbols;
+        final symbols = state is ProductMarketWatchLoaded ? state.symbols : cubit.visibleMarketSymbols;
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(12),
-          itemCount: symbols.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            final item = symbols[index];
-            final isUp = item.change >= 0;
-            return Card(
-              child: ListTile(
-                title: Text(item.symbol, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(item.name),
-                trailing: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('\$${item.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                    Text(
-                      '${isUp ? '+' : ''}${item.change.toStringAsFixed(2)}%',
-                      style: TextStyle(color: isUp ? Colors.green : Colors.red),
+        return Column(
+          children: [
+            const _SellerFilterBar(),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(12),
+                itemCount: symbols.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final item = symbols[index];
+                  final isUp = item.change >= 0;
+                  return Card(
+                    child: ListTile(
+                      onTap: () => _openMarketDetail(context, item),
+                      title: Text(item.symbol, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('${item.name} • ${item.sellerName}'),
+                      trailing: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('\$${item.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                          Text(
+                            '${isUp ? '+' : ''}${item.change.toStringAsFixed(2)}%',
+                            style: TextStyle(color: isUp ? Colors.green : Colors.red),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _openMarketDetail(BuildContext context, MarketSymbolModel item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final isUp = item.change >= 0;
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item.symbol, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 4),
+              Text('${item.name} • Seller: ${item.sellerName}'),
+              const SizedBox(height: 12),
+              Text('Live Price: \$${item.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18)),
+              Text(
+                '24h: ${isUp ? '+' : ''}${item.change.toStringAsFixed(2)}%',
+                style: TextStyle(color: isUp ? Colors.green : Colors.red),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.of(context, rootNavigator: true).pushNamed(
+                      AppRoutes.checkoutRoute,
+                      arguments: {
+                        'title': item.symbol,
+                        'seller': item.sellerName,
+                        'amount': item.price,
+                      },
+                    );
+                  },
+                  child: const Text('Buy Now'),
                 ),
               ),
-            );
-          },
+            ],
+          ),
         );
       },
     );

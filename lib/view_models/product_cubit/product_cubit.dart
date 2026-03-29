@@ -11,6 +11,7 @@ class ProductCubit extends Cubit<ProductState> {
   List<ProductItemModel> allProducts = [];
   List<MarketSymbolModel> marketSymbols = initialMarketSymbols;
   List<ProductItemModel> visibleCatalogProducts = [];
+  List<MarketSymbolModel> visibleMarketSymbols = [];
   String selectedCategory = 'All';
   String activeSeller = 'All Sellers';
   int quantity = 1;
@@ -26,6 +27,7 @@ class ProductCubit extends Cubit<ProductState> {
       selectedCategory = 'All';
       activeSeller = seller;
       _emitCatalog();
+      _emitMarketWatch();
       _startMarketFeed();
     } catch (e) {
       emit(ProductError('Failed to load products: $e'));
@@ -35,6 +37,7 @@ class ProductCubit extends Cubit<ProductState> {
   void onGlobalSellerChanged(String seller) {
     activeSeller = seller;
     _emitCatalog();
+    _emitMarketWatch();
   }
 
   void applyCategoryFilter({required String category}) {
@@ -85,6 +88,13 @@ class ProductCubit extends Cubit<ProductState> {
     }
   }
 
+  void _emitMarketWatch() {
+    visibleMarketSymbols = marketSymbols.where((symbol) {
+      return activeSeller == 'All Sellers' || symbol.sellerName == activeSeller;
+    }).toList();
+    emit(ProductMarketWatchLoaded(symbols: visibleMarketSymbols, seller: activeSeller));
+  }
+
   void _startMarketFeed() {
     _marketTimer?.cancel();
     final random = Random();
@@ -95,7 +105,7 @@ class ProductCubit extends Cubit<ProductState> {
         final newChange = symbol.change + (move * 100);
         return symbol.copyWith(price: newPrice, change: newChange);
       }).toList();
-      emit(ProductMarketWatchLoaded(symbols: marketSymbols, seller: activeSeller));
+      _emitMarketWatch();
     });
   }
 

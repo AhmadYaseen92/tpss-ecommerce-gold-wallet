@@ -66,34 +66,6 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
                 color: AppColors.primaryColor,
               ),
             ),
-            leadingWidth: 150,
-            leading: Center(
-              child: BlocBuilder<AppCubit, AppState>(
-                builder: (context, appState) {
-                  return PopupMenuButton<String>(
-                    tooltip: 'Seller scope',
-                    onSelected: (item) => context.read<AppCubit>().setSeller(item),
-                    itemBuilder: (context) {
-                      return AppCubit.supportedSellers
-                          .map((item) => PopupMenuItem<String>(value: item, child: Text(item)))
-                          .toList();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.greyBorder),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        appState.selectedSeller,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
             actions: [
               IconButton(
                 onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.accountSummaryRoute),
