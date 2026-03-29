@@ -7,8 +7,8 @@ import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/a
 
 enum ConvertMethod {
   cashSettlement,
-  cashToUsdt,
-  cashToEDirham,
+  toUsdt,
+  toEDirham,
 }
 
 class AccountSummaryPage extends StatefulWidget {
@@ -27,28 +27,27 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
   int selectedUsdtIndex = 0;
   int selectedEDirhamIndex = 0;
 
-  final portfolioToCashController = TextEditingController();
+  final amountController = TextEditingController();
   final bankAmountController = TextEditingController();
   final cardAmountController = TextEditingController();
-  final convertAmountController = TextEditingController();
+  final noteController = TextEditingController();
 
   static const double totalPortfolio = 12450.0;
 
-  double get portfolioToCash => double.tryParse(portfolioToCashController.text.trim()) ?? 0;
+  double get amount => double.tryParse(amountController.text.trim()) ?? 0;
   double get bankAmount => double.tryParse(bankAmountController.text.trim()) ?? 0;
   double get cardAmount => double.tryParse(cardAmountController.text.trim()) ?? 0;
-  double get convertAmount => double.tryParse(convertAmountController.text.trim()) ?? 0;
 
   bool get isCashSettlement => selectedMethod == ConvertMethod.cashSettlement;
-  bool get isCashToUsdt => selectedMethod == ConvertMethod.cashToUsdt;
-  bool get isCashToEDirham => selectedMethod == ConvertMethod.cashToEDirham;
+  bool get isToUsdt => selectedMethod == ConvertMethod.toUsdt;
+  bool get isToEDirham => selectedMethod == ConvertMethod.toEDirham;
 
   @override
   void dispose() {
-    portfolioToCashController.dispose();
+    amountController.dispose();
     bankAmountController.dispose();
     cardAmountController.dispose();
-    convertAmountController.dispose();
+    noteController.dispose();
     super.dispose();
   }
 
@@ -59,7 +58,7 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
       goldValue: '\$8,700.00',
       silverValue: '\$2,100.00',
       jewelleryValue: '\$1,650.00',
-      availableCash: '\$0.00',
+      availableCash: '\$12,450.00',
       usdtBalance: '1,250 USDT',
       eDirhamBalance: 'AED 4,300.00',
     );
@@ -76,7 +75,7 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
               title: 'Current Hold Account (Market Value)',
               child: Column(
                 children: [
-                  _row('Total Portfolio', '\$${totalPortfolio.toStringAsFixed(2)}', bold: true),
+                  _row('Total Portfolio (Cash Value)', '\$${totalPortfolio.toStringAsFixed(2)}', bold: true),
                   _row('Gold', summary.goldValue),
                   _row('Silver', summary.silverValue),
                   _row('Jewellery', summary.jewelleryValue),
@@ -84,60 +83,27 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
               ),
             ),
             ActionSectionCard(
-              title: 'Step 1: Convert Portfolio to Cash',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextFormField(
-                    controller: portfolioToCashController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Cash amount from portfolio',
-                      prefixText: '\$',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (v) {
-                      final value = double.tryParse((v ?? '').trim());
-                      if (value == null || value <= 0) {
-                        return 'Enter a valid amount.';
-                      }
-                      if (value > totalPortfolio) {
-                        return 'Amount must be <= total portfolio.';
-                      }
-                      return null;
-                    },
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Cash is used only as conversion stage, then settled to bank/card or converted to USDT/eDirham.',
-                    style: TextStyle(fontSize: 12, color: AppColors.greyShade600),
-                  ),
-                ],
-              ),
-            ),
-            ActionSectionCard(
-              title: 'Step 2: Complete Conversion',
+              title: 'Convert / Settle',
               child: Column(
                 children: [
                   DropdownButtonFormField<ConvertMethod>(
                     value: selectedMethod,
                     isExpanded: true,
                     decoration: const InputDecoration(
-                      labelText: 'Select Convert Method',
+                      labelText: 'Method',
                       border: OutlineInputBorder(),
                     ),
                     items: const [
                       DropdownMenuItem(
                         value: ConvertMethod.cashSettlement,
-                        child: Text('Cash Settlement (Bank/Card/Both)'),
+                        child: Text('Cash to Bank/Card'),
                       ),
                       DropdownMenuItem(
-                        value: ConvertMethod.cashToUsdt,
+                        value: ConvertMethod.toUsdt,
                         child: Text('Cash to USDT'),
                       ),
                       DropdownMenuItem(
-                        value: ConvertMethod.cashToEDirham,
+                        value: ConvertMethod.toEDirham,
                         child: Text('Cash to EDirham'),
                       ),
                     ],
@@ -147,8 +113,33 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                         selectedMethod = value;
                         bankAmountController.clear();
                         cardAmountController.clear();
-                        convertAmountController.clear();
+                        noteController.clear();
                       });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: amountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Amount',
+                      prefixText: '\$',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) {
+                      final value = double.tryParse((v ?? '').trim());
+                      if (value == null || value <= 0) return 'Enter a valid amount.';
+                      if (value > totalPortfolio) return 'Amount must be <= total portfolio.';
+                      return null;
+                    },
+                    onChanged: (v) {
+                      if (isCashSettlement) {
+                        final parsed = double.tryParse(v) ?? 0;
+                        final half = parsed / 2;
+                        bankAmountController.text = half > 0 ? half.toStringAsFixed(2) : '';
+                        cardAmountController.text = half > 0 ? half.toStringAsFixed(2) : '';
+                      }
+                      setState(() {});
                     },
                   ),
                   const SizedBox(height: 12),
@@ -175,15 +166,13 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                       ),
                       validator: (v) {
                         if (!isCashSettlement) return null;
-                        final value = double.tryParse((v ?? '').trim()) ?? 0;
-                        if (value < 0) return 'Amount cannot be negative.';
-                        final total = value + cardAmount;
-                        if (total > portfolioToCash) {
-                          return 'Bank + Card must be <= cash amount.';
+                        final bank = double.tryParse((v ?? '').trim()) ?? 0;
+                        if (bank < 0) return 'Amount cannot be negative.';
+                        if ((bank + cardAmount) > amount) {
+                          return 'Bank + Card must be <= amount.';
                         }
                         return null;
                       },
-                      onChanged: (_) => setState(() {}),
                     ),
                     const SizedBox(height: 12),
                     PredefinedAccountSelector(
@@ -207,62 +196,58 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
                       ),
                       validator: (v) {
                         if (!isCashSettlement) return null;
-                        final value = double.tryParse((v ?? '').trim()) ?? 0;
-                        if (value < 0) return 'Amount cannot be negative.';
-                        final total = value + bankAmount;
-                        if (total <= 0) return 'Enter bank/card amount.';
-                        if (total > portfolioToCash) {
-                          return 'Bank + Card must be <= cash amount.';
+                        final card = double.tryParse((v ?? '').trim()) ?? 0;
+                        if (card < 0) return 'Amount cannot be negative.';
+                        if ((card + bankAmount) <= 0) return 'Enter bank/card amount.';
+                        if ((card + bankAmount) > amount) {
+                          return 'Bank + Card must be <= amount.';
                         }
                         return null;
                       },
-                      onChanged: (_) => setState(() {}),
                     ),
                   ],
 
-                  if (isCashToUsdt || isCashToEDirham) ...[
+                  if (isToUsdt)
+                    PredefinedAccountSelector(
+                      label: 'USDT Account (from Profile)',
+                      accounts: PredefinedAccountsData.usdtAccounts,
+                      selectedIndex: selectedUsdtIndex,
+                      icon: Icons.currency_bitcoin,
+                      onChanged: (index) {
+                        if (index == null) return;
+                        setState(() => selectedUsdtIndex = index);
+                      },
+                    ),
+                  if (isToEDirham)
+                    PredefinedAccountSelector(
+                      label: 'eDirham Account (from Profile)',
+                      accounts: PredefinedAccountsData.eDirhamAccounts,
+                      selectedIndex: selectedEDirhamIndex,
+                      icon: Icons.account_balance_wallet_outlined,
+                      onChanged: (index) {
+                        if (index == null) return;
+                        setState(() => selectedEDirhamIndex = index);
+                      },
+                    ),
+
+                  if (isToUsdt || isToEDirham) ...[
+                    const SizedBox(height: 12),
                     TextFormField(
-                      controller: convertAmountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      controller: noteController,
+                      maxLines: 2,
                       decoration: const InputDecoration(
-                        labelText: 'Amount to Convert',
-                        prefixText: '\$',
+                        labelText: 'Conversion Note',
+                        hintText: 'Reason / remarks for conversion',
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) {
-                        if (!(isCashToUsdt || isCashToEDirham)) return null;
-                        final value = double.tryParse((v ?? '').trim());
-                        if (value == null || value <= 0) return 'Enter a valid amount.';
-                        if (value > portfolioToCash) {
-                          return 'Convert amount must be <= cash amount.';
+                        if (!(isToUsdt || isToEDirham)) return null;
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Note is required for USDT / EDirham conversion.';
                         }
                         return null;
                       },
-                      onChanged: (_) => setState(() {}),
                     ),
-                    const SizedBox(height: 12),
-                    if (isCashToUsdt)
-                      PredefinedAccountSelector(
-                        label: 'USDT Account (from Profile)',
-                        accounts: PredefinedAccountsData.usdtAccounts,
-                        selectedIndex: selectedUsdtIndex,
-                        icon: Icons.currency_bitcoin,
-                        onChanged: (index) {
-                          if (index == null) return;
-                          setState(() => selectedUsdtIndex = index);
-                        },
-                      ),
-                    if (isCashToEDirham)
-                      PredefinedAccountSelector(
-                        label: 'eDirham Account (from Profile)',
-                        accounts: PredefinedAccountsData.eDirhamAccounts,
-                        selectedIndex: selectedEDirhamIndex,
-                        icon: Icons.account_balance_wallet_outlined,
-                        onChanged: (index) {
-                          if (index == null) return;
-                          setState(() => selectedEDirhamIndex = index);
-                        },
-                      ),
                   ],
 
                   const SizedBox(height: 12),
@@ -284,17 +269,8 @@ class _AccountSummaryPageState extends State<AccountSummaryPage> {
   }
 
   void _onConfirm() {
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
-
-    final total = portfolioToCash;
-    if (total > totalPortfolio) {
-      _showMsg('Total transfer/convert must be <= total portfolio.');
-      return;
-    }
-
-    _showMsg('OTP sent to WhatsApp. Confirm to complete conversion.');
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    _showMsg('OTP sent to WhatsApp. Confirm to complete operation.');
   }
 
   void _showMsg(String msg) {
