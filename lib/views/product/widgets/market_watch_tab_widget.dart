@@ -119,9 +119,8 @@ class MarketWatchTabWidget extends StatelessWidget {
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                _SymbolMiniChart(
-                                  points: _chartPoints(item, length: 22),
-                                  isPositive: item.change >= 0,
+                                _MiniCandleChart(
+                                  candles: _buildCandles(item, 20),
                                 ),
                               ],
                             ),
@@ -153,6 +152,7 @@ class MarketWatchTabWidget extends StatelessWidget {
   }
 
   void _openMarketDetail(BuildContext context, MarketSymbolModel item) {
+    final candles = _buildCandles(item, 60);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -167,31 +167,46 @@ class MarketWatchTabWidget extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                item.symbol,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
+              Row(
+                children: const [
+                  Icon(Icons.menu, size: 20),
+                  SizedBox(width: 10),
+                  Icon(Icons.show_chart, size: 20),
+                  SizedBox(width: 10),
+                  Icon(Icons.gps_fixed, size: 20),
+                  SizedBox(width: 10),
+                  Icon(Icons.remove, size: 20),
+                  SizedBox(width: 10),
+                  Icon(Icons.add, size: 20),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text(
+                    item.symbol,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text('M1', style: TextStyle(fontSize: 18)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 320,
+                child: _DetailedCandleChart(
+                  candles: candles,
+                  bidLine: _bid(item),
+                  askLine: _ask(item),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 12),
               Text(
                 AppReleaseConfig.showSellerUi
                     ? '${item.name} • Seller: ${item.sellerName}'
                     : item.name,
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 220,
-                width: double.infinity,
-                child: _SymbolMiniChart(
-                  points: _chartPoints(item, length: 44),
-                  isPositive: item.change >= 0,
-                  showGrid: true,
-                  strokeWidth: 2.8,
-                ),
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 'Live Price: \$${item.price.toStringAsFixed(2)}',
                 style: const TextStyle(fontSize: 18),
@@ -202,7 +217,6 @@ class MarketWatchTabWidget extends StatelessWidget {
               Text(
                 'High ${_high(item).toStringAsFixed(2)} • Low ${_low(item).toStringAsFixed(2)}',
               ),
-              const SizedBox(height: 4),
               Text(
                 'Updated: ${_formatUpdatedTime(DateTime.now())}',
                 style: const TextStyle(color: AppColors.grey),
@@ -260,12 +274,21 @@ class MarketWatchTabWidget extends StatelessWidget {
     );
   }
 
-  List<double> _chartPoints(MarketSymbolModel item, {required int length}) {
-    return List<double>.generate(length, (index) {
-      final seed = (item.symbol.hashCode % 100) / 1000;
-      final wave = math.sin((index / (length - 1)) * math.pi * 1.6);
-      final drift = (item.change / 100) * (index / (length - 1));
-      return item.price * (1 + seed + (wave * 0.004) + drift);
+  List<_CandleData> _buildCandles(MarketSymbolModel item, int count) {
+    final seed = item.symbol.hashCode.abs() % 997;
+    final rng = math.Random(seed);
+    var prevClose = item.price * (0.992 + rng.nextDouble() * 0.01);
+
+    return List<_CandleData>.generate(count, (i) {
+      final drift = item.change / 1000;
+      final open = prevClose;
+      final change = ((rng.nextDouble() - 0.5) * 0.009) + drift;
+      final close = open * (1 + change);
+      final wickRange = open * (0.0012 + rng.nextDouble() * 0.0018);
+      final high = math.max(open, close) + wickRange;
+      final low = math.min(open, close) - wickRange;
+      prevClose = close;
+      return _CandleData(open: open, high: high, low: low, close: close, index: i);
     });
   }
 
@@ -286,95 +309,199 @@ class MarketWatchTabWidget extends StatelessWidget {
   double _low(MarketSymbolModel item) => item.price * 0.99;
 }
 
-class _SymbolMiniChart extends StatelessWidget {
-  final List<double> points;
-  final bool isPositive;
-  final bool showGrid;
-  final double strokeWidth;
+class _MiniCandleChart extends StatelessWidget {
+  final List<_CandleData> candles;
 
-  const _SymbolMiniChart({
-    required this.points,
-    required this.isPositive,
-    this.showGrid = false,
-    this.strokeWidth = 2,
+  const _MiniCandleChart({required this.candles});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 70,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: AppColors.grey.withAlpha(20),
+      ),
+      child: CustomPaint(
+        painter: _CandlePainter(candles: candles, showGrid: false, showPrices: false),
+      ),
+    );
+  }
+}
+
+class _DetailedCandleChart extends StatelessWidget {
+  final List<_CandleData> candles;
+  final double bidLine;
+  final double askLine;
+
+  const _DetailedCandleChart({
+    required this.candles,
+    required this.bidLine,
+    required this.askLine,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isPositive ? AppColors.green : AppColors.red;
     return Container(
-      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: color.withAlpha(20),
+        border: Border.all(color: AppColors.grey.withAlpha(60)),
       ),
       child: CustomPaint(
-        size: const Size(double.infinity, 70),
-        painter: _SparklinePainter(
-          points: points,
-          color: color,
-          showGrid: showGrid,
-          strokeWidth: strokeWidth,
+        painter: _CandlePainter(
+          candles: candles,
+          showGrid: true,
+          showPrices: true,
+          askLine: askLine,
+          bidLine: bidLine,
         ),
       ),
     );
   }
 }
 
-class _SparklinePainter extends CustomPainter {
-  final List<double> points;
-  final Color color;
-  final bool showGrid;
-  final double strokeWidth;
+class _CandleData {
+  final double open;
+  final double high;
+  final double low;
+  final double close;
+  final int index;
 
-  _SparklinePainter({
-    required this.points,
-    required this.color,
+  const _CandleData({
+    required this.open,
+    required this.high,
+    required this.low,
+    required this.close,
+    required this.index,
+  });
+}
+
+class _CandlePainter extends CustomPainter {
+  final List<_CandleData> candles;
+  final bool showGrid;
+  final bool showPrices;
+  final double? askLine;
+  final double? bidLine;
+
+  _CandlePainter({
+    required this.candles,
     required this.showGrid,
-    required this.strokeWidth,
+    required this.showPrices,
+    this.askLine,
+    this.bidLine,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (points.length < 2) return;
+    if (candles.isEmpty) return;
 
-    final minY = points.reduce(math.min);
-    final maxY = points.reduce(math.max);
-    final range = (maxY - minY).abs() < 0.0001 ? 1.0 : (maxY - minY);
+    final allHighs = candles.map((e) => e.high).toList();
+    final allLows = candles.map((e) => e.low).toList();
+    final maxY = allHighs.reduce(math.max);
+    final minY = allLows.reduce(math.min);
+    final range = (maxY - minY).abs() < 0.000001 ? 1.0 : (maxY - minY);
+    const rightGutter = 58.0;
+    final chartWidth = size.width - rightGutter;
+
+    double toY(double v) => size.height - ((v - minY) / range) * size.height;
 
     if (showGrid) {
       final gridPaint = Paint()
-        ..color = AppColors.grey.withAlpha(45)
-        ..strokeWidth = 1;
-      for (var i = 1; i <= 3; i++) {
-        final y = (size.height / 4) * i;
-        canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+        ..color = AppColors.grey.withAlpha(70)
+        ..strokeWidth = 0.7;
+
+      for (var i = 0; i <= 8; i++) {
+        final y = (size.height / 8) * i;
+        canvas.drawLine(Offset(0, y), Offset(chartWidth, y), gridPaint);
+      }
+      for (var i = 0; i <= 8; i++) {
+        final x = (chartWidth / 8) * i;
+        canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
       }
     }
 
-    final path = Path();
-    for (var i = 0; i < points.length; i++) {
-      final x = (i / (points.length - 1)) * size.width;
-      final y = size.height - ((points[i] - minY) / range * size.height);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
+    final candleSpace = chartWidth / candles.length;
+    final bodyWidth = (candleSpace * 0.58).clamp(2.2, 8.0).toDouble();
+
+    for (var i = 0; i < candles.length; i++) {
+      final c = candles[i];
+      final x = (i * candleSpace) + (candleSpace / 2);
+      final openY = toY(c.open);
+      final closeY = toY(c.close);
+      final highY = toY(c.high);
+      final lowY = toY(c.low);
+      final bullish = c.close >= c.open;
+      final color = bullish ? const Color(0xFF59BC6E) : const Color(0xFFF35B52);
+
+      final wickPaint = Paint()
+        ..color = color
+        ..strokeWidth = 1.2;
+      canvas.drawLine(Offset(x, highY), Offset(x, lowY), wickPaint);
+
+      final top = math.min(openY, closeY);
+      final bottom = math.max(openY, closeY);
+      final rect = Rect.fromLTRB(x - bodyWidth / 2, top, x + bodyWidth / 2, bottom + 0.8);
+      canvas.drawRect(rect, Paint()..color = color);
     }
 
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+    if (askLine != null) {
+      final y = toY(askLine!);
+      final p = Paint()
+        ..color = const Color(0xFFF35B52)
+        ..strokeWidth = 1.2;
+      canvas.drawLine(Offset(0, y), Offset(chartWidth, y), p);
+      _drawPriceTag(canvas, Offset(chartWidth + 2, y), askLine!, const Color(0xFFF35B52));
+    }
 
-    canvas.drawPath(path, paint);
+    if (bidLine != null) {
+      final y = toY(bidLine!);
+      final p = Paint()
+        ..color = const Color(0xFF59BC6E)
+        ..strokeWidth = 1.2;
+      canvas.drawLine(Offset(0, y), Offset(chartWidth, y), p);
+      _drawPriceTag(canvas, Offset(chartWidth + 2, y), bidLine!, const Color(0xFF59BC6E));
+    }
+
+    if (showPrices) {
+      final tp = TextPainter(textDirection: TextDirection.ltr);
+      for (var i = 0; i <= 8; i++) {
+        final value = maxY - ((range / 8) * i);
+        final y = (size.height / 8) * i;
+        tp.text = TextSpan(
+          text: value.toStringAsFixed(2),
+          style: const TextStyle(fontSize: 11, color: AppColors.grey),
+        );
+        tp.layout();
+        tp.paint(canvas, Offset(chartWidth + 4, y - (tp.height / 2)));
+      }
+    }
+  }
+
+  void _drawPriceTag(Canvas canvas, Offset anchor, double value, Color color) {
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: value.toStringAsFixed(2),
+        style: const TextStyle(
+          fontSize: 11,
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    final tagRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(anchor.dx, anchor.dy - 10, textPainter.width + 10, 20),
+      const Radius.circular(3),
+    );
+    canvas.drawRRect(tagRect, Paint()..color = color);
+    textPainter.paint(canvas, Offset(anchor.dx + 5, anchor.dy - textPainter.height / 2));
   }
 
   @override
-  bool shouldRepaint(covariant _SparklinePainter oldDelegate) {
-    return oldDelegate.points != points || oldDelegate.color != color;
+  bool shouldRepaint(covariant _CandlePainter oldDelegate) {
+    return oldDelegate.candles != candles ||
+        oldDelegate.showGrid != showGrid ||
+        oldDelegate.askLine != askLine ||
+        oldDelegate.bidLine != bidLine;
   }
 }
