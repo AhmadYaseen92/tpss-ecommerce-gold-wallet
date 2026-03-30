@@ -66,7 +66,8 @@ class MarketWatchTabWidget extends StatelessWidget {
                                                 ),
                                           ),
                                           Text(item.name),
-                                          if (AppReleaseConfig.showSellerUi) ...[
+                                          if (AppReleaseConfig
+                                              .showSellerUi) ...[
                                             const SizedBox(height: 4),
                                             Text(
                                               'Seller: ${item.sellerName}',
@@ -105,22 +106,30 @@ class MarketWatchTabWidget extends StatelessWidget {
                                           _marketValueLine(
                                             context,
                                             label: 'Ask',
-                                            value: _ask(item).toStringAsFixed(2),
+                                            value: _ask(
+                                              item,
+                                            ).toStringAsFixed(2),
                                           ),
                                           _marketValueLine(
                                             context,
                                             label: 'Bid',
-                                            value: _bid(item).toStringAsFixed(2),
+                                            value: _bid(
+                                              item,
+                                            ).toStringAsFixed(2),
                                           ),
                                           _marketValueLine(
                                             context,
                                             label: 'High',
-                                            value: _high(item).toStringAsFixed(2),
+                                            value: _high(
+                                              item,
+                                            ).toStringAsFixed(2),
                                           ),
                                           _marketValueLine(
                                             context,
                                             label: 'Low',
-                                            value: _low(item).toStringAsFixed(2),
+                                            value: _low(
+                                              item,
+                                            ).toStringAsFixed(2),
                                           ),
                                         ],
                                       ),
@@ -147,11 +156,12 @@ class MarketWatchTabWidget extends StatelessWidget {
               bottom: 20,
               child: FloatingActionButton.extended(
                 onPressed: () {
-                  Navigator.of(context, rootNavigator: true).pushNamed(
-                    AppRoutes.marketOrderCheckoutRoute,
-                  );
+                  Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).pushNamed(AppRoutes.marketOrderCheckoutRoute);
                 },
-                icon: const Icon(Icons.add_shopping_cart_outlined),
+                icon: const Icon(Icons.add_card),
                 label: const Text('Place Order'),
               ),
             ),
@@ -197,8 +207,14 @@ class MarketWatchTabWidget extends StatelessWidget {
                             value: '1 Minute',
                             child: Text('1 Minute'),
                           ),
-                          DropdownMenuItem(value: '30 Min', child: Text('30 Min')),
-                          DropdownMenuItem(value: '1 Hour', child: Text('1 Hour')),
+                          DropdownMenuItem(
+                            value: '30 Min',
+                            child: Text('30 Min'),
+                          ),
+                          DropdownMenuItem(
+                            value: '1 Hour',
+                            child: Text('1 Hour'),
+                          ),
                           DropdownMenuItem(value: 'Day', child: Text('Day')),
                         ],
                         onChanged: (value) {
