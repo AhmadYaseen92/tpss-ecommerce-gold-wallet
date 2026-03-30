@@ -6,6 +6,7 @@ import 'package:tpss_ecommerce_gold_wallet/view_models/forgot_password_cubit/for
 import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/widgets/reset_password_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/widgets/set_new_password_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/widgets/verify_otp_form.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 
 class ForgotPasswordPage extends StatelessWidget {
   const ForgotPasswordPage({super.key});
@@ -17,11 +18,10 @@ class ForgotPasswordPage extends StatelessWidget {
       child: BlocConsumer<ForgotPasswordCubit, ForgotPasswordState>(
         listener: (context, state) {
           if (state is ForgotPasswordSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Password reset successfully!'),
-                backgroundColor: AppColors.green,
-              ),
+            AppModalAlert.show(
+              context,
+              title: 'Success',
+              message: 'Password reset successfully!',
             );
             Navigator.pushNamedAndRemoveUntil(
               context,
@@ -29,11 +29,10 @@ class ForgotPasswordPage extends StatelessWidget {
               (route) => false,
             );
           } else if (state is ForgotPasswordError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.red,
-              ),
+            AppModalAlert.show(
+              context,
+              title: 'Error',
+              message: state.message,
             );
           }
         },

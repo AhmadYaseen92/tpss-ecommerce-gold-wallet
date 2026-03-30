@@ -6,6 +6,7 @@ import 'package:tpss_ecommerce_gold_wallet/views/account_summary/page/account_su
 import 'package:tpss_ecommerce_gold_wallet/views/account_summary/widgets/account_method_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/account_summary/widgets/account_portfolio_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 
 class AccountSummaryPage extends StatelessWidget {
   const AccountSummaryPage({super.key});
@@ -29,8 +30,10 @@ class AccountSummaryPage extends StatelessWidget {
           if (state is AccountSummaryFormState &&
               state.errorMessage != null &&
               state.errorMessage!.isNotEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
+            AppModalAlert.show(
+              context,
+              title: 'Validation',
+              message: state.errorMessage!,
             );
           }
         },

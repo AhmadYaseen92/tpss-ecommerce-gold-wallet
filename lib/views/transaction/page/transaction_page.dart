@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/transaction_cubit/transaction_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transaction/widget/transaction_filter_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transaction/widget/transaction_item_widget.dart';
 
@@ -55,8 +56,10 @@ class TransactionPage extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('History exported to Excel sheet.')),
+                        AppModalAlert.show(
+                          context,
+                          title: 'Export Complete',
+                          message: 'History exported to Excel sheet.',
                         );
                       },
                       icon: const Icon(Icons.table_chart_outlined),

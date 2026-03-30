@@ -6,6 +6,7 @@ import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/checkout_cubit/checkout_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/predefined_account_selector.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 
 class CheckoutPaymentPage extends StatefulWidget {
@@ -41,8 +42,10 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
       child: BlocConsumer<CheckoutCubit, CheckoutState>(
         listener: (context, state) {
           if (state is CheckoutSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Payment confirmed with WhatsApp OTP.')),
+            AppModalAlert.show(
+              context,
+              title: 'Payment Confirmed',
+              message: 'Payment confirmed with WhatsApp OTP.',
             );
           }
         },

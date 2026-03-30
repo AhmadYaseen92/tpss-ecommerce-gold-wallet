@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/form_header.dart';
 
@@ -100,12 +101,10 @@ class SecuritySettingsPage extends StatelessWidget {
                         label: 'Save Changes',
                         onPressed: () {
                           cubit.save();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Security settings updated successfully',
-                              ),
-                            ),
+                          AppModalAlert.show(
+                            context,
+                            title: 'Saved',
+                            message: 'Security settings updated successfully',
                           );
                         },
                       ),

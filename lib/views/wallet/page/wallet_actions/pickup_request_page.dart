@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 
 class PickupRequestPage extends StatefulWidget {
   final WalletTransaction asset;
@@ -99,14 +100,18 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
           FilledButton(
             onPressed: () {
               if (selectedDate == null || selectedTime == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please select pickup date and time.')),
+                AppModalAlert.show(
+                  context,
+                  title: 'Missing Details',
+                  message: 'Please select pickup date and time.',
                 );
                 return;
               }
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Pickup scheduled for $dateText at $timeText.')),
+              AppModalAlert.show(
+                context,
+                title: 'Pickup Confirmed',
+                message: 'Pickup scheduled for $dateText at $timeText.',
               );
             },
             child: const Text('Confirm Pickup'),

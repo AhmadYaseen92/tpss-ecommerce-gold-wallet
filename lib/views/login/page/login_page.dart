@@ -8,6 +8,7 @@ import 'package:tpss_ecommerce_gold_wallet/views/login/widgets/login_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/login/widgets/login_header_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/login/widgets/or_divider_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/login/widgets/signup_row_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -25,11 +26,10 @@ class LoginPage extends StatelessWidget {
               (route) => false,
             );
           } else if (state is LoginError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.red,
-              ),
+            AppModalAlert.show(
+              context,
+              title: 'Login Failed',
+              message: state.message,
             );
           }
         },

@@ -52,6 +52,8 @@ class AppTextField extends StatelessWidget {
           validator: validator,
           onChanged: onChanged,
           decoration: InputDecoration(
+            labelText: label,
+            floatingLabelBehavior: FloatingLabelBehavior.auto,
             hintText: hint,
             hintStyle: TextStyle(color: AppColors.greyShade400, fontSize: 14),
             prefixIcon: prefixIcon != null

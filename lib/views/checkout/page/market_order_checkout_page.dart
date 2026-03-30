@@ -4,6 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_bottom_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_text_field.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 
 class MarketOrderCheckoutPage extends StatefulWidget {
   const MarketOrderCheckoutPage({super.key});
@@ -60,12 +61,10 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
         buttonText: 'Place Order',
         onPressed: () {
           if (!(_formKey.currentState?.validate() ?? false)) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Order placed: $symbol x$_quantity (${_label(executionType)})',
-              ),
-            ),
+          AppModalAlert.show(
+            context,
+            title: 'Order Placed',
+            message: 'Order placed: $symbol x$_quantity (${_label(executionType)})',
           );
           Navigator.pop(context);
         },
