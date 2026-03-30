@@ -16,7 +16,9 @@ class TransferCubit extends Cubit<TransferState> {
 
   final Set<String> _registeredAccounts = {'10001', '10002', '20011', '77889'};
 
-  TransferCubit() : super(TransferInitial());
+  TransferCubit() : super(TransferInitial()) {
+    recipientController.addListener(_onRecipientChanged);
+  }
 
   void load() async {
     emit(TransferLoading());
@@ -35,7 +37,7 @@ class TransferCubit extends Cubit<TransferState> {
   }
 
   void setRecipientMode(RecipientMode mode) {
-    recipientMode = mode;
+    recipientMode = RecipientMode.account;
     recipientController.clear();
     isAccountVerified = false;
     _emitChanged();
@@ -43,8 +45,13 @@ class TransferCubit extends Cubit<TransferState> {
 
   void verifyAccount() {
     final accountNo = recipientController.text.trim();
-    isAccountVerified = _registeredAccounts.contains(accountNo);
+    isAccountVerified = accountNo.isNotEmpty && _registeredAccounts.contains(accountNo);
     _emitChanged();
+  }
+
+  void _onRecipientChanged() {
+    if (recipientMode != RecipientMode.account) return;
+    verifyAccount();
   }
 
   void toggleTerms(bool? value) {
@@ -65,7 +72,7 @@ class TransferCubit extends Cubit<TransferState> {
       return;
     }
     if (recipient.isEmpty) {
-      emit(TransferError('Please enter recipient details.'));
+      emit(TransferError('Please enter recipient account number.'));
       _emitChanged();
       return;
     }
@@ -103,6 +110,7 @@ class TransferCubit extends Cubit<TransferState> {
 
   @override
   Future<void> close() {
+    recipientController.removeListener(_onRecipientChanged);
     amountController.dispose();
     recipientController.dispose();
     return super.close();

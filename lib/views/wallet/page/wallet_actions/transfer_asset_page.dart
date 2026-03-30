@@ -26,7 +26,9 @@ class TransferAssetPage extends StatelessWidget {
           final cubit = context.read<TransferAssetActionCubit>();
 
           return Scaffold(
-            appBar: AppBar(title: Text(cubit.isGift ? 'Gift Asset' : 'Transfer Asset')),
+            appBar: AppBar(
+              title: Text(cubit.isGift ? 'Gift Asset' : 'Transfer Asset'),
+            ),
             bottomNavigationBar: ActionBottomBar(
               summaryLabel: 'Estimated Value',
               summaryValue: cubit.formatCurrency(cubit.estimatedValue),
@@ -37,7 +39,8 @@ class TransferAssetPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ActionReviewPage(summary: cubit.buildSummary()),
+                    builder: (_) =>
+                        ActionReviewPage(summary: cubit.buildSummary()),
                   ),
                 );
               },
@@ -57,7 +60,10 @@ class TransferAssetPage extends StatelessWidget {
                             value: WalletActionType.transfer,
                             label: Text('Transfer'),
                           ),
-                          ButtonSegment(value: WalletActionType.gift, label: Text('Gift')),
+                          ButtonSegment(
+                            value: WalletActionType.gift,
+                            label: Text('Gift'),
+                          ),
                         ],
                         selected: {cubit.transferType},
                         onSelectionChanged: (values) {
@@ -77,12 +83,48 @@ class TransferAssetPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           ActionTextField(
-                            label: cubit.isGift
-                                ? 'Recipient Email / Mobile'
-                                : 'Wallet ID / Email / Mobile',
-                            hintText: 'Enter recipient contact',
+                            label: 'Recipient Account No.',
+                            hintText: 'Enter recipient account number',
+                            keyboardType: TextInputType.number,
                             controller: cubit.recipientContactController,
                             validator: cubit.validateRecipientContact,
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                cubit.isRecipientVerified
+                                    ? Icons.verified
+                                    : Icons.error_outline,
+                                size: 16,
+                                color: cubit.isRecipientVerified
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  cubit.recipientContactController.text
+                                          .trim()
+                                          .isEmpty
+                                      ? 'Enter account number to verify recipient in our system.'
+                                      : cubit.isRecipientVerified
+                                      ? 'Verified: recipient account exists in our system.'
+                                      : 'Not verified: recipient account does not exist in our system.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        cubit.recipientContactController.text
+                                            .trim()
+                                            .isEmpty
+                                        ? Colors.grey
+                                        : cubit.isRecipientVerified
+                                        ? Colors.green
+                                        : Colors.red,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -100,7 +142,9 @@ class TransferAssetPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           ActionTextField(
-                            label: cubit.isGift ? 'Gift Message' : 'Transfer Note',
+                            label: cubit.isGift
+                                ? 'Gift Message'
+                                : 'Transfer Note',
                             hintText: cubit.isGift
                                 ? 'Write a gift message'
                                 : 'Optional transfer note',
