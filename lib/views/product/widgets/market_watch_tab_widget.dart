@@ -84,6 +84,15 @@ class MarketWatchTabWidget extends StatelessWidget {
                                               color: AppColors.grey,
                                             ),
                                           ),
+                                          const SizedBox(height: 2),
+                                          const Text(
+                                            'Last: 1m',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.grey,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -152,7 +161,8 @@ class MarketWatchTabWidget extends StatelessWidget {
   }
 
   void _openMarketDetail(BuildContext context, MarketSymbolModel item) {
-    final candles = _buildCandles(item, 60);
+    var selectedFrame = '1 Minute';
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -161,89 +171,128 @@ class MarketWatchTabWidget extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: const [
-                  Icon(Icons.menu, size: 20),
-                  SizedBox(width: 10),
-                  Icon(Icons.show_chart, size: 20),
-                  SizedBox(width: 10),
-                  Icon(Icons.gps_fixed, size: 20),
-                  SizedBox(width: 10),
-                  Icon(Icons.remove, size: 20),
-                  SizedBox(width: 10),
-                  Icon(Icons.add, size: 20),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final candles = _buildCandles(item, _countForFrame(selectedFrame));
+
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    item.symbol,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                  Row(
+                    children: [
+                      Text(
+                        item.symbol,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.grey.withAlpha(120)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedFrame,
+                            items: const [
+                              DropdownMenuItem(
+                                value: '1 Minute',
+                                child: Text('1 Minute'),
+                              ),
+                              DropdownMenuItem(value: '30 Min', child: Text('30 Min')),
+                              DropdownMenuItem(value: '1 Hour', child: Text('1 Hour')),
+                              DropdownMenuItem(value: '1 Day', child: Text('1 Day')),
+                            ],
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setModalState(() => selectedFrame = value);
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  const Text('M1', style: TextStyle(fontSize: 18)),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'X: Price  •  Y: Time',
+                    style: TextStyle(fontSize: 12, color: AppColors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 320,
+                    child: _DetailedCandleChart(
+                      candles: candles,
+                      bidLine: _bid(item),
+                      askLine: _ask(item),
+                      timeframe: selectedFrame,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    AppReleaseConfig.showSellerUi
+                        ? '${item.name} • Seller: ${item.sellerName}'
+                        : item.name,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Live Price: \$${item.price.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  Text(
+                    'Ask ${_ask(item).toStringAsFixed(2)} • Bid ${_bid(item).toStringAsFixed(2)}',
+                  ),
+                  Text(
+                    'High ${_high(item).toStringAsFixed(2)} • Low ${_low(item).toStringAsFixed(2)}',
+                  ),
+                  Text(
+                    'Updated: ${_formatUpdatedTime(DateTime.now())}',
+                    style: const TextStyle(color: AppColors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.of(context, rootNavigator: true).pushNamed(
+                          AppRoutes.marketOrderCheckoutRoute,
+                          arguments: {
+                            'title': item.symbol,
+                            'seller': item.sellerName,
+                            'amount': item.price,
+                          },
+                        );
+                      },
+                      child: const Text('Place Order'),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 320,
-                child: _DetailedCandleChart(
-                  candles: candles,
-                  bidLine: _bid(item),
-                  askLine: _ask(item),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                AppReleaseConfig.showSellerUi
-                    ? '${item.name} • Seller: ${item.sellerName}'
-                    : item.name,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Live Price: \$${item.price.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 18),
-              ),
-              Text(
-                'Ask ${_ask(item).toStringAsFixed(2)} • Bid ${_bid(item).toStringAsFixed(2)}',
-              ),
-              Text(
-                'High ${_high(item).toStringAsFixed(2)} • Low ${_low(item).toStringAsFixed(2)}',
-              ),
-              Text(
-                'Updated: ${_formatUpdatedTime(DateTime.now())}',
-                style: const TextStyle(color: AppColors.grey),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    Navigator.of(context, rootNavigator: true).pushNamed(
-                      AppRoutes.marketOrderCheckoutRoute,
-                      arguments: {
-                        'title': item.symbol,
-                        'seller': item.sellerName,
-                        'amount': item.price,
-                      },
-                    );
-                  },
-                  child: const Text('Place Order'),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
+  }
+
+  int _countForFrame(String frame) {
+    switch (frame) {
+      case '30 Min':
+        return 45;
+      case '1 Hour':
+        return 50;
+      case '1 Day':
+        return 35;
+      case '1 Minute':
+      default:
+        return 60;
+    }
   }
 
   Widget _marketValueLine(
@@ -323,7 +372,12 @@ class _MiniCandleChart extends StatelessWidget {
         color: AppColors.grey.withAlpha(20),
       ),
       child: CustomPaint(
-        painter: _CandlePainter(candles: candles, showGrid: false, showPrices: false),
+        painter: _CandlePainter(
+          candles: candles,
+          showGrid: false,
+          showPrices: false,
+          timeframe: '1 Minute',
+        ),
       ),
     );
   }
@@ -333,11 +387,13 @@ class _DetailedCandleChart extends StatelessWidget {
   final List<_CandleData> candles;
   final double bidLine;
   final double askLine;
+  final String timeframe;
 
   const _DetailedCandleChart({
     required this.candles,
     required this.bidLine,
     required this.askLine,
+    required this.timeframe,
   });
 
   @override
@@ -353,6 +409,7 @@ class _DetailedCandleChart extends StatelessWidget {
           showPrices: true,
           askLine: askLine,
           bidLine: bidLine,
+          timeframe: timeframe,
         ),
       ),
     );
@@ -379,6 +436,7 @@ class _CandlePainter extends CustomPainter {
   final List<_CandleData> candles;
   final bool showGrid;
   final bool showPrices;
+  final String timeframe;
   final double? askLine;
   final double? bidLine;
 
@@ -386,6 +444,7 @@ class _CandlePainter extends CustomPainter {
     required this.candles,
     required this.showGrid,
     required this.showPrices,
+    required this.timeframe,
     this.askLine,
     this.bidLine,
   });
@@ -400,9 +459,11 @@ class _CandlePainter extends CustomPainter {
     final minY = allLows.reduce(math.min);
     final range = (maxY - minY).abs() < 0.000001 ? 1.0 : (maxY - minY);
     const rightGutter = 58.0;
+    const bottomGutter = 20.0;
     final chartWidth = size.width - rightGutter;
+    final chartHeight = size.height - bottomGutter;
 
-    double toY(double v) => size.height - ((v - minY) / range) * size.height;
+    double toY(double v) => chartHeight - ((v - minY) / range) * chartHeight;
 
     if (showGrid) {
       final gridPaint = Paint()
@@ -410,12 +471,12 @@ class _CandlePainter extends CustomPainter {
         ..strokeWidth = 0.7;
 
       for (var i = 0; i <= 8; i++) {
-        final y = (size.height / 8) * i;
+        final y = (chartHeight / 8) * i;
         canvas.drawLine(Offset(0, y), Offset(chartWidth, y), gridPaint);
       }
       for (var i = 0; i <= 8; i++) {
         final x = (chartWidth / 8) * i;
-        canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+        canvas.drawLine(Offset(x, 0), Offset(x, chartHeight), gridPaint);
       }
     }
 
@@ -465,7 +526,7 @@ class _CandlePainter extends CustomPainter {
       final tp = TextPainter(textDirection: TextDirection.ltr);
       for (var i = 0; i <= 8; i++) {
         final value = maxY - ((range / 8) * i);
-        final y = (size.height / 8) * i;
+        final y = (chartHeight / 8) * i;
         tp.text = TextSpan(
           text: value.toStringAsFixed(2),
           style: const TextStyle(fontSize: 11, color: AppColors.grey),
@@ -473,6 +534,38 @@ class _CandlePainter extends CustomPainter {
         tp.layout();
         tp.paint(canvas, Offset(chartWidth + 4, y - (tp.height / 2)));
       }
+
+      final xLabel = TextPainter(
+        text: TextSpan(
+          text: _xLabel(timeframe),
+          style: const TextStyle(fontSize: 11, color: AppColors.grey),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      xLabel.paint(canvas, Offset(4, chartHeight + 3));
+
+      final xLabelMid = TextPainter(
+        text: const TextSpan(
+          text: 'Time',
+          style: TextStyle(fontSize: 11, color: AppColors.grey),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      xLabelMid.paint(canvas, Offset((chartWidth / 2) - (xLabelMid.width / 2), chartHeight + 3));
+    }
+  }
+
+  String _xLabel(String frame) {
+    switch (frame) {
+      case '30 Min':
+        return 'Last 30m';
+      case '1 Hour':
+        return 'Last 1h';
+      case '1 Day':
+        return 'Last 1d';
+      case '1 Minute':
+      default:
+        return 'Last 1m';
     }
   }
 
@@ -502,6 +595,7 @@ class _CandlePainter extends CustomPainter {
     return oldDelegate.candles != candles ||
         oldDelegate.showGrid != showGrid ||
         oldDelegate.askLine != askLine ||
-        oldDelegate.bidLine != bidLine;
+        oldDelegate.bidLine != bidLine ||
+        oldDelegate.timeframe != timeframe;
   }
 }
