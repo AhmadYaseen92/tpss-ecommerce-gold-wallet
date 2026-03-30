@@ -59,13 +59,14 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
         summaryLabel: 'Estimated Total',
         summaryValue: '\$${_total.toStringAsFixed(2)}',
         buttonText: 'Place Order',
-        onPressed: () {
+        onPressed: () async {
           if (!(_formKey.currentState?.validate() ?? false)) return;
-          AppModalAlert.show(
+          await AppModalAlert.show(
             context,
             title: 'Order Placed',
             message: 'Order placed: $symbol x$_quantity (${_label(executionType)})',
           );
+          if (!context.mounted) return;
           Navigator.pop(context);
         },
       ),

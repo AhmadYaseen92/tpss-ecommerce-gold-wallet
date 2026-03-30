@@ -16,13 +16,14 @@ class ForgotPasswordPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => ForgotPasswordCubit(),
       child: BlocConsumer<ForgotPasswordCubit, ForgotPasswordState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is ForgotPasswordSuccess) {
-            AppModalAlert.show(
+            await AppModalAlert.show(
               context,
               title: 'Success',
               message: 'Password reset successfully!',
             );
+            if (!context.mounted) return;
             Navigator.pushNamedAndRemoveUntil(
               context,
               AppRoutes.loginRoute,

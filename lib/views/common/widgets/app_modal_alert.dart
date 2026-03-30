@@ -8,8 +8,11 @@ class AppModalAlert {
     String title = 'Notice',
     String buttonText = 'OK',
   }) async {
+    if (!context.mounted) return;
     await showDialog<void>(
       context: context,
+      useRootNavigator: true,
+      barrierDismissible: true,
       builder: (ctx) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
