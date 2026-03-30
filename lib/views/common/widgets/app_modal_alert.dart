@@ -15,6 +15,8 @@ class AppModalAlert {
       barrierDismissible: true,
       builder: (ctx) {
         return AlertDialog(
+          backgroundColor: AppColors.white,
+          surfaceTintColor: AppColors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
             title,
