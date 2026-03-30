@@ -77,12 +77,47 @@ class TransferAssetPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           ActionTextField(
-                            label: cubit.isGift
-                                ? 'Recipient Email / Mobile'
-                                : 'Wallet ID / Email / Mobile',
-                            hintText: 'Enter recipient contact',
+                            label: 'Recipient Account No.',
+                            hintText: 'Enter recipient account number',
+                            keyboardType: TextInputType.number,
                             controller: cubit.recipientContactController,
                             validator: cubit.validateRecipientContact,
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                cubit.isRecipientVerified
+                                    ? Icons.verified
+                                    : Icons.error_outline,
+                                size: 16,
+                                color: cubit.isRecipientVerified
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  cubit.recipientContactController.text.trim().isEmpty
+                                      ? 'Enter account number to verify recipient in our system.'
+                                      : cubit.isRecipientVerified
+                                          ? 'Verified: recipient account exists in our system.'
+                                          : 'Not verified: recipient account does not exist in our system.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: cubit.recipientContactController.text.trim().isEmpty
+                                        ? Colors.grey
+                                        : cubit.isRecipientVerified
+                                            ? Colors.green
+                                            : Colors.red,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: cubit.verifyRecipientAccount,
+                                child: const Text('Verify'),
+                              ),
+                            ],
                           ),
                         ],
                       ),

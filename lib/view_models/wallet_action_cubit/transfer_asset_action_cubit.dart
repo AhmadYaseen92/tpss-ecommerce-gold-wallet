@@ -14,6 +14,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
       messageController = TextEditingController(),
       super(TransferAssetActionInitial()) {
     quantityController.addListener(_emitUpdated);
+    recipientContactController.addListener(_onRecipientChanged);
   }
 
   final WalletTransaction asset;
@@ -23,7 +24,11 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
   final TextEditingController quantityController;
   final TextEditingController messageController;
 
+
   WalletActionType transferType = WalletActionType.transfer;
+  bool isRecipientVerified = false;
+
+  final Set<String> _registeredAccounts = {'10001', '10002', '20011', '77889'};
 
   int get maxQuantity => asset.quantity;
   double get unitPrice => _parseCurrency(asset.marketValue) / maxQuantity;
@@ -48,7 +53,11 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
   }
 
   String? validateRecipientContact(String? value) {
-    if ((value ?? '').trim().isEmpty) return 'Recipient contact is required';
+    final account = (value ?? '').trim();
+    if (account.isEmpty) return 'Recipient account number is required';
+    if (!isRecipientVerified) {
+      return 'Account is not verified. Recipient must exist in our system';
+    }
     return null;
   }
 
@@ -58,6 +67,16 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
     if (qty < 1) return 'Quantity must be at least 1';
     if (qty > maxQuantity) return 'Quantity cannot exceed $maxQuantity';
     return null;
+  }
+
+  void verifyRecipientAccount() {
+    final accountNo = recipientContactController.text.trim();
+    isRecipientVerified = accountNo.isNotEmpty && _registeredAccounts.contains(accountNo);
+    _emitUpdated();
+  }
+
+  void _onRecipientChanged() {
+    verifyRecipientAccount();
   }
 
   void updateTransferType(WalletActionType value) {
@@ -73,7 +92,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
       primaryValue: '$quantity Units',
       feeValue: formatCurrency(feeAmount),
       totalValue: formatCurrency(estimatedValue),
-      destinationLabel: isGift ? 'Recipient Contact' : 'Wallet ID / Contact',
+      destinationLabel: 'Recipient Account No.',
       destinationValue: recipientContactController.text.trim(),
       note: messageController.text.trim(),
       referenceNumber: 'TRX-${DateTime.now().millisecondsSinceEpoch}',
@@ -91,6 +110,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
 
   @override
   Future<void> close() {
+    recipientContactController.removeListener(_onRecipientChanged);
     recipientNameController.dispose();
     recipientContactController.dispose();
     quantityController.dispose();
