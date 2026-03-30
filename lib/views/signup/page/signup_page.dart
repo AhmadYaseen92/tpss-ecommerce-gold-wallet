@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/signup_cubit/signup_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_step1_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/signup/widgets/signup_step2_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/step_indicator_widget.dart';
@@ -19,11 +20,10 @@ class SignupPage extends StatelessWidget {
           if (state is SignupSuccess) {
             Navigator.pushNamed(context, AppRoutes.loginRoute);
           } else if (state is SignupError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.red,
-              ),
+            AppModalAlert.show(
+              context,
+              title: 'Signup Failed',
+              message: state.message,
             );
           }
         },

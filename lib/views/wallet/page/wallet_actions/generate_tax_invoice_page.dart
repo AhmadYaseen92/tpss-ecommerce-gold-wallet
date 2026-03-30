@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 
@@ -69,7 +70,7 @@ class GenerateTaxInvoicePage extends StatelessWidget {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          AppModalAlert.show(context, title: label, message: message);
         },
         icon: Icon(icon),
         label: Text(label),

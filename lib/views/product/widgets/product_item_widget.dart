@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
@@ -27,7 +28,8 @@ class ProductItemWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(product.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text('Seller: ${product.sellerName}', style: const TextStyle(fontSize: 12, color: AppColors.darkGold)),
+                    if (AppReleaseConfig.showSellerUi)
+                      Text('Seller: ${product.sellerName}', style: const TextStyle(fontSize: 12, color: AppColors.darkGold)),
                     const SizedBox(height: 6),
                     Text(
                       product.description,

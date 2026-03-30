@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/cart_cubit/cart_cubit.dart';
@@ -77,11 +78,13 @@ class CartItemWidget extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        'Seller: ${product.sellerName}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.darkGold),
-                      ),
-                      const SizedBox(height: 4),
+                      if (AppReleaseConfig.showSellerUi) ...[
+                        Text(
+                          'Seller: ${product.sellerName}',
+                          style: const TextStyle(fontSize: 12, color: AppColors.darkGold),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
                       Opacity(
                         opacity: 0.7,
                         child: Text(

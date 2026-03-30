@@ -4,6 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/sell_cubit/sell_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/terms_row.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/sell/widgets/info_card_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/summary_row_widget.dart';
@@ -269,8 +270,10 @@ class SellWidget extends StatelessWidget {
               label: 'Confirm Trade',
               onPressed: () {
                 sellCubit.submit();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Sell confirmed. Tax invoice has been generated.')),
+                AppModalAlert.show(
+                  context,
+                  title: 'Sell Confirmed',
+                  message: 'Sell confirmed. Tax invoice has been generated.',
                 );
               },
             ),

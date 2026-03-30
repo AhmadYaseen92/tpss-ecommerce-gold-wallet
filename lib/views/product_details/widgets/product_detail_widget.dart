@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
@@ -9,6 +10,7 @@ import 'package:tpss_ecommerce_gold_wallet/views/product_details/widgets/bottomb
 import 'package:tpss_ecommerce_gold_wallet/views/product_details/widgets/description_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product_details/widgets/product_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product_details/widgets/product_specs_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 
 class ProductDetailWidget extends StatelessWidget {
   final ProductItemModel product;
@@ -55,15 +57,17 @@ class ProductDetailWidget extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        'Seller: ${product.sellerName}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.darkGold,
-                          fontWeight: FontWeight.w600,
+                      if (AppReleaseConfig.showSellerUi) ...[
+                        Text(
+                          'Seller: ${product.sellerName}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.darkGold,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
+                        const SizedBox(height: 6),
+                      ],
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -113,17 +117,10 @@ class ProductDetailWidget extends StatelessWidget {
         ),
         BottomBar(
           onAddToCart: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '${product.name} x${productCubit.quantity} added to cart',
-                ),
-                backgroundColor: AppColors.darkGold,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+            AppModalAlert.show(
+              context,
+              title: 'Added to Cart',
+              message: '${product.name} x${productCubit.quantity} added to cart',
             );
             productCubit.addCart(product);
           },

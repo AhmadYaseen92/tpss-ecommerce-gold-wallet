@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/transaction_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transaction/widget/transaction_icon_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transaction/widget/transaction_status_badge_widget.dart';
@@ -38,11 +39,13 @@ class TransactionItemWidget extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          'Seller: ${transaction.sellerName}',
-                          style: const TextStyle(fontSize: 11, color: AppColors.darkGold),
-                        ),
-                        const SizedBox(height: 2),
+                        if (AppReleaseConfig.showSellerUi) ...[
+                          Text(
+                            'Seller: ${transaction.sellerName}',
+                            style: const TextStyle(fontSize: 11, color: AppColors.darkGold),
+                          ),
+                          const SizedBox(height: 2),
+                        ],
                         Text(
                           DateFormat('MMM dd, hh:mm a').format(transaction.date),
                           style: const TextStyle(

@@ -1,6 +1,7 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/transaction_model.dart';
 
 part 'transaction_state.dart';
@@ -9,12 +10,14 @@ class TransactionCubit extends Cubit<TransactionState> {
   String selectedPeriod = 'All Periods';
   String selectedType = 'All Types';
   String selectedStatus = 'All Statuses';
-  String activeSeller = 'All Sellers';
+  String activeSeller = AppReleaseConfig.defaultSeller;
 
   TransactionCubit() : super(TransactionInitial());
 
-  void loadTransactions({String seller = 'All Sellers'}) async {
-    activeSeller = seller;
+  void loadTransactions({String seller = AppReleaseConfig.allSellersLabel}) async {
+    activeSeller = AppReleaseConfig.isIndividualSellerRelease
+        ? AppReleaseConfig.individualSellerName
+        : seller;
     emit(TransactionLoading());
     try {
       await Future.delayed(const Duration(milliseconds: 600));
@@ -56,7 +59,10 @@ class TransactionCubit extends Cubit<TransactionState> {
       else if (selectedStatus == 'Failed')
         statusMatch = transaction.status.toLowerCase() == 'failed';
 
-      final sellerMatch = activeSeller == 'All Sellers' || transaction.sellerName == activeSeller;
+      final sellerMatch = AppReleaseConfig.matchesSeller(
+        activeSeller,
+        transaction.sellerName,
+      );
       return periodMatch && typeMatch && statusMatch && sellerMatch;
     }).toList();
   }

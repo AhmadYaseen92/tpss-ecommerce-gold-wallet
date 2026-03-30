@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/account_conversion_request_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 
 class AccountSummaryConfirmationPage extends StatelessWidget {
@@ -34,8 +35,10 @@ class AccountSummaryConfirmationPage extends StatelessWidget {
           ),
           FilledButton.icon(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('OTP sent to WhatsApp. Confirm to complete operation.')),
+              AppModalAlert.show(
+                context,
+                title: 'OTP Sent',
+                message: 'OTP sent to WhatsApp. Confirm to complete operation.',
               );
             },
             icon: const Icon(Icons.verified_user_outlined),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 
@@ -13,19 +14,21 @@ class ProductCubit extends Cubit<ProductState> {
   List<ProductItemModel> visibleCatalogProducts = [];
   List<MarketSymbolModel> visibleMarketSymbols = [];
   String selectedCategory = 'All';
-  String activeSeller = 'All Sellers';
+  String activeSeller = AppReleaseConfig.defaultSeller;
   int quantity = 1;
   Timer? _marketTimer;
 
   ProductCubit() : super(ProductInitial());
 
-  void loadProducts({String seller = 'All Sellers'}) async {
+  void loadProducts({String seller = AppReleaseConfig.allSellersLabel}) async {
     emit(ProductLoading());
     try {
       await Future.delayed(const Duration(milliseconds: 400));
       allProducts = dummyProducts;
       selectedCategory = 'All';
-      activeSeller = seller;
+      activeSeller = AppReleaseConfig.isIndividualSellerRelease
+          ? AppReleaseConfig.individualSellerName
+          : seller;
       _emitCatalog();
       _emitMarketWatch();
       _startMarketFeed();
@@ -49,8 +52,10 @@ class ProductCubit extends Cubit<ProductState> {
     visibleCatalogProducts = allProducts.where((product) {
       final categoryOk =
           selectedCategory == 'All' || product.category == selectedCategory;
-      final sellerOk =
-          activeSeller == 'All Sellers' || product.sellerName == activeSeller;
+      final sellerOk = AppReleaseConfig.matchesSeller(
+        activeSeller,
+        product.sellerName,
+      );
       return categoryOk && sellerOk;
     }).toList();
 
@@ -98,7 +103,7 @@ class ProductCubit extends Cubit<ProductState> {
 
   void _emitMarketWatch() {
     visibleMarketSymbols = marketSymbols.where((symbol) {
-      return activeSeller == 'All Sellers' || symbol.sellerName == activeSeller;
+      return AppReleaseConfig.matchesSeller(activeSeller, symbol.sellerName);
     }).toList();
     emit(
       ProductMarketWatchLoaded(

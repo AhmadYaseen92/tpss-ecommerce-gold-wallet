@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/cart_cubit/cart_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/cart/widgets/cart_item_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/cart/widgets/cart_summary.dart';
@@ -24,8 +25,12 @@ class CartPage extends StatelessWidget {
               } else if (state is CartLoaded) {
                 final cartProducts = state.cartProducts;
                 if (cartProducts.isEmpty) {
-                  return const Center(
-                    child: Text('Your cart is empty for selected seller'),
+                  return Center(
+                    child: Text(
+                      AppReleaseConfig.showSellerUi
+                          ? 'Your cart is empty for selected seller'
+                          : 'Your cart is empty',
+                    ),
                   );
                 }
                 return Column(
