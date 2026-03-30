@@ -8,10 +8,7 @@ class RecipientField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mode = cubit.recipientMode;
-    final isEmail = mode == RecipientMode.email;
-    final isPhone = mode == RecipientMode.phone;
-    final isAccount = mode == RecipientMode.account;
+    final hasInput = cubit.recipientController.text.trim().isNotEmpty;
 
     return Column(
       children: [
@@ -25,7 +22,7 @@ class RecipientField extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                isEmail ? Icons.email_outlined : isPhone ? Icons.phone_outlined : Icons.badge_outlined,
+                Icons.badge_outlined,
                 color: AppColors.greyShade400,
                 size: 20,
               ),
@@ -33,28 +30,18 @@ class RecipientField extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: cubit.recipientController,
-                  keyboardType: isEmail
-                      ? TextInputType.emailAddress
-                      : isPhone
-                          ? TextInputType.phone
-                          : TextInputType.number,
+                  keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    hintText: isEmail
-                        ? 'recipient@example.com'
-                        : isPhone
-                            ? '+1 234 567 8900'
-                            : 'Enter account number',
+                    hintText: 'Enter recipient account number',
                     border: InputBorder.none,
                   ),
                 ),
               ),
-              if (isAccount)
-                TextButton(onPressed: cubit.verifyAccount, child: const Text('Verify')),
+              TextButton(onPressed: cubit.verifyAccount, child: const Text('Verify')),
             ],
           ),
         ),
-        if (isAccount)
-          Padding(
+        Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Row(
               children: [
@@ -65,10 +52,18 @@ class RecipientField extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  cubit.isAccountVerified
-                      ? 'Account exists in system and verified.'
-                      : 'Account must be verified before transfer.',
-                  style: TextStyle(color: cubit.isAccountVerified ? AppColors.green : AppColors.red),
+                  !hasInput
+                      ? 'Enter account number to verify in system.'
+                      : cubit.isAccountVerified
+                          ? 'Verified: account exists in our system.'
+                          : 'Not verified: account does not exist in our system.',
+                  style: TextStyle(
+                    color: !hasInput
+                        ? AppColors.greyShade600
+                        : cubit.isAccountVerified
+                            ? AppColors.green
+                            : AppColors.red,
+                  ),
                 ),
               ],
             ),

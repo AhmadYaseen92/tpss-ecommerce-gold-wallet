@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
@@ -21,99 +23,127 @@ class MarketWatchTabWidget extends StatelessWidget {
             ? state.symbols
             : cubit.visibleMarketSymbols;
 
-        return Column(
+        return Stack(
           children: [
-            const SellerFilterBarWidget(),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.all(12),
-                itemCount: symbols.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final item = symbols[index];
-                  return Card(
-                    color: AppColors.white,
-                    child: GestureDetector(
-                      onTap: () => _openMarketDetail(context, item),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 16,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            /// LEFT SIDE (Title + Subtitle)
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.symbol,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium!
-                                        .copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(item.name),
-                                  if (AppReleaseConfig.showSellerUi) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Seller: ${item.sellerName}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.darkGold,
+            Column(
+              children: [
+                const SellerFilterBarWidget(),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 84),
+                    itemCount: symbols.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final item = symbols[index];
+                      return Card(
+                        color: AppColors.white,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => _openMarketDetail(context, item),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 16,
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.symbol,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium!
+                                                .copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                          Text(item.name),
+                                          if (AppReleaseConfig.showSellerUi) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Seller: ${item.sellerName}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: AppColors.darkGold,
+                                              ),
+                                            ),
+                                          ],
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Updated: ${_formatUpdatedTime(DateTime.now())}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 150,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          _marketValueLine(
+                                            context,
+                                            label: 'Ask',
+                                            value: _ask(item).toStringAsFixed(2),
+                                          ),
+                                          _marketValueLine(
+                                            context,
+                                            label: 'Bid',
+                                            value: _bid(item).toStringAsFixed(2),
+                                          ),
+                                          _marketValueLine(
+                                            context,
+                                            label: 'High',
+                                            value: _high(item).toStringAsFixed(2),
+                                          ),
+                                          _marketValueLine(
+                                            context,
+                                            label: 'Low',
+                                            value: _low(item).toStringAsFixed(2),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Updated: ${_formatUpdatedTime(DateTime.now())}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            /// RIGHT SIDE (Ask/Bid/High/Low)
-                            SizedBox(
-                              width: 150,
-                              child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _marketValueLine(
-                                  context,
-                                  label: 'Ask',
-                                  value: _ask(item).toStringAsFixed(2),
                                 ),
-                                _marketValueLine(
-                                  context,
-                                  label: 'Bid',
-                                  value: _bid(item).toStringAsFixed(2),
-                                ),
-                                _marketValueLine(
-                                  context,
-                                  label: 'High',
-                                  value: _high(item).toStringAsFixed(2),
-                                ),
-                                _marketValueLine(
-                                  context,
-                                  label: 'Low',
-                                  value: _low(item).toStringAsFixed(2),
+                                const SizedBox(height: 12),
+                                _SymbolMiniChart(
+                                  points: _chartPoints(item, length: 22),
+                                  isPositive: item.change >= 0,
                                 ),
                               ],
                             ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            Positioned(
+              right: 20,
+              bottom: 20,
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  Navigator.of(context, rootNavigator: true).pushNamed(
+                    AppRoutes.marketOrderCheckoutRoute,
                   );
                 },
+                icon: const Icon(Icons.add_shopping_cart_outlined),
+                label: const Text('Place Order'),
               ),
             ),
           ],
@@ -125,6 +155,7 @@ class MarketWatchTabWidget extends StatelessWidget {
   void _openMarketDetail(BuildContext context, MarketSymbolModel item) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppColors.backgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -150,6 +181,17 @@ class MarketWatchTabWidget extends StatelessWidget {
                     : item.name,
               ),
               const SizedBox(height: 12),
+              SizedBox(
+                height: 220,
+                width: double.infinity,
+                child: _SymbolMiniChart(
+                  points: _chartPoints(item, length: 44),
+                  isPositive: item.change >= 0,
+                  showGrid: true,
+                  strokeWidth: 2.8,
+                ),
+              ),
+              const SizedBox(height: 12),
               Text(
                 'Live Price: \$${item.price.toStringAsFixed(2)}',
                 style: const TextStyle(fontSize: 18),
@@ -157,7 +199,9 @@ class MarketWatchTabWidget extends StatelessWidget {
               Text(
                 'Ask ${_ask(item).toStringAsFixed(2)} • Bid ${_bid(item).toStringAsFixed(2)}',
               ),
-              Text('High ${_high(item).toStringAsFixed(2)} • Low ${_low(item).toStringAsFixed(2)}'),
+              Text(
+                'High ${_high(item).toStringAsFixed(2)} • Low ${_low(item).toStringAsFixed(2)}',
+              ),
               const SizedBox(height: 4),
               Text(
                 'Updated: ${_formatUpdatedTime(DateTime.now())}',
@@ -178,7 +222,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                       },
                     );
                   },
-                  child: const Text('Continue'),
+                  child: const Text('Place Order'),
                 ),
               ),
             ],
@@ -216,6 +260,15 @@ class MarketWatchTabWidget extends StatelessWidget {
     );
   }
 
+  List<double> _chartPoints(MarketSymbolModel item, {required int length}) {
+    return List<double>.generate(length, (index) {
+      final seed = (item.symbol.hashCode % 100) / 1000;
+      final wave = math.sin((index / (length - 1)) * math.pi * 1.6);
+      final drift = (item.change / 100) * (index / (length - 1));
+      return item.price * (1 + seed + (wave * 0.004) + drift);
+    });
+  }
+
   String _formatUpdatedTime(DateTime time) {
     final month = time.month.toString().padLeft(2, '0');
     final day = time.day.toString().padLeft(2, '0');
@@ -231,4 +284,97 @@ class MarketWatchTabWidget extends StatelessWidget {
   double _bid(MarketSymbolModel item) => item.price * 0.9985;
   double _high(MarketSymbolModel item) => item.price * 1.01;
   double _low(MarketSymbolModel item) => item.price * 0.99;
+}
+
+class _SymbolMiniChart extends StatelessWidget {
+  final List<double> points;
+  final bool isPositive;
+  final bool showGrid;
+  final double strokeWidth;
+
+  const _SymbolMiniChart({
+    required this.points,
+    required this.isPositive,
+    this.showGrid = false,
+    this.strokeWidth = 2,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isPositive ? AppColors.green : AppColors.red;
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: color.withAlpha(20),
+      ),
+      child: CustomPaint(
+        size: const Size(double.infinity, 70),
+        painter: _SparklinePainter(
+          points: points,
+          color: color,
+          showGrid: showGrid,
+          strokeWidth: strokeWidth,
+        ),
+      ),
+    );
+  }
+}
+
+class _SparklinePainter extends CustomPainter {
+  final List<double> points;
+  final Color color;
+  final bool showGrid;
+  final double strokeWidth;
+
+  _SparklinePainter({
+    required this.points,
+    required this.color,
+    required this.showGrid,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (points.length < 2) return;
+
+    final minY = points.reduce(math.min);
+    final maxY = points.reduce(math.max);
+    final range = (maxY - minY).abs() < 0.0001 ? 1.0 : (maxY - minY);
+
+    if (showGrid) {
+      final gridPaint = Paint()
+        ..color = AppColors.grey.withAlpha(45)
+        ..strokeWidth = 1;
+      for (var i = 1; i <= 3; i++) {
+        final y = (size.height / 4) * i;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+      }
+    }
+
+    final path = Path();
+    for (var i = 0; i < points.length; i++) {
+      final x = (i / (points.length - 1)) * size.width;
+      final y = size.height - ((points[i] - minY) / range * size.height);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SparklinePainter oldDelegate) {
+    return oldDelegate.points != points || oldDelegate.color != color;
+  }
 }

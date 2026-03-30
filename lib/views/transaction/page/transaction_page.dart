@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/transaction_cubit/transaction_cubit.dart';
@@ -41,15 +40,29 @@ class TransactionPage extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (AppReleaseConfig.showSellerUi)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: OutlinedButton.icon(
+                  TransactionFilterBar(
+                    transactionCubit: BlocProvider.of<TransactionCubit>(
+                      context,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 4.0,
+                    ),
+                    child: Row(
+                      children: [
+                        const Text(
+                          'RECENT ACTIVITY',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                            color: AppColors.grey,
+                          ),
+                        ),
+                        const Spacer(),
+                        OutlinedButton.icon(
                           onPressed: () {
                             AppModalAlert.show(
                               context,
@@ -57,29 +70,10 @@ class TransactionPage extends StatelessWidget {
                               message: 'History exported to Excel sheet.',
                             );
                           },
-                          icon: const Icon(Icons.table_chart_outlined),
+                          icon: const Icon(Icons.table_chart_outlined, size: 18),
                           label: const Text('Export to Excel'),
                         ),
-                      ),
-                    ),
-                  TransactionFilterBar(
-                    transactionCubit: BlocProvider.of<TransactionCubit>(
-                      context,
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 4.0,
-                    ),
-                    child: Text(
-                      'RECENT ACTIVITY',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
-                        color: AppColors.grey,
-                      ),
+                      ],
                     ),
                   ),
                   Expanded(

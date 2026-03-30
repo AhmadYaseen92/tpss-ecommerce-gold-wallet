@@ -8,39 +8,31 @@ class RecipientToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _toggle(context, RecipientMode.account, 'Account', Icons.account_balance_wallet_outlined),
-        const SizedBox(width: 8),
-        _toggle(context, RecipientMode.email, 'Email', Icons.email_outlined),
-        const SizedBox(width: 8),
-        _toggle(context, RecipientMode.phone, 'Phone', Icons.phone_outlined),
-      ],
-    );
-  }
-
-  Widget _toggle(BuildContext context, RecipientMode mode, String label, IconData icon) {
-    final selected = cubit.recipientMode == mode;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => cubit.setRecipientMode(mode),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.luxuryIvory : AppColors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: selected ? AppColors.primaryColor : AppColors.greysShade2),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.luxuryIvory,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primaryColor),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.account_balance_wallet_outlined,
+            size: 18,
+            color: AppColors.primaryColor,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: selected ? AppColors.primaryColor : AppColors.greyShade600),
-              const SizedBox(width: 4),
-              Text(label, style: TextStyle(color: selected ? AppColors.primaryColor : AppColors.greyShade600)),
-            ],
+          SizedBox(width: 6),
+          Text(
+            'Account Number (Required)',
+            style: TextStyle(
+              color: AppColors.primaryColor,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
