@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_form_dropdown.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_bottom_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_text_field.dart';
@@ -84,21 +84,34 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                 title: 'Order Type & Quantity',
                 child: Column(
                   children: [
-                    AppFormDropdown<MarketExecutionType>(
-                      label: 'Buy Type',
-                      value: executionType,
-                      items: MarketExecutionType.values
-                          .map(
-                            (type) => DropdownMenuItem<MarketExecutionType>(
-                              value: type,
-                              child: Text(_label(type)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (type) {
-                        if (type == null) return;
-                        setState(() => executionType = type);
-                      },
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Execution Type',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      children: MarketExecutionType.values.map((type) {
+                        final selected = type == executionType;
+                        return ChoiceChip(
+                          label: Text(_label(type)),
+                          selected: selected,
+                          selectedColor: AppColors.primaryColor.withAlpha(25),
+                          labelStyle: TextStyle(
+                            color: selected ? AppColors.primaryColor : AppColors.darkBrown,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          side: BorderSide(
+                            color: selected ? AppColors.primaryColor : AppColors.greyBorder,
+                          ),
+                          onSelected: (_) => setState(() => executionType = type),
+                        );
+                      }).toList(),
                     ),
                     const SizedBox(height: 12),
                     Row(
