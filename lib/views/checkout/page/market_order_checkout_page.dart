@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 
 class MarketOrderCheckoutPage extends StatefulWidget {
   const MarketOrderCheckoutPage({super.key});
@@ -37,7 +38,7 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
   @override
   Widget build(BuildContext context) {
     final symbol = (_args['title'] ?? 'XAUUSD').toString();
-    final seller = (_args['seller'] ?? 'All Sellers').toString();
+    final seller = (_args['seller'] ?? AppReleaseConfig.defaultSeller).toString();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Market Order Checkout'), centerTitle: true),
@@ -51,7 +52,7 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _row('Symbol/Unit', symbol),
-                  _row('Seller', seller),
+                  if (AppReleaseConfig.showSellerUi) _row('Seller', seller),
                   _row('Live Price', '\$${_unitPrice.toStringAsFixed(2)}'),
                 ],
               ),

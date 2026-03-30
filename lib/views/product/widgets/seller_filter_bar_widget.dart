@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_filter_chip.dart';
 
@@ -8,6 +9,9 @@ class SellerFilterBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!AppReleaseConfig.showSellerUi) {
+      return const SizedBox.shrink();
+    }
     final selectedSeller = context.watch<AppCubit>().state.selectedSeller;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),

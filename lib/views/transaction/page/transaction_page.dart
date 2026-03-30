@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/transaction_cubit/transaction_cubit.dart';
@@ -36,15 +37,18 @@ class TransactionPage extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: double.infinity,
-                  color: AppColors.luxuryIvory,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Text(
-                    seller == 'All Sellers' ? 'Transactions scope: all sellers' : 'Transactions scope: $seller',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                if (AppReleaseConfig.showSellerUi)
+                  Container(
+                    width: double.infinity,
+                    color: AppColors.luxuryIvory,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Text(
+                      seller == AppReleaseConfig.allSellersLabel
+                          ? 'Transactions scope: all sellers'
+                          : 'Transactions scope: $seller',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
-                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   child: Align(

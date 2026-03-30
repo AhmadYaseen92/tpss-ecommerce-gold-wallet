@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
@@ -30,7 +31,6 @@ class MarketWatchTabWidget extends StatelessWidget {
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final item = symbols[index];
-                  final isUp = item.change >= 0;
                   return Card(
                     color: AppColors.white,
                     child: GestureDetector(
@@ -56,36 +56,57 @@ class MarketWatchTabWidget extends StatelessWidget {
                                         .copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   Text(item.name),
+                                  if (AppReleaseConfig.showSellerUi) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Seller: ${item.sellerName}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.darkGold,
+                                      ),
+                                    ),
+                                  ],
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Seller: ${item.sellerName}',
+                                    'Updated: ${_formatUpdatedTime(DateTime.now())}',
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: AppColors.darkGold,
+                                      color: AppColors.grey,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
 
-                            /// RIGHT SIDE (Price + Change)
-                            Column(
+                            /// RIGHT SIDE (Ask/Bid/High/Low)
+                            SizedBox(
+                              width: 150,
+                              child: Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  '\$${item.price.toStringAsFixed(2)}',
-                                  style: Theme.of(context).textTheme.bodyMedium,
+                                _marketValueLine(
+                                  context,
+                                  label: 'Ask',
+                                  value: _ask(item).toStringAsFixed(2),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${isUp ? '+' : ''}${item.change.toStringAsFixed(2)}%',
-                                  style: Theme.of(context).textTheme.bodyMedium!
-                                      .copyWith(
-                                        color: isUp ? Colors.green : Colors.red,
-                                      ),
+                                _marketValueLine(
+                                  context,
+                                  label: 'Bid',
+                                  value: _bid(item).toStringAsFixed(2),
+                                ),
+                                _marketValueLine(
+                                  context,
+                                  label: 'High',
+                                  value: _high(item).toStringAsFixed(2),
+                                ),
+                                _marketValueLine(
+                                  context,
+                                  label: 'Low',
+                                  value: _low(item).toStringAsFixed(2),
                                 ),
                               ],
+                            ),
                             ),
                           ],
                         ),
@@ -109,7 +130,6 @@ class MarketWatchTabWidget extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        final isUp = item.change >= 0;
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -124,15 +144,24 @@ class MarketWatchTabWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text('${item.name} • Seller: ${item.sellerName}'),
+              Text(
+                AppReleaseConfig.showSellerUi
+                    ? '${item.name} • Seller: ${item.sellerName}'
+                    : item.name,
+              ),
               const SizedBox(height: 12),
               Text(
                 'Live Price: \$${item.price.toStringAsFixed(2)}',
                 style: const TextStyle(fontSize: 18),
               ),
               Text(
-                '24h: ${isUp ? '+' : ''}${item.change.toStringAsFixed(2)}%',
-                style: TextStyle(color: isUp ? Colors.green : Colors.red),
+                'Ask ${_ask(item).toStringAsFixed(2)} • Bid ${_bid(item).toStringAsFixed(2)}',
+              ),
+              Text('High ${_high(item).toStringAsFixed(2)} • Low ${_low(item).toStringAsFixed(2)}'),
+              const SizedBox(height: 4),
+              Text(
+                'Updated: ${_formatUpdatedTime(DateTime.now())}',
+                style: const TextStyle(color: AppColors.grey),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -158,4 +187,46 @@ class MarketWatchTabWidget extends StatelessWidget {
       },
     );
   }
+
+  Widget _marketValueLine(
+    BuildContext context, {
+    required String label,
+    required String value,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1.5),
+      child: RichText(
+        text: TextSpan(
+          style: Theme.of(context).textTheme.bodySmall,
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: const TextStyle(color: AppColors.grey),
+            ),
+            TextSpan(
+              text: '\$$value',
+              style: const TextStyle(
+                color: AppColors.black,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatUpdatedTime(DateTime time) {
+    final month = time.month.toString().padLeft(2, '0');
+    final day = time.day.toString().padLeft(2, '0');
+    final year = time.year.toString();
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$year-$month-$day $hour:$minute';
+  }
+
+  double _ask(MarketSymbolModel item) => item.price * 1.0015;
+  double _bid(MarketSymbolModel item) => item.price * 0.9985;
+  double _high(MarketSymbolModel item) => item.price * 1.01;
+  double _low(MarketSymbolModel item) => item.price * 0.99;
 }

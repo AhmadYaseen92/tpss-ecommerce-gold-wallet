@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 
@@ -112,14 +113,16 @@ class WalletHoldingItemWidget extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          'Seller: ${item.sellerName}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.darkGold,
-                            fontWeight: FontWeight.w600,
+                        if (AppReleaseConfig.showSellerUi) ...[
+                          Text(
+                            'Seller: ${item.sellerName}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.darkGold,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
+                          const SizedBox(height: 6),
+                        ],
 
                         Wrap(
                           spacing: 8,

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 
 part 'cart_state.dart';
@@ -6,10 +7,12 @@ part 'cart_state.dart';
 class CartCubit extends Cubit<CartState> {
   CartCubit() : super(CartInitial());
 
-  String _sellerFilter = 'All Sellers';
+  String _sellerFilter = AppReleaseConfig.defaultSeller;
 
-  void loadCartProducts({String sellerFilter = 'All Sellers'}) async {
-    _sellerFilter = sellerFilter;
+  void loadCartProducts({String sellerFilter = AppReleaseConfig.allSellersLabel}) async {
+    _sellerFilter = AppReleaseConfig.isIndividualSellerRelease
+        ? AppReleaseConfig.individualSellerName
+        : sellerFilter;
     emit(CartLoading());
     try {
       await Future.delayed(const Duration(milliseconds: 300));
@@ -20,8 +23,9 @@ class CartCubit extends Cubit<CartState> {
   }
 
   List<ProductItemModel> get _filteredProducts {
-    if (_sellerFilter == 'All Sellers') return List<ProductItemModel>.from(dummycartProducts);
-    return dummycartProducts.where((p) => p.sellerName == _sellerFilter).toList();
+    return dummycartProducts
+        .where((p) => AppReleaseConfig.matchesSeller(_sellerFilter, p.sellerName))
+        .toList();
   }
 
   void addProduct(ProductItemModel product) {

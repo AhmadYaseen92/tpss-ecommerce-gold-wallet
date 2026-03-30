@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 
 class WalletTransactionsWidget extends StatelessWidget {
@@ -136,14 +137,16 @@ class WalletTransactionsWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2.0),
-              Text(
-                'Seller: ${tx.sellerName}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.darkGold,
-                  fontWeight: FontWeight.w600,
+              if (AppReleaseConfig.showSellerUi) ...[
+                Text(
+                  'Seller: ${tx.sellerName}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.darkGold,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2.0),
+                const SizedBox(height: 2.0),
+              ],
               Text(
                 tx.subtitle,
                 style: Theme.of(

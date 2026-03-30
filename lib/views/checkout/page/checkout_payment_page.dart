@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/checkout_cubit/checkout_cubit.dart';
@@ -17,11 +18,20 @@ class CheckoutPaymentPage extends StatefulWidget {
 class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   int selectedBankIndex = 0;
   int selectedPaymentIndex = 0;
+  final TextEditingController _discountCodeController = TextEditingController();
+  String? _discountError;
+  double _discountAmount = 0.0;
 
   Map<String, dynamic> get _checkoutArgs {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map<String, dynamic>) return args;
     return const {};
+  }
+
+  @override
+  void dispose() {
+    _discountCodeController.dispose();
+    super.dispose();
   }
 
   @override
@@ -38,6 +48,8 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         },
         builder: (context, state) {
           final cubit = context.read<CheckoutCubit>();
+          final amount = ((_checkoutArgs['amount'] as num?) ?? 1250).toDouble();
+          final total = (amount - _discountAmount).clamp(0.0, double.infinity);
           return Scaffold(
             backgroundColor: AppColors.backgroundColor,
             appBar: AppBar(title: const Text('Process Checkout'), centerTitle: true),
@@ -92,7 +104,32 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                     child: Column(
                       children: [
                         _row('Asset', (_checkoutArgs['title'] ?? 'Gold Asset').toString()),
-                        _row('Seller', (_checkoutArgs['seller'] ?? 'All Sellers').toString()),
+                        if (AppReleaseConfig.showSellerUi)
+                          _row('Seller', (_checkoutArgs['seller'] ?? AppReleaseConfig.defaultSeller).toString()),
+                      ],
+                    ),
+                  ),
+                  ActionSectionCard(
+                    title: 'Discount Code (Optional)',
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _discountCodeController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: InputDecoration(
+                            hintText: 'Enter discount code',
+                            errorText: _discountError,
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: OutlinedButton(
+                            onPressed: () => _applyDiscountCode(amount),
+                            child: const Text('Apply Code'),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -105,10 +142,11 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                           _row('Account', PredefinedAccountsData.bankAccounts[selectedBankIndex].name),
                         if (cubit.selectedPaymentType == CheckoutPaymentType.card)
                           _row('Method', PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name),
-                        _row('Amount', '\$${((_checkoutArgs['amount'] as num?) ?? 1250).toStringAsFixed(2)}'),
+                        _row('Amount', '\$${amount.toStringAsFixed(2)}'),
                         _row('Fee', '\$0.00'),
+                        _row('Discount', '-\$${_discountAmount.toStringAsFixed(2)}'),
                         const Divider(),
-                        _row('Total', '\$${((_checkoutArgs['amount'] as num?) ?? 1250).toStringAsFixed(2)}', bold: true),
+                        _row('Total', '\$${total.toStringAsFixed(2)}', bold: true),
                       ],
                     ),
                   ),
@@ -138,6 +176,36 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         },
       ),
     );
+  }
+
+  void _applyDiscountCode(double amount) {
+    final raw = _discountCodeController.text.trim().toUpperCase();
+    if (raw.isEmpty) {
+      setState(() {
+        _discountAmount = 0.0;
+        _discountError = null;
+      });
+      return;
+    }
+
+    const discountMap = <String, double>{
+      'SAVE10': 0.10,
+      'GOLD5': 0.05,
+      'VIP15': 0.15,
+    };
+    final percent = discountMap[raw];
+    if (percent == null) {
+      setState(() {
+        _discountAmount = 0.0;
+        _discountError = 'Invalid discount code';
+      });
+      return;
+    }
+
+    setState(() {
+      _discountError = null;
+      _discountAmount = amount * percent;
+    });
   }
 
   IconData _icon(CheckoutPaymentType type) {
