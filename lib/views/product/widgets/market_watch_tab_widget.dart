@@ -222,7 +222,9 @@ class MarketWatchTabWidget extends StatelessWidget {
     final year = time.year.toString();
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
-    return '$year-$month-$day $hour:$minute';
+    final second = time.second.toString().padLeft(2, '0');
+    final millisecond = time.millisecond.toString().padLeft(3, '0');
+    return '$year-$month-$day $hour:$minute:$second.$millisecond';
   }
 
   double _ask(MarketSymbolModel item) => item.price * 1.0015;
