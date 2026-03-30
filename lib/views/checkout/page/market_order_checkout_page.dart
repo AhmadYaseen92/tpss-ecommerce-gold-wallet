@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_form_dropdown.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_bottom_bar.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_text_field.dart';
 
 class MarketOrderCheckoutPage extends StatefulWidget {
   const MarketOrderCheckoutPage({super.key});
@@ -12,11 +15,14 @@ class MarketOrderCheckoutPage extends StatefulWidget {
 enum MarketExecutionType { instant, limit, stop }
 
 class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
+  final _formKey = GlobalKey<FormState>();
+
   MarketExecutionType executionType = MarketExecutionType.instant;
   int quantity = 1;
+
+  final TextEditingController triggerPriceController = TextEditingController();
   final TextEditingController tpController = TextEditingController();
   final TextEditingController slController = TextEditingController();
-  final TextEditingController triggerPriceController = TextEditingController();
 
   Map<String, dynamic> get _args {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -29,9 +35,9 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
 
   @override
   void dispose() {
+    triggerPriceController.dispose();
     tpController.dispose();
     slController.dispose();
-    triggerPriceController.dispose();
     super.dispose();
   }
 
@@ -42,131 +48,166 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Market Order Checkout'), centerTitle: true),
+      bottomNavigationBar: ActionBottomBar(
+        summaryLabel: 'Estimated Total',
+        summaryValue: '\$${_total.toStringAsFixed(2)}',
+        buttonText: 'Place Order',
+        onPressed: () {
+          if (!(_formKey.currentState?.validate() ?? false)) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Order placed: $symbol x$quantity (${_label(executionType)})',
+              ),
+            ),
+          );
+          Navigator.pop(context);
+        },
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _row('Symbol/Unit', symbol),
-                  if (AppReleaseConfig.showSellerUi) _row('Seller', seller),
-                  _row('Live Price', '\$${_unitPrice.toStringAsFixed(2)}'),
-                ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              ActionSectionCard(
+                title: 'Order Details',
+                child: Column(
+                  children: [
+                    _readonlyRow('Symbol/Unit', symbol),
+                    if (AppReleaseConfig.showSellerUi) _readonlyRow('Seller', seller),
+                    _readonlyRow('Live Price', '\$${_unitPrice.toStringAsFixed(2)}'),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            _card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Buy Type', style: TextStyle(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: MarketExecutionType.values.map((type) {
-                      final selected = executionType == type;
-                      return ChoiceChip(
-                        label: Text(_label(type)),
-                        selected: selected,
-                        onSelected: (_) => setState(() => executionType = type),
-                        selectedColor: AppColors.luxuryIvory,
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 14),
-                  const Text('Quantity', style: TextStyle(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: quantity > 1 ? () => setState(() => quantity--) : null,
-                        icon: const Icon(Icons.remove_circle_outline),
-                      ),
-                      Text('$quantity', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                      IconButton(
-                        onPressed: () => setState(() => quantity++),
-                        icon: const Icon(Icons.add_circle_outline),
-                      ),
-                      const Spacer(),
-                      Text('Total: \$${_total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                  if (executionType != MarketExecutionType.instant) ...[
+              ActionSectionCard(
+                title: 'Order Type & Quantity',
+                child: Column(
+                  children: [
+                    AppFormDropdown<MarketExecutionType>(
+                      label: 'Buy Type',
+                      value: executionType,
+                      items: MarketExecutionType.values
+                          .map(
+                            (type) => DropdownMenuItem<MarketExecutionType>(
+                              value: type,
+                              child: Text(_label(type)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (type) {
+                        if (type == null) return;
+                        setState(() => executionType = type);
+                      },
+                    ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: triggerPriceController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                        labelText: executionType == MarketExecutionType.limit ? 'Limit Price' : 'Stop Price',
-                        border: const OutlineInputBorder(),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Quantity',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 14,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.black12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  quantity.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: quantity > 1 ? () => setState(() => quantity--) : null,
+                          icon: const Icon(Icons.remove_circle_outline),
+                        ),
+                        IconButton(
+                          onPressed: () => setState(() => quantity++),
+                          icon: const Icon(Icons.add_circle_outline),
+                        ),
+                      ],
                     ),
                   ],
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: tpController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Take Profit (TP)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: slController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Stop Loss (SL)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: SizedBox(
-            height: 50,
-            child: FilledButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Order placed: $symbol x$quantity (${_label(executionType)})')),
-                );
-                Navigator.pop(context);
-              },
-              child: const Text('Buy Now'),
-            ),
+              ActionSectionCard(
+                title: 'Risk Management',
+                child: Column(
+                  children: [
+                    if (executionType != MarketExecutionType.instant) ...[
+                      ActionTextField(
+                        label: executionType == MarketExecutionType.limit
+                            ? 'Limit Price'
+                            : 'Stop Price',
+                        hintText: 'Enter trigger price',
+                        controller: triggerPriceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        validator: (value) {
+                          if (executionType == MarketExecutionType.instant) return null;
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Required for ${_label(executionType)} orders';
+                          }
+                          if (double.tryParse(value) == null) return 'Enter a valid number';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    ActionTextField(
+                      label: 'Take Profit (TP)',
+                      hintText: 'Optional',
+                      controller: tpController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      validator: _optionalNumberValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    ActionTextField(
+                      label: 'Stop Loss (SL)',
+                      hintText: 'Optional',
+                      controller: slController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      validator: _optionalNumberValidator,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _card({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.greyBorder),
-      ),
-      child: child,
-    );
+  String? _optionalNumberValidator(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    if (double.tryParse(value) == null) return 'Enter a valid number';
+    return null;
   }
 
-  Widget _row(String key, String value) {
+  Widget _readonlyRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        children: [Expanded(child: Text(key)), Text(value, style: const TextStyle(fontWeight: FontWeight.w600))],
+        children: [
+          Expanded(child: Text(label)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+        ],
       ),
     );
   }
