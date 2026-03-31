@@ -2,8 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
 
 class ProductItemWidget extends StatelessWidget {
@@ -13,10 +13,12 @@ class ProductItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
       child: Card(
-        color: AppColors.white,
+        color: palette.surface,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Row(
@@ -27,18 +29,21 @@ class ProductItemWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(product.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(product.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.textPrimary)),
                     if (AppReleaseConfig.showSellerUi)
-                      Text('Seller: ${product.sellerName}', style: const TextStyle(fontSize: 12, color: AppColors.darkGold)),
+                      Text('Seller: ${product.sellerName}', style: TextStyle(fontSize: 12, color: palette.primary)),
                     const SizedBox(height: 6),
                     Text(
                       product.description,
-                      style: const TextStyle(fontSize: 13, color: AppColors.grey),
+                      style: TextStyle(fontSize: 13, color: palette.textSecondary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    Text('\$${product.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      '\$${product.price.toStringAsFixed(2)}',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.textPrimary),
+                    ),
                   ],
                 ),
               ),
@@ -46,7 +51,7 @@ class ProductItemWidget extends StatelessWidget {
                 onPressed: () {
                   BlocProvider.of<ProductCubit>(context).toggleFavorite(product.id);
                 },
-                icon: Icon(product.isFavorite ? Icons.favorite : Icons.favorite_border, color: AppColors.darkGold),
+                icon: Icon(product.isFavorite ? Icons.favorite : Icons.favorite_border, color: palette.primary),
               ),
             ],
           ),
