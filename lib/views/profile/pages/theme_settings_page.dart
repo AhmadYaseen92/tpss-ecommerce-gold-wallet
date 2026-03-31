@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
@@ -23,6 +24,7 @@ class _ThemeSettingsPageState extends State<ThemeSettingsPage> {
       builder: (context, state) {
         final cubit = context.read<AppCubit>();
         final selectedMode = stagedMode ?? state.themeMode;
+        final palette = context.appPalette;
 
         return Scaffold(
           appBar: AppBar(
@@ -31,6 +33,7 @@ class _ThemeSettingsPageState extends State<ThemeSettingsPage> {
               'Theme',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: palette.primary,
                   ),
             ),
             actions: [
