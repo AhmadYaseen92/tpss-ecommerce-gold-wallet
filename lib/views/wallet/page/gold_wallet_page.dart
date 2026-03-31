@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/wallet_cubit/wallet_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/home/widgets/PortfolioCardWidget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_card_widget.dart';
@@ -63,7 +64,7 @@ class GoldWalletPage extends StatelessWidget {
                   if (wallet.transactions.isNotEmpty)
                     WalletTransactionsWidget(
                       transactions: wallet.transactions,
-                      accentColor: AppColors.primaryColor,
+                      accentColor: context.appPalette.primary,
                     ),
                 ],
               ),

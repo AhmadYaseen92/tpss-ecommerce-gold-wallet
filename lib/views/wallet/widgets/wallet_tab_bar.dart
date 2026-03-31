@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/wallet_cubit/wallet_cubit.dart';
 
@@ -14,7 +15,7 @@ class WalletTabBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4.0),
       decoration: BoxDecoration(
-        color: AppColors.greysShade2,
+        color: context.appPalette.surfaceMuted,
         borderRadius: BorderRadius.circular(50.0),
       ),
       child: Row(
@@ -30,7 +31,7 @@ class WalletTabBar extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.white : AppColors.transparent,
+                  color: isSelected ? context.appPalette.surface : AppColors.transparent,
                   borderRadius: BorderRadius.circular(50.0),
                   boxShadow: isSelected
                       ? [
@@ -51,7 +52,7 @@ class WalletTabBar extends StatelessWidget {
                         fontWeight:
                             isSelected ? FontWeight.w700 : FontWeight.w500,
                         color:
-                            isSelected ? AppColors.darkBrown : AppColors.grey,
+                            isSelected ? AppColors.darkBrown : context.appPalette.textSecondary,
                       ),
                     ),
                   ],
