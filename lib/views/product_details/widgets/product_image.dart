@@ -18,7 +18,7 @@ class ProductImage extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 300,
-      color: AppColors.white,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child:
           // is3D
           //     ? ModelViewer(

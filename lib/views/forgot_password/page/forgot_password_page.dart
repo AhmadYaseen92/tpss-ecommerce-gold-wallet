@@ -44,7 +44,7 @@ class ForgotPasswordPage extends StatelessWidget {
           if (state is ForgotPasswordLoading) {
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              body: Center(
+              body: const Center(
                 child: CircularProgressIndicator.adaptive(
                   backgroundColor: AppColors.darkGold,
                 ),

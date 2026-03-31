@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 
 class SignUpRow extends StatelessWidget {
@@ -7,23 +7,25 @@ class SignUpRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           "Don't have an account? ",
-          style: TextStyle(fontSize: 14, color: AppColors.greyShade600),
+          style: TextStyle(fontSize: 14, color: palette.textSecondary),
         ),
         TextButton(
           onPressed: () {
             Navigator.pushNamed(context, AppRoutes.signupRoute);
           },
-          child: const Text(
+          child: Text(
             'Sign Up',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: AppColors.primaryColor,
+              color: palette.primary,
             ),
           ),
         ),

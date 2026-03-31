@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/forgot_password_cubit/forgot_password_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
@@ -14,6 +14,8 @@ class ResetPasswordForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Form(
       key: formKey,
       child: Column(
@@ -25,12 +27,12 @@ class ResetPasswordForm extends StatelessWidget {
                 'Enter your registered email or phone number to receive a verification code.',
           ),
           const SizedBox(height: 28),
-          const Text(
+          Text(
             'Email or Phone',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textColor,
+              color: palette.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -47,12 +49,12 @@ class ResetPasswordForm extends StatelessWidget {
                 : null,
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Delivery Method',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textColor,
+              color: palette.textPrimary,
             ),
           ),
           const SizedBox(height: 12),

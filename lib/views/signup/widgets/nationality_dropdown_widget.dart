@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class NationalityDropdown extends StatelessWidget {
   final String selectedNationality;
@@ -19,25 +19,27 @@ class NationalityDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.greyBorder, width: 1),
+        border: Border.all(color: palette.border, width: 1),
       ),
       child: DropdownButton<String>(
         borderRadius: BorderRadius.circular(12),
-        dropdownColor: AppColors.white,
-        style: const TextStyle(
-          color: AppColors.textColor,
+        dropdownColor: palette.surface,
+        style: TextStyle(
+          color: palette.textPrimary,
           fontSize: 14,
         ),
         underline: const SizedBox(),
         value: selectedNationality,
-        icon: const Icon(
+        icon: Icon(
           Icons.keyboard_arrow_down,
-          color: AppColors.greyShade500,
+          color: palette.textSecondary,
         ),
         isExpanded: true,
         items: nationalities.map((e) {
@@ -45,9 +47,9 @@ class NationalityDropdown extends StatelessWidget {
             value: e['name'],
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.flag_outlined,
-                  color: AppColors.primaryColor,
+                  color: palette.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 10),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/user_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/login_cubit/login_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
@@ -15,6 +15,8 @@ class LoginForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = BlocProvider.of<LoginCubit>(context);
+    final palette = context.appPalette;
+
     return Form(
       key: formKey,
       child: Column(
@@ -22,10 +24,10 @@ class LoginForm extends StatelessWidget {
         children: [
           Text(
             "Email or Phone Number",
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.textColor,
+              color: palette.textPrimary,
             ),
           ),
           AppTextField(
@@ -55,10 +57,10 @@ class LoginForm extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             "Password",
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.textColor,
+              color: palette.textPrimary,
             ),
           ),
           AppTextField(
@@ -85,9 +87,9 @@ class LoginForm extends StatelessWidget {
             },
             onChanged: cubit.updatePassword,
           ),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           RememberMeRow(cubit: cubit),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           AppButton(
             cubit: cubit,
             label: 'Log In',

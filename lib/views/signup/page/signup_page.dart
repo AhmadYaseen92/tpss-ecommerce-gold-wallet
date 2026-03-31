@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/signup_cubit/signup_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
@@ -33,6 +34,8 @@ class SignupPage extends StatelessWidget {
             current is SignupStepChanged,
         builder: (context, state) {
           final cubit = BlocProvider.of<SignupCubit>(context);
+          final palette = context.appPalette;
+
           if (state is SignupLoading) {
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -62,7 +65,7 @@ class SignupPage extends StatelessWidget {
                   'Sign Up',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primaryColor,
+                    color: palette.primary,
                   ),
                 ),
               ),

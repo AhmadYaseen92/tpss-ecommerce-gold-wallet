@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class PasswordRequirementsWidget extends StatelessWidget {
   final bool hasMinChars;
@@ -17,6 +17,8 @@ class PasswordRequirementsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Column(
       children: [
         Row(
@@ -25,12 +27,14 @@ class PasswordRequirementsWidget extends StatelessWidget {
               child: RequirementItem(
                 label: 'Min 8 chars',
                 isMet: hasMinChars,
+                palette: palette,
               ),
             ),
             Expanded(
               child: RequirementItem(
                 label: '1 Number',
                 isMet: hasNumber,
+                palette: palette,
               ),
             ),
           ],
@@ -42,12 +46,14 @@ class PasswordRequirementsWidget extends StatelessWidget {
               child: RequirementItem(
                 label: '1 Special char',
                 isMet: hasSpecialChar,
+                palette: palette,
               ),
             ),
             Expanded(
               child: RequirementItem(
                 label: 'Uppercase',
                 isMet: hasUppercase,
+                palette: palette,
               ),
             ),
           ],
@@ -60,8 +66,14 @@ class PasswordRequirementsWidget extends StatelessWidget {
 class RequirementItem extends StatelessWidget {
   final String label;
   final bool isMet;
+  final AppPalette palette;
 
-  const RequirementItem({super.key, required this.label, required this.isMet});
+  const RequirementItem({
+    super.key,
+    required this.label,
+    required this.isMet,
+    required this.palette,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -70,14 +82,14 @@ class RequirementItem extends StatelessWidget {
         Icon(
           isMet ? Icons.check_circle_outline : Icons.radio_button_unchecked,
           size: 18,
-          color: isMet ? AppColors.primaryColor : AppColors.greyShade400,
+          color: isMet ? palette.primary : palette.border,
         ),
         const SizedBox(width: 6),
         Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            color: isMet ? AppColors.textColor : AppColors.greyShade600,
+            color: isMet ? palette.textPrimary : palette.textSecondary,
             fontWeight: isMet ? FontWeight.w500 : FontWeight.w400,
           ),
         ),

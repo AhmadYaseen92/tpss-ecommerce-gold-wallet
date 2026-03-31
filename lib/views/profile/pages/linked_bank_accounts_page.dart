@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
@@ -18,6 +18,7 @@ class LinkedBankAccountsPage extends StatelessWidget {
         builder: (context, state) {
           final cubit = BlocProvider.of<ProfileCubit>(context);
           final selectedBank = cubit.bankAccounts[cubit.selectedBankIndex];
+          final palette = context.appPalette;
 
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -27,7 +28,7 @@ class LinkedBankAccountsPage extends StatelessWidget {
               title: Text(
                 'Linked Bank Accounts',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.primaryColor,
+                  color: palette.primary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -44,7 +45,7 @@ class LinkedBankAccountsPage extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: palette.surface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -59,7 +60,7 @@ class LinkedBankAccountsPage extends StatelessWidget {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<int>(
                       borderRadius: BorderRadius.circular(12),
-                      dropdownColor: AppColors.white,
+                      dropdownColor: palette.surface,
                       value: cubit.selectedBankIndex,
                       items: List.generate(
                         cubit.bankAccounts.length,
@@ -76,9 +77,14 @@ class LinkedBankAccountsPage extends StatelessWidget {
                       },
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppColors.white,
+                        fillColor: palette.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: palette.border),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: palette.border),
                         ),
                       ),
                     ),

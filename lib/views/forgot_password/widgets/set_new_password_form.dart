@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/forgot_password_cubit/forgot_password_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
@@ -15,6 +15,8 @@ class SetNewPasswordForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Form(
       key: formKey,
       child: Column(
@@ -28,12 +30,12 @@ class SetNewPasswordForm extends StatelessWidget {
                     'Please create a secure password to access your Imseeh Gold Wallet.',
               ),
               const SizedBox(height: 28),
-              const Text(
+              Text(
                 'New Password',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textColor,
+                  color: palette.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -61,12 +63,12 @@ class SetNewPasswordForm extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Confirm Password',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textColor,
+                  color: palette.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),

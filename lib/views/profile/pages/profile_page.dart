@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/account_settings_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/main_profile_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/preferences_widget.dart';
@@ -9,6 +9,8 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -18,7 +20,7 @@ class ProfilePage extends StatelessWidget {
             'My Profile',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.primaryColor,
+              color: palette.primary,
             ),
           ),
 
