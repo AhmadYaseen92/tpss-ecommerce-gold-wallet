@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class AppFormDropdown<T> extends StatelessWidget {
   final String label;
@@ -23,6 +23,8 @@ class AppFormDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return DropdownButtonFormField<T>(
       value: value,
       isExpanded: true,
@@ -30,31 +32,32 @@ class AppFormDropdown<T> extends StatelessWidget {
       validator: validator,
       autovalidateMode: autovalidateMode,
       onChanged: onChanged,
+      dropdownColor: palette.surface,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
         filled: true,
-        fillColor: AppColors.white,
+        fillColor: palette.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.greyBorder, width: 1),
+          borderSide: BorderSide(color: palette.border, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.greyBorder, width: 1),
+          borderSide: BorderSide(color: palette.border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primaryColor, width: 1.5),
+          borderSide: BorderSide(color: palette.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.red, width: 1),
+          borderSide: BorderSide(color: palette.danger, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.red, width: 1.5),
+          borderSide: BorderSide(color: palette.danger, width: 1.5),
         ),
       ),
     );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/profile_item_widget.dart';
 
@@ -8,10 +8,12 @@ class PreferencesWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -19,26 +21,23 @@ class PreferencesWidget extends StatelessWidget {
         children: [
           Text(
             'Preferences',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleMedium!.copyWith(
+              fontWeight: FontWeight.bold,
+              color: palette.textPrimary,
+            ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           ProfileItemWidget(
             icon: Icons.language,
             title: 'Language',
             subtitle: 'English, Arabic, Turkish',
-            onTap: () {
-              Navigator.of(context).pushNamed(AppRoutes.languageRoute);
-            },
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.languageRoute),
           ),
           ProfileItemWidget(
             icon: Icons.brightness_6,
             title: 'Theme',
             subtitle: 'Light, Dark, System default',
-            onTap: () {
-              Navigator.of(context).pushNamed(AppRoutes.themeRoute);
-            },
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.themeRoute),
           ),
         ],
       ),

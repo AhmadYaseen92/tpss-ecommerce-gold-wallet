@@ -1,54 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class ProductSpecsWidget extends StatelessWidget {
   final String purity;
   final String weight;
   final String metal;
 
-  const ProductSpecsWidget({
-    required this.purity,
-    required this.weight,
-    required this.metal,
-  });
+  const ProductSpecsWidget({super.key, required this.purity, required this.weight, required this.metal});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _productSpecsCard(label: 'Purity', value: purity),
+        _productSpecsCard(context, label: 'Purity', value: purity),
         const SizedBox(width: 10),
-        _productSpecsCard(label: 'Weight', value: weight),
+        _productSpecsCard(context, label: 'Weight', value: weight),
         const SizedBox(width: 10),
-        _productSpecsCard(label: 'Metal', value: metal),
+        _productSpecsCard(context, label: 'Metal', value: metal),
       ],
     );
   }
 
-  Widget _productSpecsCard({required String label, required String value}) {
+  Widget _productSpecsCard(BuildContext context, {required String label, required String value}) {
+    final palette = context.appPalette;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: palette.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.greyShade2),
+          border: Border.all(color: palette.border),
         ),
         child: Column(
           children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 15, color: AppColors.black, fontWeight: FontWeight.bold),
-            ),
+            Text(label, style: TextStyle(fontSize: 15, color: palette.textPrimary, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 15,
-                color: AppColors.darkGrey,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Text(value, style: TextStyle(fontSize: 15, color: palette.textSecondary), textAlign: TextAlign.center),
           ],
         ),
       ),

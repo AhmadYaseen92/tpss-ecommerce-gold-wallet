@@ -46,7 +46,7 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
     final timeText = selectedTime == null ? 'Select time' : selectedTime!.format(context);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Pickup Request'),
         centerTitle: true,

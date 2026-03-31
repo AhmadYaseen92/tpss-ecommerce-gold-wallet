@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class ActionSectionCard extends StatelessWidget {
   final String title;
@@ -13,17 +13,19 @@ class ActionSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryColor.withAlpha(40)),
+        border: Border.all(color: palette.primary.withAlpha(40)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowBlack15,
+            color: Colors.black.withAlpha(30),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -36,7 +38,7 @@ class ActionSectionCard extends StatelessWidget {
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.darkBrown,
+              color: palette.textPrimary,
             ),
           ),
           const SizedBox(height: 12),

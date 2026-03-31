@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/transfer_cubit/transfer_cubit.dart';
 
@@ -9,16 +9,18 @@ class AppDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.greysShade2),
+        border: Border.all(color: palette.border),
       ),
       child: DropdownButton<int>(
         borderRadius: BorderRadius.circular(12),
-        dropdownColor: AppColors.white,
+        dropdownColor: palette.surface,
         value: cubit.selectedAssetIndex,
         isExpanded: true,
         underline: const SizedBox.shrink(),
@@ -28,7 +30,7 @@ class AppDropdown extends StatelessWidget {
             value: i,
             child: Row(
               children: [
-                const Icon(Icons.inventory_2, color: AppColors.primaryColor),
+                Icon(Icons.inventory_2, color: palette.primary),
                 const SizedBox(width: 8),
                 Text(
                   '${Asset.assets[i].name}  •  \$${Asset.assets[i].pricePerUnit.toStringAsFixed(2)}/g',

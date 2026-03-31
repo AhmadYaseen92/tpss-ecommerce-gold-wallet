@@ -19,9 +19,9 @@ class SellGoldPage extends StatelessWidget {
         builder: (context, state) {
           if (state is SellInitial || state is SellLoading) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: AppColors.backgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Sell Assets',
@@ -39,9 +39,9 @@ class SellGoldPage extends StatelessWidget {
             );
           } else if (state is SellDataChanged) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: AppColors.backgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                     'Sell Assets',
@@ -55,9 +55,9 @@ class SellGoldPage extends StatelessWidget {
             );
           } else if (state is SellError) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: AppColors.backgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Sell Assets',

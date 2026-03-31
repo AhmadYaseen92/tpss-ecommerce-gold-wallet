@@ -35,7 +35,7 @@ class SignupPage extends StatelessWidget {
           final cubit = BlocProvider.of<SignupCubit>(context);
           if (state is SignupLoading) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               body: const Center(
                 child: CircularProgressIndicator.adaptive(
                   backgroundColor: AppColors.darkGold,
@@ -44,9 +44,9 @@ class SignupPage extends StatelessWidget {
             );
           }
           return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: AppColors.backgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),

@@ -1,22 +1,25 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class SummaryTransactionWidget extends StatelessWidget {
   const SummaryTransactionWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: AppColors.primaryColor),
+        border: Border.all(color: palette.primary),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowBlack,
+            color: Colors.black.withAlpha(35),
             blurRadius: 8.0,
             offset: const Offset(0, 4),
           ),
@@ -31,14 +34,14 @@ class SummaryTransactionWidget extends StatelessWidget {
                 'Recent Transaction',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.black,
+                  color: palette.textPrimary,
                 ),
               ),
               const Spacer(),
               Text(
                 'View All',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.primaryColor,
+                  color: palette.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -46,11 +49,11 @@ class SummaryTransactionWidget extends StatelessWidget {
           ),
           const SizedBox(height: 20.0),
           _buildTransactionItem(context, 'Buy Gold', '+ \$500'),
-          Divider(height: 20.0, thickness: 1.0, color: AppColors.greysShade2),
+          Divider(height: 20.0, thickness: 1.0, color: palette.border),
           _buildTransactionItem(context, 'Sell Gold', '- \$200'),
-          Divider(height: 20.0, thickness: 1.0, color: AppColors.greysShade2),
+          Divider(height: 20.0, thickness: 1.0, color: palette.border),
           _buildTransactionItem(context, 'Transfer to Omar', '- \$100'),
-          Divider(height: 20.0, thickness: 1.0, color: AppColors.greysShade2),
+          Divider(height: 20.0, thickness: 1.0, color: palette.border),
           _buildTransactionItem(context, 'Transfer to Omar', '- \$100'),
         ],
       ),
@@ -71,7 +74,7 @@ class SummaryTransactionWidget extends StatelessWidget {
           color: amount.startsWith('-') ? AppColors.red : AppColors.green,
         ),
         const SizedBox(width: 8.0),
-        Text(title),
+        Text(title, style: TextStyle(color: context.appPalette.textSecondary)),
         const Spacer(),
         Text(
           amount,

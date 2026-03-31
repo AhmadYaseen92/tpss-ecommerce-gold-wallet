@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/transaction_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transaction/widget/transaction_icon_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transaction/widget/transaction_status_badge_widget.dart';
@@ -13,10 +14,12 @@ class TransactionItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       child: Card(
-        color: AppColors.white,
+        color: palette.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
           padding: const EdgeInsets.all(14.0),
@@ -32,26 +35,16 @@ class TransactionItemWidget extends StatelessWidget {
                       children: [
                         Text(
                           transaction.title,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.black,
-                          ),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: palette.textPrimary),
                         ),
                         const SizedBox(height: 2),
                         if (AppReleaseConfig.showSellerUi) ...[
-                          Text(
-                            'Seller: ${transaction.sellerName}',
-                            style: const TextStyle(fontSize: 11, color: AppColors.darkGold),
-                          ),
+                          Text('Seller: ${transaction.sellerName}', style: TextStyle(fontSize: 11, color: palette.primary)),
                           const SizedBox(height: 2),
                         ],
                         Text(
                           DateFormat('MMM dd, hh:mm a').format(transaction.date),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.grey,
-                          ),
+                          style: TextStyle(fontSize: 12, color: palette.textSecondary),
                         ),
                       ],
                     ),
@@ -64,34 +57,20 @@ class TransactionItemWidget extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: transaction.amount.startsWith('+')
-                              ? AppColors.green
-                              : AppColors.red,
+                          color: transaction.amount.startsWith('+') ? AppColors.green : AppColors.red,
                         ),
                       ),
                       if (transaction.secondaryAmount != null)
-                        Text(
-                          transaction.secondaryAmount!,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.black,
-                          ),
-                        ),
+                        Text(transaction.secondaryAmount!, style: TextStyle(fontSize: 12, color: palette.textPrimary)),
                     ],
                   ),
                 ],
               ),
-              const Divider(height: 20, thickness: 0.8),
+              Divider(height: 20, thickness: 0.8, color: palette.border),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'ID: #${transaction.id}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.grey,
-                    ),
-                  ),
+                  Text('ID: #${transaction.id}', style: TextStyle(fontSize: 12, color: palette.textSecondary)),
                   StatusBadge(status: transaction.status),
                 ],
               ),
