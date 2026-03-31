@@ -42,7 +42,7 @@ class ForgotPasswordPage extends StatelessWidget {
           final cubit = BlocProvider.of<ForgotPasswordCubit>(context);
 
           if (state is ForgotPasswordLoading) {
-            return const Scaffold(
+            return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               body: Center(
                 child: CircularProgressIndicator.adaptive(
