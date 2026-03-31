@@ -20,10 +20,10 @@ class LinkedBankAccountsPage extends StatelessWidget {
           final selectedBank = cubit.bankAccounts[cubit.selectedBankIndex];
 
           return Scaffold(
-            backgroundColor: AppColors.backgroundColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
               centerTitle: true,
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               title: Text(
                 'Linked Bank Accounts',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/profile_item_widget.dart';
 
@@ -8,10 +8,12 @@ class AccountSettingsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -19,44 +21,35 @@ class AccountSettingsWidget extends StatelessWidget {
         children: [
           Text(
             'Account Settings',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleMedium!.copyWith(
+              fontWeight: FontWeight.bold,
+              color: palette.textPrimary,
+            ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           ProfileItemWidget(
             icon: Icons.account_circle,
             title: 'Personal Information',
             subtitle: 'Name, email, phone',
-            onTap: () {
-              Navigator.of(context).pushNamed(AppRoutes.personalInformationRoute);
-            },
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.personalInformationRoute),
           ),
           ProfileItemWidget(
             icon: Icons.lock,
             title: 'Security Settings',
             subtitle: 'Password, Face ID, 2FA',
-            onTap: () {
-              Navigator.of(context).pushNamed(AppRoutes.securitySettingsRoute);
-            },
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.securitySettingsRoute),
           ),
           ProfileItemWidget(
             icon: Icons.account_balance,
             title: 'Linked Bank Accounts',
             subtitle: 'Banks accounts details',
-            onTap: () {
-              Navigator.of(
-                context,
-              ).pushNamed(AppRoutes.linkedBankAccountsRoute);
-            },
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.linkedBankAccountsRoute),
           ),
           ProfileItemWidget(
             icon: Icons.payment,
             title: 'Payment Methods',
             subtitle: 'Credit/debit cards, PayPal, Wallets',
-            onTap: () {
-              Navigator.of(context).pushNamed(AppRoutes.paymentMethodsRoute);
-            },
+            onTap: () => Navigator.of(context).pushNamed(AppRoutes.paymentMethodsRoute),
           ),
         ],
       ),

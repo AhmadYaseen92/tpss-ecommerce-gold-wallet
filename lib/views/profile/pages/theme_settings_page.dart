@@ -1,94 +1,146 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/form_header.dart';
 
-class ThemeSettingsPage extends StatelessWidget {
+class ThemeSettingsPage extends StatefulWidget {
   const ThemeSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ProfileCubit(),
-      child: BlocBuilder<ProfileCubit, ProfileState>(
-        builder: (context, state) {
-          final cubit = BlocProvider.of<ProfileCubit>(context);
-          final options = ['Light', 'Dark', 'System Default'];
+  State<ThemeSettingsPage> createState() => _ThemeSettingsPageState();
+}
 
-          return Scaffold(
-            backgroundColor: AppColors.backgroundColor,
-            appBar: AppBar(
-              centerTitle: true,
-              backgroundColor: AppColors.backgroundColor,
-              title: Text(
-                'Theme',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.primaryColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              actions: [
-                TextButton.icon(
-                  onPressed: cubit.toggleEdit,
-                  icon: Icon(cubit.isEditing ? Icons.close : Icons.edit),
-                  label: Text(cubit.isEditing ? 'Cancel' : 'Edit'),
-                ),
-              ],
+class _ThemeSettingsPageState extends State<ThemeSettingsPage> {
+  bool isEditing = false;
+  ThemeMode? stagedMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AppCubit, AppState>(
+      builder: (context, state) {
+        final cubit = context.read<AppCubit>();
+        final selectedMode = stagedMode ?? state.themeMode;
+
+        return Scaffold(
+          appBar: AppBar(
+            centerTitle: true,
+            title: Text(
+              'Theme',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
             ),
-            body: SingleChildScrollView(
+            actions: [
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    if (isEditing) {
+                      stagedMode = null;
+                    }
+                    isEditing = !isEditing;
+                  });
+                },
+                icon: Icon(isEditing ? Icons.close : Icons.edit),
+                label: Text(isEditing ? 'Cancel' : 'Edit'),
+              ),
+            ],
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Container(
               padding: const EdgeInsets.all(16),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const FormHeader(
-                      title: 'Theme Settings',
-                      subtitle: 'Choose one theme mode.',
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const FormHeader(
+                    title: 'Theme Settings',
+                    subtitle: 'Choose one theme mode.',
+                  ),
+                  const SizedBox(height: 16),
+                  const FormSectionLabel(label: 'THEME MODE'),
+                  _ThemeModeTile(
+                    title: 'Light',
+                    mode: ThemeMode.light,
+                    groupValue: selectedMode,
+                    enabled: isEditing,
+                    onChanged: (mode) => setState(() => stagedMode = mode),
+                  ),
+                  _ThemeModeTile(
+                    title: 'Dark',
+                    mode: ThemeMode.dark,
+                    groupValue: selectedMode,
+                    enabled: isEditing,
+                    onChanged: (mode) => setState(() => stagedMode = mode),
+                  ),
+                  _ThemeModeTile(
+                    title: 'System Default',
+                    mode: ThemeMode.system,
+                    groupValue: selectedMode,
+                    enabled: isEditing,
+                    onChanged: (mode) => setState(() => stagedMode = mode),
+                  ),
+                  if (isEditing)
+                    AppButton(
+                      cubit: cubit,
+                      label: 'Save Changes',
+                      onPressed: () {
+                        cubit.setThemeMode(stagedMode ?? state.themeMode);
+                        setState(() {
+                          isEditing = false;
+                          stagedMode = null;
+                        });
+                        AppModalAlert.show(
+                          context,
+                          title: 'Saved',
+                          message: 'Theme updated successfully',
+                        );
+                      },
                     ),
-                    const SizedBox(height: 16),
-                    const FormSectionLabel(label: 'THEME MODE'),
-                    ...options.map(
-                      (option) => RadioListTile<String>(
-                        value: option,
-                        groupValue: cubit.selectedTheme,
-                        onChanged: cubit.isEditing
-                            ? (value) {
-                                if (value != null) cubit.selectTheme(value);
-                              }
-                            : null,
-                        title: Text(option),
-                        activeColor: AppColors.primaryColor,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    if (cubit.isEditing)
-                      AppButton(
-                        cubit: cubit,
-                        label: 'Save Changes',
-                        onPressed: () {
-                          cubit.save();
-                          AppModalAlert.show(
-                            context,
-                            title: 'Saved',
-                            message: 'Theme updated successfully',
-                          );
-                        },
-                      ),
-                  ],
-                ),
+                ],
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ThemeModeTile extends StatelessWidget {
+  const _ThemeModeTile({
+    required this.title,
+    required this.mode,
+    required this.groupValue,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final String title;
+  final ThemeMode mode;
+  final ThemeMode groupValue;
+  final bool enabled;
+  final ValueChanged<ThemeMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return RadioListTile<ThemeMode>(
+      value: mode,
+      groupValue: groupValue,
+      onChanged: enabled
+          ? (value) {
+              if (value != null) onChanged(value);
+            }
+          : null,
+      title: Text(title),
+      activeColor: Theme.of(context).colorScheme.primary,
+      contentPadding: EdgeInsets.zero,
     );
   }
 }

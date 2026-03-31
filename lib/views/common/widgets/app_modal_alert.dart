@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 
 class AppModalAlert {
   static Future<void> show(
@@ -14,9 +13,11 @@ class AppModalAlert {
       useRootNavigator: true,
       barrierDismissible: true,
       builder: (ctx) {
+        final theme = Theme.of(ctx);
+
         return AlertDialog(
-          backgroundColor: AppColors.white,
-          surfaceTintColor: AppColors.white,
+          backgroundColor: theme.colorScheme.surface,
+          surfaceTintColor: theme.colorScheme.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
             title,
@@ -32,7 +33,7 @@ class AppModalAlert {
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryColor,
+                backgroundColor: theme.colorScheme.primary,
               ),
               child: Text(buttonText),
             ),

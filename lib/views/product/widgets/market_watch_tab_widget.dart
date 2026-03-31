@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
@@ -36,7 +37,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final item = symbols[index];
                       return Card(
-                        color: AppColors.white,
+                        color: context.appPalette.surface,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
                           onTap: () => _openMarketDetail(context, item),
@@ -71,7 +72,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                                             const SizedBox(height: 4),
                                             Text(
                                               'Seller: ${item.sellerName}',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 12,
                                                 color: AppColors.darkGold,
                                               ),
@@ -80,17 +81,17 @@ class MarketWatchTabWidget extends StatelessWidget {
                                           const SizedBox(height: 4),
                                           Text(
                                             'Updated: ${_formatUpdatedTime(DateTime.now())}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
-                                              color: AppColors.grey,
+                                              color: context.appPalette.textSecondary,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
-                                          const Text(
+                                          Text(
                                             'Last: 1m',
                                             style: TextStyle(
                                               fontSize: 12,
-                                              color: AppColors.grey,
+                                              color: context.appPalette.textSecondary,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -177,7 +178,7 @@ class MarketWatchTabWidget extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -194,7 +195,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                     children: [
                       Text(
                         item.symbol,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                         ),
@@ -231,9 +232,9 @@ class MarketWatchTabWidget extends StatelessWidget {
                         : item.name,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'X: Pricing   |   Y: Time',
-                    style: TextStyle(fontSize: 12, color: AppColors.grey),
+                    style: TextStyle(fontSize: 12, color: context.appPalette.textSecondary),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
@@ -258,19 +259,19 @@ class MarketWatchTabWidget extends StatelessWidget {
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Last 1m',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: AppColors.grey,
+                                      color: context.appPalette.textSecondary,
                                     ),
                                   ),
                                   const Spacer(),
                                   Text(
                                     interval,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      color: AppColors.grey,
+                                      color: context.appPalette.textSecondary,
                                     ),
                                   ),
                                 ],
@@ -287,23 +288,23 @@ class MarketWatchTabWidget extends StatelessWidget {
                             children: [
                               Text(
                                 _high(item).toStringAsFixed(2),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: AppColors.grey,
+                                  color: context.appPalette.textSecondary,
                                 ),
                               ),
                               Text(
                                 item.price.toStringAsFixed(2),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: AppColors.grey,
+                                  color: context.appPalette.textSecondary,
                                 ),
                               ),
                               Text(
                                 _low(item).toStringAsFixed(2),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: AppColors.grey,
+                                  color: context.appPalette.textSecondary,
                                 ),
                               ),
                             ],
@@ -315,7 +316,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     'Live Price: \$${item.price.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 18),
+                    style: TextStyle(fontSize: 18),
                   ),
                   Text(
                     'Ask ${_ask(item).toStringAsFixed(2)} • Bid ${_bid(item).toStringAsFixed(2)}',
@@ -326,7 +327,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Updated: ${_formatUpdatedTime(DateTime.now())}',
-                    style: const TextStyle(color: AppColors.grey),
+                    style: TextStyle(color: context.appPalette.textSecondary),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -382,12 +383,12 @@ class MarketWatchTabWidget extends StatelessWidget {
           children: [
             TextSpan(
               text: '$label: ',
-              style: const TextStyle(color: AppColors.grey),
+              style: TextStyle(color: context.appPalette.textSecondary),
             ),
             TextSpan(
               text: '\$$value',
-              style: const TextStyle(
-                color: AppColors.black,
+              style: TextStyle(
+                color: context.appPalette.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),

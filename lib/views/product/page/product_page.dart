@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
@@ -35,9 +36,9 @@ class ProductPage extends StatelessWidget {
                 labelStyle: Theme.of(
                   context,
                 ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
-                labelColor: AppColors.primaryColor,
-                unselectedLabelColor: AppColors.grey,
-                indicatorColor: AppColors.primaryColor,
+                labelColor: context.appPalette.primary,
+                unselectedLabelColor: context.appPalette.textSecondary,
+                indicatorColor: context.appPalette.primary,
                 tabs: [
                   Tab(text: 'Catalog'),
                   Tab(text: 'Market Watch'),

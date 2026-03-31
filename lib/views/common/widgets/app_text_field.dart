@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class AppTextField extends StatelessWidget {
   final String label;
@@ -38,6 +38,8 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -55,9 +57,9 @@ class AppTextField extends StatelessWidget {
             labelText: label,
             floatingLabelBehavior: FloatingLabelBehavior.auto,
             hintText: hint,
-            hintStyle: TextStyle(color: AppColors.greyShade400, fontSize: 14),
+            hintStyle: TextStyle(color: palette.textSecondary, fontSize: 14),
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, color: AppColors.greyShade400, size: 20)
+                ? Icon(prefixIcon, color: palette.textSecondary, size: 20)
                 : null,
             suffixIcon: isPassword
                 ? IconButton(
@@ -65,40 +67,40 @@ class AppTextField extends StatelessWidget {
                       obscureText
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
-                      color: AppColors.greyShade400,
+                      color: palette.textSecondary,
                       size: 20,
                     ),
                     onPressed: onToggleObscure,
                   )
                 : null,
             filled: true,
-            fillColor: enabled ? AppColors.white : AppColors.greyShade100,
+            fillColor: enabled ? palette.surface : palette.surfaceMuted,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.greyBorder, width: 1),
+              borderSide: BorderSide(color: palette.border, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.greyBorder, width: 1),
+              borderSide: BorderSide(color: palette.border, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.primaryColor,
+              borderSide: BorderSide(
+                color: palette.primary,
                 width: 1.5,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.red, width: 1),
+              borderSide: BorderSide(color: palette.danger, width: 1),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.red, width: 1.5),
+              borderSide: BorderSide(color: palette.danger, width: 1.5),
             ),
           ),
         ),

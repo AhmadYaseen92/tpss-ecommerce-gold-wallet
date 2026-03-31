@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 
@@ -9,80 +9,40 @@ class BottomBar extends StatelessWidget {
   final VoidCallback onBuyNow;
   final ProductCubit productCubit;
 
-  const BottomBar({
-    required this.quantity,
-    required this.onAddToCart,
-    required this.onBuyNow,
-    required this.productCubit,
-  });
+  const BottomBar({super.key, required this.quantity, required this.onAddToCart, required this.onBuyNow, required this.productCubit});
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        border: const Border(top: BorderSide(color: AppColors.white, width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.grey,
-            blurRadius: 20,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        color: palette.surface,
+        border: Border(top: BorderSide(color: palette.border, width: 1)),
+        boxShadow: [BoxShadow(color: Colors.black.withAlpha(40), blurRadius: 20, offset: const Offset(0, -2))],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Quantity row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Quantity',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.black,
-                  ),
-                ),
+                Text('Quantity', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: palette.textPrimary)),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: palette.surface,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.grey),
+                    border: Border.all(color: palette.border),
                   ),
                   padding: const EdgeInsets.all(4),
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: Icon(Icons.remove),
-                        color: AppColors.black,
-                        onPressed: () {
-                          productCubit.decreaseQuantity();
-                        },
-                      ),
-                      SizedBox(
-                        width: 32,
-                        child: Text(
-                          '$quantity',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.black,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.add),
-                        color: AppColors.black,
-                        onPressed: () {
-                          productCubit.increaseQuantity();
-                        },
-                      ),
+                      IconButton(icon: const Icon(Icons.remove), color: palette.textPrimary, onPressed: productCubit.decreaseQuantity),
+                      SizedBox(width: 32, child: Text('$quantity', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: palette.textPrimary))),
+                      IconButton(icon: const Icon(Icons.add), color: palette.textPrimary, onPressed: productCubit.increaseQuantity),
                     ],
                   ),
                 ),
@@ -98,32 +58,18 @@ class BottomBar extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onAddToCart,
                     icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                    label: const Text(
-                      'Add to Cart',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
+                    label: const Text('Add to Cart', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.black,
-                      side: BorderSide(color: AppColors.grey),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      foregroundColor: palette.textPrimary,
+                      side: BorderSide(color: palette.border),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: AppButton(
-                    label: 'Buy Now',
-                    cubit: productCubit,
-                    onPressed: onBuyNow,
-                  ),
-                ),
-              ),
+              Expanded(child: SizedBox(height: 48, child: AppButton(label: 'Buy Now', cubit: productCubit, onPressed: onBuyNow))),
             ],
           ),
           const SizedBox(height: 15),

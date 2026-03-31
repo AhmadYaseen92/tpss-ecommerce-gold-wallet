@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/transfer_cubit/transfer_cubit.dart';
 
 class AmountField extends StatelessWidget {
@@ -8,20 +8,22 @@ class AmountField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.greysShade2),
+        border: Border.all(color: palette.border),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.scale_rounded,
-                color: AppColors.primaryColor,
+                color: palette.primary,
                 size: 28,
               ),
               const SizedBox(width: 12),
@@ -31,9 +33,9 @@ class AmountField extends StatelessWidget {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: '0',
-                    hintStyle: TextStyle(color: AppColors.grey, fontSize: 22),
+                    hintStyle: TextStyle(color: palette.textSecondary, fontSize: 22),
                     border: InputBorder.none,
                   ),
                   style: const TextStyle(fontSize: 22),
@@ -42,7 +44,7 @@ class AmountField extends StatelessWidget {
               ),
               Text(
                 'gram',
-                style: TextStyle(color: AppColors.darkGrey, fontSize: 16),
+                style: TextStyle(color: palette.textSecondary, fontSize: 16),
               ),
             ],
           ),
@@ -53,7 +55,7 @@ class AmountField extends StatelessWidget {
               'Available: ${cubit.selectedAsset.availableUnits.toStringAsFixed(0)} gram',
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.grey),
+              ).textTheme.bodySmall?.copyWith(color: palette.textSecondary),
             ),
           ),
         ],

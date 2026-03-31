@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 
 class WalletTransactionsWidget extends StatelessWidget {
@@ -15,15 +16,17 @@ class WalletTransactionsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowBlack15,
+            color: Colors.black.withAlpha(30),
             blurRadius: 8.0,
             offset: const Offset(0, 3),
           ),
@@ -38,7 +41,7 @@ class WalletTransactionsWidget extends StatelessWidget {
                 'My Transactions',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.darkBrown,
+                  color: palette.textPrimary,
                 ),
               ),
               const Spacer(),
@@ -67,11 +70,7 @@ class WalletTransactionsWidget extends StatelessWidget {
               children: [
                 _buildTransactionRow(context, tx),
                 if (index < transactions.length - 1)
-                  Divider(
-                    height: 20.0,
-                    thickness: 1.0,
-                    color: AppColors.greysShade2,
-                  ),
+                  Divider(height: 20.0, thickness: 1.0, color: palette.border),
               ],
             );
           }),
@@ -81,6 +80,7 @@ class WalletTransactionsWidget extends StatelessWidget {
   }
 
   Widget _buildTransactionRow(BuildContext context, WalletTransaction tx) {
+    final palette = context.appPalette;
     final isPositive = tx.change.startsWith('+');
     return Row(
       children: [
@@ -95,14 +95,10 @@ class WalletTransactionsWidget extends StatelessWidget {
               width: 44.0,
               height: 44.0,
               decoration: BoxDecoration(
-                color: AppColors.greyShade2,
+                color: palette.surfaceMuted,
                 borderRadius: BorderRadius.circular(10.0),
               ),
-              child: const Icon(
-                Icons.image_not_supported_outlined,
-                size: 22.0,
-                color: AppColors.grey,
-              ),
+              child: Icon(Icons.image_not_supported_outlined, size: 22.0, color: palette.textSecondary),
             ),
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
@@ -110,15 +106,11 @@ class WalletTransactionsWidget extends StatelessWidget {
                 width: 44.0,
                 height: 44.0,
                 decoration: BoxDecoration(
-                  color: AppColors.greyShade2,
+                  color: palette.surfaceMuted,
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 child: const Center(
-                  child: SizedBox(
-                    width: 20.0,
-                    height: 20.0,
-                    child: CircularProgressIndicator(strokeWidth: 2.0),
-                  ),
+                  child: SizedBox(width: 20.0, height: 20.0, child: CircularProgressIndicator(strokeWidth: 2.0)),
                 ),
               );
             },
@@ -133,7 +125,7 @@ class WalletTransactionsWidget extends StatelessWidget {
                 tx.name,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.darkBrown,
+                  color: palette.textPrimary,
                 ),
               ),
               const SizedBox(height: 2.0),
@@ -141,18 +133,13 @@ class WalletTransactionsWidget extends StatelessWidget {
                 Text(
                   'Seller: ${tx.sellerName}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.darkGold,
+                    color: palette.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2.0),
               ],
-              Text(
-                tx.subtitle,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.darkGrey),
-              ),
+              Text(tx.subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.textSecondary)),
             ],
           ),
         ),
@@ -163,7 +150,7 @@ class WalletTransactionsWidget extends StatelessWidget {
               tx.marketValue,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.darkBrown,
+                color: palette.textPrimary,
               ),
             ),
             const SizedBox(height: 2.0),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 Widget summaryRow(
   BuildContext context, {
@@ -8,6 +8,8 @@ Widget summaryRow(
   bool isBold = false,
   Color? valueColor,
 }) {
+  final palette = context.appPalette;
+
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
@@ -15,14 +17,14 @@ Widget summaryRow(
         label,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-          color: AppColors.greyShade700,
+          color: palette.textSecondary,
         ),
       ),
       Text(
         value,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-          color: valueColor ?? AppColors.black,
+          color: valueColor ?? palette.textPrimary,
         ),
       ),
     ],

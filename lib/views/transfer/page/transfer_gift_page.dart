@@ -105,7 +105,7 @@ class TransferGiftPage extends StatelessWidget {
           final cubit = BlocProvider.of<TransferCubit>(context);
 
           final appBar = AppBar(
-            backgroundColor: AppColors.backgroundColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             centerTitle: true,
             title: Text(
               'Transfer / Gift',
@@ -118,7 +118,7 @@ class TransferGiftPage extends StatelessWidget {
 
           if (state is TransferInitial || state is TransferLoading) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: appBar,
               body: const Center(
                 child: CircularProgressIndicator.adaptive(
@@ -129,7 +129,7 @@ class TransferGiftPage extends StatelessWidget {
           }
 
           return Scaffold(
-            backgroundColor: AppColors.backgroundColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: appBar,
             body: TransferWidget(cubit: cubit),
           );

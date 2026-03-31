@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class ProfileItemWidget extends StatelessWidget {
   final IconData icon;
@@ -17,30 +17,31 @@ class ProfileItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return ListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
       leading: Container(
         decoration: BoxDecoration(
-          color: AppColors.luxuryIvory,
+          color: palette.surfaceMuted,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: AppColors.primaryColor),
+        child: Icon(icon, color: palette.primary),
       ),
       title: Text(
         title,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.w500),
+        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+          fontWeight: FontWeight.w500,
+          color: palette.textPrimary,
+        ),
       ),
       subtitle: Text(
         subtitle,
-        style: Theme.of(
-          context,
-        ).textTheme.bodySmall!.copyWith(color: AppColors.grey),
+        style: Theme.of(context).textTheme.bodySmall!.copyWith(color: palette.textSecondary),
       ),
       onTap: onTap,
-      trailing: Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.grey),
+      trailing: Icon(Icons.arrow_forward_ios, size: 16, color: palette.textSecondary),
     );
   }
 }

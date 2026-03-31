@@ -19,9 +19,9 @@ class ConvertPage extends StatelessWidget {
         builder: (context, state) {
           if (state is ConvertInitial || state is ConvertLoading) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: AppColors.backgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Convert',
@@ -39,9 +39,9 @@ class ConvertPage extends StatelessWidget {
             );
           } else if (state is ConvertDataChanged) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: AppColors.backgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Convert',
@@ -57,9 +57,9 @@ class ConvertPage extends StatelessWidget {
             );
           } else if (state is ConvertError) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: AppColors.backgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Convert',

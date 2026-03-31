@@ -36,7 +36,7 @@ class LoginPage extends StatelessWidget {
         builder: (context, state) {
           if (state is LoginLoading) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               body: const Center(
                 child: CircularProgressIndicator.adaptive(
                   backgroundColor: AppColors.darkGold,
@@ -47,7 +47,7 @@ class LoginPage extends StatelessWidget {
               state is LoginPasswordVisibilityChanged ||
               state is LoginRememberMeChanged) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               body: SafeArea(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
