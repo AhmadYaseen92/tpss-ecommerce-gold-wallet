@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/account_conversion_request_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/account_summary_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/account_summary_cubit/account_summary_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/account_summary/page/account_summary_confirmation_page.dart';
@@ -15,13 +14,13 @@ class AccountSummaryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const summary = AccountSummaryModel(
-      holdMarketValue: 12450.0,
-      goldValue: 8700.0,
-      silverValue: 2100.0,
-      jewelleryValue: 1650.0,
-      availableCash: 12450.0,
-      usdtBalance: 12450.0,
-      eDirhamBalance: 45727.95,
+      holdMarketValue: '\$12,450.00',
+      goldValue: '\$8,700.00',
+      silverValue: '\$2,100.00',
+      jewelleryValue: '\$1,650.00',
+      availableCash: '\$12,450.00',
+      usdtBalance: '1,250 USDT',
+      eDirhamBalance: 'AED 4,300.00',
     );
 
     return BlocProvider(
@@ -49,9 +48,6 @@ class AccountSummaryPage extends StatelessWidget {
                 AccountPortfolioCard(
                   summary: summary,
                   totalPortfolio: AccountSummaryCubit.totalPortfolio,
-                  selectedMethod: state is AccountSummaryFormState
-                      ? state.selectedMethod
-                      : ConvertMethod.transferToBank,
                 ),
                 const AccountMethodForm(),
                 const SizedBox(height: 8),

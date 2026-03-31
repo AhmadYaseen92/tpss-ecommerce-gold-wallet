@@ -1,11 +1,11 @@
 class AccountSummaryModel {
-  final double holdMarketValue;
-  final double goldValue;
-  final double silverValue;
-  final double jewelleryValue;
-  final double availableCash;
-  final double usdtBalance;
-  final double eDirhamBalance;
+  final String holdMarketValue;
+  final String goldValue;
+  final String silverValue;
+  final String jewelleryValue;
+  final String availableCash;
+  final String usdtBalance;
+  final String eDirhamBalance;
 
   const AccountSummaryModel({
     required this.holdMarketValue,

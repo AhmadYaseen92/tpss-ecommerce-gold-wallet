@@ -71,6 +71,26 @@ class AccountMethodForm extends StatelessWidget {
                     return null;
                   },
                 ),
+                if (formState.selectedMethod == ConvertMethod.transferToUsdt ||
+                    formState.selectedMethod == ConvertMethod.transferToEDirham) ...[
+                  const SizedBox(height: 12),
+                  Builder(
+                    builder: (_) {
+                      final convertedAmount =
+                          cubit.convertedAmountLabel(formState) ?? '';
+                      return AppTextField(
+                        key: ValueKey(convertedAmount),
+                        label:
+                            formState.selectedMethod == ConvertMethod.transferToUsdt
+                            ? 'Converted Amount (USDT)'
+                            : 'Converted Amount (E-Dirham)',
+                        hint: 'Calculated amount',
+                        initialValue: convertedAmount,
+                        enabled: false,
+                      );
+                    },
+                  ),
+                ],
                 const SizedBox(height: 12),
                 AppTextField(
                   label: 'Note',
