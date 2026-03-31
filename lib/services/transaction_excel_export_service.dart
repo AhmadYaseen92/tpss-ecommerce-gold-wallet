@@ -68,7 +68,7 @@ class TransactionExcelExportService {
       await FileSaver.instance.saveFile(
         name: fileName,
         bytes: bytes,
-        ext: 'xlsx',
+        fileExtension: 'xlsx',
         mimeType: MimeType.microsoftExcel,
       );
       return null;
