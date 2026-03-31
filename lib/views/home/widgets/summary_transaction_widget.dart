@@ -4,7 +4,9 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class SummaryTransactionWidget extends StatelessWidget {
-  const SummaryTransactionWidget({super.key});
+  const SummaryTransactionWidget({super.key, required this.onViewAllHistory});
+
+  final VoidCallback onViewAllHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -38,11 +40,19 @@ class SummaryTransactionWidget extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Text(
-                'View All',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: palette.primary,
-                  fontWeight: FontWeight.w500,
+              TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.all(0.0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: onViewAllHistory,
+                child: Text(
+                  'View All',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: palette.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
