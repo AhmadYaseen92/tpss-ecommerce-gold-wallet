@@ -25,6 +25,10 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
   late final CartCubit cartCubit;
   int _currentTabIndex = 0;
 
+  void _openHistoryTab() {
+    setState(() => _currentTabIndex = 4);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -46,9 +50,9 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
     }
 
     final screens = [
-      HomePage(),
+      HomePage(onViewAllHistory: _openHistoryTab),
       const ProductPage(),
-      const GoldWalletPage(),
+      GoldWalletPage(onViewAllHistory: _openHistoryTab),
       BlocProvider.value(value: cartCubit, child: const CartPage()),
       const TransactionPage(),
     ];

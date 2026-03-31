@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/account_conversion_request_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 
 class AccountSummaryConfirmationPage extends StatelessWidget {
+  static const double _usdToEDirhamRate = 3.6725;
+
   final AccountConversionRequest request;
   final double totalPortfolio;
 
@@ -15,6 +18,8 @@ class AccountSummaryConfirmationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final convertedAmount = _convertedAmountLabel(request.method, request.amount);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Review Conversion')),
       body: ListView(
@@ -27,6 +32,8 @@ class AccountSummaryConfirmationPage extends StatelessWidget {
                 _row('Method', _methodLabel(request.method)),
                 _row('Target Account', request.targetAccount),
                 _row('Amount', '\$${request.amount.toStringAsFixed(2)}'),
+                if (convertedAmount != null)
+                  _row('Converted Amount', convertedAmount),
                 _row('Note', request.note.isEmpty ? 'No note' : request.note),
                 const Divider(),
                 _row('Portfolio Limit', '\$${totalPortfolio.toStringAsFixed(2)}'),
@@ -59,6 +66,18 @@ class AccountSummaryConfirmationPage extends StatelessWidget {
         return 'Transfer To USDT Account';
       case ConvertMethod.transferToEDirham:
         return 'Transfer To E-Dirham Account';
+    }
+  }
+
+  String? _convertedAmountLabel(ConvertMethod method, double amount) {
+    switch (method) {
+      case ConvertMethod.transferToUsdt:
+        return '${NumberFormat('#,##0.##').format(amount)} USDT';
+      case ConvertMethod.transferToEDirham:
+        return 'AED ${NumberFormat('#,##0.00').format(amount * _usdToEDirhamRate)}';
+      case ConvertMethod.transferToBank:
+      case ConvertMethod.transferToCard:
+        return null;
     }
   }
 

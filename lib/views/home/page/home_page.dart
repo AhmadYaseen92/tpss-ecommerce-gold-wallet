@@ -7,7 +7,9 @@ import 'package:tpss_ecommerce_gold_wallet/views/home/widgets/home_quick_actions
 import 'package:tpss_ecommerce_gold_wallet/views/home/widgets/summary_transaction_widget.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, required this.onViewAllHistory});
+
+  final VoidCallback onViewAllHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,7 @@ class HomePage extends StatelessWidget {
               availableCash: '\$ 200,000',
             ),
             const SizedBox(height: 20),
-            SummaryTransactionWidget(),
+            SummaryTransactionWidget(onViewAllHistory: onViewAllHistory),
 
             // const SizedBox(height: 20),
 

@@ -9,10 +9,12 @@ class WalletTransactionsWidget extends StatelessWidget {
     super.key,
     required this.transactions,
     required this.accentColor,
+    required this.onViewAllHistory,
   });
 
   final List<WalletTransaction> transactions;
   final Color accentColor;
+  final VoidCallback onViewAllHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +53,7 @@ class WalletTransactionsWidget extends StatelessWidget {
                   padding: const EdgeInsets.all(0.0),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                onPressed: () {},
+                onPressed: onViewAllHistory,
                 child: Text(
                   'View All ',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

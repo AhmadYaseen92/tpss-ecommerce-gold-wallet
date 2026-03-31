@@ -9,7 +9,9 @@ import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_tab_bar.d
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_transactions_widget.dart';
 
 class GoldWalletPage extends StatelessWidget {
-  const GoldWalletPage({super.key});
+  const GoldWalletPage({super.key, required this.onViewAllHistory});
+
+  final VoidCallback onViewAllHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +67,7 @@ class GoldWalletPage extends StatelessWidget {
                     WalletTransactionsWidget(
                       transactions: wallet.transactions,
                       accentColor: context.appPalette.primary,
+                      onViewAllHistory: onViewAllHistory,
                     ),
                 ],
               ),

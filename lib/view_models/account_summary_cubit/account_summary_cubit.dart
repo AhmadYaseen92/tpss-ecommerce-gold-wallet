@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/account_conversion_request_model.dart';
 
@@ -8,6 +9,7 @@ class AccountSummaryCubit extends Cubit<AccountSummaryState> {
   AccountSummaryCubit() : super(AccountSummaryFormState.initial());
 
   static const double totalPortfolio = 12450.0;
+  static const double usdToEDirhamRate = 3.6725;
 
   AccountSummaryFormState get _formState {
     if (state is AccountSummaryFormState) {
@@ -183,5 +185,20 @@ class AccountSummaryCubit extends Cubit<AccountSummaryState> {
         errorMessage: message,
       ),
     );
+  }
+
+  String? convertedAmountLabel(AccountSummaryFormState state) {
+    final amount = double.tryParse(state.amount.trim());
+    if (amount == null || amount <= 0) return null;
+
+    switch (state.selectedMethod) {
+      case ConvertMethod.transferToUsdt:
+        return '${NumberFormat('#,##0.##').format(amount)} USDT';
+      case ConvertMethod.transferToEDirham:
+        return 'AED ${NumberFormat('#,##0.00').format(amount * usdToEDirhamRate)}';
+      case ConvertMethod.transferToBank:
+      case ConvertMethod.transferToCard:
+        return null;
+    }
   }
 }

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/account_settings_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/profile/widgets/main_profile_widget.dart';
@@ -37,6 +40,18 @@ class ProfilePage extends StatelessWidget {
               AccountSettingsWidget(),
               const SizedBox(height: 20),
               PreferencesWidget(),
+              const SizedBox(height: 20),
+              AppButton(
+                label: 'Logout',
+                icon: Icons.logout_rounded,
+                onPressed: () {
+                  Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+                    AppRoutes.loginRoute,
+                    (route) => false,
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
             ],
           ),
         ),
