@@ -30,19 +30,15 @@ class ForgotPasswordPage extends StatelessWidget {
               (route) => false,
             );
           } else if (state is ForgotPasswordError) {
-            AppModalAlert.show(
-              context,
-              title: 'Error',
-              message: state.message,
-            );
+            AppModalAlert.show(context, title: 'Error', message: state.message);
           }
         },
-        
+
         builder: (context, state) {
           final cubit = BlocProvider.of<ForgotPasswordCubit>(context);
 
           if (state is ForgotPasswordLoading) {
-            return const Scaffold(
+            return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               body: Center(
                 child: CircularProgressIndicator.adaptive(

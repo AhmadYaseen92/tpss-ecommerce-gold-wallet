@@ -20,7 +20,7 @@ class OnboardingPage extends StatelessWidget {
         builder: (context, state) {
           final onboardingCubit = BlocProvider.of<OnboardingCubit>(context);
           if (state is OnboardingLoading) {
-            return const Scaffold(
+            return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               body: Center(
                 child: CircularProgressIndicator.adaptive(
@@ -28,7 +28,8 @@ class OnboardingPage extends StatelessWidget {
                 ),
               ),
             );
-          } else if (state is OnboardingLoaded || state is OnboardingPageChanged) {
+          } else if (state is OnboardingLoaded ||
+              state is OnboardingPageChanged) {
             {
               if (onboardingCubit.currentPage == 1) {
                 return Scaffold(
@@ -37,7 +38,10 @@ class OnboardingPage extends StatelessWidget {
                     children: [
                       OnboardingBuySellPage(cubit: onboardingCubit),
                       const Spacer(),
-                      StepIndicator(currentStep: onboardingCubit.currentPage, totalSteps:3),
+                      StepIndicator(
+                        currentStep: onboardingCubit.currentPage,
+                        totalSteps: 3,
+                      ),
                       const SizedBox(height: 50),
                     ],
                   ),
@@ -49,7 +53,10 @@ class OnboardingPage extends StatelessWidget {
                     children: [
                       OnboardingDigitalWalletPage(cubit: onboardingCubit),
                       const Spacer(),
-                      StepIndicator(currentStep: onboardingCubit.currentPage, totalSteps:3),
+                      StepIndicator(
+                        currentStep: onboardingCubit.currentPage,
+                        totalSteps: 3,
+                      ),
                       const SizedBox(height: 50),
                     ],
                   ),
@@ -62,7 +69,10 @@ class OnboardingPage extends StatelessWidget {
                     children: [
                       OnboardingTransferAndGiftPage(cubit: onboardingCubit),
                       const Spacer(),
-                      StepIndicator(currentStep: onboardingCubit.currentPage, totalSteps:3),
+                      StepIndicator(
+                        currentStep: onboardingCubit.currentPage,
+                        totalSteps: 3,
+                      ),
                       const SizedBox(height: 50),
                     ],
                   ),
@@ -75,7 +85,7 @@ class OnboardingPage extends StatelessWidget {
               body: Center(child: Text('Error: ${state.message}')),
             );
           }
-          return const Scaffold(
+          return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: SizedBox.shrink(),
           );
