@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 /// Allows typing over an existing digit by always keeping the last entered char.
 class _OtpDigitFormatter extends TextInputFormatter {
@@ -40,6 +40,8 @@ class OtpInputWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(length, (index) {
@@ -68,30 +70,28 @@ class OtpInputWidget extends StatelessWidget {
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
                 inputFormatters: [_OtpDigitFormatter()],
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textColor,
+                  color: palette.textPrimary,
                 ),
                 decoration: InputDecoration(
                   counterText: '',
                   filled: true,
-                  fillColor: AppColors.white,
+                  fillColor: palette.surface,
                   contentPadding: EdgeInsets.zero,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        BorderSide(color: AppColors.greyBorder, width: 1),
+                    borderSide: BorderSide(color: palette.border, width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        BorderSide(color: AppColors.greyBorder, width: 1),
+                    borderSide: BorderSide(color: palette.border, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(
-                      color: AppColors.primaryColor,
+                    borderSide: BorderSide(
+                      color: palette.primary,
                       width: 1.5,
                     ),
                   ),

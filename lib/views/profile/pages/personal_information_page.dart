@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
@@ -19,6 +19,7 @@ class PersonalInformationPage extends StatelessWidget {
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
           final cubit = BlocProvider.of<ProfileCubit>(context);
+          final palette = context.appPalette;
 
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -28,7 +29,7 @@ class PersonalInformationPage extends StatelessWidget {
               title: Text(
                 'Personal Information',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.primaryColor,
+                  color: palette.primary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -45,7 +46,7 @@ class PersonalInformationPage extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: palette.surface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -104,7 +105,7 @@ class PersonalInformationPage extends StatelessWidget {
                       enabled: cubit.isEditing,
                     ),
                     const SizedBox(height: 14),
-                    const Divider(color: AppColors.greyShade400),
+                    Divider(color: palette.border),
                     const SizedBox(height: 14),
                     const Text(
                       'Identity Verification',

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class TermsRow extends StatelessWidget {
   final bool value;
@@ -23,13 +23,15 @@ class TermsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Checkbox(
           value: value,
           onChanged: onChanged,
-          activeColor: AppColors.primaryColor,
+          activeColor: palette.primary,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         ),
         const SizedBox(width: 4),
@@ -38,16 +40,16 @@ class TermsRow extends StatelessWidget {
             padding: const EdgeInsets.only(top: 12),
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.greyShade700,
+                  color: palette.textSecondary,
                 ),
                 children: [
                   TextSpan(text: prefixText),
                   TextSpan(
                     text: highlightedText,
-                    style: const TextStyle(
-                      color: AppColors.primaryColor,
+                    style: TextStyle(
+                      color: palette.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -56,8 +58,8 @@ class TermsRow extends StatelessWidget {
                       TextSpan(text: connectorText),
                       TextSpan(
                         text: secondHighlightedText,
-                        style: const TextStyle(
-                          color: AppColors.primaryColor,
+                        style: TextStyle(
+                          color: palette.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

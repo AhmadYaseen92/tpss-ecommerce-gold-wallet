@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/profile_cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
@@ -19,6 +19,7 @@ class PaymentMethodsPage extends StatelessWidget {
           final cubit = BlocProvider.of<ProfileCubit>(context);
           final selectedMethod =
               cubit.paymentMethods[cubit.selectedPaymentIndex];
+          final palette = context.appPalette;
 
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -28,7 +29,7 @@ class PaymentMethodsPage extends StatelessWidget {
               title: Text(
                 'Payment Methods',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.primaryColor,
+                  color: palette.primary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -46,7 +47,7 @@ class PaymentMethodsPage extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: palette.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -78,16 +79,16 @@ class PaymentMethodsPage extends StatelessWidget {
                                 method.icon,
                                 size: 18,
                                 color: selected
-                                    ? AppColors.primaryColor
-                                    : AppColors.greyShade600,
+                                    ? palette.primary
+                                    : palette.textSecondary,
                               ),
                               onSelected: (_) =>
                                   cubit.selectPaymentMethod(index),
-                              selectedColor: AppColors.luxuryIvory,
+                              selectedColor: palette.surfaceMuted,
                               side: BorderSide(
                                 color: selected
-                                    ? AppColors.primaryColor
-                                    : AppColors.greyBorder,
+                                    ? palette.primary
+                                    : palette.border,
                               ),
                             );
                           },
@@ -98,9 +99,9 @@ class PaymentMethodsPage extends StatelessWidget {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.luxuryIvory,
+                          color: palette.surfaceMuted,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.greyBorder),
+                          border: Border.all(color: palette.border),
                         ),
                         child: Text(
                           '${selectedMethod.name} • ${selectedMethod.subtitle}',

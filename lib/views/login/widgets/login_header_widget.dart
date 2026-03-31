@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class LoginHeader extends StatelessWidget {
   const LoginHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Column(
       children: [
         const SizedBox(height: 10),
-        const Text(
+        Text(
           'Welcome Back',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: AppColors.textColor,
+            color: palette.textPrimary,
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Securely access your gold portfolio.',
-          style: TextStyle(fontSize: 14, color: AppColors.greyShade600),
+          style: TextStyle(fontSize: 14, color: palette.textSecondary),
         ),
       ],
     );
