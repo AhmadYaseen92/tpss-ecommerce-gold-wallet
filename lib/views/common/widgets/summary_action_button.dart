@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class SummaryActionButton extends StatelessWidget {
   final String title;
@@ -17,6 +17,8 @@ class SummaryActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -24,18 +26,18 @@ class SummaryActionButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.white,
-            border: Border.all(color: AppColors.primaryColor.withAlpha(50)),
+            color: palette.surface,
+            border: Border.all(color: palette.primary.withAlpha(50)),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: AppColors.primaryColor),
+              Icon(icon, color: palette.primary),
               const SizedBox(height: 8),
               Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 4),
-              Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.greyShade600)),
+              Text(subtitle, style: TextStyle(fontSize: 12, color: palette.textSecondary)),
             ],
           ),
         ),

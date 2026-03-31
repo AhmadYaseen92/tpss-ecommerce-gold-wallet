@@ -27,11 +27,11 @@ class ProductDetailPage extends StatelessWidget {
 
           if (state is ProductDetailLoading) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
                 centerTitle: true,
                 title: const Text('Product Detail'),
-                backgroundColor: AppColors.backgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 titleTextStyle:
                     Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
@@ -47,11 +47,11 @@ class ProductDetailPage extends StatelessWidget {
           } else if (state is ProductDetailLoaded ||
               state is ProductQuantityChanged) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
                 centerTitle: true,
                 title: const Text('Product Detail'),
-                backgroundColor: AppColors.backgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 titleTextStyle:
                     Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
@@ -74,11 +74,11 @@ class ProductDetailPage extends StatelessWidget {
             );
           } else if (state is ProductDetailError) {
             return Scaffold(
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
                 centerTitle: true,
                 title: const Text('Product Detail'),
-                backgroundColor: AppColors.backgroundColor,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 titleTextStyle:
                     Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,

@@ -19,10 +19,10 @@ class SecuritySettingsPage extends StatelessWidget {
           final cubit = BlocProvider.of<ProfileCubit>(context);
 
           return Scaffold(
-            backgroundColor: AppColors.backgroundColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
               centerTitle: true,
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               title: Text(
                 'Security Settings',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(

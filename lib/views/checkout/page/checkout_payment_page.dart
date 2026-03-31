@@ -54,7 +54,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
           final amount = ((_checkoutArgs['amount'] as num?) ?? 1250).toDouble();
           final total = (amount - _discountAmount).clamp(0.0, double.infinity);
           return Scaffold(
-            backgroundColor: AppColors.backgroundColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(title: const Text('Process Checkout'), centerTitle: true),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),

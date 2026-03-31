@@ -19,10 +19,10 @@ class LanguageSettingsPage extends StatelessWidget {
           final options = ['English', 'العربية', 'Türkçe'];
 
           return Scaffold(
-            backgroundColor: AppColors.backgroundColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
               centerTitle: true,
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               title: Text(
                 'Language',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(

@@ -14,7 +14,7 @@ class GenerateTaxInvoicePage extends StatelessWidget {
     final reference = 'INV-$refKey-${DateTime.now().millisecondsSinceEpoch}';
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Generate Tax Invoice'),
         centerTitle: true,
