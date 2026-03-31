@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/checkout_cubit/checkout_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 
 class CheckoutPaymentPage extends StatefulWidget {
@@ -37,16 +38,14 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return BlocProvider(
       create: (_) => CheckoutCubit()..load(),
       child: BlocConsumer<CheckoutCubit, CheckoutState>(
         listener: (context, state) {
           if (state is CheckoutSuccess) {
-            AppModalAlert.show(
-              context,
-              title: 'Payment Confirmed',
-              message: 'Payment confirmed with WhatsApp OTP.',
-            );
+            AppModalAlert.show(context, title: 'Payment Confirmed', message: 'Payment confirmed with WhatsApp OTP.');
           }
         },
         builder: (context, state) {
@@ -55,7 +54,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
           final total = (amount - _discountAmount).clamp(0.0, double.infinity);
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            appBar: AppBar(title: const Text('Process Checkout'), centerTitle: true),
+            appBar: AppBar(title: Text('Process Checkout', style: TextStyle(color: palette.textPrimary)), centerTitle: true),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -106,9 +105,9 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                     title: 'Order Details',
                     child: Column(
                       children: [
-                        _row('Asset', (_checkoutArgs['title'] ?? 'Gold Asset').toString()),
+                        _row(context, 'Asset', (_checkoutArgs['title'] ?? 'Gold Asset').toString()),
                         if (AppReleaseConfig.showSellerUi)
-                          _row('Seller', (_checkoutArgs['seller'] ?? AppReleaseConfig.defaultSeller).toString()),
+                          _row(context, 'Seller', (_checkoutArgs['seller'] ?? AppReleaseConfig.defaultSeller).toString()),
                       ],
                     ),
                   ),
@@ -119,19 +118,12 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                         TextField(
                           controller: _discountCodeController,
                           textCapitalization: TextCapitalization.characters,
-                          decoration: InputDecoration(
-                            hintText: 'Enter discount code',
-                            errorText: _discountError,
-                            border: const OutlineInputBorder(),
-                          ),
+                          decoration: InputDecoration(hintText: 'Enter discount code', errorText: _discountError, border: const OutlineInputBorder()),
                         ),
                         const SizedBox(height: 10),
                         Align(
                           alignment: Alignment.centerRight,
-                          child: OutlinedButton(
-                            onPressed: () => _applyDiscountCode(amount),
-                            child: const Text('Apply Code'),
-                          ),
+                          child: OutlinedButton(onPressed: () => _applyDiscountCode(amount), child: const Text('Apply Code')),
                         ),
                       ],
                     ),
@@ -140,16 +132,14 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                     title: 'Review Summary',
                     child: Column(
                       children: [
-                        _row('Payment', _label(cubit.selectedPaymentType)),
-                        if (cubit.selectedPaymentType == CheckoutPaymentType.bank)
-                          _row('Account', PredefinedAccountsData.bankAccounts[selectedBankIndex].name),
-                        if (cubit.selectedPaymentType == CheckoutPaymentType.card)
-                          _row('Method', PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name),
-                        _row('Amount', '\$${amount.toStringAsFixed(2)}'),
-                        _row('Fee', '\$0.00'),
-                        _row('Discount', '-\$${_discountAmount.toStringAsFixed(2)}'),
-                        const Divider(),
-                        _row('Total', '\$${total.toStringAsFixed(2)}', bold: true),
+                        _row(context, 'Payment', _label(cubit.selectedPaymentType)),
+                        if (cubit.selectedPaymentType == CheckoutPaymentType.bank) _row(context, 'Account', PredefinedAccountsData.bankAccounts[selectedBankIndex].name),
+                        if (cubit.selectedPaymentType == CheckoutPaymentType.card) _row(context, 'Method', PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name),
+                        _row(context, 'Amount', '\$${amount.toStringAsFixed(2)}'),
+                        _row(context, 'Fee', '\$0.00'),
+                        _row(context, 'Discount', '-\$${_discountAmount.toStringAsFixed(2)}'),
+                        Divider(color: palette.border),
+                        _row(context, 'Total', '\$${total.toStringAsFixed(2)}', bold: true),
                       ],
                     ),
                   ),
@@ -164,11 +154,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                   child: FilledButton.icon(
                     onPressed: state is CheckoutLoading ? null : cubit.confirmOtp,
                     icon: state is CheckoutLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.lock_open_outlined),
                     label: const Text('Confirm Checkout'),
                   ),
@@ -191,11 +177,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
       return;
     }
 
-    const discountMap = <String, double>{
-      'SAVE10': 0.10,
-      'GOLD5': 0.05,
-      'VIP15': 0.15,
-    };
+    const discountMap = <String, double>{'SAVE10': 0.10, 'GOLD5': 0.05, 'VIP15': 0.15};
     final percent = discountMap[raw];
     if (percent == null) {
       setState(() {
@@ -244,13 +226,12 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     }
   }
 
-  Widget _row(String label, String value, {bool bold = false}) {
-    final style = TextStyle(fontWeight: bold ? FontWeight.w700 : FontWeight.w500);
+  Widget _row(BuildContext context, String label, String value, {bool bold = false}) {
+    final palette = context.appPalette;
+    final style = TextStyle(fontWeight: bold ? FontWeight.w700 : FontWeight.w500, color: palette.textPrimary);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [Expanded(child: Text(label, style: style)), Text(value, style: style)],
-      ),
+      child: Row(children: [Expanded(child: Text(label, style: style)), Text(value, style: style)]),
     );
   }
 }
@@ -262,16 +243,12 @@ class _PaymentTile extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _PaymentTile({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
+  const _PaymentTile({required this.title, required this.subtitle, required this.icon, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -279,24 +256,24 @@ class _PaymentTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.luxuryIvory : AppColors.white,
+          color: selected ? palette.surfaceMuted : palette.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: selected ? AppColors.primaryColor : AppColors.greysShade2),
+          border: Border.all(color: selected ? palette.primary : palette.border),
         ),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.primaryColor),
+            Icon(icon, color: palette.primary),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.grey)),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.w700, color: palette.textPrimary)),
+                  Text(subtitle, style: TextStyle(fontSize: 12, color: palette.textSecondary)),
                 ],
               ),
             ),
-            Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, color: AppColors.primaryColor),
+            Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, color: palette.primary),
           ],
         ),
       ),

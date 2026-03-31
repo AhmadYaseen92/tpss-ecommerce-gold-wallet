@@ -6,16 +6,18 @@ import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/wallet_cubit/wallet_cubit.dart';
 
 class WalletTabBar extends StatelessWidget {
-  const WalletTabBar({required this.selectedIndex});
+  const WalletTabBar({super.key, required this.selectedIndex});
 
   final int selectedIndex;
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Container(
       padding: const EdgeInsets.all(4.0),
       decoration: BoxDecoration(
-        color: context.appPalette.surfaceMuted,
+        color: palette.surfaceMuted,
         borderRadius: BorderRadius.circular(50.0),
       ),
       child: Row(
@@ -31,17 +33,9 @@ class WalletTabBar extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 decoration: BoxDecoration(
-                  color: isSelected ? context.appPalette.surface : AppColors.transparent,
+                  color: isSelected ? palette.primary.withAlpha(25) : AppColors.transparent,
                   borderRadius: BorderRadius.circular(50.0),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.shadowBlack18,
-                            blurRadius: 4.0,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
+                  boxShadow: isSelected ? [BoxShadow(color: Colors.black.withAlpha(20), blurRadius: 4.0, offset: const Offset(0, 2))] : null,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -49,10 +43,8 @@ class WalletTabBar extends StatelessWidget {
                     Text(
                       wallet.tabLabel,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color:
-                            isSelected ? AppColors.darkBrown : context.appPalette.textSecondary,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? palette.primary : palette.textSecondary,
                       ),
                     ),
                   ],
@@ -65,5 +57,3 @@ class WalletTabBar extends StatelessWidget {
     );
   }
 }
-
-
