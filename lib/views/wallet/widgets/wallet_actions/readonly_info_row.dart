@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class ReadonlyInfoRow extends StatelessWidget {
   final String label;
@@ -9,6 +9,8 @@ class ReadonlyInfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -16,16 +18,14 @@ class ReadonlyInfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.darkGrey),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: palette.textSecondary),
             ),
           ),
           Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.black,
+              color: palette.textPrimary,
             ),
           ),
         ],
