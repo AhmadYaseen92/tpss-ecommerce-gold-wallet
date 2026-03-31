@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/login_cubit/login_cubit.dart';
 
@@ -10,6 +10,8 @@ class RememberMeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -21,17 +23,17 @@ class RememberMeRow extends StatelessWidget {
                   child: Checkbox(
                     value: cubit.rememberMe,
                     onChanged: (val) => cubit.toggleRememberMe(val ?? false),
-                    activeColor: AppColors.primaryColor,
-                    side: BorderSide(color: AppColors.greyShade400),
+                    activeColor: palette.primary,
+                    side: BorderSide(color: palette.border),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'Remember me',
-                  style: TextStyle(fontSize: 13, color: AppColors.textColor),
+                  style: TextStyle(fontSize: 13, color: palette.textPrimary),
                 ),
               ],
             ),
@@ -44,12 +46,12 @@ class RememberMeRow extends StatelessWidget {
               onPressed: () {
                 Navigator.pushNamed(context, AppRoutes.forgotPasswordRoute);
               },
-              child: const Text(
+              child: Text(
                 'Forgot Password?',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primaryColor,
+                  color: palette.primary,
                 ),
               ),
             ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/signup_cubit/signup_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
@@ -15,6 +15,8 @@ class SignupStep1Form extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Form(
       key: formKey,
       child: Column(
@@ -94,15 +96,15 @@ class SignupStep1Form extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: palette.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.greyBorder, width: 1),
+                  border: Border.all(color: palette.border, width: 1),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today_outlined,
-                      color: AppColors.primaryColor,
+                      color: palette.primary,
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -116,14 +118,14 @@ class SignupStep1Form extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           color: cubit.dateOfBirth != null
-                              ? AppColors.textColor
-                              : AppColors.greyShade400,
+                              ? palette.textPrimary
+                              : palette.textSecondary,
                         ),
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.calendar_month_outlined,
-                      color: AppColors.greyShade500,
+                      color: palette.textSecondary,
                       size: 20,
                     ),
                   ],
@@ -140,7 +142,6 @@ class SignupStep1Form extends StatelessWidget {
               if (formKey.currentState?.validate() ?? false) {
                 cubit.goToStep2();
               }
-              ;
             },
           ),
         ],

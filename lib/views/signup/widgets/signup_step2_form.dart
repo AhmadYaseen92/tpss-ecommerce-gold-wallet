@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/signup_cubit/signup_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_text_field.dart';
@@ -18,6 +18,8 @@ class SignupStep2Form extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return Form(
       key: formKey,
       child: Column(
@@ -28,12 +30,12 @@ class SignupStep2Form extends StatelessWidget {
             subtitle: 'Step 2: Verify your identity and set a secure password.',
           ),
           const SizedBox(height: 28),
-          const Text(
+          Text(
             'Identity Verification',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppColors.textColor,
+              color: palette.textPrimary,
             ),
           ),
           const SizedBox(height: 16),
@@ -71,14 +73,14 @@ class SignupStep2Form extends StatelessWidget {
                 : null,
           ),
           const SizedBox(height: 14),
-          const Divider(thickness: 1, color: AppColors.greyShade400),
+          Divider(thickness: 1, color: palette.border),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'Security',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppColors.textColor,
+              color: palette.textPrimary,
             ),
           ),
           const SizedBox(height: 16),
@@ -134,7 +136,7 @@ class SignupStep2Form extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          Divider(thickness: 1, color: AppColors.greyBorder),
+          Divider(thickness: 1, color: palette.border),
           const SizedBox(height: 16),
           BlocBuilder<SignupCubit, SignupState>(
             builder: (context, state) {

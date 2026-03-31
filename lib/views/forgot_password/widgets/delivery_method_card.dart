@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class DeliveryMethodCard extends StatelessWidget {
   final String title;
@@ -19,16 +19,18 @@ class DeliveryMethodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: palette.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primaryColor : AppColors.greyBorder,
+            color: isSelected ? palette.primary : palette.border,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -38,7 +40,7 @@ class DeliveryMethodCard extends StatelessWidget {
               value: true,
               groupValue: isSelected,
               onChanged: (_) => onTap(),
-              activeColor: AppColors.primaryColor,
+              activeColor: palette.primary,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             const SizedBox(width: 8),
@@ -48,18 +50,18 @@ class DeliveryMethodCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textColor,
+                      color: palette.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.greyShade600,
+                      color: palette.textSecondary,
                     ),
                   ),
                 ],
@@ -67,7 +69,7 @@ class DeliveryMethodCard extends StatelessWidget {
             ),
             Icon(
               icon,
-              color: AppColors.greyShade500,
+              color: palette.textSecondary,
               size: 22,
             ),
           ],
