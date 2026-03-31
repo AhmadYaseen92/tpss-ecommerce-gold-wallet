@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_bottom_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_text_field.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 
 class MarketOrderCheckoutPage extends StatefulWidget {
   const MarketOrderCheckoutPage({super.key});
@@ -50,22 +50,19 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
     final symbol = (_args['title'] ?? 'XAUUSD').toString();
     final seller = (_args['seller'] ?? AppReleaseConfig.defaultSeller).toString();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Market Order Checkout'), centerTitle: true),
+      appBar: AppBar(title: Text('Market Order Checkout', style: TextStyle(color: palette.textPrimary)), centerTitle: true),
       bottomNavigationBar: ActionBottomBar(
         summaryLabel: 'Estimated Total',
         summaryValue: '\$${_total.toStringAsFixed(2)}',
         buttonText: 'Place Order',
         onPressed: () async {
           if (!(_formKey.currentState?.validate() ?? false)) return;
-          await AppModalAlert.show(
-            context,
-            title: 'Order Placed',
-            message: 'Order placed: $symbol x$_quantity (${_label(executionType)})',
-          );
+          await AppModalAlert.show(context, title: 'Order Placed', message: 'Order placed: $symbol x$_quantity (${_label(executionType)})');
           if (!context.mounted) return;
           Navigator.pop(context);
         },
@@ -80,9 +77,9 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                 title: 'Order Details',
                 child: Column(
                   children: [
-                    _readonlyRow('Symbol/Unit', symbol),
-                    if (AppReleaseConfig.showSellerUi) _readonlyRow('Seller', seller),
-                    _readonlyRow('Live Price', '\$${_unitPrice.toStringAsFixed(2)}'),
+                    _readonlyRow(context, 'Symbol/Unit', symbol),
+                    if (AppReleaseConfig.showSellerUi) _readonlyRow(context, 'Seller', seller),
+                    _readonlyRow(context, 'Live Price', '\$${_unitPrice.toStringAsFixed(2)}'),
                   ],
                 ),
               ),
@@ -92,12 +89,7 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Execution Type',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                      child: Text('Execution Type', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700, color: palette.textPrimary)),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -107,14 +99,10 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                         return ChoiceChip(
                           label: Text(_label(type)),
                           selected: selected,
-                          selectedColor: AppColors.primaryColor.withAlpha(25),
-                          labelStyle: TextStyle(
-                            color: selected ? AppColors.primaryColor : AppColors.darkBrown,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          side: BorderSide(
-                            color: selected ? AppColors.primaryColor : AppColors.greyBorder,
-                          ),
+                          selectedColor: palette.primary.withAlpha(25),
+                          backgroundColor: palette.surface,
+                          labelStyle: TextStyle(color: selected ? palette.primary : palette.textSecondary, fontWeight: FontWeight.w700),
+                          side: BorderSide(color: selected ? palette.primary : palette.border),
                           onSelected: (_) => setState(() => executionType = type),
                         );
                       }).toList(),
@@ -131,9 +119,7 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                             onChanged: (_) => setState(() {}),
                             validator: (value) {
                               final parsed = int.tryParse((value ?? '').trim());
-                              if (parsed == null || parsed < 1) {
-                                return 'Quantity must be at least 1';
-                              }
+                              if (parsed == null || parsed < 1) return 'Quantity must be at least 1';
                               return null;
                             },
                           ),
@@ -146,14 +132,14 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                                   setState(() {});
                                 }
                               : null,
-                          icon: const Icon(Icons.remove_circle_outline),
+                          icon: Icon(Icons.remove_circle_outline, color: palette.textSecondary),
                         ),
                         IconButton(
                           onPressed: () {
                             quantityController.text = (_quantity + 1).toString();
                             setState(() {});
                           },
-                          icon: const Icon(Icons.add_circle_outline),
+                          icon: Icon(Icons.add_circle_outline, color: palette.textSecondary),
                         ),
                       ],
                     ),
@@ -166,38 +152,22 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                   children: [
                     if (executionType != MarketExecutionType.instant) ...[
                       ActionTextField(
-                        label: executionType == MarketExecutionType.limit
-                            ? 'Limit Price'
-                            : 'Stop Price',
+                        label: executionType == MarketExecutionType.limit ? 'Limit Price' : 'Stop Price',
                         hintText: 'Enter trigger price',
                         controller: triggerPriceController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         validator: (value) {
                           if (executionType == MarketExecutionType.instant) return null;
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Required for ${_label(executionType)} orders';
-                          }
+                          if (value == null || value.trim().isEmpty) return 'Required for ${_label(executionType)} orders';
                           if (double.tryParse(value) == null) return 'Enter a valid number';
                           return null;
                         },
                       ),
                       const SizedBox(height: 12),
                     ],
-                    ActionTextField(
-                      label: 'Take Profite',
-                      hintText: 'Optional',
-                      controller: tpController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: _optionalNumberValidator,
-                    ),
+                    ActionTextField(label: 'Take Profit', hintText: 'Optional', controller: tpController, keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: _optionalNumberValidator),
                     const SizedBox(height: 12),
-                    ActionTextField(
-                      label: 'Stope Loss',
-                      hintText: 'Optional',
-                      controller: slController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: _optionalNumberValidator,
-                    ),
+                    ActionTextField(label: 'Stop Loss', hintText: 'Optional', controller: slController, keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: _optionalNumberValidator),
                   ],
                 ),
               ),
@@ -214,13 +184,14 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
     return null;
   }
 
-  Widget _readonlyRow(String label, String value) {
+  Widget _readonlyRow(BuildContext context, String label, String value) {
+    final palette = context.appPalette;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Expanded(child: Text(label)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Expanded(child: Text(label, style: TextStyle(color: palette.textPrimary))),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w700, color: palette.textPrimary)),
         ],
       ),
     );

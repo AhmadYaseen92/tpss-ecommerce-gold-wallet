@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 
 class PredefinedAccountSelector extends StatelessWidget {
@@ -20,6 +20,7 @@ class PredefinedAccountSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
     final selected = accounts[selectedIndex];
 
     return Column(
@@ -30,10 +31,11 @@ class PredefinedAccountSelector extends StatelessWidget {
           isExpanded: true,
           isDense: true,
           borderRadius: BorderRadius.circular(12),
-          dropdownColor: AppColors.white,
+          dropdownColor: palette.surface,
+          style: TextStyle(color: palette.textPrimary),
           decoration: InputDecoration(
             labelText: label,
-            prefixIcon: Icon(icon, color: AppColors.primaryColor),
+            prefixIcon: Icon(icon, color: palette.primary),
             border: const OutlineInputBorder(),
           ),
           selectedItemBuilder: (context) {
@@ -45,6 +47,7 @@ class PredefinedAccountSelector extends StatelessWidget {
                   accounts[index].name,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
+                  style: TextStyle(color: palette.textPrimary),
                 ),
               ),
             );
@@ -57,16 +60,14 @@ class PredefinedAccountSelector extends StatelessWidget {
                 '${accounts[index].name} • ${accounts[index].subtitle}',
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
+                style: TextStyle(color: palette.textPrimary),
               ),
             ),
           ),
           onChanged: onChanged,
         ),
         const SizedBox(height: 6),
-        Text(
-          selected.subtitle,
-          style: const TextStyle(fontSize: 12, color: AppColors.greyShade600),
-        ),
+        Text(selected.subtitle, style: TextStyle(fontSize: 12, color: palette.textSecondary)),
       ],
     );
   }

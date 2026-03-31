@@ -1,39 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 
 class DescriptionWidget extends StatelessWidget {
   final ProductItemModel product;
 
-  const DescriptionWidget({
-    super.key,
-    required this.product,
-  });
-
+  const DescriptionWidget({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Description',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: AppColors.black,
-          ),
-        ),
+        Text('Description', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: palette.textPrimary)),
         const SizedBox(height: 4),
-          Text(
-            product.description,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.darkGrey,
-              height: 1.6,
-            ),
-          )
+        Text(product.description, style: TextStyle(fontSize: 13, color: palette.textSecondary, height: 1.6)),
       ],
     );
   }

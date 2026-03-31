@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 
 class AppFilterChip extends StatelessWidget {
   final String label;
@@ -15,11 +15,13 @@ class AppFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
+
     return FilterChip(
       label: Text(
         label,
         style: TextStyle(
-          color: selected ? AppColors.white : AppColors.grey,
+          color: selected ? palette.surface : palette.textSecondary,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -27,12 +29,12 @@ class AppFilterChip extends StatelessWidget {
       onSelected: (_) => onTap(),
       showCheckmark: false,
       avatar: selected
-          ? const Icon(Icons.check_circle, size: 16, color: AppColors.white)
+          ? Icon(Icons.check_circle, size: 16, color: palette.surface)
           : null,
-      selectedColor: AppColors.primaryColor,
-      backgroundColor: AppColors.white,
+      selectedColor: palette.primary,
+      backgroundColor: palette.surface,
       side: BorderSide(
-        color: selected ? AppColors.primaryColor : AppColors.greyBorder,
+        color: selected ? palette.primary : palette.border,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

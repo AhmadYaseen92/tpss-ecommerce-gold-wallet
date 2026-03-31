@@ -21,10 +21,10 @@ class PaymentMethodsPage extends StatelessWidget {
               cubit.paymentMethods[cubit.selectedPaymentIndex];
 
           return Scaffold(
-            backgroundColor: AppColors.backgroundColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
               centerTitle: true,
-              backgroundColor: AppColors.backgroundColor,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               title: Text(
                 'Payment Methods',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
