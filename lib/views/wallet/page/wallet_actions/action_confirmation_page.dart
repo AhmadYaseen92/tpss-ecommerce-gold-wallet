@@ -48,14 +48,26 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
       appBar: AppBar(title: const Text('Confirmation')),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.popUntil(context, (route) => route.isFirst);
-            },
-            child: Text(_isCompleted ? 'Done' : 'Back to Wallet'),
-          ),
+        child: Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _isSellFlow
+                    ? (_isExpired || _isCompleted ? null : _completeSellWithOtp)
+                    : null,
+                child: Text(_isCompleted ? 'Completed' : 'Confirm & Complete'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.popUntil(context, (route) => route.isFirst);
+                },
+                child: const Text('Back to Wallet'),
+              ),
+            ),
+          ],
         ),
       ),
       body: SafeArea(
@@ -80,35 +92,6 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
               Text(widget.summary.title),
               const SizedBox(height: 20),
 
-              if (_isSellFlow && !_isCompleted) ...[
-                ActionSectionCard(
-                  title: 'Sell Quote Lock',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ReadonlyInfoRow(label: 'Locked Price', value: widget.summary.totalValue),
-                      ReadonlyInfoRow(label: 'Timer', value: _formatSeconds(_secondsLeft)),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'This price is locked for 30 seconds. Complete OTP to finish the sale. If the timer expires, the quote will be cancelled and you can retry with the latest market price.',
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                OtpInputWidget(
-                  value: _otp,
-                  onChanged: (value) => setState(() => _otp = value),
-                  onCompleted: (value) => setState(() => _otp = value),
-                ),
-                const SizedBox(height: 10),
-                TextButton(
-                  onPressed: _isExpired ? null : _completeSellWithOtp,
-                  child: const Text('Verify OTP & Complete Sell'),
-                ),
-                const SizedBox(height: 6),
-              ],
-
               ActionSectionCard(
                 title: 'Transaction Summary',
                 child: Column(
@@ -126,6 +109,34 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                   ],
                 ),
               ),
+              if (_isSellFlow && !_isCompleted) ...[
+                const SizedBox(height: 12),
+                ActionSectionCard(
+                  title: 'Locked Quote & OTP',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ReadonlyInfoRow(label: 'Locked Price', value: widget.summary.totalValue),
+                      ReadonlyInfoRow(label: 'Timer', value: _formatSeconds(_secondsLeft)),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'This price is locked for 30 seconds. Enter OTP and tap Confirm & Complete. If timer expires, quote is cancelled and you can retry with live price.',
+                      ),
+                      const SizedBox(height: 12),
+                      OtpInputWidget(
+                        value: _otp,
+                        onChanged: (value) => setState(() => _otp = value),
+                        onCompleted: (value) => setState(() => _otp = value),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              if (_isCompleted)
+                const Padding(
+                  padding: EdgeInsets.only(top: 10),
+                  child: Text('Transaction completed successfully at the locked price.'),
+                ),
             ],
           ),
         ),
