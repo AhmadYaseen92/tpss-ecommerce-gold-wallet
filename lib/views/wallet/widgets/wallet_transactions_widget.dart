@@ -84,6 +84,9 @@ class WalletTransactionsWidget extends StatelessWidget {
   Widget _buildTransactionRow(BuildContext context, WalletTransaction tx) {
     final palette = context.appPalette;
     final isPositive = tx.change.startsWith('+');
+    final pnlAmount = tx.marketValueAmount - tx.estimatedPurchaseValue;
+    final pnlLabel = pnlAmount >= 0 ? 'Profit' : 'Loss';
+    final signedPnlAmount = pnlAmount >= 0 ? '+' : '-';
     return Row(
       children: [
         ClipRRect(
@@ -157,7 +160,15 @@ class WalletTransactionsWidget extends StatelessWidget {
             ),
             const SizedBox(height: 2.0),
             Text(
-              tx.change,
+              'Live Price: \$${tx.marketPricePerGram.toStringAsFixed(2)}/g',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: palette.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 2.0),
+            Text(
+              '$pnlLabel: $signedPnlAmount\$${pnlAmount.abs().toStringAsFixed(2)} (${tx.change})',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: isPositive ? AppColors.green : AppColors.red,
                 fontWeight: FontWeight.w500,

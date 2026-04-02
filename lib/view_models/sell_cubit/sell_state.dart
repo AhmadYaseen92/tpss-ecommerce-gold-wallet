@@ -11,8 +11,18 @@ final class SellDataChanged extends SellState {
   final double units;
   final bool agreedToTerms;
   final int selectedAssetIndex;
+  final double currentPricePerUnit;
+  final int priceLockSecondsRemaining;
+  final String? statusMessage;
 
-  SellDataChanged({required this.units, required this.agreedToTerms, required this.selectedAssetIndex});
+  SellDataChanged({
+    required this.units,
+    required this.agreedToTerms,
+    required this.selectedAssetIndex,
+    required this.currentPricePerUnit,
+    required this.priceLockSecondsRemaining,
+    required this.statusMessage,
+  });
 
 }
 

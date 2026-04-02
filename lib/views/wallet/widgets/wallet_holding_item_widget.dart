@@ -24,6 +24,9 @@ class WalletHoldingItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
+    final pnlAmount = item.marketValueAmount - item.estimatedPurchaseValue;
+    final pnlLabel = pnlAmount >= 0 ? 'Profit' : 'Loss';
+    final signedPnlAmount = pnlAmount >= 0 ? '+' : '-';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
@@ -105,6 +108,21 @@ class WalletHoldingItemWidget extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Live Price: \$${item.marketPricePerGram.toStringAsFixed(2)}/g',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: palette.textSecondary,
+                              ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$pnlLabel: $signedPnlAmount\$${pnlAmount.abs().toStringAsFixed(2)} (${item.change})',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: item.change.startsWith('+') ? AppColors.green : AppColors.red,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                       ],
                     ),
