@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/market_order_repository.dart';
@@ -29,6 +31,22 @@ class MarketOrderListView extends StatefulWidget {
 }
 
 class _MarketOrderListViewState extends State<MarketOrderListView> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final orders = MarketOrderRepository.orders;
@@ -64,16 +82,11 @@ class _MarketOrderListViewState extends State<MarketOrderListView> {
                         Text('Total: \$${order.total.toStringAsFixed(2)}'),
                         const SizedBox(height: 10),
                         if (order.status == MarketOrderStatus.pending)
-                          Row(
+                          const Row(
                             children: [
-                              FilledButton.icon(
-                                onPressed: () {
-                                  MarketOrderRepository.settleOrder(order.id);
-                                  setState(() {});
-                                },
-                                icon: const Icon(Icons.sync),
-                                label: const Text('Process'),
-                              ),
+                              Icon(Icons.hourglass_top_rounded, size: 16),
+                              SizedBox(width: 8),
+                              Text('Waiting for payment provider result...'),
                             ],
                           ),
                         if (order.status == MarketOrderStatus.rejected)

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
@@ -10,6 +12,7 @@ class MarketOrderRepository {
   static int _nextOrderId = 1005;
   static bool _seeded = false;
   static final List<MarketOrderModel> _orders = <MarketOrderModel>[];
+  static final Map<String, Timer> _settlementTimers = <String, Timer>{};
   static final Map<String, double> _accountBalances = {
     PredefinedAccountsData.bankAccounts[0].name: 12000,
     PredefinedAccountsData.bankAccounts[1].name: 250,
@@ -44,6 +47,7 @@ class MarketOrderRepository {
       createdAt: DateTime.now(),
     );
     _orders.add(order);
+    _scheduleAutoSettlement(order.id);
     todayNotifications.insert(
       0,
       NotificationModel(
@@ -63,6 +67,7 @@ class MarketOrderRepository {
     final order = _orders[index];
     if (order.status != MarketOrderStatus.pending) return order;
 
+    _settlementTimers.remove(orderId)?.cancel();
     final accountBalance = getAccountBalance(order.paymentAccount);
     if (accountBalance < order.total) {
       final rejected = order.copyWith(status: MarketOrderStatus.rejected);
@@ -118,6 +123,7 @@ class MarketOrderRepository {
       paymentAccount: paymentAccount,
     );
     _orders[index] = reopened;
+    _scheduleAutoSettlement(orderId);
     return reopened;
   }
 
@@ -126,6 +132,7 @@ class MarketOrderRepository {
     final index = _orders.indexWhere((o) => o.id == orderId);
     if (index == -1) return;
     _orders[index] = _orders[index].copyWith(status: MarketOrderStatus.cancelled);
+    _settlementTimers.remove(orderId)?.cancel();
   }
 
   static double livePriceForSymbol(String symbol, {double fallback = 0}) {
@@ -190,9 +197,20 @@ class MarketOrderRepository {
     ];
 
     _orders.addAll(sampleOrders);
+    for (final order in sampleOrders.where((o) => o.status == MarketOrderStatus.pending)) {
+      _scheduleAutoSettlement(order.id, delay: const Duration(seconds: 5));
+    }
     for (final order in sampleOrders.where((o) => o.status == MarketOrderStatus.filled)) {
       _addToWallet(order);
     }
+  }
+
+  static void _scheduleAutoSettlement(String orderId, {Duration delay = const Duration(seconds: 4)}) {
+    _settlementTimers.remove(orderId)?.cancel();
+    _settlementTimers[orderId] = Timer(delay, () {
+      settleOrder(orderId);
+      _settlementTimers.remove(orderId)?.cancel();
+    });
   }
 
   static void _addToWallet(MarketOrderModel order) {
