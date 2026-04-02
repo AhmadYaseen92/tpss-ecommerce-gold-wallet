@@ -8,6 +8,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/order/page/market_order_list_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product/widgets/seller_filter_bar_widget.dart';
 
 class MarketWatchTabWidget extends StatelessWidget {
@@ -24,149 +25,98 @@ class MarketWatchTabWidget extends StatelessWidget {
             ? state.symbols
             : cubit.visibleMarketSymbols;
 
-        return Stack(
-          children: [
-            Column(
-              children: [
-                const SellerFilterBarWidget(),
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 84),
-                    itemCount: symbols.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final item = symbols[index];
-                      return Card(
-                        color: context.appPalette.surface,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () => _openMarketDetail(context, item),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                              horizontal: 16,
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+        return DefaultTabController(
+          length: 2,
+          child: Column(
+            children: [
+              const SellerFilterBarWidget(),
+              TabBar(
+                tabs: const [
+                  Tab(text: 'Tickers'),
+                  Tab(text: 'Orders'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    Stack(
+                      children: [
+                        ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 84),
+                          itemCount: symbols.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final item = symbols[index];
+                            return Card(
+                              color: context.appPalette.surface,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () => _openMarketDetail(context, item),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            item.symbol,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleMedium!
-                                                .copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                          ),
-                                          Text(item.name),
-                                          if (AppReleaseConfig
-                                              .showSellerUi) ...[
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Seller: ${item.sellerName}',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: AppColors.darkGold,
-                                              ),
-                                            ),
-                                          ],
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Updated: ${_formatUpdatedTime(DateTime.now())}',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: context.appPalette.textSecondary,
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(item.symbol, style: Theme.of(context).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold)),
+                                                Text(item.name),
+                                                if (AppReleaseConfig.showSellerUi) ...[
+                                                  const SizedBox(height: 4),
+                                                  Text('Seller: ${item.sellerName}', style: const TextStyle(fontSize: 12, color: AppColors.darkGold)),
+                                                ],
+                                                const SizedBox(height: 4),
+                                                Text('Updated: ${_formatUpdatedTime(DateTime.now())}', style: TextStyle(fontSize: 12, color: context.appPalette.textSecondary)),
+                                                const SizedBox(height: 2),
+                                                Text('Last: 1m', style: TextStyle(fontSize: 12, color: context.appPalette.textSecondary, fontWeight: FontWeight.w600)),
+                                              ],
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'Last: 1m',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: context.appPalette.textSecondary,
-                                              fontWeight: FontWeight.w600,
+                                          SizedBox(
+                                            width: 150,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              children: [
+                                                _marketValueLine(context, label: 'Ask', value: _ask(item).toStringAsFixed(2)),
+                                                _marketValueLine(context, label: 'Bid', value: _bid(item).toStringAsFixed(2)),
+                                                _marketValueLine(context, label: 'High', value: _high(item).toStringAsFixed(2)),
+                                                _marketValueLine(context, label: 'Low', value: _low(item).toStringAsFixed(2)),
+                                              ],
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    SizedBox(
-                                      width: 150,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          _marketValueLine(
-                                            context,
-                                            label: 'Ask',
-                                            value: _ask(
-                                              item,
-                                            ).toStringAsFixed(2),
-                                          ),
-                                          _marketValueLine(
-                                            context,
-                                            label: 'Bid',
-                                            value: _bid(
-                                              item,
-                                            ).toStringAsFixed(2),
-                                          ),
-                                          _marketValueLine(
-                                            context,
-                                            label: 'High',
-                                            value: _high(
-                                              item,
-                                            ).toStringAsFixed(2),
-                                          ),
-                                          _marketValueLine(
-                                            context,
-                                            label: 'Low',
-                                            value: _low(
-                                              item,
-                                            ).toStringAsFixed(2),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 12),
+                                      _SymbolMiniChart(points: _chartPoints(item, length: 22), isPositive: item.change >= 0),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(height: 12),
-                                _SymbolMiniChart(
-                                  points: _chartPoints(item, length: 22),
-                                  isPositive: item.change >= 0,
-                                ),
-                              ],
-                            ),
+                              ),
+                            );
+                          },
+                        ),
+                        Positioned(
+                          right: 20,
+                          bottom: 20,
+                          child: FloatingActionButton.extended(
+                            onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.marketOrderCheckoutRoute),
+                            icon: const Icon(Icons.add_card),
+                            label: const Text('Place Order'),
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      ],
+                    ),
+                    const MarketOrderListView(),
+                  ],
                 ),
-              ],
-            ),
-            Positioned(
-              right: 20,
-              bottom: 20,
-              child: FloatingActionButton.extended(
-                onPressed: () {
-                  Navigator.of(
-                    context,
-                    rootNavigator: true,
-                  ).pushNamed(AppRoutes.marketOrderCheckoutRoute);
-                },
-                icon: const Icon(Icons.add_card),
-                label: const Text('Place Order'),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

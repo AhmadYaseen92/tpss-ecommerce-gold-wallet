@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum WalletCategory { gold, silver, jewelry, coins }
+enum WalletCategory { gold, silver, jewelry, coins, spotMr }
 
 enum AssetType { bar, gram, ounce, coin, necklace, ring, bracelet }
 
@@ -425,5 +425,18 @@ final List<WalletModel> dummyWallets = [
             'https://images.unsplash.com/photo-1610375461246-83df859d849d?q=80&w=800',
       ),
     ],
+  ),
+  WalletModel(
+    category: WalletCategory.spotMr,
+    tabLabel: 'Spot MR',
+    walletName: 'Spot MR Orders',
+    isVerified: true,
+    icon: Icons.show_chart,
+    totalWeightInGrams: 0,
+    totalMarketValue: '\$0.00',
+    totalHoldings: 0,
+    change: '+0.0%',
+    note: 'Contains all market watch buy orders.',
+    transactions: const [],
   ),
 ];

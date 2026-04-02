@@ -13,13 +13,28 @@ class MarketOrderListPage extends StatefulWidget {
 class _MarketOrderListPageState extends State<MarketOrderListPage> {
   @override
   Widget build(BuildContext context) {
-    final orders = MarketOrderRepository.orders;
-
     return Scaffold(
       appBar: AppBar(title: const Text('My Market Orders'), centerTitle: true),
-      body: orders.isEmpty
-          ? const Center(child: Text('No orders yet.'))
-          : ListView.separated(
+      body: const MarketOrderListView(),
+    );
+  }
+}
+
+class MarketOrderListView extends StatefulWidget {
+  const MarketOrderListView({super.key});
+
+  @override
+  State<MarketOrderListView> createState() => _MarketOrderListViewState();
+}
+
+class _MarketOrderListViewState extends State<MarketOrderListView> {
+  @override
+  Widget build(BuildContext context) {
+    final orders = MarketOrderRepository.orders;
+
+    return orders.isEmpty
+        ? const Center(child: Text('No orders yet.'))
+        : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemBuilder: (_, index) {
                 final order = orders[index];
@@ -75,8 +90,7 @@ class _MarketOrderListPageState extends State<MarketOrderListPage> {
               },
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemCount: orders.length,
-            ),
-    );
+            );
   }
 
   Widget _statusChip(BuildContext context, MarketOrderStatus status) {

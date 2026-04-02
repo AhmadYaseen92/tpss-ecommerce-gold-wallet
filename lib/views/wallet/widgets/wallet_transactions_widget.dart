@@ -4,7 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 
-class WalletTransactionsWidget extends StatefulWidget {
+class WalletTransactionsWidget extends StatelessWidget {
   const WalletTransactionsWidget({
     super.key,
     required this.transactions,
@@ -17,18 +17,8 @@ class WalletTransactionsWidget extends StatefulWidget {
   final VoidCallback onViewAllHistory;
 
   @override
-  State<WalletTransactionsWidget> createState() => _WalletTransactionsWidgetState();
-}
-
-class _WalletTransactionsWidgetState extends State<WalletTransactionsWidget> {
-  bool _spotMrOnly = false;
-
-  @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
-    final visibleTransactions = _spotMrOnly
-        ? widget.transactions.where((tx) => tx.isSpotMrOrder).toList()
-        : widget.transactions;
 
     return Container(
       width: double.infinity,
@@ -56,12 +46,6 @@ class _WalletTransactionsWidgetState extends State<WalletTransactionsWidget> {
                   color: palette.textPrimary,
                 ),
               ),
-              const SizedBox(width: 8),
-              FilterChip(
-                selected: _spotMrOnly,
-                label: const Text('Spot MR'),
-                onSelected: (value) => setState(() => _spotMrOnly = value),
-              ),
               const Spacer(),
               TextButton(
                 style: TextButton.styleFrom(
@@ -69,11 +53,11 @@ class _WalletTransactionsWidgetState extends State<WalletTransactionsWidget> {
                   padding: const EdgeInsets.all(0.0),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                onPressed: widget.onViewAllHistory,
+                onPressed: onViewAllHistory,
                 child: Text(
                   'View All ',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: widget.accentColor,
+                    color: accentColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -81,18 +65,13 @@ class _WalletTransactionsWidgetState extends State<WalletTransactionsWidget> {
             ],
           ),
           const SizedBox(height: 14.0),
-          if (visibleTransactions.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text('No Spot MR transactions yet.', style: TextStyle(color: palette.textSecondary)),
-            ),
-          ...visibleTransactions.asMap().entries.map((entry) {
+          ...transactions.asMap().entries.map((entry) {
             final index = entry.key;
             final tx = entry.value;
             return Column(
               children: [
                 _buildTransactionRow(context, tx),
-                if (index < visibleTransactions.length - 1)
+                if (index < transactions.length - 1)
                   Divider(height: 20.0, thickness: 1.0, color: palette.border),
               ],
             );

@@ -96,13 +96,13 @@ class MarketOrderRepository {
   }
 
   static void _addToWallet(MarketOrderModel order) {
-    final goldWalletIndex = dummyWallets.indexWhere((wallet) => wallet.category == WalletCategory.gold);
+    final goldWalletIndex = dummyWallets.indexWhere((wallet) => wallet.category == WalletCategory.spotMr);
     if (goldWalletIndex == -1) return;
 
     final wallet = dummyWallets[goldWalletIndex];
     final tx = WalletTransaction(
       name: 'Spot MR ${order.symbol}',
-      category: WalletCategory.gold,
+      category: WalletCategory.spotMr,
       assetType: AssetType.gram,
       subtitle: '${order.quantity} unit • Spot MR',
       weightInGrams: order.quantity.toDouble(),
