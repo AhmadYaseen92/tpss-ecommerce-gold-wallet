@@ -1,12 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/data/market_order_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 
 part 'wallet_state.dart';
 
 class WalletCubit extends Cubit<WalletState> {
-  final List<WalletModel> _wallets = List<WalletModel>.from(dummyWallets);
+  final List<WalletModel> _wallets = <WalletModel>[];
   int _selectedIndex = 0;
   Timer? _marketTimer;
   int _tick = 0;
@@ -17,6 +18,11 @@ class WalletCubit extends Cubit<WalletState> {
     emit(WalletLoading());
     try {
       await Future.delayed(const Duration(milliseconds: 1000));
+      // Ensure market orders are seeded and Spot MR filled orders are synced into dummyWallets first.
+      MarketOrderRepository.orders;
+      _wallets
+        ..clear()
+        ..addAll(List<WalletModel>.from(dummyWallets));
       _selectedIndex = 0;
       _emitWallets();
       _startMarketFeed();
@@ -40,8 +46,23 @@ class WalletCubit extends Cubit<WalletState> {
   }
 
   void _refreshLivePricing() {
+    final sourceWallets = List<WalletModel>.from(dummyWallets);
+
     for (int walletIndex = 0; walletIndex < _wallets.length; walletIndex++) {
-      final wallet = _wallets[walletIndex];
+      var wallet = _wallets[walletIndex];
+      if (wallet.category == WalletCategory.spotMr) {
+        final liveSpotWallet = sourceWallets.firstWhere(
+          (w) => w.category == WalletCategory.spotMr,
+          orElse: () => wallet,
+        );
+        wallet = wallet.copyWith(
+          transactions: liveSpotWallet.transactions,
+          totalHoldings: liveSpotWallet.totalHoldings,
+          totalMarketValue: liveSpotWallet.totalMarketValue,
+          totalWeightInGrams: liveSpotWallet.totalWeightInGrams,
+        );
+      }
+
       final updatedTransactions = wallet.transactions.asMap().entries.map((entry) {
         final txIndex = entry.key;
         final tx = entry.value;
