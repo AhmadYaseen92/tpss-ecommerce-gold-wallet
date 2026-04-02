@@ -7,6 +7,7 @@ class MarketOrderModel {
   final int quantity;
   final double unitPrice;
   final String paymentMethod;
+  final String paymentAccount;
   final MarketOrderStatus status;
   final DateTime createdAt;
 
@@ -17,20 +18,28 @@ class MarketOrderModel {
     required this.quantity,
     required this.unitPrice,
     required this.paymentMethod,
+    required this.paymentAccount,
     required this.status,
     required this.createdAt,
   });
 
   double get total => unitPrice * quantity;
 
-  MarketOrderModel copyWith({MarketOrderStatus? status}) {
+  MarketOrderModel copyWith({
+    MarketOrderStatus? status,
+    double? unitPrice,
+    String? paymentMethod,
+    String? paymentAccount,
+    int? quantity,
+  }) {
     return MarketOrderModel(
       id: id,
       symbol: symbol,
       seller: seller,
-      quantity: quantity,
-      unitPrice: unitPrice,
-      paymentMethod: paymentMethod,
+      quantity: quantity ?? this.quantity,
+      unitPrice: unitPrice ?? this.unitPrice,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paymentAccount: paymentAccount ?? this.paymentAccount,
       status: status ?? this.status,
       createdAt: createdAt,
     );

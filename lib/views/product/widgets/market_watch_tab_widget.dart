@@ -104,7 +104,12 @@ class MarketWatchTabWidget extends StatelessWidget {
                           right: 20,
                           bottom: 20,
                           child: FloatingActionButton.extended(
-                            onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.marketOrderCheckoutRoute),
+                            onPressed: () async {
+                              final goToOrders = await Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.marketOrderCheckoutRoute);
+                              if (goToOrders == true && context.mounted) {
+                                DefaultTabController.of(context).animateTo(1);
+                              }
+                            },
                             icon: const Icon(Icons.add_card),
                             label: const Text('Place Order'),
                           ),
@@ -283,9 +288,9 @@ class MarketWatchTabWidget extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(ctx);
-                        Navigator.of(context, rootNavigator: true).pushNamed(
+                        final goToOrders = await Navigator.of(context, rootNavigator: true).pushNamed(
                           AppRoutes.marketOrderCheckoutRoute,
                           arguments: {
                             'title': item.symbol,
@@ -293,6 +298,9 @@ class MarketWatchTabWidget extends StatelessWidget {
                             'amount': item.price,
                           },
                         );
+                        if (goToOrders == true && context.mounted) {
+                          DefaultTabController.of(context).animateTo(1);
+                        }
                       },
                       child: const Text('Place Order'),
                     ),

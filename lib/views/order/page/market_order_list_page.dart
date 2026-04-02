@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/market_order_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 
 class MarketOrderListPage extends StatefulWidget {
   const MarketOrderListPage({super.key});
@@ -59,15 +60,50 @@ class _MarketOrderListViewState extends State<MarketOrderListView> {
                         Text('Seller: ${order.seller}'),
                         Text('Qty: ${order.quantity} • Unit: \$${order.unitPrice.toStringAsFixed(2)}'),
                         Text('Payment: ${order.paymentMethod}'),
+                        Text('Account: ${order.paymentAccount}'),
                         Text('Total: \$${order.total.toStringAsFixed(2)}'),
                         const SizedBox(height: 10),
+                        if (order.status == MarketOrderStatus.pending)
+                          Row(
+                            children: [
+                              FilledButton.icon(
+                                onPressed: () {
+                                  MarketOrderRepository.settleOrder(order.id, approve: true);
+                                  setState(() {});
+                                },
+                                icon: const Icon(Icons.check_circle_outline),
+                                label: const Text('Complete'),
+                              ),
+                              const SizedBox(width: 8),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  MarketOrderRepository.settleOrder(order.id, approve: false);
+                                  setState(() {});
+                                },
+                                icon: const Icon(Icons.close),
+                                label: const Text('Reject'),
+                              ),
+                            ],
+                          ),
                         if (order.status == MarketOrderStatus.rejected)
                           Row(
                             children: [
                               OutlinedButton.icon(
-                                onPressed: () {
-                                  MarketOrderRepository.reopenRejectedOrder(order.id);
-                                  setState(() {});
+                                onPressed: () async {
+                                  final livePrice = MarketOrderRepository.livePriceForSymbol(order.symbol, fallback: order.unitPrice);
+                                  final goToOrders = await Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.marketOrderCheckoutRoute,
+                                    arguments: {
+                                      'title': order.symbol,
+                                      'seller': order.seller,
+                                      'amount': livePrice,
+                                      'reopenOrderId': order.id,
+                                    },
+                                  );
+                                  if (goToOrders == true && mounted) {
+                                    setState(() {});
+                                  }
                                 },
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('Reopen'),

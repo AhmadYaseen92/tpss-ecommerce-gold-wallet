@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/market_order_repository.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_bottom_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_text_field.dart';
@@ -29,6 +30,8 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
   final TextEditingController tpController = TextEditingController();
   final TextEditingController slController = TextEditingController();
   CheckoutPaymentType paymentType = CheckoutPaymentType.cash;
+  int selectedBankIndex = 0;
+  int selectedPaymentIndex = 0;
 
   Map<String, dynamic> get _args {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -76,19 +79,33 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
         buttonText: 'Place Order',
         onPressed: () async {
           if (!(_formKey.currentState?.validate() ?? false)) return;
-          final order = MarketOrderRepository.placeOrder(
-            symbol: symbol,
-            seller: seller,
-            quantity: _quantity,
-            unitPrice: _unitPrice,
-            paymentMethod: _paymentLabel(paymentType),
+          final reopenOrderId = _args['reopenOrderId'] as String?;
+          final order = reopenOrderId == null
+              ? MarketOrderRepository.placeOrder(
+                  symbol: symbol,
+                  seller: seller,
+                  quantity: _quantity,
+                  unitPrice: _unitPrice,
+                  paymentMethod: _paymentLabel(paymentType),
+                  paymentAccount: _selectedAccountLabel(),
+                )
+              : MarketOrderRepository.reopenOrderAsPending(
+                    orderId: reopenOrderId,
+                    liveUnitPrice: _unitPrice,
+                    quantity: _quantity,
+                    paymentMethod: _paymentLabel(paymentType),
+                    paymentAccount: _selectedAccountLabel(),
+                  );
+
+          if (order == null) return;
+
+          await AppModalAlert.show(
+            context,
+            title: 'Order Submitted',
+            message: 'Order ${order.id} is pending now. It will be completed or rejected after settlement.',
           );
-          final message = order.status == MarketOrderStatus.filled
-              ? 'Order ${order.id} placed, added to wallet, and \$${order.total.toStringAsFixed(2)} deducted directly from ${_paymentLabel(paymentType)}.'
-              : 'Order ${order.id} rejected due to low balance. You can reopen or cancel it from Order List.';
-          await AppModalAlert.show(context, title: 'Order Update', message: message);
           if (!context.mounted) return;
-          Navigator.pushNamed(context, AppRoutes.marketOrderListRoute);
+          Navigator.pop(context, true);
         },
       ),
       body: SingleChildScrollView(
@@ -193,6 +210,34 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                   }).toList(),
                 ),
               ),
+              if (paymentType == CheckoutPaymentType.bank)
+                ActionSectionCard(
+                  title: 'Select Linked Bank Account',
+                  child: PredefinedAccountSelector(
+                    label: 'Bank Account',
+                    accounts: PredefinedAccountsData.bankAccounts,
+                    selectedIndex: selectedBankIndex,
+                    icon: Icons.account_balance_outlined,
+                    onChanged: (index) {
+                      if (index == null) return;
+                      setState(() => selectedBankIndex = index);
+                    },
+                  ),
+                ),
+              if (paymentType == CheckoutPaymentType.card)
+                ActionSectionCard(
+                  title: 'Select Predefined Payment Method',
+                  child: PredefinedAccountSelector(
+                    label: 'Payment Method',
+                    accounts: PredefinedAccountsData.paymentMethods,
+                    selectedIndex: selectedPaymentIndex,
+                    icon: Icons.credit_card_outlined,
+                    onChanged: (index) {
+                      if (index == null) return;
+                      setState(() => selectedPaymentIndex = index);
+                    },
+                  ),
+                ),
               ActionSectionCard(
                 title: 'Risk Management',
                 child: Column(
@@ -274,6 +319,17 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
         return 'Deduct directly from saved card';
       case CheckoutPaymentType.cash:
         return 'Deduct directly from wallet balance';
+    }
+  }
+
+  String _selectedAccountLabel() {
+    switch (paymentType) {
+      case CheckoutPaymentType.bank:
+        return PredefinedAccountsData.bankAccounts[selectedBankIndex].name;
+      case CheckoutPaymentType.card:
+        return PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name;
+      case CheckoutPaymentType.cash:
+        return 'Wallet Cash Balance';
     }
   }
 }

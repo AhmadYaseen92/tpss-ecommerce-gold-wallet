@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/notification_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
@@ -17,82 +18,121 @@ class MarketOrderRepository {
     required int quantity,
     required double unitPrice,
     required String paymentMethod,
+    required String paymentAccount,
   }) {
-    var order = MarketOrderModel(
+    final order = MarketOrderModel(
       id: 'MO-${_nextOrderId++}',
       symbol: symbol,
       seller: seller,
       quantity: quantity,
       unitPrice: unitPrice,
       paymentMethod: paymentMethod,
+      paymentAccount: paymentAccount,
       status: MarketOrderStatus.pending,
       createdAt: DateTime.now(),
     );
+    _orders.add(order);
+    todayNotifications.insert(
+      0,
+      NotificationModel(
+        title: 'Market Order Pending',
+        description: 'Order ${order.id} submitted and now pending settlement.',
+        dateTime: DateTime.now(),
+        icon: const Icon(Icons.hourglass_top_rounded, color: AppColors.amber),
+      ),
+    );
+    return order;
+  }
 
-    final total = order.total;
-    if (availableCashBalance < total) {
-      order = order.copyWith(status: MarketOrderStatus.rejected);
-      _orders.add(order);
+  static MarketOrderModel? settleOrder(String orderId, {required bool approve}) {
+    final index = _orders.indexWhere((o) => o.id == orderId);
+    if (index == -1) return null;
+    final order = _orders[index];
+    if (order.status != MarketOrderStatus.pending) return order;
+
+    if (!approve) {
+      final rejected = order.copyWith(status: MarketOrderStatus.rejected);
+      _orders[index] = rejected;
+      todayNotifications.insert(
+        0,
+        NotificationModel(
+          title: 'Order Rejected',
+          description: 'Order ${order.id} was rejected by payment provider.',
+          dateTime: DateTime.now(),
+          icon: const Icon(Icons.error_outline, color: AppColors.red),
+        ),
+      );
+      return rejected;
+    }
+
+    if (order.paymentMethod == 'Cash Balance' && availableCashBalance < order.total) {
+      final rejected = order.copyWith(status: MarketOrderStatus.rejected);
+      _orders[index] = rejected;
       todayNotifications.insert(
         0,
         NotificationModel(
           title: 'Pending Order Rejected',
-          description: 'Insufficient balance for ${order.symbol}. Please add funds and reopen order ${order.id}.',
+          description: 'Insufficient cash balance for ${order.symbol}.',
           dateTime: DateTime.now(),
           icon: const Icon(Icons.warning_amber_rounded, color: AppColors.red),
         ),
       );
-      return order;
+      return rejected;
     }
 
-    availableCashBalance -= total;
-    order = order.copyWith(status: MarketOrderStatus.filled);
-    _orders.add(order);
-    _addToWallet(order);
+    if (order.paymentMethod == 'Cash Balance') {
+      availableCashBalance -= order.total;
+    }
+    final filled = order.copyWith(status: MarketOrderStatus.filled);
+    _orders[index] = filled;
+    _addToWallet(filled);
 
     todayNotifications.insert(
       0,
       NotificationModel(
-        title: 'Market Order Filled',
-        description: 'Order ${order.id} filled. \$${total.toStringAsFixed(2)} deducted directly and added to wallet.',
+        title: 'Order Completed',
+        description: 'Order ${order.id} completed and added to Spot MR wallet.',
         dateTime: DateTime.now(),
         icon: const Icon(Icons.check_circle, color: AppColors.green),
       ),
     );
 
-    return order;
+    return filled;
   }
 
-  static MarketOrderModel? reopenRejectedOrder(String orderId) {
+  static MarketOrderModel? reopenOrderAsPending({
+    required String orderId,
+    required double liveUnitPrice,
+    required int quantity,
+    required String paymentMethod,
+    required String paymentAccount,
+  }) {
     final index = _orders.indexWhere((o) => o.id == orderId);
     if (index == -1) return null;
     final order = _orders[index];
     if (order.status != MarketOrderStatus.rejected) return order;
 
-    if (availableCashBalance < order.total) {
-      todayNotifications.insert(
-        0,
-        NotificationModel(
-          title: 'Order Still Rejected',
-          description: 'Order ${order.id} still has no balance coverage.',
-          dateTime: DateTime.now(),
-          icon: const Icon(Icons.error_outline, color: AppColors.red),
-        ),
-      );
-      return order;
-    }
-
-    availableCashBalance -= order.total;
-    final filled = order.copyWith(status: MarketOrderStatus.filled);
-    _orders[index] = filled;
-    _addToWallet(filled);
-    return filled;
+    final reopened = order.copyWith(
+      status: MarketOrderStatus.pending,
+      unitPrice: liveUnitPrice,
+      quantity: quantity,
+      paymentMethod: paymentMethod,
+      paymentAccount: paymentAccount,
+    );
+    _orders[index] = reopened;
+    return reopened;
   }
 
   static void cancelOrder(String orderId) {
     final index = _orders.indexWhere((o) => o.id == orderId);
     if (index == -1) return;
     _orders[index] = _orders[index].copyWith(status: MarketOrderStatus.cancelled);
+  }
+
+  static double livePriceForSymbol(String symbol, {double fallback = 0}) {
+    final match = initialMarketSymbols.where((item) => item.symbol == symbol);
+    if (match.isEmpty) return fallback;
+    return match.first.price;
   }
 
   static void _addToWallet(MarketOrderModel order) {
