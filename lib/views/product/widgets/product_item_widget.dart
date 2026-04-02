@@ -31,7 +31,8 @@ class ProductItemWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(product.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.textPrimary)),
-                    GramsHintLabel(grams: GramsConverter.fromWeightText(product.weight), prefix: 'Weight:'),
+                    if (AppReleaseConfig.showWeightInGrams)
+                      GramsHintLabel(grams: GramsConverter.fromWeightText(product.weight), prefix: 'Weight:'),
                     if (AppReleaseConfig.showSellerUi)
                       Text('Seller: ${product.sellerName}', style: TextStyle(fontSize: 12, color: palette.primary)),
                     const SizedBox(height: 6),

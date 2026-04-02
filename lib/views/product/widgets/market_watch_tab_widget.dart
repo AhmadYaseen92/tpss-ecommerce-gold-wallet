@@ -69,7 +69,8 @@ class MarketWatchTabWidget extends StatelessWidget {
                                               children: [
                                                 Text(item.symbol, style: Theme.of(context).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold)),
                                                 Text(item.name),
-                                                GramsHintLabel(grams: GramsConverter.fromSymbol(item.symbol), prefix: 'Weight:'),
+                                                if (AppReleaseConfig.showWeightInGrams)
+                                                  GramsHintLabel(grams: GramsConverter.fromSymbol(item.symbol), prefix: 'Weight:'),
                                                 if (AppReleaseConfig.showSellerUi) ...[
                                                   const SizedBox(height: 4),
                                                   Text('Seller: ${item.sellerName}', style: const TextStyle(fontSize: 12, color: AppColors.darkGold)),
@@ -193,7 +194,8 @@ class MarketWatchTabWidget extends StatelessWidget {
                         ? '${item.name} • Seller: ${item.sellerName}'
                         : item.name,
                   ),
-                  GramsHintLabel(grams: GramsConverter.fromSymbol(item.symbol), prefix: 'Weight:'),
+                  if (AppReleaseConfig.showWeightInGrams)
+                    GramsHintLabel(grams: GramsConverter.fromSymbol(item.symbol), prefix: 'Weight:'),
                   const SizedBox(height: 8),
                   Text(
                     'X: Pricing   |   Y: Time',

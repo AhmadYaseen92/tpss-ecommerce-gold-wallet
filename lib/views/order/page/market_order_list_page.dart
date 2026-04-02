@@ -110,7 +110,8 @@ class _MarketOrderListContent extends StatelessWidget {
                                 const SizedBox(height: 8),
                                 Text('Seller: ${order.seller}'),
                                 Text('Qty: ${order.quantity} • Unit: \$${order.unitPrice.toStringAsFixed(2)}'),
-                                GramsHintLabel(grams: totalWeight, prefix: 'Weight:'),
+                                if (AppReleaseConfig.showWeightInGrams)
+                                  GramsHintLabel(grams: totalWeight, prefix: 'Weight:'),
                                 Text('Payment: ${order.paymentMethod}'),
                                 Text('Account: ${order.paymentAccount}'),
                                 Text('Total: \$${order.total.toStringAsFixed(2)}'),
