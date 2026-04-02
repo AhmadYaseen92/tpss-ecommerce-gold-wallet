@@ -6,6 +6,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/checkout_cubit/checkout_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
@@ -152,7 +153,21 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                 child: SizedBox(
                   height: 52,
                   child: FilledButton.icon(
-                    onPressed: state is CheckoutLoading ? null : cubit.confirmOtp,
+                    onPressed: state is CheckoutLoading
+                        ? null
+                        : () async {
+                            final otpVerified = await Navigator.pushNamed(
+                              context,
+                              AppRoutes.confirmOtpRoute,
+                              arguments: const {
+                                'title': 'Confirm Buy OTP',
+                                'subtitle': 'Enter the OTP to confirm your checkout payment.',
+                              },
+                            );
+                            if (otpVerified == true) {
+                              cubit.confirmOtp();
+                            }
+                          },
                     icon: state is CheckoutLoading
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.lock_open_outlined),

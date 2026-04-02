@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/sell_cubit/sell_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
@@ -149,7 +150,7 @@ class SellWidget extends StatelessWidget {
                           context,
                           label: 'Per gram',
                           value:
-                              '\$${sellCubit.selectedAsset.pricePerUnit.toStringAsFixed(2)}',
+                              '\$${sellCubit.currentPricePerUnit.toStringAsFixed(2)}',
                           valueColor: AppColors.primaryColor,
                         ),
                       ),
@@ -166,6 +167,41 @@ class SellWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 20.0),
                   Container(
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12.0),
+                      border: Border.all(color: AppColors.greysShade2),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.timer_outlined,
+                          color: AppColors.primaryColor,
+                        ),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          child: Text(
+                            'Price is fixed for ${sellCubit.priceLockSecondsRemaining}s. If you do not confirm, the price updates automatically.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.darkGrey),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if ((sellCubit.statusMessage ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 8.0),
+                    Text(
+                      sellCubit.statusMessage!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                  const SizedBox(height: 20.0),
+                  Container(
                     padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
                       color: AppColors.white,
@@ -178,7 +214,7 @@ class SellWidget extends StatelessWidget {
                           context,
                           label: 'Amount',
                           value:
-                              '${sellCubit.units.toStringAsFixed(1)} g x \$${sellCubit.selectedAsset.pricePerUnit.toStringAsFixed(0)}',
+                              '${sellCubit.units.toStringAsFixed(1)} g x \$${sellCubit.currentPricePerUnit.toStringAsFixed(2)}',
                         ),
                         const Divider(height: 20.0),
                         summaryRow(
@@ -268,8 +304,19 @@ class SellWidget extends StatelessWidget {
             child: AppButton(
               cubit: sellCubit,
               label: 'Confirm Trade',
-              onPressed: () {
-                sellCubit.submit();
+              onPressed: () async {
+                final otpVerified = await Navigator.pushNamed(
+                  context,
+                  AppRoutes.confirmOtpRoute,
+                  arguments: const {
+                    'title': 'Confirm Sell OTP',
+                    'subtitle': 'Enter the OTP to complete this sell action.',
+                  },
+                );
+                if (otpVerified != true) return;
+
+                final submitted = await sellCubit.submit();
+                if (!context.mounted || !submitted) return;
                 AppModalAlert.show(
                   context,
                   title: 'Sell Confirmed',

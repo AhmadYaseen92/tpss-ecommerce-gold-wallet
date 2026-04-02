@@ -22,6 +22,7 @@ import 'package:tpss_ecommerce_gold_wallet/views/sell/page/sell_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transfer/page/transfer_gift_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/page/forgot_password_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/splash/page/splash_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/page/confirm_otp_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/sell_asset_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/transfer_asset_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/page/wallet_actions/convert_asset_page.dart';
@@ -145,6 +146,15 @@ class AppRouter {
 
       case AppRoutes.marketOrderCheckoutRoute:
         return MaterialPageRoute(builder: (_) => const MarketOrderCheckoutPage(), settings: settings);
+
+      case AppRoutes.confirmOtpRoute:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+          builder: (_) => ConfirmOtpPage(
+            title: args?['title'] as String?,
+            subtitle: args?['subtitle'] as String?,
+          ),
+        );
 
       default:
         return MaterialPageRoute(
