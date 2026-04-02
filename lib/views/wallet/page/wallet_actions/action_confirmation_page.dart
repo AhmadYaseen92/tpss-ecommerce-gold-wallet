@@ -46,90 +46,84 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Confirmation')),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            },
+            child: Text(_isCompleted ? 'Done' : 'Back to Wallet'),
+          ),
+        ),
+      ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Expanded(
-                child: SingleChildScrollView(
+              const SizedBox(height: 12),
+              CircleAvatar(
+                radius: 34,
+                child: Icon(
+                  _isCompleted ? Icons.check : Icons.lock_clock_outlined,
+                  size: 34,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '$statusText Successfully',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(widget.summary.title),
+              const SizedBox(height: 20),
+
+              if (_isSellFlow && !_isCompleted) ...[
+                ActionSectionCard(
+                  title: 'Sell Quote Lock',
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 12),
-                      CircleAvatar(
-                        radius: 34,
-                        child: Icon(
-                          _isCompleted ? Icons.check : Icons.lock_clock_outlined,
-                          size: 34,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '$statusText Successfully',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-                      ),
+                      ReadonlyInfoRow(label: 'Locked Price', value: widget.summary.totalValue),
+                      ReadonlyInfoRow(label: 'Timer', value: _formatSeconds(_secondsLeft)),
                       const SizedBox(height: 8),
-                      Text(widget.summary.title),
-                      const SizedBox(height: 20),
-
-                      if (_isSellFlow && !_isCompleted) ...[
-                        ActionSectionCard(
-                          title: 'Sell Quote Lock',
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ReadonlyInfoRow(label: 'Locked Price', value: widget.summary.totalValue),
-                              ReadonlyInfoRow(label: 'Timer', value: _formatSeconds(_secondsLeft)),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'This price is locked for 30 seconds. Complete OTP to finish the sale. If the timer expires, the quote will be cancelled and you can retry with the latest market price.',
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        OtpInputWidget(
-                          value: _otp,
-                          onChanged: (value) => setState(() => _otp = value),
-                          onCompleted: (value) => setState(() => _otp = value),
-                        ),
-                        const SizedBox(height: 10),
-                        TextButton(
-                          onPressed: _isExpired ? null : _completeSellWithOtp,
-                          child: const Text('Verify OTP & Complete Sell'),
-                        ),
-                        const SizedBox(height: 6),
-                      ],
-
-                      ActionSectionCard(
-                        title: 'Transaction Summary',
-                        child: Column(
-                          children: [
-                            ReadonlyInfoRow(label: 'Asset', value: widget.summary.asset.name),
-                            ReadonlyInfoRow(label: 'Action', value: widget.summary.title),
-                            ReadonlyInfoRow(label: 'Amount', value: widget.summary.primaryValue),
-                            ReadonlyInfoRow(label: 'Fee', value: widget.summary.feeValue),
-                            ReadonlyInfoRow(label: 'Total', value: widget.summary.totalValue),
-                            ReadonlyInfoRow(label: widget.summary.destinationLabel, value: widget.summary.destinationValue),
-                            if (widget.summary.note != null && widget.summary.note!.isNotEmpty)
-                              ReadonlyInfoRow(label: 'Note', value: widget.summary.note!),
-                            ReadonlyInfoRow(label: 'Reference', value: widget.summary.referenceNumber),
-                            ReadonlyInfoRow(label: 'Date', value: DateFormat('dd MMM yyyy, hh:mm a').format(widget.summary.createdAt)),
-                          ],
-                        ),
+                      const Text(
+                        'This price is locked for 30 seconds. Complete OTP to finish the sale. If the timer expires, the quote will be cancelled and you can retry with the latest market price.',
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.popUntil(context, (route) => route.isFirst);
-                  },
-                  child: Text(_isCompleted ? 'Done' : 'Back to Wallet'),
+                const SizedBox(height: 12),
+                OtpInputWidget(
+                  value: _otp,
+                  onChanged: (value) => setState(() => _otp = value),
+                  onCompleted: (value) => setState(() => _otp = value),
+                ),
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: _isExpired ? null : _completeSellWithOtp,
+                  child: const Text('Verify OTP & Complete Sell'),
+                ),
+                const SizedBox(height: 6),
+              ],
+
+              ActionSectionCard(
+                title: 'Transaction Summary',
+                child: Column(
+                  children: [
+                    ReadonlyInfoRow(label: 'Asset', value: widget.summary.asset.name),
+                    ReadonlyInfoRow(label: 'Action', value: widget.summary.title),
+                    ReadonlyInfoRow(label: 'Amount', value: widget.summary.primaryValue),
+                    ReadonlyInfoRow(label: 'Fee', value: widget.summary.feeValue),
+                    ReadonlyInfoRow(label: 'Total', value: widget.summary.totalValue),
+                    ReadonlyInfoRow(label: widget.summary.destinationLabel, value: widget.summary.destinationValue),
+                    if (widget.summary.note != null && widget.summary.note!.isNotEmpty)
+                      ReadonlyInfoRow(label: 'Note', value: widget.summary.note!),
+                    ReadonlyInfoRow(label: 'Reference', value: widget.summary.referenceNumber),
+                    ReadonlyInfoRow(label: 'Date', value: DateFormat('dd MMM yyyy, hh:mm a').format(widget.summary.createdAt)),
+                  ],
                 ),
               ),
             ],
