@@ -7,6 +7,7 @@ import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/notification_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/grams_hint_label.dart';
 
 class MarketOrderRepository {
   static int _nextOrderId = 1005;
@@ -220,7 +221,7 @@ class MarketOrderRepository {
     final wallet = dummyWallets[goldWalletIndex];
     final existing = wallet.transactions.any((tx) => tx.subtitle.contains(order.id));
     if (existing) return;
-    final gramsPerUnit = _gramsPerUnit(order.symbol);
+    final gramsPerUnit = GramsConverter.fromSymbol(order.symbol);
     final totalWeight = gramsPerUnit * order.quantity;
     final tx = WalletTransaction(
       name: 'Spot MR ${order.symbol}',
@@ -247,13 +248,4 @@ class MarketOrderRepository {
     );
   }
 
-  static double _gramsPerUnit(String symbol) {
-    final upper = symbol.toUpperCase();
-    if (upper.contains('1KG')) return 1000;
-    if (upper.contains('100G')) return 100;
-    if (upper.contains('10G')) return 10;
-    if (upper.contains('1OZ')) return 31.1035;
-    // fallback for futures or unknown symbols where unit weight is not explicit.
-    return 1;
-  }
 }

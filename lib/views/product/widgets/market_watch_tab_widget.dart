@@ -9,6 +9,7 @@ import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/grams_hint_label.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/order/page/market_order_list_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product/widgets/seller_filter_bar_widget.dart';
 
@@ -68,6 +69,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                                               children: [
                                                 Text(item.symbol, style: Theme.of(context).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold)),
                                                 Text(item.name),
+                                                GramsHintLabel(grams: GramsConverter.fromSymbol(item.symbol), prefix: 'Weight:'),
                                                 if (AppReleaseConfig.showSellerUi) ...[
                                                   const SizedBox(height: 4),
                                                   Text('Seller: ${item.sellerName}', style: const TextStyle(fontSize: 12, color: AppColors.darkGold)),
@@ -191,6 +193,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                         ? '${item.name} • Seller: ${item.sellerName}'
                         : item.name,
                   ),
+                  GramsHintLabel(grams: GramsConverter.fromSymbol(item.symbol), prefix: 'Weight:'),
                   const SizedBox(height: 8),
                   Text(
                     'X: Pricing   |   Y: Time',

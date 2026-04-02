@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/grams_hint_label.dart';
 
 class ProductItemWidget extends StatelessWidget {
   final Cubit cubit;
@@ -30,6 +31,7 @@ class ProductItemWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(product.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.textPrimary)),
+                    GramsHintLabel(grams: GramsConverter.fromWeightText(product.weight), prefix: 'Weight:'),
                     if (AppReleaseConfig.showSellerUi)
                       Text('Seller: ${product.sellerName}', style: TextStyle(fontSize: 12, color: palette.primary)),
                     const SizedBox(height: 6),

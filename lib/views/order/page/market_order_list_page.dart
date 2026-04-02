@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/market_order_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/grams_hint_label.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/market_order_cubit/market_order_cubit.dart';
 
 class MarketOrderListPage extends StatelessWidget {
@@ -88,6 +89,7 @@ class _MarketOrderListContent extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       itemBuilder: (_, index) {
                         final order = loaded.orders[index];
+                        final totalWeight = GramsConverter.fromSymbol(order.symbol) * order.quantity;
                         return Card(
                           child: Padding(
                             padding: const EdgeInsets.all(12),
@@ -108,6 +110,7 @@ class _MarketOrderListContent extends StatelessWidget {
                                 const SizedBox(height: 8),
                                 Text('Seller: ${order.seller}'),
                                 Text('Qty: ${order.quantity} • Unit: \$${order.unitPrice.toStringAsFixed(2)}'),
+                                GramsHintLabel(grams: totalWeight, prefix: 'Weight:'),
                                 Text('Payment: ${order.paymentMethod}'),
                                 Text('Account: ${order.paymentAccount}'),
                                 Text('Total: \$${order.total.toStringAsFixed(2)}'),
