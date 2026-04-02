@@ -7,6 +7,9 @@ class AppReleaseConfig {
 
   static const String allSellersLabel = 'All Sellers';
 
+  /// Feature flag for displaying calculated gram labels in UI.
+  static const bool showWeightInGrams = true;
+
   static bool get showSellerUi => !isIndividualSellerRelease;
 
   static String get defaultSeller =>
