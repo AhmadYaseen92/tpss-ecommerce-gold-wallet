@@ -10,9 +10,16 @@ class CartCubit extends Cubit<CartState> {
   String _sellerFilter = AppReleaseConfig.defaultSeller;
 
   void loadCartProducts({String sellerFilter = AppReleaseConfig.allSellersLabel}) async {
-    _sellerFilter = AppReleaseConfig.isIndividualSellerRelease
-        ? AppReleaseConfig.individualSellerName
-        : sellerFilter;
+    if (AppReleaseConfig.isIndividualSellerRelease) {
+      _sellerFilter = AppReleaseConfig.individualSellerName;
+    } else {
+      final sellers = availableSellers;
+      if (sellerFilter == AppReleaseConfig.allSellersLabel && sellers.isNotEmpty) {
+        _sellerFilter = sellers.first;
+      } else {
+        _sellerFilter = sellerFilter;
+      }
+    }
     emit(CartLoading());
     try {
       await Future.delayed(const Duration(milliseconds: 300));
@@ -26,6 +33,13 @@ class CartCubit extends Cubit<CartState> {
     return dummycartProducts
         .where((p) => AppReleaseConfig.matchesSeller(_sellerFilter, p.sellerName))
         .toList();
+  }
+
+  String get selectedSellerFilter => _sellerFilter;
+
+  List<String> get availableSellers {
+    final sellers = dummycartProducts.map((p) => p.sellerName).toSet().toList()..sort();
+    return sellers;
   }
 
   void addProduct(ProductItemModel product) {

@@ -80,6 +80,7 @@ class WalletTransaction {
   final String marketValue;
   final String change;
   final String sellerName;
+  final bool isSpotMrOrder;
   final String imageUrl;
   final String? certificateUrl;
 
@@ -94,6 +95,7 @@ class WalletTransaction {
     required this.marketValue,
     required this.change,
     this.sellerName = 'Imseeh',
+    this.isSpotMrOrder = false,
     required this.imageUrl,
     this.certificateUrl,
   });
@@ -132,6 +134,7 @@ class WalletTransaction {
     String? marketValue,
     String? change,
     String? sellerName,
+    bool? isSpotMrOrder,
     String? imageUrl,
     String? certificateUrl,
   }) {
@@ -146,6 +149,7 @@ class WalletTransaction {
       marketValue: marketValue ?? this.marketValue,
       change: change ?? this.change,
       sellerName: sellerName ?? this.sellerName,
+      isSpotMrOrder: isSpotMrOrder ?? this.isSpotMrOrder,
       imageUrl: imageUrl ?? this.imageUrl,
       certificateUrl: certificateUrl ?? this.certificateUrl,
     );

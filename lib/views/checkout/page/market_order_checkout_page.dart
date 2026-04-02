@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/data/market_order_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/models/checkout_payment_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_bottom_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/wallet/widgets/wallet_actions/action_section_card.dart';
@@ -24,6 +28,7 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
   final TextEditingController triggerPriceController = TextEditingController();
   final TextEditingController tpController = TextEditingController();
   final TextEditingController slController = TextEditingController();
+  CheckoutPaymentType paymentType = CheckoutPaymentType.cash;
 
   Map<String, dynamic> get _args {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -55,16 +60,35 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
     final seller = (_args['seller'] ?? AppReleaseConfig.defaultSeller).toString();
 
     return Scaffold(
-      appBar: AppBar(title: Text('Market Order Checkout', style: TextStyle(color: palette.textPrimary)), centerTitle: true),
+      appBar: AppBar(
+        title: Text('Market Order Checkout', style: TextStyle(color: palette.textPrimary)),
+        centerTitle: true,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.marketOrderListRoute),
+            child: const Text('Orders'),
+          ),
+        ],
+      ),
       bottomNavigationBar: ActionBottomBar(
         summaryLabel: 'Estimated Total',
         summaryValue: '\$${_total.toStringAsFixed(2)}',
         buttonText: 'Place Order',
         onPressed: () async {
           if (!(_formKey.currentState?.validate() ?? false)) return;
-          await AppModalAlert.show(context, title: 'Order Placed', message: 'Order placed: $symbol x$_quantity (${_label(executionType)})');
+          final order = MarketOrderRepository.placeOrder(
+            symbol: symbol,
+            seller: seller,
+            quantity: _quantity,
+            unitPrice: _unitPrice,
+            paymentMethod: _paymentLabel(paymentType),
+          );
+          final message = order.status == MarketOrderStatus.filled
+              ? 'Order ${order.id} placed, added to wallet, and \$${order.total.toStringAsFixed(2)} deducted directly from ${_paymentLabel(paymentType)}.'
+              : 'Order ${order.id} rejected due to low balance. You can reopen or cancel it from Order List.';
+          await AppModalAlert.show(context, title: 'Order Update', message: message);
           if (!context.mounted) return;
-          Navigator.pop(context);
+          Navigator.pushNamed(context, AppRoutes.marketOrderListRoute);
         },
       ),
       body: SingleChildScrollView(
@@ -147,6 +171,29 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                 ),
               ),
               ActionSectionCard(
+                title: 'Payment Method',
+                child: Column(
+                  children: CheckoutPaymentType.values.map((type) {
+                    final selected = paymentType == type;
+                    return RadioListTile<CheckoutPaymentType>(
+                      value: type,
+                      groupValue: paymentType,
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(_paymentLabel(type)),
+                      subtitle: Text(
+                        selected && type == CheckoutPaymentType.cash
+                            ? 'Available: \$${MarketOrderRepository.availableCashBalance.toStringAsFixed(2)}'
+                            : _paymentSubtitle(type),
+                      ),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => paymentType = value);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+              ActionSectionCard(
                 title: 'Risk Management',
                 child: Column(
                   children: [
@@ -205,6 +252,28 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
         return 'Limit';
       case MarketExecutionType.stop:
         return 'Stop';
+    }
+  }
+
+  String _paymentLabel(CheckoutPaymentType type) {
+    switch (type) {
+      case CheckoutPaymentType.bank:
+        return 'Bank Account';
+      case CheckoutPaymentType.card:
+        return 'Card';
+      case CheckoutPaymentType.cash:
+        return 'Cash Balance';
+    }
+  }
+
+  String _paymentSubtitle(CheckoutPaymentType type) {
+    switch (type) {
+      case CheckoutPaymentType.bank:
+        return 'Deduct directly from linked bank account';
+      case CheckoutPaymentType.card:
+        return 'Deduct directly from saved card';
+      case CheckoutPaymentType.cash:
+        return 'Deduct directly from wallet balance';
     }
   }
 }

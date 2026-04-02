@@ -68,7 +68,7 @@ class PortfolioCardWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Available Cash:', style: TextStyle(color: palette.textSecondary)),
+                Text('Available cash balance:', style: TextStyle(color: palette.textSecondary)),
                 Text(
                   availableCash!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

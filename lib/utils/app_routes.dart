@@ -41,5 +41,6 @@ class AppRoutes {
   static const String accountSummaryRoute = '/account-summary';
   static const String checkoutRoute = '/checkout';
   static const String marketOrderCheckoutRoute = '/market-order-checkout';
+  static const String marketOrderListRoute = '/market-order-list';
   static const String confirmOtpRoute = '/confirm-otp';
 }
