@@ -220,12 +220,14 @@ class MarketOrderRepository {
     final wallet = dummyWallets[goldWalletIndex];
     final existing = wallet.transactions.any((tx) => tx.subtitle.contains(order.id));
     if (existing) return;
+    final gramsPerUnit = _gramsPerUnit(order.symbol);
+    final totalWeight = gramsPerUnit * order.quantity;
     final tx = WalletTransaction(
       name: 'Spot MR ${order.symbol}',
       category: WalletCategory.spotMr,
       assetType: AssetType.gram,
-      subtitle: '${order.quantity} unit • Spot MR • ${order.id}',
-      weightInGrams: order.quantity.toDouble(),
+      subtitle: '${order.quantity} unit • ${totalWeight.toStringAsFixed(2)} g • Spot MR • ${order.id}',
+      weightInGrams: totalWeight,
       purity: '999.9',
       quantity: order.quantity,
       marketValue: '\$${order.total.toStringAsFixed(2)}',
@@ -243,5 +245,15 @@ class MarketOrderRepository {
       totalMarketValue: '\$${nextTotal.toStringAsFixed(2)}',
       totalWeightInGrams: updatedTx.fold<double>(0, (sum, item) => sum + item.weightInGrams),
     );
+  }
+
+  static double _gramsPerUnit(String symbol) {
+    final upper = symbol.toUpperCase();
+    if (upper.contains('1KG')) return 1000;
+    if (upper.contains('100G')) return 100;
+    if (upper.contains('10G')) return 10;
+    if (upper.contains('1OZ')) return 31.1035;
+    // fallback for futures or unknown symbols where unit weight is not explicit.
+    return 1;
   }
 }
