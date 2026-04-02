@@ -34,13 +34,19 @@ class MarketOrderListView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => MarketOrderCubit()..load(sellerFilter: sellerFilter),
-      child: _MarketOrderListContent(showStatusFilter: showStatusFilter, sellerFilter: sellerFilter),
+      child: _MarketOrderListContent(
+        showStatusFilter: showStatusFilter,
+        sellerFilter: sellerFilter,
+      ),
     );
   }
 }
 
 class _MarketOrderListContent extends StatelessWidget {
-  const _MarketOrderListContent({required this.showStatusFilter, required this.sellerFilter});
+  const _MarketOrderListContent({
+    required this.showStatusFilter,
+    required this.sellerFilter,
+  });
 
   final bool showStatusFilter;
   final String sellerFilter;
@@ -89,8 +95,11 @@ class _MarketOrderListContent extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       itemBuilder: (_, index) {
                         final order = loaded.orders[index];
-                        final totalWeight = GramsConverter.fromSymbol(order.symbol) * order.quantity;
+                        final totalWeight =
+                            GramsConverter.fromSymbol(order.symbol) *
+                            order.quantity;
                         return Card(
+                          color: Theme.of(context).cardColor,
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Column(
@@ -101,7 +110,9 @@ class _MarketOrderListContent extends StatelessWidget {
                                     Expanded(
                                       child: Text(
                                         '${order.symbol} • ${order.id}',
-                                        style: const TextStyle(fontWeight: FontWeight.w700),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
                                     ),
                                     _statusChip(context, order.status),
@@ -109,19 +120,31 @@ class _MarketOrderListContent extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 8),
                                 Text('Seller: ${order.seller}'),
-                                Text('Qty: ${order.quantity} • Unit: \$${order.unitPrice.toStringAsFixed(2)}'),
+                                Text(
+                                  'Qty: ${order.quantity} • Unit: \$${order.unitPrice.toStringAsFixed(2)}',
+                                ),
                                 if (AppReleaseConfig.showWeightInGrams)
-                                  GramsHintLabel(grams: totalWeight, prefix: 'Weight:'),
+                                  GramsHintLabel(
+                                    grams: totalWeight,
+                                    prefix: 'Weight:',
+                                  ),
                                 Text('Payment: ${order.paymentMethod}'),
                                 Text('Account: ${order.paymentAccount}'),
-                                Text('Total: \$${order.total.toStringAsFixed(2)}'),
+                                Text(
+                                  'Total: \$${order.total.toStringAsFixed(2)}',
+                                ),
                                 const SizedBox(height: 10),
                                 if (order.status == MarketOrderStatus.pending)
                                   const Row(
                                     children: [
-                                      Icon(Icons.hourglass_top_rounded, size: 16),
+                                      Icon(
+                                        Icons.hourglass_top_rounded,
+                                        size: 16,
+                                      ),
                                       SizedBox(width: 8),
-                                      Text('Waiting for payment provider result...'),
+                                      Text(
+                                        'Waiting for payment provider result...',
+                                      ),
                                     ],
                                   ),
                                 if (order.status == MarketOrderStatus.rejected)
@@ -129,22 +152,28 @@ class _MarketOrderListContent extends StatelessWidget {
                                     children: [
                                       OutlinedButton.icon(
                                         onPressed: () async {
-                                          final livePrice = MarketOrderRepository.livePriceForSymbol(
-                                            order.symbol,
-                                            fallback: order.unitPrice,
-                                          );
-                                          final goToOrders = await Navigator.pushNamed(
-                                            context,
-                                            AppRoutes.marketOrderCheckoutRoute,
-                                            arguments: {
-                                              'title': order.symbol,
-                                              'seller': order.seller,
-                                              'amount': livePrice,
-                                              'reopenOrderId': order.id,
-                                            },
-                                          );
-                                          if (goToOrders == true && context.mounted) {
-                                            cubit.load(sellerFilter: loaded.sellerFilter);
+                                          final livePrice =
+                                              MarketOrderRepository.livePriceForSymbol(
+                                                order.symbol,
+                                                fallback: order.unitPrice,
+                                              );
+                                          final goToOrders =
+                                              await Navigator.pushNamed(
+                                                context,
+                                                AppRoutes
+                                                    .marketOrderCheckoutRoute,
+                                                arguments: {
+                                                  'title': order.symbol,
+                                                  'seller': order.seller,
+                                                  'amount': livePrice,
+                                                  'reopenOrderId': order.id,
+                                                },
+                                              );
+                                          if (goToOrders == true &&
+                                              context.mounted) {
+                                            cubit.load(
+                                              sellerFilter: loaded.sellerFilter,
+                                            );
                                           }
                                         },
                                         icon: const Icon(Icons.refresh),
@@ -153,8 +182,12 @@ class _MarketOrderListContent extends StatelessWidget {
                                       const SizedBox(width: 8),
                                       OutlinedButton.icon(
                                         onPressed: () {
-                                          MarketOrderRepository.cancelOrder(order.id);
-                                          cubit.load(sellerFilter: loaded.sellerFilter);
+                                          MarketOrderRepository.cancelOrder(
+                                            order.id,
+                                          );
+                                          cubit.load(
+                                            sellerFilter: loaded.sellerFilter,
+                                          );
                                         },
                                         icon: const Icon(Icons.cancel_outlined),
                                         label: const Text('Cancel'),
@@ -195,13 +228,25 @@ class _MarketOrderListContent extends StatelessWidget {
     final palette = context.appPalette;
     switch (status) {
       case MarketOrderStatus.pending:
-        return Chip(label: const Text('Pending'), backgroundColor: palette.surfaceMuted);
+        return Chip(
+          label: const Text('Pending'),
+          backgroundColor: palette.surfaceMuted,
+        );
       case MarketOrderStatus.filled:
-        return const Chip(label: Text('Filled'), backgroundColor: Color(0xFFD9F6DF));
+        return const Chip(
+          label: Text('Filled'),
+          backgroundColor: Color(0xFFD9F6DF),
+        );
       case MarketOrderStatus.rejected:
-        return const Chip(label: Text('Rejected'), backgroundColor: Color(0xFFFFE0E0));
+        return const Chip(
+          label: Text('Rejected'),
+          backgroundColor: Color(0xFFFFE0E0),
+        );
       case MarketOrderStatus.cancelled:
-        return const Chip(label: Text('Cancelled'), backgroundColor: Color(0xFFF0F0F0));
+        return const Chip(
+          label: Text('Cancelled'),
+          backgroundColor: Color(0xFFF0F0F0),
+        );
     }
   }
 }

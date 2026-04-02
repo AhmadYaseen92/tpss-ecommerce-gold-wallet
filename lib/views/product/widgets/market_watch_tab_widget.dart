@@ -48,7 +48,8 @@ class MarketWatchTabWidget extends StatelessWidget {
                         ListView.separated(
                           padding: const EdgeInsets.fromLTRB(12, 12, 12, 84),
                           itemCount: symbols.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final item = symbols[index];
                             return Card(
@@ -57,47 +58,120 @@ class MarketWatchTabWidget extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                                 onTap: () => _openMarketDetail(context, item),
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 16,
+                                  ),
                                   child: Column(
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                Text(item.symbol, style: Theme.of(context).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold)),
+                                                Text(
+                                                  item.symbol,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium!
+                                                      .copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                ),
                                                 Text(item.name),
-                                                if (AppReleaseConfig.showWeightInGrams)
-                                                  GramsHintLabel(grams: GramsConverter.fromSymbol(item.symbol), prefix: 'Weight:'),
-                                                if (AppReleaseConfig.showSellerUi) ...[
+                                                if (AppReleaseConfig
+                                                    .showWeightInGrams)
+                                                  GramsHintLabel(
+                                                    grams:
+                                                        GramsConverter.fromSymbol(
+                                                          item.symbol,
+                                                        ),
+                                                    prefix: 'Weight:',
+                                                  ),
+                                                if (AppReleaseConfig
+                                                    .showSellerUi) ...[
                                                   const SizedBox(height: 4),
-                                                  Text('Seller: ${item.sellerName}', style: const TextStyle(fontSize: 12, color: AppColors.darkGold)),
+                                                  Text(
+                                                    'Seller: ${item.sellerName}',
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: AppColors.darkGold,
+                                                    ),
+                                                  ),
                                                 ],
                                                 const SizedBox(height: 4),
-                                                Text('Updated: ${_formatUpdatedTime(DateTime.now())}', style: TextStyle(fontSize: 12, color: context.appPalette.textSecondary)),
+                                                Text(
+                                                  'Updated: ${_formatUpdatedTime(DateTime.now())}',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: context
+                                                        .appPalette
+                                                        .textSecondary,
+                                                  ),
+                                                ),
                                                 const SizedBox(height: 2),
-                                                Text('Last: 1m', style: TextStyle(fontSize: 12, color: context.appPalette.textSecondary, fontWeight: FontWeight.w600)),
+                                                Text(
+                                                  'Last: 1m',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: context
+                                                        .appPalette
+                                                        .textSecondary,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
                                               ],
                                             ),
                                           ),
                                           SizedBox(
                                             width: 150,
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
                                               children: [
-                                                _marketValueLine(context, label: 'Ask', value: _ask(item).toStringAsFixed(2)),
-                                                _marketValueLine(context, label: 'Bid', value: _bid(item).toStringAsFixed(2)),
-                                                _marketValueLine(context, label: 'High', value: _high(item).toStringAsFixed(2)),
-                                                _marketValueLine(context, label: 'Low', value: _low(item).toStringAsFixed(2)),
+                                                _marketValueLine(
+                                                  context,
+                                                  label: 'Ask',
+                                                  value: _ask(
+                                                    item,
+                                                  ).toStringAsFixed(2),
+                                                ),
+                                                _marketValueLine(
+                                                  context,
+                                                  label: 'Bid',
+                                                  value: _bid(
+                                                    item,
+                                                  ).toStringAsFixed(2),
+                                                ),
+                                                _marketValueLine(
+                                                  context,
+                                                  label: 'High',
+                                                  value: _high(
+                                                    item,
+                                                  ).toStringAsFixed(2),
+                                                ),
+                                                _marketValueLine(
+                                                  context,
+                                                  label: 'Low',
+                                                  value: _low(
+                                                    item,
+                                                  ).toStringAsFixed(2),
+                                                ),
                                               ],
                                             ),
                                           ),
                                         ],
                                       ),
                                       const SizedBox(height: 12),
-                                      _SymbolMiniChart(points: _chartPoints(item, length: 22), isPositive: item.change >= 0),
+                                      _SymbolMiniChart(
+                                        points: _chartPoints(item, length: 22),
+                                        isPositive: item.change >= 0,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -110,7 +184,10 @@ class MarketWatchTabWidget extends StatelessWidget {
                           bottom: 20,
                           child: FloatingActionButton.extended(
                             onPressed: () async {
-                              final goToOrders = await Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.marketOrderCheckoutRoute);
+                              final goToOrders = await Navigator.of(
+                                context,
+                                rootNavigator: true,
+                              ).pushNamed(AppRoutes.marketOrderCheckoutRoute);
                               if (goToOrders == true && context.mounted) {
                                 DefaultTabController.of(context).animateTo(1);
                               }
@@ -195,11 +272,17 @@ class MarketWatchTabWidget extends StatelessWidget {
                         : item.name,
                   ),
                   if (AppReleaseConfig.showWeightInGrams)
-                    GramsHintLabel(grams: GramsConverter.fromSymbol(item.symbol), prefix: 'Weight:'),
+                    GramsHintLabel(
+                      grams: GramsConverter.fromSymbol(item.symbol),
+                      prefix: 'Weight:',
+                    ),
                   const SizedBox(height: 8),
                   Text(
                     'X: Pricing   |   Y: Time',
-                    style: TextStyle(fontSize: 12, color: context.appPalette.textSecondary),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.appPalette.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
@@ -300,19 +383,23 @@ class MarketWatchTabWidget extends StatelessWidget {
                     child: FilledButton(
                       onPressed: () async {
                         Navigator.pop(ctx);
-                        final goToOrders = await Navigator.of(context, rootNavigator: true).pushNamed(
-                          AppRoutes.marketOrderCheckoutRoute,
-                          arguments: {
-                            'title': item.symbol,
-                            'seller': item.sellerName,
-                            'amount': item.price,
-                          },
-                        );
+                        final goToOrders =
+                            await Navigator.of(
+                              context,
+                              rootNavigator: true,
+                            ).pushNamed(
+                              AppRoutes.marketOrderCheckoutRoute,
+                              arguments: {
+                                'title': item.symbol,
+                                'seller': item.sellerName,
+                                'amount': item.price,
+                              },
+                            );
                         if (goToOrders == true && context.mounted) {
                           DefaultTabController.of(context).animateTo(1);
                         }
                       },
-                      child: const Text('Place Order'),
+                      child: const Text('Continue Placing Order'),
                     ),
                   ),
                 ],
