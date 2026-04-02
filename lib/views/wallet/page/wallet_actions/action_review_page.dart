@@ -18,7 +18,7 @@ class ActionReviewPage extends StatelessWidget {
       bottomNavigationBar: ActionBottomBar(
         summaryLabel: "Total",
         summaryValue: summary.totalValue,
-        buttonText: "Confirm",
+        buttonText: summary.actionType == WalletActionType.sell ? "Confirm & Lock Price" : "Confirm",
         onPressed: () {
           Navigator.push(
             context,

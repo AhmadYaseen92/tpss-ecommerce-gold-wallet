@@ -31,6 +31,15 @@ class GoldWalletPage extends StatelessWidget {
             );
           } else if (state is WalletLoaded) {
             final wallet = state.wallets[state.selectedIndex];
+            final totalPortfolioValue = state.wallets.fold<double>(
+              0,
+              (sum, item) =>
+                  sum +
+                  (double.tryParse(
+                        item.totalMarketValue.replaceAll(RegExp(r'[^0-9.]'), ''),
+                      ) ??
+                      0),
+            );
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -39,8 +48,8 @@ class GoldWalletPage extends StatelessWidget {
                   const SizedBox(height: 12),
                   PortfolioCardWidget(
                     title: 'Total Portfolio Value',
-                    value: '\$12,450.00',
-                    change: '+\$125 (1.01%)',
+                    value: '\$${totalPortfolioValue.toStringAsFixed(2)}',
+                    change: '${wallet.change} live',
                     availableCash: '\$2,000.00',
                   ),
                   const SizedBox(height: 20.0),

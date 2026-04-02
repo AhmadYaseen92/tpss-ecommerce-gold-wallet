@@ -37,6 +37,36 @@ class WalletModel {
 
   double get totalWeightInKg => totalWeightInGrams / 1000;
   double get totalWeightInOz => totalWeightInGrams / 31.1035;
+
+  WalletModel copyWith({
+    WalletCategory? category,
+    String? tabLabel,
+    String? walletName,
+    bool? isVerified,
+    bool? isComingSoon,
+    IconData? icon,
+    double? totalWeightInGrams,
+    String? totalMarketValue,
+    int? totalHoldings,
+    String? change,
+    String? note,
+    List<WalletTransaction>? transactions,
+  }) {
+    return WalletModel(
+      category: category ?? this.category,
+      tabLabel: tabLabel ?? this.tabLabel,
+      walletName: walletName ?? this.walletName,
+      isVerified: isVerified ?? this.isVerified,
+      isComingSoon: isComingSoon ?? this.isComingSoon,
+      icon: icon ?? this.icon,
+      totalWeightInGrams: totalWeightInGrams ?? this.totalWeightInGrams,
+      totalMarketValue: totalMarketValue ?? this.totalMarketValue,
+      totalHoldings: totalHoldings ?? this.totalHoldings,
+      change: change ?? this.change,
+      note: note ?? this.note,
+      transactions: transactions ?? this.transactions,
+    );
+  }
 }
 
 class WalletTransaction {
@@ -70,6 +100,61 @@ class WalletTransaction {
 
   double get weightInKg => weightInGrams / 1000;
   double get weightInOz => weightInGrams / 31.1035;
+
+  double get marketValueAmount => _parseCurrency(marketValue);
+
+  /// e.g. '+1.8%' => 1.8, '-0.3%' => -0.3
+  double get changePercent {
+    final cleaned = change.replaceAll('%', '').replaceAll('+', '').trim();
+    final parsed = double.tryParse(cleaned) ?? 0;
+    return change.trim().startsWith('-') ? -parsed : parsed;
+  }
+
+  double get estimatedPurchaseValue {
+    final denominator = 1 + (changePercent / 100);
+    if (denominator == 0) return marketValueAmount;
+    return marketValueAmount / denominator;
+  }
+
+  double get marketPricePerGram {
+    if (weightInGrams == 0) return 0;
+    return marketValueAmount / weightInGrams;
+  }
+
+  WalletTransaction copyWith({
+    String? name,
+    WalletCategory? category,
+    AssetType? assetType,
+    String? subtitle,
+    double? weightInGrams,
+    String? purity,
+    int? quantity,
+    String? marketValue,
+    String? change,
+    String? sellerName,
+    String? imageUrl,
+    String? certificateUrl,
+  }) {
+    return WalletTransaction(
+      name: name ?? this.name,
+      category: category ?? this.category,
+      assetType: assetType ?? this.assetType,
+      subtitle: subtitle ?? this.subtitle,
+      weightInGrams: weightInGrams ?? this.weightInGrams,
+      purity: purity ?? this.purity,
+      quantity: quantity ?? this.quantity,
+      marketValue: marketValue ?? this.marketValue,
+      change: change ?? this.change,
+      sellerName: sellerName ?? this.sellerName,
+      imageUrl: imageUrl ?? this.imageUrl,
+      certificateUrl: certificateUrl ?? this.certificateUrl,
+    );
+  }
+
+  double _parseCurrency(String raw) {
+    final clean = raw.replaceAll(RegExp(r'[^0-9.]'), '');
+    return double.tryParse(clean) ?? 0;
+  }
 }
 
 final List<WalletModel> dummyWallets = [
