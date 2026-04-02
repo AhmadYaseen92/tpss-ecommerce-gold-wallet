@@ -29,7 +29,7 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
   final TextEditingController triggerPriceController = TextEditingController();
   final TextEditingController tpController = TextEditingController();
   final TextEditingController slController = TextEditingController();
-  CheckoutPaymentType paymentType = CheckoutPaymentType.cash;
+  CheckoutPaymentType paymentType = CheckoutPaymentType.bank;
   int selectedBankIndex = 0;
   int selectedPaymentIndex = 0;
 
@@ -190,7 +190,7 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
               ActionSectionCard(
                 title: 'Payment Method',
                 child: Column(
-                  children: CheckoutPaymentType.values.map((type) {
+                  children: const [CheckoutPaymentType.bank, CheckoutPaymentType.card].map((type) {
                     final selected = paymentType == type;
                     return RadioListTile<CheckoutPaymentType>(
                       value: type,
@@ -198,8 +198,8 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
                       contentPadding: EdgeInsets.zero,
                       title: Text(_paymentLabel(type)),
                       subtitle: Text(
-                        selected && type == CheckoutPaymentType.cash
-                            ? 'Available: \$${MarketOrderRepository.availableCashBalance.toStringAsFixed(2)}'
+                        selected
+                            ? 'Available: \$${MarketOrderRepository.getAccountBalance(_accountNameByType(type)).toStringAsFixed(2)}'
                             : _paymentSubtitle(type),
                       ),
                       onChanged: (value) {
@@ -318,7 +318,18 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
       case CheckoutPaymentType.card:
         return 'Deduct directly from saved card';
       case CheckoutPaymentType.cash:
-        return 'Deduct directly from wallet balance';
+        return 'Disabled for Spot MR market orders';
+    }
+  }
+
+  String _accountNameByType(CheckoutPaymentType type) {
+    switch (type) {
+      case CheckoutPaymentType.bank:
+        return PredefinedAccountsData.bankAccounts[selectedBankIndex].name;
+      case CheckoutPaymentType.card:
+        return PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name;
+      case CheckoutPaymentType.cash:
+        return '';
     }
   }
 

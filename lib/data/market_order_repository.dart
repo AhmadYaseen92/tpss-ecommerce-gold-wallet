@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/notification_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
 
 class MarketOrderRepository {
-  static double availableCashBalance = 2000;
-  static int _nextOrderId = 1;
+  static int _nextOrderId = 1005;
+  static bool _seeded = false;
   static final List<MarketOrderModel> _orders = <MarketOrderModel>[];
+  static final Map<String, double> _accountBalances = {
+    PredefinedAccountsData.bankAccounts[0].name: 12000,
+    PredefinedAccountsData.bankAccounts[1].name: 250,
+    PredefinedAccountsData.paymentMethods[0].name: 5000,
+    PredefinedAccountsData.paymentMethods[1].name: 800,
+    PredefinedAccountsData.paymentMethods[2].name: 300,
+  };
 
-  static List<MarketOrderModel> get orders => List.unmodifiable(_orders.reversed);
+  static List<MarketOrderModel> get orders {
+    _ensureSeedData();
+    return List.unmodifiable(_orders.reversed);
+  }
 
   static MarketOrderModel placeOrder({
     required String symbol,
@@ -20,6 +31,7 @@ class MarketOrderRepository {
     required String paymentMethod,
     required String paymentAccount,
   }) {
+    _ensureSeedData();
     final order = MarketOrderModel(
       id: 'MO-${_nextOrderId++}',
       symbol: symbol,
@@ -44,35 +56,22 @@ class MarketOrderRepository {
     return order;
   }
 
-  static MarketOrderModel? settleOrder(String orderId, {required bool approve}) {
+  static MarketOrderModel? settleOrder(String orderId) {
+    _ensureSeedData();
     final index = _orders.indexWhere((o) => o.id == orderId);
     if (index == -1) return null;
     final order = _orders[index];
     if (order.status != MarketOrderStatus.pending) return order;
 
-    if (!approve) {
-      final rejected = order.copyWith(status: MarketOrderStatus.rejected);
-      _orders[index] = rejected;
-      todayNotifications.insert(
-        0,
-        NotificationModel(
-          title: 'Order Rejected',
-          description: 'Order ${order.id} was rejected by payment provider.',
-          dateTime: DateTime.now(),
-          icon: const Icon(Icons.error_outline, color: AppColors.red),
-        ),
-      );
-      return rejected;
-    }
-
-    if (order.paymentMethod == 'Cash Balance' && availableCashBalance < order.total) {
+    final accountBalance = getAccountBalance(order.paymentAccount);
+    if (accountBalance < order.total) {
       final rejected = order.copyWith(status: MarketOrderStatus.rejected);
       _orders[index] = rejected;
       todayNotifications.insert(
         0,
         NotificationModel(
           title: 'Pending Order Rejected',
-          description: 'Insufficient cash balance for ${order.symbol}.',
+          description: 'Insufficient account balance for ${order.symbol}.',
           dateTime: DateTime.now(),
           icon: const Icon(Icons.warning_amber_rounded, color: AppColors.red),
         ),
@@ -80,9 +79,7 @@ class MarketOrderRepository {
       return rejected;
     }
 
-    if (order.paymentMethod == 'Cash Balance') {
-      availableCashBalance -= order.total;
-    }
+    _accountBalances[order.paymentAccount] = accountBalance - order.total;
     final filled = order.copyWith(status: MarketOrderStatus.filled);
     _orders[index] = filled;
     _addToWallet(filled);
@@ -107,6 +104,7 @@ class MarketOrderRepository {
     required String paymentMethod,
     required String paymentAccount,
   }) {
+    _ensureSeedData();
     final index = _orders.indexWhere((o) => o.id == orderId);
     if (index == -1) return null;
     final order = _orders[index];
@@ -124,6 +122,7 @@ class MarketOrderRepository {
   }
 
   static void cancelOrder(String orderId) {
+    _ensureSeedData();
     final index = _orders.indexWhere((o) => o.id == orderId);
     if (index == -1) return;
     _orders[index] = _orders[index].copyWith(status: MarketOrderStatus.cancelled);
@@ -135,16 +134,79 @@ class MarketOrderRepository {
     return match.first.price;
   }
 
+  static double getAccountBalance(String accountName) {
+    return _accountBalances[accountName] ?? 0;
+  }
+
+  static void _ensureSeedData() {
+    if (_seeded) return;
+    _seeded = true;
+
+    final sampleOrders = <MarketOrderModel>[
+      MarketOrderModel(
+        id: 'MO-1001',
+        symbol: 'XAU-1OZ',
+        seller: 'Imseeh',
+        quantity: 1,
+        unitPrice: 2189.40,
+        paymentMethod: 'Bank Account',
+        paymentAccount: PredefinedAccountsData.bankAccounts[0].name,
+        status: MarketOrderStatus.pending,
+        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      ),
+      MarketOrderModel(
+        id: 'MO-1002',
+        symbol: 'XAU-10G',
+        seller: 'Imseeh',
+        quantity: 2,
+        unitPrice: 704.50,
+        paymentMethod: 'Card',
+        paymentAccount: PredefinedAccountsData.paymentMethods[0].name,
+        status: MarketOrderStatus.filled,
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+      MarketOrderModel(
+        id: 'MO-1003',
+        symbol: 'XAG-1KG',
+        seller: 'Da’naa',
+        quantity: 1,
+        unitPrice: 793.15,
+        paymentMethod: 'Bank Account',
+        paymentAccount: PredefinedAccountsData.bankAccounts[1].name,
+        status: MarketOrderStatus.rejected,
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      MarketOrderModel(
+        id: 'MO-1004',
+        symbol: 'GCJ26',
+        seller: 'Sakkejha',
+        quantity: 1,
+        unitPrice: 2194.80,
+        paymentMethod: 'Card',
+        paymentAccount: PredefinedAccountsData.paymentMethods[1].name,
+        status: MarketOrderStatus.cancelled,
+        createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      ),
+    ];
+
+    _orders.addAll(sampleOrders);
+    for (final order in sampleOrders.where((o) => o.status == MarketOrderStatus.filled)) {
+      _addToWallet(order);
+    }
+  }
+
   static void _addToWallet(MarketOrderModel order) {
     final goldWalletIndex = dummyWallets.indexWhere((wallet) => wallet.category == WalletCategory.spotMr);
     if (goldWalletIndex == -1) return;
 
     final wallet = dummyWallets[goldWalletIndex];
+    final existing = wallet.transactions.any((tx) => tx.subtitle.contains(order.id));
+    if (existing) return;
     final tx = WalletTransaction(
       name: 'Spot MR ${order.symbol}',
       category: WalletCategory.spotMr,
       assetType: AssetType.gram,
-      subtitle: '${order.quantity} unit • Spot MR',
+      subtitle: '${order.quantity} unit • Spot MR • ${order.id}',
       weightInGrams: order.quantity.toDouble(),
       purity: '999.9',
       quantity: order.quantity,

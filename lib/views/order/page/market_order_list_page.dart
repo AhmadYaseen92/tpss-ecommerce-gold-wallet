@@ -68,20 +68,11 @@ class _MarketOrderListViewState extends State<MarketOrderListView> {
                             children: [
                               FilledButton.icon(
                                 onPressed: () {
-                                  MarketOrderRepository.settleOrder(order.id, approve: true);
+                                  MarketOrderRepository.settleOrder(order.id);
                                   setState(() {});
                                 },
-                                icon: const Icon(Icons.check_circle_outline),
-                                label: const Text('Complete'),
-                              ),
-                              const SizedBox(width: 8),
-                              OutlinedButton.icon(
-                                onPressed: () {
-                                  MarketOrderRepository.settleOrder(order.id, approve: false);
-                                  setState(() {});
-                                },
-                                icon: const Icon(Icons.close),
-                                label: const Text('Reject'),
+                                icon: const Icon(Icons.sync),
+                                label: const Text('Process'),
                               ),
                             ],
                           ),
