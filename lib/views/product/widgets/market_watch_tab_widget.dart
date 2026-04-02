@@ -7,6 +7,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/order/page/market_order_list_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product/widgets/seller_filter_bar_widget.dart';
@@ -21,6 +22,7 @@ class MarketWatchTabWidget extends StatelessWidget {
           current is ProductMarketWatchLoaded || current is ProductLoaded,
       builder: (context, state) {
         final cubit = context.read<ProductCubit>();
+        final sellerFilter = context.watch<AppCubit>().state.selectedSeller;
         final symbols = state is ProductMarketWatchLoaded
             ? state.symbols
             : cubit.visibleMarketSymbols;
@@ -116,7 +118,10 @@ class MarketWatchTabWidget extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const MarketOrderListView(),
+                    MarketOrderListView(
+                      sellerFilter: sellerFilter,
+                      showStatusFilter: true,
+                    ),
                   ],
                 ),
               ),

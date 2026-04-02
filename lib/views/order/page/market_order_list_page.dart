@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/market_order_repository.dart';
@@ -18,13 +19,22 @@ class _MarketOrderListPageState extends State<MarketOrderListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('My Market Orders'), centerTitle: true),
-      body: const MarketOrderListView(),
+      body: const MarketOrderListView(showStatusFilter: true),
     );
   }
 }
 
+enum MarketOrderStatusFilter { all, pending, filled, rejected, cancelled }
+
 class MarketOrderListView extends StatefulWidget {
-  const MarketOrderListView({super.key});
+  const MarketOrderListView({
+    super.key,
+    this.sellerFilter = AppReleaseConfig.allSellersLabel,
+    this.showStatusFilter = false,
+  });
+
+  final String sellerFilter;
+  final bool showStatusFilter;
 
   @override
   State<MarketOrderListView> createState() => _MarketOrderListViewState();
@@ -32,6 +42,7 @@ class MarketOrderListView extends StatefulWidget {
 
 class _MarketOrderListViewState extends State<MarketOrderListView> {
   Timer? _refreshTimer;
+  MarketOrderStatusFilter _statusFilter = MarketOrderStatusFilter.all;
 
   @override
   void initState() {
@@ -49,11 +60,44 @@ class _MarketOrderListViewState extends State<MarketOrderListView> {
 
   @override
   Widget build(BuildContext context) {
-    final orders = MarketOrderRepository.orders;
+    final orders = MarketOrderRepository.orders.where((order) {
+      final sellerMatch = AppReleaseConfig.matchesSeller(widget.sellerFilter, order.seller);
+      final statusMatch = switch (_statusFilter) {
+        MarketOrderStatusFilter.all => true,
+        MarketOrderStatusFilter.pending => order.status == MarketOrderStatus.pending,
+        MarketOrderStatusFilter.filled => order.status == MarketOrderStatus.filled,
+        MarketOrderStatusFilter.rejected => order.status == MarketOrderStatus.rejected,
+        MarketOrderStatusFilter.cancelled => order.status == MarketOrderStatus.cancelled,
+      };
+      return sellerMatch && statusMatch;
+    }).toList();
 
-    return orders.isEmpty
-        ? const Center(child: Text('No orders yet.'))
-        : ListView.separated(
+    return Column(
+      children: [
+        if (widget.showStatusFilter)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: MarketOrderStatusFilter.values.map((status) {
+                  final selected = status == _statusFilter;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(_statusLabel(status)),
+                      selected: selected,
+                      onSelected: (_) => setState(() => _statusFilter = status),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        Expanded(
+          child: orders.isEmpty
+              ? const Center(child: Text('No orders for selected filters.'))
+              : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemBuilder: (_, index) {
                 final order = orders[index];
@@ -130,7 +174,25 @@ class _MarketOrderListViewState extends State<MarketOrderListView> {
               },
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemCount: orders.length,
-            );
+            ),
+        ),
+      ],
+    );
+  }
+
+  String _statusLabel(MarketOrderStatusFilter filter) {
+    switch (filter) {
+      case MarketOrderStatusFilter.all:
+        return 'All';
+      case MarketOrderStatusFilter.pending:
+        return 'Pending';
+      case MarketOrderStatusFilter.filled:
+        return 'Filled';
+      case MarketOrderStatusFilter.rejected:
+        return 'Rejected';
+      case MarketOrderStatusFilter.cancelled:
+        return 'Cancelled';
+    }
   }
 
   Widget _statusChip(BuildContext context, MarketOrderStatus status) {
