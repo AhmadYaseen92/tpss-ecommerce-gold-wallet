@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/asset_model.dart';
 
 part 'sell_state.dart';
 

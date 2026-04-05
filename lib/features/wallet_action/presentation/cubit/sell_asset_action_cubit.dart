@@ -2,19 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/entities/sell_asset_entities.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/usecases/prepare_sell_asset_usecase.dart';
 
 part 'sell_asset_action_state.dart';
 
 class SellAssetActionCubit extends Cubit<SellAssetActionState> {
-  SellAssetActionCubit({required this.initialAsset})
-      : quantityController = TextEditingController(text: '1'),
-        noteController = TextEditingController(),
-        super(SellAssetActionInitial()) {
+  SellAssetActionCubit({
+    required this.initialAsset,
+    required WalletActionRepository repository,
+    PrepareSellAssetUseCase? prepareSellAssetUseCase,
+  }) : _repository = repository,
+       _prepareSellAssetUseCase = prepareSellAssetUseCase ?? const PrepareSellAssetUseCase(),
+       quantityController = TextEditingController(text: '1'),
+       noteController = TextEditingController(),
+       super(SellAssetActionInitial()) {
     quantityController.addListener(_emitUpdated);
+    _emitUpdated();
   }
 
   final WalletActionSummary initialAsset;
+  final WalletActionRepository _repository;
+  final PrepareSellAssetUseCase _prepareSellAssetUseCase;
   final TextEditingController quantityController;
   final TextEditingController noteController;
 
@@ -39,9 +50,17 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
   bool get isBankPayout => payoutMethod == 'Bank Account';
   bool get isPaymentMethodPayout => payoutMethod == 'Payment Method';
 
-  double get grossAmount => unitPrice * quantity;
-  double get feeAmount => grossAmount * 0.008;
-  double get receivedAmount => grossAmount - feeAmount;
+  SellAssetResultEntity? get calculatedResult {
+    final current = state;
+    if (current is SellAssetActionUpdated) return current.result;
+    return null;
+  }
+
+  String? get errorMessage {
+    final current = state;
+    if (current is SellAssetActionUpdated) return current.errorMessage;
+    return null;
+  }
 
   String formatCurrency(double value) => NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(value);
 
@@ -71,7 +90,35 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
     _emitUpdated();
   }
 
+  Future<void> _emitUpdated() async {
+    try {
+      final marketOpen = await _repository.isMarketOpen();
+      final liquidity = await _repository.availableLiquidity();
+      final lockedPrice = await _repository.lockUnitPrice(unitPrice);
+
+      final result = _prepareSellAssetUseCase(
+        SellAssetRequestEntity(
+          quantity: quantity,
+          maxQuantity: maxQuantity,
+          unitPrice: unitPrice,
+          marketOpen: marketOpen,
+          availableLiquidity: liquidity,
+          lockedPrice: lockedPrice,
+        ),
+      );
+
+      emit(SellAssetActionUpdated(result: result));
+    } catch (e) {
+      emit(SellAssetActionUpdated(result: null, errorMessage: e.toString()));
+    }
+  }
+
   WalletActionSummary buildSummary() {
+    final result = calculatedResult;
+    if (result == null) {
+      throw Exception(errorMessage ?? 'Unable to prepare sell summary.');
+    }
+
     final payout = isBankPayout
         ? 'Bank - ${predefinedBankAccounts[selectedBankAccountIndex].name}'
         : 'Payment - ${predefinedPaymentMethods[selectedPaymentMethodIndex].name}';
@@ -80,9 +127,9 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
       asset: initialAsset.asset,
       actionType: WalletActionType.sell,
       title: 'Sell Asset',
-      primaryValue: '$quantity Units',
-      feeValue: formatCurrency(feeAmount),
-      totalValue: formatCurrency(receivedAmount),
+      primaryValue: '${result.quantity} Units',
+      feeValue: formatCurrency(result.feeAmount),
+      totalValue: formatCurrency(result.receivedAmount),
       destinationLabel: 'Payout Method',
       destinationValue: payout,
       note: noteController.text.trim(),
@@ -96,8 +143,6 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
     final clean = raw.replaceAll(RegExp(r'[^0-9.]'), '');
     return double.tryParse(clean) ?? 0;
   }
-
-  void _emitUpdated() => emit(SellAssetActionUpdated());
 
   @override
   Future<void> close() {

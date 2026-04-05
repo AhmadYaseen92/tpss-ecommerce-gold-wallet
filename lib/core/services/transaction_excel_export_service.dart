@@ -6,7 +6,7 @@ import 'package:file_saver/file_saver.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/transaction_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
 
 class TransactionExcelExportService {
   static final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');

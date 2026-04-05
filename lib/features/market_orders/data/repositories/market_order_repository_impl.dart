@@ -1,7 +1,7 @@
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/datasources/market_order_local_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/domain/entities/market_order_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/domain/repositories/market_order_repository.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart' as legacy_models;
+import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/models/market_order_model.dart' as legacy_models;
 
 class MarketOrderRepositoryImpl implements MarketOrderRepository {
   MarketOrderRepositoryImpl(this._localDataSource);

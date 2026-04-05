@@ -4,4 +4,9 @@ sealed class SellAssetActionState {}
 
 final class SellAssetActionInitial extends SellAssetActionState {}
 
-final class SellAssetActionUpdated extends SellAssetActionState {}
+final class SellAssetActionUpdated extends SellAssetActionState {
+  SellAssetActionUpdated({required this.result, this.errorMessage});
+
+  final SellAssetResultEntity? result;
+  final String? errorMessage;
+}

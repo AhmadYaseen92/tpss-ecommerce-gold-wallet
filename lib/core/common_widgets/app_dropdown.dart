@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/asset_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/cubit/transfer_cubit.dart';
 
 class AppDropdown extends StatelessWidget {

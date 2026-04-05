@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/home_carousel_Item_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/home/data/models/home_carousel_Item_model.dart';
 
 class HomeCarouselWidget extends StatelessWidget {
   const HomeCarouselWidget({super.key});

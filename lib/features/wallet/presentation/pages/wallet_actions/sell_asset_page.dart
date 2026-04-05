@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/presentation/cubit/sell_asset_action_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/pages/wallet_actions/action_review_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_bottom_bar.dart';
@@ -20,7 +21,10 @@ class SellAssetPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SellAssetActionCubit(initialAsset: asset),
+      create: (_) => SellAssetActionCubit(
+        initialAsset: asset,
+        repository: InjectionContainer.walletActionRepository(),
+      ),
       child: BlocBuilder<SellAssetActionCubit, SellAssetActionState>(
         builder: (context, state) {
           final cubit = context.read<SellAssetActionCubit>();
@@ -29,10 +33,13 @@ class SellAssetPage extends StatelessWidget {
             appBar: AppBar(title: const Text('Sell Asset')),
             bottomNavigationBar: ActionBottomBar(
               summaryLabel: 'Estimated Receive',
-              summaryValue: cubit.formatCurrency(cubit.receivedAmount),
+              summaryValue: cubit.calculatedResult == null
+                  ? '-'
+                  : cubit.formatCurrency(cubit.calculatedResult!.receivedAmount),
               buttonText: 'Review Sell',
               onPressed: () {
                 if (!(_formKey.currentState?.validate() ?? false)) return;
+                if (cubit.calculatedResult == null) return;
 
                 Navigator.push(
                   context,
@@ -110,10 +117,24 @@ class SellAssetPage extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (cubit.errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          cubit.errorMessage!,
+                          style: TextStyle(color: Theme.of(context).colorScheme.error),
+                        ),
+                      ),
                     FeeSummaryCard(
-                      grossAmount: cubit.formatCurrency(cubit.grossAmount),
-                      feeAmount: cubit.formatCurrency(cubit.feeAmount),
-                      totalAmount: cubit.formatCurrency(cubit.receivedAmount),
+                      grossAmount: cubit.calculatedResult == null
+                          ? '-'
+                          : cubit.formatCurrency(cubit.calculatedResult!.grossAmount),
+                      feeAmount: cubit.calculatedResult == null
+                          ? '-'
+                          : cubit.formatCurrency(cubit.calculatedResult!.feeAmount),
+                      totalAmount: cubit.calculatedResult == null
+                          ? '-'
+                          : cubit.formatCurrency(cubit.calculatedResult!.receivedAmount),
                       totalLabel: 'You Receive',
                     ),
                   ],

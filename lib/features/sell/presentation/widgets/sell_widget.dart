@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/asset_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/sell/presentation/cubit/sell_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';

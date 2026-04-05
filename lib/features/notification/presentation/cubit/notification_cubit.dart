@@ -1,5 +1,5 @@
 import 'package:bloc/bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/notification_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/notification/data/models/notification_model.dart';
 
 part 'notification_state.dart';
 

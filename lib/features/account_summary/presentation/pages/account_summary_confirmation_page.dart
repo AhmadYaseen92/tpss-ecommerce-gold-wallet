@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/account_conversion_request_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/convert/data/models/account_conversion_request_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 

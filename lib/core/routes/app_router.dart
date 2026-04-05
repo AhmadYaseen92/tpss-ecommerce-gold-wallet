@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/wallet_action_models.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/product_item_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/navigation/presentation/pages/custom_bottom_navbar.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/pages/login_page.dart';

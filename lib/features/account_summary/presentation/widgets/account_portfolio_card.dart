@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/account_summary_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/account_summary/data/models/account_summary_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 
 class AccountPortfolioCard extends StatelessWidget {

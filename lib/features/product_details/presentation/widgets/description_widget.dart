@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/product_item_model.dart';
 
 class DescriptionWidget extends StatelessWidget {
   final ProductItemModel product;
