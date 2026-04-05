@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/domain/entities/market_order_entity.dart';
-import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/grams_hint_label.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/grams_hint_label.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/presentation/cubit/market_order_cubit.dart';
 
 class MarketOrderListPage extends StatelessWidget {

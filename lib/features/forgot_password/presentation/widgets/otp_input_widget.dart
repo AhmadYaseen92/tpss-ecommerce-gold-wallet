@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 
 /// Allows typing over an existing digit by always keeping the last entered char.
 class _OtpDigitFormatter extends TextInputFormatter {

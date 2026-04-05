@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart'
     show WalletTransaction;
-import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_holding_item_widget.dart';
 
 class WalletItemsPage extends StatelessWidget {

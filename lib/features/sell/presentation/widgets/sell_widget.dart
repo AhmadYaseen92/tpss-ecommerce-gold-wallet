@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/asset_model.dart';
-import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/sell/presentation/cubit/sell_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_button.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_modal_alert.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/terms_row.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/terms_row.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/sell/presentation/widgets/info_card_widget.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/summary_row_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/summary_row_widget.dart';
 
 class SellWidget extends StatelessWidget {
   final SellCubit sellCubit;

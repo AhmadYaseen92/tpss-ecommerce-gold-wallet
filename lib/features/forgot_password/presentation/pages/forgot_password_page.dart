@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/cubit/forgot_password_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/widgets/reset_password_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/widgets/set_new_password_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/widgets/verify_otp_form.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 
 class ForgotPasswordPage extends StatelessWidget {
   const ForgotPasswordPage({super.key});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/cubit/login_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 
 class BiometricButtons extends StatelessWidget {
   final LoginCubit cubit;

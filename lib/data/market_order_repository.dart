@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/notification_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/grams_hint_label.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/grams_hint_label.dart';
 
 class MarketOrderRepository {
   static int _nextOrderId = 1005;

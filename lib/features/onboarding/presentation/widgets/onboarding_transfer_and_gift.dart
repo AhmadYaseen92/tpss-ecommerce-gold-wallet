@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/onboarding/presentation/cubit/onboarding_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 
 class OnboardingTransferAndGiftPage extends StatelessWidget {
   const OnboardingTransferAndGiftPage({super.key,required this.cubit});

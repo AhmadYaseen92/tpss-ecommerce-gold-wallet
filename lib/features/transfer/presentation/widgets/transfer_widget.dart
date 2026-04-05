@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/cubit/transfer_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/amount_field.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_button.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_dropdown.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/form_header.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/terms_row.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/amount_field.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_dropdown.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/form_header.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/terms_row.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/widgets/recipient_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/widgets/recipient_toggle.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/widgets/summary_card.dart';

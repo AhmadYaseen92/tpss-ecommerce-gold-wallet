@@ -7,7 +7,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/fee_summary_card.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/predefined_account_selector.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/wallet_asset_summary_card.dart';
 
 class SellAssetPage extends StatelessWidget {

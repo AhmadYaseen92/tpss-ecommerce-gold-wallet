@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 
 class ReadonlyInfoRow extends StatelessWidget {
   final String label;

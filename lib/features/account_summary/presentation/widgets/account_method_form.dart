@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/account_conversion_request_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/account_summary/presentation/cubit/account_summary_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_form_dropdown.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_text_field.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/predefined_account_selector.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_form_dropdown.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 
 class AccountMethodForm extends StatelessWidget {

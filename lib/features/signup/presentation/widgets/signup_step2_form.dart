@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/signup/presentation/cubit/signup_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_button.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_text_field.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/password_requirements_widget.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/terms_row.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/password_requirements_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/terms_row.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/signup/presentation/widgets/document_type_toggle_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/signup/presentation/widgets/nationality_dropdown_widget.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/form_header.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/form_header.dart';
 
 class SignupStep2Form extends StatelessWidget {
   SignupStep2Form({super.key, required this.cubit});

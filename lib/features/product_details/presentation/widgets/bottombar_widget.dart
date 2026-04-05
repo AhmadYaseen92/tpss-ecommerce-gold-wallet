@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 
 class BottomBar extends StatelessWidget {
   final int quantity;

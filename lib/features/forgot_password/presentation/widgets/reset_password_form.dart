@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/cubit/forgot_password_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_button.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_text_field.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/widgets/delivery_method_card.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/form_header.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/form_header.dart';
 
 class ResetPasswordForm extends StatelessWidget {
   ResetPasswordForm({super.key, required this.cubit});

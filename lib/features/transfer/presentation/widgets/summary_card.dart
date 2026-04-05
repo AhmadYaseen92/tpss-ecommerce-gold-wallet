@@ -1,10 +1,10 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/cubit/transfer_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/form_header.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/summary_row_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/form_header.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/summary_row_widget.dart';
 
 class SummaryCard extends StatelessWidget {
   final TransferCubit cubit;

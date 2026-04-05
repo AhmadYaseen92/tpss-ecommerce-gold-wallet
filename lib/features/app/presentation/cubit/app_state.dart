@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 
 class AppState {
   final String selectedSeller;

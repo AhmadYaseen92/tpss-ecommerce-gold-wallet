@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_text_field.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
 
 class ActionTextField extends StatelessWidget {
   final String label;

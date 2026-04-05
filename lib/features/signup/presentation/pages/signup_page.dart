@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/signup/presentation/cubit/signup_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/signup/presentation/widgets/signup_step1_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/signup/presentation/widgets/signup_step2_form.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/step_indicator_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/step_indicator_widget.dart';
 
 class SignupPage extends StatelessWidget {
   const SignupPage({super.key});

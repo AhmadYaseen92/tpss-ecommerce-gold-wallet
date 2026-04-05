@@ -5,8 +5,8 @@ import 'package:tpss_ecommerce_gold_wallet/features/account_summary/presentation
 import 'package:tpss_ecommerce_gold_wallet/features/account_summary/presentation/pages/account_summary_confirmation_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/account_summary/presentation/widgets/account_method_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/account_summary/presentation/widgets/account_portfolio_card.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_button.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 
 class AccountSummaryPage extends StatelessWidget {
   const AccountSummaryPage({super.key});
