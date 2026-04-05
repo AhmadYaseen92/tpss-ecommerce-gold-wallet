@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/helpers/predefined_accounts_data.dart';
 
 part 'profile_state.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/data/predefined_accounts_data.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/helpers/predefined_accounts_data.dart';
 
 class PredefinedAccountSelector extends StatelessWidget {
   final String label;

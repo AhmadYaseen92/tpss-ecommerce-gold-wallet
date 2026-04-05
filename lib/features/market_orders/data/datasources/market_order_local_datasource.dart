@@ -1,4 +1,4 @@
-import 'package:tpss_ecommerce_gold_wallet/data/market_order_repository.dart' as legacy;
+import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/datasources/market_order_legacy_repository.dart' as legacy;
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/models/market_order_model.dart' as legacy_models;
 
 class MarketOrderLocalDataSource {

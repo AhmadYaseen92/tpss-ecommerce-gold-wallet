@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/data/market_order_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/datasources/market_order_legacy_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
 
 part 'wallet_state.dart';
