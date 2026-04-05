@@ -7,7 +7,7 @@ import 'package:tpss_ecommerce_gold_wallet/models/market_symbol_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/notification_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/wallet_model.dart';
-import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/grams_hint_label.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/widgets/grams_hint_label.dart';
 
 class MarketOrderRepository {
   static int _nextOrderId = 1005;
