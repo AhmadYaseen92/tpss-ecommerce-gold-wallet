@@ -3,7 +3,7 @@ import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/product_item_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/cart_cubit/cart_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/cubit/cart_cubit.dart';
 
 class CartItemWidget extends StatelessWidget {
   final CartCubit cartCubit;

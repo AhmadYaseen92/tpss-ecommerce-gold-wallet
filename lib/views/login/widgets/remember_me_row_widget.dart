@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/login_cubit/login_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/cubit/login_cubit.dart';
 
 class RememberMeRow extends StatelessWidget {
   const RememberMeRow({super.key, required this.cubit});

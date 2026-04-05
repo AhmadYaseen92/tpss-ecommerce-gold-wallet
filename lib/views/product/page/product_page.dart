@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_state.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/product_cubit/product_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_state.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product/widgets/catalog_tab_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/product/widgets/market_watch_tab_widget.dart';
 

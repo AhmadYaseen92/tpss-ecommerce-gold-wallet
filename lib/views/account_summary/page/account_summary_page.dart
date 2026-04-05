@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/models/account_summary_model.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/account_summary_cubit/account_summary_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/account_summary/presentation/cubit/account_summary_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/account_summary/page/account_summary_confirmation_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/account_summary/widgets/account_method_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/account_summary/widgets/account_portfolio_card.dart';

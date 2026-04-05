@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/app_cubit/app_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/app_filter_chip.dart';
 
 class SellerFilterBarWidget extends StatelessWidget {

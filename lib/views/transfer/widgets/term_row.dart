@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/transfer_cubit/transfer_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/cubit/transfer_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/terms_row.dart';
 
 class TransferTermsRow extends StatelessWidget {

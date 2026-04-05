@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/transaction_cubit/transaction_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transaction/presentation/cubit/transaction_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/transaction/widget/transaction_filter_dropdown.dart';
 
 class TransactionFilterBar extends StatelessWidget {

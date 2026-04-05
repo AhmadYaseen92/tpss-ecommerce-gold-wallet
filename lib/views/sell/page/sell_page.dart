@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/sell_cubit/sell_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/presentation/cubit/sell_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/sell/widgets/sell_widget.dart';
 
 class SellGoldPage extends StatelessWidget {

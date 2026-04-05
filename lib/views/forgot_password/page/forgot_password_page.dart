@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/forgot_password_cubit/forgot_password_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/cubit/forgot_password_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/widgets/reset_password_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/widgets/set_new_password_form.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/forgot_password/widgets/verify_otp_form.dart';
