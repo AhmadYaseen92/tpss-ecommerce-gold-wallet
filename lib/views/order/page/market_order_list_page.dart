@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/constant/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/data/market_order_repository.dart';
-import 'package:tpss_ecommerce_gold_wallet/models/market_order_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/datasources/market_order_local_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/repositories/market_order_repository_impl.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/market_orders/domain/entities/market_order_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/utils/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/views/common/widgets/grams_hint_label.dart';
-import 'package:tpss_ecommerce_gold_wallet/view_models/market_order_cubit/market_order_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/market_orders/presentation/cubit/market_order_cubit.dart';
 
 class MarketOrderListPage extends StatelessWidget {
   const MarketOrderListPage({super.key});
@@ -33,28 +34,23 @@ class MarketOrderListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => MarketOrderCubit()..load(sellerFilter: sellerFilter),
-      child: _MarketOrderListContent(
-        showStatusFilter: showStatusFilter,
-        sellerFilter: sellerFilter,
-      ),
+      create: (_) =>
+          MarketOrderCubit(
+            repository: MarketOrderRepositoryImpl(MarketOrderLocalDataSource()),
+          )..load(sellerFilter: sellerFilter),
+      child: _MarketOrderListContent(showStatusFilter: showStatusFilter),
     );
   }
 }
 
 class _MarketOrderListContent extends StatelessWidget {
-  const _MarketOrderListContent({
-    required this.showStatusFilter,
-    required this.sellerFilter,
-  });
+  const _MarketOrderListContent({required this.showStatusFilter});
 
   final bool showStatusFilter;
-  final String sellerFilter;
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<MarketOrderCubit>();
-    cubit.setSellerFilter(sellerFilter);
 
     return BlocBuilder<MarketOrderCubit, MarketOrderState>(
       builder: (context, state) {
@@ -152,11 +148,10 @@ class _MarketOrderListContent extends StatelessWidget {
                                     children: [
                                       OutlinedButton.icon(
                                         onPressed: () async {
-                                          final livePrice =
-                                              MarketOrderRepository.livePriceForSymbol(
-                                                order.symbol,
-                                                fallback: order.unitPrice,
-                                              );
+                                          final livePrice = cubit.livePriceForSymbol(
+                                            order.symbol,
+                                            fallback: order.unitPrice,
+                                          );
                                           final goToOrders =
                                               await Navigator.pushNamed(
                                                 context,
@@ -182,12 +177,7 @@ class _MarketOrderListContent extends StatelessWidget {
                                       const SizedBox(width: 8),
                                       OutlinedButton.icon(
                                         onPressed: () {
-                                          MarketOrderRepository.cancelOrder(
-                                            order.id,
-                                          );
-                                          cubit.load(
-                                            sellerFilter: loaded.sellerFilter,
-                                          );
+                                          cubit.cancelOrder(order.id);
                                         },
                                         icon: const Icon(Icons.cancel_outlined),
                                         label: const Text('Cancel'),

@@ -7,18 +7,19 @@ class MarketOrderInitial extends MarketOrderState {}
 class MarketOrderLoading extends MarketOrderState {}
 
 class MarketOrderLoaded extends MarketOrderState {
-  final List<MarketOrderModel> orders;
-  final String sellerFilter;
-  final MarketOrderStatusFilter statusFilter;
-
   MarketOrderLoaded({
     required this.orders,
     required this.sellerFilter,
     required this.statusFilter,
   });
+
+  final List<MarketOrderEntity> orders;
+  final String sellerFilter;
+  final MarketOrderStatusFilter statusFilter;
 }
 
 class MarketOrderError extends MarketOrderState {
-  final String message;
   MarketOrderError(this.message);
+
+  final String message;
 }
