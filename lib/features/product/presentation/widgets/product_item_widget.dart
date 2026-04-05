@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/product_item_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/grams_hint_label.dart';
 
 class ProductItemWidget extends StatelessWidget {
   final Cubit cubit;
-  final ProductItemModel product;
+  final ProductEntity product;
   const ProductItemWidget({super.key, required this.cubit, required this.product});
 
   @override

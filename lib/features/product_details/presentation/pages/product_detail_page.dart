@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/product_item_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
 import '../widgets/product_detail_widget.dart';
 
 class ProductDetailPage extends StatelessWidget {
-  final ProductItemModel product;
+  final ProductEntity product;
 
   const ProductDetailPage({super.key, required this.product});
 
@@ -15,7 +16,13 @@ class ProductDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) {
-        final cubit = ProductCubit();
+        final cubit = ProductCubit(
+          getProductsUseCase: InjectionContainer.getProductsUseCase(),
+          getProductDetailUseCase: InjectionContainer.getProductDetailUseCase(),
+          toggleProductFavoriteUseCase: InjectionContainer.toggleProductFavoriteUseCase(),
+          addProductToCartUseCase: InjectionContainer.addProductToCartUseCase(),
+          watchMarketSymbolsUseCase: InjectionContainer.watchMarketSymbolsUseCase(),
+        );
         cubit.loadProductDetail(product.id);
         return cubit;
       },

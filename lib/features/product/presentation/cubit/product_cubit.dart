@@ -1,37 +1,67 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/market_symbol_model.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/product_item_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/market_symbol_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/add_product_to_cart_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/filter_market_symbols_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/filter_products_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/get_product_detail_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/get_products_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/toggle_product_favorite_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/watch_market_symbols_usecase.dart';
 
 part 'product_state.dart';
 
 class ProductCubit extends Cubit<ProductState> {
-  List<ProductItemModel> allProducts = [];
-  List<MarketSymbolModel> marketSymbols = initialMarketSymbols;
-  List<ProductItemModel> visibleCatalogProducts = [];
-  List<MarketSymbolModel> visibleMarketSymbols = [];
+  ProductCubit({
+    required GetProductsUseCase getProductsUseCase,
+    required GetProductDetailUseCase getProductDetailUseCase,
+    required ToggleProductFavoriteUseCase toggleProductFavoriteUseCase,
+    required AddProductToCartUseCase addProductToCartUseCase,
+    required WatchMarketSymbolsUseCase watchMarketSymbolsUseCase,
+    FilterProductsUseCase filterProductsUseCase = const FilterProductsUseCase(),
+    FilterMarketSymbolsUseCase filterMarketSymbolsUseCase = const FilterMarketSymbolsUseCase(),
+  }) : _getProductsUseCase = getProductsUseCase,
+       _getProductDetailUseCase = getProductDetailUseCase,
+       _toggleProductFavoriteUseCase = toggleProductFavoriteUseCase,
+       _addProductToCartUseCase = addProductToCartUseCase,
+       _watchMarketSymbolsUseCase = watchMarketSymbolsUseCase,
+       _filterProductsUseCase = filterProductsUseCase,
+       _filterMarketSymbolsUseCase = filterMarketSymbolsUseCase,
+       super(ProductInitial());
+
+  final GetProductsUseCase _getProductsUseCase;
+  final GetProductDetailUseCase _getProductDetailUseCase;
+  final ToggleProductFavoriteUseCase _toggleProductFavoriteUseCase;
+  final AddProductToCartUseCase _addProductToCartUseCase;
+  final WatchMarketSymbolsUseCase _watchMarketSymbolsUseCase;
+  final FilterProductsUseCase _filterProductsUseCase;
+  final FilterMarketSymbolsUseCase _filterMarketSymbolsUseCase;
+
+  List<ProductEntity> allProducts = [];
+  List<MarketSymbolEntity> marketSymbols = [];
+  List<ProductEntity> visibleCatalogProducts = [];
+  List<MarketSymbolEntity> visibleMarketSymbols = [];
+
   String selectedCategory = 'All';
   String activeSeller = AppReleaseConfig.defaultSeller;
   int quantity = 1;
-  Timer? _marketTimer;
 
-  ProductCubit() : super(ProductInitial());
+  StreamSubscription<List<MarketSymbolEntity>>? _marketSubscription;
 
-  void loadProducts({String seller = AppReleaseConfig.allSellersLabel}) async {
+  Future<void> loadProducts({String seller = AppReleaseConfig.allSellersLabel}) async {
     emit(ProductLoading());
     try {
-      await Future.delayed(const Duration(milliseconds: 400));
-      allProducts = dummyProducts;
+      allProducts = await _getProductsUseCase();
       selectedCategory = 'All';
       activeSeller = AppReleaseConfig.isIndividualSellerRelease
           ? AppReleaseConfig.individualSellerName
           : seller;
+
       _emitCatalog();
-      _emitMarketWatch();
-      _startMarketFeed();
+      await _startMarketWatch();
     } catch (e) {
       emit(ProductError('Failed to load products: $e'));
     }
@@ -48,83 +78,30 @@ class ProductCubit extends Cubit<ProductState> {
     _emitCatalog();
   }
 
-  void _emitCatalog() {
-    visibleCatalogProducts = allProducts.where((product) {
-      final categoryOk =
-          selectedCategory == 'All' || product.category == selectedCategory;
-      final sellerOk = AppReleaseConfig.matchesSeller(
-        activeSeller,
-        product.sellerName,
-      );
-      return categoryOk && sellerOk;
-    }).toList();
-
-    emit(
-      ProductLoaded(
-        products: visibleCatalogProducts,
-        category: selectedCategory,
-        seller: activeSeller,
-      ),
-    );
+  Future<void> toggleFavorite(String productId) async {
+    await _toggleProductFavoriteUseCase(productId);
+    allProducts = await _getProductsUseCase();
+    _emitCatalog();
   }
 
-  void toggleFavorite(String productId) {
-    final index = allProducts.indexWhere((p) => p.id == productId);
-    if (index != -1) {
-      allProducts[index] = allProducts[index].copyWith(
-        isFavorite: !allProducts[index].isFavorite,
-      );
-      _emitCatalog();
-    }
-  }
-
-  void loadProductDetail(String productId) async {
+  Future<void> loadProductDetail(String productId) async {
     emit(ProductDetailLoading());
     try {
-      await Future.delayed(const Duration(milliseconds: 600));
-      final product = dummyProducts.firstWhere((p) => p.id == productId);
-      allProducts = [product];
+      final product = await _getProductDetailUseCase(productId);
       emit(ProductDetailLoaded(product));
     } catch (e) {
       emit(ProductDetailError('Failed to load product detail: $e'));
     }
   }
 
-  void toggleDetailFavorite(String productId) {
-    final index = allProducts.indexWhere((p) => p.id == productId);
-    if (index != -1) {
-      final updatedProduct = allProducts[index].copyWith(
-        isFavorite: !allProducts[index].isFavorite,
-      );
-      allProducts[index] = updatedProduct;
-      emit(ProductDetailLoaded(updatedProduct));
-    }
+  Future<void> toggleDetailFavorite(String productId) async {
+    await _toggleProductFavoriteUseCase(productId);
+    final product = await _getProductDetailUseCase(productId);
+    emit(ProductDetailLoaded(product));
   }
 
-  void _emitMarketWatch() {
-    visibleMarketSymbols = marketSymbols.where((symbol) {
-      return AppReleaseConfig.matchesSeller(activeSeller, symbol.sellerName);
-    }).toList();
-    emit(
-      ProductMarketWatchLoaded(
-        symbols: visibleMarketSymbols,
-        seller: activeSeller,
-      ),
-    );
-  }
-
-  void _startMarketFeed() {
-    _marketTimer?.cancel();
-    final random = Random();
-    _marketTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      marketSymbols = marketSymbols.map((symbol) {
-        final move = (random.nextDouble() - 0.5) * 0.01;
-        final newPrice = symbol.price * (1 + move);
-        final newChange = symbol.change + (move * 100);
-        return symbol.copyWith(price: newPrice, change: newChange);
-      }).toList();
-      _emitMarketWatch();
-    });
+  Future<void> addCart(ProductEntity product) async {
+    await _addProductToCartUseCase(product, quantity);
   }
 
   int increaseQuantity() {
@@ -141,24 +118,46 @@ class ProductCubit extends Cubit<ProductState> {
     return quantity;
   }
 
-  void addCart(ProductItemModel product) {
-    final qtyToAdd = quantity;
-    final idx = dummycartProducts.indexWhere((p) => p.id == product.id);
-    if (idx != -1) {
-      final existing = dummycartProducts[idx];
-      dummycartProducts[idx] = existing.copyWith(
-        quantity: existing.quantity + qtyToAdd,
-      );
-    } else {
-      dummycartProducts.add(
-        product.copyWith(quantity: qtyToAdd, isInCart: true),
-      );
-    }
+  Future<void> _startMarketWatch() async {
+    await _marketSubscription?.cancel();
+    _marketSubscription = _watchMarketSymbolsUseCase().listen((symbols) {
+      marketSymbols = symbols;
+      _emitMarketWatch();
+    });
+  }
+
+  void _emitCatalog() {
+    visibleCatalogProducts = _filterProductsUseCase(
+      products: allProducts,
+      category: selectedCategory,
+      seller: activeSeller,
+    );
+
+    emit(
+      ProductLoaded(
+        products: visibleCatalogProducts,
+        category: selectedCategory,
+        seller: activeSeller,
+      ),
+    );
+  }
+
+  void _emitMarketWatch() {
+    visibleMarketSymbols = _filterMarketSymbolsUseCase(
+      symbols: marketSymbols,
+      seller: activeSeller,
+    );
+    emit(
+      ProductMarketWatchLoaded(
+        symbols: visibleMarketSymbols,
+        seller: activeSeller,
+      ),
+    );
   }
 
   @override
-  Future<void> close() {
-    _marketTimer?.cancel();
+  Future<void> close() async {
+    await _marketSubscription?.cancel();
     return super.close();
   }
 }

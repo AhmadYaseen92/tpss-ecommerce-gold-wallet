@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/market_symbol_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/market_symbol_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
@@ -212,7 +212,7 @@ class MarketWatchTabWidget extends StatelessWidget {
     );
   }
 
-  void _openMarketDetail(BuildContext context, MarketSymbolModel item) {
+  void _openMarketDetail(BuildContext context, MarketSymbolEntity item) {
     String interval = '1 Minute';
 
     showModalBottomSheet(
@@ -453,7 +453,7 @@ class MarketWatchTabWidget extends StatelessWidget {
     );
   }
 
-  List<double> _chartPoints(MarketSymbolModel item, {required int length}) {
+  List<double> _chartPoints(MarketSymbolEntity item, {required int length}) {
     return List<double>.generate(length, (index) {
       final seed = (item.symbol.hashCode % 100) / 1000;
       final wave = math.sin((index / (length - 1)) * math.pi * 1.6);
@@ -473,10 +473,10 @@ class MarketWatchTabWidget extends StatelessWidget {
     return '$year-$month-$day $hour:$minute:$second.$millisecond';
   }
 
-  double _ask(MarketSymbolModel item) => item.price * 1.0015;
-  double _bid(MarketSymbolModel item) => item.price * 0.9985;
-  double _high(MarketSymbolModel item) => item.price * 1.01;
-  double _low(MarketSymbolModel item) => item.price * 0.99;
+  double _ask(MarketSymbolEntity item) => item.price * 1.0015;
+  double _bid(MarketSymbolEntity item) => item.price * 0.9985;
+  double _high(MarketSymbolEntity item) => item.price * 1.01;
+  double _low(MarketSymbolEntity item) => item.price * 0.99;
 }
 
 class _SymbolMiniChart extends StatelessWidget {

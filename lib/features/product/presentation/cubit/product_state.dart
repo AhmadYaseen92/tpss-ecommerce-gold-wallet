@@ -7,7 +7,7 @@ final class ProductInitial extends ProductState {}
 final class ProductLoading extends ProductState {}
 
 final class ProductLoaded extends ProductState {
-  final List<ProductItemModel> products;
+  final List<ProductEntity> products;
   final String category;
   final String seller;
 
@@ -19,7 +19,7 @@ final class ProductLoaded extends ProductState {
 }
 
 final class ProductMarketWatchLoaded extends ProductState {
-  final List<MarketSymbolModel> symbols;
+  final List<MarketSymbolEntity> symbols;
   final String seller;
 
   ProductMarketWatchLoaded({required this.symbols, required this.seller});
@@ -34,7 +34,7 @@ final class ProductError extends ProductState {
 final class ProductDetailLoading extends ProductState {}
 
 final class ProductDetailLoaded extends ProductState {
-  final ProductItemModel product;
+  final ProductEntity product;
 
   ProductDetailLoaded(this.product);
 }
@@ -52,7 +52,7 @@ final class ProductDetailError extends ProductState {
 }
 
 final class ProductCartLoaded extends ProductState {
-  final List<ProductItemModel> cartProducts;
+  final List<ProductEntity> cartProducts;
 
   ProductCartLoaded({required this.cartProducts});
 }
