@@ -5,7 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/mark
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/repositories/product_repository.dart';
 
-class ProductRepositoryImpl implements ProductRepository {
+class ProductRepositoryImpl implements IProductRepository {
   ProductRepositoryImpl(this._localDataSource);
 
   final ProductLocalDataSource _localDataSource;

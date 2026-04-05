@@ -1,3 +1,10 @@
+import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_local_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/data/repositories/cart_repository_impl.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/repositories/cart_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/add_cart_product_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/get_cart_items_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/remove_cart_product_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/update_cart_product_quantity_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/datasources/market_order_local_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/repositories/market_order_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/domain/repositories/market_order_repository.dart';
@@ -17,17 +24,22 @@ class InjectionContainer {
   const InjectionContainer._();
 
   static final ProductLocalDataSource _productLocalDataSource = ProductLocalDataSource();
+  static final CartLocalDataSource _cartLocalDataSource = CartLocalDataSource();
 
-  static MarketOrderRepository marketOrderRepository() {
+  static IMarketOrderRepository marketOrderRepository() {
     return MarketOrderRepositoryImpl(MarketOrderLocalDataSource());
   }
 
-  static WalletActionRepository walletActionRepository() {
+  static IWalletActionRepository walletActionRepository() {
     return WalletActionRepositoryImpl(WalletActionRemoteDataSource());
   }
 
-  static ProductRepository productRepository() {
+  static IProductRepository productRepository() {
     return ProductRepositoryImpl(_productLocalDataSource);
+  }
+
+  static ICartRepository cartRepository() {
+    return CartRepositoryImpl(_cartLocalDataSource);
   }
 
   static GetProductsUseCase getProductsUseCase() {
@@ -48,5 +60,21 @@ class InjectionContainer {
 
   static WatchMarketSymbolsUseCase watchMarketSymbolsUseCase() {
     return WatchMarketSymbolsUseCase(productRepository());
+  }
+
+  static GetCartItemsUseCase getCartItemsUseCase() {
+    return GetCartItemsUseCase(cartRepository());
+  }
+
+  static AddCartProductUseCase addCartProductUseCase() {
+    return AddCartProductUseCase(cartRepository());
+  }
+
+  static RemoveCartProductUseCase removeCartProductUseCase() {
+    return RemoveCartProductUseCase(cartRepository());
+  }
+
+  static UpdateCartProductQuantityUseCase updateCartProductQuantityUseCase() {
+    return UpdateCartProductQuantityUseCase(cartRepository());
   }
 }

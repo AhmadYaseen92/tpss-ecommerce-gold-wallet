@@ -3,7 +3,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/domain/repositories/
 class ToggleProductFavoriteUseCase {
   const ToggleProductFavoriteUseCase(this._repository);
 
-  final ProductRepository _repository;
+  final IProductRepository _repository;
 
   Future<void> call(String productId) => _repository.toggleFavorite(productId);
 }

@@ -1,4 +1,4 @@
-abstract class WalletActionRepository {
+abstract class IWalletActionRepository {
   Future<bool> isMarketOpen();
 
   Future<double> availableLiquidity();

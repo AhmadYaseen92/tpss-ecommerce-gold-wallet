@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/cubit/cart_cubit.dart';
@@ -32,7 +33,12 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
   @override
   void initState() {
     super.initState();
-    cartCubit = CartCubit();
+    cartCubit = CartCubit(
+      getCartItemsUseCase: InjectionContainer.getCartItemsUseCase(),
+      addCartProductUseCase: InjectionContainer.addCartProductUseCase(),
+      removeCartProductUseCase: InjectionContainer.removeCartProductUseCase(),
+      updateCartProductQuantityUseCase: InjectionContainer.updateCartProductQuantityUseCase(),
+    );
   }
 
   @override

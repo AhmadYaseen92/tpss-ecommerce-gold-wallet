@@ -4,7 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/domain/repositories/
 class AddProductToCartUseCase {
   const AddProductToCartUseCase(this._repository);
 
-  final ProductRepository _repository;
+  final IProductRepository _repository;
 
   Future<void> call(ProductEntity product, int quantity) => _repository.addToCart(product, quantity);
 }

@@ -4,7 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/domain/repositories/
 class WatchMarketSymbolsUseCase {
   const WatchMarketSymbolsUseCase(this._repository);
 
-  final ProductRepository _repository;
+  final IProductRepository _repository;
 
   Stream<List<MarketSymbolEntity>> call() => _repository.watchMarketSymbols();
 }

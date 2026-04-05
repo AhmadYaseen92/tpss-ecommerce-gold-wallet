@@ -5,7 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/market_orders/domain/reposit
 class GetFilteredMarketOrders {
   GetFilteredMarketOrders(this._repository);
 
-  final MarketOrderRepository _repository;
+  final IMarketOrderRepository _repository;
 
   List<MarketOrderEntity> call({
     required String sellerFilter,

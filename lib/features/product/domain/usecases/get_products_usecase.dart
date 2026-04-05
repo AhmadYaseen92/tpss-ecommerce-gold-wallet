@@ -4,7 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/domain/repositories/
 class GetProductsUseCase {
   const GetProductsUseCase(this._repository);
 
-  final ProductRepository _repository;
+  final IProductRepository _repository;
 
   Future<List<ProductEntity>> call() => _repository.getProducts();
 }

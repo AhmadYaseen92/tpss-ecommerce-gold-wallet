@@ -1,7 +1,7 @@
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/datasources/wallet_action_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 
-class WalletActionRepositoryImpl implements WalletActionRepository {
+class WalletActionRepositoryImpl implements IWalletActionRepository {
   WalletActionRepositoryImpl(this._remoteDataSource);
 
   final WalletActionRemoteDataSource _remoteDataSource;

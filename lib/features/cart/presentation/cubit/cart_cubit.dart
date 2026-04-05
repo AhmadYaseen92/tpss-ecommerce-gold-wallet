@@ -1,83 +1,95 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/product_item_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/add_cart_product_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/calculate_cart_summary_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/filter_cart_items_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/get_available_sellers_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/get_cart_items_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/remove_cart_product_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/update_cart_product_quantity_usecase.dart';
 
 part 'cart_state.dart';
 
 class CartCubit extends Cubit<CartState> {
-  CartCubit() : super(CartInitial());
+  CartCubit({
+    required GetCartItemsUseCase getCartItemsUseCase,
+    required AddCartProductUseCase addCartProductUseCase,
+    required RemoveCartProductUseCase removeCartProductUseCase,
+    required UpdateCartProductQuantityUseCase updateCartProductQuantityUseCase,
+    CalculateCartSummaryUseCase calculateCartSummaryUseCase = const CalculateCartSummaryUseCase(),
+    FilterCartItemsUseCase filterCartItemsUseCase = const FilterCartItemsUseCase(),
+    GetAvailableSellersUseCase getAvailableSellersUseCase = const GetAvailableSellersUseCase(),
+  }) : _getCartItemsUseCase = getCartItemsUseCase,
+       _addCartProductUseCase = addCartProductUseCase,
+       _removeCartProductUseCase = removeCartProductUseCase,
+       _updateCartProductQuantityUseCase = updateCartProductQuantityUseCase,
+       _calculateCartSummaryUseCase = calculateCartSummaryUseCase,
+       _filterCartItemsUseCase = filterCartItemsUseCase,
+       _getAvailableSellersUseCase = getAvailableSellersUseCase,
+       super(CartInitial());
+
+  final GetCartItemsUseCase _getCartItemsUseCase;
+  final AddCartProductUseCase _addCartProductUseCase;
+  final RemoveCartProductUseCase _removeCartProductUseCase;
+  final UpdateCartProductQuantityUseCase _updateCartProductQuantityUseCase;
+  final CalculateCartSummaryUseCase _calculateCartSummaryUseCase;
+  final FilterCartItemsUseCase _filterCartItemsUseCase;
+  final GetAvailableSellersUseCase _getAvailableSellersUseCase;
 
   String _sellerFilter = AppReleaseConfig.defaultSeller;
+  List<CartItemEntity> _allItems = [];
 
-  void loadCartProducts({String sellerFilter = AppReleaseConfig.allSellersLabel}) async {
-    if (AppReleaseConfig.isIndividualSellerRelease) {
-      _sellerFilter = AppReleaseConfig.individualSellerName;
-    } else {
-      final sellers = availableSellers;
-      if (sellerFilter == AppReleaseConfig.allSellersLabel && sellers.isNotEmpty) {
+  Future<void> loadCartProducts({String sellerFilter = AppReleaseConfig.allSellersLabel}) async {
+    emit(CartLoading());
+    try {
+      _allItems = await _getCartItemsUseCase();
+      final sellers = _getAvailableSellersUseCase(_allItems);
+
+      if (AppReleaseConfig.isIndividualSellerRelease) {
+        _sellerFilter = AppReleaseConfig.individualSellerName;
+      } else if (sellerFilter == AppReleaseConfig.allSellersLabel && sellers.isNotEmpty) {
         _sellerFilter = sellers.first;
       } else {
         _sellerFilter = sellerFilter;
       }
-    }
-    emit(CartLoading());
-    try {
-      await Future.delayed(const Duration(milliseconds: 300));
-      emit(CartLoaded(cartProducts: _filteredProducts));
+
+      _emitLoaded();
     } catch (e) {
       emit(CartError('Failed to load cart products: $e'));
     }
   }
 
-  List<ProductItemModel> get _filteredProducts {
-    return dummycartProducts
-        .where((p) => AppReleaseConfig.matchesSeller(_sellerFilter, p.sellerName))
-        .toList();
+  Future<void> addProduct(CartItemEntity product) async {
+    await _addCartProductUseCase(product);
+    _allItems = await _getCartItemsUseCase();
+    _emitLoaded();
   }
 
-  String get selectedSellerFilter => _sellerFilter;
-
-  List<String> get availableSellers {
-    final sellers = dummycartProducts.map((p) => p.sellerName).toSet().toList()..sort();
-    return sellers;
+  Future<void> removeProduct(String id) async {
+    await _removeCartProductUseCase(id);
+    _allItems = await _getCartItemsUseCase();
+    _emitLoaded();
   }
 
-  void addProduct(ProductItemModel product) {
-    final existingIndex = dummycartProducts.indexWhere((item) => item.id == product.id);
-
-    if (existingIndex != -1) {
-      final existing = dummycartProducts[existingIndex];
-      dummycartProducts[existingIndex] = existing.copyWith(
-        quantity: existing.quantity + product.quantity,
-      );
-    } else {
-      dummycartProducts.add(product);
-    }
-    emit(CartLoaded(cartProducts: _filteredProducts));
+  Future<void> updateProductQuantity(String id, int quantity) async {
+    await _updateCartProductQuantityUseCase(id, quantity);
+    _allItems = await _getCartItemsUseCase();
+    _emitLoaded();
   }
 
-  void removeProduct(String id) {
-    dummycartProducts.removeWhere((item) => item.id == id);
-    emit(CartLoaded(cartProducts: _filteredProducts));
+  void _emitLoaded() {
+    final filtered = _filterCartItemsUseCase(items: _allItems, sellerFilter: _sellerFilter);
+    final summary = _calculateCartSummaryUseCase(filtered);
+    final sellers = _getAvailableSellersUseCase(_allItems);
+
+    emit(
+      CartLoaded(
+        cartProducts: filtered,
+        summary: summary,
+        selectedSellerFilter: _sellerFilter,
+        availableSellers: sellers,
+      ),
+    );
   }
-
-  void updateProductQuantity(String id, int quantity) {
-    final safeQty = quantity < 1 ? 1 : quantity;
-    final index = dummycartProducts.indexWhere((item) => item.id == id);
-    if (index != -1) {
-      dummycartProducts[index] = dummycartProducts[index].copyWith(quantity: safeQty);
-      emit(CartLoaded(cartProducts: _filteredProducts));
-    }
-  }
-
-  double get subtotal {
-    if (state is! CartLoaded) return 0.0;
-    return (state as CartLoaded).cartProducts.fold(0.0, (sum, product) {
-      return sum + (product.price * product.quantity);
-    });
-  }
-
-  double get tax => subtotal * 0.05;
-
-  double get total => subtotal + tax;
 }

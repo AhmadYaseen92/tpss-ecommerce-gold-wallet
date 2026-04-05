@@ -10,14 +10,14 @@ part 'market_order_state.dart';
 
 class MarketOrderCubit extends Cubit<MarketOrderState> {
   MarketOrderCubit({
-    required MarketOrderRepository repository,
+    required IMarketOrderRepository repository,
     Duration refreshInterval = const Duration(seconds: 1),
   }) : _repository = repository,
        _getFilteredMarketOrders = GetFilteredMarketOrders(repository),
        _refreshInterval = refreshInterval,
        super(MarketOrderInitial());
 
-  final MarketOrderRepository _repository;
+  final IMarketOrderRepository _repository;
   final GetFilteredMarketOrders _getFilteredMarketOrders;
   final Duration _refreshInterval;
 

@@ -32,9 +32,9 @@ class _CartPageState extends State<CartPage> {
                 );
               } else if (state is CartLoaded) {
                 final cartProducts = state.cartProducts;
-                final sellers = cartCubit.availableSellers;
+                final sellers = state.availableSellers;
                 if (AppReleaseConfig.showSellerUi && sellers.isNotEmpty) {
-                  _selectedSeller ??= cartCubit.selectedSellerFilter;
+                  _selectedSeller ??= state.selectedSellerFilter;
                 }
                 if (cartProducts.isEmpty) {
                   return Center(
@@ -76,7 +76,7 @@ class _CartPageState extends State<CartPage> {
                         cartProducts: cartProducts,
                       ),
                     ),
-                    CartSummary(cartCubit: cartCubit),
+                    CartSummary(summary: state.summary),
                   ],
                 );
               } else if (state is CartError) {

@@ -12,7 +12,7 @@ part 'sell_asset_action_state.dart';
 class SellAssetActionCubit extends Cubit<SellAssetActionState> {
   SellAssetActionCubit({
     required this.initialAsset,
-    required WalletActionRepository repository,
+    required IWalletActionRepository repository,
     PrepareSellAssetUseCase? prepareSellAssetUseCase,
   }) : _repository = repository,
        _prepareSellAssetUseCase = prepareSellAssetUseCase ?? const PrepareSellAssetUseCase(),
@@ -24,7 +24,7 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
   }
 
   final WalletActionSummary initialAsset;
-  final WalletActionRepository _repository;
+  final IWalletActionRepository _repository;
   final PrepareSellAssetUseCase _prepareSellAssetUseCase;
   final TextEditingController quantityController;
   final TextEditingController noteController;

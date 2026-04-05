@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/product_item_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/cubit/cart_cubit.dart';
 
 class CartItemWidget extends StatelessWidget {
   final CartCubit cartCubit;
-  final List<ProductItemModel> cartProducts;
+  final List<CartItemEntity> cartProducts;
   const CartItemWidget({super.key, required this.cartCubit, required this.cartProducts});
 
   @override

@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/cubit/cart_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 
 class CartSummary extends StatelessWidget {
-  final CartCubit cartCubit;
-  const CartSummary({super.key, required this.cartCubit});
+  final CartSummaryEntity summary;
+
+  const CartSummary({super.key, required this.summary});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class CartSummary extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Opacity(opacity: 0.9, child: Text('Subtotal', style: TextStyle(color: palette.textSecondary))),
-              Text('\$${cartCubit.subtotal.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
+              Text('\$${summary.subtotal.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
             ],
           ),
           const SizedBox(height: 8),
@@ -35,7 +36,7 @@ class CartSummary extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Opacity(opacity: 0.9, child: Text('Tax (5.0%)', style: TextStyle(color: palette.textSecondary))),
-              Text('\$${cartCubit.tax.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
+              Text('\$${summary.tax.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
             ],
           ),
           const SizedBox(height: 8),
@@ -67,7 +68,7 @@ class CartSummary extends StatelessWidget {
                   Opacity(opacity: 0.75, child: Text('Includes all duties', style: TextStyle(fontSize: 12, color: palette.textSecondary))),
                 ],
               ),
-              Text('\$${cartCubit.total.toStringAsFixed(2)}', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: palette.textPrimary)),
+              Text('\$${summary.total.toStringAsFixed(2)}', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: palette.textPrimary)),
             ],
           ),
           const SizedBox(height: 12),
@@ -76,7 +77,6 @@ class CartSummary extends StatelessWidget {
             height: 56,
             child: AppButton(
               label: 'Proceed to Checkout',
-              cubit: cartCubit,
               onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.checkoutRoute),
             ),
           ),
