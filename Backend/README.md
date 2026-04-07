@@ -7,12 +7,20 @@
 - `TPSS.GoldWallet.Domain` (**Class Library**)  
 - `TPSS.GoldWallet.Infrastructure` (**Class Library**)
 
-All are real projects inside `TPSS.GoldWallet.sln`, so in Visual Studio you can right-click each project and use **Build / Rebuild / Clean**.
+All are real projects inside `TPSS.GoldWallet.sln`, so in Visual Studio you can right-click each project and use **Build / Rebuild / Clean / Publish**.
 
-## Windows SQL Server (SSMS) — migration flow
+## Build commands
 
-### 1) Create database
-Run in SSMS:
+Run from repository root:
+
+```powershell
+dotnet clean Backend/TPSS.GoldWallet.sln
+dotnet build Backend/TPSS.GoldWallet.sln -c Debug
+```
+
+## Windows SQL Server (SSMS) — create DB + migrate + run
+
+### 1) Create database in SSMS
 
 ```sql
 IF DB_ID(N'GoldWalletDb') IS NULL
@@ -22,42 +30,31 @@ END
 GO
 ```
 
-Or use: `Backend/scripts/sqlserver-create-db.sql`.
+(also in `Backend/scripts/sqlserver-create-db.sql`)
 
-### 2) Run migrations + start API
+### 2) Run migration + API
 
-```powershell
-cd Backend/scripts
-./windows-sqlserver-migrate-and-run.ps1 -Server "localhost" -Database "GoldWalletDb"
-```
-
-### 3) Optional: add new migration
+Run from repository root (recommended):
 
 ```powershell
-cd Backend/scripts
-./windows-sqlserver-migrate-and-run.ps1 -Server "localhost" -Database "GoldWalletDb" -AddMigration -MigrationName "YourMigration"
+./Backend/scripts/windows-sqlserver-migrate-and-run.ps1 -Server "localhost" -Database "GoldWalletDb"
 ```
 
-## Alternative (bash helper)
-
-```bash
-cd Backend/scripts
-./run-migrations.sh
-```
-
-
-## Important (Visual Studio vs VS Code)
-
-- In **VS Code Explorer**, everything appears as folders and right-click does **not** show project actions like Clean/Build/Publish.
-- To right-click projects and use **Clean / Rebuild / Publish**, open the solution in **Visual Studio 2022**:
+Or if you are inside `Backend/TPSS.GoldWallet.Api`:
 
 ```powershell
-start Backend/TPSS.GoldWallet.sln
+./run-sqlserver.ps1 -Server "localhost" -Database "GoldWalletDb"
 ```
 
-If you still see old `src` folder, run:
+### 3) Optional: add a migration first
 
 ```powershell
-cd Backend/scripts
-./cleanup-legacy-layout.ps1
+./Backend/scripts/windows-sqlserver-migrate-and-run.ps1 -Server "localhost" -Database "GoldWalletDb" -AddMigration -MigrationName "YourMigration"
 ```
+
+## Important (path issue)
+
+If your current folder is `Backend/TPSS.GoldWallet.Api`, **do not** run `cd Backend/scripts` (that path won't exist relative to API folder).  
+Either:
+- go back to repo root first, or
+- use `./run-sqlserver.ps1` from API folder.

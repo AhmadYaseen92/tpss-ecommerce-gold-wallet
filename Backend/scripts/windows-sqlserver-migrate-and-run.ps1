@@ -10,8 +10,17 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$api = Join-Path $root "../TPSS.GoldWallet.Api"
+function Invoke-Dotnet {
+  param([string]$Args)
+  Write-Host "> dotnet $Args"
+  & dotnet $Args
+  if ($LASTEXITCODE -ne 0) {
+    throw "dotnet command failed: dotnet $Args"
+  }
+}
+
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$api = Join-Path $scriptDir "../TPSS.GoldWallet.Api"
 Set-Location $api
 
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
@@ -28,27 +37,26 @@ else {
   $conn = "Server=$Server;Database=$Database;User Id=$SqlUser;Password=$SqlPassword;TrustServerCertificate=True;"
 }
 
-$env:Database__Provider = "SqlServer"
 $env:ConnectionStrings__SqlServer = $conn
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 
 Write-Host "[1/3] Restoring packages..."
-dotnet restore
+Invoke-Dotnet "restore"
 
 if ($AddMigration) {
   Write-Host "[2/4] Adding migration $MigrationName..."
-  dotnet ef migrations add $MigrationName --project ../TPSS.GoldWallet.Infrastructure --startup-project . --output-dir Persistence/Migrations
+  Invoke-Dotnet "ef migrations add $MigrationName --project ../TPSS.GoldWallet.Infrastructure --startup-project . --output-dir Persistence/Migrations"
 
   Write-Host "[3/4] Applying migrations..."
-  dotnet ef database update --project ../TPSS.GoldWallet.Infrastructure --startup-project .
+  Invoke-Dotnet "ef database update --project ../TPSS.GoldWallet.Infrastructure --startup-project ."
 
   Write-Host "[4/4] Running API..."
-  dotnet run
+  Invoke-Dotnet "run"
 }
 else {
   Write-Host "[2/3] Applying migrations..."
-  dotnet ef database update --project ../TPSS.GoldWallet.Infrastructure --startup-project .
+  Invoke-Dotnet "ef database update --project ../TPSS.GoldWallet.Infrastructure --startup-project ."
 
   Write-Host "[3/3] Running API..."
-  dotnet run
+  Invoke-Dotnet "run"
 }
