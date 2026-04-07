@@ -1,0 +1,5 @@
+IF DB_ID(N'GoldWalletDb') IS NULL
+BEGIN
+    CREATE DATABASE [GoldWalletDb];
+END
+GO

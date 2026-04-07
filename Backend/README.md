@@ -1,75 +1,53 @@
-# Backend (.NET 9 Clean Architecture, JWT, RBAC, KYC, Audit)
+# Backend (.NET 9 Clean Architecture)
 
-## Projects
+## Windows + SQL Server (no Docker) — create DB and run with migrations
 
-- `TPSS.GoldWallet.Domain`: Core entities and POCO models.
-- `TPSS.GoldWallet.Application`: Use-cases (CQRS + MediatR), DTOs, abstractions, permissions.
-- `TPSS.GoldWallet.Infrastructure`: EF Core + PostgreSQL, Identity, JWT, repository implementations.
-- `TPSS.GoldWallet.Api`: REST API entrypoint.
+### 1) Create database in SQL Server (SSMS)
+Run this script in SSMS:
 
-## Quick start (create DB + run app)
-
-### Option A: One command bootstrap
-
-```bash
-cd Backend/scripts
-./dev-bootstrap.sh
+```sql
+IF DB_ID(N'GoldWalletDb') IS NULL
+BEGIN
+    CREATE DATABASE [GoldWalletDb];
+END
+GO
 ```
 
-This will:
-1. start PostgreSQL in Docker,
-2. apply SQL schema,
-3. run EF migrations,
-4. start the API.
+(also available at `Backend/scripts/sqlserver-create-db.sql`)
 
-### Option B: Step by step
+### 2) Run migration + start API (PowerShell)
 
-```bash
+```powershell
 cd Backend/scripts
-./dev-up.sh
-./dev-init-db.sh
-./dev-run-api.sh
+./windows-sqlserver-migrate-and-run.ps1 -Server "localhost" -Database "GoldWalletDb"
 ```
 
-### Stop DB container
+If you use SQL login instead of Windows auth:
 
-```bash
+```powershell
 cd Backend/scripts
-./dev-down.sh
+./windows-sqlserver-migrate-and-run.ps1 -Server "localhost" -Database "GoldWalletDb" -TrustedConnection:$false -SqlUser "sa" -SqlPassword "YourPassword"
 ```
 
-## Script reference
+This script will:
+1. `dotnet restore`
+2. add migration (if missing)
+3. `dotnet ef database update`
+4. `dotnet run`
 
-- `docker-compose.postgres.yml`: local PostgreSQL service (port `5432`).
-- `dev-up.sh`: starts DB container and waits for health.
-- `dev-init-db.sh`: applies SQL schema (`001_init_schema.sql`) via `psql`.
-- `dev-run-api.sh`: restores, migrates, and runs ASP.NET API.
-- `dev-bootstrap.sh`: full flow in one command.
-- `run-migrations.sh`: explicit EF migration generation + database update.
+## Manual commands (alternative)
 
-## API coverage
+```powershell
+cd Backend/src/TPSS.GoldWallet.Api
+$env:Database__Provider="SqlServer"
+$env:ConnectionStrings__SqlServer="Server=localhost;Database=GoldWalletDb;Trusted_Connection=True;TrustServerCertificate=True;"
+dotnet restore
+dotnet ef database update --project ../TPSS.GoldWallet.Infrastructure --startup-project .
+dotnet run
+```
 
-- Auth (`/api/auth/login`)
-- Products/catalog
-- Cart
-- Wallet
-- Dashboard
-- Account summary
-- Profile
-- History + transactions
-- Notifications
-- KYC
-- Admin logs
+## Notes
 
-## Security model
-
-- ASP.NET Core Identity with password + lockout rules
-- JWT bearer authentication
-- Role-based identities (`Customer`, `ComplianceOfficer`, `Admin`)
-- Permission-based API authorization policies
-- Audit logs for sensitive actions
-
-## DB + mobile mapping docs
-
-- DB SQL init: `Backend/scripts/001_init_schema.sql`
-- Mobile/backend mapping: `Backend/docs/mobile-backend-mapping.md`
+- `appsettings.json` defaults to SQL Server provider.
+- PostgreSQL support is still available by setting `Database:Provider = PostgreSql` and `ConnectionStrings:PostgreSql`.
+- Swagger is available in development mode.

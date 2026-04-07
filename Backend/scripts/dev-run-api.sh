@@ -10,7 +10,8 @@ if ! command -v dotnet >/dev/null 2>&1; then
 fi
 
 export ASPNETCORE_ENVIRONMENT="${ASPNETCORE_ENVIRONMENT:-Development}"
-export ConnectionStrings__Default="${ConnectionStrings__Default:-Host=localhost;Port=5432;Database=gold_wallet;Username=postgres;Password=postgres}"
+export Database__Provider="${Database__Provider:-PostgreSql}"
+export ConnectionStrings__PostgreSql="${ConnectionStrings__PostgreSql:-Host=localhost;Port=5432;Database=gold_wallet;Username=postgres;Password=postgres}"
 
 cd "$API_DIR"
 dotnet restore
