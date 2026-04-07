@@ -1,18 +1,18 @@
 # Backend (.NET 9 Clean Architecture)
 
-## Solution structure (projects, not nested src folders)
+## Solution projects
 
-- `TPSS.GoldWallet.Api`
-- `TPSS.GoldWallet.Application`
-- `TPSS.GoldWallet.Domain`
-- `TPSS.GoldWallet.Infrastructure`
+- `TPSS.GoldWallet.Api` (**Executable API project**)  
+- `TPSS.GoldWallet.Application` (**Class Library**)  
+- `TPSS.GoldWallet.Domain` (**Class Library**)  
+- `TPSS.GoldWallet.Infrastructure` (**Class Library**)
 
-All four projects now live directly under `Backend/` and are included in `TPSS.GoldWallet.sln`.
+All are real projects inside `TPSS.GoldWallet.sln`, so in Visual Studio you can right-click each project and use **Build / Rebuild / Clean**.
 
-## Windows + SQL Server (no Docker) — create DB and run with migrations
+## Windows SQL Server (SSMS) — migration flow
 
-### 1) Create database in SQL Server (SSMS)
-Run this script in SSMS:
+### 1) Create database
+Run in SSMS:
 
 ```sql
 IF DB_ID(N'GoldWalletDb') IS NULL
@@ -22,40 +22,25 @@ END
 GO
 ```
 
-(also available at `Backend/scripts/sqlserver-create-db.sql`)
+Or use: `Backend/scripts/sqlserver-create-db.sql`.
 
-### 2) Run migration + start API (PowerShell)
+### 2) Run migrations + start API
 
 ```powershell
 cd Backend/scripts
 ./windows-sqlserver-migrate-and-run.ps1 -Server "localhost" -Database "GoldWalletDb"
 ```
 
-If you use SQL login instead of Windows auth:
+### 3) Optional: add new migration
 
 ```powershell
 cd Backend/scripts
-./windows-sqlserver-migrate-and-run.ps1 -Server "localhost" -Database "GoldWalletDb" -TrustedConnection:$false -SqlUser "sa" -SqlPassword "YourPassword"
+./windows-sqlserver-migrate-and-run.ps1 -Server "localhost" -Database "GoldWalletDb" -AddMigration -MigrationName "YourMigration"
 ```
 
-This script will:
-1. `dotnet restore`
-2. `dotnet ef database update`
-3. `dotnet run`
+## Alternative (bash helper)
 
-## Manual commands (alternative)
-
-```powershell
-cd Backend/TPSS.GoldWallet.Api
-$env:Database__Provider="SqlServer"
-$env:ConnectionStrings__SqlServer="Server=localhost;Database=GoldWalletDb;Trusted_Connection=True;TrustServerCertificate=True;"
-dotnet restore
-dotnet ef database update --project ../TPSS.GoldWallet.Infrastructure --startup-project .
-dotnet run
+```bash
+cd Backend/scripts
+./run-migrations.sh
 ```
-
-## Notes
-
-- `appsettings.json` defaults to SQL Server provider.
-- PostgreSQL support is still available by setting `Database:Provider = PostgreSql` and `ConnectionStrings:PostgreSql`.
-- Swagger is available in development mode.

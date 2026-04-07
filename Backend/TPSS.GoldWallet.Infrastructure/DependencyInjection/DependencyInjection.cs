@@ -14,21 +14,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var provider = configuration.GetValue<string>("Database:Provider") ?? "SqlServer";
+        var sqlServer = configuration.GetConnectionString("SqlServer")
+                        ?? "Server=localhost;Database=GoldWalletDb;Trusted_Connection=True;TrustServerCertificate=True;";
 
-        if (provider.Equals("PostgreSql", StringComparison.OrdinalIgnoreCase) ||
-            provider.Equals("Postgres", StringComparison.OrdinalIgnoreCase))
-        {
-            var postgres = configuration.GetConnectionString("PostgreSql")
-                           ?? "Host=localhost;Port=5432;Database=gold_wallet;Username=postgres;Password=postgres";
-            services.AddDbContext<AppDbContext>(options => options.UseNpgsql(postgres));
-        }
-        else
-        {
-            var sqlServer = configuration.GetConnectionString("SqlServer")
-                            ?? "Server=localhost;Database=GoldWalletDb;Trusted_Connection=True;TrustServerCertificate=True;";
-            services.AddDbContext<AppDbContext>(options => options.UseSqlServer(sqlServer));
-        }
+        services.AddDbContext<AppDbContext>(options => options.UseSqlServer(sqlServer));
 
         services.AddIdentity<AppIdentityUser, IdentityRole<Guid>>(options =>
             {

@@ -107,5 +107,4 @@ This document maps current Flutter mobile features/models to backend entities an
 
 ## Notes
 
-- This backend is code-first with EF Core PostgreSQL provider.
-- SQL bootstrap script is available at `Backend/scripts/001_init_schema.sql`.
+- This backend is code-first with EF Core (SQL Server).
