@@ -1,8 +1,10 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TPSS.GoldWallet.Application.DTOs;
 using TPSS.GoldWallet.Application.Features.Carts.Commands.AddCartItem;
 using TPSS.GoldWallet.Application.Features.Carts.Queries.GetCart;
+using TPSS.GoldWallet.Application.Security;
 
 namespace TPSS.GoldWallet.Api.Controllers;
 
@@ -11,6 +13,7 @@ namespace TPSS.GoldWallet.Api.Controllers;
 public sealed class CartsController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Policy = PermissionNames.CartRead)]
     [ProducesResponseType(typeof(CartDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<CartDto>> GetCart([FromRoute] Guid customerId, CancellationToken cancellationToken)
     {
@@ -19,6 +22,7 @@ public sealed class CartsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("items")]
+    [Authorize(Policy = PermissionNames.CartWrite)]
     [ProducesResponseType(typeof(CartDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<CartDto>> AddItem(

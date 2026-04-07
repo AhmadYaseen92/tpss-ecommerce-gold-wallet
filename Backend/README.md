@@ -1,17 +1,41 @@
-# Backend (.NET Clean Architecture)
+# Backend (.NET 9 Clean Architecture, JWT, RBAC, KYC, Audit)
 
-This backend is implemented as a clean architecture .NET solution with four projects:
+## Projects
 
-- `TPSS.GoldWallet.Domain` (Core): entities and value objects only (POCO).
-- `TPSS.GoldWallet.Application` (Use Cases): CQRS handlers with MediatR, validation, and interfaces.
-- `TPSS.GoldWallet.Infrastructure`: EF Core persistence + repository implementations.
-- `TPSS.GoldWallet.Api` (Presentation): ASP.NET Core Web API endpoints.
+- `TPSS.GoldWallet.Domain`: Core entities and business rules (POCO only).
+- `TPSS.GoldWallet.Application`: Use-cases (CQRS + MediatR), DTOs, repository abstractions, permission constants.
+- `TPSS.GoldWallet.Infrastructure`: EF Core + PostgreSQL, Identity, JWT token service, repository implementations.
+- `TPSS.GoldWallet.Api`: HTTP entrypoint with JWT authentication and permission-based authorization policies.
 
-## API endpoints
+## Covered screens/features
 
-- `GET /api/products` - returns catalog items for frontend list screens.
-- `GET /api/customers/{customerId}/cart` - returns the customer cart.
-- `POST /api/customers/{customerId}/cart/items` - adds item to cart.
+The backend now includes endpoints and use-cases for:
+
+- Catalog / product listing
+- Cart
+- Wallet
+- Dashboard
+- Profile
+- History
+- KYC submission
+- Admin audit logs
+- Authentication (JWT login)
+- Role + permissions access control
+
+## Security model
+
+- ASP.NET Core Identity with hardened password + lockout options
+- JWT bearer tokens
+- Role-based accounts (`Customer`, `ComplianceOfficer`, `Admin`)
+- Permission-based API policies (claim: `permission`)
+- Audit log table + write hooks for security-sensitive operations
+
+## Database (PostgreSQL, code-first)
+
+- EF Core configured with PostgreSQL provider in Infrastructure.
+- `AppDbContext` defines entities/relations/indexes.
+- SQL bootstrap script: `Backend/scripts/001_init_schema.sql`.
+- EF migration helper script: `Backend/scripts/run-migrations.sh`.
 
 ## Run locally
 
@@ -21,4 +45,16 @@ dotnet restore
 dotnet run
 ```
 
-Swagger is available in development mode.
+## Migration commands
+
+```bash
+cd Backend/scripts
+./run-migrations.sh
+```
+
+## Default seeded admin
+
+- Email: `admin@goldwallet.local`
+- Password: `Admin#12345Secure`
+
+> Change both for non-local environments.

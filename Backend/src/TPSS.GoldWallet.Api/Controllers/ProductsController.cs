@@ -1,11 +1,14 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TPSS.GoldWallet.Application.DTOs;
 using TPSS.GoldWallet.Application.Features.Products.Queries.GetCatalog;
+using TPSS.GoldWallet.Application.Security;
 
 namespace TPSS.GoldWallet.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = PermissionNames.CatalogRead)]
 [Route("api/products")]
 public sealed class ProductsController(IMediator mediator) : ControllerBase
 {
