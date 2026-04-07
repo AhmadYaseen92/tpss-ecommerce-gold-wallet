@@ -44,3 +44,20 @@ cd Backend/scripts
 cd Backend/scripts
 ./run-migrations.sh
 ```
+
+
+## Important (Visual Studio vs VS Code)
+
+- In **VS Code Explorer**, everything appears as folders and right-click does **not** show project actions like Clean/Build/Publish.
+- To right-click projects and use **Clean / Rebuild / Publish**, open the solution in **Visual Studio 2022**:
+
+```powershell
+start Backend/TPSS.GoldWallet.sln
+```
+
+If you still see old `src` folder, run:
+
+```powershell
+cd Backend/scripts
+./cleanup-legacy-layout.ps1
+```
