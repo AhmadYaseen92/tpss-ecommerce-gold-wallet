@@ -2,13 +2,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPSS.GoldWallet.Domain", "src/TPSS.GoldWallet.Domain/TPSS.GoldWallet.Domain.csproj", "{A9A28026-5D8E-4C8A-B8A4-ED9CE8633F8F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPSS.GoldWallet.Domain", "TPSS.GoldWallet.Domain/TPSS.GoldWallet.Domain.csproj", "{A9A28026-5D8E-4C8A-B8A4-ED9CE8633F8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPSS.GoldWallet.Application", "src/TPSS.GoldWallet.Application/TPSS.GoldWallet.Application.csproj", "{5D9EF523-6D3F-4B49-A5FD-754C9B3C24D6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPSS.GoldWallet.Application", "TPSS.GoldWallet.Application/TPSS.GoldWallet.Application.csproj", "{5D9EF523-6D3F-4B49-A5FD-754C9B3C24D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPSS.GoldWallet.Infrastructure", "src/TPSS.GoldWallet.Infrastructure/TPSS.GoldWallet.Infrastructure.csproj", "{9E5A5E84-E76E-4AC6-A5EF-3F1B9186D8F4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPSS.GoldWallet.Infrastructure", "TPSS.GoldWallet.Infrastructure/TPSS.GoldWallet.Infrastructure.csproj", "{9E5A5E84-E76E-4AC6-A5EF-3F1B9186D8F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPSS.GoldWallet.Api", "src/TPSS.GoldWallet.Api/TPSS.GoldWallet.Api.csproj", "{EFAFA052-4A1D-4632-BB05-2382A0191D3A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TPSS.GoldWallet.Api", "TPSS.GoldWallet.Api/TPSS.GoldWallet.Api.csproj", "{EFAFA052-4A1D-4632-BB05-2382A0191D3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-API_DIR="$ROOT_DIR/src/TPSS.GoldWallet.Api"
+API_DIR="$ROOT_DIR/TPSS.GoldWallet.Api"
 
 if ! command -v dotnet >/dev/null 2>&1; then
   echo "[ERROR] dotnet SDK is required." >&2

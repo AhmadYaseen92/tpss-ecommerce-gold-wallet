@@ -1,5 +1,14 @@
 # Backend (.NET 9 Clean Architecture)
 
+## Solution structure (projects, not nested src folders)
+
+- `TPSS.GoldWallet.Api`
+- `TPSS.GoldWallet.Application`
+- `TPSS.GoldWallet.Domain`
+- `TPSS.GoldWallet.Infrastructure`
+
+All four projects now live directly under `Backend/` and are included in `TPSS.GoldWallet.sln`.
+
 ## Windows + SQL Server (no Docker) — create DB and run with migrations
 
 ### 1) Create database in SQL Server (SSMS)
@@ -31,14 +40,13 @@ cd Backend/scripts
 
 This script will:
 1. `dotnet restore`
-2. add migration (if missing)
-3. `dotnet ef database update`
-4. `dotnet run`
+2. `dotnet ef database update`
+3. `dotnet run`
 
 ## Manual commands (alternative)
 
 ```powershell
-cd Backend/src/TPSS.GoldWallet.Api
+cd Backend/TPSS.GoldWallet.Api
 $env:Database__Provider="SqlServer"
 $env:ConnectionStrings__SqlServer="Server=localhost;Database=GoldWalletDb;Trusted_Connection=True;TrustServerCertificate=True;"
 dotnet restore

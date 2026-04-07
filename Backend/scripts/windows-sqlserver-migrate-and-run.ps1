@@ -11,7 +11,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$api = Join-Path $root "../src/TPSS.GoldWallet.Api"
+$api = Join-Path $root "../TPSS.GoldWallet.Api"
 Set-Location $api
 
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
