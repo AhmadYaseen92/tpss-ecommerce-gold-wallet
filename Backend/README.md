@@ -58,3 +58,9 @@ If your current folder is `Backend/TPSS.GoldWallet.Api`, **do not** run `cd Back
 Either:
 - go back to repo root first, or
 - use `./run-sqlserver.ps1` from API folder.
+
+
+### Where to run commands
+
+- If terminal path is repo root: `D:\TPSS\tpss-ecommerce-gold-wallet`, use paths starting with `Backend/...`.
+- If terminal path is API folder: `...\Backend\TPSS.GoldWallet.Api`, use `./run-sqlserver.ps1` and **do not** prefix with `Backend/...`.

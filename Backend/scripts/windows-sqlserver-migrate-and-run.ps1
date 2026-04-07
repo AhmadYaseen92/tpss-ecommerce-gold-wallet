@@ -11,11 +11,15 @@ param(
 $ErrorActionPreference = "Stop"
 
 function Invoke-Dotnet {
-  param([string]$Args)
-  Write-Host "> dotnet $Args"
-  & dotnet $Args
+  param(
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$Args
+  )
+
+  Write-Host "> dotnet $($Args -join ' ')"
+  & dotnet @Args
   if ($LASTEXITCODE -ne 0) {
-    throw "dotnet command failed: dotnet $Args"
+    throw "dotnet command failed: dotnet $($Args -join ' ')"
   }
 }
 
@@ -41,22 +45,22 @@ $env:ConnectionStrings__SqlServer = $conn
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 
 Write-Host "[1/3] Restoring packages..."
-Invoke-Dotnet "restore"
+Invoke-Dotnet restore
 
 if ($AddMigration) {
   Write-Host "[2/4] Adding migration $MigrationName..."
-  Invoke-Dotnet "ef migrations add $MigrationName --project ../TPSS.GoldWallet.Infrastructure --startup-project . --output-dir Persistence/Migrations"
+  Invoke-Dotnet ef migrations add $MigrationName --project ../TPSS.GoldWallet.Infrastructure --startup-project . --output-dir Persistence/Migrations
 
   Write-Host "[3/4] Applying migrations..."
-  Invoke-Dotnet "ef database update --project ../TPSS.GoldWallet.Infrastructure --startup-project ."
+  Invoke-Dotnet ef database update --project ../TPSS.GoldWallet.Infrastructure --startup-project .
 
   Write-Host "[4/4] Running API..."
-  Invoke-Dotnet "run"
+  Invoke-Dotnet run
 }
 else {
   Write-Host "[2/3] Applying migrations..."
-  Invoke-Dotnet "ef database update --project ../TPSS.GoldWallet.Infrastructure --startup-project ."
+  Invoke-Dotnet ef database update --project ../TPSS.GoldWallet.Infrastructure --startup-project .
 
   Write-Host "[3/3] Running API..."
-  Invoke-Dotnet "run"
+  Invoke-Dotnet run
 }
