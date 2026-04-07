@@ -1,12 +1,15 @@
 # Monorepo root ignore rules
-# Flutter/Dart generated files that may appear if commands are run from repo root.
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub/
-build/
+# Ignore accidental Flutter/Android generated files at REPOSITORY ROOT only.
+/.dart_tool/
+/.flutter-plugins
+/.flutter-plugins-dependencies
+/.packages
+/.pub/
+/build/
+/.android/
+/android/
+/.gradle/
 
-# IDE/system
-.idea/
-.DS_Store
+# IDE/system at root
+/.idea/
+/.DS_Store
