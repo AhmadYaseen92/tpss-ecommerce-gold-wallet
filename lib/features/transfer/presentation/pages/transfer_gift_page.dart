@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/cubit/transfer_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/widgets/transfer_widget.dart';
@@ -12,7 +13,11 @@ class TransferGiftPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) {
-        final cubit = TransferCubit();
+        final cubit = TransferCubit(
+          validateTransferUseCase: InjectionContainer.validateTransferUseCase(),
+          calculateTransferTotalsUseCase: InjectionContainer.calculateTransferTotalsUseCase(),
+          verifyTransferAccountUseCase: InjectionContainer.verifyTransferAccountUseCase(),
+        );
         cubit.load();
         return cubit;
       },

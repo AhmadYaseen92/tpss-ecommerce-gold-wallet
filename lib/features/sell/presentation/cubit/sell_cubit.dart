@@ -1,12 +1,37 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/entities/sell_totals_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/usecases/calculate_sell_totals_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/usecases/get_live_sell_price_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/usecases/load_sell_data_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/usecases/submit_sell_order_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/usecases/validate_sell_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/asset_model.dart';
 
 part 'sell_state.dart';
 
 class SellCubit extends Cubit<SellState> {
   static const int _priceLockDurationSeconds = 30;
+
+  SellCubit({
+    required LoadSellDataUseCase loadSellDataUseCase,
+    required GetLiveSellPriceUseCase getLiveSellPriceUseCase,
+    required ValidateSellUseCase validateSellUseCase,
+    required SubmitSellOrderUseCase submitSellOrderUseCase,
+    required CalculateSellTotalsUseCase calculateSellTotalsUseCase,
+  }) : _loadSellDataUseCase = loadSellDataUseCase,
+       _getLiveSellPriceUseCase = getLiveSellPriceUseCase,
+       _validateSellUseCase = validateSellUseCase,
+       _submitSellOrderUseCase = submitSellOrderUseCase,
+       _calculateSellTotalsUseCase = calculateSellTotalsUseCase,
+       super(SellInitial());
+
+  final LoadSellDataUseCase _loadSellDataUseCase;
+  final GetLiveSellPriceUseCase _getLiveSellPriceUseCase;
+  final ValidateSellUseCase _validateSellUseCase;
+  final SubmitSellOrderUseCase _submitSellOrderUseCase;
+  final CalculateSellTotalsUseCase _calculateSellTotalsUseCase;
 
   double units = 0.0;
   bool agreedToTerms = false;
@@ -22,8 +47,6 @@ class SellCubit extends Cubit<SellState> {
     'Main Account •••• 1234',
     'Savings Account •••• 7788',
   ];
-
-  SellCubit() : super(SellInitial());
 
   final TextEditingController amountController = TextEditingController();
 
@@ -50,18 +73,14 @@ class SellCubit extends Cubit<SellState> {
   }
 
   Future<bool> submit() async {
-    if (units <= 0) {
-      statusMessage = 'Enter a valid amount before confirming.';
-      _emitChanged();
-      return false;
-    }
-    if (!agreedToTerms) {
-      statusMessage = 'Please agree to Terms & Conditions first.';
+    final errorMessage = _validateSellUseCase(units: units, agreedToTerms: agreedToTerms);
+    if (errorMessage != null) {
+      statusMessage = errorMessage;
       _emitChanged();
       return false;
     }
     emit(SellLoading());
-    await Future.delayed(const Duration(milliseconds: 1000));
+    await _submitSellOrderUseCase();
     emit(SellSuccess());
     statusMessage = 'Sell confirmed at locked price.';
     _emitChanged();
@@ -70,8 +89,8 @@ class SellCubit extends Cubit<SellState> {
 
   void loadSellData() async {
     emit(SellLoading());
-    await Future.delayed(const Duration(milliseconds: 600));
-    currentPricePerUnit = selectedAsset.pricePerUnit;
+    await _loadSellDataUseCase();
+    currentPricePerUnit = _getLiveSellPriceUseCase(assetIndex: selectedAssetIndex, refreshCount: _refreshCount);
     _restartPriceLockTimer();
     _emitChanged();
   }
@@ -92,10 +111,10 @@ class SellCubit extends Cubit<SellState> {
 
   void _refreshPrice() {
     _refreshCount++;
-    final basePrice = selectedAsset.pricePerUnit;
-    final factor = ((_refreshCount + selectedAssetIndex) % 5) - 2;
-    final changePercent = factor * 0.006; // ±1.2% max change on every refresh.
-    currentPricePerUnit = (basePrice * (1 + changePercent)).clamp(0.01, double.infinity);
+    currentPricePerUnit = _getLiveSellPriceUseCase(
+      assetIndex: selectedAssetIndex,
+      refreshCount: _refreshCount,
+    );
     statusMessage =
         'Price updated to \$${currentPricePerUnit.toStringAsFixed(2)}. You have 30 seconds to confirm.';
   }
@@ -114,9 +133,13 @@ class SellCubit extends Cubit<SellState> {
   }
 
   Asset get selectedAsset => Asset.assets[selectedAssetIndex];
-  double get subtotal => units * currentPricePerUnit;
-  double get fee => subtotal * SellState.feePercent;
-  double get net => subtotal - fee;
+  SellTotalsEntity get totals => _calculateSellTotalsUseCase(
+    units: units,
+    pricePerUnit: currentPricePerUnit,
+  );
+  double get subtotal => totals.subtotal;
+  double get fee => totals.fee;
+  double get net => totals.net;
 
   @override
   Future<void> close() {

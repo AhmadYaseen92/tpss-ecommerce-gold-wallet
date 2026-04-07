@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/sell/presentation/cubit/sell_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/sell/presentation/widgets/sell_widget.dart';
 
@@ -11,7 +12,13 @@ class SellGoldPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) {
-        final cubit = SellCubit();
+        final cubit = SellCubit(
+          loadSellDataUseCase: InjectionContainer.loadSellDataUseCase(),
+          getLiveSellPriceUseCase: InjectionContainer.getLiveSellPriceUseCase(),
+          validateSellUseCase: InjectionContainer.validateSellUseCase(),
+          submitSellOrderUseCase: InjectionContainer.submitSellOrderUseCase(),
+          calculateSellTotalsUseCase: InjectionContainer.calculateSellTotalsUseCase(),
+        );
         cubit.loadSellData();
         return cubit;
       },
@@ -26,9 +33,9 @@ class SellGoldPage extends StatelessWidget {
                 title: Text(
                   'Sell Assets',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryColor,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryColor,
+                  ),
                 ),
               ),
               body: const Center(
@@ -44,14 +51,14 @@ class SellGoldPage extends StatelessWidget {
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
-                    'Sell Assets',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryColor,
-                        ),
+                  'Sell Assets',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryColor,
                   ),
                 ),
-                body: SellWidget(sellCubit: BlocProvider.of<SellCubit>(context),)
+              ),
+              body: SellWidget(sellCubit: BlocProvider.of<SellCubit>(context)),
             );
           } else if (state is SellError) {
             return Scaffold(
@@ -62,12 +69,12 @@ class SellGoldPage extends StatelessWidget {
                 title: Text(
                   'Sell Assets',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryColor,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryColor,
+                  ),
                 ),
               ),
-              body: Center(child: Text((state).message)),
+              body: Center(child: Text(state.message)),
             );
           }
           return const SizedBox.shrink();
@@ -76,6 +83,3 @@ class SellGoldPage extends StatelessWidget {
     );
   }
 }
-
-
-

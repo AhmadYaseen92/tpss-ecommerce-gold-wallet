@@ -1,10 +1,29 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/entities/transfer_totals_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/calculate_transfer_totals_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/validate_transfer_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/verify_transfer_account_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/asset_model.dart';
 
 part 'transfer_state.dart';
 
 class TransferCubit extends Cubit<TransferState> {
+  TransferCubit({
+    required ValidateTransferUseCase validateTransferUseCase,
+    required CalculateTransferTotalsUseCase calculateTransferTotalsUseCase,
+    required VerifyTransferAccountUseCase verifyTransferAccountUseCase,
+  }) : _validateTransferUseCase = validateTransferUseCase,
+       _calculateTransferTotalsUseCase = calculateTransferTotalsUseCase,
+       _verifyTransferAccountUseCase = verifyTransferAccountUseCase,
+       super(TransferInitial()) {
+    recipientController.addListener(_onRecipientChanged);
+  }
+
+  final ValidateTransferUseCase _validateTransferUseCase;
+  final CalculateTransferTotalsUseCase _calculateTransferTotalsUseCase;
+  final VerifyTransferAccountUseCase _verifyTransferAccountUseCase;
+
   double units = 0.0;
   int selectedAssetIndex = 0;
   RecipientMode recipientMode = RecipientMode.account;
@@ -13,12 +32,6 @@ class TransferCubit extends Cubit<TransferState> {
 
   final TextEditingController amountController = TextEditingController();
   final TextEditingController recipientController = TextEditingController();
-
-  final Set<String> _registeredAccounts = {'10001', '10002', '20011', '77889'};
-
-  TransferCubit() : super(TransferInitial()) {
-    recipientController.addListener(_onRecipientChanged);
-  }
 
   void load() async {
     emit(TransferLoading());
@@ -37,15 +50,20 @@ class TransferCubit extends Cubit<TransferState> {
   }
 
   void setRecipientMode(RecipientMode mode) {
-    recipientMode = RecipientMode.account;
+    recipientMode = mode;
     recipientController.clear();
     isAccountVerified = false;
     _emitChanged();
   }
 
-  void verifyAccount() {
+  Future<void> verifyAccount() async {
     final accountNo = recipientController.text.trim();
-    isAccountVerified = accountNo.isNotEmpty && _registeredAccounts.contains(accountNo);
+    if (accountNo.isEmpty) {
+      isAccountVerified = false;
+      _emitChanged();
+      return;
+    }
+    isAccountVerified = await _verifyTransferAccountUseCase(accountNo);
     _emitChanged();
   }
 
@@ -61,28 +79,15 @@ class TransferCubit extends Cubit<TransferState> {
 
   void submit() async {
     final recipient = recipientController.text.trim();
-    if (units <= 0) {
-      emit(TransferError('Please enter a valid amount.'));
-      _emitChanged();
-      return;
-    }
-    if (units > selectedAsset.availableUnits) {
-      emit(TransferError('Amount exceeds available balance.'));
-      _emitChanged();
-      return;
-    }
-    if (recipient.isEmpty) {
-      emit(TransferError('Please enter recipient account number.'));
-      _emitChanged();
-      return;
-    }
-    if (recipientMode == RecipientMode.account && !isAccountVerified) {
-      emit(TransferError('Recipient account must exist and be verified.'));
-      _emitChanged();
-      return;
-    }
-    if (!agreedToTerms) {
-      emit(TransferError('Please agree to the terms and conditions.'));
+    final errorMessage = await _validateTransferUseCase(
+      units: units,
+      availableUnits: selectedAsset.availableUnits,
+      recipient: recipient,
+      requiresAccountVerification: recipientMode == RecipientMode.account,
+      agreedToTerms: agreedToTerms,
+    );
+    if (errorMessage != null) {
+      emit(TransferError(errorMessage));
       _emitChanged();
       return;
     }
@@ -104,9 +109,13 @@ class TransferCubit extends Cubit<TransferState> {
   }
 
   Asset get selectedAsset => Asset.assets[selectedAssetIndex];
-  double get subtotal => units * selectedAsset.pricePerUnit;
-  double get fee => subtotal * TransferState.feePercent;
-  double get totalDeducted => subtotal + fee;
+  TransferTotalsEntity get totals => _calculateTransferTotalsUseCase(
+    units: units,
+    pricePerUnit: selectedAsset.pricePerUnit,
+  );
+  double get subtotal => totals.subtotal;
+  double get fee => totals.fee;
+  double get totalDeducted => totals.totalDeducted;
 
   @override
   Future<void> close() {

@@ -16,6 +16,20 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/get_
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/get_products_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/toggle_product_favorite_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/watch_market_symbols_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/data/datasources/sell_local_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/data/repositories/sell_repository_impl.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/repositories/sell_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/usecases/calculate_sell_totals_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/usecases/get_live_sell_price_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/usecases/load_sell_data_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/usecases/submit_sell_order_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/sell/domain/usecases/validate_sell_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/data/datasources/transfer_local_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/data/repositories/transfer_repository_impl.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/repositories/transfer_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/calculate_transfer_totals_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/validate_transfer_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/verify_transfer_account_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/datasources/wallet_action_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/repositories/wallet_action_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
@@ -31,6 +45,8 @@ class InjectionContainer {
   static final ProductLocalDataSource _productLocalDataSource = ProductLocalDataSource();
   static final CartLocalDataSource _cartLocalDataSource = CartLocalDataSource();
   static final WalletLocalDataSource _walletLocalDataSource = WalletLocalDataSource();
+  static final TransferLocalDataSource _transferLocalDataSource = TransferLocalDataSource();
+  static final SellLocalDataSource _sellLocalDataSource = SellLocalDataSource();
 
   static IMarketOrderRepository marketOrderRepository() {
     return MarketOrderRepositoryImpl(MarketOrderLocalDataSource());
@@ -66,6 +82,46 @@ class InjectionContainer {
 
   static WatchMarketSymbolsUseCase watchMarketSymbolsUseCase() {
     return WatchMarketSymbolsUseCase(productRepository());
+  }
+
+  static ITransferRepository transferRepository() {
+    return TransferRepositoryImpl(_transferLocalDataSource);
+  }
+
+  static ValidateTransferUseCase validateTransferUseCase() {
+    return ValidateTransferUseCase(transferRepository());
+  }
+
+  static VerifyTransferAccountUseCase verifyTransferAccountUseCase() {
+    return VerifyTransferAccountUseCase(transferRepository());
+  }
+
+  static CalculateTransferTotalsUseCase calculateTransferTotalsUseCase() {
+    return const CalculateTransferTotalsUseCase();
+  }
+
+  static ISellRepository sellRepository() {
+    return SellRepositoryImpl(_sellLocalDataSource);
+  }
+
+  static LoadSellDataUseCase loadSellDataUseCase() {
+    return LoadSellDataUseCase(sellRepository());
+  }
+
+  static GetLiveSellPriceUseCase getLiveSellPriceUseCase() {
+    return GetLiveSellPriceUseCase(sellRepository());
+  }
+
+  static ValidateSellUseCase validateSellUseCase() {
+    return const ValidateSellUseCase();
+  }
+
+  static SubmitSellOrderUseCase submitSellOrderUseCase() {
+    return SubmitSellOrderUseCase(sellRepository());
+  }
+
+  static CalculateSellTotalsUseCase calculateSellTotalsUseCase() {
+    return const CalculateSellTotalsUseCase();
   }
 
 
