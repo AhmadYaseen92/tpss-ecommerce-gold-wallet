@@ -60,6 +60,27 @@ public static class SeedData
             await dbContext.WalletAccounts.AddAsync(new WalletAccount(admin.Id, "USD"));
         }
 
+        if (!dbContext.AccountSummaries.Any(x => x.CustomerId == admin.Id))
+        {
+            await dbContext.AccountSummaries.AddAsync(new AccountSummarySnapshot(admin.Id, 345200m, 340000m, 2200m, 3000m, 12500m, 500m, 300m));
+        }
+
+        if (!dbContext.TradeTransactions.Any(x => x.CustomerId == admin.Id))
+        {
+            await dbContext.TradeTransactions.AddRangeAsync([
+                new TradeTransaction(admin.Id, "Buy Gold", "buy", "completed", DateTime.UtcNow.AddDays(-2), "+ 10g", "Imseeh", "- $650.00"),
+                new TradeTransaction(admin.Id, "Deposit Funds", "deposit", "completed", DateTime.UtcNow.AddDays(-5), "+ $1000.00", "Sakkejha", null)
+            ]);
+        }
+
+        if (!dbContext.Notifications.Any(x => x.CustomerId == admin.Id))
+        {
+            await dbContext.Notifications.AddRangeAsync([
+                new NotificationMessage(admin.Id, "Gold Price Surge", "Gold prices hit a new daily high.", "market"),
+                new NotificationMessage(admin.Id, "Security Alert", "New login attempt detected.", "security")
+            ]);
+        }
+
         await dbContext.SaveChangesAsync();
     }
 }

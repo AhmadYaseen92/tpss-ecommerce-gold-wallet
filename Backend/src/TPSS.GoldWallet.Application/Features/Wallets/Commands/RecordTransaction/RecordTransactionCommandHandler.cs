@@ -2,6 +2,7 @@ using MediatR;
 using TPSS.GoldWallet.Application.Abstractions;
 using TPSS.GoldWallet.Application.DTOs;
 using TPSS.GoldWallet.Domain.Entities;
+using TPSS.GoldWallet.Domain.Enums;
 
 namespace TPSS.GoldWallet.Application.Features.Wallets.Commands.RecordTransaction;
 
@@ -20,7 +21,17 @@ public sealed class RecordTransactionCommandHandler(
             await walletRepository.AddAsync(wallet, cancellationToken);
         }
 
-        var transaction = wallet.RecordTransaction(request.Amount, request.Type, request.Reference);
+        var isDebit = request.Type is WalletTransactionType.Withdrawal or WalletTransactionType.Purchase;
+        var newBalance = isDebit ? wallet.Balance - request.Amount : wallet.Balance + request.Amount;
+
+        if (newBalance < 0)
+        {
+            throw new InvalidOperationException("Insufficient balance.");
+        }
+
+        wallet.SetBalance(newBalance);
+        wallet.AddTransaction(new WalletTransaction(wallet.Id, request.Amount, wallet.Currency, request.Type, request.Reference));
+
         walletRepository.Update(wallet);
 
         await auditLogRepository.AddAsync(new AuditLog(request.CustomerId, "wallet.transaction", "wallet", request.Type.ToString(), "system"), cancellationToken);

@@ -58,3 +58,8 @@ cd Backend/scripts
 - Password: `Admin#12345Secure`
 
 > Change both for non-local environments.
+
+
+## Mobile feature mapping
+
+- See `Backend/docs/mobile-backend-mapping.md` for detailed mapping between Flutter mobile models and backend entities/APIs/roles.

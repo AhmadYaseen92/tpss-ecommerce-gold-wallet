@@ -21,6 +21,4 @@ public sealed class Product : Entity
     public string Description { get; private set; } = string.Empty;
     public Money Price { get; private set; }
     public bool IsActive { get; private set; }
-
-    public void Deactivate() => IsActive = false;
 }

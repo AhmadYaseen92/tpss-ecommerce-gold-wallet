@@ -24,12 +24,4 @@ public sealed class UserProfile : Entity
     public string CountryCode { get; private set; } = string.Empty;
     public KycStatus KycStatus { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
-
-    public void UpdateNames(string firstName, string lastName)
-    {
-        FirstName = firstName;
-        LastName = lastName;
-    }
-
-    public void SetKycStatus(KycStatus status) => KycStatus = status;
 }

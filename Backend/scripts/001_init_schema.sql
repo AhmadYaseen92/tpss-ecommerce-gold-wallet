@@ -77,3 +77,42 @@ CREATE TABLE IF NOT EXISTS "AuditLogs" (
 
 CREATE INDEX IF NOT EXISTS "IX_AuditLogs_CreatedAtUtc" ON "AuditLogs"("CreatedAtUtc");
 CREATE INDEX IF NOT EXISTS "IX_KycVerifications_CustomerId" ON "KycVerifications"("CustomerId");
+
+CREATE TABLE IF NOT EXISTS "Notifications" (
+    "Id" uuid PRIMARY KEY,
+    "CustomerId" uuid NOT NULL,
+    "Title" varchar(256) NOT NULL,
+    "Description" text NOT NULL,
+    "Category" varchar(64) NOT NULL,
+    "IsRead" boolean NOT NULL,
+    "CreatedAtUtc" timestamp with time zone NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "AccountSummaries" (
+    "Id" uuid PRIMARY KEY,
+    "CustomerId" uuid NOT NULL,
+    "HoldMarketValue" numeric(18,2) NOT NULL,
+    "GoldValue" numeric(18,2) NOT NULL,
+    "SilverValue" numeric(18,2) NOT NULL,
+    "JewelleryValue" numeric(18,2) NOT NULL,
+    "AvailableCash" numeric(18,2) NOT NULL,
+    "UsdtBalance" numeric(18,2) NOT NULL,
+    "EDirhamBalance" numeric(18,2) NOT NULL,
+    "CreatedAtUtc" timestamp with time zone NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "TradeTransactions" (
+    "Id" uuid PRIMARY KEY,
+    "CustomerId" uuid NOT NULL,
+    "Title" varchar(128) NOT NULL,
+    "Type" varchar(32) NOT NULL,
+    "Status" varchar(32) NOT NULL,
+    "DateUtc" timestamp with time zone NOT NULL,
+    "Amount" varchar(64) NOT NULL,
+    "SellerName" varchar(128) NOT NULL,
+    "SecondaryAmount" varchar(64) NULL
+);
+
+CREATE INDEX IF NOT EXISTS "IX_Notifications_CustomerId" ON "Notifications"("CustomerId");
+CREATE INDEX IF NOT EXISTS "IX_AccountSummaries_CustomerId" ON "AccountSummaries"("CustomerId");
+CREATE INDEX IF NOT EXISTS "IX_TradeTransactions_CustomerId" ON "TradeTransactions"("CustomerId");

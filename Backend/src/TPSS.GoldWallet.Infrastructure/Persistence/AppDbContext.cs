@@ -16,6 +16,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
     public DbSet<KycVerification> KycVerifications => Set<KycVerification>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<NotificationMessage> Notifications => Set<NotificationMessage>();
+    public DbSet<AccountSummarySnapshot> AccountSummaries => Set<AccountSummarySnapshot>();
+    public DbSet<TradeTransaction> TradeTransactions => Set<TradeTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -88,6 +91,38 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(x => x.Resource).HasMaxLength(128).IsRequired();
             entity.Property(x => x.IpAddress).HasMaxLength(64);
             entity.HasIndex(x => x.CreatedAtUtc);
+        });
+
+        modelBuilder.Entity<NotificationMessage>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.CustomerId);
+            entity.Property(x => x.Title).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.Category).HasMaxLength(64).IsRequired();
+        });
+
+        modelBuilder.Entity<AccountSummarySnapshot>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.CustomerId);
+            entity.Property(x => x.HoldMarketValue).HasPrecision(18, 2);
+            entity.Property(x => x.GoldValue).HasPrecision(18, 2);
+            entity.Property(x => x.SilverValue).HasPrecision(18, 2);
+            entity.Property(x => x.JewelleryValue).HasPrecision(18, 2);
+            entity.Property(x => x.AvailableCash).HasPrecision(18, 2);
+            entity.Property(x => x.UsdtBalance).HasPrecision(18, 2);
+            entity.Property(x => x.EDirhamBalance).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<TradeTransaction>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.CustomerId);
+            entity.Property(x => x.Title).HasMaxLength(128).IsRequired();
+            entity.Property(x => x.Type).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.Status).HasMaxLength(32).IsRequired();
+            entity.Property(x => x.Amount).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.SellerName).HasMaxLength(128).IsRequired();
         });
     }
 }

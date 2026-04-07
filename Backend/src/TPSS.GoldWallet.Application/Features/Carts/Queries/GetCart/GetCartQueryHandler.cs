@@ -13,17 +13,19 @@ public sealed class GetCartQueryHandler(ICartRepository cartRepository)
         var cart = await cartRepository.GetByCustomerIdAsync(request.CustomerId, cancellationToken)
             ?? new Cart(request.CustomerId);
 
+        var items = cart.Items.Select(item => new CartItemDto(
+                item.ProductId,
+                item.ProductName,
+                item.Quantity,
+                item.UnitPrice.Amount,
+                item.UnitPrice.Amount * item.Quantity,
+                item.UnitPrice.Currency))
+            .ToList();
+
         return new CartDto(
             cart.CustomerId,
-            cart.Items.Select(item => new CartItemDto(
-                    item.ProductId,
-                    item.ProductName,
-                    item.Quantity,
-                    item.UnitPrice.Amount,
-                    item.LineTotal.Amount,
-                    item.UnitPrice.Currency))
-                .ToList(),
-            cart.Subtotal.Amount,
-            cart.Items.FirstOrDefault()?.UnitPrice.Currency ?? "USD");
+            items,
+            items.Sum(x => x.LineTotal),
+            items.FirstOrDefault()?.Currency ?? "USD");
     }
 }

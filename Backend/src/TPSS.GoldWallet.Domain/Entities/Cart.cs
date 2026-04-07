@@ -1,5 +1,4 @@
 using TPSS.GoldWallet.Domain.Common;
-using TPSS.GoldWallet.Domain.ValueObjects;
 
 namespace TPSS.GoldWallet.Domain.Entities;
 
@@ -17,30 +16,9 @@ public sealed class Cart : Entity
     public Guid CustomerId { get; private set; }
     public IReadOnlyCollection<CartItem> Items => _items.AsReadOnly();
 
-    public Money Subtotal => _items.Count == 0
-        ? Money.Zero()
-        : _items.Select(x => x.LineTotal).Aggregate((left, right) => left.Add(right));
-
-    public void AddItem(Product product, int quantity)
+    public void ReplaceItems(IEnumerable<CartItem> items)
     {
-        var existing = _items.SingleOrDefault(x => x.ProductId == product.Id);
-        if (existing is null)
-        {
-            _items.Add(new CartItem(product.Id, product.Name, product.Price, quantity));
-            return;
-        }
-
-        existing.Increase(quantity);
-    }
-
-    public void RemoveItem(Guid productId)
-    {
-        var existing = _items.SingleOrDefault(x => x.ProductId == productId);
-        if (existing is null)
-        {
-            return;
-        }
-
-        _items.Remove(existing);
+        _items.Clear();
+        _items.AddRange(items);
     }
 }

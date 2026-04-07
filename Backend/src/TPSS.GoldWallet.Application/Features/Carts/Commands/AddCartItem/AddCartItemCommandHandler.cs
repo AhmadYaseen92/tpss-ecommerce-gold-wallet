@@ -28,22 +28,42 @@ public sealed class AddCartItemCommandHandler(
             await cartRepository.AddAsync(cart, cancellationToken);
         }
 
-        cart.AddItem(product, request.Quantity);
-        cartRepository.Update(cart);
+        var items = cart.Items.ToList();
+        var existing = items.SingleOrDefault(x => x.ProductId == request.ProductId);
 
+        if (existing is null)
+        {
+            items.Add(new CartItem(product.Id, product.Name, product.Price, request.Quantity));
+        }
+        else
+        {
+            items.Remove(existing);
+            items.Add(new CartItem(existing.ProductId, existing.ProductName, existing.UnitPrice, existing.Quantity + request.Quantity));
+        }
+
+        cart.ReplaceItems(items);
+        cartRepository.Update(cart);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return ToDto(cart);
+    }
+
+    private static CartDto ToDto(Cart cart)
+    {
+        var lines = cart.Items
+            .Select(item => new CartItemDto(
+                item.ProductId,
+                item.ProductName,
+                item.Quantity,
+                item.UnitPrice.Amount,
+                item.UnitPrice.Amount * item.Quantity,
+                item.UnitPrice.Currency))
+            .ToList();
 
         return new CartDto(
             cart.CustomerId,
-            cart.Items.Select(item => new CartItemDto(
-                    item.ProductId,
-                    item.ProductName,
-                    item.Quantity,
-                    item.UnitPrice.Amount,
-                    item.LineTotal.Amount,
-                    item.UnitPrice.Currency))
-                .ToList(),
-            cart.Subtotal.Amount,
-            cart.Items.FirstOrDefault()?.UnitPrice.Currency ?? "USD");
+            lines,
+            lines.Sum(x => x.LineTotal),
+            lines.FirstOrDefault()?.Currency ?? "USD");
     }
 }

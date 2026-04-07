@@ -1,5 +1,4 @@
 using TPSS.GoldWallet.Domain.Common;
-using TPSS.GoldWallet.Domain.Enums;
 
 namespace TPSS.GoldWallet.Domain.Entities;
 
@@ -23,22 +22,7 @@ public sealed class WalletAccount : Entity
     public DateTime CreatedAtUtc { get; private set; }
     public IReadOnlyCollection<WalletTransaction> Transactions => _transactions.AsReadOnly();
 
-    public WalletTransaction RecordTransaction(decimal amount, WalletTransactionType type, string reference)
-    {
-        if (amount <= 0) throw new ArgumentOutOfRangeException(nameof(amount));
+    public void SetBalance(decimal balance) => Balance = balance;
 
-        if (type is WalletTransactionType.Withdrawal or WalletTransactionType.Purchase)
-        {
-            if (Balance < amount) throw new InvalidOperationException("Insufficient balance.");
-            Balance -= amount;
-        }
-        else
-        {
-            Balance += amount;
-        }
-
-        var transaction = new WalletTransaction(Id, amount, Currency, type, reference);
-        _transactions.Add(transaction);
-        return transaction;
-    }
+    public void AddTransaction(WalletTransaction transaction) => _transactions.Add(transaction);
 }
