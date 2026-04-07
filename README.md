@@ -1,16 +1,28 @@
-# tpss_ecommerce_gold_wallet
+# TPSS E-commerce Gold Wallet (Monorepo Layout)
 
-A new Flutter project.
+## Structure
+- `Frontend/Mobile`: Flutter mobile application (current app code).
+- `Frontend/Web`: Reserved for future web frontend.
+- `Backend`: Reserved for future backend services/APIs.
 
-## Getting Started
+## Important
+Run Flutter commands from `Frontend/Mobile` (not repository root):
 
-This project is a starting point for a Flutter application.
+```bash
+cd Frontend/Mobile
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
+If VS Code still shows red errors after the move:
+1. Open `Frontend/Mobile` as the workspace folder, or keep repo root open and run `Flutter: Restart Analysis Server`.
+2. Run `flutter clean && flutter pub get` inside `Frontend/Mobile`.
+3. Delete accidental generated folders at repo root (for example root-level `android/` or `.dart_tool/`) if they appear.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Quick cleanup (if duplicate root folders still appear)
+From repository root run:
+
+```bash
+./scripts/cleanup-root-artifacts.sh
+```
