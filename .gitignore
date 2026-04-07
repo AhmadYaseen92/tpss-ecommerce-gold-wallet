@@ -1,5 +1,5 @@
 # Monorepo root ignore rules
-# Ignore accidental Flutter/Android generated files at REPOSITORY ROOT only.
+# Ignore accidental Flutter project/artifacts at REPOSITORY ROOT only.
 /.dart_tool/
 /.flutter-plugins
 /.flutter-plugins-dependencies
@@ -8,6 +8,19 @@
 /build/
 /.android/
 /android/
+/ios/
+/linux/
+/macos/
+/windows/
+/web/
+/lib/
+/test/
+/assets/
+/.metadata
+/analysis_options.yaml
+/devtools_options.yaml
+/pubspec.yaml
+/pubspec.lock
 /.gradle/
 
 # IDE/system at root

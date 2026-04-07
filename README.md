@@ -25,4 +25,5 @@ From repository root run:
 
 ```bash
 ./scripts/cleanup-root-artifacts.sh
+# run this from repository root
 ```
