@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/presentation/cubit/transfer_asset_action_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/pages/wallet_actions/action_review_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_bottom_bar.dart';
@@ -11,7 +11,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/wallet_asset_summary_card.dart';
 
 class TransferAssetPage extends StatelessWidget {
-  final WalletTransaction asset;
+  final WalletTransactionEntity asset;
 
   TransferAssetPage({super.key, required this.asset});
 

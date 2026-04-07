@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/cubit/wallet_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/presentation/widgets/PortfolioCardWidget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_card_widget.dart';
@@ -17,7 +18,10 @@ class GoldWalletPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) {
-        WalletCubit walletCubit = WalletCubit();
+        WalletCubit walletCubit = WalletCubit(
+          loadWalletsUseCase: InjectionContainer.loadWalletsUseCase(),
+          watchWalletsUseCase: InjectionContainer.watchWalletsUseCase(),
+        );
         walletCubit.loadWallets();
         return walletCubit;
       },
@@ -54,7 +58,7 @@ class GoldWalletPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20.0),
 
-                  WalletTabBar(selectedIndex: state.selectedIndex),
+                  WalletTabBar(selectedIndex: state.selectedIndex, wallets: state.wallets),
                   const SizedBox(height: 16.0),
 
                   WalletCardWidget(

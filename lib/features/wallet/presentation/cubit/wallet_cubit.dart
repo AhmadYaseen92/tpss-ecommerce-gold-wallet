@@ -1,31 +1,36 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/datasources/market_order_legacy_repository.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/usecases/load_wallets_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/usecases/watch_wallets_usecase.dart';
 
 part 'wallet_state.dart';
 
 class WalletCubit extends Cubit<WalletState> {
-  final List<WalletModel> _wallets = <WalletModel>[];
+  WalletCubit({
+    required LoadWalletsUseCase loadWalletsUseCase,
+    required WatchWalletsUseCase watchWalletsUseCase,
+  }) : _loadWalletsUseCase = loadWalletsUseCase,
+       _watchWalletsUseCase = watchWalletsUseCase,
+       super(WalletInitial());
+
+  final LoadWalletsUseCase _loadWalletsUseCase;
+  final WatchWalletsUseCase _watchWalletsUseCase;
+
+  final List<WalletEntity> _wallets = <WalletEntity>[];
   int _selectedIndex = 0;
-  Timer? _marketTimer;
-  int _tick = 0;
+  StreamSubscription<List<WalletEntity>>? _walletSubscription;
 
-  WalletCubit() : super(WalletInitial());
-
-  void loadWallets() async {
+  Future<void> loadWallets() async {
     emit(WalletLoading());
     try {
-      await Future.delayed(const Duration(milliseconds: 1000));
-      // Ensure market orders are seeded and Spot MR filled orders are synced into dummyWallets first.
-      MarketOrderRepository.orders;
       _wallets
         ..clear()
-        ..addAll(List<WalletModel>.from(dummyWallets));
+        ..addAll(await _loadWalletsUseCase());
       _selectedIndex = 0;
       _emitWallets();
-      _startMarketFeed();
+      await _startWalletWatch();
     } catch (e) {
       emit(WalletError('Failed to load wallets: $e'));
     }
@@ -36,60 +41,14 @@ class WalletCubit extends Cubit<WalletState> {
     _emitWallets();
   }
 
-  void _startMarketFeed() {
-    _marketTimer?.cancel();
-    _marketTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      _tick++;
-      _refreshLivePricing();
+  Future<void> _startWalletWatch() async {
+    await _walletSubscription?.cancel();
+    _walletSubscription = _watchWalletsUseCase().listen((wallets) {
+      _wallets
+        ..clear()
+        ..addAll(wallets);
       _emitWallets();
     });
-  }
-
-  void _refreshLivePricing() {
-    final sourceWallets = List<WalletModel>.from(dummyWallets);
-
-    for (int walletIndex = 0; walletIndex < _wallets.length; walletIndex++) {
-      var wallet = _wallets[walletIndex];
-      if (wallet.category == WalletCategory.spotMr) {
-        final liveSpotWallet = sourceWallets.firstWhere(
-          (w) => w.category == WalletCategory.spotMr,
-          orElse: () => wallet,
-        );
-        wallet = wallet.copyWith(
-          transactions: liveSpotWallet.transactions,
-          totalHoldings: liveSpotWallet.totalHoldings,
-          totalMarketValue: liveSpotWallet.totalMarketValue,
-          totalWeightInGrams: liveSpotWallet.totalWeightInGrams,
-        );
-      }
-
-      final updatedTransactions = wallet.transactions.asMap().entries.map((entry) {
-        final txIndex = entry.key;
-        final tx = entry.value;
-        final oscillationSeed = ((_tick + walletIndex + txIndex) % 7) - 3; // -3 to +3
-        final deltaPercent = oscillationSeed * 0.003; // max ±0.9% every tick
-        final nextValue = (tx.marketValueAmount * (1 + deltaPercent)).clamp(0.01, double.infinity);
-        final costBasis = tx.estimatedPurchaseValue;
-        final pnlPercent = costBasis == 0 ? 0 : ((nextValue - costBasis) / costBasis) * 100;
-        final signedPnl = pnlPercent >= 0 ? '+' : '';
-
-        return tx.copyWith(
-          marketValue: '\$${nextValue.toStringAsFixed(2)}',
-          change: '$signedPnl${pnlPercent.toStringAsFixed(2)}%',
-        );
-      }).toList();
-
-      final totalMarket = updatedTransactions.fold<double>(0, (sum, tx) => sum + tx.marketValueAmount);
-      final totalPurchase = updatedTransactions.fold<double>(0, (sum, tx) => sum + tx.estimatedPurchaseValue);
-      final walletPnlPercent = totalPurchase == 0 ? 0 : ((totalMarket - totalPurchase) / totalPurchase) * 100;
-      final signed = walletPnlPercent >= 0 ? '+' : '';
-
-      _wallets[walletIndex] = wallet.copyWith(
-        transactions: updatedTransactions,
-        totalMarketValue: '\$${totalMarket.toStringAsFixed(2)}',
-        change: '$signed${walletPnlPercent.toStringAsFixed(2)}%',
-      );
-    }
   }
 
   void _emitWallets() {
@@ -97,8 +56,8 @@ class WalletCubit extends Cubit<WalletState> {
   }
 
   @override
-  Future<void> close() {
-    _marketTimer?.cancel();
+  Future<void> close() async {
+    await _walletSubscription?.cancel();
     return super.close();
   }
 }

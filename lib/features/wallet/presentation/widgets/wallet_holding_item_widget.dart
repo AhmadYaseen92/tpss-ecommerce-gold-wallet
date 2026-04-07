@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 
 class WalletHoldingItemWidget extends StatelessWidget {
-  final WalletTransaction item;
+  final WalletTransactionEntity item;
   final VoidCallback onSell;
   final VoidCallback onGiftTransfer;
   final VoidCallback onGenerateTaxInvoice;

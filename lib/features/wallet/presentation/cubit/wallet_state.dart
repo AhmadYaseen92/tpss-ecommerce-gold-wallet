@@ -7,7 +7,7 @@ final class WalletInitial extends WalletState {}
 final class WalletLoading extends WalletState {}
 
 final class WalletLoaded extends WalletState {
-  final List<WalletModel> wallets;
+  final List<WalletEntity> wallets;
   final int selectedIndex;
 
   WalletLoaded({required this.wallets, required this.selectedIndex});

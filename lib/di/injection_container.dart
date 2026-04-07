@@ -19,12 +19,18 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/watc
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/datasources/wallet_action_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/repositories/wallet_action_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/datasources/wallet_local_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/repositories/wallet_repository_impl.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/repositories/wallet_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/usecases/load_wallets_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/usecases/watch_wallets_usecase.dart';
 
 class InjectionContainer {
   const InjectionContainer._();
 
   static final ProductLocalDataSource _productLocalDataSource = ProductLocalDataSource();
   static final CartLocalDataSource _cartLocalDataSource = CartLocalDataSource();
+  static final WalletLocalDataSource _walletLocalDataSource = WalletLocalDataSource();
 
   static IMarketOrderRepository marketOrderRepository() {
     return MarketOrderRepositoryImpl(MarketOrderLocalDataSource());
@@ -60,6 +66,19 @@ class InjectionContainer {
 
   static WatchMarketSymbolsUseCase watchMarketSymbolsUseCase() {
     return WatchMarketSymbolsUseCase(productRepository());
+  }
+
+
+  static IWalletRepository walletRepository() {
+    return WalletRepositoryImpl(_walletLocalDataSource);
+  }
+
+  static LoadWalletsUseCase loadWalletsUseCase() {
+    return LoadWalletsUseCase(walletRepository());
+  }
+
+  static WatchWalletsUseCase watchWalletsUseCase() {
+    return WatchWalletsUseCase(walletRepository());
   }
 
   static GetCartItemsUseCase getCartItemsUseCase() {

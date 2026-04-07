@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/navigation/presentation/pages/custom_bottom_navbar.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/pages/login_page.dart';
@@ -104,7 +104,7 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ConvertPage());
 
       case AppRoutes.walletItemsRoute:
-        final transactions = settings.arguments as List<WalletTransaction>;
+        final transactions = settings.arguments as List<WalletTransactionEntity>;
         return MaterialPageRoute(
           builder: (_) => WalletItemsPage(transactions: transactions),
         );
@@ -116,25 +116,25 @@ class AppRouter {
         );
 
       case AppRoutes.walletAssetTransferRoute:
-        final transaction = settings.arguments as WalletTransaction;
+        final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
           builder: (_) => TransferAssetPage(asset: transaction),
         );
 
       case AppRoutes.walletAssetConvertRoute:
-        final transaction = settings.arguments as WalletTransaction;
+        final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
           builder: (_) => ConvertAssetPage(asset: transaction),
         );
 
       case AppRoutes.walletTaxInvoiceRoute:
-        final transaction = settings.arguments as WalletTransaction;
+        final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
           builder: (_) => GenerateTaxInvoicePage(asset: transaction),
         );
 
       case AppRoutes.walletPickupRoute:
-        final transaction = settings.arguments as WalletTransaction;
+        final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
           builder: (_) => PickupRequestPage(asset: transaction),
         );

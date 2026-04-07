@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 
 class WalletTransactionsWidget extends StatelessWidget {
   const WalletTransactionsWidget({
@@ -12,7 +12,7 @@ class WalletTransactionsWidget extends StatelessWidget {
     required this.onViewAllHistory,
   });
 
-  final List<WalletTransaction> transactions;
+  final List<WalletTransactionEntity> transactions;
   final Color accentColor;
   final VoidCallback onViewAllHistory;
 
@@ -81,7 +81,7 @@ class WalletTransactionsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTransactionRow(BuildContext context, WalletTransaction tx) {
+  Widget _buildTransactionRow(BuildContext context, WalletTransactionEntity tx) {
     final palette = context.appPalette;
     final isPositive = tx.change.startsWith('+');
     final pnlAmount = tx.marketValueAmount - tx.estimatedPurchaseValue;

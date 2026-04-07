@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/cubit/wallet_cubit.dart';
 
 class WalletTabBar extends StatelessWidget {
-  const WalletTabBar({super.key, required this.selectedIndex});
+  const WalletTabBar({super.key, required this.selectedIndex, required this.wallets});
 
   final int selectedIndex;
+  final List<WalletEntity> wallets;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +22,7 @@ class WalletTabBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(50.0),
       ),
       child: Row(
-        children: dummyWallets.asMap().entries.map((entry) {
+        children: wallets.asMap().entries.map((entry) {
           final index = entry.key;
           final wallet = entry.value;
           final isSelected = index == selectedIndex;

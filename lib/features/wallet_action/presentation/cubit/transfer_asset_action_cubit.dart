@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 
 part 'transfer_asset_action_state.dart';
 
@@ -17,7 +17,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
     recipientContactController.addListener(_onRecipientChanged);
   }
 
-  final WalletTransaction asset;
+  final WalletTransactionEntity asset;
 
   final TextEditingController recipientNameController;
   final TextEditingController recipientContactController;

@@ -1,4 +1,4 @@
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 
 enum WalletActionType { sell, transfer, gift, convertToCash, convertToCrypto }
 
@@ -6,7 +6,7 @@ enum WalletActionType { sell, transfer, gift, convertToCash, convertToCrypto }
 enum ConvertTargetType { cash, crypto }
 
 class WalletActionSummary {
-  final WalletTransaction asset;
+  final WalletTransactionEntity asset;
   final WalletActionType actionType;
   final String title;
   final String primaryValue;
