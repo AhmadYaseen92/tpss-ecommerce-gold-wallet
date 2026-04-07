@@ -18,3 +18,11 @@ If VS Code still shows red errors after the move:
 1. Open `Frontend/Mobile` as the workspace folder, or keep repo root open and run `Flutter: Restart Analysis Server`.
 2. Run `flutter clean && flutter pub get` inside `Frontend/Mobile`.
 3. Delete accidental generated folders at repo root (for example root-level `android/` or `.dart_tool/`) if they appear.
+
+
+## Quick cleanup (if duplicate root folders still appear)
+From repository root run:
+
+```bash
+./scripts/cleanup-root-artifacts.sh
+```
