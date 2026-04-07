@@ -2,64 +2,74 @@
 
 ## Projects
 
-- `TPSS.GoldWallet.Domain`: Core entities and business rules (POCO only).
-- `TPSS.GoldWallet.Application`: Use-cases (CQRS + MediatR), DTOs, repository abstractions, permission constants.
-- `TPSS.GoldWallet.Infrastructure`: EF Core + PostgreSQL, Identity, JWT token service, repository implementations.
-- `TPSS.GoldWallet.Api`: HTTP entrypoint with JWT authentication and permission-based authorization policies.
+- `TPSS.GoldWallet.Domain`: Core entities and POCO models.
+- `TPSS.GoldWallet.Application`: Use-cases (CQRS + MediatR), DTOs, abstractions, permissions.
+- `TPSS.GoldWallet.Infrastructure`: EF Core + PostgreSQL, Identity, JWT, repository implementations.
+- `TPSS.GoldWallet.Api`: REST API entrypoint.
 
-## Covered screens/features
+## Quick start (create DB + run app)
 
-The backend now includes endpoints and use-cases for:
-
-- Catalog / product listing
-- Cart
-- Wallet
-- Dashboard
-- Profile
-- History
-- KYC submission
-- Admin audit logs
-- Authentication (JWT login)
-- Role + permissions access control
-
-## Security model
-
-- ASP.NET Core Identity with hardened password + lockout options
-- JWT bearer tokens
-- Role-based accounts (`Customer`, `ComplianceOfficer`, `Admin`)
-- Permission-based API policies (claim: `permission`)
-- Audit log table + write hooks for security-sensitive operations
-
-## Database (PostgreSQL, code-first)
-
-- EF Core configured with PostgreSQL provider in Infrastructure.
-- `AppDbContext` defines entities/relations/indexes.
-- SQL bootstrap script: `Backend/scripts/001_init_schema.sql`.
-- EF migration helper script: `Backend/scripts/run-migrations.sh`.
-
-## Run locally
-
-```bash
-cd Backend/src/TPSS.GoldWallet.Api
-dotnet restore
-dotnet run
-```
-
-## Migration commands
+### Option A: One command bootstrap
 
 ```bash
 cd Backend/scripts
-./run-migrations.sh
+./dev-bootstrap.sh
 ```
 
-## Default seeded admin
+This will:
+1. start PostgreSQL in Docker,
+2. apply SQL schema,
+3. run EF migrations,
+4. start the API.
 
-- Email: `admin@goldwallet.local`
-- Password: `Admin#12345Secure`
+### Option B: Step by step
 
-> Change both for non-local environments.
+```bash
+cd Backend/scripts
+./dev-up.sh
+./dev-init-db.sh
+./dev-run-api.sh
+```
 
+### Stop DB container
 
-## Mobile feature mapping
+```bash
+cd Backend/scripts
+./dev-down.sh
+```
 
-- See `Backend/docs/mobile-backend-mapping.md` for detailed mapping between Flutter mobile models and backend entities/APIs/roles.
+## Script reference
+
+- `docker-compose.postgres.yml`: local PostgreSQL service (port `5432`).
+- `dev-up.sh`: starts DB container and waits for health.
+- `dev-init-db.sh`: applies SQL schema (`001_init_schema.sql`) via `psql`.
+- `dev-run-api.sh`: restores, migrates, and runs ASP.NET API.
+- `dev-bootstrap.sh`: full flow in one command.
+- `run-migrations.sh`: explicit EF migration generation + database update.
+
+## API coverage
+
+- Auth (`/api/auth/login`)
+- Products/catalog
+- Cart
+- Wallet
+- Dashboard
+- Account summary
+- Profile
+- History + transactions
+- Notifications
+- KYC
+- Admin logs
+
+## Security model
+
+- ASP.NET Core Identity with password + lockout rules
+- JWT bearer authentication
+- Role-based identities (`Customer`, `ComplianceOfficer`, `Admin`)
+- Permission-based API authorization policies
+- Audit logs for sensitive actions
+
+## DB + mobile mapping docs
+
+- DB SQL init: `Backend/scripts/001_init_schema.sql`
+- Mobile/backend mapping: `Backend/docs/mobile-backend-mapping.md`
