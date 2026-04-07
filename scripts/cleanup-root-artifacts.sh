@@ -49,3 +49,14 @@ if [[ "$removed_any" == false ]]; then
 else
   echo "✅ Cleanup complete."
 fi
+
+# Rebuild Dart package config for the real mobile app so package: imports resolve in IDE.
+if [[ -d "Frontend/Mobile" ]]; then
+  if command -v flutter >/dev/null 2>&1; then
+    echo "🔄 Running 'flutter pub get' in Frontend/Mobile ..."
+    (cd Frontend/Mobile && flutter pub get)
+    echo "✅ Mobile dependencies refreshed."
+  else
+    echo "⚠️  Flutter SDK not found in PATH. Run manually: cd Frontend/Mobile && flutter pub get"
+  fi
+fi
