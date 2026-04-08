@@ -14,18 +14,22 @@ public class NotificationsController(INotificationService notificationService) :
 {
     [HttpGet("{userId:int}")]
     public async Task<IActionResult> GetByUserId(int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
+        => await Search(new UserPagedRequestDto { UserId = userId, PageNumber = pageNumber, PageSize = pageSize }, cancellationToken);
+
+    [HttpPost("search")]
+    public async Task<IActionResult> Search([FromBody] UserPagedRequestDto request, CancellationToken cancellationToken = default)
     {
-        EnsureAccess(userId);
-        var data = await notificationService.GetByUserIdAsync(userId, pageNumber, pageSize, cancellationToken);
+        EnsureAccess(request.UserId);
+        var data = await notificationService.GetByUserIdAsync(request.UserId, request.PageNumber, request.PageSize, cancellationToken);
         return Ok(ApiResponse<PagedResult<NotificationDto>>.Ok(data));
     }
 
-    [HttpPut("{userId:int}/{notificationId:int}/read")]
-    public async Task<IActionResult> MarkAsRead(int userId, int notificationId, CancellationToken cancellationToken = default)
+    [HttpPut("read")]
+    public async Task<IActionResult> MarkAsRead([FromBody] MarkNotificationReadRequestDto request, CancellationToken cancellationToken = default)
     {
-        EnsureAccess(userId);
-        await notificationService.MarkAsReadAsync(userId, notificationId, cancellationToken);
-        return Ok(ApiResponse<object>.Ok(new { NotificationId = notificationId }, "Notification marked as read"));
+        EnsureAccess(request.UserId);
+        await notificationService.MarkAsReadAsync(request.UserId, request.NotificationId, cancellationToken);
+        return Ok(ApiResponse<object>.Ok(new { request.NotificationId }, "Notification marked as read"));
     }
 
     private void EnsureAccess(int userId)

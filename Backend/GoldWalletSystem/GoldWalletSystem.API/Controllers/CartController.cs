@@ -14,9 +14,13 @@ public class CartController(ICartService cartService) : ControllerBase
 {
     [HttpGet("{userId:int}")]
     public async Task<IActionResult> Get(int userId, CancellationToken cancellationToken = default)
+        => await GetByUser(new UserRequestDto { UserId = userId }, cancellationToken);
+
+    [HttpPost("by-user")]
+    public async Task<IActionResult> GetByUser([FromBody] UserRequestDto request, CancellationToken cancellationToken = default)
     {
-        EnsureAccess(userId);
-        var data = await cartService.GetCartByUserIdAsync(userId, cancellationToken);
+        EnsureAccess(request.UserId);
+        var data = await cartService.GetCartByUserIdAsync(request.UserId, cancellationToken);
         return Ok(ApiResponse<CartDto>.Ok(data));
     }
 
@@ -31,8 +35,7 @@ public class CartController(ICartService cartService) : ControllerBase
     private void EnsureAccess(int userId)
     {
         var isAdmin = User.IsInRole("Admin");
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue(ClaimTypes.Sid) ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var sub = User.FindFirstValue("sub") ?? userIdClaim;
+        var sub = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!isAdmin && sub != userId.ToString())
             throw new UnauthorizedAccessException("You are not allowed to access this resource.");
     }

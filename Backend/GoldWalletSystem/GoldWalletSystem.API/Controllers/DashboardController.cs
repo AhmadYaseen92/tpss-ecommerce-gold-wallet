@@ -14,9 +14,13 @@ public class DashboardController(IDashboardService dashboardService) : Controlle
 {
     [HttpGet("{userId:int}")]
     public async Task<IActionResult> Get(int userId, CancellationToken cancellationToken = default)
+        => await GetByUser(new UserRequestDto { UserId = userId }, cancellationToken);
+
+    [HttpPost("by-user")]
+    public async Task<IActionResult> GetByUser([FromBody] UserRequestDto request, CancellationToken cancellationToken = default)
     {
-        EnsureAccess(userId);
-        var data = await dashboardService.GetByUserIdAsync(userId, cancellationToken);
+        EnsureAccess(request.UserId);
+        var data = await dashboardService.GetByUserIdAsync(request.UserId, cancellationToken);
         return Ok(ApiResponse<DashboardDto>.Ok(data));
     }
 

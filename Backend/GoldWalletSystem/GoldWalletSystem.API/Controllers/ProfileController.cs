@@ -14,9 +14,13 @@ public class ProfileController(IProfileService profileService) : ControllerBase
 {
     [HttpGet("{userId:int}")]
     public async Task<IActionResult> Get(int userId, CancellationToken cancellationToken = default)
+        => await GetByUser(new UserRequestDto { UserId = userId }, cancellationToken);
+
+    [HttpPost("by-user")]
+    public async Task<IActionResult> GetByUser([FromBody] UserRequestDto request, CancellationToken cancellationToken = default)
     {
-        EnsureAccess(userId);
-        var data = await profileService.GetByUserIdAsync(userId, cancellationToken);
+        EnsureAccess(request.UserId);
+        var data = await profileService.GetByUserIdAsync(request.UserId, cancellationToken);
         if (data is null)
             return NotFound(ApiResponse<ProfileDto>.Fail("Profile not found", StatusCodes.Status404NotFound));
 

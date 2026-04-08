@@ -13,8 +13,12 @@ public class LogsController(IAuditLogService auditLogService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
+        => await Search(new PagedRequestDto { PageNumber = pageNumber, PageSize = pageSize }, cancellationToken);
+
+    [HttpPost("search")]
+    public async Task<IActionResult> Search([FromBody] PagedRequestDto request, CancellationToken cancellationToken = default)
     {
-        var data = await auditLogService.GetLogsAsync(pageNumber, pageSize, cancellationToken);
+        var data = await auditLogService.GetLogsAsync(request.PageNumber, request.PageSize, cancellationToken);
         return Ok(ApiResponse<PagedResult<AuditLogDto>>.Ok(data));
     }
 }
