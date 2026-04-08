@@ -15,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<TransactionHistory> TransactionHistories => Set<TransactionHistory>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
     public DbSet<AppNotification> AppNotifications => Set<AppNotification>();
     public DbSet<Wallet> Wallets => Set<Wallet>();
     public DbSet<WalletAsset> WalletAssets => Set<WalletAsset>();
@@ -32,6 +33,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<UserProfile>().HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId);
         modelBuilder.Entity<PaymentMethod>().HasOne(x => x.UserProfile).WithMany(x => x.PaymentMethods).HasForeignKey(x => x.UserProfileId);
         modelBuilder.Entity<LinkedBankAccount>().HasOne(x => x.UserProfile).WithMany(x => x.LinkedBankAccounts).HasForeignKey(x => x.UserProfileId);
+        modelBuilder.Entity<Invoice>().HasMany(x => x.Items).WithOne(x => x.Invoice).HasForeignKey(x => x.InvoiceId);
 
         modelBuilder.Entity<Product>().HasData(
             new Product { Id = 1, Name = "Gold Ring", Sku = "PRD-GOLD-RING", Description = "18k gold ring", Price = 250m, AvailableStock = 200 },
@@ -64,7 +66,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         );
 
         modelBuilder.Entity<Invoice>().HasData(
-            new Invoice { Id = 1, UserId = 1, InvoiceNumber = "INV-0001", SubTotal = 500, TaxAmount = 25, TotalAmount = 525, Status = "Paid", IssuedOnUtc = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc), CreatedAtUtc = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc) }
+            new Invoice { Id = 1, InvestorUserId = 2, SellerUserId = 3, InvoiceNumber = "INV-0001", InvoiceCategory = "Trade", SourceChannel = "Mobile", SubTotal = 500, TaxAmount = 25, TotalAmount = 525, InvoiceQrCode = "QR-INV-SEED-0001", Status = "Paid", IssuedOnUtc = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc), CreatedAtUtc = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc) }
+        );
+
+        modelBuilder.Entity<InvoiceItem>().HasData(
+            new InvoiceItem { Id = 1, InvoiceId = 1, ProductId = 1, ItemName = "Gold Ring", Quantity = 1, UnitPrice = 500, LineTotal = 500, ItemQrCode = "QR-ITEM-SEED-0001" }
         );
 
         modelBuilder.Entity<MobileAppConfiguration>().HasData(

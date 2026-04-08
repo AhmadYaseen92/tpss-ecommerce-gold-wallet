@@ -9,4 +9,7 @@ public class InvoiceService(IInvoiceReadRepository invoiceReadRepository) : IInv
 {
     public Task<PagedResult<InvoiceDto>> GetByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
         => invoiceReadRepository.GetByUserIdAsync(userId, pageNumber, pageSize, cancellationToken);
+
+    public Task<InvoiceDto> CreateAsync(CreateInvoiceRequestDto request, CancellationToken cancellationToken = default)
+        => invoiceReadRepository.CreateAsync(request, cancellationToken);
 }

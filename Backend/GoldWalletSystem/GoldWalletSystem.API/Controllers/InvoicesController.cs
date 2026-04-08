@@ -18,4 +18,14 @@ public class InvoicesController(IInvoiceService invoiceService, ICurrentUserServ
         var data = await invoiceService.GetByUserIdAsync(request.UserId, request.PageNumber, request.PageSize, cancellationToken);
         return Ok(ApiResponse<PagedResult<InvoiceDto>>.Ok(data));
     }
+
+    [HttpPost("create")]
+    public async Task<IActionResult> Create([FromBody] CreateInvoiceRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (!HasUserAccess(request.InvestorUserId) && !User.IsInRole(GoldWalletSystem.Domain.Constants.SystemRoles.Admin))
+            return ForbidApiResponse();
+
+        var data = await invoiceService.CreateAsync(request, cancellationToken);
+        return Ok(ApiResponse<InvoiceDto>.Ok(data, "Invoice generated"));
+    }
 }
