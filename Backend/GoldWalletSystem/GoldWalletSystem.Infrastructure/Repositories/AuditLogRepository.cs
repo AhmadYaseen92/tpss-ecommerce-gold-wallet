@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GoldWalletSystem.Infrastructure.Repositories;
 
-public class AuditLogRepository(AppDbContext dbContext) : IReadRepository<AuditLogDto>
+public class AuditLogRepository(AppDbContext dbContext) : IAuditLogRepository
 {
     public async Task<PagedResult<AuditLogDto>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {

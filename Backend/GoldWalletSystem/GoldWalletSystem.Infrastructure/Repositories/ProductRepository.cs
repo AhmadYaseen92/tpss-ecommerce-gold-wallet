@@ -1,12 +1,13 @@
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Products;
 using GoldWalletSystem.Application.Interfaces.Repositories;
+using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
 
 namespace GoldWalletSystem.Infrastructure.Repositories;
 
-public class ProductRepository(AppDbContext dbContext) : IReadRepository<ProductDto>
+public class ProductRepository(AppDbContext dbContext) : IProductRepository
 {
     public async Task<PagedResult<ProductDto>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
@@ -17,4 +18,7 @@ public class ProductRepository(AppDbContext dbContext) : IReadRepository<Product
             .ToListAsync(cancellationToken);
         return new PagedResult<ProductDto>(items, totalCount, pageNumber, pageSize);
     }
+
+    public Task<Product?> GetByIdAsync(int productId, CancellationToken cancellationToken = default)
+        => dbContext.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == productId, cancellationToken);
 }

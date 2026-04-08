@@ -1,7 +1,6 @@
 using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Application.Services;
-using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +14,9 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 
-        services.AddScoped<IReadRepository<GoldWalletSystem.Application.DTOs.Products.ProductDto>, ProductRepository>();
-        services.AddScoped<IReadRepository<Product>, ProductEntityRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
-        services.AddScoped<IReadRepository<GoldWalletSystem.Application.DTOs.Logs.AuditLogDto>, AuditLogRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<ITransactionHistoryReadRepository, TransactionHistoryRepository>();
         services.AddScoped<IInvoiceReadRepository, InvoiceRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();

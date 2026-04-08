@@ -5,7 +5,7 @@ using GoldWalletSystem.Domain.Entities;
 
 namespace GoldWalletSystem.Application.Services;
 
-public class CartService(ICartRepository cartRepository, IReadRepository<Product> productRepository) : ICartService
+public class CartService(ICartRepository cartRepository, IProductRepository productRepository) : ICartService
 {
     public async Task<CartDto> GetCartByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
@@ -21,8 +21,7 @@ public class CartService(ICartRepository cartRepository, IReadRepository<Product
         }
 
         var cart = await cartRepository.GetOrCreateByUserIdAsync(userId, cancellationToken);
-        var productPage = await productRepository.GetPagedAsync(1, int.MaxValue, cancellationToken);
-        var product = productPage.Items.FirstOrDefault(x => x.Id == productId)
+        var product = await productRepository.GetByIdAsync(productId, cancellationToken)
             ?? throw new InvalidOperationException($"Product id {productId} does not exist.");
 
         var existingItem = cart.Items.FirstOrDefault(x => x.ProductId == productId);
