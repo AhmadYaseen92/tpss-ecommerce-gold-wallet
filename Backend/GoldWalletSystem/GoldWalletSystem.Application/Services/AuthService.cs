@@ -17,7 +17,7 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
         if (!user.IsActive || !passwordHasher.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
-        var role = user.Email.Contains("admin", StringComparison.OrdinalIgnoreCase) ? "Admin" : "User";
+        var role = string.IsNullOrWhiteSpace(user.Role) ? GoldWalletSystem.Domain.Constants.SystemRoles.Investor : user.Role;
         var token = tokenService.GenerateAccessToken(user.Id, user.Email, role);
 
         return new LoginResponseDto

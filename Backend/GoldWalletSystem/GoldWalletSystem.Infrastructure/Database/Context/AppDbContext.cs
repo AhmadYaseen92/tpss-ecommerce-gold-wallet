@@ -20,6 +20,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<WalletAsset> WalletAssets => Set<WalletAsset>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
+    public DbSet<MobileAppConfiguration> MobileAppConfigurations => Set<MobileAppConfiguration>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,10 +40,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         );
 
         modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, Email = "demo@wallet.com", FullName = "Demo User", PasswordHash = "seeded", IsActive = true, PhoneNumber = "+1-202-555-0123" }
+            new User { Id = 1, Email = "admin@wallet.com", FullName = "Admin User", PasswordHash = "seeded", Role = GoldWalletSystem.Domain.Constants.SystemRoles.Admin, IsActive = true, PhoneNumber = "+1-202-555-0123" },
+            new User { Id = 2, Email = "investor@wallet.com", FullName = "Investor User", PasswordHash = "seeded", Role = GoldWalletSystem.Domain.Constants.SystemRoles.Investor, IsActive = true, PhoneNumber = "+1-202-555-0199" },
+            new User { Id = 3, Email = "seller@wallet.com", FullName = "Seller User", PasswordHash = "seeded", Role = GoldWalletSystem.Domain.Constants.SystemRoles.Seller, IsActive = true, PhoneNumber = "+1-202-555-0177" }
         );
 
-        modelBuilder.Entity<Cart>().HasData(new Cart { Id = 1, UserId = 1 });
+        modelBuilder.Entity<Cart>().HasData(new Cart { Id = 1, UserId = 1 }, new Cart { Id = 2, UserId = 2 }, new Cart { Id = 3, UserId = 3 });
 
         modelBuilder.Entity<UserProfile>().HasData(new UserProfile { Id = 1, UserId = 1, Nationality = "Jordanian", PreferredLanguage = "en", PreferredTheme = "light", DateOfBirth = new DateOnly(1990, 1, 1) });
         modelBuilder.Entity<PaymentMethod>().HasData(new PaymentMethod { Id = 1, UserProfileId = 1, Type = "Visa", MaskedNumber = "**** **** **** 3021", IsDefault = true });
@@ -62,6 +65,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<Invoice>().HasData(
             new Invoice { Id = 1, UserId = 1, InvoiceNumber = "INV-0001", SubTotal = 500, TaxAmount = 25, TotalAmount = 525, Status = "Paid", IssuedOnUtc = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc), CreatedAtUtc = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc) }
+        );
+
+        modelBuilder.Entity<MobileAppConfiguration>().HasData(
+            new MobileAppConfiguration { Id = 1, ConfigKey = "tabs.home", JsonValue = "{\"enabled\":true}", IsEnabled = true, Description = "Home tab visibility" },
+            new MobileAppConfiguration { Id = 2, ConfigKey = "actions.sell", JsonValue = "{\"enabled\":true,\"requireKyc\":true}", IsEnabled = true, Description = "Sell action rules" },
+            new MobileAppConfiguration { Id = 3, ConfigKey = "features.notifications", JsonValue = "{\"enabled\":true}", IsEnabled = true, Description = "Notification feature toggle" }
         );
 
         modelBuilder.Entity<AppNotification>().HasData(
