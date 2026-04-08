@@ -11,10 +11,6 @@ namespace GoldWalletSystem.API.Controllers;
 [Route("api/logs")]
 public class LogsController(IAuditLogService auditLogService) : ControllerBase
 {
-    [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
-        => await Search(new PagedRequestDto { PageNumber = pageNumber, PageSize = pageSize }, cancellationToken);
-
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] PagedRequestDto request, CancellationToken cancellationToken = default)
     {

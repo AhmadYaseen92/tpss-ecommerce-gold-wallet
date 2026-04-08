@@ -12,10 +12,6 @@ namespace GoldWalletSystem.API.Controllers;
 [Route("api/cart")]
 public class CartController(ICartService cartService) : ControllerBase
 {
-    [HttpGet("{userId:int}")]
-    public async Task<IActionResult> Get(int userId, CancellationToken cancellationToken = default)
-        => await GetByUser(new UserRequestDto { UserId = userId }, cancellationToken);
-
     [HttpPost("by-user")]
     public async Task<IActionResult> GetByUser([FromBody] UserRequestDto request, CancellationToken cancellationToken = default)
     {
@@ -24,11 +20,11 @@ public class CartController(ICartService cartService) : ControllerBase
         return Ok(ApiResponse<CartDto>.Ok(data));
     }
 
-    [HttpPost("{userId:int}/items")]
-    public async Task<IActionResult> AddItem(int userId, [FromBody] AddCartItemRequestDto request, CancellationToken cancellationToken = default)
+    [HttpPost("items")]
+    public async Task<IActionResult> AddItem([FromBody] AddCartItemByUserRequestDto request, CancellationToken cancellationToken = default)
     {
-        EnsureAccess(userId);
-        var data = await cartService.AddItemAsync(userId, request.ProductId, request.Quantity, cancellationToken);
+        EnsureAccess(request.UserId);
+        var data = await cartService.AddItemAsync(request.UserId, request.ProductId, request.Quantity, cancellationToken);
         return Ok(ApiResponse<CartDto>.Ok(data, "Item added"));
     }
 

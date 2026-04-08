@@ -12,10 +12,6 @@ namespace GoldWalletSystem.API.Controllers;
 [Route("api/invoices")]
 public class InvoicesController(IInvoiceService invoiceService) : ControllerBase
 {
-    [HttpGet("{userId:int}")]
-    public async Task<IActionResult> GetByUserId(int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
-        => await Search(new UserPagedRequestDto { UserId = userId, PageNumber = pageNumber, PageSize = pageSize }, cancellationToken);
-
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] UserPagedRequestDto request, CancellationToken cancellationToken = default)
     {

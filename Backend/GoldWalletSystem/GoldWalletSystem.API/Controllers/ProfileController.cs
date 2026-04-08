@@ -12,10 +12,6 @@ namespace GoldWalletSystem.API.Controllers;
 [Route("api/profile")]
 public class ProfileController(IProfileService profileService) : ControllerBase
 {
-    [HttpGet("{userId:int}")]
-    public async Task<IActionResult> Get(int userId, CancellationToken cancellationToken = default)
-        => await GetByUser(new UserRequestDto { UserId = userId }, cancellationToken);
-
     [HttpPost("by-user")]
     public async Task<IActionResult> GetByUser([FromBody] UserRequestDto request, CancellationToken cancellationToken = default)
     {
