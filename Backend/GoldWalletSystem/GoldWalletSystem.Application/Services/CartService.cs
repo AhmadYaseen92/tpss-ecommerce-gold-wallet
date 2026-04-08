@@ -17,7 +17,7 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
     {
         if (quantity <= 0)
         {
-            throw new ArgumentException("Quantity should be greater than 0.");
+            throw new InvalidOperationException("Quantity should be greater than 0.");
         }
 
         var cart = await cartRepository.GetOrCreateByUserIdAsync(userId, cancellationToken);
@@ -33,11 +33,13 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
                 ProductId = productId,
                 Quantity = quantity,
                 UnitPrice = product.Price,
+                LineTotal = product.Price * quantity,
             });
         }
         else
         {
             existingItem.Quantity += quantity;
+            existingItem.LineTotal = existingItem.Quantity * existingItem.UnitPrice;
             existingItem.UpdatedAtUtc = DateTime.UtcNow;
         }
 
@@ -47,7 +49,7 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
 
     private static CartDto Map(Cart cart)
     {
-        var items = cart.Items.Select(i => new CartItemDto(i.Id, i.ProductId, i.Product.Name, i.UnitPrice, i.Quantity, i.UnitPrice * i.Quantity)).ToList();
+        var items = cart.Items.Select(i => new CartItemDto(i.Id, i.ProductId, i.Product.Name, i.UnitPrice, i.Quantity, i.LineTotal)).ToList();
         return new CartDto(cart.Id, cart.UserId, items, items.Sum(x => x.LineTotal));
     }
 }
