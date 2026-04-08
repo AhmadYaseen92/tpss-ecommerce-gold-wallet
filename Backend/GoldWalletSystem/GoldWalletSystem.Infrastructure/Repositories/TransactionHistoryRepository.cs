@@ -1,6 +1,6 @@
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Transactions;
-using GoldWalletSystem.Application.Services;
+using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
 

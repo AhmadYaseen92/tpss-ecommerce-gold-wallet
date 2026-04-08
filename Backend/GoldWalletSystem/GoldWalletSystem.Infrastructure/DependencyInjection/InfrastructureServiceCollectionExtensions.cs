@@ -21,12 +21,18 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IReadRepository<GoldWalletSystem.Application.DTOs.Logs.AuditLogDto>, AuditLogRepository>();
         services.AddScoped<ITransactionHistoryReadRepository, TransactionHistoryRepository>();
         services.AddScoped<IInvoiceReadRepository, InvoiceRepository>();
+        services.AddScoped<IDashboardRepository, DashboardRepository>();
+        services.AddScoped<IProfileRepository, ProfileRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
 
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ITransactionHistoryService, TransactionHistoryService>();
         services.AddScoped<IInvoiceService, InvoiceService>();
+        services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }
