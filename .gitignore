@@ -1,29 +1,34 @@
-# Monorepo root ignore rules
-# Ignore accidental Flutter project/artifacts at REPOSITORY ROOT only.
-/.dart_tool/
-/.flutter-plugins
-/.flutter-plugins-dependencies
-/.packages
-/.pub/
-/build/
-/.android/
-/android/
-/ios/
-/linux/
-/macos/
-/windows/
-/web/
-/lib/
-/test/
-/assets/
-/.metadata
-/analysis_options.yaml
-/devtools_options.yaml
-/pubspec.yaml
-/pubspec.lock
-/.gradle/
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
 
-# IDE/system at root
-/.idea/
-/.DS_Store
-/.vs/tpss-ecommerce-gold-wallet/FileContentIndex
+# Monorepo root ignore rules
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+build/
+.android/
+android/
+ios/
+linux/
+macos/
+windows/
+web/
+lib/
+test/
+assets/
+.metadata
+analysis_options.yaml
+devtools_options.yaml
+pubspec.yaml
+pubspec.lock
+.gradle/
+
+# IDE/system
+.idea/
+.DS_Store

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="GoldWalletSystem.API/GoldWalletSystem.API.csproj" />
+  <Project Path="GoldWalletSystem.Application/GoldWalletSystem.Application.csproj" />
+  <Project Path="GoldWalletSystem.Domain/GoldWalletSystem.Domain.csproj" />
+  <Project Path="GoldWalletSystem.Infrastructure/GoldWalletSystem.Infrastructure.csproj" />
+</Solution>

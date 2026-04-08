@@ -1,0 +1,12 @@
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\bin\Debug\net10.0\GoldWalletSystem.Domain.deps.json
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\bin\Debug\net10.0\GoldWalletSystem.Domain.dll
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\bin\Debug\net10.0\GoldWalletSystem.Domain.pdb
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\obj\Debug\net10.0\GoldWalletSystem.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\obj\Debug\net10.0\GoldWalletSystem.Domain.AssemblyInfoInputs.cache
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\obj\Debug\net10.0\GoldWalletSystem.Domain.AssemblyInfo.cs
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\obj\Debug\net10.0\GoldWalletSystem.Domain.csproj.CoreCompileInputs.cache
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\obj\Debug\net10.0\GoldWalletSystem.Domain.sourcelink.json
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\obj\Debug\net10.0\GoldWalletSystem.Domain.dll
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\obj\Debug\net10.0\refint\GoldWalletSystem.Domain.dll
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\obj\Debug\net10.0\GoldWalletSystem.Domain.pdb
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Domain\obj\Debug\net10.0\ref\GoldWalletSystem.Domain.dll
