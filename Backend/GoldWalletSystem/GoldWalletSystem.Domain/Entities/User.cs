@@ -1,4 +1,4 @@
-﻿namespace GoldWalletSystem.Domain.Entities;
+namespace GoldWalletSystem.Domain.Entities;
 
 public class User : BaseEntity
 {
@@ -9,4 +9,5 @@ public class User : BaseEntity
     public bool IsActive { get; set; } = true;
 
     public Wallet? Wallet { get; set; }
+    public Cart? Cart { get; set; }
 }
