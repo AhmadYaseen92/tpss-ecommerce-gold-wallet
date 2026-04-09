@@ -46,8 +46,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureInvoiceItem(modelBuilder);
         ConfigureAppNotification(modelBuilder);
         ConfigureMobileAppConfiguration(modelBuilder);
-
-        SeedData(modelBuilder);
     }
 
     private static void ConfigureUser(ModelBuilder modelBuilder)
@@ -306,83 +304,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Description).HasMaxLength(500);
             entity.HasIndex(x => x.ConfigKey).IsUnique();
         });
-    }
-
-    private static void SeedData(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Product>().HasData(
-            new Product { Id = 1, Name = "Gold Ring", Sku = "PRD-GOLD-RING", Description = "18k gold ring", Price = 250m, AvailableStock = 200 },
-            new Product { Id = 2, Name = "Silver Necklace", Sku = "PRD-SLV-NECK", Description = "Silver necklace", Price = 120m, AvailableStock = 350 },
-            new Product { Id = 3, Name = "Gold Coin", Sku = "PRD-GOLD-COIN", Description = "Investment gold coin", Price = 500m, AvailableStock = 50 }
-        );
-
-        modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, Email = "admin@wallet.com", FullName = "Admin User", PasswordHash = "seeded", Role = SystemRoles.Admin, IsActive = true, PhoneNumber = "+1-202-555-0123" },
-            new User { Id = 2, Email = "investor@wallet.com", FullName = "Investor User", PasswordHash = "seeded", Role = SystemRoles.Investor, IsActive = true, PhoneNumber = "+1-202-555-0199" },
-            new User { Id = 3, Email = "seller@wallet.com", FullName = "Seller User", PasswordHash = "seeded", Role = SystemRoles.Seller, IsActive = true, PhoneNumber = "+1-202-555-0177" }
-        );
-
-        modelBuilder.Entity<Cart>().HasData(new Cart { Id = 1, UserId = 1 }, new Cart { Id = 2, UserId = 2 }, new Cart { Id = 3, UserId = 3 });
-
-        modelBuilder.Entity<UserProfile>().HasData(
-            new UserProfile { Id = 1, UserId = 1, Nationality = "Jordanian", PreferredLanguage = "en", PreferredTheme = "light", DateOfBirth = new DateOnly(1990, 1, 1) }
-        );
-
-        modelBuilder.Entity<PaymentMethod>().HasData(
-            new PaymentMethod { Id = 1, UserProfileId = 1, Type = "Visa", MaskedNumber = "**** **** **** 3021", IsDefault = true }
-        );
-
-        modelBuilder.Entity<LinkedBankAccount>().HasData(
-            new LinkedBankAccount { Id = 1, UserProfileId = 1, BankName = "Arab Bank", IbanMasked = "JO** **** **** 1188", IsVerified = true }
-        );
-
-        modelBuilder.Entity<Wallet>().HasData(new Wallet { Id = 1, UserId = 1, CashBalance = 2500m, CurrencyCode = "USD" });
-
-        modelBuilder.Entity<WalletAsset>().HasData(
-            new WalletAsset { Id = 1, WalletId = 1, AssetType = AssetType.GoldBar, Weight = 10m, Unit = "gram", Purity = 24m, Quantity = 2, AverageBuyPrice = 200m, CurrentMarketPrice = 220m }
-        );
-
-        modelBuilder.Entity<AuditLog>().HasData(
-            new AuditLog { Id = 1, UserId = 1, Action = "Seed", EntityName = "Database", Details = "Initial seed completed", CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
-        );
-
-        modelBuilder.Entity<TransactionHistory>().HasData(
-            new TransactionHistory { Id = 1, UserId = 1, TransactionType = "WalletTopup", Amount = 1000m, Currency = "USD", Reference = "TXN-0001", CreatedAtUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new TransactionHistory { Id = 2, UserId = 1, TransactionType = "Purchase", Amount = 250m, Currency = "USD", Reference = "TXN-0002", CreatedAtUtc = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc) }
-        );
-
-        modelBuilder.Entity<Invoice>().HasData(
-            new Invoice
-            {
-                Id = 1,
-                InvestorUserId = 2,
-                SellerUserId = 3,
-                InvoiceNumber = "INV-0001",
-                InvoiceCategory = "Trade",
-                SourceChannel = "Mobile",
-                SubTotal = 500m,
-                TaxAmount = 25m,
-                TotalAmount = 525m,
-                InvoiceQrCode = "QR-INV-SEED-0001",
-                Status = "Paid",
-                IssuedOnUtc = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc),
-                CreatedAtUtc = new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Utc)
-            }
-        );
-
-        modelBuilder.Entity<InvoiceItem>().HasData(
-            new InvoiceItem { Id = 1, InvoiceId = 1, ProductId = 1, ItemName = "Gold Ring", Quantity = 1, UnitPrice = 500m, LineTotal = 500m, ItemQrCode = "QR-ITEM-SEED-0001" }
-        );
-
-        modelBuilder.Entity<MobileAppConfiguration>().HasData(
-            new MobileAppConfiguration { Id = 1, ConfigKey = "tabs.home", JsonValue = "{\"enabled\":true}", IsEnabled = true, Description = "Home tab visibility" },
-            new MobileAppConfiguration { Id = 2, ConfigKey = "actions.sell", JsonValue = "{\"enabled\":true,\"requireKyc\":true}", IsEnabled = true, Description = "Sell action rules" },
-            new MobileAppConfiguration { Id = 3, ConfigKey = "features.notifications", JsonValue = "{\"enabled\":true}", IsEnabled = true, Description = "Notification feature toggle" }
-        );
-
-        modelBuilder.Entity<AppNotification>().HasData(
-            new AppNotification { Id = 1, UserId = 1, Title = "Welcome", Body = "Your wallet is ready.", IsRead = false, CreatedAtUtc = new DateTime(2026, 1, 3, 0, 0, 0, DateTimeKind.Utc) },
-            new AppNotification { Id = 2, UserId = 1, Title = "Invoice generated", Body = "Invoice INV-0001 was generated.", IsRead = true, CreatedAtUtc = new DateTime(2026, 1, 4, 0, 0, 0, DateTimeKind.Utc) }
-        );
     }
 }

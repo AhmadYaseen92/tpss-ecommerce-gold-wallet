@@ -14,7 +14,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddOpenApi();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=(localdb)\\mssqllocaldb;Database=GoldWalletSystemDb;Trusted_Connection=True;TrustServerCertificate=True;";
+    ?? "Server=localhost;Database=GoldWalletSystemDb;Trusted_Connection=True;TrustServerCertificate=True;";
 
 builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddApiLayer();
