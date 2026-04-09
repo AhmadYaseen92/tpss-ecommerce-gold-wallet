@@ -32,7 +32,7 @@ class AuthRemoteDataSource {
     return envelope.data!;
   }
 
-  Future<void> register({
+  Future<String> register({
     required RegisterRequestModel request,
   }) async {
     final response = await _apiService.register(request);
@@ -49,5 +49,7 @@ class AuthRemoteDataSource {
             : envelope.message,
       );
     }
+
+    return envelope.message;
   }
 }

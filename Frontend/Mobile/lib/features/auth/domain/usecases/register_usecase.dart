@@ -5,12 +5,16 @@ class RegisterUseCase {
 
   final IAuthRepository _repository;
 
-  Future<void> call({
+  Future<String> call({
     required String firstName,
     required String lastName,
     required String email,
     required String phoneNumber,
     required String password,
+    String? dateOfBirth,
+    String? nationality,
+    String? preferredLanguage,
+    String? preferredTheme,
   }) {
     return _repository.register(
       firstName: firstName,
@@ -18,6 +22,10 @@ class RegisterUseCase {
       email: email,
       phoneNumber: phoneNumber,
       password: password,
+      dateOfBirth: dateOfBirth,
+      nationality: nationality,
+      preferredLanguage: preferredLanguage,
+      preferredTheme: preferredTheme,
     );
   }
 }

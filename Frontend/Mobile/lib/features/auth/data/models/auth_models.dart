@@ -23,6 +23,10 @@ class RegisterRequestModel {
     required this.email,
     required this.phoneNumber,
     required this.password,
+    this.dateOfBirth,
+    this.nationality,
+    this.preferredLanguage,
+    this.preferredTheme,
   });
 
   final String firstName;
@@ -30,6 +34,10 @@ class RegisterRequestModel {
   final String email;
   final String phoneNumber;
   final String password;
+  final String? dateOfBirth;
+  final String? nationality;
+  final String? preferredLanguage;
+  final String? preferredTheme;
 
   Map<String, dynamic> toJson() => _$RegisterRequestModelToJson(this);
 }

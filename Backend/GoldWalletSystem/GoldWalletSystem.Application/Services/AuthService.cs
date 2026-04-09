@@ -61,7 +61,17 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             UpdatedAtUtc = DateTime.UtcNow,
         };
 
-        var created = await userAuthRepository.AddAsync(user, cancellationToken);
+        var profile = new UserProfile
+        {
+            DateOfBirth = request.DateOfBirth,
+            Nationality = request.Nationality,
+            PreferredLanguage = string.IsNullOrWhiteSpace(request.PreferredLanguage) ? "en" : request.PreferredLanguage,
+            PreferredTheme = string.IsNullOrWhiteSpace(request.PreferredTheme) ? "light" : request.PreferredTheme,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+        };
+
+        var created = await userAuthRepository.AddAsync(user, profile, cancellationToken);
 
         return new RegisterResponseDto
         {

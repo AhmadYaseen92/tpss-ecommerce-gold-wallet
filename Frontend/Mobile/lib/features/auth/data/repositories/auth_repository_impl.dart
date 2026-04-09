@@ -23,12 +23,16 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
-  Future<void> register({
+  Future<String> register({
     required String firstName,
     required String lastName,
     required String email,
     required String phoneNumber,
     required String password,
+    String? dateOfBirth,
+    String? nationality,
+    String? preferredLanguage,
+    String? preferredTheme,
   }) {
     return _remoteDataSource.register(
       request: RegisterRequestModel(
@@ -37,6 +41,10 @@ class AuthRepositoryImpl implements IAuthRepository {
         email: email,
         phoneNumber: phoneNumber,
         password: password,
+        dateOfBirth: dateOfBirth,
+        nationality: nationality,
+        preferredLanguage: preferredLanguage,
+        preferredTheme: preferredTheme,
       ),
     );
   }

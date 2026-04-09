@@ -6,11 +6,15 @@ abstract class IAuthRepository {
     required String password,
   });
 
-  Future<void> register({
+  Future<String> register({
     required String firstName,
     required String lastName,
     required String email,
     required String phoneNumber,
     required String password,
+    String? dateOfBirth,
+    String? nationality,
+    String? preferredLanguage,
+    String? preferredTheme,
   });
 }

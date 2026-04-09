@@ -20,7 +20,15 @@ class SignupPage extends StatelessWidget {
       child: BlocConsumer<SignupCubit, SignupState>(
         listener: (context, state) {
           if (state is SignupSuccess) {
-            Navigator.pushNamed(context, AppRoutes.loginRoute);
+            AppModalAlert.show(
+              context,
+              title: 'Signup Success',
+              message: state.message,
+            ).then((_) {
+              if (context.mounted) {
+                Navigator.pushNamed(context, AppRoutes.loginRoute);
+              }
+            });
           } else if (state is SignupError) {
             AppModalAlert.show(
               context,

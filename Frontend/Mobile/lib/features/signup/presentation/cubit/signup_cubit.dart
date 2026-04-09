@@ -134,14 +134,18 @@ class SignupCubit extends Cubit<SignupState> {
 
     emit(SignupLoading());
     try {
-      await _registerUseCase(
+      final message = await _registerUseCase(
         firstName: firstName,
         lastName: lastName,
         email: email,
         phoneNumber: '$phoneCode$phoneNumber',
         password: password,
+        dateOfBirth: dateOfBirth?.toIso8601String().split('T').first,
+        nationality: nationality,
+        preferredLanguage: 'en',
+        preferredTheme: 'light',
       );
-      emit(SignupSuccess());
+      emit(SignupSuccess(message));
     } on DioException catch (e) {
       emit(SignupError(_extractMessage(e)));
     } catch (e) {

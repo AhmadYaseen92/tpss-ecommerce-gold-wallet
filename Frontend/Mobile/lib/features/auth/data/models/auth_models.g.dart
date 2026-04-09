@@ -21,6 +21,10 @@ RegisterRequestModel _$RegisterRequestModelFromJson(Map<String, dynamic> json) =
       email: json['email'] as String,
       phoneNumber: json['phoneNumber'] as String,
       password: json['password'] as String,
+      dateOfBirth: json['dateOfBirth'] as String?,
+      nationality: json['nationality'] as String?,
+      preferredLanguage: json['preferredLanguage'] as String?,
+      preferredTheme: json['preferredTheme'] as String?,
     );
 
 Map<String, dynamic> _$RegisterRequestModelToJson(
@@ -31,6 +35,10 @@ Map<String, dynamic> _$RegisterRequestModelToJson(
   'email': instance.email,
   'phoneNumber': instance.phoneNumber,
   'password': instance.password,
+  'dateOfBirth': instance.dateOfBirth,
+  'nationality': instance.nationality,
+  'preferredLanguage': instance.preferredLanguage,
+  'preferredTheme': instance.preferredTheme,
 };
 
 LoginResponseModel _$LoginResponseModelFromJson(Map<String, dynamic> json) =>
