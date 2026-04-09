@@ -1,21 +1,28 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/usecases/login_usecase.dart';
 
 part 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
-  LoginCubit({required LoginUseCase loginUseCase})
+  LoginCubit({required LoginUseCase loginUseCase, required Dio dio})
     : _loginUseCase = loginUseCase,
+      _dio = dio,
       super(LoginInitial());
 
   final LoginUseCase _loginUseCase;
+  final Dio _dio;
 
   bool rememberMe = false;
   bool obscurePassword = true;
   String identifier = '';
   String password = '';
+
+  String get currentBaseUrl => ApiConfig.baseUrl;
+  int get currentTimeoutSeconds => ApiConfig.timeoutSeconds;
 
   void updateIdentifier(String value) {
     identifier = value;
@@ -55,6 +62,59 @@ class LoginCubit extends Cubit<LoginState> {
     }
   }
 
+  Future<void> checkServerConnection() async {
+    try {
+      await _dio.post(
+        '/auth/login',
+        data: const {
+          'email': 'connectivity-check@local.test',
+          'password': 'invalid-password',
+        },
+      );
+      emit(
+        LoginServerCheckResult(
+          success: true,
+          message: 'Connected successfully to ${ApiConfig.baseUrl}.',
+        ),
+      );
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      if (statusCode == 400 || statusCode == 401) {
+        emit(
+          LoginServerCheckResult(
+            success: true,
+            message:
+                'Connected to server (${ApiConfig.baseUrl}). API responded with HTTP $statusCode.',
+          ),
+        );
+        return;
+      }
+
+      emit(
+        LoginServerCheckResult(
+          success: false,
+          message: _extractMessage(e),
+        ),
+      );
+    }
+  }
+
+  void updateServerConfig({
+    required String baseUrl,
+    required int timeoutSeconds,
+  }) {
+    InjectionContainer.updateNetworkConfig(
+      baseUrl: baseUrl,
+      timeoutSeconds: timeoutSeconds,
+    );
+    emit(
+      LoginServerConfigUpdated(
+        baseUrl: ApiConfig.baseUrl,
+        timeoutSeconds: ApiConfig.timeoutSeconds,
+      ),
+    );
+  }
+
   Future<void> loginWithFaceId() async {
     emit(LoginError('Biometric login is not connected yet.'));
   }
@@ -70,6 +130,18 @@ class LoginCubit extends Cubit<LoginState> {
   }
 
   String _extractMessage(DioException e) {
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      return 'Request timeout after ${ApiConfig.timeoutSeconds}s. '
+          'Check server IP/port, same Wi-Fi network, and firewall settings.';
+    }
+
+    if (e.type == DioExceptionType.connectionError) {
+      return 'Cannot connect to ${ApiConfig.baseUrl}. '
+          'Make sure backend is running and phone can reach your machine.';
+    }
+
     final payload = e.response?.data;
     if (payload is Map<String, dynamic>) {
       final errors = payload['errors'];

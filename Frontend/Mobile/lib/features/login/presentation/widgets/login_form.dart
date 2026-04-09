@@ -21,8 +21,23 @@ class LoginForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Server: ${cubit.currentBaseUrl}',
+                style: TextStyle(fontSize: 12, color: palette.textSecondary),
+              ),
+              TextButton.icon(
+                onPressed: () => _openServerSettings(context, cubit),
+                icon: const Icon(Icons.settings_ethernet, size: 18),
+                label: const Text('Server Settings'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           Text(
-            "Email",
+            'Email',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -40,9 +55,7 @@ class LoginForm extends StatelessWidget {
               if (value == null || value.isEmpty) {
                 return 'Please enter your email.';
               }
-              if (!RegExp(
-                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  ).hasMatch(value) ) {
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                 return 'Please enter a valid email.';
               }
               return null;
@@ -51,7 +64,7 @@ class LoginForm extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            "Password",
+            'Password',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -89,6 +102,72 @@ class LoginForm extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _openServerSettings(BuildContext context, LoginCubit cubit) async {
+    final baseUrlController = TextEditingController(text: cubit.currentBaseUrl);
+    final timeoutController = TextEditingController(
+      text: cubit.currentTimeoutSeconds.toString(),
+    );
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Server Settings'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: baseUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Base URL',
+                    hintText: 'http://192.168.1.2:5095/api',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: timeoutController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Timeout (seconds)',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final timeout = int.tryParse(timeoutController.text.trim()) ?? 20;
+                cubit.updateServerConfig(
+                  baseUrl: baseUrlController.text.trim(),
+                  timeoutSeconds: timeout,
+                );
+                Navigator.pop(ctx);
+              },
+              child: const Text('Save'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final timeout = int.tryParse(timeoutController.text.trim()) ?? 20;
+                cubit.updateServerConfig(
+                  baseUrl: baseUrlController.text.trim(),
+                  timeoutSeconds: timeout,
+                );
+                cubit.checkServerConnection();
+              },
+              child: const Text('Save & Test'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

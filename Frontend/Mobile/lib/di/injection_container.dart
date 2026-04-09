@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/network/dio_factory.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/data/datasources/auth_api_service.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/data/datasources/auth_remote_datasource.dart';
@@ -81,6 +82,25 @@ class InjectionContainer {
 
   static LoginUseCase loginUseCase() => sl<LoginUseCase>();
   static RegisterUseCase registerUseCase() => sl<RegisterUseCase>();
+
+
+  static Dio dio() => sl<Dio>();
+
+  static void updateNetworkConfig({
+    required String baseUrl,
+    required int timeoutSeconds,
+  }) {
+    ApiConfig.updateBaseUrl(baseUrl);
+    ApiConfig.updateTimeout(timeoutSeconds);
+
+    final dioClient = sl<Dio>();
+    dioClient.options
+      ..baseUrl = ApiConfig.baseUrl
+      ..connectTimeout = Duration(seconds: ApiConfig.timeoutSeconds)
+      ..receiveTimeout = Duration(seconds: ApiConfig.timeoutSeconds)
+      ..sendTimeout = Duration(seconds: ApiConfig.timeoutSeconds);
+  }
+
 
   static IMarketOrderRepository marketOrderRepository() {
     return MarketOrderRepositoryImpl(MarketOrderLocalDataSource());

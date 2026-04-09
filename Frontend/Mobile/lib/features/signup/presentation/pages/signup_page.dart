@@ -29,10 +29,6 @@ class SignupPage extends StatelessWidget {
             );
           }
         },
-        buildWhen: (_, current) =>
-            current is SignupInitial ||
-            current is SignupLoading ||
-            current is SignupStepChanged,
         builder: (context, state) {
           final cubit = BlocProvider.of<SignupCubit>(context);
           final palette = context.appPalette;
