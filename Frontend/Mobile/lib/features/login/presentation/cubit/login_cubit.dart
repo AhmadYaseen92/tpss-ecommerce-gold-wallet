@@ -18,8 +18,8 @@ class LoginCubit extends Cubit<LoginState> {
 
   bool rememberMe = false;
   bool obscurePassword = true;
-  String identifier = '';
-  String password = '';
+  String identifier = 'investor@goldwallet.com';
+  String password = 'Password@123';
 
   String get currentBaseUrl => ApiConfig.baseUrl;
   int get currentTimeoutSeconds => ApiConfig.timeoutSeconds;
@@ -64,13 +64,7 @@ class LoginCubit extends Cubit<LoginState> {
 
   Future<void> checkServerConnection() async {
     try {
-      await _dio.post(
-        '/auth/login',
-        data: const {
-          'email': 'connectivity-check@local.test',
-          'password': 'invalid-password',
-        },
-      );
+      await _dio.get('/auth/ping');
       emit(
         LoginServerCheckResult(
           success: true,
@@ -78,18 +72,6 @@ class LoginCubit extends Cubit<LoginState> {
         ),
       );
     } on DioException catch (e) {
-      final statusCode = e.response?.statusCode;
-      if (statusCode == 400 || statusCode == 401) {
-        emit(
-          LoginServerCheckResult(
-            success: true,
-            message:
-                'Connected to server (${ApiConfig.baseUrl}). API responded with HTTP $statusCode.',
-          ),
-        );
-        return;
-      }
-
       emit(
         LoginServerCheckResult(
           success: false,

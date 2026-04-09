@@ -41,6 +41,10 @@ class LoginForm extends StatelessWidget {
               '⚠️ localhost works only on emulator/simulator. Use your LAN IP for real device.',
               style: TextStyle(fontSize: 12, color: Colors.red.shade700),
             ),
+          Text(
+            'Dev quick test prefill: investor@goldwallet.com / Password@123',
+            style: TextStyle(fontSize: 12, color: palette.textSecondary),
+          ),
           const SizedBox(height: 8),
           Text(
             'Email',

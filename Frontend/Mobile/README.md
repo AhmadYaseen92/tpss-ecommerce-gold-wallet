@@ -36,7 +36,7 @@ From Login screen:
 3. Tap **Save & Test**.
 4. If connected, you'll get a green success snackbar.
 
-Connection check calls `/auth/login` with a test credential and treats `400/401` as **reachable server**.
+Connection check calls `GET /auth/ping` and expects HTTP 200.
 
 ## Generate Retrofit/JSON code
 
@@ -49,6 +49,7 @@ flutter pub run build_runner build --delete-conflicting-outputs
 
 ## Auth endpoints used
 
+- `GET /auth/ping`
 - `POST /auth/login`
 - `POST /auth/register`
 
