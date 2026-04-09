@@ -19,23 +19,31 @@ class LoginRequestModel {
 class RegisterRequestModel {
   const RegisterRequestModel({
     required this.firstName,
+    required this.middleName,
     required this.lastName,
     required this.email,
     required this.phoneNumber,
     required this.password,
     this.dateOfBirth,
     this.nationality,
+    this.documentType,
+    this.idNumber,
+    this.profilePhotoUrl,
     this.preferredLanguage,
     this.preferredTheme,
   });
 
   final String firstName;
+  final String middleName;
   final String lastName;
   final String email;
   final String phoneNumber;
   final String password;
   final String? dateOfBirth;
   final String? nationality;
+  final String? documentType;
+  final String? idNumber;
+  final String? profilePhotoUrl;
   final String? preferredLanguage;
   final String? preferredTheme;
 

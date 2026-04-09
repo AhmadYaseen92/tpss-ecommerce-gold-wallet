@@ -8,12 +8,16 @@ abstract class IAuthRepository {
 
   Future<String> register({
     required String firstName,
+    required String middleName,
     required String lastName,
     required String email,
     required String phoneNumber,
     required String password,
     String? dateOfBirth,
     String? nationality,
+    String? documentType,
+    String? idNumber,
+    String? profilePhotoUrl,
     String? preferredLanguage,
     String? preferredTheme,
   });

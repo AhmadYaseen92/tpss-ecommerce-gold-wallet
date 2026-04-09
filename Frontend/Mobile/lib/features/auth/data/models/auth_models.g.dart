@@ -17,12 +17,16 @@ Map<String, dynamic> _$LoginRequestModelToJson(LoginRequestModel instance) =>
 RegisterRequestModel _$RegisterRequestModelFromJson(Map<String, dynamic> json) =>
     RegisterRequestModel(
       firstName: json['firstName'] as String,
+      middleName: json['middleName'] as String,
       lastName: json['lastName'] as String,
       email: json['email'] as String,
       phoneNumber: json['phoneNumber'] as String,
       password: json['password'] as String,
       dateOfBirth: json['dateOfBirth'] as String?,
       nationality: json['nationality'] as String?,
+      documentType: json['documentType'] as String?,
+      idNumber: json['idNumber'] as String?,
+      profilePhotoUrl: json['profilePhotoUrl'] as String?,
       preferredLanguage: json['preferredLanguage'] as String?,
       preferredTheme: json['preferredTheme'] as String?,
     );
@@ -31,12 +35,16 @@ Map<String, dynamic> _$RegisterRequestModelToJson(
   RegisterRequestModel instance,
 ) => <String, dynamic>{
   'firstName': instance.firstName,
+  'middleName': instance.middleName,
   'lastName': instance.lastName,
   'email': instance.email,
   'phoneNumber': instance.phoneNumber,
   'password': instance.password,
   'dateOfBirth': instance.dateOfBirth,
   'nationality': instance.nationality,
+  'documentType': instance.documentType,
+  'idNumber': instance.idNumber,
+  'profilePhotoUrl': instance.profilePhotoUrl,
   'preferredLanguage': instance.preferredLanguage,
   'preferredTheme': instance.preferredTheme,
 };

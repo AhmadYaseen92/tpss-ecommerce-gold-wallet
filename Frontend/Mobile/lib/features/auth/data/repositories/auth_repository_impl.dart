@@ -25,24 +25,32 @@ class AuthRepositoryImpl implements IAuthRepository {
   @override
   Future<String> register({
     required String firstName,
+    required String middleName,
     required String lastName,
     required String email,
     required String phoneNumber,
     required String password,
     String? dateOfBirth,
     String? nationality,
+    String? documentType,
+    String? idNumber,
+    String? profilePhotoUrl,
     String? preferredLanguage,
     String? preferredTheme,
   }) {
     return _remoteDataSource.register(
       request: RegisterRequestModel(
         firstName: firstName,
+        middleName: middleName,
         lastName: lastName,
         email: email,
         phoneNumber: phoneNumber,
         password: password,
         dateOfBirth: dateOfBirth,
         nationality: nationality,
+        documentType: documentType,
+        idNumber: idNumber,
+        profilePhotoUrl: profilePhotoUrl,
         preferredLanguage: preferredLanguage,
         preferredTheme: preferredTheme,
       ),

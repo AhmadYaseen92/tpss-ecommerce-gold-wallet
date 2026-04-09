@@ -92,3 +92,14 @@ If login still times out:
 5. Do not use `localhost` on real devices; use your machine LAN IP instead.
 6. On iOS, HTTP is allowed in app `Info.plist` for local-dev testing.
 
+
+
+## DB migration required
+
+After pulling latest backend changes, apply migrations so new profile columns are created:
+
+```bash
+dotnet ef database update
+```
+
+Latest migration: `AddUserProfileIdentityFields` (adds `DocumentType`, `IdNumber`, `ProfilePhotoUrl` to `UserProfiles`).

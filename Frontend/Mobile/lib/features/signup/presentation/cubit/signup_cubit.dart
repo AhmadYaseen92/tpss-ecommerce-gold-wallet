@@ -136,12 +136,16 @@ class SignupCubit extends Cubit<SignupState> {
     try {
       final message = await _registerUseCase(
         firstName: firstName,
+        middleName: middleName,
         lastName: lastName,
         email: email,
         phoneNumber: '$phoneCode$phoneNumber',
         password: password,
         dateOfBirth: dateOfBirth?.toIso8601String().split('T').first,
         nationality: nationality,
+        documentType: documentType,
+        idNumber: idNumber,
+        profilePhotoUrl: '',
         preferredLanguage: 'en',
         preferredTheme: 'light',
       );

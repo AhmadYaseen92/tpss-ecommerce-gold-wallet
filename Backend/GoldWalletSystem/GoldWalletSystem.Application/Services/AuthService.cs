@@ -51,7 +51,7 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
 
         var user = new User
         {
-            FullName = $"{request.FirstName.Trim()} {request.LastName.Trim()}".Trim(),
+            FullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  "," ").Trim(),
             Email = request.Email.Trim(),
             PasswordHash = passwordHasher.Hash(request.Password),
             PhoneNumber = request.PhoneNumber?.Trim(),
@@ -65,6 +65,9 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
         {
             DateOfBirth = request.DateOfBirth,
             Nationality = request.Nationality,
+            DocumentType = request.DocumentType,
+            IdNumber = request.IdNumber,
+            ProfilePhotoUrl = request.ProfilePhotoUrl,
             PreferredLanguage = string.IsNullOrWhiteSpace(request.PreferredLanguage) ? "en" : request.PreferredLanguage,
             PreferredTheme = string.IsNullOrWhiteSpace(request.PreferredTheme) ? "light" : request.PreferredTheme,
             CreatedAtUtc = DateTime.UtcNow,

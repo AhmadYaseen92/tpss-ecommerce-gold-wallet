@@ -71,6 +71,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.ToTable("UserProfiles");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Nationality).HasMaxLength(100);
+            entity.Property(x => x.DocumentType).HasMaxLength(50);
+            entity.Property(x => x.IdNumber).HasMaxLength(100);
+            entity.Property(x => x.ProfilePhotoUrl).HasMaxLength(500);
             entity.Property(x => x.PreferredLanguage).HasMaxLength(10);
             entity.Property(x => x.PreferredTheme).HasMaxLength(20);
             entity.HasIndex(x => x.UserId).IsUnique();
