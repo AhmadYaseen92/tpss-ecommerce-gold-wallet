@@ -1,0 +1,16 @@
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\bin\Debug\net10.0\GoldWalletSystem.Application.deps.json
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\bin\Debug\net10.0\GoldWalletSystem.Application.dll
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\bin\Debug\net10.0\GoldWalletSystem.Application.pdb
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\bin\Debug\net10.0\GoldWalletSystem.Domain.dll
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\bin\Debug\net10.0\GoldWalletSystem.Domain.pdb
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\GoldWalletSystem.Application.csproj.AssemblyReference.cache
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\GoldWalletSystem.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\GoldWalletSystem.Application.AssemblyInfoInputs.cache
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\GoldWalletSystem.Application.AssemblyInfo.cs
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\GoldWalletSystem.Application.csproj.CoreCompileInputs.cache
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\GoldWalletSystem.Application.sourcelink.json
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\GoldWall.D3D7E3EE.Up2Date
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\GoldWalletSystem.Application.dll
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\refint\GoldWalletSystem.Application.dll
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\GoldWalletSystem.Application.pdb
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Application\obj\Debug\net10.0\ref\GoldWalletSystem.Application.dll

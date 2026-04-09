@@ -1,0 +1,6 @@
+@GoldWalletSystem.API_HostAddress = http://localhost:5095
+
+GET {{GoldWalletSystem.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
