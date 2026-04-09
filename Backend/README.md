@@ -57,3 +57,10 @@ If your DB is already drifted and you need an immediate fix, run the emergency S
 ```
 
 (Or copy/paste script contents from `Backend/GoldWalletSystem/scripts/fix-missing-seller-schema.sql`.)
+
+
+## Integration architecture
+
+For full mobile feature coverage and required sample-data fields, see:
+
+- `Backend/GoldWalletSystem/docs/mobile-backend-integration-map.md`
