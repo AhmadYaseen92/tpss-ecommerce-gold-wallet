@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/usecases/login_usecase.dart';
 
@@ -53,7 +54,12 @@ class LoginCubit extends Cubit<LoginState> {
         return;
       }
 
-      await _loginUseCase(email: identifier, password: password);
+      final session = await _loginUseCase(email: identifier, password: password);
+      AuthSessionStore.setSession(
+        token: session.accessToken,
+        uid: session.userId,
+        sid: session.sellerId,
+      );
       emit(LoginSuccess());
     } on DioException catch (e) {
       emit(LoginError(_extractMessage(e)));

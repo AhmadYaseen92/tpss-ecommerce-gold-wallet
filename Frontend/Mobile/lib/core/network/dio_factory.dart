@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 
 class DioFactory {
   const DioFactory._();
@@ -14,6 +15,18 @@ class DioFactory {
         headers: const {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+        },
+      ),
+    );
+
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          final token = AuthSessionStore.accessToken;
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
         },
       ),
     );

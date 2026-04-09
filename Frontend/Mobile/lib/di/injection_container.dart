@@ -8,7 +8,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/auth/data/repositories/auth_
 import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/repositories/auth_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/usecases/login_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/usecases/register_usecase.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_local_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/data/repositories/cart_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/repositories/cart_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/add_cart_product_usecase.dart';
@@ -54,7 +54,6 @@ class InjectionContainer {
 
   static final ProductLocalDataSource _productLocalDataSource =
       ProductLocalDataSource();
-  static final CartLocalDataSource _cartLocalDataSource = CartLocalDataSource();
   static final WalletLocalDataSource _walletLocalDataSource =
       WalletLocalDataSource();
   static final TransferLocalDataSource _transferLocalDataSource =
@@ -115,7 +114,7 @@ class InjectionContainer {
   }
 
   static ICartRepository cartRepository() {
-    return CartRepositoryImpl(_cartLocalDataSource);
+    return CartRepositoryImpl(CartRemoteDataSource(sl<Dio>()));
   }
 
   static GetProductsUseCase getProductsUseCase() {

@@ -1,57 +1,54 @@
-import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_local_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/repositories/cart_repository.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/product_item_model.dart';
 
 class CartRepositoryImpl implements ICartRepository {
-  CartRepositoryImpl(this._localDataSource);
+  CartRepositoryImpl(this._remoteDataSource);
 
-  final CartLocalDataSource _localDataSource;
+  final CartRemoteDataSource _remoteDataSource;
 
   @override
   Future<List<CartItemEntity>> getCartItems() async {
-    final items = _localDataSource.getCartItems();
+    final items = await _remoteDataSource.getCartItems();
     return items.map(_toEntity).toList();
   }
 
   @override
   Future<void> addProduct(CartItemEntity item) async {
-    _localDataSource.addProduct(_toModel(item));
+    final productId = int.tryParse(item.id) ?? 0;
+    if (productId <= 0) {
+      throw Exception('Invalid product id for server cart add.');
+    }
+    await _remoteDataSource.addProduct(productId: productId, quantity: item.quantity);
   }
 
   @override
   Future<void> removeProduct(String id) async {
-    _localDataSource.removeProduct(id);
+    final productId = int.tryParse(id) ?? 0;
+    if (productId <= 0) {
+      throw Exception('Invalid product id for server cart remove.');
+    }
+    await _remoteDataSource.removeProduct(productId: productId);
   }
 
   @override
   Future<void> updateProductQuantity(String id, int quantity) async {
-    _localDataSource.updateProductQuantity(id, quantity);
+    final productId = int.tryParse(id) ?? 0;
+    if (productId <= 0) {
+      throw Exception('Invalid product id for server cart update.');
+    }
+    await _remoteDataSource.updateProductQuantity(productId: productId, quantity: quantity);
   }
 
-  CartItemEntity _toEntity(ProductItemModel model) {
+  CartItemEntity _toEntity(CartRemoteItemModel model) {
     return CartItemEntity(
-      id: model.id,
-      name: model.name,
-      description: model.description,
-      price: model.price,
-      imageUrl: model.imageUrl,
-      sellerName: model.sellerName,
+      id: model.productId.toString(),
+      name: model.productName,
+      description: model.productName,
+      price: model.unitPrice,
+      imageUrl: '',
+      sellerName: '',
       quantity: model.quantity,
-    );
-  }
-
-  ProductItemModel _toModel(CartItemEntity entity) {
-    return ProductItemModel(
-      id: entity.id,
-      name: entity.name,
-      description: entity.description,
-      price: entity.price,
-      imageUrl: entity.imageUrl,
-      category: 'Bullion',
-      sellerName: entity.sellerName,
-      quantity: entity.quantity,
-      isInCart: true,
     );
   }
 }
