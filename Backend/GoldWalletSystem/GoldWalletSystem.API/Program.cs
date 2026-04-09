@@ -1,5 +1,7 @@
 using GoldWalletSystem.API.Extensions;
 using GoldWalletSystem.API.Middleware;
+using GoldWalletSystem.Domain.Constants;
+using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -55,6 +57,42 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.Database.MigrateAsync();
+
+    if (!await dbContext.Users.AnyAsync())
+    {
+        var seededUser = new User
+        {
+            FullName = "Test Investor",
+            Email = "investor@goldwallet.com",
+            PasswordHash = "seeded",
+            Role = SystemRoles.Investor,
+            PhoneNumber = "+962700000000",
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        };
+
+        dbContext.Users.Add(seededUser);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.Wallets.Add(new Wallet
+        {
+            UserId = seededUser.Id,
+            CashBalance = 10000,
+            CurrencyCode = "USD",
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+
+        dbContext.Carts.Add(new Cart
+        {
+            UserId = seededUser.Id,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+
+        await dbContext.SaveChangesAsync();
+    }
 }
 
 app.UseHttpsRedirection();

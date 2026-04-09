@@ -55,6 +55,16 @@ flutter pub run build_runner build --delete-conflicting-outputs
 If backend currently exposes only login, signup will fail until `/auth/register` is added server-side.
 
 
+
+## Dev test login credentials
+
+On first backend run in Development, the API auto-seeds a test account if DB has no users:
+
+- **Email:** `investor@goldwallet.com`
+- **Password:** `Password@123`
+
+> This is for local development only.
+
 ## Troubleshooting: mobile cannot connect
 
 If login still times out:
