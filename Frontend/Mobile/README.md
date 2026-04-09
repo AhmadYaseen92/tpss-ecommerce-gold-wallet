@@ -1,16 +1,35 @@
-# tpss_ecommerce_gold_wallet
+# TPSS Gold Wallet Mobile
 
-A new Flutter project.
+Flutter mobile client for the TPSS ecommerce gold wallet platform.
 
-## Getting Started
+## Backend connection (local network)
 
-This project is a starting point for a Flutter application.
+This app now uses **Dio + Retrofit + GetIt** for auth APIs.
 
-A few resources to get you started if this is your first Flutter project:
+Default backend URL is configured for your local machine/network setup:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- `http://192.168.1.2:5095/api`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+You can override it at runtime without code changes:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://192.168.1.2:5095/api
+```
+
+> Keep your phone/emulator and backend machine on the same Wi-Fi/LAN.
+
+## Generate Retrofit/JSON code
+
+Run these commands whenever API models/services change:
+
+```bash
+flutter pub get
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+## Auth endpoints used
+
+- `POST /auth/login`
+- `POST /auth/register`
+
+If your backend currently exposes only login, keep login flow enabled and add `/auth/register` in backend before testing signup.

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/app/data/models/user_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/cubit/login_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
@@ -23,7 +22,7 @@ class LoginForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Email or Phone Number",
+            "Email",
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -32,23 +31,19 @@ class LoginForm extends StatelessWidget {
           ),
           AppTextField(
             initialValue: cubit.identifier,
-            label: 'Email or Phone Number',
-            hint: 'Enter your email or phone number',
+            label: 'Email',
+            hint: 'Enter your email',
             prefixIcon: Icons.mail_outline,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your email or phone number.';
+                return 'Please enter your email.';
               }
               if (!RegExp(
                     r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  ).hasMatch(value) &&
-                  !RegExp(r'^\+?[0-9]{7,15}$').hasMatch(value)) {
-                return 'Please enter a valid email or phone number.';
-              }
-              if (value != dummyUser.email && value != dummyUser.phoneNumber) {
-                return 'No account found with this email or phone number.';
+                  ).hasMatch(value) ) {
+                return 'Please enter a valid email.';
               }
               return null;
             },
@@ -79,9 +74,6 @@ class LoginForm extends StatelessWidget {
               }
               if (value.length < 6) {
                 return 'Password must be at least 6 characters.';
-              }
-              if (value != dummyUser.password) {
-                return 'Incorrect password. Please try again.';
               }
               return null;
             },

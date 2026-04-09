@@ -1,3 +1,12 @@
+import 'package:dio/dio.dart';
+import 'package:get_it/get_it.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/network/dio_factory.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/auth/data/datasources/auth_api_service.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/repositories/auth_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/usecases/login_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/usecases/register_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_local_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/data/repositories/cart_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/repositories/cart_repository.dart';
@@ -30,23 +39,48 @@ import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/repositories
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/calculate_transfer_totals_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/validate_transfer_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/verify_transfer_account_usecase.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/datasources/wallet_action_remote_datasource.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/repositories/wallet_action_repository_impl.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/datasources/wallet_local_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/repositories/wallet_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/repositories/wallet_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/usecases/load_wallets_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/usecases/watch_wallets_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/datasources/wallet_action_remote_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/repositories/wallet_action_repository_impl.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 
 class InjectionContainer {
   const InjectionContainer._();
 
-  static final ProductLocalDataSource _productLocalDataSource = ProductLocalDataSource();
+  static final ProductLocalDataSource _productLocalDataSource =
+      ProductLocalDataSource();
   static final CartLocalDataSource _cartLocalDataSource = CartLocalDataSource();
-  static final WalletLocalDataSource _walletLocalDataSource = WalletLocalDataSource();
-  static final TransferLocalDataSource _transferLocalDataSource = TransferLocalDataSource();
+  static final WalletLocalDataSource _walletLocalDataSource =
+      WalletLocalDataSource();
+  static final TransferLocalDataSource _transferLocalDataSource =
+      TransferLocalDataSource();
   static final SellLocalDataSource _sellLocalDataSource = SellLocalDataSource();
+
+  static final GetIt sl = GetIt.instance;
+
+  static Future<void> setup() async {
+    if (sl.isRegistered<Dio>()) {
+      return;
+    }
+
+    sl.registerLazySingleton<Dio>(DioFactory.create);
+    sl.registerLazySingleton<AuthApiService>(() => AuthApiService(sl<Dio>()));
+    sl.registerLazySingleton<AuthRemoteDataSource>(
+      () => AuthRemoteDataSource(sl<AuthApiService>()),
+    );
+    sl.registerLazySingleton<IAuthRepository>(
+      () => AuthRepositoryImpl(sl<AuthRemoteDataSource>()),
+    );
+    sl.registerLazySingleton<LoginUseCase>(() => LoginUseCase(sl()));
+    sl.registerLazySingleton<RegisterUseCase>(() => RegisterUseCase(sl()));
+  }
+
+  static LoginUseCase loginUseCase() => sl<LoginUseCase>();
+  static RegisterUseCase registerUseCase() => sl<RegisterUseCase>();
 
   static IMarketOrderRepository marketOrderRepository() {
     return MarketOrderRepositoryImpl(MarketOrderLocalDataSource());
@@ -123,7 +157,6 @@ class InjectionContainer {
   static CalculateSellTotalsUseCase calculateSellTotalsUseCase() {
     return const CalculateSellTotalsUseCase();
   }
-
 
   static IWalletRepository walletRepository() {
     return WalletRepositoryImpl(_walletLocalDataSource);

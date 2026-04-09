@@ -1,10 +1,16 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/usecases/login_usecase.dart';
 
 part 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
-  LoginCubit() : super(LoginInitial());
+  LoginCubit({required LoginUseCase loginUseCase})
+    : _loginUseCase = loginUseCase,
+      super(LoginInitial());
+
+  final LoginUseCase _loginUseCase;
 
   bool rememberMe = false;
   bool obscurePassword = true;
@@ -29,46 +35,58 @@ class LoginCubit extends Cubit<LoginState> {
     emit(LoginRememberMeChanged(rememberMe: rememberMe));
   }
 
-  void login({required String identifier, required String password}) async {
+  Future<void> login({
+    required String identifier,
+    required String password,
+  }) async {
     emit(LoginLoading());
     try {
-      await Future.delayed(const Duration(seconds: 2));
       if (identifier.isEmpty || password.isEmpty) {
         emit(LoginError('Please fill in all fields.'));
         return;
       }
+
+      await _loginUseCase(email: identifier, password: password);
       emit(LoginSuccess());
+    } on DioException catch (e) {
+      emit(LoginError(_extractMessage(e)));
     } catch (e) {
       emit(LoginError('Login failed: $e'));
     }
   }
 
-  void loginWithFaceId() async {
-    emit(LoginLoading());
-    try {
-      await Future.delayed(const Duration(milliseconds: 800));
-      // TODO: Integrate biometric authentication
-      emit(LoginSuccess());
-    } catch (e) {
-      emit(LoginError('Face ID authentication failed.'));
-    }
+  Future<void> loginWithFaceId() async {
+    emit(LoginError('Biometric login is not connected yet.'));
   }
 
-  void loginWithFingerprint() async {
-    emit(LoginLoading());
-    try {
-      await Future.delayed(const Duration(milliseconds: 800));
-      // TODO: Integrate biometric authentication
-      emit(LoginSuccess());
-    } catch (e) {
-      emit(LoginError('Fingerprint authentication failed.'));
-    }
+  Future<void> loginWithFingerprint() async {
+    emit(LoginError('Biometric login is not connected yet.'));
   }
 
-    void onLoginPressed(GlobalKey<FormState> formKey) {
+  void onLoginPressed(GlobalKey<FormState> formKey) {
     if (formKey.currentState?.validate() ?? false) {
       login(identifier: identifier, password: password);
     }
   }
 
+  String _extractMessage(DioException e) {
+    final payload = e.response?.data;
+    if (payload is Map<String, dynamic>) {
+      final errors = payload['errors'];
+      if (errors is List && errors.isNotEmpty) {
+        return errors.first.toString();
+      }
+
+      final message = payload['message'];
+      if (message is String && message.trim().isNotEmpty) {
+        return message;
+      }
+    }
+
+    if (e.error is String && (e.error as String).trim().isNotEmpty) {
+      return e.error as String;
+    }
+
+    return 'Login failed. Please check your credentials and backend URL.';
+  }
 }
