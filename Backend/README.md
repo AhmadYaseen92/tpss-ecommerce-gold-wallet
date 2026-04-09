@@ -49,3 +49,11 @@ dotnet ef database update --project GoldWalletSystem.Infrastructure --startup-pr
 
 This repo includes a repair migration (`EnsureSellerAndProfileColumns`) that creates missing seller/profile schema
 idempotently for drifted environments.
+
+If your DB is already drifted and you need an immediate fix, run the emergency SQL script in SSMS:
+
+```sql
+:r Backend/GoldWalletSystem/scripts/fix-missing-seller-schema.sql
+```
+
+(Or copy/paste script contents from `Backend/GoldWalletSystem/scripts/fix-missing-seller-schema.sql`.)
