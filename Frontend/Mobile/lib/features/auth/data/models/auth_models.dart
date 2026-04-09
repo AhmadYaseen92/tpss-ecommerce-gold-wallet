@@ -31,6 +31,7 @@ class RegisterRequestModel {
     this.profilePhotoUrl,
     this.preferredLanguage,
     this.preferredTheme,
+    this.sellerId = 0,
   });
 
   final String firstName;
@@ -46,6 +47,7 @@ class RegisterRequestModel {
   final String? profilePhotoUrl;
   final String? preferredLanguage;
   final String? preferredTheme;
+  final int sellerId;
 
   Map<String, dynamic> toJson() => _$RegisterRequestModelToJson(this);
 }
@@ -57,12 +59,14 @@ class LoginResponseModel {
     required this.expiresAtUtc,
     required this.role,
     required this.userId,
+    required this.sellerId,
   });
 
   final String accessToken;
   final DateTime expiresAtUtc;
   final String role;
   final int userId;
+  final int sellerId;
 
   factory LoginResponseModel.fromJson(Map<String, dynamic> json) =>
       _$LoginResponseModelFromJson(json);

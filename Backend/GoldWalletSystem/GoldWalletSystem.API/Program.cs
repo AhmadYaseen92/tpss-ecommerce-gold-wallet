@@ -60,6 +60,24 @@ using (var scope = app.Services.CreateScope())
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
     await dbContext.Database.MigrateAsync();
 
+    if (!await dbContext.Sellers.AnyAsync())
+    {
+        dbContext.Sellers.Add(new Seller
+        {
+            Name = "Imseeh",
+            Code = "IMSEEH",
+            ContactEmail = "contact@imseeh.com",
+            ContactPhone = "+962700000001",
+            Address = "Amman, Jordan",
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        await dbContext.SaveChangesAsync();
+    }
+
+    var defaultSellerId = await dbContext.Sellers.OrderBy(x => x.Id).Select(x => x.Id).FirstAsync();
+
     if (!await dbContext.Users.AnyAsync())
     {
         var seededUser = new User
@@ -92,6 +110,35 @@ using (var scope = app.Services.CreateScope())
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         });
+
+        if (!await dbContext.Products.AnyAsync())
+        {
+            dbContext.Products.AddRange(
+                new Product
+                {
+                    Name = "Gold Bar 1 oz",
+                    Sku = "XAU-1OZ",
+                    Description = "24K gold bar",
+                    Price = 2189.40m,
+                    AvailableStock = 100,
+                    IsActive = true,
+                    SellerId = defaultSellerId,
+                    CreatedAtUtc = DateTime.UtcNow,
+                    UpdatedAtUtc = DateTime.UtcNow
+                },
+                new Product
+                {
+                    Name = "Gold Bar 10 g",
+                    Sku = "XAU-10G",
+                    Description = "24K gold bar",
+                    Price = 704.50m,
+                    AvailableStock = 250,
+                    IsActive = true,
+                    SellerId = defaultSellerId,
+                    CreatedAtUtc = DateTime.UtcNow,
+                    UpdatedAtUtc = DateTime.UtcNow
+                });
+        }
 
         await dbContext.SaveChangesAsync();
     }

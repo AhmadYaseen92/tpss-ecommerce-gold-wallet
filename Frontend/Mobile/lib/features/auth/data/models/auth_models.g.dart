@@ -29,6 +29,7 @@ RegisterRequestModel _$RegisterRequestModelFromJson(Map<String, dynamic> json) =
       profilePhotoUrl: json['profilePhotoUrl'] as String?,
       preferredLanguage: json['preferredLanguage'] as String?,
       preferredTheme: json['preferredTheme'] as String?,
+      sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$RegisterRequestModelToJson(
@@ -47,6 +48,7 @@ Map<String, dynamic> _$RegisterRequestModelToJson(
   'profilePhotoUrl': instance.profilePhotoUrl,
   'preferredLanguage': instance.preferredLanguage,
   'preferredTheme': instance.preferredTheme,
+  'sellerId': instance.sellerId,
 };
 
 LoginResponseModel _$LoginResponseModelFromJson(Map<String, dynamic> json) =>
@@ -55,6 +57,7 @@ LoginResponseModel _$LoginResponseModelFromJson(Map<String, dynamic> json) =>
       expiresAtUtc: DateTime.parse(json['expiresAtUtc'] as String),
       role: json['role'] as String,
       userId: (json['userId'] as num).toInt(),
+      sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$LoginResponseModelToJson(LoginResponseModel instance) =>
@@ -63,6 +66,7 @@ Map<String, dynamic> _$LoginResponseModelToJson(LoginResponseModel instance) =>
       'expiresAtUtc': instance.expiresAtUtc.toIso8601String(),
       'role': instance.role,
       'userId': instance.userId,
+      'sellerId': instance.sellerId,
     };
 
 ApiEnvelope<T> _$ApiEnvelopeFromJson<T>(

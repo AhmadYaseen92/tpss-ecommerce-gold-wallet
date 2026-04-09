@@ -148,6 +148,7 @@ class SignupCubit extends Cubit<SignupState> {
         profilePhotoUrl: '',
         preferredLanguage: 'en',
         preferredTheme: 'light',
+        sellerId: 0,
       );
       emit(SignupSuccess(message));
     } on DioException catch (e) {

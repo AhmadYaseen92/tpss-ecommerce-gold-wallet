@@ -20,5 +20,6 @@ abstract class IAuthRepository {
     String? profilePhotoUrl,
     String? preferredLanguage,
     String? preferredTheme,
+    int sellerId = 0,
   });
 }

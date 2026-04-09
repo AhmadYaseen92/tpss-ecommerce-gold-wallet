@@ -5,7 +5,7 @@ using GoldWalletSystem.Domain.Entities;
 
 namespace GoldWalletSystem.Application.Services;
 
-public class CartService(ICartRepository cartRepository, IProductRepository productRepository) : ICartService
+public class CartService(ICartRepository cartRepository, IProductRepository productRepository, ICurrentUserService currentUserService) : ICartService
 {
     public async Task<CartDto> GetCartByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
@@ -23,6 +23,11 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
         var cart = await cartRepository.GetOrCreateByUserIdAsync(userId, cancellationToken);
         var product = await productRepository.GetByIdAsync(productId, cancellationToken)
             ?? throw new InvalidOperationException($"Product id {productId} does not exist.");
+
+        if (currentUserService.SellerId is int sellerId && product.SellerId != sellerId)
+        {
+            throw new InvalidOperationException("Product does not belong to your seller.");
+        }
 
         var existingItem = cart.Items.FirstOrDefault(x => x.ProductId == productId);
 

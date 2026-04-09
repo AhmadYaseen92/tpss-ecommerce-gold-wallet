@@ -19,6 +19,7 @@ class AuthRepositoryImpl implements IAuthRepository {
       expiresAtUtc: result.expiresAtUtc,
       role: result.role,
       userId: result.userId,
+      sellerId: result.sellerId,
     );
   }
 
@@ -37,6 +38,7 @@ class AuthRepositoryImpl implements IAuthRepository {
     String? profilePhotoUrl,
     String? preferredLanguage,
     String? preferredTheme,
+    int sellerId = 0,
   }) {
     return _remoteDataSource.register(
       request: RegisterRequestModel(
@@ -53,6 +55,7 @@ class AuthRepositoryImpl implements IAuthRepository {
         profilePhotoUrl: profilePhotoUrl,
         preferredLanguage: preferredLanguage,
         preferredTheme: preferredTheme,
+        sellerId: sellerId,
       ),
     );
   }

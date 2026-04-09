@@ -16,4 +16,5 @@ public class RegisterRequestDto
     public string PreferredLanguage { get; set; } = "en";
     public string PreferredTheme { get; set; } = "light";
     public string Role { get; set; } = GoldWalletSystem.Domain.Constants.SystemRoles.Investor;
+    public int SellerId { get; set; }
 }

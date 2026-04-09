@@ -20,14 +20,15 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             throw new UnauthorizedAccessException("Invalid credentials.");
 
         var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
-        var token = tokenService.GenerateAccessToken(user.Id, user.Email, role);
+        var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, user.SellerId);
 
         return new LoginResponseDto
         {
             AccessToken = token.Token,
             ExpiresAtUtc = token.ExpiresAtUtc,
             Role = role,
-            UserId = user.Id
+            UserId = user.Id,
+            SellerId = user.SellerId
         };
     }
 
@@ -49,6 +50,10 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
 
         var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
 
+        var sellerId = request.SellerId > 0
+            ? request.SellerId
+            : await userAuthRepository.GetDefaultSellerIdAsync(cancellationToken);
+
         var user = new User
         {
             FullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  "," ").Trim(),
@@ -56,6 +61,7 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             PasswordHash = passwordHasher.Hash(request.Password),
             PhoneNumber = request.PhoneNumber?.Trim(),
             Role = role,
+            SellerId = sellerId,
             IsActive = true,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
@@ -82,6 +88,7 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             Email = created.Email,
             FullName = created.FullName,
             Role = created.Role,
+            SellerId = created.SellerId,
         };
     }
 }

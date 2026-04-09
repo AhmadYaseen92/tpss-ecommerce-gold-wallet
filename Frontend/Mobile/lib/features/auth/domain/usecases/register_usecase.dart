@@ -19,6 +19,7 @@ class RegisterUseCase {
     String? profilePhotoUrl,
     String? preferredLanguage,
     String? preferredTheme,
+    int sellerId = 0,
   }) {
     return _repository.register(
       firstName: firstName,
@@ -34,6 +35,7 @@ class RegisterUseCase {
       profilePhotoUrl: profilePhotoUrl,
       preferredLanguage: preferredLanguage,
       preferredTheme: preferredTheme,
+      sellerId: sellerId,
     );
   }
 }
