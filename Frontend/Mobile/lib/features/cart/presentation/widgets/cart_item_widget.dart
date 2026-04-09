@@ -123,7 +123,8 @@ class CartItemWidget extends StatelessWidget {
   }
 
   Widget _buildProductImage(String imageUrl, dynamic palette) {
-    final validNetwork = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+    final parsed = Uri.tryParse(imageUrl.trim());
+    final validNetwork = parsed != null && (parsed.scheme == 'http' || parsed.scheme == 'https') && parsed.host.isNotEmpty;
     if (!validNetwork) {
       return Container(
         width: 84,

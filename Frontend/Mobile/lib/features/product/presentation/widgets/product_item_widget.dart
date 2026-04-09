@@ -64,7 +64,8 @@ class ProductItemWidget extends StatelessWidget {
   }
 
   Widget _buildProductImage(String imageUrl, dynamic palette) {
-    final validNetworkUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+    final parsed = Uri.tryParse(imageUrl.trim());
+    final validNetworkUrl = parsed != null && (parsed.scheme == 'http' || parsed.scheme == 'https') && parsed.host.isNotEmpty;
     if (!validNetworkUrl) {
       return Container(
         width: 80,

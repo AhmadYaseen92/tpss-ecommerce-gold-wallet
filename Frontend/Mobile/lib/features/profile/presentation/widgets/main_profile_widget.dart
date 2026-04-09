@@ -32,6 +32,8 @@ class MainProfileWidget extends StatelessWidget {
         }
 
         final profile = snapshot.data!;
+        final photoUri = Uri.tryParse(profile.profilePhotoUrl.trim());
+        final hasValidPhotoUrl = photoUri != null && (photoUri.scheme == 'http' || photoUri.scheme == 'https') && photoUri.host.isNotEmpty;
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -44,8 +46,8 @@ class MainProfileWidget extends StatelessWidget {
               CircleAvatar(
                 radius: 55,
                 backgroundColor: palette.surfaceMuted,
-                backgroundImage: profile.profilePhotoUrl.isNotEmpty ? NetworkImage(profile.profilePhotoUrl) : null,
-                child: profile.profilePhotoUrl.isEmpty ? Icon(Icons.person, size: 42, color: palette.textSecondary) : null,
+                backgroundImage: hasValidPhotoUrl ? NetworkImage(profile.profilePhotoUrl.trim()) : null,
+                child: !hasValidPhotoUrl ? Icon(Icons.person, size: 42, color: palette.textSecondary) : null,
               ),
               const SizedBox(height: 8),
               Row(
