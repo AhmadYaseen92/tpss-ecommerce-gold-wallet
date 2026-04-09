@@ -1,5 +1,6 @@
 using GoldWalletSystem.API.Extensions;
 using GoldWalletSystem.API.Middleware;
+using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Infrastructure.Database.Context;
@@ -56,6 +57,7 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
     await dbContext.Database.MigrateAsync();
 
     if (!await dbContext.Users.AnyAsync())
@@ -64,7 +66,7 @@ using (var scope = app.Services.CreateScope())
         {
             FullName = "Test Investor",
             Email = "investor@goldwallet.com",
-            PasswordHash = "seeded",
+            PasswordHash = passwordHasher.Hash("Password@123"),
             Role = SystemRoles.Investor,
             PhoneNumber = "+962700000000",
             IsActive = true,

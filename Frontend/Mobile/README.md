@@ -53,9 +53,23 @@ flutter pub run build_runner build --delete-conflicting-outputs
 - `POST /auth/login`
 - `POST /auth/register`
 
-If backend currently exposes only login, signup will fail until `/auth/register` is added server-side.
+`/auth/register` is now available in backend and used by Signup screen.
 
 
+
+
+
+### Password hash format in DB
+
+Backend stores password hash as:
+
+`base64Salt.base64Hash.iterations`
+
+Example (shape only):
+
+`ABCD....==.EFGH....==.100000`
+
+Do not store plain password in `PasswordHash` column.
 
 ## Dev test login credentials
 
