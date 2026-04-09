@@ -53,3 +53,17 @@ flutter pub run build_runner build --delete-conflicting-outputs
 - `POST /auth/register`
 
 If backend currently exposes only login, signup will fail until `/auth/register` is added server-side.
+
+
+## Troubleshooting: mobile cannot connect
+
+If login still times out:
+
+1. Start backend with LAN binding (already configured in this repo):
+   - `Backend/GoldWalletSystem/GoldWalletSystem.API/Properties/launchSettings.json` uses `http://0.0.0.0:5095`
+2. From your phone browser, open `http://192.168.1.2:5095/swagger` (or any API path) to confirm reachability.
+3. Keep both phone and backend machine on same Wi-Fi.
+4. Open Windows/macOS firewall for port `5095`.
+5. Do not use `localhost` on real devices; use your machine LAN IP instead.
+6. On iOS, HTTP is allowed in app `Info.plist` for local-dev testing.
+

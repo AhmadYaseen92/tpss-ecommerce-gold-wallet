@@ -35,6 +35,12 @@ class LoginForm extends StatelessWidget {
               ),
             ],
           ),
+          if (cubit.currentBaseUrl.contains('localhost') ||
+              cubit.currentBaseUrl.contains('127.0.0.1'))
+            Text(
+              '⚠️ localhost works only on emulator/simulator. Use your LAN IP for real device.',
+              style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+            ),
           const SizedBox(height: 8),
           Text(
             'Email',
