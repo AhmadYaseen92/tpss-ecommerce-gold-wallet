@@ -18,6 +18,12 @@ import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/update_
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/datasources/market_order_local_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/repositories/market_order_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/domain/repositories/market_order_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/notification/data/datasources/notification_remote_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/notification/data/repositories/notification_repository_impl.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/repositories/notification_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/get_notifications_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/mark_all_notifications_read_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/mark_notification_read_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/datasources/product_local_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/repositories/product_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/repositories/product_repository.dart';
@@ -117,8 +123,24 @@ class InjectionContainer {
     return CartRepositoryImpl(CartRemoteDataSource(sl<Dio>()));
   }
 
+  static INotificationRepository notificationRepository() {
+    return NotificationRepositoryImpl(NotificationRemoteDataSource(sl<Dio>()));
+  }
+
   static GetProductsUseCase getProductsUseCase() {
     return GetProductsUseCase(productRepository());
+  }
+
+  static GetNotificationsUseCase getNotificationsUseCase() {
+    return GetNotificationsUseCase(notificationRepository());
+  }
+
+  static MarkNotificationReadUseCase markNotificationReadUseCase() {
+    return MarkNotificationReadUseCase(notificationRepository());
+  }
+
+  static MarkAllNotificationsReadUseCase markAllNotificationsReadUseCase() {
+    return MarkAllNotificationsReadUseCase(notificationRepository());
   }
 
   static GetProductDetailUseCase getProductDetailUseCase() {
