@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+namespace GoldWalletSystem.Application.DTOs.Auth;
 
-namespace GoldWalletSystem.Application.DTOs.Auth
+public class LoginRequestDto
 {
-    internal class LoginRequestDto
-    {
-    }
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }

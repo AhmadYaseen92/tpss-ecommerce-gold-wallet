@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+namespace GoldWalletSystem.Application.DTOs.Auth;
 
-namespace GoldWalletSystem.Application.DTOs.Auth
+public class LoginResponseDto
 {
-    internal class LoginResponseDto
-    {
-    }
+    public required string AccessToken { get; init; }
+    public required DateTime ExpiresAtUtc { get; init; }
+    public required string Role { get; init; }
+    public required int UserId { get; init; }
 }
