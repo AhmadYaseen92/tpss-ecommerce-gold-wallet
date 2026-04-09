@@ -25,6 +25,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/mark_all_notifications_read_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/mark_notification_read_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/datasources/product_local_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/data/datasources/product_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/repositories/product_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/repositories/product_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/add_product_to_cart_usecase.dart';
@@ -116,7 +117,11 @@ class InjectionContainer {
   }
 
   static IProductRepository productRepository() {
-    return ProductRepositoryImpl(_productLocalDataSource);
+    return ProductRepositoryImpl(
+      ProductRemoteDataSource(sl<Dio>()),
+      _productLocalDataSource,
+      CartRemoteDataSource(sl<Dio>()),
+    );
   }
 
   static ICartRepository cartRepository() {
