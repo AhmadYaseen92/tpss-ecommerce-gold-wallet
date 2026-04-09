@@ -6,4 +6,5 @@ namespace GoldWalletSystem.Application.Interfaces.Repositories;
 public interface ITransactionHistoryReadRepository
 {
     Task<PagedResult<TransactionHistoryDto>> GetByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+    Task<PagedResult<TransactionHistoryDto>> FilterAsync(TransactionHistoryFilterRequestDto request, CancellationToken cancellationToken = default);
 }

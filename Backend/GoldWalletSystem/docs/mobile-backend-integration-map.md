@@ -9,6 +9,11 @@ and which database entities/fields must be populated when manually seeding sampl
 - `POST /api/auth/register`
 - `GET /api/auth/ping`
 - `POST /api/profile/by-user`
+- `PUT /api/profile/personal`
+- `PUT /api/profile/settings`
+- `PUT /api/profile/password`
+- `POST /api/profile/payment-methods`
+- `POST /api/profile/linked-bank-accounts`
 
 Required entities/fields:
 - `Users`: `Id`, `Email`, `PasswordHash`, `Role`, `SellerId`, `IsActive`
@@ -36,6 +41,8 @@ Required entities/fields:
 
 - `POST /api/cart/by-user`
 - `POST /api/cart/items`
+- `PUT /api/cart/items`
+- `DELETE /api/cart/items/{userId}/{productId}`
 
 Required entities/fields:
 - `Carts`: `UserId`
@@ -45,6 +52,8 @@ Required entities/fields:
 ## 5) Transactions history & invoices
 
 - `POST /api/transaction-history/search`
+- `POST /api/transaction-history/filter`
+- `POST /api/transaction-history/export-csv`
 - `POST /api/invoices/search`
 - `POST /api/invoices/create`
 

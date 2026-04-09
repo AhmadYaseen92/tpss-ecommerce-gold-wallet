@@ -9,4 +9,7 @@ public class TransactionHistoryService(ITransactionHistoryReadRepository transac
 {
     public Task<PagedResult<TransactionHistoryDto>> GetByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
         => transactionHistoryReadRepository.GetByUserIdAsync(userId, pageNumber, pageSize, cancellationToken);
+
+    public Task<PagedResult<TransactionHistoryDto>> FilterAsync(TransactionHistoryFilterRequestDto request, CancellationToken cancellationToken = default)
+        => transactionHistoryReadRepository.FilterAsync(request, cancellationToken);
 }
