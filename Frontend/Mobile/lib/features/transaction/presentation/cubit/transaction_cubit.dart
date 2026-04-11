@@ -14,7 +14,9 @@ class TransactionCubit extends Cubit<TransactionState> {
 
   TransactionCubit() : super(TransactionInitial());
 
-  void loadTransactions({String seller = AppReleaseConfig.allSellersLabel}) async {
+  Future<void> loadTransactions({
+    String seller = AppReleaseConfig.allSellersLabel,
+  }) async {
     activeSeller = AppReleaseConfig.isIndividualSellerRelease
         ? AppReleaseConfig.individualSellerName
         : seller;
