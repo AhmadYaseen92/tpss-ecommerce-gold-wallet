@@ -18,7 +18,7 @@ class ProductRepositoryImpl implements IProductRepository {
 
   @override
   Future<List<ProductEntity>> getProducts() async {
-    final products = await _remoteDataSource.getProducts(pageNumber: 1, pageSize: 100);
+    final products = await _remoteDataSource.getProducts(pageNumber: 1, pageSize: 20);
     return products.map(_toEntity).toList();
   }
 

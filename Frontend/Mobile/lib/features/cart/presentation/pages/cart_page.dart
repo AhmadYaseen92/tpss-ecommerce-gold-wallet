@@ -71,9 +71,14 @@ class _CartPageState extends State<CartPage> {
                         ),
                       ),
                     Expanded(
-                      child: CartItemWidget(
-                        cartCubit: cartCubit,
-                        cartProducts: cartProducts,
+                      child: RefreshIndicator(
+                        onRefresh: () => cartCubit.loadCartProducts(
+                          sellerFilter: _selectedSeller ?? state.selectedSellerFilter,
+                        ),
+                        child: CartItemWidget(
+                          cartCubit: cartCubit,
+                          cartProducts: cartProducts,
+                        ),
                       ),
                     ),
                     CartSummary(summary: state.summary),

@@ -54,7 +54,16 @@ class ProductPage extends StatelessWidget {
               const SizedBox(height: 10),
               Expanded(
                 child: TabBarView(
-                  children: [CatalogTabWidget(), MarketWatchTabWidget()],
+                  children: [
+                    RefreshIndicator(
+                      onRefresh: () => context.read<ProductCubit>().loadProducts(seller: activeSeller),
+                      child: CatalogTabWidget(),
+                    ),
+                    RefreshIndicator(
+                      onRefresh: () => context.read<ProductCubit>().loadProducts(seller: activeSeller),
+                      child: MarketWatchTabWidget(),
+                    ),
+                  ],
                 ),
               ),
             ],

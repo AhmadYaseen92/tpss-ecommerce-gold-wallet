@@ -95,13 +95,18 @@ class TransactionPage extends StatelessWidget {
                               style: TextStyle(color: AppColors.grey),
                             ),
                           )
-                        : ListView.builder(
-                            itemCount: state.transactions.length,
-                            itemBuilder: (context, index) {
-                              return TransactionItemWidget(
-                                transaction: state.transactions[index],
-                              );
-                            },
+                        : RefreshIndicator(
+                            onRefresh: () => context.read<TransactionCubit>().loadTransactions(
+                              seller: context.read<TransactionCubit>().activeSeller,
+                            ),
+                            child: ListView.builder(
+                              itemCount: state.transactions.length,
+                              itemBuilder: (context, index) {
+                                return TransactionItemWidget(
+                                  transaction: state.transactions[index],
+                                );
+                              },
+                            ),
                           ),
                   ),
                 ],

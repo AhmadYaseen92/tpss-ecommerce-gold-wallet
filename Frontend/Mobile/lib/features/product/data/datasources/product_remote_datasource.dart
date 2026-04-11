@@ -5,7 +5,7 @@ class ProductRemoteDataSource {
 
   final Dio _dio;
 
-  Future<List<ProductRemoteModel>> getProducts({int pageNumber = 1, int pageSize = 100}) async {
+  Future<List<ProductRemoteModel>> getProducts({int pageNumber = 1, int pageSize = 20}) async {
     final response = await _dio.post(
       '/products/search',
       data: {

@@ -13,11 +13,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
     public async Task<PagedResult<ProductDto>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Products.AsNoTracking().Where(x => x.IsActive);
-
-        if (currentUser.SellerId is int sellerId)
-        {
-            query = query.Where(x => x.SellerId == sellerId);
-        }
+        _ = currentUser;
 
         query = query.OrderBy(x => x.Id);
         var totalCount = await query.CountAsync(cancellationToken);

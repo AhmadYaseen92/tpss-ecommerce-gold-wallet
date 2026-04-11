@@ -37,9 +37,9 @@ class NotificationPage extends StatelessWidget {
             if (!hasAny) {
               body = Center(child: Text('No notifications found.', style: TextStyle(color: palette.textSecondary)));
             } else {
-              body = SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              body = RefreshIndicator(
+                onRefresh: () => context.read<NotificationCubit>().loadNotifications(),
+                child: ListView(
                   children: [
                     if (state.todayNotifications.isNotEmpty) ...[
                       Padding(
