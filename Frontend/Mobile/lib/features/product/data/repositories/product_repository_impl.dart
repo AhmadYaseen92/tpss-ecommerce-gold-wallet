@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/datasources/product_local_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/datasources/product_remote_datasource.dart';
@@ -19,7 +20,11 @@ class ProductRepositoryImpl implements IProductRepository {
   @override
   Future<List<ProductEntity>> getProducts() async {
     final products = await _remoteDataSource.getProducts(pageNumber: 1, pageSize: 20);
-    return products.map(_toEntity).toList();
+    final userSellerId = AuthSessionStore.sellerId;
+    final allowed = userSellerId == null
+        ? products
+        : products.where((product) => product.sellerId == userSellerId).toList();
+    return allowed.map(_toEntity).toList();
   }
 
   @override
@@ -39,6 +44,11 @@ class ProductRepositoryImpl implements IProductRepository {
 
   @override
   Future<void> addToCart(ProductEntity product, int quantity) async {
+    final userSellerId = AuthSessionStore.sellerId;
+    if (userSellerId != null && product.sellerId != userSellerId) {
+      throw Exception('Product does not belong to your seller scope.');
+    }
+
     final productId = int.tryParse(product.id);
     if (productId == null) {
       throw Exception('Invalid product id for server add-to-cart.');
@@ -56,6 +66,7 @@ class ProductRepositoryImpl implements IProductRepository {
   ProductEntity _toEntity(ProductRemoteModel model) {
     return ProductEntity(
       id: model.id.toString(),
+      sellerId: model.sellerId,
       name: model.name,
       description: model.description,
       price: model.price,
