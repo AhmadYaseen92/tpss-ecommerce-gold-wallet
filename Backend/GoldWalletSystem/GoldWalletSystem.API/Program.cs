@@ -125,42 +125,43 @@ using (var scope = app.Services.CreateScope())
             UpdatedAtUtc = DateTime.UtcNow
         });
 
-        if (await dbContext.Products.CountAsync() < 50)
+        await dbContext.SaveChangesAsync();
+    }
+
+    if (await dbContext.Products.CountAsync() < 50)
+    {
+        var productNames = new[]
         {
-            var productNames = new[]
+            "Gold Bar 1 oz", "Gold Bar 10 g", "Gold Bar 100 g", "Gold Coin 1 oz", "Gold Cast Bar 50 g",
+            "Silver Bar 1 kg", "Silver Bar 100 g", "Silver Coin 1 oz", "Silver Round 1 oz", "Silver Stacker 5 oz",
+            "Platinum Bar 1 oz", "Platinum Coin 1 oz", "Palladium Bar 1 oz", "Palladium Coin 1 oz", "Mixed Bullion Pack",
+            "Gold Necklace 18K", "Gold Ring 18K", "Gold Bracelet 18K", "Diamond Ring", "Emerald Pendant"
+        };
+
+        var products = new List<Product>();
+        for (var i = 0; i < 60; i++)
+        {
+            var sellerId = allSellerIds[i % allSellerIds.Count];
+            var template = productNames[i % productNames.Length];
+            var sku = $"SKU-{sellerId:D2}-{i + 1:D3}";
+            var price = 100 + (i * 13.75m);
+
+            products.Add(new Product
             {
-                "Gold Bar 1 oz", "Gold Bar 10 g", "Gold Bar 100 g", "Gold Coin 1 oz", "Gold Cast Bar 50 g",
-                "Silver Bar 1 kg", "Silver Bar 100 g", "Silver Coin 1 oz", "Silver Round 1 oz", "Silver Stacker 5 oz",
-                "Platinum Bar 1 oz", "Platinum Coin 1 oz", "Palladium Bar 1 oz", "Palladium Coin 1 oz", "Mixed Bullion Pack",
-                "Gold Necklace 18K", "Gold Ring 18K", "Gold Bracelet 18K", "Diamond Ring", "Emerald Pendant"
-            };
-
-            var products = new List<Product>();
-            for (var i = 0; i < 60; i++)
-            {
-                var sellerId = allSellerIds[i % allSellerIds.Count];
-                var template = productNames[i % productNames.Length];
-                var sku = $"SKU-{sellerId:D2}-{i + 1:D3}";
-                var price = 100 + (i * 13.75m);
-
-                products.Add(new Product
-                {
-                    Name = $"{template} #{i + 1}",
-                    Sku = sku,
-                    Description = $"Seeded product for seller {sellerId}.",
-                    Price = price,
-                    AvailableStock = 20 + (i % 40),
-                    IsActive = true,
-                    SellerId = sellerId,
-                    CreatedAtUtc = DateTime.UtcNow,
-                    UpdatedAtUtc = DateTime.UtcNow
-                });
-            }
-
-            var existingSkus = await dbContext.Products.AsNoTracking().Select(x => x.Sku).ToHashSetAsync();
-            dbContext.Products.AddRange(products.Where(product => !existingSkus.Contains(product.Sku)));
+                Name = $"{template} #{i + 1}",
+                Sku = sku,
+                Description = $"Seeded product for seller {sellerId}.",
+                Price = price,
+                AvailableStock = 20 + (i % 40),
+                IsActive = true,
+                SellerId = sellerId,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
         }
 
+        var existingSkus = await dbContext.Products.AsNoTracking().Select(x => x.Sku).ToHashSetAsync();
+        dbContext.Products.AddRange(products.Where(product => !existingSkus.Contains(product.Sku)));
         await dbContext.SaveChangesAsync();
     }
 }
