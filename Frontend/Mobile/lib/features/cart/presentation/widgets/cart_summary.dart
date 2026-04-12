@@ -7,8 +7,15 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 
 class CartSummary extends StatelessWidget {
   final CartSummaryEntity summary;
+  final List<String> cartProductIds;
+  final Future<void> Function()? onCheckoutCompleted;
 
-  const CartSummary({super.key, required this.summary});
+  const CartSummary({
+    super.key,
+    required this.summary,
+    required this.cartProductIds,
+    this.onCheckoutCompleted,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +84,20 @@ class CartSummary extends StatelessWidget {
             height: 56,
             child: AppButton(
               label: 'Proceed to Checkout',
-              onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.checkoutRoute),
+              onPressed: () async {
+                final result = await Navigator.of(context, rootNavigator: true).pushNamed(
+                  AppRoutes.checkoutRoute,
+                  arguments: {
+                    'source': 'cart',
+                    'fromCart': true,
+                    'productIds': cartProductIds,
+                    'amount': summary.total,
+                  },
+                );
+                if (result == true) {
+                  await onCheckoutCompleted?.call();
+                }
+              },
             ),
           ),
         ],

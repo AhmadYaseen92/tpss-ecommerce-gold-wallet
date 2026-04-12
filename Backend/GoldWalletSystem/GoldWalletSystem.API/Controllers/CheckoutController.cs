@@ -51,7 +51,18 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             if (cart.Items.Count == 0)
                 throw new InvalidOperationException("Cart is empty.");
 
-            lines.AddRange(cart.Items.Select(item => (item.Product, item.Quantity)));
+            var selectedItems = cart.Items.AsEnumerable();
+            if (request.ProductIds is { Count: > 0 })
+            {
+                var productIdSet = request.ProductIds.ToHashSet();
+                selectedItems = selectedItems.Where(item => productIdSet.Contains(item.ProductId));
+            }
+
+            var selectedList = selectedItems.ToList();
+            if (selectedList.Count == 0)
+                throw new InvalidOperationException("No matching cart items were selected for checkout.");
+
+            lines.AddRange(selectedList.Select(item => (item.Product, item.Quantity)));
         }
         else
         {
@@ -122,7 +133,16 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
 
         if (request.FromCart && cart is not null)
         {
-            dbContext.CartItems.RemoveRange(cart.Items);
+            if (request.ProductIds is { Count: > 0 })
+            {
+                var productIdSet = request.ProductIds.ToHashSet();
+                var matchedItems = cart.Items.Where(x => productIdSet.Contains(x.ProductId)).ToList();
+                dbContext.CartItems.RemoveRange(matchedItems);
+            }
+            else
+            {
+                dbContext.CartItems.RemoveRange(cart.Items);
+            }
         }
 
         dbContext.AuditLogs.Add(new AuditLog
@@ -174,6 +194,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
     {
         public int UserId { get; set; }
         public bool FromCart { get; set; } = true;
+        public List<int>? ProductIds { get; set; }
         public int? ProductId { get; set; }
         public int? Quantity { get; set; }
     }

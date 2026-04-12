@@ -104,7 +104,13 @@ class _CartPageState extends State<CartPage> {
                           ),
                         ),
                       ),
-                      CartSummary(summary: state.summary),
+                      CartSummary(
+                        summary: state.summary,
+                        cartProductIds: state.cartProducts.map((item) => item.id).toList(),
+                        onCheckoutCompleted: () => cartCubit.loadCartProducts(
+                          sellerFilter: _selectedSeller ?? state.selectedSellerFilter,
+                        ),
+                      ),
                     ],
                   );
                 } else if (state is CartError) {

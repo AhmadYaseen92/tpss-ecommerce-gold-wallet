@@ -45,9 +45,21 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     return BlocProvider(
       create: (_) => CheckoutCubit(InjectionContainer.dio())..load(),
       child: BlocConsumer<CheckoutCubit, CheckoutState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is CheckoutSuccess) {
-            AppModalAlert.show(context, title: 'Payment Confirmed', message: 'Payment confirmed with WhatsApp OTP.');
+            await AppModalAlert.show(
+              context,
+              title: 'Checkout Successful',
+              message: 'Purchase completed and added to your wallet.',
+            );
+            if (!mounted) return;
+            _navigateAfterSuccess();
+          } else if (state is CheckoutError) {
+            await AppModalAlert.show(
+              context,
+              title: 'Checkout Failed',
+              message: state.message,
+            );
           }
         },
         builder: (context, state) {
@@ -166,7 +178,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                               },
                             );
                             if (otpVerified == true) {
-                              cubit.confirmOtp(checkoutArgs: _checkoutArgs);
+                              await cubit.confirmOtp(checkoutArgs: _checkoutArgs);
                             }
                           },
                     icon: state is CheckoutLoading
@@ -181,6 +193,27 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         },
       ),
     );
+  }
+
+  void _navigateAfterSuccess() {
+    final source = (_checkoutArgs['source'] ?? '').toString().toLowerCase();
+    if (source == 'cart') {
+      Navigator.of(context, rootNavigator: true).pop(true);
+      return;
+    }
+
+    final navigator = Navigator.of(context, rootNavigator: true);
+    var foundProductRoute = false;
+    navigator.popUntil((route) {
+      final isProductRoute = route.settings.name == AppRoutes.productRoute;
+      if (isProductRoute) {
+        foundProductRoute = true;
+      }
+      return isProductRoute || route.isFirst;
+    });
+    if (!foundProductRoute) {
+      navigator.pushNamed(AppRoutes.productRoute);
+    }
   }
 
   void _applyDiscountCode(double amount) {

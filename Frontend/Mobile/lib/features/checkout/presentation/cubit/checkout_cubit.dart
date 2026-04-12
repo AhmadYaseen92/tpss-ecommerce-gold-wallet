@@ -34,32 +34,44 @@ class CheckoutCubit extends Cubit<CheckoutState> {
 
   Future<void> confirmOtp({required Map<String, dynamic> checkoutArgs}) async {
     emit(CheckoutLoading());
-    final userId = AuthSessionStore.userId;
-    if (userId == null) {
-      emit(CheckoutError('No logged-in user.'));
-      return;
+    try {
+      final userId = AuthSessionStore.userId;
+      if (userId == null) {
+        emit(CheckoutError('No logged-in user.'));
+        return;
+      }
+
+      final fromCart = checkoutArgs['fromCart'] == true;
+      final productIdRaw = checkoutArgs['productId'];
+      final quantityRaw = checkoutArgs['quantity'];
+      final productId = productIdRaw is num ? productIdRaw.toInt() : int.tryParse('$productIdRaw');
+      final quantity = quantityRaw is num ? quantityRaw.toInt() : int.tryParse('$quantityRaw');
+      final productIdsRaw = checkoutArgs['productIds'];
+      final productIds = productIdsRaw is List
+          ? productIdsRaw
+                .map((e) => e is num ? e.toInt() : int.tryParse('$e'))
+                .whereType<int>()
+                .toList()
+          : <int>[];
+
+      await _dio.post('/checkout/confirm', data: {
+        'userId': userId,
+        'fromCart': fromCart,
+        if (fromCart) 'productIds': productIds,
+        if (!fromCart) 'productId': productId,
+        if (!fromCart) 'quantity': quantity,
+      });
+
+      otpConfirmed = true;
+      emit(CheckoutSuccess());
+      emit(
+        CheckoutDataChanged(
+          selectedPaymentType: selectedPaymentType,
+          otpConfirmed: otpConfirmed,
+        ),
+      );
+    } catch (e) {
+      emit(CheckoutError('Checkout failed: $e'));
     }
-
-    final productIdRaw = checkoutArgs['productId'];
-    final quantityRaw = checkoutArgs['quantity'];
-    final productId = productIdRaw is num ? productIdRaw.toInt() : int.tryParse('$productIdRaw');
-    final quantity = quantityRaw is num ? quantityRaw.toInt() : int.tryParse('$quantityRaw');
-    final fromCart = productId == null || quantity == null;
-
-    await _dio.post('/checkout/confirm', data: {
-      'userId': userId,
-      'fromCart': fromCart,
-      if (!fromCart) 'productId': productId,
-      if (!fromCart) 'quantity': quantity,
-    });
-
-    otpConfirmed = true;
-    emit(CheckoutSuccess());
-    emit(
-      CheckoutDataChanged(
-        selectedPaymentType: selectedPaymentType,
-        otpConfirmed: otpConfirmed,
-      ),
-    );
   }
 }
