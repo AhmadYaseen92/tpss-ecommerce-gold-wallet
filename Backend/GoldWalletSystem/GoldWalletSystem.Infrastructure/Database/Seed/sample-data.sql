@@ -4,7 +4,7 @@ Full merged seed script for GoldWalletSystemDb
 Includes:
 1) Sellers upsert
 2) Users upsert
-3) New user: investoe@goldwallet.com
+3) New user: investor@goldwallet.com
 4) UserProfiles, Wallets, Carts creation
 5) Empty startup state for CartItems, WalletAssets, TransactionHistories
 6) Products upsert with LOCAL server image paths
@@ -86,7 +86,7 @@ BEGIN TRY
         (N'Bullion Investor2',    N'bullion.investor2@example.com',   N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', @SellerBullion, N'+15551030003'),
 
         -- Requested new user
-        (N'Gold Wallet Investor', N'investoe@goldwallet.com',         N'NN53R1Ggd5QH71EKW6wALA==.UbTyu0VUnNi27SE8JQbIjY5d8gs3jgo+SiUsNtLtt8I=.100000', N'Investor', @SellerImseeh,  N'+962790000999');
+        (N'Gold Wallet Investor', N'investor@goldwallet.com',         N'NN53R1Ggd5QH71EKW6wALA==.UbTyu0VUnNi27SE8JQbIjY5d8gs3jgo+SiUsNtLtt8I=.100000', N'Investor', @SellerImseeh,  N'+962790000999');
 
     MERGE [Users] AS T
     USING @Users AS S
@@ -299,7 +299,7 @@ FROM [Sellers];
 SELECT COUNT(*) AS UserCount
 FROM [Users]
 WHERE [Email] LIKE N'%@example.com'
-   OR [Email] = N'investoe@goldwallet.com';
+   OR [Email] = N'investor@goldwallet.com';
 
 SELECT COUNT(*) AS ProductCount
 FROM [Products]
@@ -309,7 +309,7 @@ WHERE [Sku] LIKE N'IMSEEH-%'
 
 SELECT [Id], [FullName], [Email], [Role], [SellerId], [IsActive]
 FROM [Users]
-WHERE [Email] = N'investoe@goldwallet.com';
+WHERE [Email] = N'investor@goldwallet.com';
 
 SELECT TOP 20 [Id], [Name], [Sku], [ImageUrl]
 FROM [Products]
