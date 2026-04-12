@@ -20,11 +20,7 @@ class ProductRepositoryImpl implements IProductRepository {
   @override
   Future<List<ProductEntity>> getProducts() async {
     final products = await _remoteDataSource.getProducts(pageNumber: 1, pageSize: 20);
-    final userSellerId = AuthSessionStore.sellerId;
-    final allowed = userSellerId == null
-        ? products
-        : products.where((product) => product.sellerId == userSellerId).toList();
-    return allowed.map(_toEntity).toList();
+    return products.map(_toEntity).toList();
   }
 
   @override
