@@ -8,12 +8,12 @@ final class ProductLoading extends ProductState {}
 
 final class ProductLoaded extends ProductState {
   final List<ProductEntity> products;
-  final String category;
+  final int? categoryId;
   final String seller;
 
   ProductLoaded({
     required this.products,
-    required this.category,
+    required this.categoryId,
     required this.seller,
   });
 }

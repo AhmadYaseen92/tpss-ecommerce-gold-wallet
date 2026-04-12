@@ -7,6 +7,7 @@ class ProductEntity {
     required this.price,
     required this.imageUrl,
     required this.category,
+    required this.categoryId,
     required this.isFavorite,
     required this.purity,
     required this.weight,
@@ -23,6 +24,7 @@ class ProductEntity {
   final double price;
   final String imageUrl;
   final String category;
+  final int categoryId;
   final bool isFavorite;
   final String purity;
   final String weight;
@@ -39,6 +41,7 @@ class ProductEntity {
     double? price,
     String? imageUrl,
     String? category,
+    int? categoryId,
     bool? isFavorite,
     String? purity,
     String? weight,
@@ -55,6 +58,7 @@ class ProductEntity {
       price: price ?? this.price,
       imageUrl: imageUrl ?? this.imageUrl,
       category: category ?? this.category,
+      categoryId: categoryId ?? this.categoryId,
       isFavorite: isFavorite ?? this.isFavorite,
       purity: purity ?? this.purity,
       weight: weight ?? this.weight,

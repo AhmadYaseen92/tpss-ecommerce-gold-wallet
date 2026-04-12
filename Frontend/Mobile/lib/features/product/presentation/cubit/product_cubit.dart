@@ -45,7 +45,7 @@ class ProductCubit extends Cubit<ProductState> {
   List<ProductEntity> visibleCatalogProducts = [];
   List<MarketSymbolEntity> visibleMarketSymbols = [];
 
-  String selectedCategory = 'All';
+  int? selectedCategoryId;
   String activeSeller = AppReleaseConfig.defaultSeller;
   int quantity = 1;
 
@@ -55,7 +55,7 @@ class ProductCubit extends Cubit<ProductState> {
     emit(ProductLoading());
     try {
       allProducts = await _getProductsUseCase();
-      selectedCategory = 'All';
+      selectedCategoryId = null;
       activeSeller = AppReleaseConfig.isIndividualSellerRelease
           ? AppReleaseConfig.individualSellerName
           : seller;
@@ -73,8 +73,8 @@ class ProductCubit extends Cubit<ProductState> {
     _emitMarketWatch();
   }
 
-  void applyCategoryFilter({required String category}) {
-    selectedCategory = category;
+  void applyCategoryFilter({required int? categoryId}) {
+    selectedCategoryId = categoryId;
     _emitCatalog();
   }
 
@@ -129,14 +129,14 @@ class ProductCubit extends Cubit<ProductState> {
   void _emitCatalog() {
     visibleCatalogProducts = _filterProductsUseCase(
       products: allProducts,
-      category: selectedCategory,
+      categoryId: selectedCategoryId,
       seller: activeSeller,
     );
 
     emit(
       ProductLoaded(
         products: visibleCatalogProducts,
-        category: selectedCategory,
+        categoryId: selectedCategoryId,
         seller: activeSeller,
       ),
     );

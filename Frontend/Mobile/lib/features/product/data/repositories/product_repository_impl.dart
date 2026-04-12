@@ -1,6 +1,5 @@
 import 'dart:collection';
 
-import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/datasources/product_local_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/datasources/product_remote_datasource.dart';
@@ -19,8 +18,22 @@ class ProductRepositoryImpl implements IProductRepository {
 
   @override
   Future<List<ProductEntity>> getProducts() async {
-    final products = await _remoteDataSource.getProducts(pageNumber: 1, pageSize: 20);
-    return products.map(_toEntity).toList();
+    const pageSize = 50;
+    final allModels = <ProductRemoteModel>[];
+    var pageNumber = 1;
+    var totalCount = 0;
+
+    do {
+      final response = await _remoteDataSource.getProducts(
+        pageNumber: pageNumber,
+        pageSize: pageSize,
+      );
+      allModels.addAll(response.items);
+      totalCount = response.totalCount;
+      pageNumber++;
+    } while (allModels.length < totalCount && totalCount > 0);
+
+    return allModels.map(_toEntity).toList();
   }
 
   @override
@@ -40,11 +53,6 @@ class ProductRepositoryImpl implements IProductRepository {
 
   @override
   Future<void> addToCart(ProductEntity product, int quantity) async {
-    final userSellerId = AuthSessionStore.sellerId;
-    if (userSellerId != null && product.sellerId != userSellerId) {
-      throw Exception('Product does not belong to your seller scope.');
-    }
-
     final productId = int.tryParse(product.id);
     if (productId == null) {
       throw Exception('Invalid product id for server add-to-cart.');
@@ -69,7 +77,8 @@ class ProductRepositoryImpl implements IProductRepository {
       imageUrl: model.imageUrl.trim().isNotEmpty
           ? model.imageUrl
           : _imageBySkuOrName(sku: model.sku, name: model.name),
-      category: _categoryByName(model.name),
+      category: _categoryLabelById(model.categoryId),
+      categoryId: model.categoryId,
       isFavorite: _favoriteProductIds.contains(model.id.toString()),
       purity: _purityByDescription(model.description),
       weight: _weightBySku(model.sku),
@@ -90,14 +99,14 @@ class ProductRepositoryImpl implements IProductRepository {
     );
   }
 
-  String _categoryByName(String name) {
-    final value = name.toLowerCase();
-    if (value.contains('ring') || value.contains('necklace') || value.contains('pendant') || value.contains('earring')) {
-      return 'Jewellery';
-    }
-    if (value.contains('coin')) return 'Coins';
+  String _categoryLabelById(int categoryId) {
+    if (_coinCategoryIds.contains(categoryId)) return 'Coins';
+    if (_jewelleryCategoryIds.contains(categoryId)) return 'Jewellery';
     return 'Bullion';
   }
+
+  static const Set<int> _coinCategoryIds = {4, 5, 6};
+  static const Set<int> _jewelleryCategoryIds = {7, 8, 9};
 
   String _metalByName(String name) {
     final value = name.toLowerCase();
