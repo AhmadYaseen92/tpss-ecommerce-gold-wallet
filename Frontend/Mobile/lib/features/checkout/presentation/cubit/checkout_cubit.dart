@@ -44,9 +44,15 @@ class CheckoutCubit extends Cubit<CheckoutState> {
       final explicitFromCart = checkoutArgs['fromCart'];
       final productIdRaw = checkoutArgs['productId'];
       final quantityRaw = checkoutArgs['quantity'];
-      final productId = productIdRaw is num ? productIdRaw.toInt() : int.tryParse('$productIdRaw');
-      final quantity = quantityRaw is num ? quantityRaw.toInt() : int.tryParse('$quantityRaw');
-      final fromCart = explicitFromCart is bool ? explicitFromCart : (productId == null || quantity == null);
+      final productId = productIdRaw is num
+          ? productIdRaw.toInt()
+          : int.tryParse('$productIdRaw');
+      final quantity = quantityRaw is num
+          ? quantityRaw.toInt()
+          : int.tryParse('$quantityRaw');
+      final fromCart = explicitFromCart is bool
+          ? explicitFromCart
+          : (productId == null || quantity == null);
       final productIdsRaw = checkoutArgs['productIds'];
       final productIds = productIdsRaw is List
           ? productIdsRaw
@@ -55,18 +61,26 @@ class CheckoutCubit extends Cubit<CheckoutState> {
                 .toList()
           : <int>[];
 
-      if (!fromCart && (productId == null || quantity == null || quantity <= 0)) {
-        emit(CheckoutError('Missing product checkout data. Please retry from product details.'));
+      if (!fromCart &&
+          (productId == null || quantity == null || quantity <= 0)) {
+        emit(
+          CheckoutError(
+            'Missing product checkout data. Please retry from product details.',
+          ),
+        );
         return;
       }
 
-      await _dio.post('/checkout/confirm', data: {
-        'userId': userId,
-        'fromCart': fromCart,
-        if (fromCart) 'productIds': productIds,
-        if (!fromCart) 'productId': productId,
-        if (!fromCart) 'quantity': quantity,
-      });
+      await _dio.post(
+        '/checkout/confirm',
+        data: {
+          'userId': userId,
+          'fromCart': fromCart,
+          if (fromCart) 'productIds': productIds,
+          if (!fromCart) 'productId': productId,
+          if (!fromCart) 'quantity': quantity,
+        },
+      );
 
       otpConfirmed = true;
       emit(CheckoutSuccess());
@@ -101,11 +115,12 @@ class CheckoutCubit extends Cubit<CheckoutState> {
     }
 
     return switch (statusCode) {
-      400 => 'Invalid checkout request. Please review cart/product details and try again.',
+      400 =>
+        'Invalid checkout request. Please review cart/product details and try again.',
       401 || 403 => 'Your session has expired. Please log in again.',
       404 => 'Requested item was not found. Please refresh and try again.',
-      409 => 'Stock changed during checkout. Please refresh your cart and retry.',
-      >= 500 => 'Server error while processing checkout. Please try again shortly.',
+      409 =>
+        'Stock changed during checkout. Please refresh your cart and retry.',
       _ => 'Checkout failed. Please try again.',
     };
   }
