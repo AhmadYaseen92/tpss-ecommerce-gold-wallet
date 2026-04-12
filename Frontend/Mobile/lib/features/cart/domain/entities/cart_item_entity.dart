@@ -6,6 +6,8 @@ class CartItemEntity {
     required this.price,
     required this.imageUrl,
     required this.sellerName,
+    required this.availableStock,
+    required this.weight,
     required this.quantity,
   });
 
@@ -15,6 +17,8 @@ class CartItemEntity {
   final double price;
   final String imageUrl;
   final String sellerName;
+  final int availableStock;
+  final String weight;
   final int quantity;
 
   CartItemEntity copyWith({int? quantity}) {
@@ -25,6 +29,8 @@ class CartItemEntity {
       price: price,
       imageUrl: imageUrl,
       sellerName: sellerName,
+      availableStock: availableStock,
+      weight: weight,
       quantity: quantity ?? this.quantity,
     );
   }

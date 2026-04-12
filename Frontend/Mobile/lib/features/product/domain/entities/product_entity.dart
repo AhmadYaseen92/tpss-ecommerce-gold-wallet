@@ -5,8 +5,10 @@ class ProductEntity {
     required this.name,
     required this.description,
     required this.price,
+    required this.availableStock,
     required this.imageUrl,
     required this.category,
+    required this.categoryId,
     required this.isFavorite,
     required this.purity,
     required this.weight,
@@ -21,8 +23,10 @@ class ProductEntity {
   final String name;
   final String description;
   final double price;
+  final int availableStock;
   final String imageUrl;
   final String category;
+  final int categoryId;
   final bool isFavorite;
   final String purity;
   final String weight;
@@ -37,8 +41,10 @@ class ProductEntity {
     String? name,
     String? description,
     double? price,
+    int? availableStock,
     String? imageUrl,
     String? category,
+    int? categoryId,
     bool? isFavorite,
     String? purity,
     String? weight,
@@ -53,8 +59,10 @@ class ProductEntity {
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,
+      availableStock: availableStock ?? this.availableStock,
       imageUrl: imageUrl ?? this.imageUrl,
       category: category ?? this.category,
+      categoryId: categoryId ?? this.categoryId,
       isFavorite: isFavorite ?? this.isFavorite,
       purity: purity ?? this.purity,
       weight: weight ?? this.weight,

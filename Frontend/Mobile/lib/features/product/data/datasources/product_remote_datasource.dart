@@ -5,20 +5,40 @@ class ProductRemoteDataSource {
 
   final Dio _dio;
 
-  Future<List<ProductRemoteModel>> getProducts({int pageNumber = 1, int pageSize = 20}) async {
+  Future<ProductRemotePageModel> getProducts({int pageNumber = 1, int pageSize = 20, int? categoryId}) async {
     final response = await _dio.post(
       '/products/search',
       data: {
         'pageNumber': pageNumber,
         'pageSize': pageSize,
+        if (categoryId != null) 'category': categoryId,
       },
     );
 
     final payload = response.data as Map<String, dynamic>;
     final data = payload['data'] as Map<String, dynamic>?;
     final items = (data?['items'] as List<dynamic>? ?? []);
-    return items.map((item) => ProductRemoteModel.fromJson(item as Map<String, dynamic>)).toList();
+    return ProductRemotePageModel(
+      items: items.map((item) => ProductRemoteModel.fromJson(item as Map<String, dynamic>)).toList(),
+      totalCount: (data?['totalCount'] as num?)?.toInt() ?? 0,
+      pageNumber: (data?['pageNumber'] as num?)?.toInt() ?? pageNumber,
+      pageSize: (data?['pageSize'] as num?)?.toInt() ?? pageSize,
+    );
   }
+}
+
+class ProductRemotePageModel {
+  ProductRemotePageModel({
+    required this.items,
+    required this.totalCount,
+    required this.pageNumber,
+    required this.pageSize,
+  });
+
+  final List<ProductRemoteModel> items;
+  final int totalCount;
+  final int pageNumber;
+  final int pageSize;
 }
 
 class ProductRemoteModel {
@@ -30,6 +50,9 @@ class ProductRemoteModel {
     required this.imageUrl,
     required this.price,
     required this.availableStock,
+    required this.categoryId,
+    required this.weightValue,
+    required this.weightUnit,
     required this.sellerId,
     required this.sellerName,
   });
@@ -41,6 +64,9 @@ class ProductRemoteModel {
   final String imageUrl;
   final double price;
   final int availableStock;
+  final int categoryId;
+  final double weightValue;
+  final String weightUnit;
   final int sellerId;
   final String sellerName;
 
@@ -53,8 +79,36 @@ class ProductRemoteModel {
       imageUrl: (json['imageUrl'] ?? '') as String,
       price: (json['price'] as num?)?.toDouble() ?? 0,
       availableStock: (json['availableStock'] as num?)?.toInt() ?? 0,
+      categoryId: _parseCategoryId(json['category']),
+      weightValue: (json['weightValue'] as num?)?.toDouble() ?? 0,
+      weightUnit: _parseWeightUnit(json['weightUnit']),
       sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
       sellerName: (json['sellerName'] ?? '') as String,
     );
+  }
+
+  static int _parseCategoryId(dynamic categoryValue) {
+    if (categoryValue is num) {
+      return categoryValue.toInt();
+    }
+    if (categoryValue is String) {
+      return int.tryParse(categoryValue) ?? 0;
+    }
+    return 0;
+  }
+
+  static String _parseWeightUnit(dynamic weightUnitValue) {
+    if (weightUnitValue is String) {
+      return weightUnitValue;
+    }
+    if (weightUnitValue is num) {
+      return switch (weightUnitValue.toInt()) {
+        1 => 'Gram',
+        2 => 'Kilogram',
+        3 => 'Ounce',
+        _ => '',
+      };
+    }
+    return '';
   }
 }

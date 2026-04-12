@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/grams_hint_label.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/cubit/cart_cubit.dart';
@@ -64,6 +65,10 @@ class CartItemWidget extends StatelessWidget {
                         opacity: 0.85,
                         child: Text(product.description, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: palette.textSecondary)),
                       ),
+                      GramsHintLabel(
+                        grams: GramsConverter.fromWeightText(product.weight),
+                        prefix: 'Weight:',
+                      ),
                       const SizedBox(height: 8),
                       Text('\$${product.price.toStringAsFixed(2)}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: palette.textPrimary)),
                     ],
@@ -100,7 +105,9 @@ class CartItemWidget extends StatelessWidget {
                               iconSize: 18,
                               padding: const EdgeInsets.all(4),
                               icon: Icon(Icons.add, color: palette.textSecondary),
-                              onPressed: () => cartCubit.updateProductQuantity(product.id, product.quantity + 1),
+                              onPressed: product.quantity >= product.availableStock
+                                  ? null
+                                  : () => cartCubit.updateProductQuantity(product.id, product.quantity + 1),
                             ),
                           ],
                         ),
