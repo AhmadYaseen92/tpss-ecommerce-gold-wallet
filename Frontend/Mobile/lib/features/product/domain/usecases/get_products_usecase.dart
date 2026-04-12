@@ -6,5 +6,6 @@ class GetProductsUseCase {
 
   final IProductRepository _repository;
 
-  Future<List<ProductEntity>> call() => _repository.getProducts();
+  Future<List<ProductEntity>> call({int? categoryId}) =>
+      _repository.getProducts(categoryId: categoryId);
 }

@@ -2,7 +2,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/mark
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
 
 abstract class IProductRepository {
-  Future<List<ProductEntity>> getProducts();
+  Future<List<ProductEntity>> getProducts({int? categoryId});
 
   Future<ProductEntity> getProductDetail(String productId);
 

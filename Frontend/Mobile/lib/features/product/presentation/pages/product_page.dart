@@ -64,6 +64,9 @@ class ProductPage extends StatelessWidget {
                                 .loadProducts(
                                   seller:
                                       context.read<ProductCubit>().activeSeller,
+                                  categoryId: context
+                                      .read<ProductCubit>()
+                                      .selectedCategoryId,
                                 ),
                             child: CatalogTabWidget(),
                           ),
@@ -73,6 +76,9 @@ class ProductPage extends StatelessWidget {
                                 .loadProducts(
                                   seller:
                                       context.read<ProductCubit>().activeSeller,
+                                  categoryId: context
+                                      .read<ProductCubit>()
+                                      .selectedCategoryId,
                                 ),
                             child: MarketWatchTabWidget(),
                           ),

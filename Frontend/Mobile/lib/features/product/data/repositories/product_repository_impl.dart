@@ -18,7 +18,7 @@ class ProductRepositoryImpl implements IProductRepository {
   final Set<String> _favoriteProductIds = HashSet<String>();
 
   @override
-  Future<List<ProductEntity>> getProducts() async {
+  Future<List<ProductEntity>> getProducts({int? categoryId}) async {
     const pageSize = 50;
     final allModels = <ProductRemoteModel>[];
     var pageNumber = 1;
@@ -28,6 +28,7 @@ class ProductRepositoryImpl implements IProductRepository {
       final response = await _remoteDataSource.getProducts(
         pageNumber: pageNumber,
         pageSize: pageSize,
+        categoryId: categoryId,
       );
       allModels.addAll(response.items);
       totalCount = response.totalCount;
