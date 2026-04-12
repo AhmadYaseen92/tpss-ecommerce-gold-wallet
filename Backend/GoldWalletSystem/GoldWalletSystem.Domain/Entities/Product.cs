@@ -9,6 +9,8 @@ public class Product : BaseEntity
     public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public ProductCategory Category { get; set; } = ProductCategory.Other;
+    public decimal WeightValue { get; set; }
+    public ProductWeightUnit WeightUnit { get; set; } = ProductWeightUnit.Gram;
     public decimal Price { get; set; }
     public int AvailableStock { get; set; }
     public bool IsActive { get; set; } = true;

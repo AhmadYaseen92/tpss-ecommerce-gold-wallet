@@ -8,16 +8,21 @@ class ProductFilterBar extends StatelessWidget {
   final ProductCubit productCubit;
   const ProductFilterBar({super.key, required this.productCubit});
 
-  static const List<String> categories = ['All', 'Bullion', 'Jewellery', 'Coins'];
+  static const List<({String label, int? categoryId})> categories = [
+    (label: 'All', categoryId: null),
+    (label: 'Bullion', categoryId: 3),
+    (label: 'Jewellery', categoryId: 7),
+    (label: 'Coins', categoryId: 4),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ProductCubit, ProductState>(
       bloc: productCubit,
       builder: (context, state) {
-        var selectedCategory = productCubit.selectedCategory;
+        var selectedCategoryId = productCubit.selectedCategoryId;
         if (state is ProductLoaded) {
-          selectedCategory = state.category;
+          selectedCategoryId = state.categoryId;
         }
 
         return Padding(
@@ -26,13 +31,13 @@ class ProductFilterBar extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: categories.map((category) {
-                final isSelected = selectedCategory == category;
+                final isSelected = selectedCategoryId == category.categoryId;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: AppFilterChip(
-                    label: category,
+                    label: category.label,
                     selected: isSelected,
-                    onTap: () => productCubit.applyCategoryFilter(category: category),
+                    onTap: () => productCubit.applyCategoryFilter(categoryId: category.categoryId),
                   ),
                 );
               }).toList(),

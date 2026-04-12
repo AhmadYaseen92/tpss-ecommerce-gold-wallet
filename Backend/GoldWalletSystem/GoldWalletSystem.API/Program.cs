@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using GoldWalletSystem.Domain.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -140,18 +141,48 @@ using (var scope = app.Services.CreateScope())
         };
 
         var products = new List<Product>();
+
+        static (decimal Value, ProductWeightUnit Unit) ParseWeight(string source)
+        {
+            var normalized = source.ToLowerInvariant();
+            if (normalized.Contains("1 kg")) return (1, ProductWeightUnit.Kilogram);
+            if (normalized.Contains("100 g")) return (100, ProductWeightUnit.Gram);
+            if (normalized.Contains("50 g")) return (50, ProductWeightUnit.Gram);
+            if (normalized.Contains("10 g")) return (10, ProductWeightUnit.Gram);
+            if (normalized.Contains("5 g")) return (5, ProductWeightUnit.Gram);
+            if (normalized.Contains("1 oz")) return (1, ProductWeightUnit.Ounce);
+            return (1, ProductWeightUnit.Gram);
+        }
+
+        static ProductCategory ResolveCategory(string source)
+        {
+            var normalized = source.ToLowerInvariant();
+            if (normalized.Contains("coin")) return ProductCategory.Coin;
+            if (normalized.Contains("necklace") || normalized.Contains("ring") || normalized.Contains("bracelet") || normalized.Contains("pendant"))
+                return ProductCategory.Jewelry;
+            if (normalized.Contains("bar")) return ProductCategory.Bar;
+            if (normalized.Contains("gold")) return ProductCategory.Gold;
+            if (normalized.Contains("silver")) return ProductCategory.Silver;
+            return ProductCategory.Other;
+        }
+
         for (var i = 0; i < 60; i++)
         {
             var sellerId = allSellerIds[i % allSellerIds.Count];
             var template = productNames[i % productNames.Length];
             var sku = $"SKU-{sellerId:D2}-{i + 1:D3}";
             var price = 100 + (i * 13.75m);
+            var (weightValue, weightUnit) = ParseWeight(template);
+            var category = ResolveCategory(template);
 
             products.Add(new Product
             {
                 Name = $"{template} #{i + 1}",
                 Sku = sku,
                 Description = $"Seeded product for seller {sellerId}.",
+                Category = category,
+                WeightValue = weightValue,
+                WeightUnit = weightUnit,
                 Price = price,
                 AvailableStock = 20 + (i % 40),
                 IsActive = true,
@@ -163,6 +194,34 @@ using (var scope = app.Services.CreateScope())
 
         var existingSkus = await dbContext.Products.AsNoTracking().Select(x => x.Sku).ToHashSetAsync();
         dbContext.Products.AddRange(products.Where(product => !existingSkus.Contains(product.Sku)));
+        await dbContext.SaveChangesAsync();
+    }
+
+    var productsMissingWeight = await dbContext.Products
+        .Where(x => x.WeightValue <= 0)
+        .ToListAsync();
+
+    foreach (var product in productsMissingWeight)
+    {
+        var name = product.Name;
+        var normalized = name.ToLowerInvariant();
+        product.WeightValue = normalized.Contains("1 kg") ? 1
+            : normalized.Contains("100 g") ? 100
+            : normalized.Contains("50 g") ? 50
+            : normalized.Contains("20 g") ? 20
+            : normalized.Contains("10 g") ? 10
+            : normalized.Contains("5 g") ? 5
+            : normalized.Contains("1 oz") ? 1
+            : 1;
+        product.WeightUnit = normalized.Contains("kg")
+            ? ProductWeightUnit.Kilogram
+            : normalized.Contains("oz")
+                ? ProductWeightUnit.Ounce
+                : ProductWeightUnit.Gram;
+    }
+
+    if (productsMissingWeight.Count > 0)
+    {
         await dbContext.SaveChangesAsync();
     }
 }
