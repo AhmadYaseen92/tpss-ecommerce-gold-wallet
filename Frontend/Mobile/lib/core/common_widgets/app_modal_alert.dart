@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppModalAlertVariant { info, success, failed }
+enum AppModalAlertVariant { success, failed, warning }
 
 class AppModalAlert {
   static Future<void> show(
@@ -8,7 +8,7 @@ class AppModalAlert {
     required String message,
     String? title,
     String buttonText = 'OK',
-    AppModalAlertVariant variant = AppModalAlertVariant.info,
+    AppModalAlertVariant variant = AppModalAlertVariant.warning,
   }) async {
     if (!context.mounted) return;
     await showDialog<void>(
@@ -16,10 +16,11 @@ class AppModalAlert {
       useRootNavigator: true,
       barrierDismissible: true,
       builder: (ctx) {
+        final theme = Theme.of(ctx);
         final colors = switch (variant) {
           AppModalAlertVariant.success => (
             border: const Color(0xFF2E7D32),
-            button: const Color(0xFF2E7D32),
+            button: theme.colorScheme.primary,
             title: 'Success',
           ),
           AppModalAlertVariant.failed => (
@@ -27,10 +28,10 @@ class AppModalAlert {
             button: const Color(0xFFC62828),
             title: 'Failed',
           ),
-          AppModalAlertVariant.info => (
-            border: const Color(0xFF1565C0),
-            button: const Color(0xFF1565C0),
-            title: 'Notice',
+          AppModalAlertVariant.warning => (
+            border: const Color(0xFFEF6C00),
+            button: const Color(0xFFEF6C00),
+            title: 'Warning',
           ),
         };
 

@@ -65,6 +65,7 @@ class WalletCubit extends Cubit<WalletState> {
   int _toCategoryId(WalletCategory category) => switch (category) {
     WalletCategory.gold => 1,
     WalletCategory.silver => 2,
+    WalletCategory.diamond => 3,
     WalletCategory.jewelry => 4,
     WalletCategory.coins => 5,
     WalletCategory.spotMr => 6,

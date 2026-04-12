@@ -12,4 +12,20 @@ public class WalletRepository(AppDbContext dbContext) : IWalletRepository
             .AsNoTracking()
             .Include(x => x.Assets)
             .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
+    public async Task<Wallet> CreateForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var wallet = new Wallet
+        {
+            UserId = userId,
+            CurrencyCode = "USD",
+            CashBalance = 0,
+            CreatedAtUtc = DateTime.UtcNow,
+        };
+
+        dbContext.Wallets.Add(wallet);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return wallet;
+    }
 }
