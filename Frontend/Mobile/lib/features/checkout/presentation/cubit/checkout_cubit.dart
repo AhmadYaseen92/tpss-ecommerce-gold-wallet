@@ -76,8 +76,57 @@ class CheckoutCubit extends Cubit<CheckoutState> {
           otpConfirmed: otpConfirmed,
         ),
       );
-    } catch (e) {
-      emit(CheckoutError('Checkout failed: $e'));
+    } on DioException catch (e) {
+      emit(CheckoutError(_friendlyCheckoutError(e)));
+    } catch (_) {
+      emit(CheckoutError('Checkout could not be completed. Please try again.'));
     }
+  }
+
+  String _friendlyCheckoutError(DioException error) {
+    final statusCode = error.response?.statusCode;
+    final serverMessage = _extractServerMessage(error.response?.data);
+    if (serverMessage.isNotEmpty) {
+      return serverMessage;
+    }
+
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout) {
+      return 'Request timed out. Please check your internet connection and try again.';
+    }
+
+    if (error.type == DioExceptionType.connectionError) {
+      return 'Unable to reach server. Please check your internet connection.';
+    }
+
+    return switch (statusCode) {
+      400 => 'Invalid checkout request. Please review cart/product details and try again.',
+      401 || 403 => 'Your session has expired. Please log in again.',
+      404 => 'Requested item was not found. Please refresh and try again.',
+      409 => 'Stock changed during checkout. Please refresh your cart and retry.',
+      >= 500 => 'Server error while processing checkout. Please try again shortly.',
+      _ => 'Checkout failed. Please try again.',
+    };
+  }
+
+  String _extractServerMessage(dynamic payload) {
+    if (payload is Map<String, dynamic>) {
+      final message = payload['message']?.toString().trim() ?? '';
+      if (message.isNotEmpty) return message;
+
+      final errors = payload['errors'];
+      if (errors is List && errors.isNotEmpty) {
+        final first = errors.first.toString().trim();
+        if (first.isNotEmpty) return first;
+      }
+
+      final data = payload['data'];
+      if (data is Map<String, dynamic>) {
+        final nestedMessage = data['message']?.toString().trim() ?? '';
+        if (nestedMessage.isNotEmpty) return nestedMessage;
+      }
+    }
+    return '';
   }
 }
