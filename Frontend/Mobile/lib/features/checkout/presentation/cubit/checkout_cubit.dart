@@ -42,6 +42,7 @@ class CheckoutCubit extends Cubit<CheckoutState> {
       }
 
       final explicitFromCart = checkoutArgs['fromCart'];
+      final source = (checkoutArgs['source'] ?? '').toString().toLowerCase();
       final productIdRaw = checkoutArgs['productId'];
       final quantityRaw = checkoutArgs['quantity'];
       final productId = productIdRaw is num
@@ -50,7 +51,9 @@ class CheckoutCubit extends Cubit<CheckoutState> {
       final quantity = quantityRaw is num
           ? quantityRaw.toInt()
           : int.tryParse('$quantityRaw');
-      final fromCart = explicitFromCart is bool
+      final fromCart = source == 'product'
+          ? false
+          : explicitFromCart is bool
           ? explicitFromCart
           : (productId == null || quantity == null);
       final productIdsRaw = checkoutArgs['productIds'];

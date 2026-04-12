@@ -206,16 +206,19 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     }
 
     final navigator = Navigator.of(context, rootNavigator: true);
-    var foundProductRoute = false;
+    var foundListRoute = false;
     navigator.popUntil((route) {
-      final isProductRoute = route.settings.name == AppRoutes.productRoute;
-      if (isProductRoute) {
-        foundProductRoute = true;
+      final isListRoute = route.settings.name == AppRoutes.homeRoute || route.settings.name == AppRoutes.productRoute;
+      if (isListRoute) {
+        foundListRoute = true;
       }
-      return isProductRoute || route.isFirst;
+      return isListRoute || route.isFirst;
     });
-    if (!foundProductRoute) {
-      navigator.pushNamed(AppRoutes.productRoute);
+    if (!foundListRoute) {
+      navigator.pushNamedAndRemoveUntil(
+        AppRoutes.homeRoute,
+        (route) => false,
+      );
     }
   }
 
