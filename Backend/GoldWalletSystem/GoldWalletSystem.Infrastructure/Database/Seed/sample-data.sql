@@ -1,16 +1,24 @@
 /*
-Seed script: more sellers + users + products with empty portfolio/wallet-assets/cart/transactions.
-Target: SQL Server database used by GoldWalletSystem.
+Full merged seed script for GoldWalletSystemDb
 
-What this script does:
-1) Upserts 3 sellers.
-2) Upserts 9 users (3 per seller) with PBKDF2 password hashes.
-3) Ensures each user has: UserProfile, Wallet (cash 0), Cart.
-4) Adds 60 products (20 per seller).
-5) Keeps CartItems, WalletAssets (portfolio), TransactionHistories empty for these users.
-6) Writes AuditLogs for seed actions (and provides A→Z action log examples).
+Includes:
+1) Sellers upsert
+2) Users upsert
+3) New user: investoe@goldwallet.com
+4) UserProfiles, Wallets, Carts creation
+5) Empty startup state for CartItems, WalletAssets, TransactionHistories
+6) Products upsert with LOCAL server image paths
+7) Home carousel config with LOCAL banner paths
+8) Audit logs
+9) Verification queries
 
-Default password for seeded users (already hashed below): P@ssw0rd123!
+Important:
+- Product images should exist physically under:
+  GoldWalletSystem.API/wwwroot/images/products/
+- Banner images should exist physically under:
+  GoldWalletSystem.API/wwwroot/images/banners/
+- Profile default image should exist physically under:
+  GoldWalletSystem.API/wwwroot/images/profiles/
 */
 
 SET NOCOUNT ON;
@@ -30,9 +38,9 @@ BEGIN TRY
     MERGE [Sellers] AS T
     USING (
         VALUES
-            (N'Imseeh',        N'IMSEEH', N'contact@imseeh.com',        N'+962700000001', N'Amman, Jordan'),
-            (N'Gold Palace',   N'GOLDPAL',N'contact@goldpalace.com',    N'+15550000002',  N'Dallas, TX'),
-            (N'Bullion House', N'BULLION',N'contact@bullionhouse.com',  N'+15550000003',  N'Miami, FL')
+            (N'Imseeh',        N'IMSEEH',  N'contact@imseeh.com',       N'+962700000001', N'Amman, Jordan'),
+            (N'Gold Palace',   N'GOLDPAL', N'contact@goldpalace.com',   N'+15550000002',  N'Dallas, TX'),
+            (N'Bullion House', N'BULLION', N'contact@bullionhouse.com', N'+15550000003',  N'Miami, FL')
     ) AS S([Name],[Code],[ContactEmail],[ContactPhone],[Address])
     ON T.[Code] = S.[Code]
     WHEN MATCHED THEN
@@ -47,12 +55,12 @@ BEGIN TRY
         INSERT ([Name],[Code],[ContactEmail],[ContactPhone],[Address],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
         VALUES (S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],S.[Address],1,@Now,NULL);
 
-    DECLARE @SellerImseeh int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'IMSEEH');
+    DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'IMSEEH');
     DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'GOLDPAL');
     DECLARE @SellerBullion int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'BULLION');
 
     ------------------------------------------------------------
-    -- 2) Users (upsert) - all active, investor role
+    -- 2) Users (upsert)
     ------------------------------------------------------------
     DECLARE @Users TABLE (
         FullName nvarchar(150),
@@ -65,15 +73,20 @@ BEGIN TRY
 
     INSERT INTO @Users (FullName, Email, PasswordHash, Role, SellerId, PhoneNumber)
     VALUES
-        (N'Imseeh Admin',      N'imseeh.admin@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerImseeh, N'+15551010001'),
-        (N'Imseeh Investor 1', N'imseeh.investor1@example.com',  N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerImseeh, N'+15551010002'),
-        (N'Imseeh Investor 2', N'imseeh.investor2@example.com',  N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', @SellerImseeh, N'+15551010003'),
-        (N'GoldPal Admin',     N'goldpal.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerGoldPal, N'+15551020001'),
-        (N'GoldPal Investor1', N'goldpal.investor1@example.com', N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerGoldPal, N'+15551020002'),
-        (N'GoldPal Investor2', N'goldpal.investor2@example.com', N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', @SellerGoldPal, N'+15551020003'),
-        (N'Bullion Admin',     N'bullion.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerBullion, N'+15551030001'),
-        (N'Bullion Investor1', N'bullion.investor1@example.com', N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerBullion, N'+15551030002'),
-        (N'Bullion Investor2', N'bullion.investor2@example.com', N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', @SellerBullion, N'+15551030003');
+        (N'Imseeh Admin',         N'imseeh.admin@example.com',        N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerImseeh,  N'+15551010001'),
+        (N'Imseeh Investor 1',    N'imseeh.investor1@example.com',    N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerImseeh,  N'+15551010002'),
+        (N'Imseeh Investor 2',    N'imseeh.investor2@example.com',    N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', @SellerImseeh,  N'+15551010003'),
+
+        (N'GoldPal Admin',        N'goldpal.admin@example.com',       N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerGoldPal, N'+15551020001'),
+        (N'GoldPal Investor1',    N'goldpal.investor1@example.com',   N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerGoldPal, N'+15551020002'),
+        (N'GoldPal Investor2',    N'goldpal.investor2@example.com',   N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', @SellerGoldPal, N'+15551020003'),
+
+        (N'Bullion Admin',        N'bullion.admin@example.com',       N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerBullion, N'+15551030001'),
+        (N'Bullion Investor1',    N'bullion.investor1@example.com',   N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerBullion, N'+15551030002'),
+        (N'Bullion Investor2',    N'bullion.investor2@example.com',   N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', @SellerBullion, N'+15551030003'),
+
+        -- Requested new user
+        (N'Gold Wallet Investor', N'investoe@goldwallet.com',         N'NN53R1Ggd5QH71EKW6wALA==.UbTyu0VUnNi27SE8JQbIjY5d8gs3jgo+SiUsNtLtt8I=.100000', N'Investor', @SellerImseeh,  N'+962790000999');
 
     MERGE [Users] AS T
     USING @Users AS S
@@ -92,7 +105,7 @@ BEGIN TRY
         VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[SellerId],S.[PhoneNumber],1,@Now,NULL);
 
     ------------------------------------------------------------
-    -- 3) Ensure empty profile/wallet/cart for every seeded user
+    -- 3) Ensure profile/wallet/cart for all seeded users
     ------------------------------------------------------------
     INSERT INTO [UserProfiles] ([UserId],[DateOfBirth],[Nationality],[PreferredLanguage],[PreferredTheme],[DocumentType],[IdNumber],[ProfilePhotoUrl],[CreatedAtUtc],[UpdatedAtUtc])
     SELECT U.[Id], NULL, N'Unknown', N'en', N'light', N'', N'', N'/images/profiles/default-user.png', @Now, NULL
@@ -112,7 +125,9 @@ BEGIN TRY
     WHERE U.[Email] IN (SELECT [Email] FROM @Users)
       AND NOT EXISTS (SELECT 1 FROM [Carts] C WHERE C.[UserId] = U.[Id]);
 
-    -- Keep startup state empty for behavior testing.
+    ------------------------------------------------------------
+    -- 4) Keep startup state empty
+    ------------------------------------------------------------
     DELETE CI
     FROM [CartItems] CI
     INNER JOIN [Carts] C ON C.[Id] = CI.[CartId]
@@ -131,7 +146,7 @@ BEGIN TRY
     WHERE U.[Email] IN (SELECT [Email] FROM @Users);
 
     ------------------------------------------------------------
-    -- 4) 60 products total (20 per seller)
+    -- 5) Products seed source
     ------------------------------------------------------------
     ;WITH SeedProducts AS (
         SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock UNION ALL
@@ -207,58 +222,95 @@ BEGIN TRY
             T.[Description] = S.[Description],
             T.[Price] = S.[Price],
             T.[AvailableStock] = S.[AvailableStock],
+            T.[ImageUrl] = CASE
+                WHEN S.[Name] LIKE N'%Silver%' THEN N'/images/products/silver.png'
+                WHEN S.[Name] LIKE N'%Coin%' THEN N'/images/products/gold-coin.png'
+                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' THEN N'/images/products/jewelry.png'
+                WHEN S.[Name] LIKE N'%Gift Card%' THEN N'/images/products/gift-card.png'
+                ELSE N'/images/products/gold-bar.png'
+            END,
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[Price],S.[AvailableStock],1,@Now,NULL);
+        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (
+            S.[SellerId],
+            S.[Name],
+            S.[Sku],
+            S.[Description],
+            S.[Price],
+            S.[AvailableStock],
+            CASE
+                WHEN S.[Name] LIKE N'%Silver%' THEN N'/images/products/silver.png'
+                WHEN S.[Name] LIKE N'%Coin%' THEN N'/images/products/gold-coin.png'
+                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' THEN N'/images/products/jewelry.png'
+                WHEN S.[Name] LIKE N'%Gift Card%' THEN N'/images/products/gift-card.png'
+                ELSE N'/images/products/gold-bar.png'
+            END,
+            1,
+            @Now,
+            NULL
+        );
 
-    UPDATE P
-    SET P.[ImageUrl] = CASE
-        WHEN P.[Name] LIKE '%Gift%' OR P.[Name] LIKE '%Pack%' THEN N'/images/products/gift-card.png'
-        WHEN P.[Name] LIKE '%Necklace%' OR P.[Name] LIKE '%Ring%' OR P.[Name] LIKE '%Bracelet%' OR P.[Name] LIKE '%Pendant%' THEN N'/images/products/jewelry.png'
-        WHEN P.[Name] LIKE '%Coin%' THEN N'/images/products/gold-coin.png'
-        WHEN P.[Name] LIKE '%Silver%' THEN N'/images/products/silver.png'
-        ELSE N'/images/products/gold-bar.png'
-    END
-    FROM [Products] P
-    WHERE ISNULL(P.[ImageUrl], N'') = N'';
-
+    ------------------------------------------------------------
+    -- 6) Mobile app configuration
+    ------------------------------------------------------------
     IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'home.carousel.images')
     BEGIN
         INSERT INTO [MobileAppConfigurations] ([ConfigKey], [JsonValue], [IsEnabled], [Description], [CreatedAtUtc], [UpdatedAtUtc])
         VALUES
         (
             N'home.carousel.images',
-            N'[\"/images/banners/banner-1.png\",\"/images/banners/banner-2.png\",\"/images/banners/banner-3.png\"]',
+            N'["/images/banners/banner-1.png","/images/banners/banner-2.png","/images/banners/banner-3.png"]',
             1,
-            N'Home carousel offer images (server paths)',
+            N'Home carousel images stored on local server',
             @Now,
             NULL
         );
     END
 
     ------------------------------------------------------------
-    -- 5) Audit logs: seed + lifecycle placeholders (A->Z)
+    -- 7) Audit logs
     ------------------------------------------------------------
     INSERT INTO [AuditLogs] ([UserId],[Action],[EntityName],[EntityId],[Details],[CreatedAtUtc],[UpdatedAtUtc])
     VALUES
-        (NULL, N'SEED_RUN', N'System', NULL, N'Executed seed-multi-seller-empty-state.sql successfully.', @Now, NULL),
-        (NULL, N'SEED_NOTE', N'System', NULL, N'Users seeded with empty cart/wallet-assets/transactions baseline.', @Now, NULL),
-        (NULL, N'LOGIN', N'Auth', NULL, N'Template action: write this at login.', @Now, NULL),
-        (NULL, N'LOGOUT', N'Auth', NULL, N'Template action: write this at logout.', @Now, NULL),
-        (NULL, N'CART_ADD', N'CartItem', NULL, N'Template action: write this when product added to cart.', @Now, NULL),
-        (NULL, N'ORDER_BUY', N'Order', NULL, N'Template action: write this when buy/checkout happens.', @Now, NULL),
+        (NULL, N'SEED_RUN',  N'System',             NULL, N'Executed merged seed script successfully.', @Now, NULL),
+        (NULL, N'SEED_NOTE', N'System',             NULL, N'Users seeded with empty cart/wallet-assets/transactions baseline.', @Now, NULL),
+        (NULL, N'LOGIN',     N'Auth',               NULL, N'Template action: write this at login.', @Now, NULL),
+        (NULL, N'LOGOUT',    N'Auth',               NULL, N'Template action: write this at logout.', @Now, NULL),
+        (NULL, N'CART_ADD',  N'CartItem',           NULL, N'Template action: write this when product added to cart.', @Now, NULL),
+        (NULL, N'ORDER_BUY', N'Order',              NULL, N'Template action: write this when buy/checkout happens.', @Now, NULL),
         (NULL, N'TX_CREATE', N'TransactionHistory', NULL, N'Template action: write this when any transaction is created.', @Now, NULL);
 
     COMMIT TRAN;
 END TRY
 BEGIN CATCH
-    IF @@TRANCOUNT > 0 ROLLBACK TRAN;
+    IF @@TRANCOUNT > 0
+        ROLLBACK TRAN;
     THROW;
 END CATCH;
 
--- quick verification
-SELECT COUNT(*) AS SellerCount FROM [Sellers];
-SELECT COUNT(*) AS UserCount FROM [Users] WHERE [Email] LIKE N'%@example.com';
-SELECT COUNT(*) AS ProductCount FROM [Products] WHERE [Sku] LIKE N'IMSEEH-%' OR [Sku] LIKE N'GOLDPAL-%' OR [Sku] LIKE N'BULLION-%';
+------------------------------------------------------------
+-- 8) Verification
+------------------------------------------------------------
+SELECT COUNT(*) AS SellerCount
+FROM [Sellers];
+
+SELECT COUNT(*) AS UserCount
+FROM [Users]
+WHERE [Email] LIKE N'%@example.com'
+   OR [Email] = N'investoe@goldwallet.com';
+
+SELECT COUNT(*) AS ProductCount
+FROM [Products]
+WHERE [Sku] LIKE N'IMSEEH-%'
+   OR [Sku] LIKE N'GOLDPAL-%'
+   OR [Sku] LIKE N'BULLION-%';
+
+SELECT [Id], [FullName], [Email], [Role], [SellerId], [IsActive]
+FROM [Users]
+WHERE [Email] = N'investoe@goldwallet.com';
+
+SELECT TOP 20 [Id], [Name], [Sku], [ImageUrl]
+FROM [Products]
+ORDER BY [Id] DESC;
