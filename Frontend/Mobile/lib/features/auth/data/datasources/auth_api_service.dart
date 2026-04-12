@@ -1,16 +1,47 @@
 import 'package:dio/dio.dart';
-import 'package:retrofit/retrofit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/data/models/auth_models.dart';
 
-part 'auth_api_service.g.dart';
+class AuthApiService {
+  AuthApiService(this._dio, {String? baseUrl}) : _baseUrl = baseUrl;
 
-@RestApi()
-abstract class AuthApiService {
-  factory AuthApiService(Dio dio, {String baseUrl}) = _AuthApiService;
+  final Dio _dio;
+  final String? _baseUrl;
 
-  @POST('/auth/login')
-  Future<Map<String, dynamic>> login(@Body() LoginRequestModel request);
+  Future<Map<String, dynamic>> login(LoginRequestModel request) async {
+    final data = request.toJson();
 
-  @POST('/auth/register')
-  Future<Map<String, dynamic>> register(@Body() RegisterRequestModel request);
+    final response = await _dio.fetch<Map<String, dynamic>>(
+      Options(method: 'POST')
+          .compose(_dio.options, '/auth/login', data: data)
+          .copyWith(baseUrl: _resolveBaseUrl()),
+    );
+
+    return response.data ?? <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> register(RegisterRequestModel request) async {
+    final data = request.toJson();
+
+    final response = await _dio.fetch<Map<String, dynamic>>(
+      Options(method: 'POST')
+          .compose(_dio.options, '/auth/register', data: data)
+          .copyWith(baseUrl: _resolveBaseUrl()),
+    );
+
+    return response.data ?? <String, dynamic>{};
+  }
+
+  String _resolveBaseUrl() {
+    final configuredBaseUrl = (_baseUrl ?? '').trim();
+    if (configuredBaseUrl.isEmpty) {
+      return _dio.options.baseUrl;
+    }
+
+    final uri = Uri.parse(configuredBaseUrl);
+    if (uri.isAbsolute) {
+      return uri.toString();
+    }
+
+    return Uri.parse(_dio.options.baseUrl).resolveUri(uri).toString();
+  }
 }
