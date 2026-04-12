@@ -107,7 +107,7 @@ class LinkedBankAccountsPage extends StatelessWidget {
                         cubit: cubit,
                         label: 'Save Changes',
                         onPressed: () {
-                          cubit.save();
+                          cubit.saveLinkedBank();
                           AppModalAlert.show(
                             context,
                             title: 'Saved',

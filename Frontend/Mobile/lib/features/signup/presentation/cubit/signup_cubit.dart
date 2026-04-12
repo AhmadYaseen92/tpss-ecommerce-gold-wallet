@@ -1,15 +1,20 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/usecases/register_usecase.dart';
 
 part 'signup_state.dart';
 
 class SignupCubit extends Cubit<SignupState> {
-  SignupCubit() : super(SignupInitial());
+  SignupCubit({required RegisterUseCase registerUseCase})
+    : _registerUseCase = registerUseCase,
+      super(SignupInitial());
+
+  final RegisterUseCase _registerUseCase;
 
   int currentStep = 1;
 
-  // Step 1 fields
   String firstName = '';
   String middleName = '';
   String lastName = '';
@@ -18,7 +23,6 @@ class SignupCubit extends Cubit<SignupState> {
   String phoneNumber = '';
   DateTime? dateOfBirth;
 
-  // Step 2 fields
   String nationality = 'Jordanian';
   String documentType = 'National ID';
   String idNumber = '';
@@ -29,7 +33,7 @@ class SignupCubit extends Cubit<SignupState> {
   bool obscureConfirm = true;
   double passwordStrength = 0.0;
   String passwordStrengthLabel = '';
-  
+
   void goToStep2() {
     currentStep = 2;
     emit(SignupStepChanged(step: 2));
@@ -74,28 +78,34 @@ class SignupCubit extends Cubit<SignupState> {
     final result = calculateStrength(value);
     passwordStrength = result.strength;
     passwordStrengthLabel = result.label;
-    emit(SignupPasswordStrengthChanged(
-      strength: result.strength,
-      strengthLabel: result.label,
-    ));
+    emit(
+      SignupPasswordStrengthChanged(
+        strength: result.strength,
+        strengthLabel: result.label,
+      ),
+    );
   }
 
   void updateConfirmPassword(String value) => confirmPassword = value;
 
   void togglePasswordVisibility() {
     obscurePassword = !obscurePassword;
-    emit(SignupPasswordVisibilityChanged(
-      obscurePassword: obscurePassword,
-      obscureConfirm: obscureConfirm,
-    ));
+    emit(
+      SignupPasswordVisibilityChanged(
+        obscurePassword: obscurePassword,
+        obscureConfirm: obscureConfirm,
+      ),
+    );
   }
 
   void toggleConfirmVisibility() {
     obscureConfirm = !obscureConfirm;
-    emit(SignupPasswordVisibilityChanged(
-      obscurePassword: obscurePassword,
-      obscureConfirm: obscureConfirm,
-    ));
+    emit(
+      SignupPasswordVisibilityChanged(
+        obscurePassword: obscurePassword,
+        obscureConfirm: obscureConfirm,
+      ),
+    );
   }
 
   void toggleTerms(bool value) {
@@ -103,7 +113,7 @@ class SignupCubit extends Cubit<SignupState> {
     emit(SignupTermsChanged(agreed: value));
   }
 
-    calculateStrength(String password) {
+  ({double strength, String label}) calculateStrength(String password) {
     if (password.isEmpty) return (strength: 0.0, label: '');
     int score = 0;
     if (password.length >= 8) score++;
@@ -116,41 +126,56 @@ class SignupCubit extends Cubit<SignupState> {
     return (strength: 1.0, label: 'Very Strong');
   }
 
-  void signup() async {
+  Future<void> signup() async {
     if (!termsAgreed) {
       emit(SignupError('Please agree to the Terms & Conditions.'));
       return;
     }
+
     emit(SignupLoading());
     try {
-      await Future.delayed(const Duration(seconds: 2));
-      emit(SignupSuccess());
+      final message = await _registerUseCase(
+        firstName: firstName,
+        middleName: middleName,
+        lastName: lastName,
+        email: email,
+        phoneNumber: '$phoneCode$phoneNumber',
+        password: password,
+        dateOfBirth: dateOfBirth?.toIso8601String().split('T').first,
+        nationality: nationality,
+        documentType: documentType,
+        idNumber: idNumber,
+        profilePhotoUrl: '',
+        preferredLanguage: 'en',
+        preferredTheme: 'light',
+        sellerId: 0,
+      );
+      emit(SignupSuccess(message));
+    } on DioException catch (e) {
+      emit(SignupError(_extractMessage(e)));
     } catch (e) {
       emit(SignupError('Sign up failed: $e'));
     }
   }
 
-
-void pickDate(BuildContext context) async {
-  final picked = await showDatePicker(
-    context: context,
-    initialDate: dateOfBirth ?? DateTime(2000),
-    firstDate: DateTime(1900),
-    lastDate: DateTime.now(),
-    builder: (ctx, child) => Theme(
-      data: Theme.of(ctx).copyWith(
-        colorScheme: const ColorScheme.light(
-          primary: AppColors.primaryColor,
+  void pickDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: dateOfBirth ?? DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(primary: AppColors.primaryColor),
         ),
+        child: child!,
       ),
-      child: child!,
-    ),
-  );
+    );
 
-  if (picked != null) {
-    updateDateOfBirth(picked);
+    if (picked != null) {
+      updateDateOfBirth(picked);
+    }
   }
-}
 
   void onSubmit(GlobalKey<FormState> formKey) {
     if (formKey.currentState?.validate() ?? false) {
@@ -158,4 +183,24 @@ void pickDate(BuildContext context) async {
     }
   }
 
+  String _extractMessage(DioException e) {
+    final payload = e.response?.data;
+    if (payload is Map<String, dynamic>) {
+      final errors = payload['errors'];
+      if (errors is List && errors.isNotEmpty) {
+        return errors.first.toString();
+      }
+
+      final message = payload['message'];
+      if (message is String && message.trim().isNotEmpty) {
+        return message;
+      }
+    }
+
+    if (e.error is String && (e.error as String).trim().isNotEmpty) {
+      return e.error as String;
+    }
+
+    return 'Signup failed. Ensure backend has /auth/register endpoint.';
+  }
 }

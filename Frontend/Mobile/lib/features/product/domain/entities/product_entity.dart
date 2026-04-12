@@ -1,6 +1,7 @@
 class ProductEntity {
   const ProductEntity({
     required this.id,
+    required this.sellerId,
     required this.name,
     required this.description,
     required this.price,
@@ -16,6 +17,7 @@ class ProductEntity {
   });
 
   final String id;
+  final int sellerId;
   final String name;
   final String description;
   final double price;
@@ -31,6 +33,7 @@ class ProductEntity {
 
   ProductEntity copyWith({
     String? id,
+    int? sellerId,
     String? name,
     String? description,
     double? price,
@@ -46,6 +49,7 @@ class ProductEntity {
   }) {
     return ProductEntity(
       id: id ?? this.id,
+      sellerId: sellerId ?? this.sellerId,
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,

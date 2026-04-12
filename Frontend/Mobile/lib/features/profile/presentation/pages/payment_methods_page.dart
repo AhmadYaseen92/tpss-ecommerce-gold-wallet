@@ -136,7 +136,7 @@ class PaymentMethodsPage extends StatelessWidget {
                           cubit: cubit,
                           label: 'Save Changes',
                           onPressed: () {
-                            cubit.save();
+                            cubit.savePaymentMethod();
                             AppModalAlert.show(
                               context,
                               title: 'Saved',

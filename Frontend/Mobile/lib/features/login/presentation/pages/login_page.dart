@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/cubit/login_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/widgets/biometric_buttons.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/widgets/login_form.dart';
@@ -16,7 +17,10 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => LoginCubit(),
+      create: (_) => LoginCubit(
+        loginUseCase: InjectionContainer.loginUseCase(),
+        dio: InjectionContainer.dio(),
+      ),
       child: BlocConsumer<LoginCubit, LoginState>(
         listener: (context, state) {
           if (state is LoginSuccess) {
@@ -31,6 +35,21 @@ class LoginPage extends StatelessWidget {
               title: 'Login Failed',
               message: state.message,
             );
+          } else if (state is LoginServerCheckResult ||
+              state is LoginServerConfigUpdated) {
+            final message = state is LoginServerCheckResult
+                ? state.message
+                : 'Server settings updated.';
+            final isSuccess = state is LoginServerCheckResult
+                ? state.success
+                : true;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: isSuccess ? Colors.green : Colors.red,
+              ),
+            );
           }
         },
         builder: (context, state) {
@@ -43,38 +62,30 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
             );
-          } else if (state is LoginInitial ||
-              state is LoginPasswordVisibilityChanged ||
-              state is LoginRememberMeChanged) {
-            return Scaffold(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              body: SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 32,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const LoginHeader(),
-                      const SizedBox(height: 36),
-                      LoginForm(),
-                      const SizedBox(height: 24),
-                      const OrDivider(),
-                      const SizedBox(height: 24),
-                      BiometricButtons(
-                        cubit: BlocProvider.of<LoginCubit>(context),
-                      ),
-                      const SizedBox(height: 24),
-                      const SignUpRow(),
-                    ],
-                  ),
+          }
+
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const LoginHeader(),
+                    const SizedBox(height: 36),
+                    LoginForm(),
+                    const SizedBox(height: 24),
+                    const OrDivider(),
+                    const SizedBox(height: 24),
+                    BiometricButtons(cubit: BlocProvider.of<LoginCubit>(context)),
+                    const SizedBox(height: 24),
+                    const SignUpRow(),
+                  ],
                 ),
               ),
-            );
-          }
-          return const SizedBox.shrink();
+            ),
+          );
         },
       ),
     );

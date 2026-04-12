@@ -9,6 +9,22 @@ namespace GoldWalletSystem.API.Controllers;
 [Route("api/auth")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
+    [HttpGet("ping")]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    public IActionResult Ping()
+    {
+        return Ok(ApiResponse<string>.Ok("Auth API reachable", "Connection successful"));
+    }
+
+    [HttpPost("register")]
+    [ProducesResponseType(typeof(ApiResponse<RegisterResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var result = await authService.RegisterAsync(request, cancellationToken);
+        return Ok(ApiResponse<RegisterResponseDto>.Ok(result, "Register successful"));
+    }
+
     [HttpPost("login")]
     [ProducesResponseType(typeof(ApiResponse<LoginResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]

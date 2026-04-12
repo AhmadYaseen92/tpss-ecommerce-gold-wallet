@@ -7,6 +7,7 @@ namespace GoldWalletSystem.Infrastructure.Database.Context;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    public DbSet<Seller> Sellers => Set<Seller>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
@@ -29,6 +30,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         base.OnModelCreating(modelBuilder);
 
+        ConfigureSeller(modelBuilder);
         ConfigureUser(modelBuilder);
         ConfigureUserProfile(modelBuilder);
         ConfigurePaymentMethod(modelBuilder);
@@ -48,6 +50,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureMobileAppConfiguration(modelBuilder);
     }
 
+    private static void ConfigureSeller(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Seller>(entity =>
+        {
+            entity.ToTable("Sellers");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.ContactEmail).HasMaxLength(200);
+            entity.Property(x => x.ContactPhone).HasMaxLength(50);
+            entity.Property(x => x.Address).HasMaxLength(500);
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.HasIndex(x => x.Name);
+        });
+    }
+
     private static void ConfigureUser(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>(entity =>
@@ -61,6 +79,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Role).IsRequired().HasMaxLength(50);
             entity.HasIndex(x => x.Email).IsUnique();
             entity.HasIndex(x => x.Role);
+            entity.HasIndex(x => x.SellerId);
+            entity.HasOne(x => x.Seller).WithMany(x => x.Users).HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 
@@ -71,6 +91,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.ToTable("UserProfiles");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Nationality).HasMaxLength(100);
+            entity.Property(x => x.DocumentType).HasMaxLength(50);
+            entity.Property(x => x.IdNumber).HasMaxLength(100);
+            entity.Property(x => x.ProfilePhotoUrl).HasMaxLength(500);
             entity.Property(x => x.PreferredLanguage).HasMaxLength(10);
             entity.Property(x => x.PreferredTheme).HasMaxLength(20);
             entity.HasIndex(x => x.UserId).IsUnique();
@@ -111,9 +134,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
             entity.Property(x => x.Sku).IsRequired().HasMaxLength(100);
             entity.Property(x => x.Description).HasMaxLength(1000);
+            entity.Property(x => x.ImageUrl).HasMaxLength(1000);
             entity.Property(x => x.Price).HasPrecision(18, 2);
             entity.HasIndex(x => x.Sku).IsUnique();
             entity.HasIndex(x => x.Name);
+            entity.HasIndex(x => x.SellerId);
+            entity.HasOne(x => x.Seller).WithMany(x => x.Products).HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 

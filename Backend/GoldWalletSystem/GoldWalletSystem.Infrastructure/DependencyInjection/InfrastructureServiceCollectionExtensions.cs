@@ -25,6 +25,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IUserAuthRepository, UserAuthRepository>();
         services.AddScoped<IMobileAppConfigurationRepository, MobileAppConfigurationRepository>();
+        services.AddScoped<IWalletRepository, WalletRepository>();
 
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ICartService, CartService>();
@@ -36,6 +37,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IMobileAppConfigurationService, MobileAppConfigurationService>();
+        services.AddScoped<IWalletService, WalletService>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 
