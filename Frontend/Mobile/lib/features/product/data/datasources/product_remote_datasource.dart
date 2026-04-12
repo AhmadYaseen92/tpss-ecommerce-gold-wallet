@@ -51,6 +51,8 @@ class ProductRemoteModel {
     required this.price,
     required this.availableStock,
     required this.categoryId,
+    required this.weightValue,
+    required this.weightUnit,
     required this.sellerId,
     required this.sellerName,
   });
@@ -63,6 +65,8 @@ class ProductRemoteModel {
   final double price;
   final int availableStock;
   final int categoryId;
+  final double weightValue;
+  final String weightUnit;
   final int sellerId;
   final String sellerName;
 
@@ -76,6 +80,8 @@ class ProductRemoteModel {
       price: (json['price'] as num?)?.toDouble() ?? 0,
       availableStock: (json['availableStock'] as num?)?.toInt() ?? 0,
       categoryId: _parseCategoryId(json['category']),
+      weightValue: (json['weightValue'] as num?)?.toDouble() ?? 0,
+      weightUnit: _parseWeightUnit(json['weightUnit']),
       sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
       sellerName: (json['sellerName'] ?? '') as String,
     );
@@ -89,5 +95,20 @@ class ProductRemoteModel {
       return int.tryParse(categoryValue) ?? 0;
     }
     return 0;
+  }
+
+  static String _parseWeightUnit(dynamic weightUnitValue) {
+    if (weightUnitValue is String) {
+      return weightUnitValue;
+    }
+    if (weightUnitValue is num) {
+      return switch (weightUnitValue.toInt()) {
+        1 => 'Gram',
+        2 => 'Kilogram',
+        3 => 'Ounce',
+        _ => '',
+      };
+    }
+    return '';
   }
 }

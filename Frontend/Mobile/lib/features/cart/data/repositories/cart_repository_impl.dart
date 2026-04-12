@@ -44,10 +44,14 @@ class CartRepositoryImpl implements ICartRepository {
     return CartItemEntity(
       id: model.productId.toString(),
       name: model.productName,
-      description: model.productName,
+      description: model.productDescription,
       price: model.unitPrice,
-      imageUrl: _imageByName(model.productName),
+      imageUrl: model.productImageUrl.trim().isNotEmpty
+          ? model.productImageUrl
+          : _imageByName(model.productName),
       sellerName: model.sellerName,
+      availableStock: model.availableStock,
+      weight: '${model.weightValue} ${model.weightUnit}',
       quantity: model.quantity,
     );
   }

@@ -136,6 +136,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Description).HasMaxLength(1000);
             entity.Property(x => x.ImageUrl).HasMaxLength(1000);
             entity.Property(x => x.Category).HasConversion<int>();
+            entity.Property(x => x.WeightValue).HasPrecision(18, 3);
+            entity.Property(x => x.WeightUnit).HasConversion<int>();
             entity.Property(x => x.Price).HasPrecision(18, 2);
             entity.HasIndex(x => x.Sku).IsUnique();
             entity.HasIndex(x => x.Name);

@@ -53,6 +53,12 @@ class ProductRepositoryImpl implements IProductRepository {
 
   @override
   Future<void> addToCart(ProductEntity product, int quantity) async {
+    if (quantity > product.availableStock) {
+      throw Exception(
+        'Requested quantity $quantity exceeds available stock ${product.availableStock}.',
+      );
+    }
+
     final productId = int.tryParse(product.id);
     if (productId == null) {
       throw Exception('Invalid product id for server add-to-cart.');
@@ -74,6 +80,7 @@ class ProductRepositoryImpl implements IProductRepository {
       name: model.name,
       description: model.description,
       price: model.price,
+      availableStock: model.availableStock,
       imageUrl: model.imageUrl.trim().isNotEmpty
           ? model.imageUrl
           : _imageBySkuOrName(sku: model.sku, name: model.name),
@@ -81,7 +88,7 @@ class ProductRepositoryImpl implements IProductRepository {
       categoryId: model.categoryId,
       isFavorite: _favoriteProductIds.contains(model.id.toString()),
       purity: _purityByDescription(model.description),
-      weight: _weightBySku(model.sku),
+      weight: _weightText(model.weightValue, model.weightUnit),
       metal: _metalByName(model.name),
       isInCart: false,
       quantity: 1,
@@ -125,12 +132,20 @@ class ProductRepositoryImpl implements IProductRepository {
     return '';
   }
 
-  String _weightBySku(String sku) {
-    final normalized = sku.toUpperCase();
-    if (normalized.contains('1OZ')) return '1 oz';
-    if (normalized.contains('10G')) return '10 g';
-    if (normalized.contains('1KG')) return '1 kg';
-    return '';
+  String _weightText(double weightValue, String weightUnit) {
+    if (weightValue <= 0) return '';
+
+    final normalizedUnit = weightUnit.trim().toLowerCase();
+    final suffix = switch (normalizedUnit) {
+      'gram' => 'g',
+      'kilogram' => 'kg',
+      'ounce' => 'oz',
+      _ => normalizedUnit,
+    };
+    final normalizedWeight = weightValue % 1 == 0
+        ? weightValue.toStringAsFixed(0)
+        : weightValue.toStringAsFixed(3);
+    return '$normalizedWeight $suffix';
   }
 
   String _imageBySkuOrName({required String sku, required String name}) {

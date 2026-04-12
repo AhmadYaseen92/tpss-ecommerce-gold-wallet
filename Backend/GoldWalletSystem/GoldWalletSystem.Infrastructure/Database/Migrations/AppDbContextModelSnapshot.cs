@@ -557,6 +557,13 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int>("WeightUnit")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("WeightValue")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
                     b.Property<int>("SellerId")
                         .HasColumnType("int");
 

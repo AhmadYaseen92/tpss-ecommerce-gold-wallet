@@ -16,7 +16,11 @@ public class CartController(ICartService cartService, ICurrentUserService curren
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var data = await cartService.GetCartByUserIdAsync(request.UserId, cancellationToken);
-        return Ok(ApiResponse<CartDto>.Ok(data));
+        var normalizedItems = data.Items
+            .Select(item => item with { ProductImageUrl = ToAbsoluteAssetUrl(item.ProductImageUrl) })
+            .ToList();
+        var normalizedData = data with { Items = normalizedItems };
+        return Ok(ApiResponse<CartDto>.Ok(normalizedData));
     }
 
     [HttpPost("items")]
@@ -41,5 +45,21 @@ public class CartController(ICartService cartService, ICurrentUserService curren
         if (!HasUserAccess(userId)) return ForbidApiResponse();
         var data = await cartService.RemoveItemAsync(userId, productId, cancellationToken);
         return Ok(ApiResponse<CartDto>.Ok(data, "Item removed"));
+    }
+
+    private string ToAbsoluteAssetUrl(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return path;
+        }
+
+        if (Uri.TryCreate(path, UriKind.Absolute, out _))
+        {
+            return path;
+        }
+
+        var normalizedPath = path.StartsWith('/') ? path : $"/{path}";
+        return $"{Request.Scheme}://{Request.Host}{normalizedPath}";
     }
 }

@@ -5,6 +5,7 @@ class ProductEntity {
     required this.name,
     required this.description,
     required this.price,
+    required this.availableStock,
     required this.imageUrl,
     required this.category,
     required this.categoryId,
@@ -22,6 +23,7 @@ class ProductEntity {
   final String name;
   final String description;
   final double price;
+  final int availableStock;
   final String imageUrl;
   final String category;
   final int categoryId;
@@ -39,6 +41,7 @@ class ProductEntity {
     String? name,
     String? description,
     double? price,
+    int? availableStock,
     String? imageUrl,
     String? category,
     int? categoryId,
@@ -56,6 +59,7 @@ class ProductEntity {
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,
+      availableStock: availableStock ?? this.availableStock,
       imageUrl: imageUrl ?? this.imageUrl,
       category: category ?? this.category,
       categoryId: categoryId ?? this.categoryId,
