@@ -29,6 +29,9 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   Map<String, dynamic> get _checkoutArgs {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map<String, dynamic>) return args;
+    if (args is Map) {
+      return args.map((key, value) => MapEntry('$key', value));
+    }
     return const {};
   }
 

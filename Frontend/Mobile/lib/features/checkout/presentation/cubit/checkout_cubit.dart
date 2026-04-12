@@ -41,11 +41,12 @@ class CheckoutCubit extends Cubit<CheckoutState> {
         return;
       }
 
-      final fromCart = checkoutArgs['fromCart'] == true;
+      final explicitFromCart = checkoutArgs['fromCart'];
       final productIdRaw = checkoutArgs['productId'];
       final quantityRaw = checkoutArgs['quantity'];
       final productId = productIdRaw is num ? productIdRaw.toInt() : int.tryParse('$productIdRaw');
       final quantity = quantityRaw is num ? quantityRaw.toInt() : int.tryParse('$quantityRaw');
+      final fromCart = explicitFromCart is bool ? explicitFromCart : (productId == null || quantity == null);
       final productIdsRaw = checkoutArgs['productIds'];
       final productIds = productIdsRaw is List
           ? productIdsRaw
@@ -53,6 +54,11 @@ class CheckoutCubit extends Cubit<CheckoutState> {
                 .whereType<int>()
                 .toList()
           : <int>[];
+
+      if (!fromCart && (productId == null || quantity == null || quantity <= 0)) {
+        emit(CheckoutError('Missing product checkout data. Please retry from product details.'));
+        return;
+      }
 
       await _dio.post('/checkout/confirm', data: {
         'userId': userId,
