@@ -15,6 +15,27 @@ public class ProductsController(IProductService productService) : ControllerBase
     public async Task<IActionResult> Search([FromBody] PagedRequestDto request, CancellationToken cancellationToken = default)
     {
         var data = await productService.GetProductsAsync(request.PageNumber, request.PageSize, cancellationToken);
-        return Ok(ApiResponse<PagedResult<ProductDto>>.Ok(data));
+        var normalizedItems = data.Items
+            .Select(product => product with { ImageUrl = ToAbsoluteAssetUrl(product.ImageUrl) })
+            .ToList();
+
+        var normalizedData = data with { Items = normalizedItems };
+        return Ok(ApiResponse<PagedResult<ProductDto>>.Ok(normalizedData));
+    }
+
+    private string ToAbsoluteAssetUrl(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return path;
+        }
+
+        if (Uri.TryCreate(path, UriKind.Absolute, out _))
+        {
+            return path;
+        }
+
+        var normalizedPath = path.StartsWith('/') ? path : $"/{path}";
+        return $"{Request.Scheme}://{Request.Host}{normalizedPath}";
     }
 }

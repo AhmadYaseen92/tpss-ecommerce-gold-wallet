@@ -19,8 +19,11 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
             migrationBuilder.Sql(@"
 UPDATE P
 SET P.ImageUrl = CASE
-    WHEN P.Name LIKE '%Silver%' THEN 'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png'
-    ELSE 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png'
+    WHEN P.Name LIKE '%Gift%' OR P.Name LIKE '%Pack%' THEN '/images/products/gift-card.png'
+    WHEN P.Name LIKE '%Necklace%' OR P.Name LIKE '%Ring%' OR P.Name LIKE '%Bracelet%' OR P.Name LIKE '%Pendant%' THEN '/images/products/jewelry.png'
+    WHEN P.Name LIKE '%Coin%' THEN '/images/products/gold-coin.png'
+    WHEN P.Name LIKE '%Silver%' THEN '/images/products/silver.png'
+    ELSE '/images/products/gold-bar.png'
 END
 FROM Products P
 WHERE ISNULL(P.ImageUrl, '') = '';
@@ -34,7 +37,7 @@ BEGIN
     VALUES
     (
         'home.carousel.images',
-        '[""https://urdu.bharatexpress.com/wp-content/uploads/2025/12/collage-67.webp"",""https://nygoldco.com/wp-content/uploads/2026/01/Exchange-Old-Jewellery-For-24k-Gold-Silver-Bar-NYGOLD-Banner-2.jpg"",""https://www.goldmarket.fr/wp-content/uploads/2025/09/84fbec39thumbnail-1110x550.jpeg.webp""]',
+        '[""/images/banners/banner-1.png"",""/images/banners/banner-2.png"",""/images/banners/banner-3.png""]',
         1,
         'Home carousel offer images (server paths)',
         SYSUTCDATETIME(),
