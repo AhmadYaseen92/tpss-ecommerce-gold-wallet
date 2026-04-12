@@ -8,20 +8,24 @@ class AuthApiService {
   final String? _baseUrl;
 
   Future<Map<String, dynamic>> login(LoginRequestModel request) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/auth/login',
-      data: request.toJson(),
-      options: Options(baseUrl: _resolveBaseUrl()),
+    final data = request.toJson();
+
+    final response = await _dio.fetch<Map<String, dynamic>>(
+      Options(method: 'POST')
+          .compose(_dio.options, '/auth/login', data: data)
+          .copyWith(baseUrl: _resolveBaseUrl()),
     );
 
     return response.data ?? <String, dynamic>{};
   }
 
   Future<Map<String, dynamic>> register(RegisterRequestModel request) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/auth/register',
-      data: request.toJson(),
-      options: Options(baseUrl: _resolveBaseUrl()),
+    final data = request.toJson();
+
+    final response = await _dio.fetch<Map<String, dynamic>>(
+      Options(method: 'POST')
+          .compose(_dio.options, '/auth/register', data: data)
+          .copyWith(baseUrl: _resolveBaseUrl()),
     );
 
     return response.data ?? <String, dynamic>{};
