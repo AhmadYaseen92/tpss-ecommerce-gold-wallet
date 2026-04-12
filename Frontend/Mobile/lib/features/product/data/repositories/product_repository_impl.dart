@@ -66,7 +66,9 @@ class ProductRepositoryImpl implements IProductRepository {
       name: model.name,
       description: model.description,
       price: model.price,
-      imageUrl: _imageBySkuOrName(sku: model.sku, name: model.name),
+      imageUrl: model.imageUrl.trim().isNotEmpty
+          ? model.imageUrl
+          : _imageBySkuOrName(sku: model.sku, name: model.name),
       category: _categoryByName(model.name),
       isFavorite: _favoriteProductIds.contains(model.id.toString()),
       purity: _purityByDescription(model.description),

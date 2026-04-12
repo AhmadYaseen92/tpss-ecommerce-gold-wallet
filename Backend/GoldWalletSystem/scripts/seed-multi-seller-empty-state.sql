@@ -95,7 +95,7 @@ BEGIN TRY
     -- 3) Ensure empty profile/wallet/cart for every seeded user
     ------------------------------------------------------------
     INSERT INTO [UserProfiles] ([UserId],[DateOfBirth],[Nationality],[PreferredLanguage],[PreferredTheme],[DocumentType],[IdNumber],[ProfilePhotoUrl],[CreatedAtUtc],[UpdatedAtUtc])
-    SELECT U.[Id], NULL, N'Unknown', N'en', N'light', N'', N'', N'', @Now, NULL
+    SELECT U.[Id], NULL, N'Unknown', N'en', N'light', N'', N'', N'https://cdn-icons-png.flaticon.com/512/3135/3135715.png', @Now, NULL
     FROM [Users] U
     WHERE U.[Email] IN (SELECT [Email] FROM @Users)
       AND NOT EXISTS (SELECT 1 FROM [UserProfiles] P WHERE P.[UserId] = U.[Id]);
@@ -212,6 +212,28 @@ BEGIN TRY
     WHEN NOT MATCHED THEN
         INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
         VALUES (S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[Price],S.[AvailableStock],1,@Now,NULL);
+
+    UPDATE P
+    SET P.[ImageUrl] = CASE
+        WHEN P.[Name] LIKE '%Silver%' THEN N'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png'
+        ELSE N'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png'
+    END
+    FROM [Products] P
+    WHERE ISNULL(P.[ImageUrl], N'') = N'';
+
+    IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'home.carousel.images')
+    BEGIN
+        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [JsonValue], [IsEnabled], [Description], [CreatedAtUtc], [UpdatedAtUtc])
+        VALUES
+        (
+            N'home.carousel.images',
+            N'[\"https://urdu.bharatexpress.com/wp-content/uploads/2025/12/collage-67.webp\",\"https://nygoldco.com/wp-content/uploads/2026/01/Exchange-Old-Jewellery-For-24k-Gold-Silver-Bar-NYGOLD-Banner-2.jpg\",\"https://www.goldmarket.fr/wp-content/uploads/2025/09/84fbec39thumbnail-1110x550.jpeg.webp\"]',
+            1,
+            N'Home carousel offer images (server paths)',
+            @Now,
+            NULL
+        );
+    END
 
     ------------------------------------------------------------
     -- 5) Audit logs: seed + lifecycle placeholders (A->Z)

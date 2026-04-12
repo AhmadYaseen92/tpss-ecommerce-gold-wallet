@@ -27,6 +27,7 @@ class ProductRemoteModel {
     required this.name,
     required this.sku,
     required this.description,
+    required this.imageUrl,
     required this.price,
     required this.availableStock,
     required this.sellerId,
@@ -37,6 +38,7 @@ class ProductRemoteModel {
   final String name;
   final String sku;
   final String description;
+  final String imageUrl;
   final double price;
   final int availableStock;
   final int sellerId;
@@ -48,6 +50,7 @@ class ProductRemoteModel {
       name: (json['name'] ?? '') as String,
       sku: (json['sku'] ?? '') as String,
       description: (json['description'] ?? '') as String,
+      imageUrl: (json['imageUrl'] ?? '') as String,
       price: (json['price'] as num?)?.toDouble() ?? 0,
       availableStock: (json['availableStock'] as num?)?.toInt() ?? 0,
       sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
