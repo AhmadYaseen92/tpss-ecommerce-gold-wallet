@@ -95,7 +95,7 @@ BEGIN TRY
     -- 3) Ensure empty profile/wallet/cart for every seeded user
     ------------------------------------------------------------
     INSERT INTO [UserProfiles] ([UserId],[DateOfBirth],[Nationality],[PreferredLanguage],[PreferredTheme],[DocumentType],[IdNumber],[ProfilePhotoUrl],[CreatedAtUtc],[UpdatedAtUtc])
-    SELECT U.[Id], NULL, N'Unknown', N'en', N'light', N'', N'', N'https://cdn-icons-png.flaticon.com/512/3135/3135715.png', @Now, NULL
+    SELECT U.[Id], NULL, N'Unknown', N'en', N'light', N'', N'', N'/images/profiles/default-user.png', @Now, NULL
     FROM [Users] U
     WHERE U.[Email] IN (SELECT [Email] FROM @Users)
       AND NOT EXISTS (SELECT 1 FROM [UserProfiles] P WHERE P.[UserId] = U.[Id]);
@@ -215,8 +215,11 @@ BEGIN TRY
 
     UPDATE P
     SET P.[ImageUrl] = CASE
-        WHEN P.[Name] LIKE '%Silver%' THEN N'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png'
-        ELSE N'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png'
+        WHEN P.[Name] LIKE '%Gift%' OR P.[Name] LIKE '%Pack%' THEN N'/images/products/gift-card.png'
+        WHEN P.[Name] LIKE '%Necklace%' OR P.[Name] LIKE '%Ring%' OR P.[Name] LIKE '%Bracelet%' OR P.[Name] LIKE '%Pendant%' THEN N'/images/products/jewelry.png'
+        WHEN P.[Name] LIKE '%Coin%' THEN N'/images/products/gold-coin.png'
+        WHEN P.[Name] LIKE '%Silver%' THEN N'/images/products/silver.png'
+        ELSE N'/images/products/gold-bar.png'
     END
     FROM [Products] P
     WHERE ISNULL(P.[ImageUrl], N'') = N'';
@@ -227,7 +230,7 @@ BEGIN TRY
         VALUES
         (
             N'home.carousel.images',
-            N'[\"https://urdu.bharatexpress.com/wp-content/uploads/2025/12/collage-67.webp\",\"https://nygoldco.com/wp-content/uploads/2026/01/Exchange-Old-Jewellery-For-24k-Gold-Silver-Bar-NYGOLD-Banner-2.jpg\",\"https://www.goldmarket.fr/wp-content/uploads/2025/09/84fbec39thumbnail-1110x550.jpeg.webp\"]',
+            N'[\"/images/banners/banner-1.png\",\"/images/banners/banner-2.png\",\"/images/banners/banner-3.png\"]',
             1,
             N'Home carousel offer images (server paths)',
             @Now,

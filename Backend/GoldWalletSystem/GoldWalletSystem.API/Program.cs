@@ -53,6 +53,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseStaticFiles();
 
 using (var scope = app.Services.CreateScope())
 {
