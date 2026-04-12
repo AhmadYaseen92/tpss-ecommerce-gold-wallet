@@ -1,0 +1,4 @@
+wwwroot\images\banners\.gitkeep
+wwwroot\images\products\.gitkeep
+wwwroot\images\products\gold-bar.png
+wwwroot\images\profiles\.gitkeep
