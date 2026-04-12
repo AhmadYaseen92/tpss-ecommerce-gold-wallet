@@ -1,5 +1,6 @@
 import 'dart:collection';
 
+import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/datasources/product_local_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/datasources/product_remote_datasource.dart';
@@ -74,6 +75,8 @@ class ProductRepositoryImpl implements IProductRepository {
   }
 
   ProductEntity _toEntity(ProductRemoteModel model) {
+    final normalizedImageUrl = _normalizeImageUrl(model.imageUrl);
+
     return ProductEntity(
       id: model.id.toString(),
       sellerId: model.sellerId,
@@ -81,8 +84,8 @@ class ProductRepositoryImpl implements IProductRepository {
       description: model.description,
       price: model.price,
       availableStock: model.availableStock,
-      imageUrl: model.imageUrl.trim().isNotEmpty
-          ? model.imageUrl
+      imageUrl: normalizedImageUrl.trim().isNotEmpty
+          ? normalizedImageUrl
           : _imageBySkuOrName(sku: model.sku, name: model.name),
       category: _categoryLabelById(model.categoryId),
       categoryId: model.categoryId,
@@ -162,5 +165,22 @@ class ProductRepositoryImpl implements IProductRepository {
       return 'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png';
     }
     return 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png';
+  }
+
+  String _normalizeImageUrl(String rawPath) {
+    final trimmed = rawPath.trim();
+    if (trimmed.isEmpty) return '';
+
+    final parsed = Uri.tryParse(trimmed);
+    if (parsed != null && parsed.hasScheme && parsed.host.isNotEmpty) {
+      return trimmed;
+    }
+
+    final apiBase = Uri.tryParse(ApiConfig.baseUrl);
+    if (apiBase == null) return trimmed;
+
+    final origin = '${apiBase.scheme}://${apiBase.host}${apiBase.hasPort ? ':${apiBase.port}' : ''}';
+    final normalizedPath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return '$origin$normalizedPath';
   }
 }

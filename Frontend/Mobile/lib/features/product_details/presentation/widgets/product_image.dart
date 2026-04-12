@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 
 class ProductImage extends StatelessWidget {
+  static const String _fallbackImageUrl =
+      'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png';
+
   final String imageUrl;
   final Color color;
   final bool is3D; // control whether to show 3D or image
@@ -15,6 +18,12 @@ class ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final parsed = Uri.tryParse(imageUrl.trim());
+    final validNetworkUrl = parsed != null &&
+        (parsed.scheme == 'http' || parsed.scheme == 'https') &&
+        parsed.host.isNotEmpty;
+    final finalUrl = validNetworkUrl ? imageUrl : _fallbackImageUrl;
+
     return Container(
       width: double.infinity,
       height: 300,
@@ -29,7 +38,7 @@ class ProductImage extends StatelessWidget {
           //       )
           //     :
           Image.network(
-            imageUrl,
+            finalUrl,
             fit: BoxFit.fitHeight,
             loadingBuilder: (context, child, progress) {
               if (progress == null) return child;
@@ -40,8 +49,9 @@ class ProductImage extends StatelessWidget {
               );
             },
             errorBuilder: (context, error, stackTrace) {
-              return Center(
-                child: Icon(Icons.broken_image_rounded, color: color, size: 48),
+              return Image.network(
+                _fallbackImageUrl,
+                fit: BoxFit.fitHeight,
               );
             },
           ),
