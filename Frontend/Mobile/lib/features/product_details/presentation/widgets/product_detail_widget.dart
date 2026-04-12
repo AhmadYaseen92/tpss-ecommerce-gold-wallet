@@ -86,15 +86,15 @@ class ProductDetailWidget extends StatelessWidget {
           },
           onBuyNow: () async {
             try {
-              await productCubit.addCart(
-                product.copyWith(quantity: productCubit.quantity),
-              );
-              if (!context.mounted) return;
               Navigator.of(context, rootNavigator: true).pushNamed(
                 AppRoutes.checkoutRoute,
                 arguments: {
+                  'source': 'product',
+                  'fromCart': false,
                   'title': product.name,
                   'seller': product.sellerName,
+                  'productId': int.tryParse(product.id),
+                  'quantity': productCubit.quantity,
                   'amount': product.price * productCubit.quantity,
                 },
               );

@@ -9,6 +9,8 @@ public sealed record ProductDto(
     string Description,
     string ImageUrl,
     ProductCategory Category,
+    decimal WeightValue,
+    ProductWeightUnit WeightUnit,
     decimal Price,
     int AvailableStock,
     int SellerId,

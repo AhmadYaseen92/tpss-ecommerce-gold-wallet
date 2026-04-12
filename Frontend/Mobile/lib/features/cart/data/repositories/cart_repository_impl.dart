@@ -1,3 +1,4 @@
+import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/repositories/cart_repository.dart';
@@ -41,13 +42,20 @@ class CartRepositoryImpl implements ICartRepository {
   }
 
   CartItemEntity _toEntity(CartRemoteItemModel model) {
+    final normalizedImageUrl = _normalizeImageUrl(model.productImageUrl);
+
     return CartItemEntity(
       id: model.productId.toString(),
       name: model.productName,
-      description: model.productName,
+      description: model.productDescription,
       price: model.unitPrice,
-      imageUrl: _imageByName(model.productName),
+      imageUrl: normalizedImageUrl.trim().isNotEmpty
+          ? normalizedImageUrl
+          : _imageByName(model.productName),
+      sellerId: model.sellerId,
       sellerName: model.sellerName,
+      availableStock: model.availableStock,
+      weight: '${model.weightValue} ${model.weightUnit}',
       quantity: model.quantity,
     );
   }
@@ -58,5 +66,22 @@ class CartRepositoryImpl implements ICartRepository {
       return 'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png';
     }
     return 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png';
+  }
+
+  String _normalizeImageUrl(String rawPath) {
+    final trimmed = rawPath.trim();
+    if (trimmed.isEmpty) return '';
+
+    final parsed = Uri.tryParse(trimmed);
+    if (parsed != null && parsed.hasScheme && parsed.host.isNotEmpty) {
+      return trimmed;
+    }
+
+    final apiBase = Uri.tryParse(ApiConfig.baseUrl);
+    if (apiBase == null) return trimmed;
+
+    final origin = '${apiBase.scheme}://${apiBase.host}${apiBase.hasPort ? ':${apiBase.port}' : ''}';
+    final normalizedPath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return '$origin$normalizedPath';
   }
 }

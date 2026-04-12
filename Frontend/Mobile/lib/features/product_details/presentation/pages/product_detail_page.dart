@@ -55,10 +55,13 @@ class ProductDetailPage extends StatelessWidget {
           }
 
           if (state is ProductDetailLoaded || state is ProductQuantityChanged) {
+            final loadedProduct = state is ProductDetailLoaded
+                ? state.product
+                : product;
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: appBar(),
-              body: ProductDetailWidget(product: product, productCubit: cubit),
+              body: ProductDetailWidget(product: loadedProduct, productCubit: cubit),
             );
           }
 

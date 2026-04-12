@@ -136,6 +136,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Description).HasMaxLength(1000);
             entity.Property(x => x.ImageUrl).HasMaxLength(1000);
             entity.Property(x => x.Category).HasConversion<int>();
+            entity.Property(x => x.WeightValue).HasPrecision(18, 3);
+            entity.Property(x => x.WeightUnit).HasConversion<int>();
             entity.Property(x => x.Price).HasPrecision(18, 2);
             entity.HasIndex(x => x.Sku).IsUnique();
             entity.HasIndex(x => x.Name);
@@ -223,6 +225,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Unit).IsRequired().HasMaxLength(20);
             entity.Property(x => x.Weight).HasPrecision(18, 3);
             entity.Property(x => x.Purity).HasPrecision(5, 2);
+            entity.Property(x => x.SellerName).HasMaxLength(200);
             entity.Property(x => x.AverageBuyPrice).HasPrecision(18, 2);
             entity.Property(x => x.CurrentMarketPrice).HasPrecision(18, 2);
             entity.HasIndex(x => x.WalletId);

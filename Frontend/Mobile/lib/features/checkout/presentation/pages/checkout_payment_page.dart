@@ -9,6 +9,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/checkout/presentation/cubit/
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/predefined_account_selector.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 
 class CheckoutPaymentPage extends StatefulWidget {
@@ -28,6 +29,9 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   Map<String, dynamic> get _checkoutArgs {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map<String, dynamic>) return args;
+    if (args is Map) {
+      return args.map((key, value) => MapEntry('$key', value));
+    }
     return const {};
   }
 
@@ -42,11 +46,23 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     final palette = context.appPalette;
 
     return BlocProvider(
-      create: (_) => CheckoutCubit()..load(),
+      create: (_) => CheckoutCubit(InjectionContainer.dio())..load(),
       child: BlocConsumer<CheckoutCubit, CheckoutState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is CheckoutSuccess) {
-            AppModalAlert.show(context, title: 'Payment Confirmed', message: 'Payment confirmed with WhatsApp OTP.');
+            await AppModalAlert.show(
+              context,
+              title: 'Checkout Successful',
+              message: 'Purchase completed and added to your wallet.',
+            );
+            if (!mounted) return;
+            _navigateAfterSuccess();
+          } else if (state is CheckoutError) {
+            await AppModalAlert.show(
+              context,
+              title: 'Checkout Failed',
+              message: state.message,
+            );
           }
         },
         builder: (context, state) {
@@ -165,7 +181,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                               },
                             );
                             if (otpVerified == true) {
-                              cubit.confirmOtp();
+                              await cubit.confirmOtp(checkoutArgs: _checkoutArgs);
                             }
                           },
                     icon: state is CheckoutLoading
@@ -180,6 +196,27 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         },
       ),
     );
+  }
+
+  void _navigateAfterSuccess() {
+    final source = (_checkoutArgs['source'] ?? '').toString().toLowerCase();
+    if (source == 'cart') {
+      Navigator.of(context, rootNavigator: true).pop(true);
+      return;
+    }
+
+    final navigator = Navigator.of(context, rootNavigator: true);
+    var foundProductRoute = false;
+    navigator.popUntil((route) {
+      final isProductRoute = route.settings.name == AppRoutes.productRoute;
+      if (isProductRoute) {
+        foundProductRoute = true;
+      }
+      return isProductRoute || route.isFirst;
+    });
+    if (!foundProductRoute) {
+      navigator.pushNamed(AppRoutes.productRoute);
+    }
   }
 
   void _applyDiscountCode(double amount) {

@@ -48,7 +48,9 @@ class CartCubit extends Cubit<CartState> {
 
       if (AppReleaseConfig.isIndividualSellerRelease) {
         _sellerFilter = AppReleaseConfig.individualSellerName;
-      } else if (sellerFilter == AppReleaseConfig.allSellersLabel && sellers.isNotEmpty) {
+      } else if (sellers.contains(sellerFilter)) {
+        _sellerFilter = sellerFilter;
+      } else if (sellers.isNotEmpty) {
         _sellerFilter = sellers.first;
       } else {
         _sellerFilter = sellerFilter;
@@ -79,9 +81,15 @@ class CartCubit extends Cubit<CartState> {
   }
 
   void _emitLoaded() {
-    final filtered = _filterCartItemsUseCase(items: _allItems, sellerFilter: _sellerFilter);
-    final summary = _calculateCartSummaryUseCase(filtered);
+    var filtered = _filterCartItemsUseCase(items: _allItems, sellerFilter: _sellerFilter);
     final sellers = _getAvailableSellersUseCase(_allItems);
+
+    if (filtered.isEmpty && sellers.isNotEmpty) {
+      _sellerFilter = sellers.first;
+      filtered = _filterCartItemsUseCase(items: _allItems, sellerFilter: _sellerFilter);
+    }
+
+    final summary = _calculateCartSummaryUseCase(filtered);
 
     emit(
       CartLoaded(

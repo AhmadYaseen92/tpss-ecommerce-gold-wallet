@@ -49,23 +49,41 @@ class CartRemoteItemModel {
   CartRemoteItemModel({
     required this.productId,
     required this.productName,
+    required this.productDescription,
+    required this.productImageUrl,
+    required this.sellerId,
     required this.sellerName,
+    required this.availableStock,
     required this.unitPrice,
+    required this.weightValue,
+    required this.weightUnit,
     required this.quantity,
   });
 
   final int productId;
   final String productName;
+  final String productDescription;
+  final String productImageUrl;
+  final int sellerId;
   final String sellerName;
+  final int availableStock;
   final double unitPrice;
+  final double weightValue;
+  final String weightUnit;
   final int quantity;
 
   factory CartRemoteItemModel.fromJson(Map<String, dynamic> json) {
     return CartRemoteItemModel(
       productId: (json['productId'] as num?)?.toInt() ?? 0,
       productName: (json['productName'] ?? '') as String,
+      productDescription: (json['productDescription'] ?? '') as String,
+      productImageUrl: (json['productImageUrl'] ?? '') as String,
+      sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
       sellerName: (json['sellerName'] ?? '') as String,
+      availableStock: (json['availableStock'] as num?)?.toInt() ?? 0,
       unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0,
+      weightValue: (json['weightValue'] as num?)?.toDouble() ?? 0,
+      weightUnit: (json['weightUnit'] ?? '').toString(),
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
     );
   }
