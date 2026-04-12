@@ -49,23 +49,13 @@ class CartRepositoryImpl implements ICartRepository {
       name: model.productName,
       description: model.productDescription,
       price: model.unitPrice,
-      imageUrl: normalizedImageUrl.trim().isNotEmpty
-          ? normalizedImageUrl
-          : _imageByName(model.productName),
+      imageUrl: normalizedImageUrl,
       sellerId: model.sellerId,
       sellerName: model.sellerName,
       availableStock: model.availableStock,
       weight: '${model.weightValue} ${model.weightUnit}',
       quantity: model.quantity,
     );
-  }
-
-  String _imageByName(String name) {
-    final value = name.toLowerCase();
-    if (value.contains('silver')) {
-      return 'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png';
-    }
-    return 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png';
   }
 
   String _normalizeImageUrl(String rawPath) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
@@ -91,34 +92,15 @@ class WalletTransactionsWidget extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(10.0),
-          child: Image.network(
-            tx.imageUrl,
+          child: AppServerImage(
+            imageUrl: tx.imageUrl,
             width: 44.0,
             height: 44.0,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              width: 44.0,
-              height: 44.0,
-              decoration: BoxDecoration(
-                color: palette.surfaceMuted,
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Icon(Icons.image_not_supported_outlined, size: 22.0, color: palette.textSecondary),
-            ),
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(
-                width: 44.0,
-                height: 44.0,
-                decoration: BoxDecoration(
-                  color: palette.surfaceMuted,
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                child: const Center(
-                  child: SizedBox(width: 20.0, height: 20.0, child: CircularProgressIndicator(strokeWidth: 2.0)),
-                ),
-              );
-            },
+            borderRadius: BorderRadius.circular(10.0),
+            backgroundColor: palette.surfaceMuted,
+            iconColor: palette.textSecondary,
+            placeholderIconSize: 22,
           ),
         ),
         const SizedBox(width: 12.0),

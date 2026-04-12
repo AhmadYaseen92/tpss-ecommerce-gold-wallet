@@ -141,13 +141,6 @@ class WalletRepositoryImpl implements IWalletRepository {
       };
 
   String _imageByAssetType(String assetType) {
-    final value = assetType.toLowerCase();
-    if (value.contains('diamond')) {
-      return 'https://images.unsplash.com/photo-1615655406736-b37c4fabf923?q=80&w=800';
-    }
-    if (value.contains('silver')) {
-      return 'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png';
-    }
-    return 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png';
+    return '';
   }
 }

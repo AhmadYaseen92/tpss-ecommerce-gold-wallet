@@ -85,9 +85,7 @@ class ProductRepositoryImpl implements IProductRepository {
       description: model.description,
       price: model.price,
       availableStock: model.availableStock,
-      imageUrl: normalizedImageUrl.trim().isNotEmpty
-          ? normalizedImageUrl
-          : _imageBySkuOrName(sku: model.sku, name: model.name),
+      imageUrl: normalizedImageUrl,
       category: _categoryLabelById(model.categoryId),
       categoryId: model.categoryId,
       isFavorite: _favoriteProductIds.contains(model.id.toString()),
@@ -153,22 +151,6 @@ class ProductRepositoryImpl implements IProductRepository {
         ? weightValue.toStringAsFixed(0)
         : weightValue.toStringAsFixed(3);
     return '$normalizedWeight $suffix';
-  }
-
-  String _imageBySkuOrName({required String sku, required String name}) {
-    const skuImages = {
-      'XAU-1OZ': 'https://www.pamp.com/sites/pamp/files/2022-02/1oz_gold_sfondo_lucido_obv.png',
-      'XAU-10G': 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png',
-      'XAG-1KG': 'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png',
-    };
-
-    final imageFromSku = skuImages[sku.toUpperCase()];
-    if (imageFromSku != null) return imageFromSku;
-
-    if (name.toLowerCase().contains('silver')) {
-      return 'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png';
-    }
-    return 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png';
   }
 
   String _normalizeImageUrl(String rawPath) {

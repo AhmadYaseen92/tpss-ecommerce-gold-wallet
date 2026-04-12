@@ -27,7 +27,7 @@ class ProductDetailWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ProductImage(imageUrl: product.imageUrl, color: palette.primary),
+                ProductImage(imageUrl: product.imageUrl),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
                   child: Column(
