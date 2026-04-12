@@ -12,9 +12,9 @@ namespace GoldWalletSystem.API.Controllers;
 public class ProductsController(IProductService productService) : ControllerBase
 {
     [HttpPost("search")]
-    public async Task<IActionResult> Search([FromBody] PagedRequestDto request, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Search([FromBody] ProductSearchRequestDto request, CancellationToken cancellationToken = default)
     {
-        var data = await productService.GetProductsAsync(request.PageNumber, request.PageSize, cancellationToken);
+        var data = await productService.GetProductsAsync(request.PageNumber, request.PageSize, request.Category, cancellationToken);
         var normalizedItems = data.Items
             .Select(product => product with { ImageUrl = ToAbsoluteAssetUrl(product.ImageUrl) })
             .ToList();

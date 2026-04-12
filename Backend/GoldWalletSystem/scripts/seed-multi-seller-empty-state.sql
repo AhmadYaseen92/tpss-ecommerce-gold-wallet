@@ -148,6 +148,10 @@ BEGIN TRY
     ------------------------------------------------------------
     -- 5) Products seed source
     ------------------------------------------------------------
+    UPDATE [Products]
+    SET [ImageUrl] = N'/images/products/gold-bar.png'
+    WHERE [ImageUrl] IS NULL OR LTRIM(RTRIM([ImageUrl])) = N'';
+
     ;WITH SeedProducts AS (
         SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock UNION ALL
         SELECT @SellerImseeh, N'IMSEEH-PRD-002', N'Imseeh 10g Gold Bar', N'24K minted bar - 10 grams', CAST(860.00 AS decimal(18,2)), 100 UNION ALL
@@ -222,6 +226,16 @@ BEGIN TRY
             T.[Description] = S.[Description],
             T.[Price] = S.[Price],
             T.[AvailableStock] = S.[AvailableStock],
+            T.[Category] = CASE
+                WHEN S.[Name] LIKE N'%Gift Card%' THEN 10
+                WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
+                WHEN S.[Name] LIKE N'%Coin%' THEN 5
+                WHEN (S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%') AND S.[Name] LIKE N'%Silver%' THEN 9
+                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' THEN 8
+                WHEN S.[Name] LIKE N'%Silver%' THEN 2
+                WHEN S.[Name] LIKE N'%Bar%' THEN 3
+                ELSE 1
+            END,
             T.[ImageUrl] = CASE
                 WHEN S.[Name] LIKE N'%Silver%' THEN N'/images/products/silver.png'
                 WHEN S.[Name] LIKE N'%Coin%' THEN N'/images/products/gold-coin.png'
@@ -232,7 +246,7 @@ BEGIN TRY
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[Category],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
         VALUES (
             S.[SellerId],
             S.[Name],
@@ -240,6 +254,16 @@ BEGIN TRY
             S.[Description],
             S.[Price],
             S.[AvailableStock],
+            CASE
+                WHEN S.[Name] LIKE N'%Gift Card%' THEN 10
+                WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
+                WHEN S.[Name] LIKE N'%Coin%' THEN 5
+                WHEN (S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%') AND S.[Name] LIKE N'%Silver%' THEN 9
+                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' THEN 8
+                WHEN S.[Name] LIKE N'%Silver%' THEN 2
+                WHEN S.[Name] LIKE N'%Bar%' THEN 3
+                ELSE 1
+            END,
             CASE
                 WHEN S.[Name] LIKE N'%Silver%' THEN N'/images/products/silver.png'
                 WHEN S.[Name] LIKE N'%Coin%' THEN N'/images/products/gold-coin.png'
@@ -311,6 +335,6 @@ SELECT [Id], [FullName], [Email], [Role], [SellerId], [IsActive]
 FROM [Users]
 WHERE [Email] = N'investoe@goldwallet.com';
 
-SELECT TOP 20 [Id], [Name], [Sku], [ImageUrl]
+SELECT TOP 20 [Id], [Name], [Sku], [Category], [ImageUrl]
 FROM [Products]
 ORDER BY [Id] DESC;
