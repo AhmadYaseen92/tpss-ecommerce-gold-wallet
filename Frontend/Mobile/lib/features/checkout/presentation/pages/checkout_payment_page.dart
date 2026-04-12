@@ -200,42 +200,28 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
 
   void _navigateAfterSuccess() {
     final source = (_checkoutArgs['source'] ?? '').toString().toLowerCase();
-    if (source == 'cart') {
-      Navigator.of(context, rootNavigator: true).pop(true);
-      return;
-    }
-
-    if (source == 'product') {
-      final navigator = Navigator.of(context, rootNavigator: true);
-      var foundProductRoute = false;
-      navigator.popUntil((route) {
-        final isProductRoute = route.settings.name == AppRoutes.productRoute;
-        if (isProductRoute) {
-          foundProductRoute = true;
-        }
-        return isProductRoute || route.isFirst;
-      });
-      if (!foundProductRoute) {
-        navigator.pushNamedAndRemoveUntil(
-          AppRoutes.productRoute,
-          (route) => false,
-        );
-      }
-      return;
-    }
-
     final navigator = Navigator.of(context, rootNavigator: true);
-    var foundListRoute = false;
+    if (source == 'cart') {
+      navigator.pop(true);
+      return;
+    }
+
+    if (source != 'product') {
+      navigator.pop();
+      return;
+    }
+
+    var foundProductRoute = false;
     navigator.popUntil((route) {
-      final isListRoute = route.settings.name == AppRoutes.homeRoute || route.settings.name == AppRoutes.productRoute;
-      if (isListRoute) {
-        foundListRoute = true;
+      final isProductRoute = route.settings.name == AppRoutes.productRoute;
+      if (isProductRoute) {
+        foundProductRoute = true;
       }
-      return isListRoute || route.isFirst;
+      return isProductRoute || route.isFirst;
     });
-    if (!foundListRoute) {
+    if (!foundProductRoute) {
       navigator.pushNamedAndRemoveUntil(
-        AppRoutes.homeRoute,
+        AppRoutes.productRoute,
         (route) => false,
       );
     }
