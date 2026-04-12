@@ -95,6 +95,8 @@ class ProductDetailWidget extends StatelessWidget {
                 arguments: {
                   'title': product.name,
                   'seller': product.sellerName,
+                  'productId': int.tryParse(product.id),
+                  'quantity': productCubit.quantity,
                   'amount': product.price * productCubit.quantity,
                 },
               );

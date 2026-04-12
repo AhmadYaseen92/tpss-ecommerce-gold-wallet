@@ -9,6 +9,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/checkout/presentation/cubit/
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/predefined_account_selector.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 
 class CheckoutPaymentPage extends StatefulWidget {
@@ -42,7 +43,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     final palette = context.appPalette;
 
     return BlocProvider(
-      create: (_) => CheckoutCubit()..load(),
+      create: (_) => CheckoutCubit(InjectionContainer.dio())..load(),
       child: BlocConsumer<CheckoutCubit, CheckoutState>(
         listener: (context, state) {
           if (state is CheckoutSuccess) {
@@ -165,7 +166,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                               },
                             );
                             if (otpVerified == true) {
-                              cubit.confirmOtp();
+                              cubit.confirmOtp(checkoutArgs: _checkoutArgs);
                             }
                           },
                     icon: state is CheckoutLoading

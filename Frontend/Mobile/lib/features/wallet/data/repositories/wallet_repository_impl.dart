@@ -76,7 +76,7 @@ class WalletRepositoryImpl implements IWalletRepository {
       marketValue: '\$${totalValue.toStringAsFixed(2)}',
       change: '$signed${changePercent.toStringAsFixed(2)}%',
       imageUrl: _imageByAssetType(asset.assetType),
-      sellerName: 'Server',
+      sellerName: asset.sellerName.isEmpty ? 'Unknown Seller' : asset.sellerName,
     );
   }
 

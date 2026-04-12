@@ -54,6 +54,7 @@ class WalletAssetRemoteModel {
     required this.unit,
     required this.purity,
     required this.quantity,
+    required this.sellerName,
     required this.averageBuyPrice,
     required this.currentMarketPrice,
   });
@@ -64,6 +65,7 @@ class WalletAssetRemoteModel {
   final String unit;
   final double purity;
   final int quantity;
+  final String sellerName;
   final double averageBuyPrice;
   final double currentMarketPrice;
 
@@ -75,6 +77,7 @@ class WalletAssetRemoteModel {
       unit: (json['unit'] ?? 'gram').toString(),
       purity: (json['purity'] as num?)?.toDouble() ?? 0,
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
+      sellerName: (json['sellerName'] ?? '').toString(),
       averageBuyPrice: (json['averageBuyPrice'] as num?)?.toDouble() ?? 0,
       currentMarketPrice: (json['currentMarketPrice'] as num?)?.toDouble() ?? 0,
     );

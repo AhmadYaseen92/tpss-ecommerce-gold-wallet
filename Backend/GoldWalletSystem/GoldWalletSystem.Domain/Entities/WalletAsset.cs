@@ -12,6 +12,7 @@ public class WalletAsset : BaseEntity
     public int Quantity { get; set; }
     public decimal AverageBuyPrice { get; set; }
     public decimal CurrentMarketPrice { get; set; }
+    public string SellerName { get; set; } = string.Empty;
 
     public Wallet Wallet { get; set; } = null!;
 }

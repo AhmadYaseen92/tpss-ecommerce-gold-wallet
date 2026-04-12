@@ -864,6 +864,11 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<string>("SellerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("Unit")
                         .IsRequired()
                         .HasMaxLength(20)
