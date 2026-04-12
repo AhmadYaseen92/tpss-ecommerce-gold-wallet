@@ -27,39 +27,59 @@ class ProductPage extends StatelessWidget {
         productCubit.loadProducts(seller: activeSeller);
         return productCubit;
       },
-      child: DefaultTabController(
-        length: 2,
-        child: BlocListener<AppCubit, AppState>(
-          listenWhen: (previous, current) =>
-              previous.selectedSeller != current.selectedSeller,
-          listener: (context, state) {
-            context.read<ProductCubit>().onGlobalSellerChanged(
-              state.selectedSeller,
-            );
-          },
-          child: Column(
-            children: [
-              TabBar(
-                labelStyle: Theme.of(
-                  context,
-                ).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
-                labelColor: context.appPalette.primary,
-                unselectedLabelColor: context.appPalette.textSecondary,
-                indicatorColor: context.appPalette.primary,
-                tabs: [
-                  Tab(text: 'Catalog'),
-                  Tab(text: 'Market Watch'),
+      child: Builder(
+        builder: (context) {
+          return DefaultTabController(
+            length: 2,
+            child: BlocListener<AppCubit, AppState>(
+              listenWhen: (previous, current) =>
+                  previous.selectedSeller != current.selectedSeller,
+              listener: (context, state) {
+                context.read<ProductCubit>().onGlobalSellerChanged(
+                  state.selectedSeller,
+                );
+              },
+              child: Column(
+                children: [
+                  TabBar(
+                    labelStyle: Theme.of(context).textTheme.titleMedium!
+                        .copyWith(fontWeight: FontWeight.bold),
+                    labelColor: context.appPalette.primary,
+                    unselectedLabelColor: context.appPalette.textSecondary,
+                    indicatorColor: context.appPalette.primary,
+                    tabs: [
+                      Tab(text: 'Catalog'),
+                      Tab(text: 'Market Watch'),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        RefreshIndicator(
+                          onRefresh: () => context
+                              .read<ProductCubit>()
+                              .loadProducts(
+                                seller: context.read<ProductCubit>().activeSeller,
+                              ),
+                          child: CatalogTabWidget(),
+                        ),
+                        RefreshIndicator(
+                          onRefresh: () => context
+                              .read<ProductCubit>()
+                              .loadProducts(
+                                seller: context.read<ProductCubit>().activeSeller,
+                              ),
+                          child: MarketWatchTabWidget(),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: TabBarView(
-                  children: [CatalogTabWidget(), MarketWatchTabWidget()],
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -7,8 +7,18 @@ import 'package:tpss_ecommerce_gold_wallet/features/profile/presentation/widgets
 import 'package:tpss_ecommerce_gold_wallet/features/profile/presentation/widgets/main_profile_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/presentation/widgets/preferences_widget.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  Future<void> _refresh() async {
+    if (!mounted) return;
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,31 +38,35 @@ class ProfilePage extends StatelessWidget {
           ),
 
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              MainProfileWidget(),
-              const SizedBox(height: 20),
-              AccountSettingsWidget(),
-              const SizedBox(height: 20),
-              PreferencesWidget(),
-              const SizedBox(height: 20),
-              AppButton(
-                label: 'Logout',
-                icon: Icons.logout_rounded,
-                onPressed: () {
-                  Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-                    AppRoutes.loginRoute,
-                    (route) => false,
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-            ],
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MainProfileWidget(),
+                const SizedBox(height: 20),
+                AccountSettingsWidget(),
+                const SizedBox(height: 20),
+                PreferencesWidget(),
+                const SizedBox(height: 20),
+                AppButton(
+                  label: 'Logout',
+                  icon: Icons.logout_rounded,
+                  onPressed: () {
+                    Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+                      AppRoutes.loginRoute,
+                      (route) => false,
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),

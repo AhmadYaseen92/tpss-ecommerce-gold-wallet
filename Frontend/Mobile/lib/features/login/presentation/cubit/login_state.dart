@@ -14,11 +14,8 @@ final class LoginError extends LoginState {
 }
 
 final class LoginRememberMeChanged extends LoginState {
-
   final bool rememberMe;
-  LoginRememberMeChanged({
-    required this.rememberMe,
-  });
+  LoginRememberMeChanged({required this.rememberMe});
 }
 
 final class LoginPasswordVisibilityChanged extends LoginState {
@@ -26,3 +23,18 @@ final class LoginPasswordVisibilityChanged extends LoginState {
   LoginPasswordVisibilityChanged({required this.obscurePassword});
 }
 
+final class LoginServerCheckResult extends LoginState {
+  final bool success;
+  final String message;
+  LoginServerCheckResult({required this.success, required this.message});
+}
+
+final class LoginServerConfigUpdated extends LoginState {
+  final String baseUrl;
+  final int timeoutSeconds;
+
+  LoginServerConfigUpdated({
+    required this.baseUrl,
+    required this.timeoutSeconds,
+  });
+}

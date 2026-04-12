@@ -18,6 +18,17 @@ public class CurrentUserService(IHttpContextAccessor accessor) : ICurrentUserSer
         }
     }
 
+
+    public int? SellerId
+    {
+        get
+        {
+            var principal = accessor.HttpContext?.User;
+            var value = principal?.FindFirstValue("seller_id");
+            return int.TryParse(value, out var sellerId) ? sellerId : null;
+        }
+    }
+
     public bool IsInRole(string role)
         => accessor.HttpContext?.User?.IsInRole(role) ?? false;
 }

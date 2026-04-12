@@ -13,13 +13,9 @@ class AppCubit extends Cubit<AppState> {
       ? [AppReleaseConfig.individualSellerName]
       : [
           AppReleaseConfig.allSellersLabel,
-          'Imseeh',
-          'Sakkejha',
-          'Da’naa',
         ];
 
   void setSeller(String seller) {
-    if (!supportedSellers.contains(seller)) return;
     emit(state.copyWith(selectedSeller: seller));
   }
 
