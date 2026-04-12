@@ -1,6 +1,8 @@
 using GoldWalletSystem.Application.DTOs.Auth;
 using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.Domain.Constants;
+using GoldWalletSystem.Domain.Entities;
 
 namespace GoldWalletSystem.Application.Services;
 
@@ -17,15 +19,76 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
         if (!user.IsActive || !passwordHasher.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
-        var role = string.IsNullOrWhiteSpace(user.Role) ? GoldWalletSystem.Domain.Constants.SystemRoles.Investor : user.Role;
-        var token = tokenService.GenerateAccessToken(user.Id, user.Email, role);
+        var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
+        var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, user.SellerId);
 
         return new LoginResponseDto
         {
             AccessToken = token.Token,
             ExpiresAtUtc = token.ExpiresAtUtc,
             Role = role,
-            UserId = user.Id
+            UserId = user.Id,
+            SellerId = user.SellerId
+        };
+    }
+
+    public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.FirstName) ||
+            string.IsNullOrWhiteSpace(request.LastName) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.Password))
+        {
+            throw new InvalidOperationException("First name, last name, email and password are required.");
+        }
+
+        var existing = await userAuthRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken);
+        if (existing is not null)
+        {
+            throw new InvalidOperationException("Email is already registered.");
+        }
+
+        var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
+
+        var sellerId = request.SellerId > 0
+            ? request.SellerId
+            : await userAuthRepository.GetDefaultSellerIdAsync(cancellationToken);
+
+        var user = new User
+        {
+            FullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  "," ").Trim(),
+            Email = request.Email.Trim(),
+            PasswordHash = passwordHasher.Hash(request.Password),
+            PhoneNumber = request.PhoneNumber?.Trim(),
+            Role = role,
+            SellerId = sellerId,
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+        };
+
+        var profile = new UserProfile
+        {
+            DateOfBirth = request.DateOfBirth,
+            Nationality = request.Nationality,
+            DocumentType = request.DocumentType,
+            IdNumber = request.IdNumber,
+            ProfilePhotoUrl = request.ProfilePhotoUrl,
+            PreferredLanguage = string.IsNullOrWhiteSpace(request.PreferredLanguage) ? "en" : request.PreferredLanguage,
+            PreferredTheme = string.IsNullOrWhiteSpace(request.PreferredTheme) ? "light" : request.PreferredTheme,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+        };
+
+        var created = await userAuthRepository.AddAsync(user, profile, cancellationToken);
+
+        return new RegisterResponseDto
+        {
+            UserId = created.Id,
+            Email = created.Email,
+            FullName = created.FullName,
+            Role = created.Role,
+            SellerId = created.SellerId,
         };
     }
 }

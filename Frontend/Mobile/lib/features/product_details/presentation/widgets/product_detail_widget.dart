@@ -65,16 +65,47 @@ class ProductDetailWidget extends StatelessWidget {
           ),
         ),
         BottomBar(
-          onAddToCart: () {
-            AppModalAlert.show(context, title: 'Added to Cart', message: '${product.name} x${productCubit.quantity} added to cart');
-            productCubit.addCart(product);
+          onAddToCart: () async {
+            try {
+              await productCubit.addCart(product);
+              if (!context.mounted) return;
+              AppModalAlert.show(
+                context,
+                title: 'Added to Cart',
+                message:
+                    '${product.name} x${productCubit.quantity} added to cart',
+              );
+            } catch (e) {
+              if (!context.mounted) return;
+              AppModalAlert.show(
+                context,
+                title: 'Add to Cart Failed',
+                message: e.toString(),
+              );
+            }
           },
-          onBuyNow: () {
-            productCubit.addCart(product.copyWith(quantity: productCubit.quantity));
-            Navigator.of(context, rootNavigator: true).pushNamed(
-              AppRoutes.checkoutRoute,
-              arguments: {'title': product.name, 'seller': product.sellerName, 'amount': product.price * productCubit.quantity},
-            );
+          onBuyNow: () async {
+            try {
+              await productCubit.addCart(
+                product.copyWith(quantity: productCubit.quantity),
+              );
+              if (!context.mounted) return;
+              Navigator.of(context, rootNavigator: true).pushNamed(
+                AppRoutes.checkoutRoute,
+                arguments: {
+                  'title': product.name,
+                  'seller': product.sellerName,
+                  'amount': product.price * productCubit.quantity,
+                },
+              );
+            } catch (e) {
+              if (!context.mounted) return;
+              AppModalAlert.show(
+                context,
+                title: 'Buy Now Failed',
+                message: e.toString(),
+              );
+            }
           },
           productCubit: productCubit,
           quantity: productCubit.quantity,

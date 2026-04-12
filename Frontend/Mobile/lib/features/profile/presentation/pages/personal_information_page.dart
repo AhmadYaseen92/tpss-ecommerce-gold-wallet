@@ -155,7 +155,7 @@ class PersonalInformationPage extends StatelessWidget {
                         cubit: cubit,
                         label: 'Save Changes',
                         onPressed: () {
-                          cubit.save();
+                          cubit.savePersonalInfo();
                           AppModalAlert.show(
                             context,
                             title: 'Saved',

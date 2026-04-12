@@ -5,6 +5,9 @@ public class UserProfile : BaseEntity
     public int UserId { get; set; }
     public DateOnly? DateOfBirth { get; set; }
     public string Nationality { get; set; } = string.Empty;
+    public string DocumentType { get; set; } = string.Empty;
+    public string IdNumber { get; set; } = string.Empty;
+    public string ProfilePhotoUrl { get; set; } = string.Empty;
     public string PreferredLanguage { get; set; } = "en";
     public string PreferredTheme { get; set; } = "light";
 

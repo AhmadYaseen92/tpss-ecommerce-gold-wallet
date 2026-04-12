@@ -75,7 +75,7 @@ class LanguageSettingsPage extends StatelessWidget {
                         cubit: cubit,
                         label: 'Save Changes',
                         onPressed: () {
-                          cubit.save();
+                          cubit.saveLanguageSettings();
                           AppModalAlert.show(
                             context,
                             title: 'Saved',

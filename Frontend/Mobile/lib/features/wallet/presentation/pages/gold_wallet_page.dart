@@ -44,45 +44,49 @@ class GoldWalletPage extends StatelessWidget {
                       ) ??
                       0),
             );
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-                  PortfolioCardWidget(
-                    title: 'Total Portfolio Value',
-                    value: '\$${totalPortfolioValue.toStringAsFixed(2)}',
-                    change: '${wallet.change} live',
-                    availableCash: '\$2,000.00',
-                  ),
-                  const SizedBox(height: 20.0),
-
-                  WalletTabBar(selectedIndex: state.selectedIndex, wallets: state.wallets),
-                  const SizedBox(height: 16.0),
-
-                  WalletCardWidget(
-                    walletName: wallet.walletName,
-                    isVerified: wallet.isVerified,
-                    totalWeightInGrams: wallet.totalWeightInGrams,
-                    totalWeightInKg: wallet.totalWeightInKg,
-                    totalWeightInOz: wallet.totalWeightInOz,
-                    totalMarketValue: wallet.totalMarketValue,
-                    totalHoldings: wallet.totalHoldings,
-                    change: wallet.change,
-                    icon: wallet.icon,
-                    transactions: wallet.transactions,
-                    note: wallet.note,
-                  ),
-
-                  const SizedBox(height: 20.0),
-                  if (wallet.transactions.isNotEmpty)
-                    WalletTransactionsWidget(
-                      transactions: wallet.transactions,
-                      accentColor: context.appPalette.primary,
-                      onViewAllHistory: onViewAllHistory,
+            return RefreshIndicator(
+              onRefresh: () => context.read<WalletCubit>().loadWallets(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    PortfolioCardWidget(
+                      title: 'Total Portfolio Value',
+                      value: '\$${totalPortfolioValue.toStringAsFixed(2)}',
+                      change: '${wallet.change} live',
+                      availableCash: '\$2,000.00',
                     ),
-                ],
+                    const SizedBox(height: 20.0),
+
+                    WalletTabBar(selectedIndex: state.selectedIndex, wallets: state.wallets),
+                    const SizedBox(height: 16.0),
+
+                    WalletCardWidget(
+                      walletName: wallet.walletName,
+                      isVerified: wallet.isVerified,
+                      totalWeightInGrams: wallet.totalWeightInGrams,
+                      totalWeightInKg: wallet.totalWeightInKg,
+                      totalWeightInOz: wallet.totalWeightInOz,
+                      totalMarketValue: wallet.totalMarketValue,
+                      totalHoldings: wallet.totalHoldings,
+                      change: wallet.change,
+                      icon: wallet.icon,
+                      transactions: wallet.transactions,
+                      note: wallet.note,
+                    ),
+
+                    const SizedBox(height: 20.0),
+                    if (wallet.transactions.isNotEmpty)
+                      WalletTransactionsWidget(
+                        transactions: wallet.transactions,
+                        accentColor: context.appPalette.primary,
+                        onViewAllHistory: onViewAllHistory,
+                      ),
+                  ],
+                ),
               ),
             );
           } else if (state is WalletError) {

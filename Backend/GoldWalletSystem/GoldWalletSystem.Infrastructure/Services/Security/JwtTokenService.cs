@@ -9,7 +9,7 @@ namespace GoldWalletSystem.Infrastructure.Services.Security;
 
 public class JwtTokenService(IConfiguration configuration) : ITokenService
 {
-    public (string Token, DateTime ExpiresAtUtc) GenerateAccessToken(int userId, string email, string role)
+    public (string Token, DateTime ExpiresAtUtc) GenerateAccessToken(int userId, string email, string role, int sellerId)
     {
         var key = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt key is missing");
         var issuer = configuration["Jwt:Issuer"] ?? "GoldWallet";
@@ -22,6 +22,7 @@ public class JwtTokenService(IConfiguration configuration) : ITokenService
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
             new("role", role),
+            new("seller_id", sellerId.ToString()),
             new(ClaimTypes.NameIdentifier, userId.ToString())
         };
 
