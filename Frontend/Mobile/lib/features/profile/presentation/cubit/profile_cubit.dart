@@ -1,35 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/helpers/predefined_accounts_data.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/profile_remote_datasource.dart';
 
 part 'profile_state.dart';
 
 class ProfileField {
+  const ProfileField(this.label, this.icon, [this.keyboardType]);
+
   final String label;
   final IconData icon;
   final TextInputType? keyboardType;
-
-  const ProfileField(this.label, this.icon, [this.keyboardType]);
 }
 
 class ProfileOption {
-  final String name;
-  final String subtitle;
-  final IconData icon;
-  final List<ProfileField> fields;
-
   const ProfileOption({
     required this.name,
     required this.subtitle,
     required this.icon,
     required this.fields,
+    this.remoteId,
   });
+
+  final String name;
+  final String subtitle;
+  final IconData icon;
+  final List<ProfileField> fields;
+  final int? remoteId;
 }
 
 class ProfileCubit extends Cubit<ProfileState> {
-  ProfileCubit() : super(ProfileInitial()) {
+  ProfileCubit({ProfileRemoteDataSource? remoteDataSource})
+    : _remoteDataSource = remoteDataSource ?? ProfileRemoteDataSource(InjectionContainer.dio()),
+      super(ProfileInitial()) {
     _initializeControllers();
+    loadProfile();
   }
+
+  final ProfileRemoteDataSource _remoteDataSource;
 
   final Map<String, TextEditingController> personalControllers = {};
   final Map<String, TextEditingController> securityControllers = {};
@@ -45,120 +53,179 @@ class ProfileCubit extends Cubit<ProfileState> {
   String selectedNationality = 'Jordanian';
   String selectedDocumentType = 'National ID';
 
-  final List<ProfileOption> paymentMethods = [
+  String profileDisplayName = '';
+  String profileDisplayEmail = '';
+  String profileDisplayPhone = '';
+  String profilePhotoUrl = '';
+
+  List<ProfileOption> paymentMethods = const [
     ProfileOption(
-      name: PredefinedAccountsData.paymentMethods[0].name,
-      subtitle: PredefinedAccountsData.paymentMethods[0].subtitle,
+      name: 'Card',
+      subtitle: 'Default payment method',
       icon: Icons.credit_card,
-      fields: [
-        ProfileField('Card Holder Name', Icons.person_outline),
-        ProfileField('Card Number', Icons.credit_card, TextInputType.number),
-        ProfileField('Expiry Date', Icons.date_range_outlined),
-        ProfileField('CVV', Icons.security, TextInputType.number),
-        ProfileField('3DS Verification', Icons.password_outlined),
-      ],
-    ),
-    ProfileOption(
-      name: PredefinedAccountsData.paymentMethods[1].name,
-      subtitle: PredefinedAccountsData.paymentMethods[1].subtitle,
-      icon: Icons.phone_iphone_outlined,
-      fields: [
-        ProfileField('Apple ID Email', Icons.alternate_email, TextInputType.emailAddress),
-        ProfileField('Device Name', Icons.devices_outlined),
-        ProfileField('Authentication Method', Icons.face_retouching_natural),
-        ProfileField('Token Provider', Icons.token_outlined),
-      ],
-    ),
-    ProfileOption(
-      name: PredefinedAccountsData.paymentMethods[2].name,
-      subtitle: PredefinedAccountsData.paymentMethods[2].subtitle,
-      icon: Icons.account_balance_wallet_outlined,
-      fields: [
-        ProfileField('Wallet Number', Icons.phone_android_outlined, TextInputType.phone),
-        ProfileField('Provider Name', Icons.wallet),
-        ProfileField('Authorization', Icons.password_outlined),
-        ProfileField('Callback Endpoint', Icons.link_outlined),
-      ],
-    ),
-    ProfileOption(
-      name: 'Orange Money',
-      subtitle: 'Wallet + OTP',
-      icon: Icons.account_balance_wallet_outlined,
-      fields: [
-        ProfileField('Wallet Number', Icons.phone_android_outlined, TextInputType.phone),
-        ProfileField('Provider Name', Icons.wallet),
-        ProfileField('Authorization', Icons.password_outlined),
-        ProfileField('Callback Endpoint', Icons.link_outlined),
-      ],
-    ),
-    ProfileOption(
-      name: 'Dinarak',
-      subtitle: 'Wallet Confirmation',
-      icon: Icons.account_balance_wallet_outlined,
-      fields: [
-        ProfileField('Wallet ID', Icons.badge_outlined),
-        ProfileField('Registered Mobile', Icons.phone_android_outlined, TextInputType.phone),
-        ProfileField('Provider Name', Icons.wallet),
-        ProfileField('Callback Endpoint', Icons.link_outlined),
-      ],
-    ),
-    ProfileOption(
-      name: 'CliQ',
-      subtitle: 'Bank-to-Bank Instant',
-      icon: Icons.account_balance_outlined,
-      fields: [
-        ProfileField('CliQ Alias', Icons.alternate_email),
-        ProfileField('Linked Bank', Icons.account_balance_outlined),
-        ProfileField('Linked IBAN', Icons.credit_card_outlined),
-        ProfileField('Confirmation Channel', Icons.mobile_friendly_outlined),
-      ],
+      fields: [ProfileField('Masked Number', Icons.credit_card)],
     ),
   ];
 
-  final List<ProfileOption> bankAccounts = [
+  List<ProfileOption> bankAccounts = const [
     ProfileOption(
-      name: PredefinedAccountsData.bankAccounts[0].name,
-      subtitle: PredefinedAccountsData.bankAccounts[0].subtitle,
+      name: 'Bank Account',
+      subtitle: 'Default linked bank',
       icon: Icons.account_balance_outlined,
       fields: [
-        ProfileField('Account Holder Name', Icons.badge_outlined),
         ProfileField('Bank Name', Icons.account_balance_outlined),
         ProfileField('IBAN', Icons.credit_card_outlined),
-        ProfileField('SWIFT/BIC', Icons.qr_code_2_outlined),
-      ],
-    ),
-    ProfileOption(
-      name: PredefinedAccountsData.bankAccounts[1].name,
-      subtitle: PredefinedAccountsData.bankAccounts[1].subtitle,
-      icon: Icons.account_balance_outlined,
-      fields: [
-        ProfileField('Account Holder Name', Icons.badge_outlined),
-        ProfileField('Bank Name', Icons.account_balance_outlined),
-        ProfileField('IBAN', Icons.credit_card_outlined),
-        ProfileField('SWIFT/BIC', Icons.qr_code_2_outlined),
       ],
     ),
   ];
 
   void _initializeControllers() {
     personalControllers.addAll({
-      'First Name': TextEditingController(text: 'Ahmad'),
-      'Middle Name': TextEditingController(text: 'Mohammad'),
-      'Last Name': TextEditingController(text: 'Yaseen'),
-      'Email Address': TextEditingController(text: 'ahmad.yaseen@tradepss.com'),
-      'Phone Number': TextEditingController(text: '791234567'),
-      'Date of Birth': TextEditingController(text: '12/05/1996'),
-      'ID Number': TextEditingController(text: '9876543210'),
+      'First Name': TextEditingController(),
+      'Middle Name': TextEditingController(),
+      'Last Name': TextEditingController(),
+      'Email Address': TextEditingController(),
+      'Phone Number': TextEditingController(),
+      'Date of Birth': TextEditingController(),
+      'ID Number': TextEditingController(),
     });
 
     securityControllers.addAll({
-      'Current Password': TextEditingController(text: '********'),
-      'New Password': TextEditingController(text: '********'),
-      'Confirm New Password': TextEditingController(text: '********'),
+      'Current Password': TextEditingController(),
+      'New Password': TextEditingController(),
+      'Confirm New Password': TextEditingController(),
     });
 
     _rebuildPaymentControllers(selectedPaymentIndex);
     _rebuildBankControllers(selectedBankIndex);
+  }
+
+  Future<void> loadProfile() async {
+    emit(ProfileLoading());
+    try {
+      final profile = await _remoteDataSource.getProfile();
+      profileDisplayName = profile.fullName;
+      profileDisplayEmail = profile.email;
+      profileDisplayPhone = profile.phoneNumber ?? '';
+      profilePhotoUrl = profile.profilePhotoUrl;
+
+      _setNameControllers(profile.fullName);
+      personalControllers['Email Address']?.text = profile.email;
+      personalControllers['Phone Number']?.text = profile.phoneNumber ?? '';
+      personalControllers['Date of Birth']?.text = _uiDateFromIso(profile.dateOfBirth);
+      personalControllers['ID Number']?.text = profile.idNumber;
+
+      selectedNationality = profile.nationality.isNotEmpty ? profile.nationality : selectedNationality;
+      selectedDocumentType = profile.documentType.isNotEmpty ? profile.documentType : selectedDocumentType;
+      selectedLanguage = _uiLanguageFromCode(profile.preferredLanguage);
+      selectedTheme = _uiThemeFromCode(profile.preferredTheme);
+
+      paymentMethods = profile.paymentMethods.isNotEmpty
+          ? profile.paymentMethods
+                .map(
+                  (item) => ProfileOption(
+                    remoteId: item.id,
+                    name: item.type,
+                    subtitle: item.isDefault ? 'Default' : 'Saved method',
+                    icon: Icons.credit_card,
+                    fields: const [ProfileField('Masked Number', Icons.credit_card)],
+                  ),
+                )
+                .toList()
+          : paymentMethods;
+
+      bankAccounts = profile.linkedBankAccounts.isNotEmpty
+          ? profile.linkedBankAccounts
+                .map(
+                  (item) => ProfileOption(
+                    remoteId: item.id,
+                    name: item.bankName,
+                    subtitle: item.isVerified ? 'Verified' : 'Unverified',
+                    icon: Icons.account_balance_outlined,
+                    fields: const [
+                      ProfileField('Bank Name', Icons.account_balance_outlined),
+                      ProfileField('IBAN', Icons.credit_card_outlined),
+                    ],
+                  ),
+                )
+                .toList()
+          : bankAccounts;
+
+      selectedPaymentIndex = 0;
+      selectedBankIndex = 0;
+      _rebuildPaymentControllers(selectedPaymentIndex, profile: profile);
+      _rebuildBankControllers(selectedBankIndex, profile: profile);
+
+      emit(ProfileLoaded());
+    } catch (e) {
+      emit(ProfileError('Failed to load profile: $e'));
+    }
+  }
+
+  Future<void> savePersonalInfo() async {
+    try {
+      await _remoteDataSource.updatePersonal(
+        fullName: _composeFullName(),
+        phoneNumber: personalControllers['Phone Number']?.text.trim(),
+        dateOfBirthIso: _isoDateFromUi(personalControllers['Date of Birth']?.text ?? ''),
+        nationality: selectedNationality,
+        documentType: selectedDocumentType,
+        idNumber: personalControllers['ID Number']?.text.trim() ?? '',
+        profilePhotoUrl: profilePhotoUrl,
+      );
+      isEditing = false;
+      emit(ProfileSaved());
+      await loadProfile();
+    } catch (e) {
+      emit(ProfileError('Failed to save personal info: $e'));
+    }
+  }
+
+  Future<void> saveLanguageSettings() async {
+    try {
+      await _remoteDataSource.updateSettings(
+        preferredLanguage: _languageCodeFromUi(selectedLanguage),
+        preferredTheme: _themeCodeFromUi(selectedTheme),
+      );
+      isEditing = false;
+      emit(ProfileSaved());
+    } catch (e) {
+      emit(ProfileError('Failed to save language settings: $e'));
+    }
+  }
+
+  Future<void> savePaymentMethod() async {
+    try {
+      final selected = paymentMethods[selectedPaymentIndex];
+      await _remoteDataSource.upsertPaymentMethod(
+        paymentMethodId: selected.remoteId,
+        type: selected.name,
+        maskedNumber: paymentControllers.isNotEmpty ? paymentControllers.first.text.trim() : '',
+        isDefault: selectedPaymentIndex == 0,
+      );
+      isEditing = false;
+      emit(ProfileSaved());
+      await loadProfile();
+    } catch (e) {
+      emit(ProfileError('Failed to save payment method: $e'));
+    }
+  }
+
+  Future<void> saveLinkedBank() async {
+    try {
+      final selected = bankAccounts[selectedBankIndex];
+      await _remoteDataSource.upsertLinkedBankAccount(
+        linkedBankAccountId: selected.remoteId,
+        bankName: bankControllers.isNotEmpty ? bankControllers[0].text.trim() : selected.name,
+        ibanMasked: bankControllers.length > 1 ? bankControllers[1].text.trim() : '',
+        isVerified: true,
+      );
+      isEditing = false;
+      emit(ProfileSaved());
+      await loadProfile();
+    } catch (e) {
+      emit(ProfileError('Failed to save linked bank account: $e'));
+    }
   }
 
   void toggleEdit() {
@@ -208,55 +275,117 @@ class ProfileCubit extends Cubit<ProfileState> {
     emit(ProfileDocumentTypeChanged(selectedDocumentType: value));
   }
 
-  void _rebuildPaymentControllers(int index) {
-    for (final c in paymentControllers) {
-      c.dispose();
+  void _setNameControllers(String fullName) {
+    final parts = fullName.split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+    personalControllers['First Name']?.text = parts.isNotEmpty ? parts.first : '';
+    personalControllers['Middle Name']?.text = parts.length > 2 ? parts.sublist(1, parts.length - 1).join(' ') : '';
+    personalControllers['Last Name']?.text = parts.length > 1 ? parts.last : '';
+  }
+
+  String _composeFullName() {
+    final firstName = personalControllers['First Name']?.text.trim() ?? '';
+    final middleName = personalControllers['Middle Name']?.text.trim() ?? '';
+    final lastName = personalControllers['Last Name']?.text.trim() ?? '';
+    return [firstName, middleName, lastName].where((part) => part.isNotEmpty).join(' ');
+  }
+
+  String _uiDateFromIso(String? iso) {
+    if (iso == null || iso.isEmpty) return '';
+    final split = iso.split('-');
+    if (split.length != 3) return '';
+    return '${split[2]}/${split[1]}/${split[0]}';
+  }
+
+  String? _isoDateFromUi(String uiValue) {
+    final clean = uiValue.trim();
+    if (clean.isEmpty) return null;
+    final split = clean.split('/');
+    if (split.length != 3) return null;
+    return '${split[2]}-${split[1].padLeft(2, '0')}-${split[0].padLeft(2, '0')}';
+  }
+
+  String _uiLanguageFromCode(String code) {
+    switch (code.toLowerCase()) {
+      case 'ar':
+      case 'arabic':
+        return 'العربية';
+      case 'tr':
+      case 'turkish':
+        return 'Türkçe';
+      default:
+        return 'English';
+    }
+  }
+
+  String _languageCodeFromUi(String value) {
+    if (value == 'العربية') return 'ar';
+    if (value == 'Türkçe') return 'tr';
+    return 'en';
+  }
+
+  String _uiThemeFromCode(String code) {
+    switch (code.toLowerCase()) {
+      case 'dark':
+        return 'Dark';
+      case 'light':
+        return 'Light';
+      default:
+        return 'System Default';
+    }
+  }
+
+  String _themeCodeFromUi(String value) {
+    if (value.toLowerCase().contains('dark')) return 'dark';
+    if (value.toLowerCase().contains('light')) return 'light';
+    return 'system';
+  }
+
+  void _rebuildPaymentControllers(int index, {ProfileRemoteModel? profile}) {
+    for (final controller in paymentControllers) {
+      controller.dispose();
     }
     paymentControllers.clear();
 
-    final defaults = <List<String>>[
-      ['Ahmad Mohammad Yaseen', '4111 1111 1111 9281', '09/28', '***', 'OTP'],
-      ['ahmad.yaseen@icloud.com', 'iPhone 15 Pro', 'Face ID', 'Apple Pay Token Service'],
-      ['0791234567', 'ZainCash', 'OTP', 'imseeh/zaincash/callback'],
-      ['0787771234', 'Orange Money', 'OTP', 'imseeh/orange-money/callback'],
-      ['DIN-442390', '0775559988', 'Dinarak', 'imseeh/dinarak/callback'],
-      [r'$ahmad.yaseen', 'Jordan Islamic Bank', 'JO94CBJO0010000000000131001', 'Bank Mobile App'],
-    ];
+    String defaultValue = '';
+    if (profile != null && profile.paymentMethods.isNotEmpty && index < profile.paymentMethods.length) {
+      defaultValue = profile.paymentMethods[index].maskedNumber;
+    }
 
-    paymentControllers.addAll(
-      defaults[index].map((value) => TextEditingController(text: value)),
-    );
+    paymentControllers.add(TextEditingController(text: defaultValue));
   }
 
-  void _rebuildBankControllers(int index) {
-    for (final c in bankControllers) {
-      c.dispose();
+  void _rebuildBankControllers(int index, {ProfileRemoteModel? profile}) {
+    for (final controller in bankControllers) {
+      controller.dispose();
     }
     bankControllers.clear();
 
-    final defaults = <List<String>>[
-      ['Ahmad Mohammad Yaseen', 'Jordan Islamic Bank', 'JO94CBJO0010000000000131001', 'JIBAJOAX'],
-      ['Ahmad Mohammad Yaseen', 'Arab Bank', 'JO32ARAB0000000000011400045', 'ARABJOAXXXX'],
-    ];
+    String bankName = '';
+    String iban = '';
+    if (profile != null && profile.linkedBankAccounts.isNotEmpty && index < profile.linkedBankAccounts.length) {
+      final selected = profile.linkedBankAccounts[index];
+      bankName = selected.bankName;
+      iban = selected.ibanMasked;
+    }
 
-    bankControllers.addAll(
-      defaults[index].map((value) => TextEditingController(text: value)),
-    );
+    bankControllers
+      ..add(TextEditingController(text: bankName))
+      ..add(TextEditingController(text: iban));
   }
 
   @override
   Future<void> close() {
-    for (final c in personalControllers.values) {
-      c.dispose();
+    for (final controller in personalControllers.values) {
+      controller.dispose();
     }
-    for (final c in securityControllers.values) {
-      c.dispose();
+    for (final controller in securityControllers.values) {
+      controller.dispose();
     }
-    for (final c in paymentControllers) {
-      c.dispose();
+    for (final controller in paymentControllers) {
+      controller.dispose();
     }
-    for (final c in bankControllers) {
-      c.dispose();
+    for (final controller in bankControllers) {
+      controller.dispose();
     }
     return super.close();
   }

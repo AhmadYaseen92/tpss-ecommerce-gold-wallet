@@ -3,6 +3,8 @@ part of 'profile_cubit.dart';
 class ProfileState {}
 
 final class ProfileInitial extends ProfileState {}
+final class ProfileLoading extends ProfileState {}
+final class ProfileLoaded extends ProfileState {}
 
 final class ProfileEditingChanged extends ProfileState {
   final bool isEditing;
@@ -45,3 +47,9 @@ final class ProfileDocumentTypeChanged extends ProfileState {
 }
 
 final class ProfileSaved extends ProfileState {}
+
+final class ProfileError extends ProfileState {
+  final String message;
+
+  ProfileError(this.message);
+}

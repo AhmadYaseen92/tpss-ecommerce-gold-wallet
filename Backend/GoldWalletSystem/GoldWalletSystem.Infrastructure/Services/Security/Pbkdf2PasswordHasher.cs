@@ -5,13 +5,26 @@ namespace GoldWalletSystem.Infrastructure.Services.Security;
 
 public class Pbkdf2PasswordHasher : IPasswordHasher
 {
+    private const int SaltSize = 16;
+    private const int HashSize = 32;
+    private const int Iterations = 100_000;
+
+    public string Hash(string plaintext)
+    {
+        var salt = RandomNumberGenerator.GetBytes(SaltSize);
+        var hash = Rfc2898DeriveBytes.Pbkdf2(
+            plaintext,
+            salt,
+            Iterations,
+            HashAlgorithmName.SHA256,
+            HashSize
+        );
+
+        return $"{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}.{Iterations}";
+    }
+
     public bool Verify(string plaintext, string hash)
     {
-        if (hash == "seeded")
-        {
-            return plaintext == "Password@123";
-        }
-
         var parts = hash.Split('.', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 3) return false;
 
