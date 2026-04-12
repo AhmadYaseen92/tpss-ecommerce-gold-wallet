@@ -529,6 +529,9 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<int>("AvailableStock")
                         .HasColumnType("int");
 
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
