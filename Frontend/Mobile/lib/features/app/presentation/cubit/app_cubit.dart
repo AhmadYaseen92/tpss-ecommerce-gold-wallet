@@ -22,4 +22,10 @@ class AppCubit extends Cubit<AppState> {
   void setThemeMode(ThemeMode mode) {
     emit(state.copyWith(themeMode: mode));
   }
+
+  void notifyCheckoutCompleted() {
+    emit(
+      state.copyWith(checkoutRefreshTick: state.checkoutRefreshTick + 1),
+    );
+  }
 }

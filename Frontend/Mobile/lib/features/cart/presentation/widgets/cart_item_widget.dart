@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/grams_hint_label.dart';
@@ -7,9 +8,6 @@ import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/cubit/cart_cubit.dart';
 
 class CartItemWidget extends StatelessWidget {
-  static const String _fallbackImageUrl =
-      'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png';
-
   final CartCubit cartCubit;
   final List<CartItemEntity> cartProducts;
   const CartItemWidget({super.key, required this.cartCubit, required this.cartProducts});
@@ -133,23 +131,13 @@ class CartItemWidget extends StatelessWidget {
   }
 
   Widget _buildProductImage(String imageUrl, dynamic palette) {
-    final parsed = Uri.tryParse(imageUrl.trim());
-    final validNetwork = parsed != null && (parsed.scheme == 'http' || parsed.scheme == 'https') && parsed.host.isNotEmpty;
-    final finalUrl = validNetwork ? imageUrl : _fallbackImageUrl;
-
-    return Image.network(
-      finalUrl,
+    return AppServerImage(
+      imageUrl: imageUrl,
       width: 84,
       height: 84,
       fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return Image.network(
-          _fallbackImageUrl,
-          width: 84,
-          height: 84,
-          fit: BoxFit.cover,
-        );
-      },
+      backgroundColor: palette.surfaceMuted,
+      iconColor: palette.textSecondary,
     );
   }
 }

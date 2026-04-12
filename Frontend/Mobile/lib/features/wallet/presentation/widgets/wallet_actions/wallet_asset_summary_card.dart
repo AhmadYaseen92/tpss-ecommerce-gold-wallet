@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
@@ -22,7 +22,15 @@ class WalletAssetSummaryCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: CachedNetworkImage(imageUrl: asset.imageUrl, width: 72, height: 72, fit: BoxFit.cover),
+                child: AppServerImage(
+                  imageUrl: asset.imageUrl,
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                  borderRadius: BorderRadius.circular(12),
+                  backgroundColor: palette.surfaceMuted,
+                  iconColor: palette.textSecondary,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

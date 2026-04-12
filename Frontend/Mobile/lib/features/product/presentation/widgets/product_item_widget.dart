@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
@@ -64,30 +64,13 @@ class ProductItemWidget extends StatelessWidget {
   }
 
   Widget _buildProductImage(String imageUrl, dynamic palette) {
-    final parsed = Uri.tryParse(imageUrl.trim());
-    final validNetworkUrl = parsed != null && (parsed.scheme == 'http' || parsed.scheme == 'https') && parsed.host.isNotEmpty;
-    if (!validNetworkUrl) {
-      return Container(
-        width: 80,
-        height: 80,
-        color: palette.surfaceMuted,
-        alignment: Alignment.center,
-        child: Icon(Icons.image_not_supported_outlined, color: palette.textSecondary),
-      );
-    }
-
-    return CachedNetworkImage(
+    return AppServerImage(
       imageUrl: imageUrl,
       width: 80,
       height: 80,
       fit: BoxFit.cover,
-      errorWidget: (_, __, ___) => Container(
-        width: 80,
-        height: 80,
-        color: palette.surfaceMuted,
-        alignment: Alignment.center,
-        child: Icon(Icons.broken_image_outlined, color: palette.textSecondary),
-      ),
+      backgroundColor: palette.surfaceMuted,
+      iconColor: palette.textSecondary,
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/network/api_error_parser.dart';
 import 'package:dio/dio.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/data/models/checkout_payment_model.dart';
 
@@ -41,7 +42,6 @@ class CheckoutCubit extends Cubit<CheckoutState> {
         return;
       }
 
-      final explicitFromCart = checkoutArgs['fromCart'];
       final productIdRaw = checkoutArgs['productId'];
       final quantityRaw = checkoutArgs['quantity'];
       final productId = productIdRaw is num
@@ -50,9 +50,8 @@ class CheckoutCubit extends Cubit<CheckoutState> {
       final quantity = quantityRaw is num
           ? quantityRaw.toInt()
           : int.tryParse('$quantityRaw');
-      final fromCart = explicitFromCart is bool
-          ? explicitFromCart
-          : (productId == null || quantity == null);
+      final isDirectCheckout = productId != null && (quantity ?? 0) > 0;
+      final fromCart = !isDirectCheckout;
       final productIdsRaw = checkoutArgs['productIds'];
       final productIds = productIdsRaw is List
           ? productIdsRaw
@@ -91,57 +90,16 @@ class CheckoutCubit extends Cubit<CheckoutState> {
         ),
       );
     } on DioException catch (e) {
-      emit(CheckoutError(_friendlyCheckoutError(e)));
+      emit(
+        CheckoutError(
+          ApiErrorParser.friendlyMessage(
+            e,
+            fallback: 'Checkout failed. Please try again.',
+          ),
+        ),
+      );
     } catch (_) {
       emit(CheckoutError('Checkout could not be completed. Please try again.'));
     }
-  }
-
-  String _friendlyCheckoutError(DioException error) {
-    final statusCode = error.response?.statusCode;
-    final serverMessage = _extractServerMessage(error.response?.data);
-    if (serverMessage.isNotEmpty) {
-      return serverMessage;
-    }
-
-    if (error.type == DioExceptionType.connectionTimeout ||
-        error.type == DioExceptionType.sendTimeout ||
-        error.type == DioExceptionType.receiveTimeout) {
-      return 'Request timed out. Please check your internet connection and try again.';
-    }
-
-    if (error.type == DioExceptionType.connectionError) {
-      return 'Unable to reach server. Please check your internet connection.';
-    }
-
-    return switch (statusCode) {
-      400 =>
-        'Invalid checkout request. Please review cart/product details and try again.',
-      401 || 403 => 'Your session has expired. Please log in again.',
-      404 => 'Requested item was not found. Please refresh and try again.',
-      409 =>
-        'Stock changed during checkout. Please refresh your cart and retry.',
-      _ => 'Checkout failed. Please try again.',
-    };
-  }
-
-  String _extractServerMessage(dynamic payload) {
-    if (payload is Map<String, dynamic>) {
-      final message = payload['message']?.toString().trim() ?? '';
-      if (message.isNotEmpty) return message;
-
-      final errors = payload['errors'];
-      if (errors is List && errors.isNotEmpty) {
-        final first = errors.first.toString().trim();
-        if (first.isNotEmpty) return first;
-      }
-
-      final data = payload['data'];
-      if (data is Map<String, dynamic>) {
-        final nestedMessage = data['message']?.toString().trim() ?? '';
-        if (nestedMessage.isNotEmpty) return nestedMessage;
-      }
-    }
-    return '';
   }
 }

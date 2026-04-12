@@ -141,7 +141,6 @@ BEGIN TRY
                 WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
                 WHEN S.[Name] LIKE N'%Coin%' THEN 5
                 WHEN S.[Name] LIKE N'%Silver%' THEN 2
-                WHEN S.[Name] LIKE N'%Bar%' THEN 3
                 ELSE 1
             END,
             T.[ImageUrl] = CASE
@@ -164,7 +163,6 @@ BEGIN TRY
                 WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
                 WHEN S.[Name] LIKE N'%Coin%' THEN 5
                 WHEN S.[Name] LIKE N'%Silver%' THEN 2
-                WHEN S.[Name] LIKE N'%Bar%' THEN 3
                 ELSE 1
             END,
             CASE

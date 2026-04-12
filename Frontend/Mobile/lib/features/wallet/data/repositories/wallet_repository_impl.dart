@@ -30,21 +30,30 @@ class WalletRepositoryImpl implements IWalletRepository {
       byCategory.putIfAbsent(category, () => []).add(asset);
     }
 
-    return byCategory.entries.map((entry) {
-      final category = entry.key;
-      final assets = entry.value;
+    const categories = <wallet_entity.WalletCategory>[
+      wallet_entity.WalletCategory.gold,
+      wallet_entity.WalletCategory.silver,
+      wallet_entity.WalletCategory.diamond,
+      wallet_entity.WalletCategory.jewelry,
+      wallet_entity.WalletCategory.coins,
+      wallet_entity.WalletCategory.spotMr,
+    ];
+
+    return categories.map((category) {
+      final assets = byCategory[category] ?? const <WalletAssetRemoteModel>[];
       final transactions = assets.map((asset) => _toTransactionEntity(category, asset)).toList();
       final totalWeightInGrams = transactions.fold<double>(0, (sum, tx) => sum + tx.weightInGrams * tx.quantity);
       final totalMarket = transactions.fold<double>(0, (sum, tx) => sum + tx.marketValueAmount);
       final totalBuy = assets.fold<double>(0, (sum, asset) => sum + (asset.averageBuyPrice * asset.quantity));
       final changePercent = totalBuy == 0 ? 0 : ((totalMarket - totalBuy) / totalBuy) * 100;
       final signed = changePercent >= 0 ? '+' : '';
+      final isEmptyCategory = transactions.isEmpty;
 
       return wallet_entity.WalletEntity(
         category: category,
         tabLabel: _tabLabel(category),
         walletName: _walletName(category),
-        isVerified: true,
+        isVerified: !isEmptyCategory,
         icon: _walletIcon(category),
         totalWeightInGrams: totalWeightInGrams,
         totalMarketValue: '\$${totalMarket.toStringAsFixed(2)}',
@@ -52,6 +61,9 @@ class WalletRepositoryImpl implements IWalletRepository {
         totalHoldings: transactions.length,
         change: '$signed${changePercent.toStringAsFixed(2)}%',
         transactions: transactions,
+        note: isEmptyCategory
+            ? 'No assets yet. Buy items from Product and start investing to build this wallet section.'
+            : null,
       );
     }).toList();
   }
@@ -89,9 +101,11 @@ class WalletRepositoryImpl implements IWalletRepository {
 
   wallet_entity.WalletCategory _toCategory(String assetType) {
     final value = assetType.toLowerCase();
+    if (value.contains('diamond')) return wallet_entity.WalletCategory.diamond;
     if (value.contains('silver')) return wallet_entity.WalletCategory.silver;
     if (value.contains('jewel')) return wallet_entity.WalletCategory.jewelry;
     if (value.contains('coin')) return wallet_entity.WalletCategory.coins;
+    if (value.contains('spot')) return wallet_entity.WalletCategory.spotMr;
     return wallet_entity.WalletCategory.gold;
   }
 
@@ -109,6 +123,7 @@ class WalletRepositoryImpl implements IWalletRepository {
   String _tabLabel(wallet_entity.WalletCategory category) => switch (category) {
         wallet_entity.WalletCategory.gold => 'Gold',
         wallet_entity.WalletCategory.silver => 'Silver',
+        wallet_entity.WalletCategory.diamond => 'Diamond',
         wallet_entity.WalletCategory.jewelry => 'Jewelry',
         wallet_entity.WalletCategory.coins => 'Coins',
         wallet_entity.WalletCategory.spotMr => 'Spot MR',
@@ -119,16 +134,13 @@ class WalletRepositoryImpl implements IWalletRepository {
   IconData _walletIcon(wallet_entity.WalletCategory category) => switch (category) {
         wallet_entity.WalletCategory.gold => Icons.workspace_premium_rounded,
         wallet_entity.WalletCategory.silver => Icons.shield_moon_rounded,
+        wallet_entity.WalletCategory.diamond => Icons.diamond_rounded,
         wallet_entity.WalletCategory.jewelry => Icons.diamond_outlined,
         wallet_entity.WalletCategory.coins => Icons.monetization_on_outlined,
         wallet_entity.WalletCategory.spotMr => Icons.show_chart_rounded,
       };
 
   String _imageByAssetType(String assetType) {
-    final value = assetType.toLowerCase();
-    if (value.contains('silver')) {
-      return 'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png';
-    }
-    return 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png';
+    return '';
   }
 }

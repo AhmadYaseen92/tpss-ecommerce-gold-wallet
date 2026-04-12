@@ -9,7 +9,7 @@ public class WalletService(IWalletRepository walletRepository) : IWalletService
     public async Task<WalletDto> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
         var wallet = await walletRepository.GetByUserIdAsync(userId, cancellationToken)
-            ?? throw new InvalidOperationException($"Wallet for user {userId} was not found.");
+            ?? await walletRepository.CreateForUserAsync(userId, cancellationToken);
 
         return new WalletDto(
             wallet.Id,

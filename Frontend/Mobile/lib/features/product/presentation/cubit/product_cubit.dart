@@ -51,11 +51,14 @@ class ProductCubit extends Cubit<ProductState> {
 
   StreamSubscription<List<MarketSymbolEntity>>? _marketSubscription;
 
-  Future<void> loadProducts({String seller = AppReleaseConfig.allSellersLabel}) async {
+  Future<void> loadProducts({
+    String seller = AppReleaseConfig.allSellersLabel,
+    int? categoryId,
+  }) async {
     emit(ProductLoading());
     try {
-      allProducts = await _getProductsUseCase();
-      selectedCategoryId = null;
+      selectedCategoryId = categoryId;
+      allProducts = await _getProductsUseCase(categoryId: selectedCategoryId);
       activeSeller = AppReleaseConfig.isIndividualSellerRelease
           ? AppReleaseConfig.individualSellerName
           : seller;
@@ -68,19 +71,26 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   void onGlobalSellerChanged(String seller) {
-    activeSeller = seller;
-    _emitCatalog();
-    _emitMarketWatch();
+    unawaited(
+      loadProducts(
+        seller: seller,
+        categoryId: selectedCategoryId,
+      ),
+    );
   }
 
   void applyCategoryFilter({required int? categoryId}) {
-    selectedCategoryId = categoryId;
-    _emitCatalog();
+    unawaited(
+      loadProducts(
+        seller: activeSeller,
+        categoryId: categoryId,
+      ),
+    );
   }
 
   Future<void> toggleFavorite(String productId) async {
     await _toggleProductFavoriteUseCase(productId);
-    allProducts = await _getProductsUseCase();
+    allProducts = await _getProductsUseCase(categoryId: selectedCategoryId);
     _emitCatalog();
   }
 

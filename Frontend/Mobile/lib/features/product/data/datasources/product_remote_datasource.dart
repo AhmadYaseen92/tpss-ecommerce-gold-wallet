@@ -92,9 +92,20 @@ class ProductRemoteModel {
       return categoryValue.toInt();
     }
     if (categoryValue is String) {
-      return int.tryParse(categoryValue) ?? 0;
+      final parsed = int.tryParse(categoryValue);
+      if (parsed != null) return parsed;
+
+      return switch (categoryValue.trim().toLowerCase()) {
+        'gold' => 1,
+        'silver' => 2,
+        'diamond' => 3,
+        'jewelry' => 4,
+        'coins' => 5,
+        'spotmr' || 'spot mr' => 6,
+        _ => 1,
+      };
     }
-    return 0;
+    return 1;
   }
 
   static String _parseWeightUnit(dynamic weightUnitValue) {

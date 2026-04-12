@@ -8,9 +8,9 @@ final class WalletLoading extends WalletState {}
 
 final class WalletLoaded extends WalletState {
   final List<WalletEntity> wallets;
-  final int selectedIndex;
+  final int? selectedCategoryId;
 
-  WalletLoaded({required this.wallets, required this.selectedIndex});
+  WalletLoaded({required this.wallets, required this.selectedCategoryId});
 }
 
 final class WalletError extends WalletState {

@@ -27,7 +27,7 @@ class ProductDetailWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ProductImage(imageUrl: product.imageUrl, color: palette.primary),
+                ProductImage(imageUrl: product.imageUrl),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
                   child: Column(
@@ -74,6 +74,7 @@ class ProductDetailWidget extends StatelessWidget {
                 title: 'Added to Cart',
                 message:
                     '${product.name} x${productCubit.quantity} added to cart',
+                variant: AppModalAlertVariant.success,
               );
             } catch (e) {
               if (!context.mounted) return;
@@ -81,6 +82,7 @@ class ProductDetailWidget extends StatelessWidget {
                 context,
                 title: 'Add to Cart Failed',
                 message: e.toString(),
+                variant: AppModalAlertVariant.failed,
               );
             }
           },
@@ -104,6 +106,7 @@ class ProductDetailWidget extends StatelessWidget {
                 context,
                 title: 'Buy Now Failed',
                 message: e.toString(),
+                variant: AppModalAlertVariant.failed,
               );
             }
           },
