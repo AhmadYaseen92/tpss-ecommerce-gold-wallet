@@ -13,6 +13,7 @@ class WalletEntity {
     required this.icon,
     required this.totalWeightInGrams,
     required this.totalMarketValue,
+    required this.cashBalance,
     required this.totalHoldings,
     required this.change,
     required this.transactions,
@@ -29,6 +30,7 @@ class WalletEntity {
 
   final double totalWeightInGrams;
   final String totalMarketValue;
+  final String cashBalance;
   final int totalHoldings;
   final String change;
   final String? note;
@@ -46,6 +48,7 @@ class WalletEntity {
     IconData? icon,
     double? totalWeightInGrams,
     String? totalMarketValue,
+    String? cashBalance,
     int? totalHoldings,
     String? change,
     String? note,
@@ -60,6 +63,7 @@ class WalletEntity {
       icon: icon ?? this.icon,
       totalWeightInGrams: totalWeightInGrams ?? this.totalWeightInGrams,
       totalMarketValue: totalMarketValue ?? this.totalMarketValue,
+      cashBalance: cashBalance ?? this.cashBalance,
       totalHoldings: totalHoldings ?? this.totalHoldings,
       change: change ?? this.change,
       note: note ?? this.note,

@@ -47,7 +47,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/repositories
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/calculate_transfer_totals_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/validate_transfer_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/domain/usecases/verify_transfer_account_usecase.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/datasources/wallet_local_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/datasources/wallet_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/repositories/wallet_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/repositories/wallet_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/usecases/load_wallets_usecase.dart';
@@ -61,8 +61,6 @@ class InjectionContainer {
 
   static final ProductLocalDataSource _productLocalDataSource =
       ProductLocalDataSource();
-  static final WalletLocalDataSource _walletLocalDataSource =
-      WalletLocalDataSource();
   static final TransferLocalDataSource _transferLocalDataSource =
       TransferLocalDataSource();
   static final SellLocalDataSource _sellLocalDataSource = SellLocalDataSource();
@@ -205,7 +203,7 @@ class InjectionContainer {
   }
 
   static IWalletRepository walletRepository() {
-    return WalletRepositoryImpl(_walletLocalDataSource);
+    return WalletRepositoryImpl(WalletRemoteDataSource(sl<Dio>()));
   }
 
   static LoadWalletsUseCase loadWalletsUseCase() {

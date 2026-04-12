@@ -1,6 +1,7 @@
 using GoldWalletSystem.Application.DTOs.Auth;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GoldWalletSystem.API.Controllers;
@@ -32,5 +33,13 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         var result = await authService.LoginAsync(request, cancellationToken);
         return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Login successful"));
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    public IActionResult Logout()
+    {
+        return Ok(ApiResponse<string>.Ok("Logged out", "Logout successful"));
     }
 }
