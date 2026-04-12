@@ -15,7 +15,6 @@
     <Folder Include="Database\Context\" />
     <Folder Include="Database\Configurations\" />
     <Folder Include="Database\Migrations\" />
-    <Folder Include="Database\Seed\" />
     <Folder Include="External\" />
     <Folder Include="DependencyInjection\" />
     <Folder Include="Services\" />

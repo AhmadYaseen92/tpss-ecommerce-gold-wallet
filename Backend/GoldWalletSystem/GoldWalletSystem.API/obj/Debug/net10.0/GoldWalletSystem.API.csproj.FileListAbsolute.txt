@@ -164,4 +164,3 @@ D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API
 D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\GoldWalletSystem.API.pdb
 D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\GoldWalletSystem.API.genruntimeconfig.cache
 D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\ref\GoldWalletSystem.API.dll
-D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
