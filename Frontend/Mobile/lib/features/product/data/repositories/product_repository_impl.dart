@@ -18,7 +18,7 @@ class ProductRepositoryImpl implements IProductRepository {
   final Set<String> _favoriteProductIds = HashSet<String>();
 
   @override
-  Future<List<ProductEntity>> getProducts() async {
+  Future<List<ProductEntity>> getProducts({int? categoryId}) async {
     const pageSize = 50;
     final allModels = <ProductRemoteModel>[];
     var pageNumber = 1;
@@ -28,6 +28,7 @@ class ProductRepositoryImpl implements IProductRepository {
       final response = await _remoteDataSource.getProducts(
         pageNumber: pageNumber,
         pageSize: pageSize,
+        categoryId: categoryId,
       );
       allModels.addAll(response.items);
       totalCount = response.totalCount;
@@ -84,9 +85,7 @@ class ProductRepositoryImpl implements IProductRepository {
       description: model.description,
       price: model.price,
       availableStock: model.availableStock,
-      imageUrl: normalizedImageUrl.trim().isNotEmpty
-          ? normalizedImageUrl
-          : _imageBySkuOrName(sku: model.sku, name: model.name),
+      imageUrl: normalizedImageUrl,
       category: _categoryLabelById(model.categoryId),
       categoryId: model.categoryId,
       isFavorite: _favoriteProductIds.contains(model.id.toString()),
@@ -110,13 +109,16 @@ class ProductRepositoryImpl implements IProductRepository {
   }
 
   String _categoryLabelById(int categoryId) {
-    if (_coinCategoryIds.contains(categoryId)) return 'Coins';
-    if (_jewelleryCategoryIds.contains(categoryId)) return 'Jewellery';
-    return 'Bullion';
+    return switch (categoryId) {
+      1 => 'Gold',
+      2 => 'Silver',
+      3 => 'Diamond',
+      4 => 'Jewelry',
+      5 => 'Coins',
+      6 => 'Spot MR',
+      _ => 'Gold',
+    };
   }
-
-  static const Set<int> _coinCategoryIds = {4, 5, 6};
-  static const Set<int> _jewelleryCategoryIds = {7, 8, 9};
 
   String _metalByName(String name) {
     final value = name.toLowerCase();
@@ -149,22 +151,6 @@ class ProductRepositoryImpl implements IProductRepository {
         ? weightValue.toStringAsFixed(0)
         : weightValue.toStringAsFixed(3);
     return '$normalizedWeight $suffix';
-  }
-
-  String _imageBySkuOrName({required String sku, required String name}) {
-    const skuImages = {
-      'XAU-1OZ': 'https://www.pamp.com/sites/pamp/files/2022-02/1oz_gold_sfondo_lucido_obv.png',
-      'XAU-10G': 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png',
-      'XAG-1KG': 'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png',
-    };
-
-    final imageFromSku = skuImages[sku.toUpperCase()];
-    if (imageFromSku != null) return imageFromSku;
-
-    if (name.toLowerCase().contains('silver')) {
-      return 'https://www.pamp.com/sites/pamp/files/2024-10/pamp-1oz-silver-bar-usa-webimage-1000x1000px-obv.png';
-    }
-    return 'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png';
   }
 
   String _normalizeImageUrl(String rawPath) {

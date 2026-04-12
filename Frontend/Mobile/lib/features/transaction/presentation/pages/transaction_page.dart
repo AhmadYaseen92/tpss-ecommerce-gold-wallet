@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_filter_chip.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/services/transaction_excel_export_service.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
@@ -31,10 +33,11 @@ class TransactionPage extends StatelessWidget {
       },
       child: BlocListener<AppCubit, AppState>(
         listenWhen: (previous, current) =>
-            previous.selectedSeller != current.selectedSeller,
+            previous.selectedSeller != current.selectedSeller ||
+            previous.checkoutRefreshTick != current.checkoutRefreshTick,
         listener: (context, state) {
-          context.read<TransactionCubit>().onGlobalSellerChanged(
-            state.selectedSeller,
+          context.read<TransactionCubit>().loadTransactions(
+            seller: state.selectedSeller,
           );
         },
         child: BlocBuilder<TransactionCubit, TransactionState>(
@@ -52,6 +55,29 @@ class TransactionPage extends StatelessWidget {
                   TransactionFilterBar(
                     transactionCubit: BlocProvider.of<TransactionCubit>(
                       context,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: ProductCategoryFilter.options.map((category) {
+                          final cubit = context.read<TransactionCubit>();
+                          final isSelected =
+                              cubit.selectedCategoryId == category.categoryId;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: AppFilterChip(
+                              label: category.label,
+                              selected: isSelected,
+                              onTap: () => cubit.filterByCategory(
+                                category.categoryId,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
                   Padding(

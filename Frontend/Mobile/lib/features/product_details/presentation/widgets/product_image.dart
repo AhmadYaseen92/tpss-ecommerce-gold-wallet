@@ -1,29 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
 
 class ProductImage extends StatelessWidget {
-  static const String _fallbackImageUrl =
-      'https://www.pamp.com/sites/pamp/files/2022-02/10g_1.png';
-
   final String imageUrl;
-  final Color color;
   final bool is3D; // control whether to show 3D or image
 
   const ProductImage({
     super.key,
     required this.imageUrl,
-    required this.color,
     this.is3D = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final parsed = Uri.tryParse(imageUrl.trim());
-    final validNetworkUrl = parsed != null &&
-        (parsed.scheme == 'http' || parsed.scheme == 'https') &&
-        parsed.host.isNotEmpty;
-    final finalUrl = validNetworkUrl ? imageUrl : _fallbackImageUrl;
-
     return Container(
       width: double.infinity,
       height: 300,
@@ -37,23 +26,11 @@ class ProductImage extends StatelessWidget {
           //         backgroundColor: Colors.white,
           //       )
           //     :
-          Image.network(
-            finalUrl,
+          AppServerImage(
+            imageUrl: imageUrl,
             fit: BoxFit.fitHeight,
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-              return Center(
-                child: CircularProgressIndicator.adaptive(
-                  backgroundColor: color,
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return Image.network(
-                _fallbackImageUrl,
-                fit: BoxFit.fitHeight,
-              );
-            },
+            width: double.infinity,
+            height: 300,
           ),
     );
   }

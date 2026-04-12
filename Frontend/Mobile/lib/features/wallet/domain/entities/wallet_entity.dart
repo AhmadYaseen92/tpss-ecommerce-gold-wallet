@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum WalletCategory { gold, silver, jewelry, coins, spotMr }
+enum WalletCategory { gold, silver, diamond, jewelry, coins, spotMr }
 
 enum AssetType { bar, gram, ounce, coin, necklace, ring, bracelet }
 

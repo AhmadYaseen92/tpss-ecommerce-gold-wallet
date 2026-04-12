@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
@@ -46,23 +46,14 @@ class WalletHoldingItemWidget extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12.0),
-                    child: CachedNetworkImage(
+                    child: AppServerImage(
                       imageUrl: item.imageUrl,
                       width: 78,
                       height: 78,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        width: 78,
-                        height: 78,
-                        color: palette.surfaceMuted,
-                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        width: 78,
-                        height: 78,
-                        color: palette.surfaceMuted,
-                        child: Icon(Icons.image_not_supported_outlined, color: palette.textSecondary),
-                      ),
+                      borderRadius: BorderRadius.circular(12.0),
+                      backgroundColor: palette.surfaceMuted,
+                      iconColor: palette.textSecondary,
                     ),
                   ),
                   const SizedBox(width: 10),

@@ -4,18 +4,25 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dar
 class AppState {
   final String selectedSeller;
   final ThemeMode themeMode;
+  final int checkoutRefreshTick;
 
   const AppState({
     required this.selectedSeller,
     this.themeMode = ThemeMode.system,
+    this.checkoutRefreshTick = 0,
   });
 
   bool get isAllSellers => selectedSeller == AppReleaseConfig.allSellersLabel;
 
-  AppState copyWith({String? selectedSeller, ThemeMode? themeMode}) {
+  AppState copyWith({
+    String? selectedSeller,
+    ThemeMode? themeMode,
+    int? checkoutRefreshTick,
+  }) {
     return AppState(
       selectedSeller: selectedSeller ?? this.selectedSeller,
       themeMode: themeMode ?? this.themeMode,
+      checkoutRefreshTick: checkoutRefreshTick ?? this.checkoutRefreshTick,
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/data/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/presentation/cubit/checkout_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/predefined_account_selector.dart';
@@ -52,16 +53,17 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
           if (state is CheckoutSuccess) {
             await AppModalAlert.show(
               context,
-              title: 'Checkout Successful',
               message: 'Purchase completed and added to your wallet.',
+              variant: AppModalAlertVariant.success,
             );
             if (!mounted) return;
+            context.read<AppCubit>().notifyCheckoutCompleted();
             _navigateAfterSuccess();
           } else if (state is CheckoutError) {
             await AppModalAlert.show(
               context,
-              title: 'Checkout Failed',
               message: state.message,
+              variant: AppModalAlertVariant.failed,
             );
           }
         },
@@ -200,12 +202,17 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
 
   void _navigateAfterSuccess() {
     final source = (_checkoutArgs['source'] ?? '').toString().toLowerCase();
+    final navigator = Navigator.of(context, rootNavigator: true);
     if (source == 'cart') {
-      Navigator.of(context, rootNavigator: true).pop(true);
+      navigator.pop(true);
       return;
     }
 
-    final navigator = Navigator.of(context, rootNavigator: true);
+    if (source != 'product') {
+      navigator.pop();
+      return;
+    }
+
     var foundProductRoute = false;
     navigator.popUntil((route) {
       final isProductRoute = route.settings.name == AppRoutes.productRoute;
@@ -215,7 +222,10 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
       return isProductRoute || route.isFirst;
     });
     if (!foundProductRoute) {
-      navigator.pushNamed(AppRoutes.productRoute);
+      navigator.pushNamedAndRemoveUntil(
+        AppRoutes.productRoute,
+        (route) => false,
+      );
     }
   }
 

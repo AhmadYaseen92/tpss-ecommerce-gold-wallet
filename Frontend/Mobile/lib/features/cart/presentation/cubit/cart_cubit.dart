@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/add_cart_product_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/calculate_cart_summary_usecase.dart';
@@ -38,6 +39,7 @@ class CartCubit extends Cubit<CartState> {
   final GetAvailableSellersUseCase _getAvailableSellersUseCase;
 
   String _sellerFilter = AppReleaseConfig.defaultSeller;
+  int? _categoryFilter;
   List<CartItemEntity> _allItems = [];
 
   Future<void> loadCartProducts({String sellerFilter = AppReleaseConfig.allSellersLabel}) async {
@@ -80,8 +82,22 @@ class CartCubit extends Cubit<CartState> {
     _emitLoaded();
   }
 
+  void setCategoryFilter(int? categoryId) {
+    _categoryFilter = categoryId;
+    _emitLoaded();
+  }
+
   void _emitLoaded() {
     var filtered = _filterCartItemsUseCase(items: _allItems, sellerFilter: _sellerFilter);
+    if (_categoryFilter != null) {
+      filtered = filtered.where((item) {
+        final id = ProductCategoryFilter.inferCategoryId(
+          name: item.name,
+          description: item.description,
+        );
+        return id == _categoryFilter;
+      }).toList();
+    }
     final sellers = _getAvailableSellersUseCase(_allItems);
 
     if (filtered.isEmpty && sellers.isNotEmpty) {
@@ -97,6 +113,7 @@ class CartCubit extends Cubit<CartState> {
         summary: summary,
         selectedSellerFilter: _sellerFilter,
         availableSellers: sellers,
+        selectedCategoryId: _categoryFilter,
       ),
     );
   }

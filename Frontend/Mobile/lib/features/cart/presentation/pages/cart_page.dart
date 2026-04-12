@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_filter_chip.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/cubit/cart_cubit.dart';
@@ -30,7 +32,8 @@ class _CartPageState extends State<CartPage> {
 
     return BlocListener<AppCubit, AppState>(
       listenWhen: (previous, current) =>
-          previous.selectedSeller != current.selectedSeller,
+          previous.selectedSeller != current.selectedSeller ||
+          previous.checkoutRefreshTick != current.checkoutRefreshTick,
       listener: (context, state) {
         _selectedSeller = state.selectedSeller;
         cartCubit.loadCartProducts(sellerFilter: state.selectedSeller);
@@ -92,6 +95,28 @@ class _CartPageState extends State<CartPage> {
                             ),
                           ),
                         ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: ProductCategoryFilter.options.map((category) {
+                              final isSelected =
+                                  state.selectedCategoryId == category.categoryId;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: AppFilterChip(
+                                  label: category.label,
+                                  selected: isSelected,
+                                  onTap: () => cartCubit.setCategoryFilter(
+                                    category.categoryId,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
                       Expanded(
                         child: RefreshIndicator(
                           onRefresh: () => cartCubit.loadCartProducts(
