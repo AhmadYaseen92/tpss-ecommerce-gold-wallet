@@ -64,6 +64,15 @@ class CheckoutCubit extends Cubit<CheckoutState> {
                 .toList()
           : <int>[];
 
+      if (fromCart && productIds.isEmpty) {
+        emit(
+          CheckoutError(
+            'Your cart is empty. Please add products to cart before checkout.',
+          ),
+        );
+        return;
+      }
+
       if (!fromCart &&
           (productId == null || quantity == null || quantity <= 0)) {
         emit(

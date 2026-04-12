@@ -205,6 +205,25 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
       return;
     }
 
+    if (source == 'product') {
+      final navigator = Navigator.of(context, rootNavigator: true);
+      var foundProductRoute = false;
+      navigator.popUntil((route) {
+        final isProductRoute = route.settings.name == AppRoutes.productRoute;
+        if (isProductRoute) {
+          foundProductRoute = true;
+        }
+        return isProductRoute || route.isFirst;
+      });
+      if (!foundProductRoute) {
+        navigator.pushNamedAndRemoveUntil(
+          AppRoutes.productRoute,
+          (route) => false,
+        );
+      }
+      return;
+    }
+
     final navigator = Navigator.of(context, rootNavigator: true);
     var foundListRoute = false;
     navigator.popUntil((route) {
