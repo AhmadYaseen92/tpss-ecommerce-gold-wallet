@@ -1,5 +1,4 @@
-using GoldWalletSystem.Domain.Enums;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -9,6 +8,13 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<int>(
+                name: "WeightUnit",
+                table: "Products",
+                type: "int",
+                nullable: false,
+                defaultValue: 1);
+
             migrationBuilder.AddColumn<decimal>(
                 name: "WeightValue",
                 table: "Products",
@@ -17,23 +23,16 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 scale: 3,
                 nullable: false,
                 defaultValue: 0m);
-
-            migrationBuilder.AddColumn<int>(
-                name: "WeightUnit",
-                table: "Products",
-                type: "int",
-                nullable: false,
-                defaultValue: (int)ProductWeightUnit.Gram);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "WeightValue",
+                name: "WeightUnit",
                 table: "Products");
 
             migrationBuilder.DropColumn(
-                name: "WeightUnit",
+                name: "WeightValue",
                 table: "Products");
         }
     }
