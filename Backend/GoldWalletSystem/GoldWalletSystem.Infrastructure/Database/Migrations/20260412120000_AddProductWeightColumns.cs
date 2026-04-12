@@ -24,6 +24,26 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 type: "int",
                 nullable: false,
                 defaultValue: (int)ProductWeightUnit.Gram);
+
+            migrationBuilder.Sql("""
+UPDATE [Products]
+SET [WeightValue] = CASE
+        WHEN LOWER([Name]) LIKE '%1 kg%' THEN 1
+        WHEN LOWER([Name]) LIKE '%100 g%' THEN 100
+        WHEN LOWER([Name]) LIKE '%50 g%' THEN 50
+        WHEN LOWER([Name]) LIKE '%20 g%' THEN 20
+        WHEN LOWER([Name]) LIKE '%10 g%' THEN 10
+        WHEN LOWER([Name]) LIKE '%5 g%' THEN 5
+        WHEN LOWER([Name]) LIKE '%1 oz%' THEN 1
+        ELSE [WeightValue]
+    END,
+    [WeightUnit] = CASE
+        WHEN LOWER([Name]) LIKE '%kg%' THEN 2
+        WHEN LOWER([Name]) LIKE '%oz%' THEN 3
+        ELSE 1
+    END
+WHERE [WeightValue] = 0;
+""");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
