@@ -8,7 +8,7 @@ public class Product : BaseEntity
     public string Sku { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
-    public ProductCategory Category { get; set; } = ProductCategory.Other;
+    public ProductCategory Category { get; set; } = ProductCategory.Gold;
     public decimal WeightValue { get; set; }
     public ProductWeightUnit WeightUnit { get; set; } = ProductWeightUnit.Gram;
     public decimal Price { get; set; }

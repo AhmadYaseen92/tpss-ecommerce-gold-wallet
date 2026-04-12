@@ -175,9 +175,10 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
 
     private static AssetType ToAssetType(ProductCategory category) => category switch
     {
-        ProductCategory.Coin or ProductCategory.GoldCoin or ProductCategory.SilverCoin => AssetType.GoldCoin,
-        ProductCategory.Jewelry or ProductCategory.GoldJewelry or ProductCategory.SilverJewelry => AssetType.Jewelry,
+        ProductCategory.Coins => AssetType.GoldCoin,
+        ProductCategory.Jewelry or ProductCategory.Diamond => AssetType.Jewelry,
         ProductCategory.Silver => AssetType.Silver,
+        ProductCategory.SpotMr => AssetType.GoldBar,
         ProductCategory.Gold => AssetType.GoldBar,
         _ => AssetType.GoldBar
     };

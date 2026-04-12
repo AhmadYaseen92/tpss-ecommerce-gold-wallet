@@ -110,13 +110,16 @@ class ProductRepositoryImpl implements IProductRepository {
   }
 
   String _categoryLabelById(int categoryId) {
-    if (_coinCategoryIds.contains(categoryId)) return 'Coins';
-    if (_jewelleryCategoryIds.contains(categoryId)) return 'Jewellery';
-    return 'Bullion';
+    return switch (categoryId) {
+      1 => 'Gold',
+      2 => 'Silver',
+      3 => 'Diamond',
+      4 => 'Jewelry',
+      5 => 'Coins',
+      6 => 'Spot MR',
+      _ => 'Gold',
+    };
   }
-
-  static const Set<int> _coinCategoryIds = {4, 5, 6};
-  static const Set<int> _jewelleryCategoryIds = {7, 8, 9};
 
   String _metalByName(String name) {
     final value = name.toLowerCase();

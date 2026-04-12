@@ -10,9 +10,12 @@ class ProductFilterBar extends StatelessWidget {
 
   static const List<({String label, int? categoryId})> categories = [
     (label: 'All', categoryId: null),
-    (label: 'Bullion', categoryId: 3),
-    (label: 'Jewellery', categoryId: 7),
-    (label: 'Coins', categoryId: 4),
+    (label: 'Gold', categoryId: 1),
+    (label: 'Silver', categoryId: 2),
+    (label: 'Diamond', categoryId: 3),
+    (label: 'Jewelry', categoryId: 4),
+    (label: 'Coins', categoryId: 5),
+    (label: 'Spot MR', categoryId: 6),
   ];
 
   @override

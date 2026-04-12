@@ -227,13 +227,11 @@ BEGIN TRY
             T.[Price] = S.[Price],
             T.[AvailableStock] = S.[AvailableStock],
             T.[Category] = CASE
-                WHEN S.[Name] LIKE N'%Gift Card%' THEN 10
-                WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
+                WHEN S.[Name] LIKE N'%Gift Card%' THEN 6
+                WHEN S.[Name] LIKE N'%Diamond%' THEN 3
                 WHEN S.[Name] LIKE N'%Coin%' THEN 5
-                WHEN (S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%') AND S.[Name] LIKE N'%Silver%' THEN 9
-                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' THEN 8
+                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' THEN 4
                 WHEN S.[Name] LIKE N'%Silver%' THEN 2
-                WHEN S.[Name] LIKE N'%Bar%' THEN 3
                 ELSE 1
             END,
             T.[ImageUrl] = CASE
@@ -255,13 +253,11 @@ BEGIN TRY
             S.[Price],
             S.[AvailableStock],
             CASE
-                WHEN S.[Name] LIKE N'%Gift Card%' THEN 10
-                WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
+                WHEN S.[Name] LIKE N'%Gift Card%' THEN 6
+                WHEN S.[Name] LIKE N'%Diamond%' THEN 3
                 WHEN S.[Name] LIKE N'%Coin%' THEN 5
-                WHEN (S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%') AND S.[Name] LIKE N'%Silver%' THEN 9
-                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' THEN 8
+                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' THEN 4
                 WHEN S.[Name] LIKE N'%Silver%' THEN 2
-                WHEN S.[Name] LIKE N'%Bar%' THEN 3
                 ELSE 1
             END,
             CASE
