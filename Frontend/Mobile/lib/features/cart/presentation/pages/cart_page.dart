@@ -32,7 +32,8 @@ class _CartPageState extends State<CartPage> {
 
     return BlocListener<AppCubit, AppState>(
       listenWhen: (previous, current) =>
-          previous.selectedSeller != current.selectedSeller,
+          previous.selectedSeller != current.selectedSeller ||
+          previous.checkoutRefreshTick != current.checkoutRefreshTick,
       listener: (context, state) {
         _selectedSeller = state.selectedSeller;
         cartCubit.loadCartProducts(sellerFilter: state.selectedSeller);

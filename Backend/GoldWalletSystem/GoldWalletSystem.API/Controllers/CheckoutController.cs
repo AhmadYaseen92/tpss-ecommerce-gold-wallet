@@ -18,6 +18,8 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
     public async Task<IActionResult> Confirm([FromBody] CheckoutConfirmRequest request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+        var isDirectCheckout = request.ProductId.HasValue && request.Quantity.HasValue && request.Quantity.Value > 0;
+        var fromCart = !isDirectCheckout;
 
         var wallet = await dbContext.Wallets
             .Include(x => x.Assets)
@@ -39,7 +41,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
         var lines = new List<(Product Product, int Quantity)>();
         Cart? cart = null;
 
-        if (request.FromCart)
+        if (fromCart)
         {
             cart = await dbContext.Carts
                 .Include(x => x.Items)
@@ -131,7 +133,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             });
         }
 
-        if (request.FromCart && cart is not null)
+        if (fromCart && cart is not null)
         {
             if (request.ProductIds is { Count: > 0 })
             {
@@ -159,7 +161,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
         return Ok(ApiResponse<object>.Ok(new
         {
             userId = request.UserId,
-            fromCart = request.FromCart,
+            fromCart,
             itemsCount = lines.Count,
             totalAmount,
             currency = wallet.CurrencyCode,

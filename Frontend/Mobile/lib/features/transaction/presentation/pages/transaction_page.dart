@@ -33,10 +33,11 @@ class TransactionPage extends StatelessWidget {
       },
       child: BlocListener<AppCubit, AppState>(
         listenWhen: (previous, current) =>
-            previous.selectedSeller != current.selectedSeller,
+            previous.selectedSeller != current.selectedSeller ||
+            previous.checkoutRefreshTick != current.checkoutRefreshTick,
         listener: (context, state) {
-          context.read<TransactionCubit>().onGlobalSellerChanged(
-            state.selectedSeller,
+          context.read<TransactionCubit>().loadTransactions(
+            seller: state.selectedSeller,
           );
         },
         child: BlocBuilder<TransactionCubit, TransactionState>(

@@ -35,10 +35,13 @@ class ProductPage extends StatelessWidget {
               color: Colors.transparent,
               child: BlocListener<AppCubit, AppState>(
                 listenWhen: (previous, current) =>
-                    previous.selectedSeller != current.selectedSeller,
+                    previous.selectedSeller != current.selectedSeller ||
+                    previous.checkoutRefreshTick !=
+                        current.checkoutRefreshTick,
                 listener: (context, state) {
-                  context.read<ProductCubit>().onGlobalSellerChanged(
-                    state.selectedSeller,
+                  context.read<ProductCubit>().loadProducts(
+                    seller: state.selectedSeller,
+                    categoryId: context.read<ProductCubit>().selectedCategoryId,
                   );
                 },
                 child: Column(

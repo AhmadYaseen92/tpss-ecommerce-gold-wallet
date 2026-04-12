@@ -6,6 +6,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/data/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/presentation/cubit/checkout_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/predefined_account_selector.dart';
@@ -56,6 +57,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
               variant: AppModalAlertVariant.success,
             );
             if (!mounted) return;
+            context.read<AppCubit>().notifyCheckoutCompleted();
             _navigateAfterSuccess();
           } else if (state is CheckoutError) {
             await AppModalAlert.show(
