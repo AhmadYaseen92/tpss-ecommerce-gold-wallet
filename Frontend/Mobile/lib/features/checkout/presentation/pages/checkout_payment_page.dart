@@ -52,16 +52,16 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
           if (state is CheckoutSuccess) {
             await AppModalAlert.show(
               context,
-              title: 'Checkout Successful',
               message: 'Purchase completed and added to your wallet.',
+              variant: AppModalAlertVariant.success,
             );
             if (!mounted) return;
             _navigateAfterSuccess();
           } else if (state is CheckoutError) {
             await AppModalAlert.show(
               context,
-              title: 'Checkout Failed',
               message: state.message,
+              variant: AppModalAlertVariant.failed,
             );
           }
         },
