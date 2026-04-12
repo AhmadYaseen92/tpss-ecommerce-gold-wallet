@@ -93,7 +93,17 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
 
     private static CartDto Map(Cart cart)
     {
-        var items = cart.Items.Select(i => new CartItemDto(i.Id, i.ProductId, i.Product.Name, i.UnitPrice, i.Quantity, i.LineTotal)).ToList();
+        var items = cart.Items
+            .Select(i => new CartItemDto(
+                i.Id,
+                i.ProductId,
+                i.Product?.Name ?? $"Product #{i.ProductId}",
+                i.Product?.Seller?.Name ?? string.Empty,
+                i.UnitPrice,
+                i.Quantity,
+                i.LineTotal))
+            .ToList();
+
         return new CartDto(cart.Id, cart.UserId, items, items.Sum(x => x.LineTotal));
     }
 }

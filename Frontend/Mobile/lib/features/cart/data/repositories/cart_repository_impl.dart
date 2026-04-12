@@ -47,7 +47,7 @@ class CartRepositoryImpl implements ICartRepository {
       description: model.productName,
       price: model.unitPrice,
       imageUrl: _imageByName(model.productName),
-      sellerName: '',
+      sellerName: model.sellerName,
       quantity: model.quantity,
     );
   }

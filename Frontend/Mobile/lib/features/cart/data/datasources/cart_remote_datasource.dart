@@ -49,12 +49,14 @@ class CartRemoteItemModel {
   CartRemoteItemModel({
     required this.productId,
     required this.productName,
+    required this.sellerName,
     required this.unitPrice,
     required this.quantity,
   });
 
   final int productId;
   final String productName;
+  final String sellerName;
   final double unitPrice;
   final int quantity;
 
@@ -62,6 +64,7 @@ class CartRemoteItemModel {
     return CartRemoteItemModel(
       productId: (json['productId'] as num?)?.toInt() ?? 0,
       productName: (json['productName'] ?? '') as String,
+      sellerName: (json['sellerName'] ?? '') as String,
       unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0,
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
     );

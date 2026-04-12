@@ -12,6 +12,7 @@ public class CartRepository(AppDbContext dbContext) : ICartRepository
         var cart = await dbContext.Carts
             .Include(x => x.Items)
             .ThenInclude(x => x.Product)
+            .ThenInclude(x => x.Seller)
             .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
 
         if (cart is not null)
@@ -22,7 +23,11 @@ public class CartRepository(AppDbContext dbContext) : ICartRepository
         cart = new Cart { UserId = userId };
         dbContext.Carts.Add(cart);
         await dbContext.SaveChangesAsync(cancellationToken);
-        return await dbContext.Carts.Include(x => x.Items).ThenInclude(x => x.Product).FirstAsync(x => x.Id == cart.Id, cancellationToken);
+        return await dbContext.Carts
+            .Include(x => x.Items)
+            .ThenInclude(x => x.Product)
+            .ThenInclude(x => x.Seller)
+            .FirstAsync(x => x.Id == cart.Id, cancellationToken);
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
