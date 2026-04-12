@@ -2,6 +2,7 @@
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
 
 part 'transaction_state.dart';
@@ -10,6 +11,7 @@ class TransactionCubit extends Cubit<TransactionState> {
   String selectedPeriod = 'All Periods';
   String selectedType = 'All Types';
   String selectedStatus = 'All Statuses';
+  int? selectedCategoryId;
   String activeSeller = AppReleaseConfig.defaultSeller;
 
   TransactionCubit() : super(TransactionInitial());
@@ -65,7 +67,17 @@ class TransactionCubit extends Cubit<TransactionState> {
         activeSeller,
         transaction.sellerName,
       );
-      return periodMatch && typeMatch && statusMatch && sellerMatch;
+      final categoryMatch = selectedCategoryId == null ||
+          ProductCategoryFilter.inferCategoryId(
+                name: transaction.title,
+                description: transaction.type,
+              ) ==
+              selectedCategoryId;
+      return periodMatch &&
+          typeMatch &&
+          statusMatch &&
+          sellerMatch &&
+          categoryMatch;
     }).toList();
   }
 
@@ -93,6 +105,12 @@ class TransactionCubit extends Cubit<TransactionState> {
 
   void filterByStatus(String status) {
     selectedStatus = status;
+    applyFilters(selectedPeriod, selectedType, selectedStatus);
+    emit(TransactionLoaded(transactions: filteredTransactions));
+  }
+
+  void filterByCategory(int? categoryId) {
+    selectedCategoryId = categoryId;
     applyFilters(selectedPeriod, selectedType, selectedStatus);
     emit(TransactionLoaded(transactions: filteredTransactions));
   }

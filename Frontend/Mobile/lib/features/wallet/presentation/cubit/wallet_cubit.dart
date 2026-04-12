@@ -19,7 +19,7 @@ class WalletCubit extends Cubit<WalletState> {
   final WatchWalletsUseCase _watchWalletsUseCase;
 
   final List<WalletEntity> _wallets = <WalletEntity>[];
-  int _selectedIndex = 0;
+  int? _selectedCategoryId;
   StreamSubscription<List<WalletEntity>>? _walletSubscription;
 
   Future<void> loadWallets() async {
@@ -28,7 +28,6 @@ class WalletCubit extends Cubit<WalletState> {
       _wallets
         ..clear()
         ..addAll(await _loadWalletsUseCase());
-      _selectedIndex = 0;
       _emitWallets();
       await _startWalletWatch();
     } catch (e) {
@@ -36,8 +35,8 @@ class WalletCubit extends Cubit<WalletState> {
     }
   }
 
-  void selectTab(int index) {
-    _selectedIndex = index;
+  void selectCategory(int? categoryId) {
+    _selectedCategoryId = categoryId;
     _emitWallets();
   }
 
@@ -52,8 +51,24 @@ class WalletCubit extends Cubit<WalletState> {
   }
 
   void _emitWallets() {
-    emit(WalletLoaded(wallets: List.unmodifiable(_wallets), selectedIndex: _selectedIndex));
+    final filtered = _selectedCategoryId == null
+        ? List<WalletEntity>.from(_wallets)
+        : _wallets.where((wallet) => _toCategoryId(wallet.category) == _selectedCategoryId).toList();
+    emit(
+      WalletLoaded(
+        wallets: List.unmodifiable(filtered),
+        selectedCategoryId: _selectedCategoryId,
+      ),
+    );
   }
+
+  int _toCategoryId(WalletCategory category) => switch (category) {
+    WalletCategory.gold => 1,
+    WalletCategory.silver => 2,
+    WalletCategory.jewelry => 4,
+    WalletCategory.coins => 5,
+    WalletCategory.spotMr => 6,
+  };
 
   @override
   Future<void> close() async {

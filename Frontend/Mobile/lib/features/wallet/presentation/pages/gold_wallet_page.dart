@@ -34,7 +34,19 @@ class GoldWalletPage extends StatelessWidget {
               ),
             );
           } else if (state is WalletLoaded) {
-            final wallet = state.wallets[state.selectedIndex];
+            if (state.wallets.isEmpty) {
+              return RefreshIndicator(
+                onRefresh: () => context.read<WalletCubit>().loadWallets(),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: const [
+                    SizedBox(height: 120),
+                    Center(child: Text('No wallet assets for selected category.')),
+                  ],
+                ),
+              );
+            }
+            final wallet = state.wallets.first;
             final totalPortfolioValue = state.wallets.fold<double>(
               0,
               (sum, item) =>
@@ -61,7 +73,12 @@ class GoldWalletPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 20.0),
 
-                    WalletTabBar(selectedIndex: state.selectedIndex, wallets: state.wallets),
+                    WalletTabBar(
+                      selectedCategoryId: state.selectedCategoryId,
+                      onCategoryTap: (categoryId) => context
+                          .read<WalletCubit>()
+                          .selectCategory(categoryId),
+                    ),
                     const SizedBox(height: 16.0),
 
                     WalletCardWidget(

@@ -11,12 +11,14 @@ final class CartLoaded extends CartState {
   final CartSummaryEntity summary;
   final String selectedSellerFilter;
   final List<String> availableSellers;
+  final int? selectedCategoryId;
 
   CartLoaded({
     required this.cartProducts,
     required this.summary,
     required this.selectedSellerFilter,
     required this.availableSellers,
+    required this.selectedCategoryId,
   });
 }
 
