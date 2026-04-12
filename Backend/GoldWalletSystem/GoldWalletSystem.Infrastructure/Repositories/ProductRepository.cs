@@ -18,7 +18,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
         query = query.OrderBy(x => x.Id);
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize)
-            .Select(x => new ProductDto(x.Id, x.Name, x.Sku, x.Description, x.Price, x.AvailableStock, x.SellerId, x.Seller.Name))
+            .Select(x => new ProductDto(x.Id, x.Name, x.Sku, x.Description, x.ImageUrl, x.Price, x.AvailableStock, x.SellerId, x.Seller.Name))
             .ToListAsync(cancellationToken);
         return new PagedResult<ProductDto>(items, totalCount, pageNumber, pageSize);
     }

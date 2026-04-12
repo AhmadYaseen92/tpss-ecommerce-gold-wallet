@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GoldWalletSystem.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ff06e82946e4aaea04d0ff025d99510f3e119fb7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+859b087fe23c1b471cd897aa6feae5dccc289925")]
 [assembly: System.Reflection.AssemblyProductAttribute("GoldWalletSystem.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GoldWalletSystem.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
