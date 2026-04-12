@@ -40,7 +40,7 @@ BEGIN TRY
     DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'GOLDPAL');
     DECLARE @SellerBullion int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'BULLION');
 
-    -- 2) Users (including requested investor@goldwallet.com).
+    -- 2) Users (including investor@goldwallet.com).
     DECLARE @Users TABLE (
         FullName nvarchar(150),
         Email nvarchar(200),
@@ -113,19 +113,19 @@ BEGIN TRY
     INNER JOIN [Users] U ON U.[Id] = TH.[UserId]
     WHERE U.[Email] IN (SELECT [Email] FROM @Users);
 
-    -- 5) Core products (small starter catalog).
+    -- 5) Core products (starter catalog) with REQUIRED weight fields.
     ;WITH SeedProducts AS (
-        SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock UNION ALL
-        SELECT @SellerImseeh, N'IMSEEH-PRD-002', N'Imseeh 1oz Gold Coin', N'Fine gold investment coin', CAST(2675.00 AS decimal(18,2)), 60 UNION ALL
-        SELECT @SellerImseeh, N'IMSEEH-PRD-003', N'Imseeh Silver 1oz Coin', N'Investment silver coin', CAST(36.00 AS decimal(18,2)), 300 UNION ALL
+        SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock, CAST(5.000 AS decimal(18,3)) AS WeightValue, 1 AS WeightUnit UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-002', N'Imseeh 1oz Gold Coin', N'Fine gold investment coin', CAST(2675.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-003', N'Imseeh Silver 1oz Coin', N'Investment silver coin', CAST(36.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
 
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-001', N'GoldPal 5g Gold Bar', N'24K minted bar - 5 grams', CAST(432.00 AS decimal(18,2)), 100 UNION ALL
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-002', N'GoldPal 1oz Gold Coin', N'Fine gold investment coin', CAST(2678.00 AS decimal(18,2)), 60 UNION ALL
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-003', N'GoldPal Silver 1oz Coin', N'Investment silver coin', CAST(37.00 AS decimal(18,2)), 300 UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-001', N'GoldPal 5g Gold Bar', N'24K minted bar - 5 grams', CAST(432.00 AS decimal(18,2)), 100, CAST(5.000 AS decimal(18,3)), 1 UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-002', N'GoldPal 1oz Gold Coin', N'Fine gold investment coin', CAST(2678.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-003', N'GoldPal Silver 1oz Coin', N'Investment silver coin', CAST(37.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
 
-        SELECT @SellerBullion, N'BULLION-PRD-001', N'Bullion 5g Gold Bar', N'24K minted bar - 5 grams', CAST(433.00 AS decimal(18,2)), 100 UNION ALL
-        SELECT @SellerBullion, N'BULLION-PRD-002', N'Bullion 1oz Gold Coin', N'Fine gold investment coin', CAST(2680.00 AS decimal(18,2)), 60 UNION ALL
-        SELECT @SellerBullion, N'BULLION-PRD-003', N'Bullion Silver 1oz Coin', N'Investment silver coin', CAST(38.00 AS decimal(18,2)), 300
+        SELECT @SellerBullion, N'BULLION-PRD-001', N'Bullion 5g Gold Bar', N'24K minted bar - 5 grams', CAST(433.00 AS decimal(18,2)), 100, CAST(5.000 AS decimal(18,3)), 1 UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-002', N'Bullion 1oz Gold Coin', N'Fine gold investment coin', CAST(2680.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-003', N'Bullion Silver 1oz Coin', N'Investment silver coin', CAST(38.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3
     )
     MERGE [Products] AS T
     USING SeedProducts AS S
@@ -137,6 +137,8 @@ BEGIN TRY
             T.[Description] = S.[Description],
             T.[Price] = S.[Price],
             T.[AvailableStock] = S.[AvailableStock],
+            T.[WeightValue] = S.[WeightValue],
+            T.[WeightUnit] = S.[WeightUnit],
             T.[Category] = CASE
                 WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
                 WHEN S.[Name] LIKE N'%Coin%' THEN 5
@@ -151,7 +153,21 @@ BEGIN TRY
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[Category],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        INSERT (
+            [SellerId],
+            [Name],
+            [Sku],
+            [Description],
+            [Price],
+            [AvailableStock],
+            [WeightValue],
+            [WeightUnit],
+            [Category],
+            [ImageUrl],
+            [IsActive],
+            [CreatedAtUtc],
+            [UpdatedAtUtc]
+        )
         VALUES (
             S.[SellerId],
             S.[Name],
@@ -159,6 +175,8 @@ BEGIN TRY
             S.[Description],
             S.[Price],
             S.[AvailableStock],
+            S.[WeightValue],
+            S.[WeightUnit],
             CASE
                 WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
                 WHEN S.[Name] LIKE N'%Coin%' THEN 5
@@ -211,7 +229,10 @@ END CATCH;
 
 -- Quick checks.
 SELECT COUNT(*) AS SellerCount FROM [Sellers];
-SELECT COUNT(*) AS SeedUserCount FROM [Users] WHERE [Email] IN (
+
+SELECT COUNT(*) AS SeedUserCount
+FROM [Users]
+WHERE [Email] IN (
     N'imseeh.admin@example.com',
     N'goldpal.admin@example.com',
     N'bullion.admin@example.com',
@@ -220,4 +241,9 @@ SELECT COUNT(*) AS SeedUserCount FROM [Users] WHERE [Email] IN (
     N'goldpal.investor1@example.com',
     N'bullion.investor1@example.com'
 );
-SELECT COUNT(*) AS SeedProductCount FROM [Products] WHERE [Sku] LIKE N'IMSEEH-PRD-%' OR [Sku] LIKE N'GOLDPAL-PRD-%' OR [Sku] LIKE N'BULLION-PRD-%';
+
+SELECT COUNT(*) AS SeedProductCount
+FROM [Products]
+WHERE [Sku] LIKE N'IMSEEH-PRD-%'
+   OR [Sku] LIKE N'GOLDPAL-PRD-%'
+   OR [Sku] LIKE N'BULLION-PRD-%';

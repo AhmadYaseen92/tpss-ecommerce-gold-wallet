@@ -1,0 +1,495 @@
+[
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
+    "Method": "Login",
+    "RelativePath": "api/auth/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Auth.LoginRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[GoldWalletSystem.Application.DTOs.Auth.LoginResponseDto, GoldWalletSystem.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.Object, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 401
+      }
+    ]
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
+    "Method": "Logout",
+    "RelativePath": "api/auth/logout",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
+    "Method": "Ping",
+    "RelativePath": "api/auth/ping",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
+    "Method": "Register",
+    "RelativePath": "api/auth/register",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Auth.RegisterRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[GoldWalletSystem.Application.DTOs.Auth.RegisterResponseDto, GoldWalletSystem.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.Object, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 400
+      }
+    ]
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.CartController",
+    "Method": "GetByUser",
+    "RelativePath": "api/cart/by-user",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Common.UserRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.CartController",
+    "Method": "AddItem",
+    "RelativePath": "api/cart/items",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Cart.AddCartItemByUserRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.CartController",
+    "Method": "UpdateItem",
+    "RelativePath": "api/cart/items",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Cart.UpdateCartItemByUserRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.CartController",
+    "Method": "RemoveItem",
+    "RelativePath": "api/cart/items/{userId}/{productId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "productId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.CheckoutController",
+    "Method": "Confirm",
+    "RelativePath": "api/checkout/confirm",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.CheckoutController\u002BCheckoutConfirmRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.DashboardController",
+    "Method": "GetByUser",
+    "RelativePath": "api/dashboard/by-user",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Common.UserRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.InvoicesController",
+    "Method": "Create",
+    "RelativePath": "api/invoices/create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Invoices.CreateInvoiceRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.InvoicesController",
+    "Method": "Search",
+    "RelativePath": "api/invoices/search",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Common.UserPagedRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.LogsController",
+    "Method": "Search",
+    "RelativePath": "api/logs/search",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Common.PagedRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.MobileAppConfigurationsController",
+    "Method": "List",
+    "RelativePath": "api/mobile-app-configurations/list",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.MobileAppConfigurationsController",
+    "Method": "Upsert",
+    "RelativePath": "api/mobile-app-configurations/upsert",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Configuration.UpsertMobileAppConfigurationRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.NotificationsController",
+    "Method": "MarkAsRead",
+    "RelativePath": "api/notifications/read",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Notifications.MarkNotificationReadRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.NotificationsController",
+    "Method": "Search",
+    "RelativePath": "api/notifications/search",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Common.UserPagedRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
+    "Method": "Search",
+    "RelativePath": "api/products/search",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Products.ProductSearchRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProfileController",
+    "Method": "GetByUser",
+    "RelativePath": "api/profile/by-user",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Common.UserRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProfileController",
+    "Method": "UpsertLinkedBank",
+    "RelativePath": "api/profile/linked-bank-accounts",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Profile.UpsertLinkedBankAccountRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProfileController",
+    "Method": "UpdatePassword",
+    "RelativePath": "api/profile/password",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Profile.UpdatePasswordRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProfileController",
+    "Method": "UpsertPaymentMethod",
+    "RelativePath": "api/profile/payment-methods",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Profile.UpsertPaymentMethodRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProfileController",
+    "Method": "UpdatePersonal",
+    "RelativePath": "api/profile/personal",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Profile.UpdateProfilePersonalInfoRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProfileController",
+    "Method": "UpdateSettings",
+    "RelativePath": "api/profile/settings",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Profile.UpdateProfileSettingsRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.TransactionHistoryController",
+    "Method": "ExportCsv",
+    "RelativePath": "api/transaction-history/export-csv",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Transactions.TransactionHistoryFilterRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.TransactionHistoryController",
+    "Method": "Filter",
+    "RelativePath": "api/transaction-history/filter",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Transactions.TransactionHistoryFilterRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.TransactionHistoryController",
+    "Method": "Search",
+    "RelativePath": "api/transaction-history/search",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Common.UserPagedRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "GetByUser",
+    "RelativePath": "api/wallet/by-user",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Common.UserRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
