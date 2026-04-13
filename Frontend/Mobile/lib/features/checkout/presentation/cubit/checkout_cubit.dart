@@ -78,12 +78,12 @@ class CheckoutCubit extends Cubit<CheckoutState> {
       await _dio.post(
         '/checkout/confirm',
         data: {
-          'userId': userId,
-          'fromCart': fromCart,
-          if (fromCart) 'productIds': productIds,
-          if (fromCart) 'sellerName': checkoutArgs['seller'],
-          if (!fromCart) 'productId': productId,
-          if (!fromCart) 'quantity': quantity,
+          'UserId': userId,
+          'FromCart': fromCart,
+          if (fromCart) 'ProductIds': productIds,
+          if (fromCart) 'SellerName': checkoutArgs['seller'],
+          if (!fromCart) 'ProductId': productId,
+          if (!fromCart) 'Quantity': quantity,
         },
       );
 

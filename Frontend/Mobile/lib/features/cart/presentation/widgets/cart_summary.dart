@@ -7,7 +7,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 
 class CartSummary extends StatelessWidget {
   final CartSummaryEntity summary;
-  final List<String> cartProductIds;
+  final List<int> cartProductIds;
   final String? selectedSellerName;
   final Future<void> Function()? onCheckoutCompleted;
 
