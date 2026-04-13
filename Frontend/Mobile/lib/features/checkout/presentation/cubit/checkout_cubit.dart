@@ -51,7 +51,12 @@ class CheckoutCubit extends Cubit<CheckoutState> {
           ? quantityRaw.toInt()
           : int.tryParse('$quantityRaw');
       final isDirectCheckout = productId != null && (quantity ?? 0) > 0;
-      final fromCart = !isDirectCheckout;
+      final fromCartRaw = checkoutArgs['fromCart'];
+      final fromCart = fromCartRaw is bool
+          ? fromCartRaw
+          : (fromCartRaw is String
+              ? fromCartRaw.toLowerCase() == 'true'
+              : !isDirectCheckout);
       final productIdsRaw = checkoutArgs['productIds'];
       final productIds = productIdsRaw is List
           ? productIdsRaw
@@ -59,6 +64,15 @@ class CheckoutCubit extends Cubit<CheckoutState> {
                 .whereType<int>()
                 .toList()
           : <int>[];
+
+      if (fromCart && productIds.isEmpty) {
+        emit(
+          CheckoutError(
+            'No cart items were selected. Please select items and try again.',
+          ),
+        );
+        return;
+      }
 
       if (!fromCart &&
           (productId == null || quantity == null || quantity <= 0)) {

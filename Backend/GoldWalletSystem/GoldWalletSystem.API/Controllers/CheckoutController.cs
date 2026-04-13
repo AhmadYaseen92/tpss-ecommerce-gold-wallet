@@ -18,8 +18,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
     public async Task<IActionResult> Confirm([FromBody] CheckoutConfirmRequest request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        var isDirectCheckout = request.ProductId.HasValue && request.Quantity.HasValue && request.Quantity.Value > 0;
-        var fromCart = !isDirectCheckout;
+        var fromCart = request.FromCart;
 
         var wallet = await dbContext.Wallets
             .Include(x => x.Assets)
@@ -53,14 +52,13 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             if (cart.Items.Count == 0)
                 throw new InvalidOperationException("Cart is empty.");
 
-            var selectedItems = cart.Items.AsEnumerable();
-            if (request.ProductIds is { Count: > 0 })
-            {
-                var productIdSet = request.ProductIds.ToHashSet();
-                selectedItems = selectedItems.Where(item => productIdSet.Contains(item.ProductId));
-            }
+            if (request.ProductIds is not { Count: > 0 })
+                throw new InvalidOperationException("Please select cart items for checkout.");
 
-            var selectedList = selectedItems.ToList();
+            var productIdSet = request.ProductIds.ToHashSet();
+            var selectedList = cart.Items
+                .Where(item => productIdSet.Contains(item.ProductId))
+                .ToList();
             if (selectedList.Count == 0)
                 throw new InvalidOperationException("No matching cart items were selected for checkout.");
 
@@ -133,18 +131,11 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             });
         }
 
-        if (fromCart && cart is not null)
+        if (fromCart && cart is not null && request.ProductIds is { Count: > 0 })
         {
-            if (request.ProductIds is { Count: > 0 })
-            {
-                var productIdSet = request.ProductIds.ToHashSet();
-                var matchedItems = cart.Items.Where(x => productIdSet.Contains(x.ProductId)).ToList();
-                dbContext.CartItems.RemoveRange(matchedItems);
-            }
-            else
-            {
-                dbContext.CartItems.RemoveRange(cart.Items);
-            }
+            var productIdSet = request.ProductIds.ToHashSet();
+            var matchedItems = cart.Items.Where(x => productIdSet.Contains(x.ProductId)).ToList();
+            dbContext.CartItems.RemoveRange(matchedItems);
         }
 
         dbContext.AuditLogs.Add(new AuditLog
