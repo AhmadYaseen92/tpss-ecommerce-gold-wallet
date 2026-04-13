@@ -17,6 +17,9 @@ class AppTextField extends StatelessWidget {
   final bool enabled;
   final bool readOnly;
   final VoidCallback? onTap;
+  final bool requiredField;
+  final AutovalidateMode autovalidateMode;
+  final String? errorText;
 
   const AppTextField({
     super.key,
@@ -35,6 +38,9 @@ class AppTextField extends StatelessWidget {
     this.enabled = true,
     this.readOnly = false,
     this.onTap,
+    this.requiredField = false,
+    this.autovalidateMode = AutovalidateMode.onUserInteraction,
+    this.errorText,
   }) : assert(
          controller == null || initialValue == '',
          'Provide either controller or initialValue, not both.',
@@ -58,11 +64,18 @@ class AppTextField extends StatelessWidget {
           keyboardType: keyboardType,
           textInputAction: textInputAction,
           validator: validator,
+          autovalidateMode: autovalidateMode,
           onChanged: onChanged,
           decoration: InputDecoration(
-            labelText: label,
+            labelText: requiredField ? '$label *' : label,
             floatingLabelBehavior: FloatingLabelBehavior.auto,
             hintText: hint,
+            errorText: errorText,
+            errorStyle: TextStyle(
+              color: palette.danger,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
             hintStyle: TextStyle(color: palette.textSecondary, fontSize: 14),
             prefixIcon: prefixIcon != null
                 ? Icon(prefixIcon, color: palette.textSecondary, size: 20)

@@ -9,6 +9,8 @@ class AppFormDropdown<T> extends StatelessWidget {
   final ValueChanged<T?>? onChanged;
   final String? Function(T?)? validator;
   final AutovalidateMode autovalidateMode;
+  final bool requiredField;
+  final String? errorText;
 
   const AppFormDropdown({
     super.key,
@@ -18,7 +20,9 @@ class AppFormDropdown<T> extends StatelessWidget {
     required this.items,
     this.onChanged,
     this.validator,
-    this.autovalidateMode = AutovalidateMode.disabled,
+    this.autovalidateMode = AutovalidateMode.onUserInteraction,
+    this.requiredField = false,
+    this.errorText,
   });
 
   @override
@@ -34,7 +38,13 @@ class AppFormDropdown<T> extends StatelessWidget {
       onChanged: onChanged,
       dropdownColor: palette.surface,
       decoration: InputDecoration(
-        labelText: label,
+        errorText: errorText,
+        errorStyle: TextStyle(
+          color: palette.danger,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        label: Text(requiredField ? '$label *' : label),
         hintText: hint,
         filled: true,
         fillColor: palette.surface,
