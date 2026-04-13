@@ -22,7 +22,12 @@ public sealed record PaymentMethodDto(
     bool IsDefault,
     string HolderName,
     string Expiry,
-    string DetailsJson);
+    string CardNumber,
+    string ApplePayToken,
+    string WalletProvider,
+    string WalletNumber,
+    string CliqAlias,
+    string CliqBankName);
 public sealed record LinkedBankAccountDto(
     int Id,
     string BankName,

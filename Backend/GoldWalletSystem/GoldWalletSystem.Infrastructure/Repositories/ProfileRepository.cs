@@ -17,7 +17,10 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
 
         var profile = await dbContext.UserProfiles
             .AsNoTracking()
-            .Include(x => x.PaymentMethods)
+            .Include(x => x.PaymentMethods).ThenInclude(x => x.CardDetails)
+            .Include(x => x.PaymentMethods).ThenInclude(x => x.ApplePayDetails)
+            .Include(x => x.PaymentMethods).ThenInclude(x => x.WalletDetails)
+            .Include(x => x.PaymentMethods).ThenInclude(x => x.CliqDetails)
             .Include(x => x.LinkedBankAccounts)
             .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
 
@@ -89,9 +92,6 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
 
         paymentMethod.Type = request.Type.Trim();
         paymentMethod.MaskedNumber = request.MaskedNumber.Trim();
-        paymentMethod.HolderName = request.HolderName.Trim();
-        paymentMethod.Expiry = request.Expiry.Trim();
-        paymentMethod.DetailsJson = request.DetailsJson.Trim();
         paymentMethod.IsDefault = request.IsDefault;
         paymentMethod.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -102,6 +102,8 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
                 .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.IsDefault, false), cancellationToken);
         }
 
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await UpsertPaymentMethodDetailsAsync(paymentMethod, request, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         return (await GetByUserIdAsync(request.UserId, cancellationToken))!;
     }
@@ -185,7 +187,19 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
             profile?.ProfilePhotoUrl ?? string.Empty,
             profile?.PreferredLanguage ?? "en",
             profile?.PreferredTheme ?? "light",
-            (profile?.PaymentMethods ?? []).Select(x => new PaymentMethodDto(x.Id, x.Type, x.MaskedNumber, x.IsDefault, x.HolderName, x.Expiry, x.DetailsJson)).ToList(),
+            (profile?.PaymentMethods ?? []).Select(x => new PaymentMethodDto(
+                x.Id,
+                x.Type,
+                x.MaskedNumber,
+                x.IsDefault,
+                x.CardDetails?.CardHolderName ?? x.ApplePayDetails?.AccountHolderName ?? x.WalletDetails?.AccountHolderName ?? x.CliqDetails?.AccountHolderName ?? string.Empty,
+                x.CardDetails?.Expiry ?? string.Empty,
+                x.CardDetails?.CardNumber ?? string.Empty,
+                x.ApplePayDetails?.ApplePayToken ?? string.Empty,
+                x.WalletDetails?.Provider ?? string.Empty,
+                x.WalletDetails?.WalletNumber ?? string.Empty,
+                x.CliqDetails?.CliqAlias ?? string.Empty,
+                x.CliqDetails?.BankName ?? string.Empty)).ToList(),
             (profile?.LinkedBankAccounts ?? []).Select(x => new LinkedBankAccountDto(
                 x.Id,
                 x.BankName,
@@ -233,17 +247,91 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
             throw new InvalidOperationException("Payment method details are required.");
 
         var type = request.Type.Trim().ToLowerInvariant();
-        var value = request.MaskedNumber.Trim();
-        if ((type.Contains("visa") || type.Contains("master")) && !CardRegex().IsMatch(value))
+        if ((type.Contains("visa") || type.Contains("master")) && !CardRegex().IsMatch(request.CardNumber))
             throw new InvalidOperationException("Card number must be 12 to 19 digits.");
         if ((type.Contains("visa") || type.Contains("master")) && !ExpiryRegex().IsMatch(request.Expiry))
             throw new InvalidOperationException("Card expiry must be MM/YY.");
-        if (type.Contains("apple") && !AppleTokenRegex().IsMatch(value))
+        if (type.Contains("apple") && !AppleTokenRegex().IsMatch(request.ApplePayToken))
             throw new InvalidOperationException("Apple Pay token format is invalid.");
-        if ((type.Contains("zain") || type.Contains("orange") || type.Contains("dinar")) && !PhoneRegex().IsMatch(value))
+        if ((type.Contains("zain") || type.Contains("orange") || type.Contains("dinar")) && !PhoneRegex().IsMatch(request.WalletNumber))
             throw new InvalidOperationException("Wallet number format is invalid.");
-        if (type.Contains("cliq") && !CliqAliasRegex().IsMatch(value))
+        if (type.Contains("cliq") && !CliqAliasRegex().IsMatch(request.CliqAlias))
             throw new InvalidOperationException("CliQ alias format is invalid.");
+    }
+
+    private async Task UpsertPaymentMethodDetailsAsync(
+        PaymentMethod paymentMethod,
+        UpsertPaymentMethodRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var normalizedType = request.Type.Trim().ToLowerInvariant();
+        await RemovePaymentDetailsAsync(paymentMethod.Id, cancellationToken);
+
+        if (normalizedType.Contains("visa") || normalizedType.Contains("master"))
+        {
+            dbContext.CardPaymentMethodDetails.Add(new CardPaymentMethodDetails
+            {
+                PaymentMethodId = paymentMethod.Id,
+                CardNumber = request.CardNumber.Trim(),
+                CardHolderName = request.HolderName.Trim(),
+                Expiry = request.Expiry.Trim(),
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            });
+            return;
+        }
+
+        if (normalizedType.Contains("apple"))
+        {
+            dbContext.ApplePayPaymentMethodDetails.Add(new ApplePayPaymentMethodDetails
+            {
+                PaymentMethodId = paymentMethod.Id,
+                ApplePayToken = request.ApplePayToken.Trim(),
+                AccountHolderName = request.HolderName.Trim(),
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            });
+            return;
+        }
+
+        if (normalizedType.Contains("cliq"))
+        {
+            dbContext.CliqPaymentMethodDetails.Add(new CliqPaymentMethodDetails
+            {
+                PaymentMethodId = paymentMethod.Id,
+                CliqAlias = request.CliqAlias.Trim(),
+                BankName = request.CliqBankName.Trim(),
+                AccountHolderName = request.HolderName.Trim(),
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            });
+            return;
+        }
+
+        dbContext.WalletPaymentMethodDetails.Add(new WalletPaymentMethodDetails
+        {
+            PaymentMethodId = paymentMethod.Id,
+            Provider = request.WalletProvider.Trim(),
+            WalletNumber = request.WalletNumber.Trim(),
+            AccountHolderName = request.HolderName.Trim(),
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+        });
+    }
+
+    private async Task RemovePaymentDetailsAsync(int paymentMethodId, CancellationToken cancellationToken)
+    {
+        var card = await dbContext.CardPaymentMethodDetails.FirstOrDefaultAsync(x => x.PaymentMethodId == paymentMethodId, cancellationToken);
+        if (card is not null) dbContext.CardPaymentMethodDetails.Remove(card);
+
+        var apple = await dbContext.ApplePayPaymentMethodDetails.FirstOrDefaultAsync(x => x.PaymentMethodId == paymentMethodId, cancellationToken);
+        if (apple is not null) dbContext.ApplePayPaymentMethodDetails.Remove(apple);
+
+        var wallet = await dbContext.WalletPaymentMethodDetails.FirstOrDefaultAsync(x => x.PaymentMethodId == paymentMethodId, cancellationToken);
+        if (wallet is not null) dbContext.WalletPaymentMethodDetails.Remove(wallet);
+
+        var cliq = await dbContext.CliqPaymentMethodDetails.FirstOrDefaultAsync(x => x.PaymentMethodId == paymentMethodId, cancellationToken);
+        if (cliq is not null) dbContext.CliqPaymentMethodDetails.Remove(cliq);
     }
 
     private static void ValidateLinkedBankRequest(UpsertLinkedBankAccountRequestDto request)

@@ -74,7 +74,12 @@ class ProfileRemoteDataSource {
     required String maskedNumber,
     required String holderName,
     required String expiry,
-    required String detailsJson,
+    required String cardNumber,
+    required String applePayToken,
+    required String walletProvider,
+    required String walletNumber,
+    required String cliqAlias,
+    required String cliqBankName,
     required bool isDefault,
   }) async {
     final userId = _requireUserId();
@@ -87,7 +92,12 @@ class ProfileRemoteDataSource {
         'maskedNumber': maskedNumber,
         'holderName': holderName,
         'expiry': expiry,
-        'detailsJson': detailsJson,
+        'cardNumber': cardNumber,
+        'applePayToken': applePayToken,
+        'walletProvider': walletProvider,
+        'walletNumber': walletNumber,
+        'cliqAlias': cliqAlias,
+        'cliqBankName': cliqBankName,
         'isDefault': isDefault,
       },
     );
@@ -201,7 +211,12 @@ class PaymentMethodRemoteModel {
     required this.isDefault,
     required this.holderName,
     required this.expiry,
-    required this.detailsJson,
+    required this.cardNumber,
+    required this.applePayToken,
+    required this.walletProvider,
+    required this.walletNumber,
+    required this.cliqAlias,
+    required this.cliqBankName,
   });
 
   final int id;
@@ -210,7 +225,12 @@ class PaymentMethodRemoteModel {
   final bool isDefault;
   final String holderName;
   final String expiry;
-  final String detailsJson;
+  final String cardNumber;
+  final String applePayToken;
+  final String walletProvider;
+  final String walletNumber;
+  final String cliqAlias;
+  final String cliqBankName;
 
   factory PaymentMethodRemoteModel.fromJson(Map<String, dynamic> json) {
     return PaymentMethodRemoteModel(
@@ -220,7 +240,12 @@ class PaymentMethodRemoteModel {
       isDefault: (json['isDefault'] ?? false) as bool,
       holderName: (json['holderName'] ?? '') as String,
       expiry: (json['expiry'] ?? '') as String,
-      detailsJson: (json['detailsJson'] ?? '') as String,
+      cardNumber: (json['cardNumber'] ?? '') as String,
+      applePayToken: (json['applePayToken'] ?? '') as String,
+      walletProvider: (json['walletProvider'] ?? '') as String,
+      walletNumber: (json['walletNumber'] ?? '') as String,
+      cliqAlias: (json['cliqAlias'] ?? '') as String,
+      cliqBankName: (json['cliqBankName'] ?? '') as String,
     );
   }
 }

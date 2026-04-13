@@ -8,14 +8,60 @@ SET NOCOUNT ON;
 
 IF OBJECT_ID(N'[PaymentMethods]', N'U') IS NOT NULL
 BEGIN
-    IF COL_LENGTH('PaymentMethods', 'HolderName') IS NULL
-        ALTER TABLE [PaymentMethods] ADD [HolderName] NVARCHAR(120) NOT NULL CONSTRAINT [DF_PaymentMethods_HolderName] DEFAULT(N'');
+    IF OBJECT_ID(N'[CardPaymentMethodDetails]', N'U') IS NULL
+    BEGIN
+        CREATE TABLE [CardPaymentMethodDetails] (
+            [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+            [PaymentMethodId] INT NOT NULL UNIQUE,
+            [CardNumber] NVARCHAR(30) NOT NULL,
+            [CardHolderName] NVARCHAR(120) NOT NULL,
+            [Expiry] NVARCHAR(10) NOT NULL,
+            [CreatedAtUtc] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            [UpdatedAtUtc] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            CONSTRAINT [FK_CardPaymentMethodDetails_PaymentMethods_PaymentMethodId] FOREIGN KEY ([PaymentMethodId]) REFERENCES [PaymentMethods]([Id]) ON DELETE CASCADE
+        );
+    END
 
-    IF COL_LENGTH('PaymentMethods', 'Expiry') IS NULL
-        ALTER TABLE [PaymentMethods] ADD [Expiry] NVARCHAR(10) NOT NULL CONSTRAINT [DF_PaymentMethods_Expiry] DEFAULT(N'');
+    IF OBJECT_ID(N'[ApplePayPaymentMethodDetails]', N'U') IS NULL
+    BEGIN
+        CREATE TABLE [ApplePayPaymentMethodDetails] (
+            [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+            [PaymentMethodId] INT NOT NULL UNIQUE,
+            [ApplePayToken] NVARCHAR(128) NOT NULL,
+            [AccountHolderName] NVARCHAR(120) NOT NULL,
+            [CreatedAtUtc] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            [UpdatedAtUtc] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            CONSTRAINT [FK_ApplePayPaymentMethodDetails_PaymentMethods_PaymentMethodId] FOREIGN KEY ([PaymentMethodId]) REFERENCES [PaymentMethods]([Id]) ON DELETE CASCADE
+        );
+    END
 
-    IF COL_LENGTH('PaymentMethods', 'DetailsJson') IS NULL
-        ALTER TABLE [PaymentMethods] ADD [DetailsJson] NVARCHAR(1000) NOT NULL CONSTRAINT [DF_PaymentMethods_DetailsJson] DEFAULT(N'');
+    IF OBJECT_ID(N'[WalletPaymentMethodDetails]', N'U') IS NULL
+    BEGIN
+        CREATE TABLE [WalletPaymentMethodDetails] (
+            [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+            [PaymentMethodId] INT NOT NULL UNIQUE,
+            [Provider] NVARCHAR(60) NOT NULL,
+            [WalletNumber] NVARCHAR(30) NOT NULL,
+            [AccountHolderName] NVARCHAR(120) NOT NULL,
+            [CreatedAtUtc] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            [UpdatedAtUtc] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            CONSTRAINT [FK_WalletPaymentMethodDetails_PaymentMethods_PaymentMethodId] FOREIGN KEY ([PaymentMethodId]) REFERENCES [PaymentMethods]([Id]) ON DELETE CASCADE
+        );
+    END
+
+    IF OBJECT_ID(N'[CliqPaymentMethodDetails]', N'U') IS NULL
+    BEGIN
+        CREATE TABLE [CliqPaymentMethodDetails] (
+            [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+            [PaymentMethodId] INT NOT NULL UNIQUE,
+            [CliqAlias] NVARCHAR(60) NOT NULL,
+            [BankName] NVARCHAR(120) NOT NULL,
+            [AccountHolderName] NVARCHAR(120) NOT NULL,
+            [CreatedAtUtc] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            [UpdatedAtUtc] DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+            CONSTRAINT [FK_CliqPaymentMethodDetails_PaymentMethods_PaymentMethodId] FOREIGN KEY ([PaymentMethodId]) REFERENCES [PaymentMethods]([Id]) ON DELETE CASCADE
+        );
+    END
 END
 
 IF OBJECT_ID(N'[LinkedBankAccounts]', N'U') IS NOT NULL

@@ -268,7 +268,12 @@ class ProfileCubit extends Cubit<ProfileState> {
         maskedNumber: paymentControllers[0].text.trim(),
         holderName: paymentControllers.length > 1 ? paymentControllers[1].text.trim() : '',
         expiry: paymentControllers.length > 2 ? paymentControllers[2].text.trim() : '',
-        detailsJson: paymentControllers.length > 3 ? paymentControllers[3].text.trim() : '',
+        cardNumber: _isCardType(selected.name) ? paymentControllers[0].text.trim() : '',
+        applePayToken: _isApplePayType(selected.name) ? paymentControllers[0].text.trim() : '',
+        walletProvider: _isWalletType(selected.name) ? selected.name : '',
+        walletNumber: _isWalletType(selected.name) ? paymentControllers[0].text.trim() : '',
+        cliqAlias: _isCliqType(selected.name) ? paymentControllers[0].text.trim() : '',
+        cliqBankName: _isCliqType(selected.name) && paymentControllers.length > 2 ? paymentControllers[2].text.trim() : '',
         isDefault: selected.isDefault,
       );
       isEditing = false;
@@ -567,7 +572,16 @@ class ProfileCubit extends Cubit<ProfileState> {
       primary = selected.maskedNumber;
       holder = selected.holderName;
       expiry = selected.expiry;
-      details = selected.detailsJson;
+      if (_isCardType(selected.type)) {
+        primary = selected.cardNumber;
+      } else if (_isApplePayType(selected.type)) {
+        primary = selected.applePayToken;
+      } else if (_isWalletType(selected.type)) {
+        primary = selected.walletNumber;
+      } else if (_isCliqType(selected.type)) {
+        primary = selected.cliqAlias;
+        details = selected.cliqBankName;
+      }
     }
 
     final selectedType = paymentMethods.isNotEmpty && index < paymentMethods.length
@@ -575,16 +589,18 @@ class ProfileCubit extends Cubit<ProfileState> {
         : availablePaymentTypes.first;
     final fields = _paymentFieldsByType(selectedType);
     for (var i = 0; i < fields.length; i++) {
+      String value = '';
+      if (i == 0) value = primary;
+      if (i == 1) value = holder;
+      if (i == 2) {
+        if (_isCardType(selectedType)) {
+          value = expiry;
+        } else if (_isCliqType(selectedType)) {
+          value = details;
+        }
+      }
       paymentControllers.add(
-        TextEditingController(
-          text: switch (i) {
-            0 => primary,
-            1 => holder,
-            2 => expiry,
-            3 => details,
-            _ => '',
-          },
-        ),
+        TextEditingController(text: value),
       );
     }
   }
@@ -656,6 +672,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       return const [
         ProfileField('CliQ Alias', Icons.account_balance_outlined),
         ProfileField('Account Holder Name', Icons.person_outline),
+        ProfileField('Bank Name', Icons.account_balance_outlined),
       ];
     }
     return const [
@@ -715,6 +732,19 @@ class ProfileCubit extends Cubit<ProfileState> {
 
     return null;
   }
+
+  bool _isCardType(String type) {
+    final normalized = type.toLowerCase();
+    return normalized.contains('visa') || normalized.contains('master');
+  }
+
+  bool _isApplePayType(String type) => type.toLowerCase().contains('apple');
+  bool _isWalletType(String type) {
+    final normalized = type.toLowerCase();
+    return normalized.contains('zain') || normalized.contains('orange') || normalized.contains('dinar');
+  }
+
+  bool _isCliqType(String type) => type.toLowerCase().contains('cliq');
 
   String? _validateBankDetails() {
     for (final controller in bankControllers) {

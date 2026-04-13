@@ -61,11 +61,23 @@ public class UpsertPaymentMethodRequestDto
     [MaxLength(128)]
     public string MaskedNumber { get; set; } = string.Empty;
     [MaxLength(120)]
-    public string HolderName { get; set; } = string.Empty;
+    public string HolderName { get; set; } = string.Empty; // common
     [MaxLength(10)]
     public string Expiry { get; set; } = string.Empty;
     [MaxLength(1000)]
     public string DetailsJson { get; set; } = string.Empty;
+    [MaxLength(30)]
+    public string CardNumber { get; set; } = string.Empty;
+    [MaxLength(128)]
+    public string ApplePayToken { get; set; } = string.Empty;
+    [MaxLength(60)]
+    public string WalletProvider { get; set; } = string.Empty;
+    [MaxLength(30)]
+    public string WalletNumber { get; set; } = string.Empty;
+    [MaxLength(60)]
+    public string CliqAlias { get; set; } = string.Empty;
+    [MaxLength(120)]
+    public string CliqBankName { get; set; } = string.Empty;
     public bool IsDefault { get; set; }
 }
 

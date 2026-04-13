@@ -36,7 +36,7 @@ Use one of these approaches:
 1. **Baseline-first migration strategy (recommended for existing DBs):**
    - create a baseline migration for the current DB state (empty `Up/Down`),
    - then add a new migration for only the delta columns.
-2. **Run idempotent upgrade SQL** for this profile/payment/bank update:
+2. **Run idempotent upgrade SQL** for this profile/payment/bank update (adds missing columns and payment-detail tables):
 
 ```sql
 :r Backend/GoldWalletSystem/scripts/upgrade-profile-payment-bank-fields.sql
