@@ -40,6 +40,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   }
 
   final ProfileRemoteDataSource _remoteDataSource;
+  ProfileRemoteModel? _cachedProfile;
 
   final Map<String, TextEditingController> personalControllers = {};
   final Map<String, TextEditingController> securityControllers = {};
@@ -97,6 +98,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     emit(ProfileLoading());
     try {
       final profile = await _remoteDataSource.getProfile();
+      _cachedProfile = profile;
       profileDisplayName = profile.fullName;
       profileDisplayEmail = profile.email;
       profileDisplayPhone = profile.phoneNumber ?? '';
@@ -366,14 +368,14 @@ class ProfileCubit extends Cubit<ProfileState> {
   void selectPaymentMethod(int index) {
     if (paymentMethods.isEmpty || index < 0 || index >= paymentMethods.length) return;
     selectedPaymentIndex = index;
-    _rebuildPaymentControllers(index);
+    _rebuildPaymentControllers(index, profile: _cachedProfile);
     emit(ProfilePaymentMethodChanged(selectedIndex: index));
   }
 
   void selectBankAccount(int index) {
     if (bankAccounts.isEmpty || index < 0 || index >= bankAccounts.length) return;
     selectedBankIndex = index;
-    _rebuildBankControllers(index);
+    _rebuildBankControllers(index, profile: _cachedProfile);
     emit(ProfileBankAccountChanged(selectedIndex: index));
   }
 

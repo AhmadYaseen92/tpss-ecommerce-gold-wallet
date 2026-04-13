@@ -16,6 +16,13 @@ class LinkedBankAccountsPage extends StatefulWidget {
 
 class _LinkedBankAccountsPageState extends State<LinkedBankAccountsPage> {
   final _formKey = GlobalKey<FormState>();
+  static const List<String> _currencyOptions = [
+    'Emirate',
+    'KSA',
+    'Dollar',
+    'Jordan',
+    'Indian Rubi',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +150,7 @@ class _LinkedBankAccountsPageState extends State<LinkedBankAccountsPage> {
                       ),
                       const SizedBox(height: 16),
                       const FormSectionLabel(label: 'ACCOUNT FIELDS'),
-                      ...List.generate(selectedBank.fields.length, (index) {
+                      ...List.generate(selectedBank.fields.length - 1, (index) {
                         final field = selectedBank.fields[index];
                         return AppTextField(
                           label: field.label,
@@ -156,6 +163,35 @@ class _LinkedBankAccountsPageState extends State<LinkedBankAccountsPage> {
                           validator: (value) => (value == null || value.trim().isEmpty) ? 'Required field' : null,
                         );
                       }),
+                      DropdownButtonFormField<String>(
+                        value: _currencyOptions.contains(cubit.bankControllers[9].text.trim())
+                            ? cubit.bankControllers[9].text.trim()
+                            : null,
+                        items: _currencyOptions
+                            .map((currency) => DropdownMenuItem(value: currency, child: Text(currency)))
+                            .toList(),
+                        onChanged: cubit.isEditing
+                            ? (value) {
+                                cubit.bankControllers[9].text = value?.trim() ?? '';
+                              }
+                            : null,
+                        decoration: InputDecoration(
+                          labelText: 'Currency *',
+                          hintText: 'Select currency',
+                          filled: true,
+                          fillColor: palette.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: palette.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: palette.border),
+                          ),
+                        ),
+                        validator: (value) =>
+                            (value == null || value.trim().isEmpty) ? 'Required field' : null,
+                      ),
                       SwitchListTile(
                         value: selectedBank.isDefault,
                         onChanged: cubit.isEditing ? cubit.toggleSelectedBankDefault : null,
