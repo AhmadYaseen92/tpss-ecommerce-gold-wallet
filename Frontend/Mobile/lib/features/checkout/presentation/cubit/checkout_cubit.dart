@@ -51,12 +51,16 @@ class CheckoutCubit extends Cubit<CheckoutState> {
           ? quantityRaw.toInt()
           : int.tryParse('$quantityRaw');
       final isDirectCheckout = productId != null && (quantity ?? 0) > 0;
+      final source = (checkoutArgs['source'] ?? '').toString().toLowerCase();
       final fromCartRaw = checkoutArgs['fromCart'];
-      final fromCart = fromCartRaw is bool
+      final inferredFromFlag = fromCartRaw is bool
           ? fromCartRaw
           : (fromCartRaw is String
               ? fromCartRaw.toLowerCase() == 'true'
               : !isDirectCheckout);
+      final fromCart = source == 'product'
+          ? false
+          : (source == 'cart' ? true : inferredFromFlag);
       final productIdsRaw = checkoutArgs['productIds'];
       final productIds = productIdsRaw is List
           ? productIdsRaw

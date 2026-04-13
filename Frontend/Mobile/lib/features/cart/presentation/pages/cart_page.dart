@@ -135,7 +135,9 @@ class _CartPageState extends State<CartPage> {
                             .map((item) => int.tryParse(item.id) ?? 0)
                             .where((id) => id > 0)
                             .toList(),
-                        selectedSellerName: state.selectedSellerFilter,
+                        selectedSellerName: cartProducts.map((e) => e.sellerName).toSet().length == 1
+                            ? cartProducts.first.sellerName
+                            : state.selectedSellerFilter,
                         onCheckoutCompleted: () => cartCubit.loadCartProducts(
                           sellerFilter: state.selectedSellerFilter,
                         ),
