@@ -13,7 +13,24 @@ class LanguageSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => ProfileCubit(),
-      child: BlocBuilder<ProfileCubit, ProfileState>(
+      child: BlocConsumer<ProfileCubit, ProfileState>(
+        listener: (context, state) async {
+          if (state is ProfileSaved) {
+            await AppModalAlert.show(
+              context,
+              title: 'Saved',
+              message: 'Language updated successfully',
+            );
+          }
+          if (state is ProfileError) {
+            await AppModalAlert.show(
+              context,
+              title: 'Validation Error',
+              message: state.message,
+              variant: AppModalAlertVariant.failed,
+            );
+          }
+        },
         builder: (context, state) {
           final cubit = BlocProvider.of<ProfileCubit>(context);
           final options = ['English', 'العربية', 'Türkçe'];
@@ -74,14 +91,7 @@ class LanguageSettingsPage extends StatelessWidget {
                       AppButton(
                         cubit: cubit,
                         label: 'Save Changes',
-                        onPressed: () {
-                          cubit.saveLanguageSettings();
-                          AppModalAlert.show(
-                            context,
-                            title: 'Saved',
-                            message: 'Language updated successfully',
-                          );
-                        },
+                        onPressed: cubit.saveLanguageSettings,
                       ),
                   ],
                 ),

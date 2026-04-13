@@ -8,4 +8,8 @@ public class PaymentMethod : BaseEntity
     public bool IsDefault { get; set; }
 
     public UserProfile UserProfile { get; set; } = null!;
+    public CardPaymentMethodDetails? CardDetails { get; set; }
+    public ApplePayPaymentMethodDetails? ApplePayDetails { get; set; }
+    public WalletPaymentMethodDetails? WalletDetails { get; set; }
+    public CliqPaymentMethodDetails? CliqDetails { get; set; }
 }

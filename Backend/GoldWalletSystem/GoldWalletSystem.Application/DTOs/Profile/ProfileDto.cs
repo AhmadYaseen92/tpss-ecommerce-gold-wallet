@@ -15,5 +15,30 @@ public sealed record ProfileDto(
     IReadOnlyList<PaymentMethodDto> PaymentMethods,
     IReadOnlyList<LinkedBankAccountDto> LinkedBankAccounts);
 
-public sealed record PaymentMethodDto(int Id, string Type, string MaskedNumber, bool IsDefault);
-public sealed record LinkedBankAccountDto(int Id, string BankName, string IbanMasked, bool IsVerified);
+public sealed record PaymentMethodDto(
+    int Id,
+    string Type,
+    string MaskedNumber,
+    bool IsDefault,
+    string HolderName,
+    string Expiry,
+    string CardNumber,
+    string ApplePayToken,
+    string WalletProvider,
+    string WalletNumber,
+    string CliqAlias,
+    string CliqBankName);
+public sealed record LinkedBankAccountDto(
+    int Id,
+    string BankName,
+    string IbanMasked,
+    bool IsVerified,
+    bool IsDefault,
+    string AccountHolderName,
+    string AccountNumber,
+    string SwiftCode,
+    string BranchName,
+    string BranchAddress,
+    string Country,
+    string City,
+    string Currency);

@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.d
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/form_header.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 
 class ThemeSettingsPage extends StatelessWidget {
   const ThemeSettingsPage({super.key});
@@ -13,7 +14,33 @@ class ThemeSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => ProfileCubit(),
-      child: BlocBuilder<ProfileCubit, ProfileState>(
+      child: BlocConsumer<ProfileCubit, ProfileState>(
+        listener: (context, state) {
+          final selected = context.read<ProfileCubit>().selectedTheme.toLowerCase();
+          final appCubit = context.read<AppCubit>();
+          if (selected.contains('dark')) {
+            appCubit.setThemeMode(ThemeMode.dark);
+          } else if (selected.contains('light')) {
+            appCubit.setThemeMode(ThemeMode.light);
+          } else {
+            appCubit.setThemeMode(ThemeMode.system);
+          }
+          if (state is ProfileSaved) {
+            AppModalAlert.show(
+              context,
+              title: 'Saved',
+              message: 'Theme updated successfully',
+            );
+          }
+          if (state is ProfileError) {
+            AppModalAlert.show(
+              context,
+              title: 'Validation Error',
+              message: state.message,
+              variant: AppModalAlertVariant.failed,
+            );
+          }
+        },
         builder: (context, state) {
           final cubit = context.read<ProfileCubit>();
           final palette = context.appPalette;
@@ -72,14 +99,7 @@ class ThemeSettingsPage extends StatelessWidget {
                       AppButton(
                         cubit: cubit,
                         label: 'Save Changes',
-                        onPressed: () {
-                          cubit.saveThemeSettings();
-                          AppModalAlert.show(
-                            context,
-                            title: 'Saved',
-                            message: 'Theme updated successfully',
-                          );
-                        },
+                        onPressed: cubit.saveThemeSettings,
                       ),
                   ],
                 ),

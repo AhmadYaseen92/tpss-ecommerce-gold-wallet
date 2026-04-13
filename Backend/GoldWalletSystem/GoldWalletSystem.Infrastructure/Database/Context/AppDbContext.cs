@@ -11,6 +11,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users => Set<User>();
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
+    public DbSet<CardPaymentMethodDetails> CardPaymentMethodDetails => Set<CardPaymentMethodDetails>();
+    public DbSet<ApplePayPaymentMethodDetails> ApplePayPaymentMethodDetails => Set<ApplePayPaymentMethodDetails>();
+    public DbSet<WalletPaymentMethodDetails> WalletPaymentMethodDetails => Set<WalletPaymentMethodDetails>();
+    public DbSet<CliqPaymentMethodDetails> CliqPaymentMethodDetails => Set<CliqPaymentMethodDetails>();
     public DbSet<LinkedBankAccount> LinkedBankAccounts => Set<LinkedBankAccount>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Cart> Carts => Set<Cart>();
@@ -34,6 +38,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureUser(modelBuilder);
         ConfigureUserProfile(modelBuilder);
         ConfigurePaymentMethod(modelBuilder);
+        ConfigureCardPaymentMethodDetails(modelBuilder);
+        ConfigureApplePayPaymentMethodDetails(modelBuilder);
+        ConfigureWalletPaymentMethodDetails(modelBuilder);
+        ConfigureCliqPaymentMethodDetails(modelBuilder);
         ConfigureLinkedBankAccount(modelBuilder);
         ConfigureProduct(modelBuilder);
         ConfigureCart(modelBuilder);
@@ -113,6 +121,61 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         });
     }
 
+    private static void ConfigureCardPaymentMethodDetails(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<CardPaymentMethodDetails>(entity =>
+        {
+            entity.ToTable("CardPaymentMethodDetails");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CardNumber).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.CardHolderName).IsRequired().HasMaxLength(120);
+            entity.Property(x => x.Expiry).IsRequired().HasMaxLength(10);
+            entity.HasIndex(x => x.PaymentMethodId).IsUnique();
+            entity.HasOne(x => x.PaymentMethod).WithOne(x => x.CardDetails).HasForeignKey<CardPaymentMethodDetails>(x => x.PaymentMethodId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureApplePayPaymentMethodDetails(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ApplePayPaymentMethodDetails>(entity =>
+        {
+            entity.ToTable("ApplePayPaymentMethodDetails");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.ApplePayToken).IsRequired().HasMaxLength(128);
+            entity.Property(x => x.AccountHolderName).IsRequired().HasMaxLength(120);
+            entity.HasIndex(x => x.PaymentMethodId).IsUnique();
+            entity.HasOne(x => x.PaymentMethod).WithOne(x => x.ApplePayDetails).HasForeignKey<ApplePayPaymentMethodDetails>(x => x.PaymentMethodId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureWalletPaymentMethodDetails(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<WalletPaymentMethodDetails>(entity =>
+        {
+            entity.ToTable("WalletPaymentMethodDetails");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Provider).IsRequired().HasMaxLength(60);
+            entity.Property(x => x.WalletNumber).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.AccountHolderName).IsRequired().HasMaxLength(120);
+            entity.HasIndex(x => x.PaymentMethodId).IsUnique();
+            entity.HasOne(x => x.PaymentMethod).WithOne(x => x.WalletDetails).HasForeignKey<WalletPaymentMethodDetails>(x => x.PaymentMethodId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureCliqPaymentMethodDetails(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<CliqPaymentMethodDetails>(entity =>
+        {
+            entity.ToTable("CliqPaymentMethodDetails");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.CliqAlias).IsRequired().HasMaxLength(60);
+            entity.Property(x => x.BankName).IsRequired().HasMaxLength(120);
+            entity.Property(x => x.AccountHolderName).IsRequired().HasMaxLength(120);
+            entity.HasIndex(x => x.PaymentMethodId).IsUnique();
+            entity.HasOne(x => x.PaymentMethod).WithOne(x => x.CliqDetails).HasForeignKey<CliqPaymentMethodDetails>(x => x.PaymentMethodId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
     private static void ConfigureLinkedBankAccount(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<LinkedBankAccount>(entity =>
@@ -121,6 +184,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasKey(x => x.Id);
             entity.Property(x => x.BankName).IsRequired().HasMaxLength(150);
             entity.Property(x => x.IbanMasked).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.AccountHolderName).HasMaxLength(120);
+            entity.Property(x => x.AccountNumber).HasMaxLength(40);
+            entity.Property(x => x.SwiftCode).HasMaxLength(20);
+            entity.Property(x => x.BranchName).HasMaxLength(120);
+            entity.Property(x => x.BranchAddress).HasMaxLength(250);
+            entity.Property(x => x.Country).HasMaxLength(80);
+            entity.Property(x => x.City).HasMaxLength(80);
+            entity.Property(x => x.Currency).HasMaxLength(10);
             entity.HasOne(x => x.UserProfile).WithMany(x => x.LinkedBankAccounts).HasForeignKey(x => x.UserProfileId).OnDelete(DeleteBehavior.Cascade);
         });
     }
