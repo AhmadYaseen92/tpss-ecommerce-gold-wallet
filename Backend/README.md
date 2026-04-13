@@ -26,6 +26,24 @@ If you see `PendingModelChangesWarning`, verify that the latest migration and
 `AppDbContextModelSnapshot` both include the same model updates before rerunning
 `dotnet ef database update`.
 
+## Troubleshooting: `There is already an object named 'MobileAppConfigurations'`
+
+If your database already exists and you run an initial migration that contains full `CreateTable(...)` calls,
+SQL Server will fail with duplicate-object errors (for example `MobileAppConfigurations`).
+
+Use one of these approaches:
+
+1. **Baseline-first migration strategy (recommended for existing DBs):**
+   - create a baseline migration for the current DB state (empty `Up/Down`),
+   - then add a new migration for only the delta columns.
+2. **Run idempotent upgrade SQL** for this profile/payment/bank update:
+
+```sql
+:r Backend/GoldWalletSystem/scripts/upgrade-profile-payment-bank-fields.sql
+```
+
+The script is safe to run multiple times and only adds missing columns.
+
 ## Troubleshooting: seller/profile schema not created
 
 If `dotnet ef database update` reports success but `Sellers` table and seller/profile columns are still missing,
