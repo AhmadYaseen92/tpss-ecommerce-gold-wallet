@@ -132,6 +132,7 @@ class _CartPageState extends State<CartPage> {
                       CartSummary(
                         summary: state.summary,
                         cartProductIds: state.cartProducts.map((item) => item.id).toList(),
+                        selectedSellerName: _selectedSeller ?? state.selectedSellerFilter,
                         onCheckoutCompleted: () => cartCubit.loadCartProducts(
                           sellerFilter: _selectedSeller ?? state.selectedSellerFilter,
                         ),
