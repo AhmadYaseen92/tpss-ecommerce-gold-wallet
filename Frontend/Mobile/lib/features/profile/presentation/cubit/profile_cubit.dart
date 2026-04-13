@@ -388,6 +388,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         isDefault: paymentMethods.isEmpty,
       ),
     ];
+    isEditing = true;
     selectedPaymentIndex = paymentMethods.length - 1;
     _rebuildPaymentControllers(selectedPaymentIndex);
     emit(ProfilePaymentMethodChanged(selectedIndex: selectedPaymentIndex));
@@ -415,6 +416,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         isDefault: false,
       ),
     ];
+    isEditing = true;
     selectedBankIndex = bankAccounts.length - 1;
     _rebuildBankControllers(selectedBankIndex);
     emit(ProfileBankAccountChanged(selectedIndex: selectedBankIndex));

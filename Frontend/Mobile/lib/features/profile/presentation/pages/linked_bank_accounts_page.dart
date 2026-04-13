@@ -7,8 +7,15 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.d
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/form_header.dart';
 
-class LinkedBankAccountsPage extends StatelessWidget {
+class LinkedBankAccountsPage extends StatefulWidget {
   const LinkedBankAccountsPage({super.key});
+
+  @override
+  State<LinkedBankAccountsPage> createState() => _LinkedBankAccountsPageState();
+}
+
+class _LinkedBankAccountsPageState extends State<LinkedBankAccountsPage> {
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -84,83 +91,91 @@ class LinkedBankAccountsPage extends StatelessWidget {
                   color: palette.surface,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const FormHeader(
-                      title: 'Bank Information',
-                      subtitle: 'Select bank account then edit its fields.',
-                    ),
-                    const SizedBox(height: 20),
-                    const FormSectionLabel(label: 'SELECT BANK ACCOUNT'),
-                    const SizedBox(height: 8),
-                    if (cubit.isEditing)
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const FormHeader(
+                        title: 'Bank Information',
+                        subtitle: 'Select a linked bank account to view details, edit, or add a new one.',
+                      ),
+                      const SizedBox(height: 20),
+                      const FormSectionLabel(label: 'SELECT BANK ACCOUNT'),
+                      const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton.icon(
                           onPressed: cubit.addBankAccount,
                           icon: const Icon(Icons.add),
-                          label: const Text('Add Account'),
+                          label: Text(hasBanks ? 'Add Account' : 'Add First Account'),
                         ),
                       ),
-                    DropdownButtonFormField<int>(
-                      borderRadius: BorderRadius.circular(12),
-                      dropdownColor: palette.surface,
-                      value: hasBanks ? cubit.selectedBankIndex : null,
-                      items: List.generate(
-                        cubit.bankAccounts.length,
-                        (index) => DropdownMenuItem(
-                          
-                          value: index,
-                          child: Text(cubit.bankAccounts[index].name),
+                      DropdownButtonFormField<int>(
+                        borderRadius: BorderRadius.circular(12),
+                        dropdownColor: palette.surface,
+                        value: hasBanks ? cubit.selectedBankIndex : null,
+                        hint: const Text('No linked account yet'),
+                        items: List.generate(
+                          cubit.bankAccounts.length,
+                          (index) => DropdownMenuItem(
+                            value: index,
+                            child: Text(cubit.bankAccounts[index].name),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          if (value != null) {
+                            cubit.selectBankAccount(value);
+                          }
+                        },
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: palette.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: palette.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: palette.border),
+                          ),
                         ),
                       ),
-                      onChanged: (value) {
-                        if (value != null) {
-                          cubit.selectBankAccount(value);
-                        }
-                      },
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: palette.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: palette.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: palette.border),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const FormSectionLabel(label: 'ACCOUNT FIELDS'),
-                    ...List.generate(selectedBank.fields.length, (index) {
-                      final field = selectedBank.fields[index];
-                      return AppTextField(
-                        label: field.label,
-                        hint: field.label,
-                        prefixIcon: field.icon,
-                        keyboardType: field.keyboardType,
-                        controller: cubit.bankControllers[index],
-                        enabled: cubit.isEditing,
-                      );
-                    }),
-                    SwitchListTile(
-                      value: selectedBank.isDefault,
-                      onChanged: cubit.isEditing ? cubit.toggleSelectedBankDefault : null,
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Set as default linked bank'),
-                    ),
-                    if (cubit.isEditing && hasBanks) ...[
                       const SizedBox(height: 16),
-                      AppButton(
-                        cubit: cubit,
-                        label: 'Save Changes',
-                        onPressed: cubit.saveLinkedBank,
+                      const FormSectionLabel(label: 'ACCOUNT FIELDS'),
+                      ...List.generate(selectedBank.fields.length, (index) {
+                        final field = selectedBank.fields[index];
+                        return AppTextField(
+                          label: field.label,
+                          hint: field.label,
+                          prefixIcon: field.icon,
+                          keyboardType: field.keyboardType,
+                          controller: cubit.bankControllers[index],
+                          enabled: cubit.isEditing,
+                          requiredField: true,
+                          validator: (value) => (value == null || value.trim().isEmpty) ? 'Required field' : null,
+                        );
+                      }),
+                      SwitchListTile(
+                        value: selectedBank.isDefault,
+                        onChanged: cubit.isEditing ? cubit.toggleSelectedBankDefault : null,
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Set as default linked bank'),
                       ),
+                      if (cubit.isEditing && hasBanks) ...[
+                        const SizedBox(height: 16),
+                        AppButton(
+                          cubit: cubit,
+                          label: 'Save Changes',
+                          onPressed: () {
+                            if (_formKey.currentState?.validate() ?? false) {
+                              cubit.saveLinkedBank();
+                            }
+                          },
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
