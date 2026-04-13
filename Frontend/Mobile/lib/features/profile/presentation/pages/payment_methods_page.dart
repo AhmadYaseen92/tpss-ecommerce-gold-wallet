@@ -143,101 +143,100 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                           ),
                           const SizedBox(height: 16),
                         ],
-                        if (!hasMethods) ...[
+                        if (hasMethods) ...[
+                          const FormSectionLabel(label: 'PAYMENT TYPE'),
                           const SizedBox(height: 8),
-                        ] else ...[
-                        const FormSectionLabel(label: 'PAYMENT TYPE'),
-                        const SizedBox(height: 8),
-                        if (selectedMethod.remoteId == null)
-                          DropdownButtonFormField<String>(
-                            value: selectedMethod.name,
-                            items: cubit.availablePaymentTypes
-                                .map(
-                                  (type) => DropdownMenuItem<String>(
-                                    value: type,
-                                    child: Text(type),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: cubit.isEditing
-                                ? (value) {
-                                    if (value != null) {
-                                      cubit.updateSelectedPaymentType(value);
+                          if (selectedMethod.remoteId == null)
+                            DropdownButtonFormField<String>(
+                              value: selectedMethod.name,
+                              items: cubit.availablePaymentTypes
+                                  .map(
+                                    (type) => DropdownMenuItem<String>(
+                                      value: type,
+                                      child: Text(type),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: cubit.isEditing
+                                  ? (value) {
+                                      if (value != null) {
+                                        cubit.updateSelectedPaymentType(value);
+                                      }
                                     }
-                                  }
-                                : null,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: palette.surface,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: palette.border),
+                                  : null,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: palette.surface,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: palette.border),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: palette.border),
+                                ),
                               ),
-                              enabledBorder: OutlineInputBorder(
+                            )
+                          else
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                              decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: palette.border),
+                                border: Border.all(color: palette.border),
+                                color: palette.surface,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.category_outlined, color: palette.textSecondary),
+                                  const SizedBox(width: 10),
+                                  Expanded(child: Text(selectedMethod.name)),
+                                ],
                               ),
                             ),
-                          )
-                        else
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: palette.border),
-                              color: palette.surface,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.category_outlined, color: palette.textSecondary),
-                                const SizedBox(width: 10),
-                                Expanded(child: Text(selectedMethod.name)),
-                              ],
-                            ),
-                          ),
-                        const SizedBox(height: 16),
-                        const FormSectionLabel(label: 'METHOD FIELDS'),
-                        ...List.generate(selectedMethod.fields.length, (index) {
-                          final field = selectedMethod.fields[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: AppTextField(
-                              label: field.label,
-                              hint: field.label,
-                              prefixIcon: field.icon,
-                              keyboardType: field.keyboardType,
-                              controller: cubit.paymentControllers[index],
-                              enabled: cubit.isEditing,
-                              requiredField: true,
-                              validator: (value) =>
-                                  (value == null || value.trim().isEmpty) ? 'Required field' : null,
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 8),
-                        SwitchListTile(
-                          value: selectedMethod.isDefault,
-                          onChanged: cubit.isEditing ? cubit.toggleSelectedPaymentDefault : null,
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Set as default payment method'),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          selectedMethod.subtitle,
-                          style: TextStyle(color: palette.textSecondary),
-                        ),
-                        if (cubit.isEditing && hasMethods) ...[
                           const SizedBox(height: 16),
-                          AppButton(
-                            cubit: cubit,
-                            label: 'Save Changes',
-                            onPressed: () {
-                              if (_formKey.currentState?.validate() ?? false) {
-                                cubit.savePaymentMethod();
-                              }
-                            },
+                          const FormSectionLabel(label: 'METHOD FIELDS'),
+                          ...List.generate(selectedMethod.fields.length, (index) {
+                            final field = selectedMethod.fields[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: AppTextField(
+                                label: field.label,
+                                hint: field.label,
+                                prefixIcon: field.icon,
+                                keyboardType: field.keyboardType,
+                                controller: cubit.paymentControllers[index],
+                                enabled: cubit.isEditing,
+                                requiredField: true,
+                                validator: (value) =>
+                                    (value == null || value.trim().isEmpty) ? 'Required field' : null,
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 8),
+                          SwitchListTile(
+                            value: selectedMethod.isDefault,
+                            onChanged: cubit.isEditing ? cubit.toggleSelectedPaymentDefault : null,
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Set as default payment method'),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            selectedMethod.subtitle,
+                            style: TextStyle(color: palette.textSecondary),
+                          ),
+                          if (cubit.isEditing) ...[
+                            const SizedBox(height: 16),
+                            AppButton(
+                              cubit: cubit,
+                              label: 'Save Changes',
+                              onPressed: () {
+                                if (_formKey.currentState?.validate() ?? false) {
+                                  cubit.savePaymentMethod();
+                                }
+                              },
+                            ),
+                          ],
                         ],
                       ],
                     ),
