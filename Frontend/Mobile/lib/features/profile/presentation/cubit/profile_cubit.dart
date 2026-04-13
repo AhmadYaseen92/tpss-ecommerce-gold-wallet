@@ -19,6 +19,7 @@ class ProfileOption {
     required this.subtitle,
     required this.icon,
     required this.fields,
+    this.isDefault = false,
     this.remoteId,
   });
 
@@ -26,6 +27,7 @@ class ProfileOption {
   final String subtitle;
   final IconData icon;
   final List<ProfileField> fields;
+  final bool isDefault;
   final int? remoteId;
 }
 
@@ -111,49 +113,48 @@ class ProfileCubit extends Cubit<ProfileState> {
       selectedLanguage = _uiLanguageFromCode(profile.preferredLanguage);
       selectedTheme = _uiThemeFromCode(profile.preferredTheme);
 
-      paymentMethods = profile.paymentMethods.isNotEmpty
-          ? profile.paymentMethods
-                .map(
-                  (item) => ProfileOption(
-                    remoteId: item.id,
-                    name: item.type,
-                    subtitle: item.isDefault ? 'Default' : 'Saved method',
-                    icon: _paymentIconByType(item.type),
-                    fields: _paymentFieldsByType(item.type),
-                  ),
-                )
-                .toList()
-          : [];
+      paymentMethods = profile.paymentMethods
+          .map(
+            (item) => ProfileOption(
+              remoteId: item.id,
+              name: item.type,
+              subtitle: item.isDefault ? 'Default' : 'Saved method',
+              icon: _paymentIconByType(item.type),
+              fields: _paymentFieldsByType(item.type),
+              isDefault: item.isDefault,
+            ),
+          )
+          .toList();
 
-      bankAccounts = profile.linkedBankAccounts.isNotEmpty
-          ? profile.linkedBankAccounts
-                .map(
-                  (item) => ProfileOption(
-                    remoteId: item.id,
-                    name: item.bankName,
-                    subtitle: item.isVerified ? 'Verified' : 'Unverified',
-                    icon: Icons.account_balance_outlined,
-                    fields: const [
-                      ProfileField('Account Holder Name', Icons.person_outline),
-                      ProfileField('Bank Name', Icons.account_balance_outlined),
-                      ProfileField('Account Number', Icons.numbers_outlined, TextInputType.number),
-                      ProfileField('IBAN', Icons.credit_card_outlined),
-                      ProfileField('SWIFT/BIC', Icons.verified_user_outlined),
-                      ProfileField('Branch Name', Icons.store_outlined),
-                      ProfileField('Branch Address', Icons.location_on_outlined),
-                      ProfileField('Country', Icons.flag_outlined),
-                      ProfileField('City', Icons.location_city_outlined),
-                      ProfileField('Currency', Icons.currency_exchange_outlined),
-                    ],
-                  ),
-                )
-                .toList()
-          : [];
+      bankAccounts = profile.linkedBankAccounts
+          .map(
+            (item) => ProfileOption(
+              remoteId: item.id,
+              name: item.bankName,
+              subtitle: item.isDefault
+                  ? 'Default • ${item.isVerified ? 'Verified' : 'Unverified'}'
+                  : (item.isVerified ? 'Verified' : 'Unverified'),
+              icon: Icons.account_balance_outlined,
+              fields: const [
+                ProfileField('Account Holder Name', Icons.person_outline),
+                ProfileField('Bank Name', Icons.account_balance_outlined),
+                ProfileField('Account Number', Icons.numbers_outlined, TextInputType.number),
+                ProfileField('IBAN', Icons.credit_card_outlined),
+                ProfileField('SWIFT/BIC', Icons.verified_user_outlined),
+                ProfileField('Branch Name', Icons.store_outlined),
+                ProfileField('Branch Address', Icons.location_on_outlined),
+                ProfileField('Country', Icons.flag_outlined),
+                ProfileField('City', Icons.location_city_outlined),
+                ProfileField('Currency', Icons.currency_exchange_outlined),
+              ],
+              isDefault: item.isDefault,
+            ),
+          )
+          .toList();
 
       selectedNationality = normalizeNationalityValue(selectedNationality);
-
-      selectedPaymentIndex = 0;
-      selectedBankIndex = 0;
+      selectedPaymentIndex = _resolveDefaultPaymentIndex(profile);
+      selectedBankIndex = _resolveDefaultBankIndex(profile);
       _rebuildPaymentControllers(selectedPaymentIndex, profile: profile);
       _rebuildBankControllers(selectedBankIndex, profile: profile);
 
@@ -208,11 +209,11 @@ class ProfileCubit extends Cubit<ProfileState> {
         idNumber: idNumber,
         profilePhotoUrl: profilePhotoUrl,
       );
-      final updatedEmail = email;
-      final emailChanged = updatedEmail.isNotEmpty && updatedEmail != profileDisplayEmail;
+
+      final emailChanged = email.isNotEmpty && email != profileDisplayEmail;
       isEditing = false;
       if (emailChanged) {
-        emit(ProfileEmailChangedRequiresRelogin(newEmail: updatedEmail));
+        emit(ProfileEmailChangedRequiresRelogin(newEmail: email));
       } else {
         emit(ProfileSaved());
         await loadProfile();
@@ -264,8 +265,11 @@ class ProfileCubit extends Cubit<ProfileState> {
       await _remoteDataSource.upsertPaymentMethod(
         paymentMethodId: selected.remoteId,
         type: selected.name,
-        maskedNumber: paymentControllers.isNotEmpty ? paymentControllers.first.text.trim() : '',
-        isDefault: selectedPaymentIndex == 0,
+        maskedNumber: paymentControllers[0].text.trim(),
+        holderName: paymentControllers.length > 1 ? paymentControllers[1].text.trim() : '',
+        expiry: paymentControllers.length > 2 ? paymentControllers[2].text.trim() : '',
+        detailsJson: paymentControllers.length > 3 ? paymentControllers[3].text.trim() : '',
+        isDefault: selected.isDefault,
       );
       isEditing = false;
       emit(ProfileSaved());
@@ -282,12 +286,22 @@ class ProfileCubit extends Cubit<ProfileState> {
         emit(ProfileError(bankValidationError));
         return;
       }
+
       final selected = bankAccounts[selectedBankIndex];
       await _remoteDataSource.upsertLinkedBankAccount(
         linkedBankAccountId: selected.remoteId,
-        bankName: bankControllers.length > 1 ? bankControllers[1].text.trim() : selected.name,
-        ibanMasked: bankControllers.length > 3 ? bankControllers[3].text.trim() : '',
+        bankName: bankControllers[1].text.trim(),
+        ibanMasked: bankControllers[3].text.trim().toUpperCase(),
         isVerified: true,
+        isDefault: selected.isDefault,
+        accountHolderName: bankControllers[0].text.trim(),
+        accountNumber: bankControllers[2].text.trim(),
+        swiftCode: bankControllers[4].text.trim().toUpperCase(),
+        branchName: bankControllers[5].text.trim(),
+        branchAddress: bankControllers[6].text.trim(),
+        country: bankControllers[7].text.trim(),
+        city: bankControllers[8].text.trim(),
+        currency: bankControllers[9].text.trim().toUpperCase(),
       );
       isEditing = false;
       emit(ProfileSaved());
@@ -344,11 +358,6 @@ class ProfileCubit extends Cubit<ProfileState> {
     emit(ProfileEditingChanged(isEditing: isEditing));
   }
 
-  void save() {
-    isEditing = false;
-    emit(ProfileSaved());
-  }
-
   void selectPaymentMethod(int index) {
     if (paymentMethods.isEmpty || index < 0 || index >= paymentMethods.length) return;
     selectedPaymentIndex = index;
@@ -371,23 +380,10 @@ class ProfileCubit extends Cubit<ProfileState> {
         subtitle: 'New method',
         icon: _paymentIconByType(availablePaymentTypes.first),
         fields: _paymentFieldsByType(availablePaymentTypes.first),
+        isDefault: paymentMethods.isEmpty,
       ),
     ];
     selectedPaymentIndex = paymentMethods.length - 1;
-    _rebuildPaymentControllers(selectedPaymentIndex);
-    emit(ProfilePaymentMethodChanged(selectedIndex: selectedPaymentIndex));
-  }
-
-  void updateSelectedPaymentType(String type) {
-    if (paymentMethods.isEmpty || selectedPaymentIndex >= paymentMethods.length) return;
-    final current = paymentMethods[selectedPaymentIndex];
-    paymentMethods[selectedPaymentIndex] = ProfileOption(
-      remoteId: current.remoteId,
-      name: type,
-      subtitle: current.subtitle,
-      icon: _paymentIconByType(type),
-      fields: _paymentFieldsByType(type),
-    );
     _rebuildPaymentControllers(selectedPaymentIndex);
     emit(ProfilePaymentMethodChanged(selectedIndex: selectedPaymentIndex));
   }
@@ -411,10 +407,58 @@ class ProfileCubit extends Cubit<ProfileState> {
           ProfileField('City', Icons.location_city_outlined),
           ProfileField('Currency', Icons.currency_exchange_outlined),
         ],
+        isDefault: false,
       ),
     ];
     selectedBankIndex = bankAccounts.length - 1;
     _rebuildBankControllers(selectedBankIndex);
+    emit(ProfileBankAccountChanged(selectedIndex: selectedBankIndex));
+  }
+
+  void updateSelectedPaymentType(String type) {
+    if (paymentMethods.isEmpty || selectedPaymentIndex >= paymentMethods.length) return;
+    final current = paymentMethods[selectedPaymentIndex];
+    paymentMethods[selectedPaymentIndex] = ProfileOption(
+      remoteId: current.remoteId,
+      name: type,
+      subtitle: current.isDefault ? 'Default' : current.subtitle,
+      icon: _paymentIconByType(type),
+      fields: _paymentFieldsByType(type),
+      isDefault: current.isDefault,
+    );
+    _rebuildPaymentControllers(selectedPaymentIndex);
+    emit(ProfilePaymentMethodChanged(selectedIndex: selectedPaymentIndex));
+  }
+
+  void toggleSelectedPaymentDefault(bool value) {
+    if (paymentMethods.isEmpty) return;
+    paymentMethods = [
+      for (var i = 0; i < paymentMethods.length; i++)
+        ProfileOption(
+          remoteId: paymentMethods[i].remoteId,
+          name: paymentMethods[i].name,
+          subtitle: i == selectedPaymentIndex && value ? 'Default' : 'Saved method',
+          icon: paymentMethods[i].icon,
+          fields: paymentMethods[i].fields,
+          isDefault: i == selectedPaymentIndex ? value : false,
+        ),
+    ];
+    emit(ProfilePaymentMethodChanged(selectedIndex: selectedPaymentIndex));
+  }
+
+  void toggleSelectedBankDefault(bool value) {
+    if (bankAccounts.isEmpty) return;
+    bankAccounts = [
+      for (var i = 0; i < bankAccounts.length; i++)
+        ProfileOption(
+          remoteId: bankAccounts[i].remoteId,
+          name: bankAccounts[i].name,
+          subtitle: i == selectedBankIndex && value ? 'Default • Verified' : 'Verified',
+          icon: bankAccounts[i].icon,
+          fields: bankAccounts[i].fields,
+          isDefault: i == selectedBankIndex ? value : false,
+        ),
+    ];
     emit(ProfileBankAccountChanged(selectedIndex: selectedBankIndex));
   }
 
@@ -514,11 +558,16 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
     paymentControllers.clear();
 
-    String defaultValue = '';
+    String primary = '';
+    String holder = '';
+    String expiry = '';
+    String details = '';
     if (profile != null && profile.paymentMethods.isNotEmpty && index < profile.paymentMethods.length) {
-      defaultValue = profile.paymentMethods[index].maskedNumber;
-    } else if (paymentMethods.isNotEmpty && index < paymentMethods.length && paymentMethods[index].fields.isNotEmpty) {
-      defaultValue = '';
+      final selected = profile.paymentMethods[index];
+      primary = selected.maskedNumber;
+      holder = selected.holderName;
+      expiry = selected.expiry;
+      details = selected.detailsJson;
     }
 
     final selectedType = paymentMethods.isNotEmpty && index < paymentMethods.length
@@ -527,7 +576,15 @@ class ProfileCubit extends Cubit<ProfileState> {
     final fields = _paymentFieldsByType(selectedType);
     for (var i = 0; i < fields.length; i++) {
       paymentControllers.add(
-        TextEditingController(text: i == 0 ? defaultValue : ''),
+        TextEditingController(
+          text: switch (i) {
+            0 => primary,
+            1 => holder,
+            2 => expiry,
+            3 => details,
+            _ => '',
+          },
+        ),
       );
     }
   }
@@ -550,8 +607,16 @@ class ProfileCubit extends Cubit<ProfileState> {
     String currency = '';
     if (profile != null && profile.linkedBankAccounts.isNotEmpty && index < profile.linkedBankAccounts.length) {
       final selected = profile.linkedBankAccounts[index];
+      accountHolderName = selected.accountHolderName;
       bankName = selected.bankName;
+      accountNumber = selected.accountNumber;
       iban = selected.ibanMasked;
+      swift = selected.swiftCode;
+      branchName = selected.branchName;
+      branchAddress = selected.branchAddress;
+      country = selected.country;
+      city = selected.city;
+      currency = selected.currency;
     }
 
     bankControllers
@@ -578,20 +643,24 @@ class ProfileCubit extends Cubit<ProfileState> {
     if (normalized.contains('apple')) {
       return const [
         ProfileField('Apple Pay Token', Icons.token_outlined),
+        ProfileField('Account Holder Name', Icons.person_outline),
       ];
     }
     if (normalized.contains('zain') || normalized.contains('orange') || normalized.contains('dinar')) {
       return const [
         ProfileField('Wallet Number', Icons.phone_android_outlined, TextInputType.phone),
+        ProfileField('Account Holder Name', Icons.person_outline),
       ];
     }
     if (normalized.contains('cliq')) {
       return const [
         ProfileField('CliQ Alias', Icons.account_balance_outlined),
+        ProfileField('Account Holder Name', Icons.person_outline),
       ];
     }
     return const [
       ProfileField('Card Number', Icons.credit_card_outlined, TextInputType.number),
+      ProfileField('Card Holder Name', Icons.person_outline),
       ProfileField('Expiry (MM/YY)', Icons.calendar_today_outlined, TextInputType.number),
     ];
   }
@@ -607,8 +676,8 @@ class ProfileCubit extends Cubit<ProfileState> {
   }
 
   String? _validatePaymentMethod(String type) {
-    for (var i = 0; i < paymentControllers.length; i++) {
-      if (paymentControllers[i].text.trim().isEmpty) {
+    for (final controller in paymentControllers) {
+      if (controller.text.trim().isEmpty) {
         return 'All payment fields are required.';
       }
     }
@@ -619,8 +688,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       if (!RegExp(r'^[0-9]{12,19}$').hasMatch(primary)) {
         return 'Card number must be 12 to 19 digits.';
       }
-      if (paymentControllers.length > 1 &&
-          !RegExp(r'^(0[1-9]|1[0-2])\/[0-9]{2}$').hasMatch(paymentControllers[1].text.trim())) {
+      if (paymentControllers.length > 2 &&
+          !RegExp(r'^(0[1-9]|1[0-2])\/[0-9]{2}$').hasMatch(paymentControllers[2].text.trim())) {
         return 'Expiry must be in MM/YY format.';
       }
       return null;
@@ -666,6 +735,18 @@ class ProfileCubit extends Cubit<ProfileState> {
       return 'SWIFT/BIC format is invalid.';
     }
     return null;
+  }
+
+  int _resolveDefaultPaymentIndex(ProfileRemoteModel profile) {
+    if (profile.paymentMethods.isEmpty) return 0;
+    final index = profile.paymentMethods.indexWhere((element) => element.isDefault);
+    return index >= 0 ? index : 0;
+  }
+
+  int _resolveDefaultBankIndex(ProfileRemoteModel profile) {
+    if (profile.linkedBankAccounts.isEmpty) return 0;
+    final index = profile.linkedBankAccounts.indexWhere((element) => element.isDefault);
+    return index >= 0 ? index : 0;
   }
 
   @override

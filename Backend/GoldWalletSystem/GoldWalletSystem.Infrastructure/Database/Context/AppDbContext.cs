@@ -109,6 +109,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Type).IsRequired().HasMaxLength(50);
             entity.Property(x => x.MaskedNumber).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.HolderName).HasMaxLength(120);
+            entity.Property(x => x.Expiry).HasMaxLength(10);
+            entity.Property(x => x.DetailsJson).HasMaxLength(1000);
             entity.HasOne(x => x.UserProfile).WithMany(x => x.PaymentMethods).HasForeignKey(x => x.UserProfileId).OnDelete(DeleteBehavior.Cascade);
         });
     }
@@ -121,6 +124,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasKey(x => x.Id);
             entity.Property(x => x.BankName).IsRequired().HasMaxLength(150);
             entity.Property(x => x.IbanMasked).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.AccountHolderName).HasMaxLength(120);
+            entity.Property(x => x.AccountNumber).HasMaxLength(40);
+            entity.Property(x => x.SwiftCode).HasMaxLength(20);
+            entity.Property(x => x.BranchName).HasMaxLength(120);
+            entity.Property(x => x.BranchAddress).HasMaxLength(250);
+            entity.Property(x => x.Country).HasMaxLength(80);
+            entity.Property(x => x.City).HasMaxLength(80);
+            entity.Property(x => x.Currency).HasMaxLength(10);
             entity.HasOne(x => x.UserProfile).WithMany(x => x.LinkedBankAccounts).HasForeignKey(x => x.UserProfileId).OnDelete(DeleteBehavior.Cascade);
         });
     }

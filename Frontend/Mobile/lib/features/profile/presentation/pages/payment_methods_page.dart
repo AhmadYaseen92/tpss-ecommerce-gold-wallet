@@ -174,6 +174,13 @@ class PaymentMethodsPage extends StatelessWidget {
                         );
                       }),
                       const SizedBox(height: 10),
+                      SwitchListTile(
+                        value: selectedMethod.isDefault,
+                        onChanged: cubit.isEditing ? cubit.toggleSelectedPaymentDefault : null,
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Set as default payment method'),
+                      ),
+                      const SizedBox(height: 4),
                       Text(
                         selectedMethod.subtitle,
                         style: TextStyle(color: palette.textSecondary),

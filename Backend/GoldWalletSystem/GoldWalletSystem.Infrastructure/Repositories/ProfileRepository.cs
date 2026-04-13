@@ -89,6 +89,9 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
 
         paymentMethod.Type = request.Type.Trim();
         paymentMethod.MaskedNumber = request.MaskedNumber.Trim();
+        paymentMethod.HolderName = request.HolderName.Trim();
+        paymentMethod.Expiry = request.Expiry.Trim();
+        paymentMethod.DetailsJson = request.DetailsJson.Trim();
         paymentMethod.IsDefault = request.IsDefault;
         paymentMethod.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -120,7 +123,23 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
         bank.BankName = request.BankName.Trim();
         bank.IbanMasked = request.IbanMasked.Trim();
         bank.IsVerified = request.IsVerified;
+        bank.IsDefault = request.IsDefault;
+        bank.AccountHolderName = request.AccountHolderName.Trim();
+        bank.AccountNumber = request.AccountNumber.Trim();
+        bank.SwiftCode = request.SwiftCode.Trim();
+        bank.BranchName = request.BranchName.Trim();
+        bank.BranchAddress = request.BranchAddress.Trim();
+        bank.Country = request.Country.Trim();
+        bank.City = request.City.Trim();
+        bank.Currency = request.Currency.Trim().ToUpperInvariant();
         bank.UpdatedAtUtc = DateTime.UtcNow;
+
+        if (request.IsDefault)
+        {
+            await dbContext.LinkedBankAccounts
+                .Where(x => x.UserProfileId == profile.Id && x.Id != bank.Id)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.IsDefault, false), cancellationToken);
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return (await GetByUserIdAsync(request.UserId, cancellationToken))!;
@@ -166,8 +185,21 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
             profile?.ProfilePhotoUrl ?? string.Empty,
             profile?.PreferredLanguage ?? "en",
             profile?.PreferredTheme ?? "light",
-            (profile?.PaymentMethods ?? []).Select(x => new PaymentMethodDto(x.Id, x.Type, x.MaskedNumber, x.IsDefault)).ToList(),
-            (profile?.LinkedBankAccounts ?? []).Select(x => new LinkedBankAccountDto(x.Id, x.BankName, x.IbanMasked, x.IsVerified)).ToList());
+            (profile?.PaymentMethods ?? []).Select(x => new PaymentMethodDto(x.Id, x.Type, x.MaskedNumber, x.IsDefault, x.HolderName, x.Expiry, x.DetailsJson)).ToList(),
+            (profile?.LinkedBankAccounts ?? []).Select(x => new LinkedBankAccountDto(
+                x.Id,
+                x.BankName,
+                x.IbanMasked,
+                x.IsVerified,
+                x.IsDefault,
+                x.AccountHolderName,
+                x.AccountNumber,
+                x.SwiftCode,
+                x.BranchName,
+                x.BranchAddress,
+                x.Country,
+                x.City,
+                x.Currency)).ToList());
 
     private void ValidatePersonalInfoRequest(UpdateProfilePersonalInfoRequestDto request, int currentUserId)
     {
@@ -204,6 +236,8 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
         var value = request.MaskedNumber.Trim();
         if ((type.Contains("visa") || type.Contains("master")) && !CardRegex().IsMatch(value))
             throw new InvalidOperationException("Card number must be 12 to 19 digits.");
+        if ((type.Contains("visa") || type.Contains("master")) && !ExpiryRegex().IsMatch(request.Expiry))
+            throw new InvalidOperationException("Card expiry must be MM/YY.");
         if (type.Contains("apple") && !AppleTokenRegex().IsMatch(value))
             throw new InvalidOperationException("Apple Pay token format is invalid.");
         if ((type.Contains("zain") || type.Contains("orange") || type.Contains("dinar")) && !PhoneRegex().IsMatch(value))
@@ -218,8 +252,22 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
             throw new InvalidOperationException("Bank name is required.");
         if (string.IsNullOrWhiteSpace(request.IbanMasked))
             throw new InvalidOperationException("IBAN is required.");
+        if (string.IsNullOrWhiteSpace(request.AccountHolderName))
+            throw new InvalidOperationException("Account holder name is required.");
+        if (string.IsNullOrWhiteSpace(request.BranchName))
+            throw new InvalidOperationException("Branch name is required.");
+        if (string.IsNullOrWhiteSpace(request.BranchAddress))
+            throw new InvalidOperationException("Branch address is required.");
+        if (string.IsNullOrWhiteSpace(request.Country) ||
+            string.IsNullOrWhiteSpace(request.City) ||
+            string.IsNullOrWhiteSpace(request.Currency))
+            throw new InvalidOperationException("Country, city, and currency are required.");
         if (!IbanRegex().IsMatch(request.IbanMasked.Trim().ToUpperInvariant()))
             throw new InvalidOperationException("IBAN format is invalid.");
+        if (!AccountNumberRegex().IsMatch(request.AccountNumber))
+            throw new InvalidOperationException("Account number format is invalid.");
+        if (!SwiftRegex().IsMatch(request.SwiftCode.Trim().ToUpperInvariant()))
+            throw new InvalidOperationException("SWIFT/BIC format is invalid.");
     }
 
     [GeneratedRegex(@"^[^\s@]+@[^\s@]+\.[^\s@]+$")]
@@ -230,10 +278,16 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
     private static partial Regex IdNumberRegex();
     [GeneratedRegex(@"^[0-9]{12,19}$")]
     private static partial Regex CardRegex();
+    [GeneratedRegex(@"^(0[1-9]|1[0-2])\/[0-9]{2}$")]
+    private static partial Regex ExpiryRegex();
     [GeneratedRegex(@"^[A-Za-z0-9_\-]{8,64}$")]
     private static partial Regex AppleTokenRegex();
     [GeneratedRegex(@"^[A-Za-z0-9._-]{4,40}$")]
     private static partial Regex CliqAliasRegex();
     [GeneratedRegex(@"^[A-Z]{2}[A-Z0-9]{13,32}$")]
     private static partial Regex IbanRegex();
+    [GeneratedRegex(@"^[0-9]{6,34}$")]
+    private static partial Regex AccountNumberRegex();
+    [GeneratedRegex(@"^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$")]
+    private static partial Regex SwiftRegex();
 }

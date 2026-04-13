@@ -72,6 +72,9 @@ class ProfileRemoteDataSource {
     int? paymentMethodId,
     required String type,
     required String maskedNumber,
+    required String holderName,
+    required String expiry,
+    required String detailsJson,
     required bool isDefault,
   }) async {
     final userId = _requireUserId();
@@ -82,6 +85,9 @@ class ProfileRemoteDataSource {
         'paymentMethodId': paymentMethodId,
         'type': type,
         'maskedNumber': maskedNumber,
+        'holderName': holderName,
+        'expiry': expiry,
+        'detailsJson': detailsJson,
         'isDefault': isDefault,
       },
     );
@@ -92,6 +98,15 @@ class ProfileRemoteDataSource {
     required String bankName,
     required String ibanMasked,
     required bool isVerified,
+    required bool isDefault,
+    required String accountHolderName,
+    required String accountNumber,
+    required String swiftCode,
+    required String branchName,
+    required String branchAddress,
+    required String country,
+    required String city,
+    required String currency,
   }) async {
     final userId = _requireUserId();
     await _dio.post(
@@ -102,6 +117,15 @@ class ProfileRemoteDataSource {
         'bankName': bankName,
         'ibanMasked': ibanMasked,
         'isVerified': isVerified,
+        'isDefault': isDefault,
+        'accountHolderName': accountHolderName,
+        'accountNumber': accountNumber,
+        'swiftCode': swiftCode,
+        'branchName': branchName,
+        'branchAddress': branchAddress,
+        'country': country,
+        'city': city,
+        'currency': currency,
       },
     );
   }
@@ -175,12 +199,18 @@ class PaymentMethodRemoteModel {
     required this.type,
     required this.maskedNumber,
     required this.isDefault,
+    required this.holderName,
+    required this.expiry,
+    required this.detailsJson,
   });
 
   final int id;
   final String type;
   final String maskedNumber;
   final bool isDefault;
+  final String holderName;
+  final String expiry;
+  final String detailsJson;
 
   factory PaymentMethodRemoteModel.fromJson(Map<String, dynamic> json) {
     return PaymentMethodRemoteModel(
@@ -188,6 +218,9 @@ class PaymentMethodRemoteModel {
       type: (json['type'] ?? '') as String,
       maskedNumber: (json['maskedNumber'] ?? '') as String,
       isDefault: (json['isDefault'] ?? false) as bool,
+      holderName: (json['holderName'] ?? '') as String,
+      expiry: (json['expiry'] ?? '') as String,
+      detailsJson: (json['detailsJson'] ?? '') as String,
     );
   }
 }
@@ -198,12 +231,30 @@ class LinkedBankAccountRemoteModel {
     required this.bankName,
     required this.ibanMasked,
     required this.isVerified,
+    required this.isDefault,
+    required this.accountHolderName,
+    required this.accountNumber,
+    required this.swiftCode,
+    required this.branchName,
+    required this.branchAddress,
+    required this.country,
+    required this.city,
+    required this.currency,
   });
 
   final int id;
   final String bankName;
   final String ibanMasked;
   final bool isVerified;
+  final bool isDefault;
+  final String accountHolderName;
+  final String accountNumber;
+  final String swiftCode;
+  final String branchName;
+  final String branchAddress;
+  final String country;
+  final String city;
+  final String currency;
 
   factory LinkedBankAccountRemoteModel.fromJson(Map<String, dynamic> json) {
     return LinkedBankAccountRemoteModel(
@@ -211,6 +262,15 @@ class LinkedBankAccountRemoteModel {
       bankName: (json['bankName'] ?? '') as String,
       ibanMasked: (json['ibanMasked'] ?? '') as String,
       isVerified: (json['isVerified'] ?? false) as bool,
+      isDefault: (json['isDefault'] ?? false) as bool,
+      accountHolderName: (json['accountHolderName'] ?? '') as String,
+      accountNumber: (json['accountNumber'] ?? '') as String,
+      swiftCode: (json['swiftCode'] ?? '') as String,
+      branchName: (json['branchName'] ?? '') as String,
+      branchAddress: (json['branchAddress'] ?? '') as String,
+      country: (json['country'] ?? '') as String,
+      city: (json['city'] ?? '') as String,
+      currency: (json['currency'] ?? '') as String,
     );
   }
 }

@@ -146,6 +146,12 @@ class LinkedBankAccountsPage extends StatelessWidget {
                         enabled: cubit.isEditing,
                       );
                     }),
+                    SwitchListTile(
+                      value: selectedBank.isDefault,
+                      onChanged: cubit.isEditing ? cubit.toggleSelectedBankDefault : null,
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Set as default linked bank'),
+                    ),
                     if (cubit.isEditing && hasBanks) ...[
                       const SizedBox(height: 16),
                       AppButton(
