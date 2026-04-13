@@ -53,22 +53,13 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             if (cart.Items.Count == 0)
                 throw new InvalidOperationException("Cart is empty.");
 
-            selectedCartItems = cart.Items.ToList();
+            if (request.ProductIds is not { Count: > 0 })
+                throw new InvalidOperationException("Please select cart items for checkout.");
 
-            if (request.ProductIds is { Count: > 0 })
-            {
-                var productIdSet = request.ProductIds.ToHashSet();
-                selectedCartItems = selectedCartItems
-                    .Where(item => productIdSet.Contains(item.ProductId))
-                    .ToList();
-            }
-            else if (!string.IsNullOrWhiteSpace(request.SellerName)
-                     && !request.SellerName.Equals("All Sellers", StringComparison.OrdinalIgnoreCase))
-            {
-                selectedCartItems = selectedCartItems
-                    .Where(item => string.Equals(item.Product.Seller?.Name, request.SellerName, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
+            var productIdSet = request.ProductIds.ToHashSet();
+            selectedCartItems = cart.Items
+                .Where(item => productIdSet.Contains(item.ProductId))
+                .ToList();
 
             if (selectedCartItems.Count == 0)
                 throw new InvalidOperationException("No matching cart items were selected for checkout.");

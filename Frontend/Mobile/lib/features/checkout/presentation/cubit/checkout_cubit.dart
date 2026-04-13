@@ -65,6 +65,15 @@ class CheckoutCubit extends Cubit<CheckoutState> {
                 .toList()
           : <int>[];
 
+      if (fromCart && productIds.isEmpty) {
+        emit(
+          CheckoutError(
+            'No cart items were selected. Please go back and try again.',
+          ),
+        );
+        return;
+      }
+
       if (!fromCart &&
           (productId == null || quantity == null || quantity <= 0)) {
         emit(
@@ -78,11 +87,17 @@ class CheckoutCubit extends Cubit<CheckoutState> {
       await _dio.post(
         '/checkout/confirm',
         data: {
+          'userId': userId,
           'UserId': userId,
+          'fromCart': fromCart,
           'FromCart': fromCart,
+          if (fromCart) 'productIds': productIds,
           if (fromCart) 'ProductIds': productIds,
+          if (fromCart) 'sellerName': checkoutArgs['seller'],
           if (fromCart) 'SellerName': checkoutArgs['seller'],
+          if (!fromCart) 'productId': productId,
           if (!fromCart) 'ProductId': productId,
+          if (!fromCart) 'quantity': quantity,
           if (!fromCart) 'Quantity': quantity,
         },
       );
