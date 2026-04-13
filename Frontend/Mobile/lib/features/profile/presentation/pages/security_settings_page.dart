@@ -9,8 +9,18 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.d
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/form_header.dart';
 
-class SecuritySettingsPage extends StatelessWidget {
+class SecuritySettingsPage extends StatefulWidget {
   const SecuritySettingsPage({super.key});
+
+  @override
+  State<SecuritySettingsPage> createState() => _SecuritySettingsPageState();
+}
+
+class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
+  final _formKey = GlobalKey<FormState>();
+  bool _obscureCurrent = true;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
 
   @override
   Widget build(BuildContext context) {
@@ -73,46 +83,70 @@ class SecuritySettingsPage extends StatelessWidget {
                   color: palette.surface,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const FormHeader(
-                      title: 'Security',
-                      subtitle: 'Change your password and keep your account secure.',
-                    ),
-                    const SizedBox(height: 20),
-                    const FormSectionLabel(label: 'CHANGE PASSWORD'),
-                    AppTextField(
-                      label: 'Current Password *',
-                      hint: 'Current Password',
-                      prefixIcon: Icons.lock_outline,
-                      controller: cubit.securityControllers['Current Password'],
-                      enabled: cubit.isEditing,
-                      isPassword: true,
-                    ),
-                    AppTextField(
-                      label: 'New Password *',
-                      hint: 'New Password',
-                      prefixIcon: Icons.lock_reset,
-                      controller: cubit.securityControllers['New Password'],
-                      enabled: cubit.isEditing,
-                      isPassword: true,
-                    ),
-                    AppTextField(
-                      label: 'Confirm New Password *',
-                      hint: 'Confirm New Password',
-                      prefixIcon: Icons.lock_open_outlined,
-                      controller: cubit.securityControllers['Confirm New Password'],
-                      enabled: cubit.isEditing,
-                      isPassword: true,
-                    ),
-                    if (cubit.isEditing)
-                      AppButton(
-                        cubit: cubit,
-                        label: 'Save Changes',
-                        onPressed: cubit.saveSecuritySettings,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const FormHeader(
+                        title: 'Security',
+                        subtitle: 'Change your password and keep your account secure.',
                       ),
-                  ],
+                      const SizedBox(height: 20),
+                      const FormSectionLabel(label: 'CHANGE PASSWORD'),
+                      AppTextField(
+                        label: 'Current Password',
+                        hint: 'Current Password',
+                        prefixIcon: Icons.lock_outline,
+                        controller: cubit.securityControllers['Current Password'],
+                        enabled: cubit.isEditing,
+                        isPassword: true,
+                        obscureText: _obscureCurrent,
+                        onToggleObscure: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                        requiredField: true,
+                        validator: (value) => (value == null || value.trim().isEmpty) ? 'Current password is required' : null,
+                      ),
+                      AppTextField(
+                        label: 'New Password',
+                        hint: 'New Password',
+                        prefixIcon: Icons.lock_reset,
+                        controller: cubit.securityControllers['New Password'],
+                        enabled: cubit.isEditing,
+                        isPassword: true,
+                        obscureText: _obscureNew,
+                        onToggleObscure: () => setState(() => _obscureNew = !_obscureNew),
+                        requiredField: true,
+                        validator: (value) => (value == null || value.trim().isEmpty) ? 'New password is required' : null,
+                      ),
+                      AppTextField(
+                        label: 'Confirm New Password',
+                        hint: 'Confirm New Password',
+                        prefixIcon: Icons.lock_open_outlined,
+                        controller: cubit.securityControllers['Confirm New Password'],
+                        enabled: cubit.isEditing,
+                        isPassword: true,
+                        obscureText: _obscureConfirm,
+                        onToggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                        requiredField: true,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) return 'Confirm password is required';
+                          final newPass = cubit.securityControllers['New Password']?.text.trim() ?? '';
+                          if (value.trim() != newPass) return 'Passwords do not match';
+                          return null;
+                        },
+                      ),
+                      if (cubit.isEditing)
+                        AppButton(
+                          cubit: cubit,
+                          label: 'Save Changes',
+                          onPressed: () {
+                            if (_formKey.currentState?.validate() ?? false) {
+                              cubit.saveSecuritySettings();
+                            }
+                          },
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
