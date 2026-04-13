@@ -27,6 +27,14 @@ class PersonalInformationPage extends StatelessWidget {
               message: 'Personal information saved successfully',
             );
           }
+          if (state is ProfileError) {
+            await AppModalAlert.show(
+              context,
+              title: 'Validation Error',
+              message: state.message,
+              variant: AppModalAlertVariant.failed,
+            );
+          }
           if (state is ProfileEmailChangedRequiresRelogin) {
             await AppModalAlert.show(
               context,

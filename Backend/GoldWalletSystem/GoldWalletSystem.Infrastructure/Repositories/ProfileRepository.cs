@@ -4,10 +4,11 @@ using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace GoldWalletSystem.Infrastructure.Repositories;
 
-public class ProfileRepository(AppDbContext dbContext, IPasswordHasher passwordHasher) : IProfileRepository
+public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher passwordHasher) : IProfileRepository
 {
     public async Task<ProfileDto?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
@@ -27,10 +28,12 @@ public class ProfileRepository(AppDbContext dbContext, IPasswordHasher passwordH
     {
         var user = await dbContext.Users.FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken)
             ?? throw new InvalidOperationException($"User {request.UserId} not found.");
+        ValidatePersonalInfoRequest(request, user.Id);
 
         var profile = await GetOrCreateProfileAsync(request.UserId, cancellationToken);
 
         user.FullName = request.FullName.Trim();
+        user.Email = request.Email.Trim().ToLowerInvariant();
         user.PhoneNumber = request.PhoneNumber?.Trim();
         user.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -72,6 +75,7 @@ public class ProfileRepository(AppDbContext dbContext, IPasswordHasher passwordH
 
     public async Task<ProfileDto> UpsertPaymentMethodAsync(UpsertPaymentMethodRequestDto request, CancellationToken cancellationToken = default)
     {
+        ValidatePaymentMethodRequest(request);
         var profile = await GetOrCreateProfileAsync(request.UserId, cancellationToken);
         var paymentMethod = request.PaymentMethodId is int pmId
             ? await dbContext.PaymentMethods.FirstOrDefaultAsync(x => x.Id == pmId && x.UserProfileId == profile.Id, cancellationToken)
@@ -101,6 +105,7 @@ public class ProfileRepository(AppDbContext dbContext, IPasswordHasher passwordH
 
     public async Task<ProfileDto> UpsertLinkedBankAccountAsync(UpsertLinkedBankAccountRequestDto request, CancellationToken cancellationToken = default)
     {
+        ValidateLinkedBankRequest(request);
         var profile = await GetOrCreateProfileAsync(request.UserId, cancellationToken);
         var bank = request.LinkedBankAccountId is int bankId
             ? await dbContext.LinkedBankAccounts.FirstOrDefaultAsync(x => x.Id == bankId && x.UserProfileId == profile.Id, cancellationToken)
@@ -163,4 +168,72 @@ public class ProfileRepository(AppDbContext dbContext, IPasswordHasher passwordH
             profile?.PreferredTheme ?? "light",
             (profile?.PaymentMethods ?? []).Select(x => new PaymentMethodDto(x.Id, x.Type, x.MaskedNumber, x.IsDefault)).ToList(),
             (profile?.LinkedBankAccounts ?? []).Select(x => new LinkedBankAccountDto(x.Id, x.BankName, x.IbanMasked, x.IsVerified)).ToList());
+
+    private void ValidatePersonalInfoRequest(UpdateProfilePersonalInfoRequestDto request, int currentUserId)
+    {
+        if (string.IsNullOrWhiteSpace(request.FullName))
+            throw new InvalidOperationException("Full name is required.");
+        if (string.IsNullOrWhiteSpace(request.Email))
+            throw new InvalidOperationException("Email is required.");
+        if (!EmailRegex().IsMatch(request.Email))
+            throw new InvalidOperationException("Email format is invalid.");
+        if (dbContext.Users.Any(x => x.Email == request.Email.Trim() && x.Id != currentUserId))
+            throw new InvalidOperationException("Email is already in use.");
+        if (string.IsNullOrWhiteSpace(request.PhoneNumber) || !PhoneRegex().IsMatch(request.PhoneNumber))
+            throw new InvalidOperationException("Phone number must be 8-15 digits.");
+        if (request.DateOfBirth is null)
+            throw new InvalidOperationException("Date of birth is required.");
+        if (request.DateOfBirth > DateOnly.FromDateTime(DateTime.UtcNow))
+            throw new InvalidOperationException("Date of birth cannot be in the future.");
+        if (string.IsNullOrWhiteSpace(request.Nationality))
+            throw new InvalidOperationException("Nationality is required.");
+        if (string.IsNullOrWhiteSpace(request.DocumentType))
+            throw new InvalidOperationException("Document type is required.");
+        if (string.IsNullOrWhiteSpace(request.IdNumber) || !IdNumberRegex().IsMatch(request.IdNumber))
+            throw new InvalidOperationException("ID Number format is invalid.");
+    }
+
+    private static void ValidatePaymentMethodRequest(UpsertPaymentMethodRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Type))
+            throw new InvalidOperationException("Payment method type is required.");
+        if (string.IsNullOrWhiteSpace(request.MaskedNumber))
+            throw new InvalidOperationException("Payment method details are required.");
+
+        var type = request.Type.Trim().ToLowerInvariant();
+        var value = request.MaskedNumber.Trim();
+        if ((type.Contains("visa") || type.Contains("master")) && !CardRegex().IsMatch(value))
+            throw new InvalidOperationException("Card number must be 12 to 19 digits.");
+        if (type.Contains("apple") && !AppleTokenRegex().IsMatch(value))
+            throw new InvalidOperationException("Apple Pay token format is invalid.");
+        if ((type.Contains("zain") || type.Contains("orange") || type.Contains("dinar")) && !PhoneRegex().IsMatch(value))
+            throw new InvalidOperationException("Wallet number format is invalid.");
+        if (type.Contains("cliq") && !CliqAliasRegex().IsMatch(value))
+            throw new InvalidOperationException("CliQ alias format is invalid.");
+    }
+
+    private static void ValidateLinkedBankRequest(UpsertLinkedBankAccountRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.BankName))
+            throw new InvalidOperationException("Bank name is required.");
+        if (string.IsNullOrWhiteSpace(request.IbanMasked))
+            throw new InvalidOperationException("IBAN is required.");
+        if (!IbanRegex().IsMatch(request.IbanMasked.Trim().ToUpperInvariant()))
+            throw new InvalidOperationException("IBAN format is invalid.");
+    }
+
+    [GeneratedRegex(@"^[^\s@]+@[^\s@]+\.[^\s@]+$")]
+    private static partial Regex EmailRegex();
+    [GeneratedRegex(@"^[+0-9]{8,15}$")]
+    private static partial Regex PhoneRegex();
+    [GeneratedRegex(@"^[A-Za-z0-9-]{4,30}$")]
+    private static partial Regex IdNumberRegex();
+    [GeneratedRegex(@"^[0-9]{12,19}$")]
+    private static partial Regex CardRegex();
+    [GeneratedRegex(@"^[A-Za-z0-9_\-]{8,64}$")]
+    private static partial Regex AppleTokenRegex();
+    [GeneratedRegex(@"^[A-Za-z0-9._-]{4,40}$")]
+    private static partial Regex CliqAliasRegex();
+    [GeneratedRegex(@"^[A-Z]{2}[A-Z0-9]{13,32}$")]
+    private static partial Regex IbanRegex();
 }

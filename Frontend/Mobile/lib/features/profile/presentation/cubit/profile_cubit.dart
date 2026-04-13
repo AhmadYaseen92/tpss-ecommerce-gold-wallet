@@ -59,6 +59,14 @@ class ProfileCubit extends Cubit<ProfileState> {
   String profilePhotoUrl = '';
 
   List<ProfileOption> paymentMethods = [];
+  final List<String> availablePaymentTypes = const [
+    'Visa / MasterCard',
+    'Apple Pay',
+    'ZainCash',
+    'Orange Money',
+    'Dinarak',
+    'CliQ',
+  ];
 
   List<ProfileOption> bankAccounts = [];
 
@@ -110,8 +118,8 @@ class ProfileCubit extends Cubit<ProfileState> {
                     remoteId: item.id,
                     name: item.type,
                     subtitle: item.isDefault ? 'Default' : 'Saved method',
-                    icon: Icons.credit_card,
-                    fields: const [ProfileField('Masked Number', Icons.credit_card)],
+                    icon: _paymentIconByType(item.type),
+                    fields: _paymentFieldsByType(item.type),
                   ),
                 )
                 .toList()
@@ -157,17 +165,50 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> savePersonalInfo() async {
     try {
+      final fullName = _composeFullName();
+      final email = personalControllers['Email Address']?.text.trim() ?? '';
+      final phone = personalControllers['Phone Number']?.text.trim() ?? '';
+      final dateOfBirth = personalControllers['Date of Birth']?.text.trim() ?? '';
+      final idNumber = personalControllers['ID Number']?.text.trim() ?? '';
+
+      if (fullName.isEmpty ||
+          email.isEmpty ||
+          phone.isEmpty ||
+          dateOfBirth.isEmpty ||
+          selectedNationality.trim().isEmpty ||
+          selectedDocumentType.trim().isEmpty ||
+          idNumber.isEmpty) {
+        emit(ProfileError('Please complete all mandatory personal information fields.'));
+        return;
+      }
+      if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
+        emit(ProfileError('Please enter a valid email address.'));
+        return;
+      }
+      if (!RegExp(r'^[+0-9]{8,15}$').hasMatch(phone)) {
+        emit(ProfileError('Phone number must be 8-15 digits.'));
+        return;
+      }
+      if (!RegExp(r'^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/[0-9]{4}$').hasMatch(dateOfBirth)) {
+        emit(ProfileError('Date of birth must be in dd/mm/yyyy format.'));
+        return;
+      }
+      if (!RegExp(r'^[A-Za-z0-9-]{4,30}$').hasMatch(idNumber)) {
+        emit(ProfileError('ID Number format is invalid.'));
+        return;
+      }
+
       await _remoteDataSource.updatePersonal(
-        fullName: _composeFullName(),
-        email: personalControllers['Email Address']?.text.trim() ?? '',
-        phoneNumber: personalControllers['Phone Number']?.text.trim(),
-        dateOfBirthIso: _isoDateFromUi(personalControllers['Date of Birth']?.text ?? ''),
+        fullName: fullName,
+        email: email,
+        phoneNumber: phone,
+        dateOfBirthIso: _isoDateFromUi(dateOfBirth),
         nationality: selectedNationality,
         documentType: selectedDocumentType,
-        idNumber: personalControllers['ID Number']?.text.trim() ?? '',
+        idNumber: idNumber,
         profilePhotoUrl: profilePhotoUrl,
       );
-      final updatedEmail = personalControllers['Email Address']?.text.trim() ?? '';
+      final updatedEmail = email;
       final emailChanged = updatedEmail.isNotEmpty && updatedEmail != profileDisplayEmail;
       isEditing = false;
       if (emailChanged) {
@@ -210,7 +251,16 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> savePaymentMethod() async {
     try {
+      if (paymentMethods.isEmpty) {
+        emit(ProfileError('Please add a payment method first.'));
+        return;
+      }
       final selected = paymentMethods[selectedPaymentIndex];
+      final validationError = _validatePaymentMethod(selected.name);
+      if (validationError != null) {
+        emit(ProfileError(validationError));
+        return;
+      }
       await _remoteDataSource.upsertPaymentMethod(
         paymentMethodId: selected.remoteId,
         type: selected.name,
@@ -227,6 +277,11 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> saveLinkedBank() async {
     try {
+      final bankValidationError = _validateBankDetails();
+      if (bankValidationError != null) {
+        emit(ProfileError(bankValidationError));
+        return;
+      }
       final selected = bankAccounts[selectedBankIndex];
       await _remoteDataSource.upsertLinkedBankAccount(
         linkedBankAccountId: selected.remoteId,
@@ -254,6 +309,18 @@ class ProfileCubit extends Cubit<ProfileState> {
 
     if (newPassword != confirmPassword) {
       emit(ProfileError('New password and confirm password do not match.'));
+      return;
+    }
+    if (newPassword.length < 8 ||
+        !RegExp(r'[A-Z]').hasMatch(newPassword) ||
+        !RegExp(r'[a-z]').hasMatch(newPassword) ||
+        !RegExp(r'[0-9]').hasMatch(newPassword) ||
+        !RegExp(r'[^A-Za-z0-9]').hasMatch(newPassword)) {
+      emit(
+        ProfileError(
+          'Password must be at least 8 chars and include upper, lower, number, and special character.',
+        ),
+      );
       return;
     }
 
@@ -299,14 +366,28 @@ class ProfileCubit extends Cubit<ProfileState> {
   void addPaymentMethod() {
     paymentMethods = [
       ...paymentMethods,
-      const ProfileOption(
-        name: 'Card',
+      ProfileOption(
+        name: availablePaymentTypes.first,
         subtitle: 'New method',
-        icon: Icons.credit_card,
-        fields: [ProfileField('Masked Number', Icons.credit_card)],
+        icon: _paymentIconByType(availablePaymentTypes.first),
+        fields: _paymentFieldsByType(availablePaymentTypes.first),
       ),
     ];
     selectedPaymentIndex = paymentMethods.length - 1;
+    _rebuildPaymentControllers(selectedPaymentIndex);
+    emit(ProfilePaymentMethodChanged(selectedIndex: selectedPaymentIndex));
+  }
+
+  void updateSelectedPaymentType(String type) {
+    if (paymentMethods.isEmpty || selectedPaymentIndex >= paymentMethods.length) return;
+    final current = paymentMethods[selectedPaymentIndex];
+    paymentMethods[selectedPaymentIndex] = ProfileOption(
+      remoteId: current.remoteId,
+      name: type,
+      subtitle: current.subtitle,
+      icon: _paymentIconByType(type),
+      fields: _paymentFieldsByType(type),
+    );
     _rebuildPaymentControllers(selectedPaymentIndex);
     emit(ProfilePaymentMethodChanged(selectedIndex: selectedPaymentIndex));
   }
@@ -440,7 +521,15 @@ class ProfileCubit extends Cubit<ProfileState> {
       defaultValue = '';
     }
 
-    paymentControllers.add(TextEditingController(text: defaultValue));
+    final selectedType = paymentMethods.isNotEmpty && index < paymentMethods.length
+        ? paymentMethods[index].name
+        : availablePaymentTypes.first;
+    final fields = _paymentFieldsByType(selectedType);
+    for (var i = 0; i < fields.length; i++) {
+      paymentControllers.add(
+        TextEditingController(text: i == 0 ? defaultValue : ''),
+      );
+    }
   }
 
   void _rebuildBankControllers(int index, {ProfileRemoteModel? profile}) {
@@ -482,6 +571,101 @@ class ProfileCubit extends Cubit<ProfileState> {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) return 'Unknown';
     return trimmed;
+  }
+
+  List<ProfileField> _paymentFieldsByType(String type) {
+    final normalized = type.toLowerCase();
+    if (normalized.contains('apple')) {
+      return const [
+        ProfileField('Apple Pay Token', Icons.token_outlined),
+      ];
+    }
+    if (normalized.contains('zain') || normalized.contains('orange') || normalized.contains('dinar')) {
+      return const [
+        ProfileField('Wallet Number', Icons.phone_android_outlined, TextInputType.phone),
+      ];
+    }
+    if (normalized.contains('cliq')) {
+      return const [
+        ProfileField('CliQ Alias', Icons.account_balance_outlined),
+      ];
+    }
+    return const [
+      ProfileField('Card Number', Icons.credit_card_outlined, TextInputType.number),
+      ProfileField('Expiry (MM/YY)', Icons.calendar_today_outlined, TextInputType.number),
+    ];
+  }
+
+  IconData _paymentIconByType(String type) {
+    final normalized = type.toLowerCase();
+    if (normalized.contains('apple')) return Icons.phone_iphone;
+    if (normalized.contains('zain') || normalized.contains('orange') || normalized.contains('dinar')) {
+      return Icons.account_balance_wallet_outlined;
+    }
+    if (normalized.contains('cliq')) return Icons.account_balance_outlined;
+    return Icons.credit_card_outlined;
+  }
+
+  String? _validatePaymentMethod(String type) {
+    for (var i = 0; i < paymentControllers.length; i++) {
+      if (paymentControllers[i].text.trim().isEmpty) {
+        return 'All payment fields are required.';
+      }
+    }
+
+    final primary = paymentControllers.first.text.trim();
+    final normalized = type.toLowerCase();
+    if (normalized.contains('visa') || normalized.contains('master')) {
+      if (!RegExp(r'^[0-9]{12,19}$').hasMatch(primary)) {
+        return 'Card number must be 12 to 19 digits.';
+      }
+      if (paymentControllers.length > 1 &&
+          !RegExp(r'^(0[1-9]|1[0-2])\/[0-9]{2}$').hasMatch(paymentControllers[1].text.trim())) {
+        return 'Expiry must be in MM/YY format.';
+      }
+      return null;
+    }
+    if (normalized.contains('apple')) {
+      if (!RegExp(r'^[A-Za-z0-9_\-]{8,64}$').hasMatch(primary)) {
+        return 'Apple Pay token format is invalid.';
+      }
+      return null;
+    }
+    if (normalized.contains('zain') || normalized.contains('orange') || normalized.contains('dinar')) {
+      if (!RegExp(r'^[+0-9]{8,15}$').hasMatch(primary)) {
+        return 'Wallet number must be 8-15 digits.';
+      }
+      return null;
+    }
+    if (normalized.contains('cliq')) {
+      if (!RegExp(r'^[A-Za-z0-9._-]{4,40}$').hasMatch(primary)) {
+        return 'CliQ alias format is invalid.';
+      }
+      return null;
+    }
+
+    return null;
+  }
+
+  String? _validateBankDetails() {
+    for (final controller in bankControllers) {
+      if (controller.text.trim().isEmpty) return 'All linked bank account fields are required.';
+    }
+
+    final accountNumber = bankControllers[2].text.trim();
+    final iban = bankControllers[3].text.trim();
+    final swift = bankControllers[4].text.trim();
+
+    if (!RegExp(r'^[0-9]{6,34}$').hasMatch(accountNumber)) {
+      return 'Account number must be between 6 and 34 digits.';
+    }
+    if (!RegExp(r'^[A-Z]{2}[A-Z0-9]{13,32}$').hasMatch(iban)) {
+      return 'IBAN format is invalid.';
+    }
+    if (!RegExp(r'^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$').hasMatch(swift)) {
+      return 'SWIFT/BIC format is invalid.';
+    }
+    return null;
   }
 
   @override

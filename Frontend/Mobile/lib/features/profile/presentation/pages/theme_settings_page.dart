@@ -25,6 +25,21 @@ class ThemeSettingsPage extends StatelessWidget {
           } else {
             appCubit.setThemeMode(ThemeMode.system);
           }
+          if (state is ProfileSaved) {
+            AppModalAlert.show(
+              context,
+              title: 'Saved',
+              message: 'Theme updated successfully',
+            );
+          }
+          if (state is ProfileError) {
+            AppModalAlert.show(
+              context,
+              title: 'Validation Error',
+              message: state.message,
+              variant: AppModalAlertVariant.failed,
+            );
+          }
         },
         builder: (context, state) {
           final cubit = context.read<ProfileCubit>();
@@ -84,14 +99,7 @@ class ThemeSettingsPage extends StatelessWidget {
                       AppButton(
                         cubit: cubit,
                         label: 'Save Changes',
-                        onPressed: () {
-                          cubit.saveThemeSettings();
-                          AppModalAlert.show(
-                            context,
-                            title: 'Saved',
-                            message: 'Theme updated successfully',
-                          );
-                        },
+                        onPressed: cubit.saveThemeSettings,
                       ),
                   ],
                 ),
