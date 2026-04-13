@@ -17,8 +17,19 @@ class LinkedBankAccountsPage extends StatelessWidget {
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
           final cubit = BlocProvider.of<ProfileCubit>(context);
-          final selectedBank = cubit.bankAccounts[cubit.selectedBankIndex];
           final palette = context.appPalette;
+          final hasBanks = cubit.bankAccounts.isNotEmpty;
+          final selectedBank = hasBanks
+              ? cubit.bankAccounts[cubit.selectedBankIndex]
+              : const ProfileOption(
+                  name: 'No linked banks yet',
+                  subtitle: 'Tap Add Account to create one',
+                  icon: Icons.account_balance_outlined,
+                  fields: [
+                    ProfileField('Bank Name', Icons.account_balance_outlined),
+                    ProfileField('IBAN', Icons.credit_card_outlined),
+                  ],
+                );
 
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -58,10 +69,19 @@ class LinkedBankAccountsPage extends StatelessWidget {
                     const SizedBox(height: 20),
                     const FormSectionLabel(label: 'SELECT BANK ACCOUNT'),
                     const SizedBox(height: 8),
+                    if (cubit.isEditing)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: cubit.addBankAccount,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add Account'),
+                        ),
+                      ),
                     DropdownButtonFormField<int>(
                       borderRadius: BorderRadius.circular(12),
                       dropdownColor: palette.surface,
-                      value: cubit.selectedBankIndex,
+                      value: hasBanks ? cubit.selectedBankIndex : null,
                       items: List.generate(
                         cubit.bankAccounts.length,
                         (index) => DropdownMenuItem(
@@ -101,7 +121,7 @@ class LinkedBankAccountsPage extends StatelessWidget {
                         enabled: cubit.isEditing,
                       );
                     }),
-                    if (cubit.isEditing) ...[
+                    if (cubit.isEditing && hasBanks) ...[
                       const SizedBox(height: 16),
                       AppButton(
                         cubit: cubit,
