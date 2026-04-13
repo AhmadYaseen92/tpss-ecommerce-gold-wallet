@@ -18,7 +18,8 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
     public async Task<IActionResult> Confirm([FromBody] CheckoutConfirmRequest request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        var fromCart = request.FromCart;
+        var isDirectCheckout = request.ProductId.HasValue && request.Quantity.HasValue && request.Quantity.Value > 0;
+        var fromCart = request.FromCart && !isDirectCheckout;
 
         var wallet = await dbContext.Wallets
             .Include(x => x.Assets)
@@ -53,13 +54,22 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             if (cart.Items.Count == 0)
                 throw new InvalidOperationException("Cart is empty.");
 
-            if (request.ProductIds is not { Count: > 0 })
-                throw new InvalidOperationException("Please select cart items for checkout.");
+            selectedCartItems = cart.Items.ToList();
 
-            var productIdSet = request.ProductIds.ToHashSet();
-            selectedCartItems = cart.Items
-                .Where(item => productIdSet.Contains(item.ProductId))
-                .ToList();
+            if (request.ProductIds is { Count: > 0 })
+            {
+                var productIdSet = request.ProductIds.ToHashSet();
+                selectedCartItems = selectedCartItems
+                    .Where(item => productIdSet.Contains(item.ProductId))
+                    .ToList();
+            }
+            else if (!string.IsNullOrWhiteSpace(request.SellerName)
+                     && !request.SellerName.Equals("All Sellers", StringComparison.OrdinalIgnoreCase))
+            {
+                selectedCartItems = selectedCartItems
+                    .Where(item => string.Equals(item.Product.Seller?.Name, request.SellerName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
 
             if (selectedCartItems.Count == 0)
                 throw new InvalidOperationException("No matching cart items were selected for checkout.");
