@@ -17,6 +17,28 @@ class PaymentMethodsPage extends StatefulWidget {
 class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
   final _formKey = GlobalKey<FormState>();
 
+  String _paymentHintForLabel(String label) {
+    switch (label) {
+      case 'Card Number':
+        return 'e.g., 4111111111111111';
+      case 'Card Holder Name':
+      case 'Account Holder Name':
+        return 'e.g., JOHN SMITH';
+      case 'Expiry (MM/YY)':
+        return 'e.g., 12/29';
+      case 'Apple Pay Token':
+        return 'e.g., apl_8Hf7x2KpQ9Lm';
+      case 'Wallet Number':
+        return 'e.g., +962790000000';
+      case 'CliQ Alias':
+        return 'e.g., john.smith';
+      case 'Bank Name':
+        return 'e.g., Arab Bank';
+      default:
+        return label;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -202,7 +224,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                               padding: const EdgeInsets.only(bottom: 8),
                               child: AppTextField(
                                 label: field.label,
-                                hint: field.label,
+                                hint: _paymentHintForLabel(field.label),
                                 prefixIcon: field.icon,
                                 keyboardType: field.keyboardType,
                                 controller: cubit.paymentControllers[index],

@@ -24,6 +24,31 @@ class _LinkedBankAccountsPageState extends State<LinkedBankAccountsPage> {
     'Indian Rupee (INR)',
   ];
 
+  String _bankHintForLabel(String label) {
+    switch (label) {
+      case 'Account Holder Name':
+        return 'e.g., John A. Smith';
+      case 'Bank Name':
+        return 'e.g., Arab Bank';
+      case 'Account Number':
+        return 'e.g., 123456789012';
+      case 'IBAN':
+        return 'e.g., JO94CBJO0010000000000131000302';
+      case 'SWIFT/BIC':
+        return 'e.g., ARABJOAXXXX';
+      case 'Branch Name':
+        return 'e.g., Abdali Branch';
+      case 'Branch Address':
+        return 'e.g., King Hussein St, Amman';
+      case 'Country':
+        return 'e.g., Jordan';
+      case 'City':
+        return 'e.g., Amman';
+      default:
+        return label;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -156,7 +181,7 @@ class _LinkedBankAccountsPageState extends State<LinkedBankAccountsPage> {
                           padding: const EdgeInsets.only(bottom: 8),
                           child: AppTextField(
                             label: field.label,
-                            hint: field.label,
+                            hint: _bankHintForLabel(field.label),
                             prefixIcon: field.icon,
                             keyboardType: field.keyboardType,
                             controller: cubit.bankControllers[index],
