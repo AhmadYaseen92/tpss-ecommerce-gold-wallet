@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
@@ -16,7 +18,40 @@ class PersonalInformationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => ProfileCubit(),
-      child: BlocBuilder<ProfileCubit, ProfileState>(
+      child: BlocConsumer<ProfileCubit, ProfileState>(
+        listener: (context, state) async {
+          if (state is ProfileSaved) {
+            await AppModalAlert.show(
+              context,
+              title: 'Saved',
+              message: 'Personal information saved successfully',
+            );
+          }
+          if (state is ProfileEmailChangedRequiresRelogin) {
+            await AppModalAlert.show(
+              context,
+              title: 'Email updated',
+              message:
+                  'We sent a one-time OTP to ${state.newEmail}. For security, please login again using your new email.',
+            );
+            if (!context.mounted) return;
+            await Navigator.pushNamed(
+              context,
+              AppRoutes.confirmOtpRoute,
+              arguments: const {
+                'title': 'Confirm Email OTP',
+                'subtitle': 'Enter the OTP sent to your updated email address.',
+              },
+            );
+            AuthSessionStore.clear();
+            if (!context.mounted) return;
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.loginRoute,
+              (route) => false,
+            );
+          }
+        },
         builder: (context, state) {
           final cubit = BlocProvider.of<ProfileCubit>(context);
           final palette = context.appPalette;
@@ -154,14 +189,7 @@ class PersonalInformationPage extends StatelessWidget {
                       AppButton(
                         cubit: cubit,
                         label: 'Save Changes',
-                        onPressed: () {
-                          cubit.savePersonalInfo();
-                          AppModalAlert.show(
-                            context,
-                            title: 'Saved',
-                            message: 'Personal information saved successfully',
-                          );
-                        },
+                        onPressed: cubit.savePersonalInfo,
                       ),
                     ],
                   ],

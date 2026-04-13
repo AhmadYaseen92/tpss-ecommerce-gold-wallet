@@ -126,8 +126,16 @@ class ProfileCubit extends Cubit<ProfileState> {
                     subtitle: item.isVerified ? 'Verified' : 'Unverified',
                     icon: Icons.account_balance_outlined,
                     fields: const [
+                      ProfileField('Account Holder Name', Icons.person_outline),
                       ProfileField('Bank Name', Icons.account_balance_outlined),
+                      ProfileField('Account Number', Icons.numbers_outlined, TextInputType.number),
                       ProfileField('IBAN', Icons.credit_card_outlined),
+                      ProfileField('SWIFT/BIC', Icons.verified_user_outlined),
+                      ProfileField('Branch Name', Icons.store_outlined),
+                      ProfileField('Branch Address', Icons.location_on_outlined),
+                      ProfileField('Country', Icons.flag_outlined),
+                      ProfileField('City', Icons.location_city_outlined),
+                      ProfileField('Currency', Icons.currency_exchange_outlined),
                     ],
                   ),
                 )
@@ -151,6 +159,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     try {
       await _remoteDataSource.updatePersonal(
         fullName: _composeFullName(),
+        email: personalControllers['Email Address']?.text.trim() ?? '',
         phoneNumber: personalControllers['Phone Number']?.text.trim(),
         dateOfBirthIso: _isoDateFromUi(personalControllers['Date of Birth']?.text ?? ''),
         nationality: selectedNationality,
@@ -158,9 +167,15 @@ class ProfileCubit extends Cubit<ProfileState> {
         idNumber: personalControllers['ID Number']?.text.trim() ?? '',
         profilePhotoUrl: profilePhotoUrl,
       );
+      final updatedEmail = personalControllers['Email Address']?.text.trim() ?? '';
+      final emailChanged = updatedEmail.isNotEmpty && updatedEmail != profileDisplayEmail;
       isEditing = false;
-      emit(ProfileSaved());
-      await loadProfile();
+      if (emailChanged) {
+        emit(ProfileEmailChangedRequiresRelogin(newEmail: updatedEmail));
+      } else {
+        emit(ProfileSaved());
+        await loadProfile();
+      }
     } catch (e) {
       emit(ProfileError('Failed to save personal info: $e'));
     }
@@ -215,8 +230,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       final selected = bankAccounts[selectedBankIndex];
       await _remoteDataSource.upsertLinkedBankAccount(
         linkedBankAccountId: selected.remoteId,
-        bankName: bankControllers.isNotEmpty ? bankControllers[0].text.trim() : selected.name,
-        ibanMasked: bankControllers.length > 1 ? bankControllers[1].text.trim() : '',
+        bankName: bankControllers.length > 1 ? bankControllers[1].text.trim() : selected.name,
+        ibanMasked: bankControllers.length > 3 ? bankControllers[3].text.trim() : '',
         isVerified: true,
       );
       isEditing = false;
@@ -304,8 +319,16 @@ class ProfileCubit extends Cubit<ProfileState> {
         subtitle: 'Unverified',
         icon: Icons.account_balance_outlined,
         fields: [
+          ProfileField('Account Holder Name', Icons.person_outline),
           ProfileField('Bank Name', Icons.account_balance_outlined),
+          ProfileField('Account Number', Icons.numbers_outlined, TextInputType.number),
           ProfileField('IBAN', Icons.credit_card_outlined),
+          ProfileField('SWIFT/BIC', Icons.verified_user_outlined),
+          ProfileField('Branch Name', Icons.store_outlined),
+          ProfileField('Branch Address', Icons.location_on_outlined),
+          ProfileField('Country', Icons.flag_outlined),
+          ProfileField('City', Icons.location_city_outlined),
+          ProfileField('Currency', Icons.currency_exchange_outlined),
         ],
       ),
     ];
@@ -426,8 +449,16 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
     bankControllers.clear();
 
+    String accountHolderName = '';
     String bankName = '';
+    String accountNumber = '';
     String iban = '';
+    String swift = '';
+    String branchName = '';
+    String branchAddress = '';
+    String country = '';
+    String city = '';
+    String currency = '';
     if (profile != null && profile.linkedBankAccounts.isNotEmpty && index < profile.linkedBankAccounts.length) {
       final selected = profile.linkedBankAccounts[index];
       bankName = selected.bankName;
@@ -435,8 +466,16 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
 
     bankControllers
+      ..add(TextEditingController(text: accountHolderName))
       ..add(TextEditingController(text: bankName))
-      ..add(TextEditingController(text: iban));
+      ..add(TextEditingController(text: accountNumber))
+      ..add(TextEditingController(text: iban))
+      ..add(TextEditingController(text: swift))
+      ..add(TextEditingController(text: branchName))
+      ..add(TextEditingController(text: branchAddress))
+      ..add(TextEditingController(text: country))
+      ..add(TextEditingController(text: city))
+      ..add(TextEditingController(text: currency));
   }
 
   static String normalizeNationalityValue(String? value) {

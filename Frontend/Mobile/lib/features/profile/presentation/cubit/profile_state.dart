@@ -48,6 +48,11 @@ final class ProfileDocumentTypeChanged extends ProfileState {
 
 final class ProfileSaved extends ProfileState {}
 
+final class ProfileEmailChangedRequiresRelogin extends ProfileState {
+  final String newEmail;
+  ProfileEmailChangedRequiresRelogin({required this.newEmail});
+}
+
 final class ProfileError extends ProfileState {
   final String message;
 

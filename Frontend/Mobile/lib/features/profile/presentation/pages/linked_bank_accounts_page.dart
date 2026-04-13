@@ -26,8 +26,16 @@ class LinkedBankAccountsPage extends StatelessWidget {
                   subtitle: 'Tap Add Account to create one',
                   icon: Icons.account_balance_outlined,
                   fields: [
+                    ProfileField('Account Holder Name', Icons.person_outline),
                     ProfileField('Bank Name', Icons.account_balance_outlined),
+                    ProfileField('Account Number', Icons.numbers_outlined),
                     ProfileField('IBAN', Icons.credit_card_outlined),
+                    ProfileField('SWIFT/BIC', Icons.verified_user_outlined),
+                    ProfileField('Branch Name', Icons.store_outlined),
+                    ProfileField('Branch Address', Icons.location_on_outlined),
+                    ProfileField('Country', Icons.flag_outlined),
+                    ProfileField('City', Icons.location_city_outlined),
+                    ProfileField('Currency', Icons.currency_exchange_outlined),
                   ],
                 );
 

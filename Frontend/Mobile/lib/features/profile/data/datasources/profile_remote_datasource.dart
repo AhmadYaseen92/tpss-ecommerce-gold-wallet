@@ -16,6 +16,7 @@ class ProfileRemoteDataSource {
 
   Future<void> updatePersonal({
     required String fullName,
+    required String email,
     required String? phoneNumber,
     required String? dateOfBirthIso,
     required String nationality,
@@ -29,6 +30,7 @@ class ProfileRemoteDataSource {
       data: {
         'userId': userId,
         'fullName': fullName,
+        'email': email,
         'phoneNumber': phoneNumber,
         'dateOfBirth': dateOfBirthIso,
         'nationality': nationality,
