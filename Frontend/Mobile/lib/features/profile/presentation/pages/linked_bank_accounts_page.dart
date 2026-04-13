@@ -17,11 +17,11 @@ class LinkedBankAccountsPage extends StatefulWidget {
 class _LinkedBankAccountsPageState extends State<LinkedBankAccountsPage> {
   final _formKey = GlobalKey<FormState>();
   static const List<String> _currencyOptions = [
-    'Emirate',
-    'KSA',
-    'Dollar',
-    'Jordan',
-    'Indian Rubi',
+    'UAE Dirham (AED)',
+    'Saudi Riyal (SAR)',
+    'US Dollar (USD)',
+    'Jordanian Dinar (JOD)',
+    'Indian Rupee (INR)',
   ];
 
   @override
@@ -152,17 +152,21 @@ class _LinkedBankAccountsPageState extends State<LinkedBankAccountsPage> {
                       const FormSectionLabel(label: 'ACCOUNT FIELDS'),
                       ...List.generate(selectedBank.fields.length - 1, (index) {
                         final field = selectedBank.fields[index];
-                        return AppTextField(
-                          label: field.label,
-                          hint: field.label,
-                          prefixIcon: field.icon,
-                          keyboardType: field.keyboardType,
-                          controller: cubit.bankControllers[index],
-                          enabled: cubit.isEditing,
-                          requiredField: true,
-                          validator: (value) => (value == null || value.trim().isEmpty) ? 'Required field' : null,
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: AppTextField(
+                            label: field.label,
+                            hint: field.label,
+                            prefixIcon: field.icon,
+                            keyboardType: field.keyboardType,
+                            controller: cubit.bankControllers[index],
+                            enabled: cubit.isEditing,
+                            requiredField: true,
+                            validator: (value) => (value == null || value.trim().isEmpty) ? 'Required field' : null,
+                          ),
                         );
                       }),
+                      const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         value: _currencyOptions.contains(cubit.bankControllers[9].text.trim())
                             ? cubit.bankControllers[9].text.trim()
@@ -192,6 +196,7 @@ class _LinkedBankAccountsPageState extends State<LinkedBankAccountsPage> {
                         validator: (value) =>
                             (value == null || value.trim().isEmpty) ? 'Required field' : null,
                       ),
+                      const SizedBox(height: 8),
                       SwitchListTile(
                         value: selectedBank.isDefault,
                         onChanged: cubit.isEditing ? cubit.toggleSelectedBankDefault : null,

@@ -7,8 +7,15 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/form_header.dart'
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/presentation/cubit/profile_cubit.dart';
 
-class PaymentMethodsPage extends StatelessWidget {
+class PaymentMethodsPage extends StatefulWidget {
   const PaymentMethodsPage({super.key});
+
+  @override
+  State<PaymentMethodsPage> createState() => _PaymentMethodsPageState();
+}
+
+class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -74,126 +81,134 @@ class PaymentMethodsPage extends StatelessWidget {
                     color: palette.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const FormHeader(
-                        title: 'Payment Method',
-                        subtitle: 'Select a method, then view / add / edit its required fields.',
-                      ),
-                      const SizedBox(height: 14),
-                      const FormSectionLabel(label: 'SAVED METHODS'),
-                      const SizedBox(height: 8),
-                      if (cubit.isEditing)
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const FormHeader(
+                          title: 'Payment Method',
+                          subtitle: 'Select a method to view details, edit, or add a new one.',
+                        ),
+                        const SizedBox(height: 20),
+                        const FormSectionLabel(label: 'SELECT PAYMENT METHOD'),
+                        const SizedBox(height: 8),
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton.icon(
                             onPressed: cubit.addPaymentMethod,
                             icon: const Icon(Icons.add),
-                            label: const Text('Add Method'),
+                            label: Text(hasMethods ? 'Add Method' : 'Add First Method'),
                           ),
                         ),
-                      SizedBox(
-                        height: 44,
-                        child: hasMethods
-                            ? ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: cubit.paymentMethods.length,
-                                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                                itemBuilder: (context, index) {
-                                  final method = cubit.paymentMethods[index];
-                                  final selected = index == cubit.selectedPaymentIndex;
-                                  return ChoiceChip(
-                                    label: Text(method.name),
-                                    selected: selected,
-                                    showCheckmark: false,
-                                    avatar: Icon(
-                                      method.icon,
-                                      size: 18,
-                                      color: selected ? palette.primary : palette.textSecondary,
-                                    ),
-                                    onSelected: (_) => cubit.selectPaymentMethod(index),
-                                    selectedColor: palette.surfaceMuted,
-                                    side: BorderSide(
-                                      color: selected ? palette.primary : palette.border,
-                                    ),
-                                  );
-                                },
-                              )
-                            : Center(
-                                child: Text(
-                                  'No methods found',
-                                  style: TextStyle(color: palette.textSecondary),
-                                ),
-                              ),
-                      ),
-                      const SizedBox(height: 14),
-                      const FormSectionLabel(label: 'PAYMENT TYPE'),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        value: hasMethods ? selectedMethod.name : null,
-                        items: cubit.availablePaymentTypes
-                            .map(
-                              (type) => DropdownMenuItem<String>(
-                                value: type,
-                                child: Text(type),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: cubit.isEditing && hasMethods
-                            ? (value) {
-                                if (value != null) {
-                                  cubit.updateSelectedPaymentType(value);
-                                }
-                              }
-                            : null,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: palette.surface,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: palette.border),
+                        DropdownButtonFormField<int>(
+                          borderRadius: BorderRadius.circular(12),
+                          dropdownColor: palette.surface,
+                          value: hasMethods ? cubit.selectedPaymentIndex : null,
+                          hint: const Text('No payment method yet'),
+                          items: List.generate(
+                            cubit.paymentMethods.length,
+                            (index) => DropdownMenuItem(
+                              value: index,
+                              child: Text(cubit.paymentMethods[index].name),
+                            ),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: palette.border),
+                          onChanged: (value) {
+                            if (value != null) {
+                              cubit.selectPaymentMethod(value);
+                            }
+                          },
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: palette.surface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: palette.border),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: palette.border),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      const FormSectionLabel(label: 'METHOD FIELDS'),
-                      ...List.generate(selectedMethod.fields.length, (index) {
-                        final field = selectedMethod.fields[index];
-                        return AppTextField(
-                          label: field.label,
-                          hint: field.label,
-                          prefixIcon: field.icon,
-                          keyboardType: field.keyboardType,
-                          controller: cubit.paymentControllers[index],
-                          enabled: cubit.isEditing,
-                        );
-                      }),
-                      const SizedBox(height: 10),
-                      SwitchListTile(
-                        value: selectedMethod.isDefault,
-                        onChanged: cubit.isEditing ? cubit.toggleSelectedPaymentDefault : null,
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Set as default payment method'),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        selectedMethod.subtitle,
-                        style: TextStyle(color: palette.textSecondary),
-                      ),
-                      if (cubit.isEditing && hasMethods) ...[
                         const SizedBox(height: 16),
-                        AppButton(
-                          cubit: cubit,
-                          label: 'Save Changes',
-                          onPressed: cubit.savePaymentMethod,
+                        const FormSectionLabel(label: 'PAYMENT TYPE'),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          value: hasMethods ? selectedMethod.name : null,
+                          items: cubit.availablePaymentTypes
+                              .map(
+                                (type) => DropdownMenuItem<String>(
+                                  value: type,
+                                  child: Text(type),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: cubit.isEditing && hasMethods
+                              ? (value) {
+                                  if (value != null) {
+                                    cubit.updateSelectedPaymentType(value);
+                                  }
+                                }
+                              : null,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: palette.surface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: palette.border),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: palette.border),
+                            ),
+                          ),
                         ),
+                        const SizedBox(height: 16),
+                        const FormSectionLabel(label: 'METHOD FIELDS'),
+                        ...List.generate(selectedMethod.fields.length, (index) {
+                          final field = selectedMethod.fields[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: AppTextField(
+                              label: field.label,
+                              hint: field.label,
+                              prefixIcon: field.icon,
+                              keyboardType: field.keyboardType,
+                              controller: cubit.paymentControllers[index],
+                              enabled: cubit.isEditing,
+                              requiredField: true,
+                              validator: (value) =>
+                                  (value == null || value.trim().isEmpty) ? 'Required field' : null,
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 8),
+                        SwitchListTile(
+                          value: selectedMethod.isDefault,
+                          onChanged: cubit.isEditing ? cubit.toggleSelectedPaymentDefault : null,
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Set as default payment method'),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          selectedMethod.subtitle,
+                          style: TextStyle(color: palette.textSecondary),
+                        ),
+                        if (cubit.isEditing && hasMethods) ...[
+                          const SizedBox(height: 16),
+                          AppButton(
+                            cubit: cubit,
+                            label: 'Save Changes',
+                            onPressed: () {
+                              if (_formKey.currentState?.validate() ?? false) {
+                                cubit.savePaymentMethod();
+                              }
+                            },
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
