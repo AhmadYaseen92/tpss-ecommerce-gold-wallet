@@ -53,6 +53,8 @@ final class ProfileEmailChangedRequiresRelogin extends ProfileState {
   ProfileEmailChangedRequiresRelogin({required this.newEmail});
 }
 
+final class ProfilePasswordChangedRequiresRelogin extends ProfileState {}
+
 final class ProfileError extends ProfileState {
   final String message;
 

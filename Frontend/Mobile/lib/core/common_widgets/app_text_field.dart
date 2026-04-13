@@ -15,6 +15,8 @@ class AppTextField extends StatelessWidget {
   final String initialValue;
   final TextEditingController? controller;
   final bool enabled;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   const AppTextField({
     super.key,
@@ -31,6 +33,8 @@ class AppTextField extends StatelessWidget {
     this.initialValue = '',
     this.controller,
     this.enabled = true,
+    this.readOnly = false,
+    this.onTap,
   }) : assert(
          controller == null || initialValue == '',
          'Provide either controller or initialValue, not both.',
@@ -48,6 +52,8 @@ class AppTextField extends StatelessWidget {
           controller: controller,
           initialValue: controller == null ? initialValue : null,
           enabled: enabled,
+          readOnly: readOnly,
+          onTap: onTap,
           obscureText: isPassword && obscureText,
           keyboardType: keyboardType,
           textInputAction: textInputAction,

@@ -352,7 +352,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       securityControllers['New Password']?.clear();
       securityControllers['Confirm New Password']?.clear();
       isEditing = false;
-      emit(ProfileSaved());
+      emit(ProfilePasswordChangedRequiresRelogin());
     } catch (e) {
       emit(ProfileError('Failed to update security settings: $e'));
     }
