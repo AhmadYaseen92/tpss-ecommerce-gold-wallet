@@ -51,6 +51,21 @@ class ProfileRemoteDataSource {
     );
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final userId = _requireUserId();
+    await _dio.put(
+      '/profile/password',
+      data: {
+        'userId': userId,
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      },
+    );
+  }
+
   Future<void> upsertPaymentMethod({
     int? paymentMethodId,
     required String type,

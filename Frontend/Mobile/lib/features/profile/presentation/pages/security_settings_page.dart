@@ -75,7 +75,7 @@ class SecuritySettingsPage extends StatelessWidget {
                         cubit: cubit,
                         label: 'Save Changes',
                         onPressed: () {
-                          cubit.save();
+                          cubit.saveSecuritySettings();
                           AppModalAlert.show(context, title: 'Saved', message: 'Security settings updated successfully');
                         },
                       ),

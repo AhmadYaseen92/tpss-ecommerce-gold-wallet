@@ -17,9 +17,16 @@ class PaymentMethodsPage extends StatelessWidget {
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
           final cubit = BlocProvider.of<ProfileCubit>(context);
-          final selectedMethod =
-              cubit.paymentMethods[cubit.selectedPaymentIndex];
           final palette = context.appPalette;
+          final hasMethods = cubit.paymentMethods.isNotEmpty;
+          final selectedMethod = hasMethods
+              ? cubit.paymentMethods[cubit.selectedPaymentIndex]
+              : const ProfileOption(
+                  name: 'No payment methods yet',
+                  subtitle: 'Tap Add Method to create one',
+                  icon: Icons.credit_card,
+                  fields: [ProfileField('Masked Number', Icons.credit_card)],
+                );
 
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -61,38 +68,48 @@ class PaymentMethodsPage extends StatelessWidget {
                       const SizedBox(height: 16),
                       const FormSectionLabel(label: 'SELECT PAYMENT METHOD'),
                       const SizedBox(height: 10),
+                      if (cubit.isEditing)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: cubit.addPaymentMethod,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add Method'),
+                          ),
+                        ),
                       SizedBox(
                         height: 44,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: cubit.paymentMethods.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 8),
-                          itemBuilder: (context, index) {
-                            final method = cubit.paymentMethods[index];
-                            final selected =
-                                index == cubit.selectedPaymentIndex;
-                            return ChoiceChip(
-                              label: Text(method.name),
-                              selected: selected,
-                              showCheckmark: false,
-                              avatar: Icon(
-                                method.icon,
-                                size: 18,
-                                color: selected
-                                    ? palette.primary
-                                    : palette.textSecondary,
+                        child: hasMethods
+                            ? ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: cubit.paymentMethods.length,
+                                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                                itemBuilder: (context, index) {
+                                  final method = cubit.paymentMethods[index];
+                                  final selected = index == cubit.selectedPaymentIndex;
+                                  return ChoiceChip(
+                                    label: Text(method.name),
+                                    selected: selected,
+                                    showCheckmark: false,
+                                    avatar: Icon(
+                                      method.icon,
+                                      size: 18,
+                                      color: selected ? palette.primary : palette.textSecondary,
+                                    ),
+                                    onSelected: (_) => cubit.selectPaymentMethod(index),
+                                    selectedColor: palette.surfaceMuted,
+                                    side: BorderSide(
+                                      color: selected ? palette.primary : palette.border,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Center(
+                                child: Text(
+                                  'No methods from server',
+                                  style: TextStyle(color: palette.textSecondary),
+                                ),
                               ),
-                              onSelected: (_) =>
-                                  cubit.selectPaymentMethod(index),
-                              selectedColor: palette.surfaceMuted,
-                              side: BorderSide(
-                                color: selected
-                                    ? palette.primary
-                                    : palette.border,
-                              ),
-                            );
-                          },
-                        ),
                       ),
                       const SizedBox(height: 14),
                       Container(
@@ -130,7 +147,7 @@ class PaymentMethodsPage extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (cubit.isEditing) ...[
+                      if (cubit.isEditing && hasMethods) ...[
                         const SizedBox(height: 16),
                         AppButton(
                           cubit: cubit,

@@ -58,26 +58,9 @@ class ProfileCubit extends Cubit<ProfileState> {
   String profileDisplayPhone = '';
   String profilePhotoUrl = '';
 
-  List<ProfileOption> paymentMethods = const [
-    ProfileOption(
-      name: 'Card',
-      subtitle: 'Default payment method',
-      icon: Icons.credit_card,
-      fields: [ProfileField('Masked Number', Icons.credit_card)],
-    ),
-  ];
+  List<ProfileOption> paymentMethods = [];
 
-  List<ProfileOption> bankAccounts = const [
-    ProfileOption(
-      name: 'Bank Account',
-      subtitle: 'Default linked bank',
-      icon: Icons.account_balance_outlined,
-      fields: [
-        ProfileField('Bank Name', Icons.account_balance_outlined),
-        ProfileField('IBAN', Icons.credit_card_outlined),
-      ],
-    ),
-  ];
+  List<ProfileOption> bankAccounts = [];
 
   void _initializeControllers() {
     personalControllers.addAll({
@@ -132,7 +115,7 @@ class ProfileCubit extends Cubit<ProfileState> {
                   ),
                 )
                 .toList()
-          : paymentMethods;
+          : [];
 
       bankAccounts = profile.linkedBankAccounts.isNotEmpty
           ? profile.linkedBankAccounts
@@ -149,7 +132,9 @@ class ProfileCubit extends Cubit<ProfileState> {
                   ),
                 )
                 .toList()
-          : bankAccounts;
+          : [];
+
+      selectedNationality = normalizeNationalityValue(selectedNationality);
 
       selectedPaymentIndex = 0;
       selectedBankIndex = 0;
@@ -194,6 +179,20 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
+  Future<void> saveThemeSettings() async {
+    try {
+      await _remoteDataSource.updateSettings(
+        preferredLanguage: _languageCodeFromUi(selectedLanguage),
+        preferredTheme: _themeCodeFromUi(selectedTheme),
+      );
+      isEditing = false;
+      emit(ProfileSaved());
+      await loadProfile();
+    } catch (e) {
+      emit(ProfileError('Failed to save theme settings: $e'));
+    }
+  }
+
   Future<void> savePaymentMethod() async {
     try {
       final selected = paymentMethods[selectedPaymentIndex];
@@ -228,6 +227,36 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
+  Future<void> saveSecuritySettings() async {
+    final currentPassword = securityControllers['Current Password']?.text.trim() ?? '';
+    final newPassword = securityControllers['New Password']?.text.trim() ?? '';
+    final confirmPassword = securityControllers['Confirm New Password']?.text.trim() ?? '';
+
+    if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+      emit(ProfileError('Please fill all password fields.'));
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      emit(ProfileError('New password and confirm password do not match.'));
+      return;
+    }
+
+    try {
+      await _remoteDataSource.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      securityControllers['Current Password']?.clear();
+      securityControllers['New Password']?.clear();
+      securityControllers['Confirm New Password']?.clear();
+      isEditing = false;
+      emit(ProfileSaved());
+    } catch (e) {
+      emit(ProfileError('Failed to update security settings: $e'));
+    }
+  }
+
   void toggleEdit() {
     isEditing = !isEditing;
     emit(ProfileEditingChanged(isEditing: isEditing));
@@ -239,15 +268,50 @@ class ProfileCubit extends Cubit<ProfileState> {
   }
 
   void selectPaymentMethod(int index) {
+    if (paymentMethods.isEmpty || index < 0 || index >= paymentMethods.length) return;
     selectedPaymentIndex = index;
     _rebuildPaymentControllers(index);
     emit(ProfilePaymentMethodChanged(selectedIndex: index));
   }
 
   void selectBankAccount(int index) {
+    if (bankAccounts.isEmpty || index < 0 || index >= bankAccounts.length) return;
     selectedBankIndex = index;
     _rebuildBankControllers(index);
     emit(ProfileBankAccountChanged(selectedIndex: index));
+  }
+
+  void addPaymentMethod() {
+    paymentMethods = [
+      ...paymentMethods,
+      const ProfileOption(
+        name: 'Card',
+        subtitle: 'New method',
+        icon: Icons.credit_card,
+        fields: [ProfileField('Masked Number', Icons.credit_card)],
+      ),
+    ];
+    selectedPaymentIndex = paymentMethods.length - 1;
+    _rebuildPaymentControllers(selectedPaymentIndex);
+    emit(ProfilePaymentMethodChanged(selectedIndex: selectedPaymentIndex));
+  }
+
+  void addBankAccount() {
+    bankAccounts = [
+      ...bankAccounts,
+      const ProfileOption(
+        name: 'New Bank',
+        subtitle: 'Unverified',
+        icon: Icons.account_balance_outlined,
+        fields: [
+          ProfileField('Bank Name', Icons.account_balance_outlined),
+          ProfileField('IBAN', Icons.credit_card_outlined),
+        ],
+      ),
+    ];
+    selectedBankIndex = bankAccounts.length - 1;
+    _rebuildBankControllers(selectedBankIndex);
+    emit(ProfileBankAccountChanged(selectedIndex: selectedBankIndex));
   }
 
   void selectBiometric(String value) {
@@ -349,6 +413,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     String defaultValue = '';
     if (profile != null && profile.paymentMethods.isNotEmpty && index < profile.paymentMethods.length) {
       defaultValue = profile.paymentMethods[index].maskedNumber;
+    } else if (paymentMethods.isNotEmpty && index < paymentMethods.length && paymentMethods[index].fields.isNotEmpty) {
+      defaultValue = '';
     }
 
     paymentControllers.add(TextEditingController(text: defaultValue));
@@ -371,6 +437,12 @@ class ProfileCubit extends Cubit<ProfileState> {
     bankControllers
       ..add(TextEditingController(text: bankName))
       ..add(TextEditingController(text: iban));
+  }
+
+  static String normalizeNationalityValue(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) return 'Unknown';
+    return trimmed;
   }
 
   @override
