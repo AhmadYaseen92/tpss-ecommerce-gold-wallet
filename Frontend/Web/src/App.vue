@@ -517,9 +517,18 @@ const downloadReport = () => {
             <small>Upload JPG/PNG image for display in product details.</small>
           </label>
 
-          <label class="checkbox-line form-checkbox-field">
-            <input v-model="productForm.isActive" type="checkbox" /> Product is active
-          </label>
+          <div class="form-toggle-row form-checkbox-field">
+            <span>Product Status</span>
+            <button
+              type="button"
+              class="modern-toggle"
+              :class="{ active: productForm.isActive }"
+              @click="productForm.isActive = !productForm.isActive"
+            >
+              <span class="toggle-thumb"></span>
+              <span class="toggle-label">{{ productForm.isActive ? 'Active' : 'Inactive' }}</span>
+            </button>
+          </div>
         </div>
 
         <div class="report-actions">

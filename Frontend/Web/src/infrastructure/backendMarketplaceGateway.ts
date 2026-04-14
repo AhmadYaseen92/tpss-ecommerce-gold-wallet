@@ -213,7 +213,34 @@ export interface ProductFormPayload {
 }
 
 export async function fetchManagedProducts(accessToken: string): Promise<ProductManagementDto[]> {
-  return getJson<ProductManagementDto[]>("/api/products/management", accessToken);
+  try {
+    return await getJson<ProductManagementDto[]>("/api/products/management", accessToken);
+  } catch (error) {
+    if (error instanceof HttpError && error.statusCode === 404) {
+      const searchResult = await postJson<PagedResult<ProductDto>, { pageNumber: number; pageSize: number; category: null }>(
+        "/api/products/search",
+        { pageNumber: 1, pageSize: 100, category: null },
+        accessToken
+      );
+
+      return searchResult.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        sku: item.sku,
+        description: item.description,
+        imageUrl: item.imageUrl,
+        category: item.category,
+        weightValue: item.weightValue,
+        weightUnit: item.weightUnit,
+        price: item.price,
+        availableStock: item.availableStock,
+        isActive: true,
+        sellerId: item.sellerId
+      }));
+    }
+
+    throw error;
+  }
 }
 
 export async function fetchProductCategories(accessToken: string): Promise<EnumItemDto[]> {
