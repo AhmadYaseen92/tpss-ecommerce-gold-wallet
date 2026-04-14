@@ -6,14 +6,15 @@ import { statusClass } from "../../../shared/services/statusStyles";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
-const iv = useInvestors(props.marketplace);
+const { selectedInvestorId, investorRows, selectedInvestor, toggleInvestorStatus } = useInvestors(props.marketplace);
+
 const viewInvestor = (id: string) => {
-  iv.selectedInvestorId.value = id;
+  selectedInvestorId.value = id;
 };
 </script>
 
 <template>
   <SectionCard title="Investors">
-    <InvestorsPage :investors="iv.investorRows" :selected="iv.selectedInvestor" :status-class="statusClass" @view="viewInvestor" @toggle="iv.toggleInvestorStatus" />
+    <InvestorsPage :investors="investorRows" :selected="selectedInvestor" :status-class="statusClass" @view="viewInvestor" @toggle="toggleInvestorStatus" />
   </SectionCard>
 </template>

@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import type { InvestorRowView } from "../types/investorTypes";
 
-defineProps<{ investors: InvestorRowView[]; selected: InvestorRowView | null; statusClass: (status: string) => string }>();
+withDefaults(
+  defineProps<{
+    investors?: InvestorRowView[];
+    selected?: InvestorRowView | null;
+    statusClass: (status?: string | null) => string;
+  }>(),
+  {
+    investors: () => [],
+    selected: null,
+  }
+);
+
 const emit = defineEmits<{ view: [id: string]; toggle: [id: string] }>();
 </script>
 
