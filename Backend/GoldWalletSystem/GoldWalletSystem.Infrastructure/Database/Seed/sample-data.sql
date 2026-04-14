@@ -22,6 +22,8 @@ BEGIN TRY
             (
                 N'Imseeh',
                 N'IMSEEH',
+                N'imseeh.seller@example.com',
+                N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000',
                 N'contact@imseeh.com',
                 N'+962700000001',
                 N'Jordan',
@@ -43,6 +45,8 @@ BEGIN TRY
             (
                 N'Gold Palace',
                 N'GOLDPAL',
+                N'goldpal.seller@example.com',
+                N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000',
                 N'contact@goldpalace.com',
                 N'+15550000002',
                 N'United States',
@@ -64,6 +68,8 @@ BEGIN TRY
             (
                 N'Bullion House',
                 N'BULLION',
+                N'bullion.seller@example.com',
+                N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000',
                 N'contact@bullionhouse.com',
                 N'+15550000003',
                 N'United States',
@@ -83,7 +89,7 @@ BEGIN TRY
                 N'/kyc/bullion/trade-license.pdf'
             )
     ) AS S(
-        [Name],[Code],[ContactEmail],[ContactPhone],
+        [Name],[Code],[Email],[PasswordHash],[ContactEmail],[ContactPhone],
         [Country],[City],[Street],[BuildingNumber],[PostalCode],
         [CompanyName],[TradeLicenseNumber],[VatNumber],[NationalIdNumber],
         [BankName],[IBAN],[AccountHolderName],
@@ -93,6 +99,8 @@ BEGIN TRY
     WHEN MATCHED THEN
         UPDATE SET
             T.[Name] = S.[Name],
+            T.[Email] = S.[Email],
+            T.[PasswordHash] = S.[PasswordHash],
             T.[ContactEmail] = S.[ContactEmail],
             T.[ContactPhone] = S.[ContactPhone],
             T.[Country] = S.[Country],
@@ -117,7 +125,7 @@ BEGIN TRY
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
         INSERT (
-            [Name],[Code],[ContactEmail],[ContactPhone],[IsActive],
+            [Name],[Code],[Email],[PasswordHash],[ContactEmail],[ContactPhone],[IsActive],
             [Country],[City],[Street],[BuildingNumber],[PostalCode],
             [CompanyName],[TradeLicenseNumber],[VatNumber],[NationalIdNumber],
             [BankName],[IBAN],[AccountHolderName],
@@ -125,7 +133,7 @@ BEGIN TRY
             [KycStatus],[ReviewedAtUtc],[ReviewNotes],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES (
-            S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],1,
+            S.[Name],S.[Code],S.[Email],S.[PasswordHash],S.[ContactEmail],S.[ContactPhone],1,
             S.[Country],S.[City],S.[Street],S.[BuildingNumber],S.[PostalCode],
             S.[CompanyName],S.[TradeLicenseNumber],S.[VatNumber],S.[NationalIdNumber],
             S.[BankName],S.[IBAN],S.[AccountHolderName],

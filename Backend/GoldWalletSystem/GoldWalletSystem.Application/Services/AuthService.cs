@@ -117,6 +117,8 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
         {
             Name = fullName,
             Code = BuildSellerCode(request),
+            Email = request.Email.Trim(),
+            PasswordHash = passwordHasher.Hash(request.Password),
             ContactEmail = request.Email.Trim(),
             ContactPhone = request.PhoneNumber?.Trim(),
             IsActive = false,

@@ -66,6 +66,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
             entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.Email).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.PasswordHash).IsRequired().HasMaxLength(500);
             entity.Property(x => x.ContactEmail).HasMaxLength(200);
             entity.Property(x => x.ContactPhone).HasMaxLength(50);
             entity.Property(x => x.Country).IsRequired().HasMaxLength(80);
@@ -86,6 +88,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.KycStatus).HasConversion<int>();
             entity.Property(x => x.ReviewNotes).HasMaxLength(1000);
             entity.HasIndex(x => x.Code).IsUnique();
+            entity.HasIndex(x => x.Email).IsUnique();
             entity.HasIndex(x => x.Name);
             entity.HasIndex(x => x.KycStatus);
         });

@@ -55,7 +55,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             {
                 Id = $"s-{x.Id}",
                 Name = x.Name,
-                Email = x.ContactEmail ?? string.Empty,
+                Email = x.Email,
                 BusinessName = x.CompanyName,
                 KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
                 SubmittedAt = x.CreatedAtUtc
