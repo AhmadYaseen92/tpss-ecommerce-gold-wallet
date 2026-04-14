@@ -28,7 +28,7 @@ A modern web app flow similar to common SaaS dashboards:
 
 Default backend URL:
 
-- `VITE_API_BASE_URL=http://localhost:5294`
+- `VITE_API_BASE_URL=http://localhost:5095`
 
 Current integrated endpoints:
 

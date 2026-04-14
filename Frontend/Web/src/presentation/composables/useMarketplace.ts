@@ -64,7 +64,11 @@ export function useMarketplace() {
       role.value = authSession.role;
       state.value = await fetchMarketplaceState(authSession);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Login failed";
+      if (err instanceof TypeError) {
+        error.value = "Cannot reach API server. Check VITE_API_BASE_URL and backend CORS/run status.";
+      } else {
+        error.value = err instanceof Error ? err.message : "Login failed";
+      }
     } finally {
       loading.value = false;
     }
