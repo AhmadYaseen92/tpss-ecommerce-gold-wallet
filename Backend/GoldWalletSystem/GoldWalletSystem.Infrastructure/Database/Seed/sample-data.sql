@@ -238,11 +238,22 @@ BEGIN TRY
     DECLARE @InvestorGoldPal int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'goldpal.investor1@example.com');
     DECLARE @SellerUserImseeh int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'imseeh.seller@example.com');
 
-    INSERT INTO [TransactionHistories] ([UserId],[TransactionType],[Amount],[Currency],[Reference],[CreatedAtUtc],[UpdatedAtUtc])
-    VALUES
-        (@InvestorMain, N'withdrawal', 1200, N'USD', N'channel=webadmin|status=pending', DATEADD(DAY, -1, @Now), NULL),
-        (@InvestorImseeh, N'sell', 740, N'USD', N'channel=webadmin|status=approved', DATEADD(DAY, -2, @Now), NULL),
-        (@InvestorGoldPal, N'transfer', 350, N'USD', N'channel=webadmin|status=rejected', DATEADD(DAY, -3, @Now), NULL);
+    IF COL_LENGTH('TransactionHistories', 'SellerId') IS NOT NULL
+    BEGIN
+        INSERT INTO [TransactionHistories] ([UserId],[SellerId],[TransactionType],[Amount],[Currency],[Reference],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES
+            (@InvestorMain, @SellerImseeh, N'withdrawal', 1200, N'USD', N'channel=webadmin|status=pending', DATEADD(DAY, -1, @Now), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'sell', 740, N'USD', N'channel=webadmin|status=approved', DATEADD(DAY, -2, @Now), NULL),
+            (@InvestorGoldPal, @SellerGoldPal, N'transfer', 350, N'USD', N'channel=webadmin|status=rejected', DATEADD(DAY, -3, @Now), NULL);
+    END
+    ELSE
+    BEGIN
+        INSERT INTO [TransactionHistories] ([UserId],[TransactionType],[Amount],[Currency],[Reference],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES
+            (@InvestorMain, N'withdrawal', 1200, N'USD', N'channel=webadmin|status=pending', DATEADD(DAY, -1, @Now), NULL),
+            (@InvestorImseeh, N'sell', 740, N'USD', N'channel=webadmin|status=approved', DATEADD(DAY, -2, @Now), NULL),
+            (@InvestorGoldPal, N'transfer', 350, N'USD', N'channel=webadmin|status=rejected', DATEADD(DAY, -3, @Now), NULL);
+    END
 
     INSERT INTO [AppNotifications] ([UserId],[Title],[Body],[IsRead],[CreatedAtUtc],[UpdatedAtUtc])
     VALUES
