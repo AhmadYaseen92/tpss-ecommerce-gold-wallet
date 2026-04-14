@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import type { NavigationKey, NotificationItem, UserRole } from "../../domain/models";
 
 defineProps<{
@@ -20,6 +20,44 @@ const emit = defineEmits<{
 
 const openNotifications = ref(false);
 const openSettings = ref(false);
+const passwordForm = reactive({ currentPassword: "", newPassword: "", confirmPassword: "" });
+const passwordMessage = ref("");
+
+const closeAllPanels = () => {
+  openNotifications.value = false;
+  openSettings.value = false;
+};
+
+const onEsc = (event: KeyboardEvent) => {
+  if (event.key === "Escape") {
+    closeAllPanels();
+  }
+};
+
+const submitPasswordChange = () => {
+  if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+    passwordMessage.value = "Please fill all password fields.";
+    return;
+  }
+
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    passwordMessage.value = "New password and confirm password do not match.";
+    return;
+  }
+
+  passwordMessage.value = "Password updated successfully (demo).";
+  passwordForm.currentPassword = "";
+  passwordForm.newPassword = "";
+  passwordForm.confirmPassword = "";
+};
+
+onMounted(() => {
+  window.addEventListener("keydown", onEsc);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onEsc);
+});
 </script>
 
 <template>
@@ -51,7 +89,7 @@ const openSettings = ref(false);
         </div>
 
         <div class="top-actions modern">
-          <button class="top-action-btn" @click="openNotifications = !openNotifications" title="Notifications">
+          <button class="top-action-btn" @click="openNotifications = !openNotifications; openSettings = false" title="Notifications">
             <span>🔔</span>
             <span>Notifications</span>
             <small v-if="notifications.filter((item) => !item.isRead).length > 0" class="badge">
@@ -62,7 +100,7 @@ const openSettings = ref(false);
             <span>{{ isDark ? "☀️" : "🌙" }}</span>
             <span>{{ isDark ? "Light" : "Dark" }}</span>
           </button>
-          <button class="top-action-btn" @click="openSettings = !openSettings" title="Settings">
+          <button class="top-action-btn" @click="openSettings = !openSettings; openNotifications = false" title="Settings">
             <span>⚙️</span>
             <span>Settings</span>
           </button>
@@ -73,8 +111,13 @@ const openSettings = ref(false);
         </div>
       </header>
 
+      <div v-if="openNotifications || openSettings" class="panel-overlay" @click="closeAllPanels"></div>
+
       <aside v-if="openNotifications" class="vertical-modal right">
-        <h4>Notifications</h4>
+        <div class="modal-head">
+          <h4>Notifications</h4>
+          <button class="ghost" @click="openNotifications = false">✕</button>
+        </div>
         <ul>
           <li v-for="notice in notifications.slice(0, 8)" :key="notice.id">
             <div>
@@ -87,13 +130,17 @@ const openSettings = ref(false);
       </aside>
 
       <aside v-if="openSettings" class="vertical-modal right settings">
-        <h4>Settings</h4>
-        <div class="settings-list">
-          <button class="ghost" @click="emit('themeToggle')">Toggle Theme</button>
-          <button class="ghost">Profile Preferences</button>
-          <button class="ghost">Security</button>
-          <button class="danger" @click="emit('logout')">Logout</button>
+        <div class="modal-head">
+          <h4>Change Password</h4>
+          <button class="ghost" @click="openSettings = false">✕</button>
         </div>
+        <form class="settings-list" @submit.prevent="submitPasswordChange">
+          <input v-model="passwordForm.currentPassword" type="password" placeholder="Current password" />
+          <input v-model="passwordForm.newPassword" type="password" placeholder="New password" />
+          <input v-model="passwordForm.confirmPassword" type="password" placeholder="Confirm new password" />
+          <button type="submit">Update Password</button>
+          <p v-if="passwordMessage" class="settings-message">{{ passwordMessage }}</p>
+        </form>
       </aside>
 
       <slot />
