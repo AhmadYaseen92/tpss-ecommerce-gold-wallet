@@ -30,6 +30,15 @@ export interface RegisterResponseDto {
   sellerId: number;
 }
 
+export interface WebSellerDto {
+  id: string;
+  name: string;
+  email: string;
+  businessName: string;
+  kycStatus: string;
+  submittedAt: string;
+}
+
 export interface DashboardDto {
   userId: number;
   fullName: string;

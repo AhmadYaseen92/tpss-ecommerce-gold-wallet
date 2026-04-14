@@ -9,6 +9,20 @@ export interface RegisterFormModel {
   email: string;
   password: string;
   confirmPassword: string;
-  businessName: string;
-  idNumber: string;
+  phoneNumber: string;
+  country: string;
+  city: string;
+  street: string;
+  buildingNumber: string;
+  postalCode: string;
+  companyName: string;
+  tradeLicenseNumber: string;
+  vatNumber: string;
+  nationalIdNumber: string;
+  bankName: string;
+  iban: string;
+  accountHolderName: string;
+  nationalIdFrontPath: string;
+  nationalIdBackPath: string;
+  tradeLicensePath: string;
 }

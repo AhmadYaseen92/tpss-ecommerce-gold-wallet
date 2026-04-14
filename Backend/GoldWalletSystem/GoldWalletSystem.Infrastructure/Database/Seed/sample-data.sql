@@ -19,22 +19,127 @@ BEGIN TRY
     MERGE [Sellers] AS T
     USING (
         VALUES
-            (N'Imseeh',        N'IMSEEH',  N'contact@imseeh.com',       N'+962700000001', N'Amman, Jordan'),
-            (N'Gold Palace',   N'GOLDPAL', N'contact@goldpalace.com',   N'+15550000002',  N'Dallas, TX'),
-            (N'Bullion House', N'BULLION', N'contact@bullionhouse.com', N'+15550000003',  N'Miami, FL')
-    ) AS S([Name],[Code],[ContactEmail],[ContactPhone],[Address])
+            (
+                N'Imseeh',
+                N'IMSEEH',
+                N'imseeh.seller@example.com',
+                N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000',
+                N'contact@imseeh.com',
+                N'+962700000001',
+                N'Jordan',
+                N'Amman',
+                N'Wasfi Al Tal St',
+                N'12A',
+                N'11181',
+                N'Imseeh Precious Metals LLC',
+                N'TL-IMSEEH-001',
+                N'VAT-IMSEEH-001',
+                N'9876543210',
+                N'Arab Bank',
+                N'JO94CBJO0010000000000131000302',
+                N'Imseeh Trading LLC',
+                N'/kyc/imseeh/national-id-front.png',
+                N'/kyc/imseeh/national-id-back.png',
+                N'/kyc/imseeh/trade-license.pdf'
+            ),
+            (
+                N'Gold Palace',
+                N'GOLDPAL',
+                N'goldpal.seller@example.com',
+                N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000',
+                N'contact@goldpalace.com',
+                N'+15550000002',
+                N'United States',
+                N'Dallas',
+                N'Elm Street',
+                N'401',
+                N'75201',
+                N'Gold Palace Inc.',
+                N'TL-GOLDPAL-002',
+                N'VAT-GOLDPAL-002',
+                N'1234509876',
+                N'Bank of America',
+                N'US64SVBKUS6S3300958879',
+                N'Gold Palace Inc.',
+                N'/kyc/goldpal/national-id-front.png',
+                N'/kyc/goldpal/national-id-back.png',
+                N'/kyc/goldpal/trade-license.pdf'
+            ),
+            (
+                N'Bullion House',
+                N'BULLION',
+                N'bullion.seller@example.com',
+                N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000',
+                N'contact@bullionhouse.com',
+                N'+15550000003',
+                N'United States',
+                N'Miami',
+                N'Biscayne Blvd',
+                N'908',
+                N'33132',
+                N'Bullion House LLC',
+                N'TL-BULLION-003',
+                N'VAT-BULLION-003',
+                N'5566778899',
+                N'Wells Fargo',
+                N'US37WFBI00000000001234123412',
+                N'Bullion House LLC',
+                N'/kyc/bullion/national-id-front.png',
+                N'/kyc/bullion/national-id-back.png',
+                N'/kyc/bullion/trade-license.pdf'
+            )
+    ) AS S(
+        [Name],[Code],[Email],[PasswordHash],[ContactEmail],[ContactPhone],
+        [Country],[City],[Street],[BuildingNumber],[PostalCode],
+        [CompanyName],[TradeLicenseNumber],[VatNumber],[NationalIdNumber],
+        [BankName],[IBAN],[AccountHolderName],
+        [NationalIdFrontPath],[NationalIdBackPath],[TradeLicensePath]
+    )
     ON T.[Code] = S.[Code]
     WHEN MATCHED THEN
         UPDATE SET
             T.[Name] = S.[Name],
+            T.[Email] = S.[Email],
+            T.[PasswordHash] = S.[PasswordHash],
             T.[ContactEmail] = S.[ContactEmail],
             T.[ContactPhone] = S.[ContactPhone],
-            T.[Address] = S.[Address],
+            T.[Country] = S.[Country],
+            T.[City] = S.[City],
+            T.[Street] = S.[Street],
+            T.[BuildingNumber] = S.[BuildingNumber],
+            T.[PostalCode] = S.[PostalCode],
+            T.[CompanyName] = S.[CompanyName],
+            T.[TradeLicenseNumber] = S.[TradeLicenseNumber],
+            T.[VatNumber] = S.[VatNumber],
+            T.[NationalIdNumber] = S.[NationalIdNumber],
+            T.[BankName] = S.[BankName],
+            T.[IBAN] = S.[IBAN],
+            T.[AccountHolderName] = S.[AccountHolderName],
+            T.[NationalIdFrontPath] = S.[NationalIdFrontPath],
+            T.[NationalIdBackPath] = S.[NationalIdBackPath],
+            T.[TradeLicensePath] = S.[TradeLicensePath],
+            T.[KycStatus] = 1,
+            T.[ReviewedAtUtc] = @Now,
+            T.[ReviewNotes] = N'Seeded as approved seller',
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([Name],[Code],[ContactEmail],[ContactPhone],[Address],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],S.[Address],1,@Now,NULL);
+        INSERT (
+            [Name],[Code],[Email],[PasswordHash],[ContactEmail],[ContactPhone],[IsActive],
+            [Country],[City],[Street],[BuildingNumber],[PostalCode],
+            [CompanyName],[TradeLicenseNumber],[VatNumber],[NationalIdNumber],
+            [BankName],[IBAN],[AccountHolderName],
+            [NationalIdFrontPath],[NationalIdBackPath],[TradeLicensePath],
+            [KycStatus],[ReviewedAtUtc],[ReviewNotes],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        VALUES (
+            S.[Name],S.[Code],S.[Email],S.[PasswordHash],S.[ContactEmail],S.[ContactPhone],1,
+            S.[Country],S.[City],S.[Street],S.[BuildingNumber],S.[PostalCode],
+            S.[CompanyName],S.[TradeLicenseNumber],S.[VatNumber],S.[NationalIdNumber],
+            S.[BankName],S.[IBAN],S.[AccountHolderName],
+            S.[NationalIdFrontPath],S.[NationalIdBackPath],S.[TradeLicensePath],
+            1,@Now,N'Seeded as approved seller',@Now,NULL
+        );
 
     DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'IMSEEH');
     DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'GOLDPAL');
@@ -52,6 +157,9 @@ BEGIN TRY
 
     INSERT INTO @Users (FullName, Email, PasswordHash, Role, SellerId, PhoneNumber)
     VALUES
+        (N'Imseeh Seller',        N'imseeh.seller@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Seller',   @SellerImseeh,  N'+962700000001'),
+        (N'GoldPal Seller',       N'goldpal.seller@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Seller',   @SellerGoldPal, N'+15550000002'),
+        (N'Bullion Seller',       N'bullion.seller@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Seller',   @SellerBullion, N'+15550000003'),
         (N'Imseeh Admin',         N'imseeh.admin@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerImseeh,  N'+15551010001'),
         (N'GoldPal Admin',        N'goldpal.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerGoldPal, N'+15551020001'),
         (N'Bullion Admin',        N'bullion.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerBullion, N'+15551030001'),
@@ -128,7 +236,7 @@ BEGIN TRY
     DECLARE @InvestorMain int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'investor@goldwallet.com');
     DECLARE @InvestorImseeh int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'imseeh.investor1@example.com');
     DECLARE @InvestorGoldPal int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'goldpal.investor1@example.com');
-    DECLARE @SellerUserImseeh int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'imseeh.admin@example.com');
+    DECLARE @SellerUserImseeh int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'imseeh.seller@example.com');
 
     INSERT INTO [TransactionHistories] ([UserId],[TransactionType],[Amount],[Currency],[Reference],[CreatedAtUtc],[UpdatedAtUtc])
     VALUES
@@ -276,6 +384,9 @@ SELECT COUNT(*) AS SellerCount FROM [Sellers];
 SELECT COUNT(*) AS SeedUserCount
 FROM [Users]
 WHERE [Email] IN (
+    N'imseeh.seller@example.com',
+    N'goldpal.seller@example.com',
+    N'bullion.seller@example.com',
     N'imseeh.admin@example.com',
     N'goldpal.admin@example.com',
     N'bullion.admin@example.com',
