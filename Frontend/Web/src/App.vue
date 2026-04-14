@@ -49,13 +49,14 @@ const menuItems = computed(() => {
   const common: Array<{ key: NavigationKey; label: string }> = [
     { key: "overview", label: "Dashboard" },
     { key: "products", label: "Products" },
-    { key: "investors", label: "Investors" },
     { key: "requests", label: "Transactions" },
     { key: "reports", label: "Reports" },
     { key: "logout", label: "Logout" }
   ];
 
-  return marketplace.role.value === "admin" ? [...common, { key: "fees", label: "Fees" }] : common;
+  return marketplace.role.value === "admin"
+    ? [...common.slice(0, 2), { key: "investors", label: "Investors" }, ...common.slice(2), { key: "fees", label: "Fees" }]
+    : common;
 });
 
 const activeMenu = computed<NavigationKey>(() => {
@@ -73,7 +74,7 @@ watch(activeMenu, (menu) => {
 
 const activeComponent = computed(() => {
   if (currentPath.value.startsWith("/products")) return ProductFeaturePage;
-  if (currentPath.value.startsWith("/investors")) return InvestorsFeaturePage;
+  if (currentPath.value.startsWith("/investors")) return marketplace.role.value === "admin" ? InvestorsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/transactions")) return TransactionsFeaturePage;
   if (currentPath.value.startsWith("/fees")) return FeesFeaturePage;
   if (currentPath.value.startsWith("/reports")) return ReportsFeaturePage;

@@ -80,6 +80,8 @@ public class WebDashboardDto
     public List<WebDashboardCardDto> Cards { get; set; } = [];
     public List<WebDashboardSegmentDto> StatusSegments { get; set; } = [];
     public List<WebDashboardSegmentDto> CategorySegments { get; set; } = [];
+    public List<WebDashboardPointDto> CategoryTransactionSeries { get; set; } = [];
+    public List<WebDashboardPointDto> CategoryCartSeries { get; set; } = [];
     public List<WebRecentTransactionDto> RecentTransactions { get; set; } = [];
 }
 
@@ -107,4 +109,10 @@ public class WebRecentTransactionDto
     public decimal Amount { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+}
+
+public class WebDashboardPointDto
+{
+    public string Label { get; set; } = string.Empty;
+    public int Value { get; set; }
 }

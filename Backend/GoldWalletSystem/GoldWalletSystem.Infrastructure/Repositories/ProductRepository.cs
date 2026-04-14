@@ -14,7 +14,10 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
     public async Task<PagedResult<ProductDto>> GetPagedAsync(int pageNumber, int pageSize, ProductCategory? category = null, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Products.AsNoTracking().Where(x => x.IsActive);
-        _ = currentUser;
+        if (!currentUser.IsInRole("Admin") && currentUser.SellerId.HasValue)
+        {
+            query = query.Where(x => x.SellerId == currentUser.SellerId.Value);
+        }
 
         if (category.HasValue)
         {

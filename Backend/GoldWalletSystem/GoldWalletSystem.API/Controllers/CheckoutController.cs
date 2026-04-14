@@ -91,13 +91,18 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             var grams = ToGrams(product.WeightValue, product.WeightUnit) * quantity;
             var assetType = ToAssetType(product.Category);
             var sellerName = product.Seller?.Name ?? string.Empty;
-            var existingAsset = wallet.Assets.FirstOrDefault(a => a.AssetType == assetType && a.SellerName == sellerName);
+            var existingAsset = wallet.Assets.FirstOrDefault(a =>
+                a.AssetType == assetType &&
+                a.Category == product.Category &&
+                a.SellerId == product.SellerId);
 
             if (existingAsset is null)
             {
                 wallet.Assets.Add(new WalletAsset
                 {
                     AssetType = assetType,
+                    Category = product.Category,
+                    SellerId = product.SellerId,
                     Weight = grams,
                     Unit = "gram",
                     Purity = ParsePurity(product.Description),
@@ -119,12 +124,15 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
                 existingAsset.Weight += grams;
                 existingAsset.CurrentMarketPrice = product.Price;
                 existingAsset.SellerName = sellerName;
+                existingAsset.Category = product.Category;
+                existingAsset.SellerId = product.SellerId;
                 existingAsset.UpdatedAtUtc = DateTime.UtcNow;
             }
 
             dbContext.TransactionHistories.Add(new TransactionHistory
             {
                 UserId = request.UserId,
+                SellerId = product.SellerId,
                 TransactionType = "BUY",
                 Amount = product.Price * quantity,
                 Currency = wallet.CurrencyCode,

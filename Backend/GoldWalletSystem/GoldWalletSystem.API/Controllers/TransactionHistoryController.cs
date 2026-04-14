@@ -15,33 +15,26 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] UserPagedRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        var data = await transactionHistoryService.GetByUserIdAsync(request.UserId, request.PageNumber, request.PageSize, cancellationToken);
+        var effectiveRequest = BuildScopedFilter(request.UserId, request.PageNumber, request.PageSize);
+        if (!HasUserAccess(effectiveRequest.UserId)) return ForbidApiResponse();
+        var data = await transactionHistoryService.FilterAsync(effectiveRequest, cancellationToken);
         return Ok(ApiResponse<PagedResult<TransactionHistoryDto>>.Ok(data));
     }
 
     [HttpPost("filter")]
     public async Task<IActionResult> Filter([FromBody] TransactionHistoryFilterRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        var data = await transactionHistoryService.FilterAsync(request, cancellationToken);
+        var effectiveRequest = BuildScopedFilter(request.UserId, request.PageNumber, request.PageSize, request.TransactionType, request.DateFromUtc, request.DateToUtc);
+        if (!HasUserAccess(effectiveRequest.UserId)) return ForbidApiResponse();
+        var data = await transactionHistoryService.FilterAsync(effectiveRequest, cancellationToken);
         return Ok(ApiResponse<PagedResult<TransactionHistoryDto>>.Ok(data));
     }
 
     [HttpPost("export-csv")]
     public async Task<IActionResult> ExportCsv([FromBody] TransactionHistoryFilterRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-
-        var exportRequest = new TransactionHistoryFilterRequestDto
-        {
-            UserId = request.UserId,
-            PageNumber = 1,
-            PageSize = 5000,
-            TransactionType = request.TransactionType,
-            DateFromUtc = request.DateFromUtc,
-            DateToUtc = request.DateToUtc,
-        };
+        var exportRequest = BuildScopedFilter(request.UserId, 1, 5000, request.TransactionType, request.DateFromUtc, request.DateToUtc);
+        if (!HasUserAccess(exportRequest.UserId)) return ForbidApiResponse();
 
         var data = await transactionHistoryService.FilterAsync(exportRequest, cancellationToken);
 
@@ -54,5 +47,28 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
 
         var bytes = Encoding.UTF8.GetBytes(csv.ToString());
         return File(bytes, "text/csv", $"transactions_{request.UserId}_{DateTime.UtcNow:yyyyMMddHHmmss}.csv");
+    }
+
+    private TransactionHistoryFilterRequestDto BuildScopedFilter(
+        int requestedUserId,
+        int pageNumber,
+        int pageSize,
+        string? transactionType = null,
+        DateTime? dateFromUtc = null,
+        DateTime? dateToUtc = null)
+    {
+        var effectiveUserId = currentUser.IsInRole("Admin") ? requestedUserId : currentUser.UserId ?? requestedUserId;
+        var effectiveSellerId = currentUser.IsInRole("Admin") ? null : currentUser.SellerId;
+
+        return new TransactionHistoryFilterRequestDto
+        {
+            UserId = effectiveUserId,
+            SellerId = effectiveSellerId,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TransactionType = transactionType,
+            DateFromUtc = dateFromUtc,
+            DateToUtc = dateToUtc
+        };
     }
 }

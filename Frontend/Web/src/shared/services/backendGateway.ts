@@ -21,6 +21,7 @@ import type {
   RegisterResponseDto,
   EnumItemDto,
   WebDashboardDto,
+  WebRequestDto,
   WebSellerDto
 } from "../types/apiTypes";
 
@@ -31,8 +32,7 @@ const fallbackCategories: EnumItemDto[] = [
   { value: 2, name: "Silver" },
   { value: 3, name: "Diamond" },
   { value: 4, name: "Jewelry" },
-  { value: 5, name: "Coins" },
-  { value: 6, name: "SpotMr" }
+  { value: 5, name: "Coins" }
 ];
 
 const fallbackWeightUnits: EnumItemDto[] = [
@@ -70,11 +70,11 @@ const mapProduct = (dto: ProductDto): Product => ({
   updatedAt: new Date().toISOString().split("T")[0]
 });
 
-const mapReports = (dashboard: DashboardDto, logs: AuditLogDto[]): ReportMetric[] => [
+const mapReports = (dashboard: DashboardDto, requestsCount: number): ReportMetric[] => [
   { title: "Wallet Balance", value: `${dashboard.walletBalance.toFixed(2)} JOD`, trend: "Live from dashboard" },
   { title: "Cart Items", value: `${dashboard.cartItemsCount}`, trend: "Per user" },
   { title: "Unread Notifications", value: `${dashboard.unreadNotifications}`, trend: "Action required" },
-  { title: "Audit Logs", value: `${logs.length}`, trend: "Latest events" }
+  { title: "Transactions", value: `${requestsCount}`, trend: "Latest events" }
 ];
 
 const mapInvestors = (dashboard: DashboardDto): Investor[] => [
@@ -95,6 +95,20 @@ const mapRequests = (logs: AuditLogDto[]): InvestorRequest[] =>
     amount: 150 + index * 35,
     status: "pending",
     createdAt: log.createdAtUtc
+  }));
+
+const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
+  items.map((item) => ({
+    id: item.id,
+    investorId: item.investorId,
+    type: ["withdrawal", "pickup", "sell", "transfer"].includes(item.type.toLowerCase())
+      ? (item.type.toLowerCase() as InvestorRequest["type"])
+      : "withdrawal",
+    amount: item.amount,
+    status: ["pending", "approved", "rejected"].includes(item.status.toLowerCase())
+      ? (item.status.toLowerCase() as InvestorRequest["status"])
+      : "pending",
+    createdAt: item.createdAt
   }));
 
 const mapNotifications = (logs: AuditLogDto[]): NotificationItem[] =>
@@ -199,6 +213,9 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
       )
     : { items: [] as AuditLogDto[], totalCount: 0, pageNumber: 1, pageSize: 20 };
 
+  const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
+  const requests = mapWebRequests(webRequests);
+
   const products = productsResult.items.map(mapProduct);
 
   let sellers: Seller[] = [];
@@ -226,7 +243,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
   return {
     sellers,
     investors: mapInvestors(dashboard),
-    requests: mapRequests(logsResult.items),
+    requests,
     products,
     invoices: products.slice(0, 5).map((product, index) => ({
       id: `inv-${index + 1}`,
@@ -242,7 +259,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
       serviceChargePercent: 2.5
     },
     notifications: mapNotifications(logsResult.items),
-    reports: mapReports(dashboard, logsResult.items),
+    reports: mapReports(dashboard, requests.length),
     currentUserName: dashboard.fullName
   };
 }
@@ -293,7 +310,8 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
 
 export async function fetchProductCategories(accessToken: string): Promise<EnumItemDto[]> {
   try {
-    return await getJson<EnumItemDto[]>("/api/products/categories", accessToken);
+    const categories = await getJson<EnumItemDto[]>("/api/products/categories", accessToken);
+    return categories.filter((item) => item.name.toLowerCase() !== "spotmr" && item.value !== 6);
   } catch {
     return fallbackCategories;
   }
