@@ -251,11 +251,19 @@ BEGIN TRY
     END
     ELSE
     BEGIN
-        INSERT INTO [TransactionHistories] ([UserId],[TransactionType],[Amount],[Currency],[Reference],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES
-            (@InvestorMain, N'withdrawal', 1200, N'USD', N'channel=webadmin|status=pending', DATEADD(DAY, -1, @Now), NULL),
-            (@InvestorImseeh, N'sell', 740, N'USD', N'channel=webadmin|status=approved', DATEADD(DAY, -2, @Now), NULL),
-            (@InvestorGoldPal, N'transfer', 350, N'USD', N'channel=webadmin|status=rejected', DATEADD(DAY, -3, @Now), NULL);
+        EXEC sp_executesql
+            N'
+            INSERT INTO [TransactionHistories] ([UserId],[TransactionType],[Amount],[Currency],[Reference],[CreatedAtUtc],[UpdatedAtUtc])
+            VALUES
+                (@InvestorMain, N''withdrawal'', 1200, N''USD'', N''channel=webadmin|status=pending'', DATEADD(DAY, -1, @Now), NULL),
+                (@InvestorImseeh, N''sell'', 740, N''USD'', N''channel=webadmin|status=approved'', DATEADD(DAY, -2, @Now), NULL),
+                (@InvestorGoldPal, N''transfer'', 350, N''USD'', N''channel=webadmin|status=rejected'', DATEADD(DAY, -3, @Now), NULL);
+            ',
+            N'@InvestorMain int, @InvestorImseeh int, @InvestorGoldPal int, @Now datetime2',
+            @InvestorMain = @InvestorMain,
+            @InvestorImseeh = @InvestorImseeh,
+            @InvestorGoldPal = @InvestorGoldPal,
+            @Now = @Now;
     END
 
     INSERT INTO [AppNotifications] ([UserId],[Title],[Body],[IsRead],[CreatedAtUtc],[UpdatedAtUtc])
