@@ -87,14 +87,20 @@ const resetProductForm = () => {
 
 const loadProductManagementData = async () => {
   if (!marketplace.session.value?.accessToken) return;
+
   try {
     managedProducts.value = await fetchManagedProducts(marketplace.session.value.accessToken);
+  } catch (error) {
+    productError.value = error instanceof Error ? error.message : "Failed to load products";
+  }
+
+  try {
     categories.value = await fetchProductCategories(marketplace.session.value.accessToken);
     weightUnits.value = await fetchWeightUnits(marketplace.session.value.accessToken);
     if (!productForm.category && categories.value.length > 0) productForm.category = categories.value[0].value;
     if (!productForm.weightUnit && weightUnits.value.length > 0) productForm.weightUnit = weightUnits.value[0].value;
   } catch (error) {
-    productError.value = error instanceof Error ? error.message : "Failed to load products";
+    productError.value = error instanceof Error ? error.message : "Failed to load dropdown values";
   }
 };
 
@@ -446,73 +452,75 @@ const downloadReport = () => {
         </div>
       </div>
 
-      <div v-else class="modal-form product-form vertical-form">
+      <div v-else class="modal-form product-form vertical-form product-form-contrast">
         <h3>{{ productPage === 'edit' ? 'Edit Product' : 'Add Product' }}</h3>
-        <p class="hint-text">Fill all required fields marked with *.</p>
+        <p class="hint-text">Important fields first. Every row has 2 fields.</p>
 
-        <label>
-          <span>Product Name *</span>
-          <input v-model="productForm.name" placeholder="e.g. 24K Gold Bar - 10g" required />
-          <small>Customer-facing name for listings and reports.</small>
-        </label>
+        <div class="grid-two form-grid-two">
+          <label>
+            <span>Product Name *</span>
+            <input v-model="productForm.name" placeholder="e.g. 24K Gold Bar - 10g" required />
+            <small>Customer-facing name for listings and reports.</small>
+          </label>
 
-        <label>
-          <span>SKU (Unique) *</span>
-          <input v-model="productForm.sku" placeholder="e.g. GB-10G-24K" required />
-          <small>Internal stock keeping unit; cannot be duplicated.</small>
-        </label>
+          <label>
+            <span>SKU (Unique) *</span>
+            <input v-model="productForm.sku" placeholder="e.g. GB-10G-24K" required />
+            <small>Internal stock keeping unit; cannot be duplicated.</small>
+          </label>
 
-        <label>
-          <span>Description *</span>
-          <input v-model="productForm.description" placeholder="Short details about purity, origin, and packaging" required />
-          <small>Describe the product details that buyers need.</small>
-        </label>
+          <label>
+            <span>Category *</span>
+            <select v-model.number="productForm.category">
+              <option disabled :value="0">{{ categories.length ? 'Select category' : 'Loading categories...' }}</option>
+              <option v-for="item in categories" :key="item.value" :value="item.value">{{ item.name }}</option>
+            </select>
+            <small>Dropdown values are loaded from backend (with fallback values if unavailable).</small>
+          </label>
 
-        <label>
-          <span>Category *</span>
-          <select v-model.number="productForm.category">
-            <option disabled :value="0">{{ categories.length ? 'Select category' : 'Loading categories...' }}</option>
-            <option v-for="item in categories" :key="item.value" :value="item.value">{{ item.name }}</option>
-          </select>
-          <small>Dropdown values are loaded from backend product categories.</small>
-        </label>
+          <label>
+            <span>Price *</span>
+            <input v-model.number="productForm.price" type="number" min="0.01" step="0.01" placeholder="e.g. 250.00" required />
+            <small>Selling price in system currency.</small>
+          </label>
 
-        <label>
-          <span>Weight Value *</span>
-          <input v-model.number="productForm.weightValue" type="number" min="0.01" step="0.01" placeholder="e.g. 10" required />
-          <small>Numeric weight amount before unit.</small>
-        </label>
+          <label>
+            <span>Available Stock *</span>
+            <input v-model.number="productForm.availableStock" type="number" min="0" step="1" placeholder="e.g. 50" required />
+            <small>Current quantity ready for sale.</small>
+          </label>
 
-        <label>
-          <span>Weight Unit *</span>
-          <select v-model.number="productForm.weightUnit">
-            <option disabled :value="0">{{ weightUnits.length ? 'Select unit' : 'Loading units...' }}</option>
-            <option v-for="item in weightUnits" :key="item.value" :value="item.value">{{ item.name }}</option>
-          </select>
-          <small>Dropdown values are loaded from backend weight units.</small>
-        </label>
+          <label>
+            <span>Weight Value *</span>
+            <input v-model.number="productForm.weightValue" type="number" min="0.01" step="0.01" placeholder="e.g. 10" required />
+            <small>Numeric weight amount before unit.</small>
+          </label>
 
-        <label>
-          <span>Price *</span>
-          <input v-model.number="productForm.price" type="number" min="0.01" step="0.01" placeholder="e.g. 250.00" required />
-          <small>Selling price in system currency.</small>
-        </label>
+          <label>
+            <span>Weight Unit *</span>
+            <select v-model.number="productForm.weightUnit">
+              <option disabled :value="0">{{ weightUnits.length ? 'Select unit' : 'Loading units...' }}</option>
+              <option v-for="item in weightUnits" :key="item.value" :value="item.value">{{ item.name }}</option>
+            </select>
+            <small>Unit dropdown values come from backend (or fallback values).</small>
+          </label>
 
-        <label>
-          <span>Available Stock *</span>
-          <input v-model.number="productForm.availableStock" type="number" min="0" step="1" placeholder="e.g. 50" required />
-          <small>Current quantity ready for sale.</small>
-        </label>
+          <label>
+            <span>Description *</span>
+            <input v-model="productForm.description" placeholder="Short details about purity, origin, and packaging" required />
+            <small>Describe the product details that buyers need.</small>
+          </label>
 
-        <label>
-          <span>Product Image</span>
-          <input type="file" accept="image/*" @change="onProductImageChange" />
-          <small>Upload JPG/PNG image for display in product details.</small>
-        </label>
+          <label>
+            <span>Product Image</span>
+            <input type="file" accept="image/*" @change="onProductImageChange" />
+            <small>Upload JPG/PNG image for display in product details.</small>
+          </label>
 
-        <label class="checkbox-line">
-          <input v-model="productForm.isActive" type="checkbox" /> Product is active
-        </label>
+          <label class="checkbox-line form-checkbox-field">
+            <input v-model="productForm.isActive" type="checkbox" /> Product is active
+          </label>
+        </div>
 
         <div class="report-actions">
           <button @click="saveProduct">Save</button>

@@ -505,3 +505,27 @@ select {
   color: var(--text-muted);
   font-size: 12px;
 }
+
+
+.product-form-contrast {
+  background: #eef6ff;
+  border: 1px solid #b5d3f6;
+}
+
+:root.dark-mode .product-form-contrast {
+  background: #1b2636;
+  border-color: #355071;
+}
+
+.form-grid-two {
+  align-items: start;
+}
+
+.form-grid-two > label {
+  min-height: 130px;
+}
+
+.form-checkbox-field {
+  align-self: center;
+  min-height: auto !important;
+}

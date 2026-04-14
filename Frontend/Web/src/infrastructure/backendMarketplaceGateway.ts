@@ -10,7 +10,7 @@ import {
   type SellerRegistration,
   type UserSession
 } from "../domain/models";
-import { deleteJson, getJson, postForm, postJson, putForm } from "./api/httpClient";
+import { HttpError, deleteJson, getJson, postForm, postJson, putForm } from "./api/httpClient";
 import type {
   AuditLogDto,
   DashboardDto,
@@ -23,6 +23,21 @@ import type {
 } from "./apiTypes";
 
 const toRole = (role: string): "admin" | "seller" => (role.toLowerCase() === "admin" ? "admin" : "seller");
+
+const fallbackCategories: EnumItemDto[] = [
+  { value: 1, name: "Gold" },
+  { value: 2, name: "Silver" },
+  { value: 3, name: "Diamond" },
+  { value: 4, name: "Jewelry" },
+  { value: 5, name: "Coins" },
+  { value: 6, name: "SpotMr" }
+];
+
+const fallbackWeightUnits: EnumItemDto[] = [
+  { value: 1, name: "Gram" },
+  { value: 2, name: "Kilogram" },
+  { value: 3, name: "Ounce" }
+];
 
 const mapSession = (dto: LoginResponseDto): UserSession => ({
   accessToken: dto.accessToken,
@@ -202,11 +217,27 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
 }
 
 export async function fetchProductCategories(accessToken: string): Promise<EnumItemDto[]> {
-  return getJson<EnumItemDto[]>("/api/products/categories", accessToken);
+  try {
+    return await getJson<EnumItemDto[]>("/api/products/categories", accessToken);
+  } catch (error) {
+    if (error instanceof HttpError && error.statusCode === 404) {
+      return fallbackCategories;
+    }
+
+    throw error;
+  }
 }
 
 export async function fetchWeightUnits(accessToken: string): Promise<EnumItemDto[]> {
-  return getJson<EnumItemDto[]>("/api/products/weight-units", accessToken);
+  try {
+    return await getJson<EnumItemDto[]>("/api/products/weight-units", accessToken);
+  } catch (error) {
+    if (error instanceof HttpError && error.statusCode === 404) {
+      return fallbackWeightUnits;
+    }
+
+    throw error;
+  }
 }
 
 export async function createManagedProduct(accessToken: string, payload: ProductFormPayload): Promise<string> {
