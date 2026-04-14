@@ -3,6 +3,7 @@ using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace GoldWalletSystem.API.Services;
 
@@ -15,6 +16,8 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
 {
     public async Task<WebDashboardDto> BuildAsync(string period, int? sellerId = null, CancellationToken cancellationToken = default)
     {
+        var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+
         var productsQuery = dbContext.Products.AsNoTracking().AsQueryable();
         if (sellerId.HasValue)
         {
@@ -32,7 +35,21 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
         {
             requestsQuery = requestsQuery.Where(x => x.SellerId == sellerId.Value);
         }
+        requestsQuery = requestsQuery.Where(x => x.CreatedAtUtc >= monthStart);
         var requests = await requestsQuery.OrderByDescending(x => x.CreatedAtUtc).Take(100).ToListAsync(cancellationToken);
+
+        var cartItemsQuery = dbContext.CartItems
+            .AsNoTracking()
+            .Include(x => x.Product)
+            .Where(x => x.CreatedAtUtc >= monthStart)
+            .AsQueryable();
+
+        if (sellerId.HasValue)
+        {
+            cartItemsQuery = cartItemsQuery.Where(x => (x.SellerId ?? x.Product.SellerId) == sellerId.Value);
+        }
+
+        var cartItems = await cartItemsQuery.ToListAsync(cancellationToken);
 
         var totalSales = products.Sum(p => p.Price * p.AvailableStock);
         var goldAvg = products.Where(p => p.Category == ProductCategory.Gold).Select(p => p.Price).DefaultIfEmpty(0).Average();
@@ -67,12 +84,47 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             })
             .ToList();
 
+        var productSkuToCategory = products
+            .GroupBy(x => x.Sku, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Category.ToString(), StringComparer.OrdinalIgnoreCase);
+
+        var categoryTransactionSeries = requests
+            .GroupBy(request =>
+            {
+                var sku = ExtractSku(request.Reference);
+                if (!string.IsNullOrWhiteSpace(sku) && productSkuToCategory.TryGetValue(sku, out var mappedCategory))
+                {
+                    return mappedCategory;
+                }
+
+                return "Unknown";
+            })
+            .Select(group => new WebDashboardPointDto
+            {
+                Label = group.Key,
+                Value = group.Count()
+            })
+            .OrderByDescending(x => x.Value)
+            .ThenBy(x => x.Label)
+            .ToList();
+
+        var categoryCartSeries = cartItems
+            .GroupBy(item => item.Product.Category.ToString())
+            .Select(group => new WebDashboardPointDto
+            {
+                Label = group.Key,
+                Value = group.Sum(x => x.Quantity)
+            })
+            .OrderByDescending(x => x.Value)
+            .ThenBy(x => x.Label)
+            .ToList();
+
         return new WebDashboardDto
         {
             Cards =
             [
-                new WebDashboardCardDto { Title = "Total Transactions", Value = requests.Count.ToString(), Trend = $"{period} period" },
-                new WebDashboardCardDto { Title = "Total Sales", Value = totalSales.ToString("0.00"), Trend = $"{period} period" },
+                new WebDashboardCardDto { Title = "Total Transactions", Value = requests.Count.ToString(), Trend = "This month" },
+                new WebDashboardCardDto { Title = "Total Sales", Value = totalSales.ToString("0.00"), Trend = "This month" },
                 new WebDashboardCardDto { Title = "Total Products", Value = products.Count.ToString(), Trend = "All" },
                 new WebDashboardCardDto { Title = "Active Products", Value = products.Count(p => p.IsActive).ToString(), Trend = "Active" },
                 new WebDashboardCardDto { Title = "Out of Stock Products", Value = products.Count(p => p.AvailableStock == 0).ToString(), Trend = "AvailableStock=0" },
@@ -93,6 +145,8 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
                     Percent = (int)Math.Round((x.Value * 100m) / categoryTotal)
                 })
                 .ToList(),
+            CategoryTransactionSeries = categoryTransactionSeries,
+            CategoryCartSeries = categoryCartSeries,
             RecentTransactions = recent
         };
     }
@@ -102,5 +156,16 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
         if (reference.Contains("status=approved", StringComparison.OrdinalIgnoreCase)) return "approved";
         if (reference.Contains("status=rejected", StringComparison.OrdinalIgnoreCase)) return "rejected";
         return "pending";
+    }
+
+    private static string? ExtractSku(string reference)
+    {
+        if (string.IsNullOrWhiteSpace(reference))
+        {
+            return null;
+        }
+
+        var match = Regex.Match(reference, @"SKU:([^|]+)", RegexOptions.IgnoreCase);
+        return match.Success ? match.Groups[1].Value.Trim() : null;
     }
 }

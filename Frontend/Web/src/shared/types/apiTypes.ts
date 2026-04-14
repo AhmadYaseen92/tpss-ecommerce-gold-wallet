@@ -116,6 +116,11 @@ export interface WebDashboardSegmentDto {
   percent: number;
 }
 
+export interface WebDashboardPointDto {
+  label: string;
+  value: number;
+}
+
 export interface WebRecentTransactionDto {
   id: string;
   investorName: string;
@@ -130,5 +135,7 @@ export interface WebDashboardDto {
   cards: WebDashboardCardDto[];
   statusSegments: WebDashboardSegmentDto[];
   categorySegments: WebDashboardSegmentDto[];
+  categoryTransactionSeries: WebDashboardPointDto[];
+  categoryCartSeries: WebDashboardPointDto[];
   recentTransactions: WebRecentTransactionDto[];
 }

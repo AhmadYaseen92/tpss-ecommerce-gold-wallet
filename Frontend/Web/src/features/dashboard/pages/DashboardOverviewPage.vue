@@ -2,16 +2,16 @@
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
 defineProps<{
-  dashboardPeriod: "today" | "week" | "month";
+  dashboardPeriod: "month";
   dashboardCards: Array<{ title: string; value: string; trend: string }>;
   statusSummary: { pending: number; approved: number; rejected: number };
   categorySummary: Array<{ category: string; count: number }>;
   statusRing: Array<{ key: string; label: string; value: number; color: string; percent: number }>;
   categoryRing: Array<{ category: string; count: number; color: string; percent: number }>;
+  categoryTransactionSeries: Array<{ label: string; value: number }>;
+  categoryCartSeries: Array<{ label: string; value: number }>;
   recentTransactions: Array<{ id: string; investorName: string; productName: string; amount: number; status: string; type: string; createdAt: string }>;
 }>();
-
-const emit = defineEmits<{ changePeriod: [period: "today" | "week" | "month"] }>();
 
 const ringBackground = (segments: Array<{ color: string; percent: number }>) => {
   let current = 0;
@@ -22,16 +22,17 @@ const ringBackground = (segments: Array<{ color: string; percent: number }>) => 
   });
   return `conic-gradient(${stops.join(",")})`;
 };
+
+const barHeight = (value: number, maxValue: number) => {
+  const safeMax = Math.max(maxValue, 1);
+  return `${Math.max(8, Math.round((value / safeMax) * 140))}px`;
+};
 </script>
 
 <template>
   <section class="dashboard-screen">
     <SectionCard title="Dashboard Controls">
-      <div class="report-actions">
-        <button :class="{ ghost: dashboardPeriod !== 'today' }" @click="emit('changePeriod', 'today')">Today</button>
-        <button :class="{ ghost: dashboardPeriod !== 'week' }" @click="emit('changePeriod', 'week')">Week</button>
-        <button :class="{ ghost: dashboardPeriod !== 'month' }" @click="emit('changePeriod', 'month')">Month</button>
-      </div>
+      <p>Analytics Period: <strong>This Month</strong></p>
     </SectionCard>
 
     <div class="interactive-metrics">
@@ -55,15 +56,31 @@ const ringBackground = (segments: Array<{ color: string; percent: number }>) => 
         </div>
       </SectionCard>
 
-      <SectionCard title="Product Categories (Circular)">
-        <div class="ring-layout">
-          <div class="circular-chart" :style="{ background: ringBackground(categoryRing) }"></div>
-          <ul class="ring-legend">
-            <li v-for="item in categoryRing" :key="item.category">
-              <span class="legend-dot" :style="{ backgroundColor: item.color }"></span>
-              <span>{{ item.category }}: {{ item.count }} ({{ item.percent }}%)</span>
-            </li>
-          </ul>
+      <SectionCard title="Product Categories Analytics (X,Y)">
+        <div class="analytics-chart">
+          <div
+            v-for="item in categoryTransactionSeries"
+            :key="item.label"
+            class="analytics-bar-group"
+          >
+            <div class="analytics-bar" :style="{ height: barHeight(item.value, Math.max(...categoryTransactionSeries.map((x) => x.value), 1)) }"></div>
+            <span class="analytics-label">{{ item.label }}</span>
+            <small class="analytics-value">{{ item.value }}</small>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Cart Analytics (X,Y)">
+        <div class="analytics-chart">
+          <div
+            v-for="item in categoryCartSeries"
+            :key="item.label"
+            class="analytics-bar-group"
+          >
+            <div class="analytics-bar cart" :style="{ height: barHeight(item.value, Math.max(...categoryCartSeries.map((x) => x.value), 1)) }"></div>
+            <span class="analytics-label">{{ item.label }}</span>
+            <small class="analytics-value">{{ item.value }}</small>
+          </div>
         </div>
       </SectionCard>
     </div>
@@ -96,3 +113,42 @@ const ringBackground = (segments: Array<{ color: string; percent: number }>) => 
     </SectionCard>
   </section>
 </template>
+
+<style scoped>
+.analytics-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  min-height: 190px;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+}
+
+.analytics-bar-group {
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.analytics-bar {
+  width: 34px;
+  border-radius: 8px 8px 2px 2px;
+  background: linear-gradient(180deg, #5b6cff 0%, #3f4ed7 100%);
+}
+
+.analytics-bar.cart {
+  background: linear-gradient(180deg, #14b8a6 0%, #0f766e 100%);
+}
+
+.analytics-label {
+  font-size: 0.75rem;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.analytics-value {
+  color: #6b7280;
+}
+</style>

@@ -12,7 +12,7 @@ const STATUS_COLORS: Record<string, string> = {
 const CATEGORY_COLORS = ["#f59e0b", "#6366f1", "#14b8a6", "#ec4899", "#84cc16"];
 
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
-  const dashboardPeriod = ref<"today" | "week" | "month">("today");
+  const dashboardPeriod = ref<"month">("month");
   const serverDashboard = ref<WebDashboardDto | null>(null);
 
   const loadDashboard = async () => {
@@ -22,7 +22,7 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
     }
 
     try {
-      serverDashboard.value = await fetchWebAdminDashboard(marketplace.session.value.accessToken, dashboardPeriod.value);
+      serverDashboard.value = await fetchWebAdminDashboard(marketplace.session.value.accessToken, "month");
     } catch {
       serverDashboard.value = null;
     }
@@ -60,6 +60,22 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
     const map = new Map<string, number>();
     marketplace.state.value.products.forEach((p) => map.set(p.category, (map.get(p.category) ?? 0) + 1));
     return Array.from(map.entries()).map(([category, count]) => ({ category, count }));
+  });
+
+  const categoryTransactionSeries = computed(() => {
+    if (serverDashboard.value?.categoryTransactionSeries?.length) {
+      return serverDashboard.value.categoryTransactionSeries;
+    }
+
+    return categorySummary.value.map((item) => ({ label: item.category, value: item.count }));
+  });
+
+  const categoryCartSeries = computed(() => {
+    if (serverDashboard.value?.categoryCartSeries?.length) {
+      return serverDashboard.value.categoryCartSeries;
+    }
+
+    return categorySummary.value.map((item) => ({ label: item.category, value: Math.max(0, item.count * 2) }));
   });
 
   const statusRing = computed(() => {
@@ -118,5 +134,5 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
       }));
   });
 
-  return { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions };
+  return { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions, categoryTransactionSeries, categoryCartSeries };
 }
