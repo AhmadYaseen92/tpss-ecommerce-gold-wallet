@@ -450,3 +450,32 @@ input {
   gap: 10px;
   margin: 12px 0;
 }
+
+select {
+  min-height: 50px;
+  border-radius: 8px;
+  border: 1px solid #d7d7d7;
+  background: var(--surface);
+  color: inherit;
+  padding: 10px;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: #fff8e1;
+}
+
+.product-details {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--surface-muted);
+}
+
+.product-form {
+  margin-top: 12px;
+}

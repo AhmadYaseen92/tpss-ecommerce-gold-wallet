@@ -63,3 +63,24 @@ export interface AuditLogDto {
   details: string;
   createdAtUtc: string;
 }
+
+
+export interface ProductManagementDto {
+  id: number;
+  name: string;
+  sku: string;
+  description: string;
+  imageUrl: string;
+  category: string;
+  weightValue: number;
+  weightUnit: string;
+  price: number;
+  availableStock: number;
+  isActive: boolean;
+  sellerId: number;
+}
+
+export interface EnumItemDto {
+  value: number;
+  name: string;
+}

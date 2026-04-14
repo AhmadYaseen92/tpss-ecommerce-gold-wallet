@@ -5,10 +5,19 @@ import AppShell from "./presentation/components/AppShell.vue";
 import MetricGrid from "./presentation/components/MetricGrid.vue";
 import SectionCard from "./presentation/components/SectionCard.vue";
 import { useMarketplace } from "./presentation/composables/useMarketplace";
+import {
+  createManagedProduct,
+  deleteManagedProduct,
+  fetchManagedProducts,
+  fetchProductCategories,
+  fetchWeightUnits,
+  updateManagedProduct,
+  type ProductFormPayload
+} from "./infrastructure/backendMarketplaceGateway";
+import type { ProductManagementDto, EnumItemDto } from "./infrastructure/apiTypes";
 
 const marketplace = useMarketplace();
 const isDark = ref(false);
-const showAddProduct = ref(false);
 const authScreen = ref<"login" | "register">("login");
 
 const loginForm = reactive({
@@ -27,7 +36,6 @@ const registerForm = reactive({
   idNumber: ""
 });
 
-const newProduct = reactive({ name: "", category: "Gold Bars", unitPrice: 0, stock: 0 });
 
 const reportFilters = reactive({
   reportType: "sales",
@@ -40,6 +48,124 @@ const reportFilters = reactive({
   stockOnly: false
 });
 const generatedReports = ref<Array<Record<string, string | number>>>([]);
+const managedProducts = ref<ProductManagementDto[]>([]);
+const categories = ref<EnumItemDto[]>([]);
+const weightUnits = ref<EnumItemDto[]>([]);
+const selectedProduct = ref<ProductManagementDto | null>(null);
+const showProductForm = ref(false);
+const isEditMode = ref(false);
+const productError = ref("");
+const productForm = reactive<ProductFormPayload>({
+  name: "",
+  sku: "",
+  description: "",
+  category: 4,
+  weightValue: 0,
+  weightUnit: 1,
+  price: 0,
+  availableStock: 0,
+  isActive: true,
+  imageFile: null,
+  existingImageUrl: ""
+});
+
+const resetProductForm = () => {
+  productForm.id = undefined;
+  productForm.name = "";
+  productForm.sku = "";
+  productForm.description = "";
+  productForm.category = 4;
+  productForm.weightValue = 0;
+  productForm.weightUnit = 1;
+  productForm.price = 0;
+  productForm.availableStock = 0;
+  productForm.isActive = true;
+  productForm.imageFile = null;
+  productForm.existingImageUrl = "";
+  productError.value = "";
+};
+
+const loadProductManagementData = async () => {
+  if (!marketplace.session.value?.accessToken) return;
+  try {
+    managedProducts.value = await fetchManagedProducts(marketplace.session.value.accessToken);
+    categories.value = await fetchProductCategories(marketplace.session.value.accessToken);
+    weightUnits.value = await fetchWeightUnits(marketplace.session.value.accessToken);
+  } catch (error) {
+    productError.value = error instanceof Error ? error.message : "Failed to load products";
+  }
+};
+
+watch(
+  () => marketplace.session.value?.accessToken,
+  () => {
+    void loadProductManagementData();
+  },
+  { immediate: true }
+);
+
+const openAddProduct = () => {
+  resetProductForm();
+  isEditMode.value = false;
+  showProductForm.value = true;
+};
+
+const openEditProduct = (product: ProductManagementDto) => {
+  isEditMode.value = true;
+  showProductForm.value = true;
+  productForm.id = product.id;
+  productForm.name = product.name;
+  productForm.sku = product.sku;
+  productForm.description = product.description;
+  productForm.category = categories.value.find((x) => x.name === product.category)?.value ?? 4;
+  productForm.weightValue = Number(product.weightValue);
+  productForm.weightUnit = weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? 1;
+  productForm.price = Number(product.price);
+  productForm.availableStock = product.availableStock;
+  productForm.isActive = product.isActive;
+  productForm.existingImageUrl = product.imageUrl;
+  productForm.imageFile = null;
+};
+
+const onProductImageChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  productForm.imageFile = input.files?.[0] ?? null;
+};
+
+const saveProduct = async () => {
+  if (!marketplace.session.value?.accessToken) return;
+  if (!productForm.name || !productForm.sku || !productForm.description || productForm.price <= 0) {
+    productError.value = "Please fill all mandatory fields with valid values.";
+    return;
+  }
+
+  try {
+    if (isEditMode.value && productForm.id) {
+      await updateManagedProduct(marketplace.session.value.accessToken, productForm.id, productForm);
+    } else {
+      await createManagedProduct(marketplace.session.value.accessToken, productForm);
+    }
+
+    showProductForm.value = false;
+    await loadProductManagementData();
+  } catch (error) {
+    productError.value = error instanceof Error ? error.message : "Failed to save product";
+  }
+};
+
+const deleteProductRecord = async (productId: number) => {
+  if (!marketplace.session.value?.accessToken) return;
+  if (!confirm("Are you sure you want to delete this product?")) return;
+
+  try {
+    await deleteManagedProduct(marketplace.session.value.accessToken, productId);
+    await loadProductManagementData();
+    if (selectedProduct.value?.id === productId) selectedProduct.value = null;
+  } catch (error) {
+    productError.value = error instanceof Error ? error.message : "Failed to delete product";
+  }
+};
+
 
 watch(isDark, (value) => {
   document.documentElement.classList.toggle("dark-mode", value);
@@ -71,28 +197,6 @@ const welcomeText = computed(() => {
 
 
 
-const productsForRole = computed(() =>
-  marketplace.role.value === "seller" ? marketplace.sellerProducts.value : marketplace.state.value.products
-);
-
-const submitNewProduct = () => {
-  if (!marketplace.activeSeller.value || !newProduct.name || newProduct.unitPrice <= 0) return;
-
-  marketplace.addProduct({
-    sellerId: marketplace.activeSeller.value.id,
-    name: newProduct.name,
-    category: newProduct.category,
-    unitPrice: Number(newProduct.unitPrice),
-    marketPrice: Number(newProduct.unitPrice),
-    stock: Number(newProduct.stock)
-  });
-
-  newProduct.name = "";
-  newProduct.category = "Gold Bars";
-  newProduct.unitPrice = 0;
-  newProduct.stock = 0;
-  showAddProduct.value = false;
-};
 
 
 const reportTypeCards = [
@@ -210,50 +314,83 @@ const downloadReport = () => {
       <MetricGrid :metrics="marketplace.overviewCards.value" />
     </section>
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'products'" title="Products">
+    <SectionCard v-if="marketplace.activeMenu.value === 'products'" title="Products Management">
       <template #actions>
-        <button v-if="marketplace.role.value === 'seller'" @click="showAddProduct = true">Add Product</button>
+        <button v-if="marketplace.role.value === 'seller'" @click="openAddProduct">Add Product</button>
       </template>
 
-      <div v-if="showAddProduct" class="modal-form">
-        <h3>New Product</h3>
-        <div class="grid-two">
-          <input v-model="newProduct.name" placeholder="Product name" />
-          <input v-model="newProduct.category" placeholder="Category" />
-          <input v-model.number="newProduct.unitPrice" type="number" placeholder="Price" />
-          <input v-model.number="newProduct.stock" type="number" placeholder="Stock" />
-        </div>
-        <div>
-          <button @click="submitNewProduct">Save Product</button>
-          <button class="ghost" @click="showAddProduct = false">Cancel</button>
-        </div>
-      </div>
+      <p v-if="productError" class="error-text">{{ productError }}</p>
 
       <table>
         <thead>
           <tr>
+            <th>ID</th>
             <th>Name</th>
+            <th>SKU</th>
             <th>Category</th>
-            <th>Stock</th>
             <th>Price</th>
-            <th>Market</th>
+            <th>Stock</th>
+            <th>Active</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="product in productsForRole" :key="product.id">
+          <tr
+            v-for="product in managedProducts"
+            :key="product.id"
+            class="clickable-row"
+            @click="selectedProduct = product"
+          >
+            <td>{{ product.id }}</td>
             <td>{{ product.name }}</td>
+            <td>{{ product.sku }}</td>
             <td>{{ product.category }}</td>
-            <td>{{ product.stock }}</td>
-            <td>{{ product.unitPrice }}</td>
-            <td>{{ product.marketPrice }}</td>
+            <td>{{ product.price }}</td>
+            <td>{{ product.availableStock }}</td>
+            <td>{{ product.isActive ? 'Yes' : 'No' }}</td>
             <td>
-              <button @click="marketplace.updateProduct(product.id, { stock: product.stock + 5 })">Update</button>
-              <button class="danger" @click="marketplace.deleteProduct(product.id)">Delete</button>
+              <button @click.stop="openEditProduct(product)">Edit</button>
+              <button class="danger" @click.stop="deleteProductRecord(product.id)">Delete</button>
             </td>
           </tr>
         </tbody>
       </table>
+
+      <div v-if="selectedProduct" class="product-details">
+        <h4>Product Details</h4>
+        <p><strong>ID:</strong> {{ selectedProduct.id }}</p>
+        <p><strong>Name:</strong> {{ selectedProduct.name }}</p>
+        <p><strong>SKU:</strong> {{ selectedProduct.sku }}</p>
+        <p><strong>Description:</strong> {{ selectedProduct.description }}</p>
+        <p><strong>Weight:</strong> {{ selectedProduct.weightValue }} {{ selectedProduct.weightUnit }}</p>
+        <p><strong>Image:</strong> <a :href="selectedProduct.imageUrl" target="_blank">Open</a></p>
+      </div>
+
+      <div v-if="showProductForm" class="modal-form product-form">
+        <h3>{{ isEditMode ? 'Edit Product' : 'Add Product' }}</h3>
+        <div class="grid-two">
+          <input v-model="productForm.name" placeholder="Name *" required />
+          <input v-model="productForm.sku" placeholder="SKU (unique) *" required />
+          <input v-model="productForm.description" placeholder="Description *" required />
+          <select v-model.number="productForm.category">
+            <option v-for="item in categories" :key="item.value" :value="item.value">{{ item.name }}</option>
+          </select>
+          <input v-model.number="productForm.weightValue" type="number" placeholder="Weight Value *" required />
+          <select v-model.number="productForm.weightUnit">
+            <option v-for="item in weightUnits" :key="item.value" :value="item.value">{{ item.name }}</option>
+          </select>
+          <input v-model.number="productForm.price" type="number" placeholder="Price *" required />
+          <input v-model.number="productForm.availableStock" type="number" placeholder="Available Stock *" required />
+          <label class="checkbox-line">
+            <input v-model="productForm.isActive" type="checkbox" /> Active
+          </label>
+          <input type="file" accept="image/*" @change="onProductImageChange" />
+        </div>
+        <div class="report-actions">
+          <button @click="saveProduct">Save</button>
+          <button class="ghost" @click="showProductForm = false">Cancel</button>
+        </div>
+      </div>
     </SectionCard>
 
     <SectionCard v-if="marketplace.activeMenu.value === 'investors'" title="Investors">

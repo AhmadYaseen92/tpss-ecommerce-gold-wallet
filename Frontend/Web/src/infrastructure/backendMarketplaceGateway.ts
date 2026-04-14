@@ -10,14 +10,16 @@ import {
   type SellerRegistration,
   type UserSession
 } from "../domain/models";
-import { postJson } from "./api/httpClient";
+import { deleteJson, getJson, postForm, postJson, putForm } from "./api/httpClient";
 import type {
   AuditLogDto,
   DashboardDto,
   LoginResponseDto,
   PagedResult,
   ProductDto,
-  RegisterResponseDto
+  ProductManagementDto,
+  RegisterResponseDto,
+  EnumItemDto
 } from "./apiTypes";
 
 const toRole = (role: string): "admin" | "seller" => (role.toLowerCase() === "admin" ? "admin" : "seller");
@@ -176,4 +178,64 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     reports: mapReports(dashboard, logsResult.items),
     currentUserName: dashboard.fullName
   };
+}
+
+
+export interface ProductFormPayload {
+  id?: number;
+  name: string;
+  sku: string;
+  description: string;
+  category: number;
+  weightValue: number;
+  weightUnit: number;
+  price: number;
+  availableStock: number;
+  isActive: boolean;
+  sellerId?: number;
+  existingImageUrl?: string;
+  imageFile?: File | null;
+}
+
+export async function fetchManagedProducts(accessToken: string): Promise<ProductManagementDto[]> {
+  return getJson<ProductManagementDto[]>("/api/products/management", accessToken);
+}
+
+export async function fetchProductCategories(accessToken: string): Promise<EnumItemDto[]> {
+  return getJson<EnumItemDto[]>("/api/products/categories", accessToken);
+}
+
+export async function fetchWeightUnits(accessToken: string): Promise<EnumItemDto[]> {
+  return getJson<EnumItemDto[]>("/api/products/weight-units", accessToken);
+}
+
+export async function createManagedProduct(accessToken: string, payload: ProductFormPayload): Promise<string> {
+  const form = buildProductForm(payload);
+  return postForm<string>("/api/products/management", form, accessToken);
+}
+
+export async function updateManagedProduct(accessToken: string, id: number, payload: ProductFormPayload): Promise<string> {
+  const form = buildProductForm(payload);
+  return putForm<string>(`/api/products/management/${id}`, form, accessToken);
+}
+
+export async function deleteManagedProduct(accessToken: string, id: number): Promise<string> {
+  return deleteJson<string>(`/api/products/management/${id}`, accessToken);
+}
+
+function buildProductForm(payload: ProductFormPayload): FormData {
+  const form = new FormData();
+  form.append("Name", payload.name);
+  form.append("Sku", payload.sku);
+  form.append("Description", payload.description);
+  form.append("Category", String(payload.category));
+  form.append("WeightValue", String(payload.weightValue));
+  form.append("WeightUnit", String(payload.weightUnit));
+  form.append("Price", String(payload.price));
+  form.append("AvailableStock", String(payload.availableStock));
+  form.append("IsActive", String(payload.isActive));
+  if (payload.sellerId) form.append("SellerId", String(payload.sellerId));
+  if (payload.existingImageUrl) form.append("ExistingImageUrl", payload.existingImageUrl);
+  if (payload.imageFile) form.append("Image", payload.imageFile);
+  return form;
 }

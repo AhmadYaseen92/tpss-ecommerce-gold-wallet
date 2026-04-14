@@ -10,7 +10,7 @@ A modern web app flow similar to common SaaS dashboards:
 ## Included modules
 
 - Dashboard summary cards.
-- Products (server list + seller management actions).
+- Products management (auto ID, unique SKU validation, category/weight dropdowns, active toggle, image upload, details view, add/edit/delete with confirm).
 - Investors and Transactions modules in side menu.
 - Fees module (admin).
 - Advanced reports generator (type cards, criteria filters, and CSV download).
