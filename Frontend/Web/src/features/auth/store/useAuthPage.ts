@@ -1,5 +1,5 @@
 import { reactive, ref } from "vue";
-import type { ReturnTypeUseMarketplace } from "../../dashboard/store/useMarketplace";
+import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 
 export function useAuthPage(marketplace: ReturnTypeUseMarketplace) {
   const authScreen = ref<"login" | "register">("login");

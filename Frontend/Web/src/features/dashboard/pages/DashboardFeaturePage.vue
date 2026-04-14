@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ReturnTypeUseMarketplace } from "../store/useMarketplace";
+import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { useDashboard } from "../store/useDashboard";
 import DashboardOverviewPage from "./DashboardOverviewPage.vue";
 

@@ -1,6 +1,6 @@
 import { reactive, ref } from "vue";
 import { downloadBlob } from "../../../shared/services/fileDownload";
-import type { ReturnTypeUseMarketplace } from "../../dashboard/store/useMarketplace";
+import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 
 export function useReports(marketplace: ReturnTypeUseMarketplace) {
   const reportFilters = reactive({ reportType: "sales", userId: "", userName: "", productName: "", dateRange: "today", customFrom: "", customTo: "", stockOnly: false });

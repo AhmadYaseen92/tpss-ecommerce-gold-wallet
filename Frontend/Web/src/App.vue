@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { RouterView, useRoute, useRouter } from "vue-router";
 import type { NavigationKey } from "./shared/types/models";
 import AppShell from "./shared/layouts/AppShell.vue";
-import SectionCard from "./shared/components/SectionCard.vue";
 import AuthPage from "./features/auth/pages/AuthPage.vue";
-import DashboardFeaturePage from "./features/dashboard/pages/DashboardFeaturePage.vue";
-import ProductFeaturePage from "./features/products/pages/ProductFeaturePage.vue";
-import InvestorsFeaturePage from "./features/investors/pages/InvestorsFeaturePage.vue";
-import TransactionsFeaturePage from "./features/transactions/pages/TransactionsFeaturePage.vue";
-import ReportsFeaturePage from "./features/reports/pages/ReportsFeaturePage.vue";
-import { useMarketplace } from "./features/dashboard/store/useMarketplace";
+import { useMarketplace } from "./shared/app/store/useMarketplace";
 
 const marketplace = useMarketplace();
+const route = useRoute();
+const router = useRouter();
 const isDark = ref(false);
+
+const ROUTE_BY_MENU: Record<Exclude<NavigationKey, "logout" | "invoices" | "inventory" | "notifications">, string> = {
+  overview: "/overview",
+  products: "/products",
+  investors: "/investors",
+  requests: "/transactions",
+  fees: "/fees",
+  reports: "/reports"
+};
 
 watch(isDark, (value) => document.documentElement.classList.toggle("dark-mode", value));
 
@@ -29,11 +35,42 @@ const menuItems = computed(() => {
   return marketplace.role.value === "admin" ? [...common, { key: "fees", label: "Fees" }] : common;
 });
 
+const activeMenu = computed<NavigationKey>(() => {
+  if (route.path.startsWith("/products")) return "products";
+  if (route.path.startsWith("/investors")) return "investors";
+  if (route.path.startsWith("/transactions")) return "requests";
+  if (route.path.startsWith("/fees")) return "fees";
+  if (route.path.startsWith("/reports")) return "reports";
+  return "overview";
+});
+
+watch(activeMenu, (menu) => {
+  marketplace.activeMenu.value = menu;
+}, { immediate: true });
+
 const welcomeText = computed(() => {
   if (!marketplace.session.value) return "Welcome";
   const fullName = marketplace.state.value.currentUserName ?? (marketplace.role.value === "admin" ? "Admin User" : "Seller User");
   return `Welcome back, ${fullName}`;
 });
+
+const handleMenuChange = (menu: NavigationKey) => {
+  if (menu === "logout") {
+    marketplace.logout();
+    router.replace("/");
+    return;
+  }
+
+  const target = ROUTE_BY_MENU[menu as keyof typeof ROUTE_BY_MENU];
+  if (target && route.path !== target) {
+    router.push(target);
+  }
+};
+
+const handleLogout = () => {
+  marketplace.logout();
+  router.replace("/");
+};
 </script>
 
 <template>
@@ -42,40 +79,18 @@ const welcomeText = computed(() => {
   <AppShell
     v-else
     :role="marketplace.role.value"
-    :active-menu="marketplace.activeMenu.value"
+    :active-menu="activeMenu"
     :menu-items="menuItems"
     :welcome-text="welcomeText"
     :is-dark="isDark"
     :notifications="marketplace.state.value.notifications"
-    @menu-change="(menu) => (menu === 'logout' ? marketplace.logout() : (marketplace.activeMenu.value = menu))"
-    @logout="marketplace.logout"
+    @menu-change="handleMenuChange"
+    @logout="handleLogout"
     @theme-toggle="isDark = !isDark"
     @notification-read="marketplace.readNotification"
   >
-    <section v-if="marketplace.activeMenu.value === 'overview'">
-      <DashboardFeaturePage :marketplace="marketplace" />
-    </section>
-
-    <SectionCard v-if="marketplace.activeMenu.value === 'products'" title="Products Management">
-      <ProductFeaturePage :marketplace="marketplace" />
-    </SectionCard>
-
-    <SectionCard v-if="marketplace.activeMenu.value === 'investors'" title="Investors">
-      <InvestorsFeaturePage :marketplace="marketplace" />
-    </SectionCard>
-
-    <SectionCard v-if="marketplace.activeMenu.value === 'requests'" title="Transactions">
-      <TransactionsFeaturePage :marketplace="marketplace" />
-    </SectionCard>
-
-    <SectionCard v-if="marketplace.activeMenu.value === 'fees'" title="Fees Management">
-      <p>Delivery: {{ marketplace.state.value.fees.deliveryFee }}</p>
-      <p>Storage: {{ marketplace.state.value.fees.storageFee }}</p>
-      <p>Service Charge: {{ marketplace.state.value.fees.serviceChargePercent }}%</p>
-    </SectionCard>
-
-    <SectionCard v-if="marketplace.activeMenu.value === 'reports'" title="Reports Generator">
-      <ReportsFeaturePage :marketplace="marketplace" />
-    </SectionCard>
+    <RouterView v-slot="{ Component }">
+      <component :is="Component" :marketplace="marketplace" />
+    </RouterView>
   </AppShell>
 </template>

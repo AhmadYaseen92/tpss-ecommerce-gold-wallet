@@ -14,7 +14,7 @@ import {
   updateSellerProduct,
   upsertInvoice,
   upsertSeller
-} from "../services/marketplaceService";
+} from "../../../features/dashboard/services/marketplaceService";
 import type {
   AuthCredentials,
   Invoice,
@@ -24,9 +24,9 @@ import type {
   SellerRegistration,
   UserRole,
   UserSession
-} from "../../../shared/types/models";
-import { fetchMarketplaceState, loginWithBackend, registerSellerWithBackend } from "../../../shared/services/backendGateway";
-import { mockMarketplaceState } from "../../../shared/services/mockMarketplaceRepository";
+} from "../../types/models";
+import { fetchMarketplaceState, loginWithBackend, registerSellerWithBackend } from "../../services/backendGateway";
+import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
 
 export function useMarketplace() {
   const role = ref<UserRole>("admin");

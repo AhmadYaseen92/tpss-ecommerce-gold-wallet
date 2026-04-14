@@ -1,5 +1,5 @@
 import { computed, ref } from "vue";
-import type { ReturnTypeUseMarketplace } from "./useMarketplace";
+import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"today" | "week" | "month">("today");

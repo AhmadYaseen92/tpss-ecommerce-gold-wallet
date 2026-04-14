@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ReturnTypeUseMarketplace } from "../../dashboard/store/useMarketplace";
+import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { useAuthPage } from "../store/useAuthPage";
 
 const { marketplace } = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();

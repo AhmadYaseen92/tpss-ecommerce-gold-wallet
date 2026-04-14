@@ -1,5 +1,5 @@
 import { computed, ref } from "vue";
-import type { ReturnTypeUseMarketplace } from "../../dashboard/store/useMarketplace";
+import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 
 export function useInvestors(marketplace: ReturnTypeUseMarketplace) {
   const selectedInvestorId = ref<string | null>(null);

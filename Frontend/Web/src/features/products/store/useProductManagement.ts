@@ -2,7 +2,7 @@ import { onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { createManagedProduct, deleteManagedProduct, fetchManagedProducts, fetchProductCategories, fetchWeightUnits, updateManagedProduct, type ProductFormPayload } from "../../../shared/services/backendGateway";
 import type { EnumItemDto, ProductManagementDto } from "../../../shared/types/apiTypes";
 import { goToProductRoute, syncProductRoute } from "../services/productRoute";
-import type { ReturnTypeUseMarketplace } from "../../dashboard/store/useMarketplace";
+import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 
 export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const managedProducts = ref<ProductManagementDto[]>([]);
