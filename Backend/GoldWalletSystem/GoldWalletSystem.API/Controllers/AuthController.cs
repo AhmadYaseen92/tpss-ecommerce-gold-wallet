@@ -8,7 +8,7 @@ namespace GoldWalletSystem.API.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(IAuthService authService, ISellerAuthService sellerAuthService) : ControllerBase
 {
     [HttpGet("ping")]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
@@ -33,6 +33,17 @@ public class AuthController(IAuthService authService) : ControllerBase
     {
         var result = await authService.LoginAsync(request, cancellationToken);
         return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Login successful"));
+    }
+
+
+
+    [HttpPost("seller-login")]
+    [ProducesResponseType(typeof(ApiResponse<LoginResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> SellerLogin([FromBody] LoginRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var result = await sellerAuthService.SellerLoginAsync(request, cancellationToken);
+        return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Seller login successful"));
     }
 
     [Authorize]

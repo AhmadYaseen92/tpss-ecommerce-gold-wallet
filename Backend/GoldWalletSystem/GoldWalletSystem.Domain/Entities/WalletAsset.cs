@@ -6,6 +6,8 @@ public class WalletAsset : BaseEntity
 {
     public int WalletId { get; set; }
     public AssetType AssetType { get; set; }
+    public ProductCategory Category { get; set; } = ProductCategory.Gold;
+    public int? SellerId { get; set; }
     public decimal Weight { get; set; }
     public string Unit { get; set; } = "gram";
     public decimal Purity { get; set; }

@@ -73,6 +73,15 @@ export interface AuditLogDto {
   createdAtUtc: string;
 }
 
+export interface WebRequestDto {
+  id: string;
+  investorId: string;
+  type: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+}
+
 
 export interface ProductManagementDto {
   id: number;
@@ -107,6 +116,11 @@ export interface WebDashboardSegmentDto {
   percent: number;
 }
 
+export interface WebDashboardPointDto {
+  label: string;
+  value: number;
+}
+
 export interface WebRecentTransactionDto {
   id: string;
   investorName: string;
@@ -121,5 +135,7 @@ export interface WebDashboardDto {
   cards: WebDashboardCardDto[];
   statusSegments: WebDashboardSegmentDto[];
   categorySegments: WebDashboardSegmentDto[];
+  categoryTransactionSeries: WebDashboardPointDto[];
+  categoryCartSeries: WebDashboardPointDto[];
   recentTransactions: WebRecentTransactionDto[];
 }

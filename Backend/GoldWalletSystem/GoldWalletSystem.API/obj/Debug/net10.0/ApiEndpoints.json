@@ -110,6 +110,41 @@
     ]
   },
   {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
+    "Method": "SellerLogin",
+    "RelativePath": "api/auth/seller-login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Auth.LoginRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[GoldWalletSystem.Application.DTOs.Auth.LoginResponseDto, GoldWalletSystem.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.Object, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 401
+      }
+    ]
+  },
+  {
     "ContainingType": "GoldWalletSystem.API.Controllers.CartController",
     "Method": "GetByUser",
     "RelativePath": "api/cart/by-user",

@@ -136,8 +136,16 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
     [HttpGet("requests")]
     public async Task<IActionResult> GetRequests(CancellationToken cancellationToken)
     {
-        var requests = await dbContext.TransactionHistories
-            .AsNoTracking()
+        var sellerIdClaim = User.FindFirst("seller_id")?.Value;
+        var currentSellerId = int.TryParse(sellerIdClaim, out var parsedSellerId) ? parsedSellerId : 0;
+
+        var query = dbContext.TransactionHistories.AsNoTracking().AsQueryable();
+        if (!User.IsInRole(SystemRoles.Admin))
+        {
+            query = query.Where(x => x.SellerId == currentSellerId);
+        }
+
+        var requests = await query
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(100)
             .Select(x => new WebRequestDto
@@ -313,7 +321,10 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard([FromQuery] string period = "today", CancellationToken cancellationToken = default)
     {
-        var dashboard = await dashboardService.BuildAsync(period, cancellationToken);
+        var sellerIdClaim = User.FindFirst("seller_id")?.Value;
+        var currentSellerId = int.TryParse(sellerIdClaim, out var parsedSellerId) ? parsedSellerId : (int?)null;
+        var scopedSellerId = User.IsInRole(SystemRoles.Admin) ? null : currentSellerId;
+        var dashboard = await dashboardService.BuildAsync(period, scopedSellerId, cancellationToken);
         return Ok(ApiResponse<WebDashboardDto>.Ok(dashboard));
     }
 

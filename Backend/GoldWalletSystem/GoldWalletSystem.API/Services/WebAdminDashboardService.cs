@@ -8,25 +8,45 @@ namespace GoldWalletSystem.API.Services;
 
 public interface IWebAdminDashboardService
 {
-    Task<WebDashboardDto> BuildAsync(string period, CancellationToken cancellationToken = default);
+    Task<WebDashboardDto> BuildAsync(string period, int? sellerId = null, CancellationToken cancellationToken = default);
 }
 
 public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboardService
 {
-    public async Task<WebDashboardDto> BuildAsync(string period, CancellationToken cancellationToken = default)
+    public async Task<WebDashboardDto> BuildAsync(string period, int? sellerId = null, CancellationToken cancellationToken = default)
     {
-        var products = await dbContext.Products.AsNoTracking().ToListAsync(cancellationToken);
+        var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+
+        var productsQuery = dbContext.Products.AsNoTracking().AsQueryable();
+        if (sellerId.HasValue)
+        {
+            productsQuery = productsQuery.Where(x => x.SellerId == sellerId.Value);
+        }
+        var products = await productsQuery.ToListAsync(cancellationToken);
 
         var investors = await dbContext.Users
             .AsNoTracking()
             .Where(x => x.Role == SystemRoles.Investor)
             .ToListAsync(cancellationToken);
 
-        var requests = await dbContext.TransactionHistories
+        var requestsQuery = dbContext.TransactionHistories.AsNoTracking().AsQueryable();
+        if (sellerId.HasValue)
+        {
+            requestsQuery = requestsQuery.Where(x => x.SellerId == sellerId.Value);
+        }
+        requestsQuery = requestsQuery.Where(x => x.CreatedAtUtc >= monthStart);
+        var requests = await requestsQuery.OrderByDescending(x => x.CreatedAtUtc).Take(100).ToListAsync(cancellationToken);
+
+        var cartItemsQuery = dbContext.CartItems
             .AsNoTracking()
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(100)
-            .ToListAsync(cancellationToken);
+            .AsQueryable();
+
+        if (sellerId.HasValue)
+        {
+            cartItemsQuery = cartItemsQuery.Where(x => x.SellerId == sellerId.Value);
+        }
+
+        var cartItems = await cartItemsQuery.ToListAsync(cancellationToken);
 
         var totalSales = products.Sum(p => p.Price * p.AvailableStock);
         var goldAvg = products.Where(p => p.Category == ProductCategory.Gold).Select(p => p.Price).DefaultIfEmpty(0).Average();
@@ -61,12 +81,59 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             })
             .ToList();
 
+        var allCategoryNames = Enum.GetValues<ProductCategory>().Select(x => x.ToString()).ToList();
+        var transactionCountByCategory = allCategoryNames.ToDictionary(x => x, _ => 0, StringComparer.OrdinalIgnoreCase);
+        var cartCountByCategory = allCategoryNames.ToDictionary(x => x, _ => 0, StringComparer.OrdinalIgnoreCase);
+
+        var walletAssetsQuery = dbContext.WalletAssets.AsNoTracking().AsQueryable();
+        if (sellerId.HasValue)
+        {
+            walletAssetsQuery = walletAssetsQuery.Where(x => x.SellerId == sellerId.Value);
+        }
+
+        var walletAssetGroups = await walletAssetsQuery
+            .GroupBy(x => x.Category)
+            .Select(group => new { Category = group.Key, Count = group.Sum(x => x.Quantity) })
+            .ToListAsync(cancellationToken);
+
+        foreach (var group in walletAssetGroups)
+        {
+            var categoryName = group.Category.ToString();
+            if (!transactionCountByCategory.ContainsKey(categoryName))
+            {
+                continue;
+            }
+
+            transactionCountByCategory[categoryName] = (int)group.Count;
+        }
+
+        var categoryTransactionSeries = allCategoryNames
+            .Select(categoryName => new WebDashboardPointDto
+            {
+                Label = categoryName,
+                Value = transactionCountByCategory.TryGetValue(categoryName, out var count) ? count : 0
+            })
+            .ToList();
+
+        foreach (var group in cartItems.GroupBy(item => item.Category.ToString()))
+        {
+            cartCountByCategory[group.Key] = group.Sum(x => x.Quantity);
+        }
+
+        var categoryCartSeries = allCategoryNames
+            .Select(categoryName => new WebDashboardPointDto
+            {
+                Label = categoryName,
+                Value = cartCountByCategory.TryGetValue(categoryName, out var count) ? count : 0
+            })
+            .ToList();
+
         return new WebDashboardDto
         {
             Cards =
             [
-                new WebDashboardCardDto { Title = "Total Transactions", Value = requests.Count.ToString(), Trend = $"{period} period" },
-                new WebDashboardCardDto { Title = "Total Sales", Value = totalSales.ToString("0.00"), Trend = $"{period} period" },
+                new WebDashboardCardDto { Title = "Total Transactions", Value = requests.Count.ToString(), Trend = "This month" },
+                new WebDashboardCardDto { Title = "Total Sales", Value = totalSales.ToString("0.00"), Trend = "This month" },
                 new WebDashboardCardDto { Title = "Total Products", Value = products.Count.ToString(), Trend = "All" },
                 new WebDashboardCardDto { Title = "Active Products", Value = products.Count(p => p.IsActive).ToString(), Trend = "Active" },
                 new WebDashboardCardDto { Title = "Out of Stock Products", Value = products.Count(p => p.AvailableStock == 0).ToString(), Trend = "AvailableStock=0" },
@@ -87,6 +154,8 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
                     Percent = (int)Math.Round((x.Value * 100m) / categoryTotal)
                 })
                 .ToList(),
+            CategoryTransactionSeries = categoryTransactionSeries,
+            CategoryCartSeries = categoryCartSeries,
             RecentTransactions = recent
         };
     }
@@ -97,4 +166,5 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
         if (reference.Contains("status=rejected", StringComparison.OrdinalIgnoreCase)) return "rejected";
         return "pending";
     }
+
 }

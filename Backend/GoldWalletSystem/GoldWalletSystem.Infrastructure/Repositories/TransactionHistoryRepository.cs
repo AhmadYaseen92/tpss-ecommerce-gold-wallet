@@ -20,7 +20,16 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
     {
         var query = dbContext.TransactionHistories
             .AsNoTracking()
-            .Where(x => x.UserId == request.UserId);
+            .AsQueryable();
+
+        if (request.SellerId.HasValue)
+        {
+            query = query.Where(x => x.SellerId == request.SellerId.Value);
+        }
+        else
+        {
+            query = query.Where(x => x.UserId == request.UserId);
+        }
 
         if (!string.IsNullOrWhiteSpace(request.TransactionType))
         {
@@ -40,7 +49,7 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
         var items = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(x => new TransactionHistoryDto(x.Id, x.UserId, x.TransactionType, x.Amount, x.Currency, x.Reference, x.CreatedAtUtc))
+            .Select(x => new TransactionHistoryDto(x.Id, x.UserId, x.SellerId, x.TransactionType, x.Amount, x.Currency, x.Reference, x.CreatedAtUtc))
             .ToListAsync(cancellationToken);
 
         return new PagedResult<TransactionHistoryDto>(items, totalCount, request.PageNumber, request.PageSize);

@@ -256,9 +256,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasKey(x => x.Id);
             entity.Property(x => x.UnitPrice).HasPrecision(18, 2);
             entity.Property(x => x.LineTotal).HasPrecision(18, 2);
+            entity.Property(x => x.Category).HasConversion<int>();
             entity.HasIndex(x => new { x.CartId, x.ProductId });
+            entity.HasIndex(x => x.SellerId);
+            entity.HasIndex(x => x.Category);
             entity.HasOne(x => x.Cart).WithMany(x => x.Items).HasForeignKey(x => x.CartId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Seller>().WithMany().HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 
@@ -289,8 +293,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Reference).IsRequired().HasMaxLength(100);
             entity.HasIndex(x => x.Reference).IsUnique();
             entity.HasIndex(x => x.UserId);
+            entity.HasIndex(x => x.SellerId);
             entity.HasIndex(x => x.CreatedAtUtc);
             entity.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<Seller>().WithMany().HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 
@@ -316,11 +322,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Unit).IsRequired().HasMaxLength(20);
             entity.Property(x => x.Weight).HasPrecision(18, 3);
             entity.Property(x => x.Purity).HasPrecision(5, 2);
+            entity.Property(x => x.Category).HasConversion<int>();
             entity.Property(x => x.SellerName).HasMaxLength(200);
             entity.Property(x => x.AverageBuyPrice).HasPrecision(18, 2);
             entity.Property(x => x.CurrentMarketPrice).HasPrecision(18, 2);
             entity.HasIndex(x => x.WalletId);
+            entity.HasIndex(x => x.Category);
+            entity.HasIndex(x => x.SellerId);
             entity.HasOne(x => x.Wallet).WithMany(x => x.Assets).HasForeignKey(x => x.WalletId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<Seller>().WithMany().HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 
