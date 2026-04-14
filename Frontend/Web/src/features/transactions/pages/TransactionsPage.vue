@@ -16,10 +16,10 @@ withDefaults(
 );
 
 const emit = defineEmits<{
-  view: [id: string];
-  saveStatus: [];
-  updateStatus: [status: "pending" | "approved" | "rejected"];
-  quickStatus: [id: string; status: "pending" | "approved" | "rejected"];
+  (e: "view", id: string): void;
+  (e: "saveStatus"): void;
+  (e: "updateStatus", status: "pending" | "approved" | "rejected"): void;
+  (e: "quickStatus", id: string, status: "pending" | "approved" | "rejected"): void;
 }>();
 </script>
 
