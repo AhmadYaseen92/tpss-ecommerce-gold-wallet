@@ -248,7 +248,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
             id: `s-${item.sellerId}`,
             userId: item.sellerId,
             name: item.sellerName,
-            email: `${item.sellerName.toLowerCase().replaceAll(" ", ".")}@goldwallet.local`,
+            email: `${item.sellerName.toLowerCase().replace(/\s+/g, ".")}@goldwallet.local`,
             businessName: item.sellerName,
             kycStatus: "approved" as const,
             submittedAt: new Date().toISOString().split("T")[0]

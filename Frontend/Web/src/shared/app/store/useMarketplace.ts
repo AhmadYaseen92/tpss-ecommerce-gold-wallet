@@ -149,6 +149,7 @@ export function useMarketplace() {
     state.value.requests = setRequestStatus(state.value.requests, requestId, status);
     if (session.value?.accessToken) {
       await updateWebRequestStatus(session.value.accessToken, requestId, status);
+      state.value = await fetchMarketplaceState(session.value);
     }
   };
 

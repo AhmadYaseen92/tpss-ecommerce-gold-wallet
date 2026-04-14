@@ -45,7 +45,7 @@ onUnmounted(() => {
 
 watch(isDark, (value) => document.documentElement.classList.toggle("dark-mode", value));
 
-const menuItems = computed(() => {
+const menuItems = computed<Array<{ key: NavigationKey; label: string }>>(() => {
   const common: Array<{ key: NavigationKey; label: string }> = [
     { key: "overview", label: "Dashboard" },
     { key: "products", label: "Products" },
@@ -55,7 +55,7 @@ const menuItems = computed(() => {
   ];
 
   return marketplace.role.value === "admin"
-    ? [...common.slice(0, 2), { key: "investors", label: "Investors" }, ...common.slice(2), { key: "fees", label: "Fees" }]
+    ? [...common.slice(0, 2), { key: "investors" as NavigationKey, label: "Investors" }, ...common.slice(2), { key: "fees" as NavigationKey, label: "Fees" }]
     : common;
 });
 

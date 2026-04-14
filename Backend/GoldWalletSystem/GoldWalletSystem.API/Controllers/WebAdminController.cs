@@ -185,8 +185,11 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         var item = await dbContext.TransactionHistories.FirstOrDefaultAsync(x => x.Id == requestId, cancellationToken);
         if (item is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
 
+        if (!string.Equals(item.Status, "pending", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(ApiResponse<object>.Fail("Only pending requests can be changed.", 400));
+
         var nextStatus = request.Status.Trim().ToLowerInvariant();
-        if (nextStatus != "pending" && nextStatus != "approved" && nextStatus != "rejected")
+        if (nextStatus != "approved" && nextStatus != "rejected")
             return BadRequest(ApiResponse<object>.Fail("Invalid status", 400));
 
         var previousStatus = item.Status;
@@ -196,6 +199,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         if (previousStatus == "pending" && nextStatus == "approved")
         {
             await ApplyApprovedRequestSideEffectsAsync(item, cancellationToken);
+            await CreateInvoiceForApprovedRequestAsync(item, cancellationToken);
         }
 
         dbContext.AuditLogs.Add(new Domain.Entities.AuditLog
@@ -205,6 +209,14 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             EntityName = "TransactionHistory",
             EntityId = item.Id,
             Details = $"Request {item.Id}: {previousStatus} -> {nextStatus}, type={item.TransactionType}, amount={item.Amount} {item.Currency}",
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        dbContext.AppNotifications.Add(new Domain.Entities.AppNotification
+        {
+            UserId = item.UserId,
+            Title = "Request Status Updated",
+            Body = $"Your {item.TransactionType} request was {nextStatus}.",
+            IsRead = false,
             CreatedAtUtc = DateTime.UtcNow
         });
 
@@ -493,5 +505,29 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 wallet.UpdatedAtUtc = DateTime.UtcNow;
             }
         }
+    }
+
+    private async Task CreateInvoiceForApprovedRequestAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
+    {
+        var sellerUserId = await dbContext.Users
+            .Where(x => x.Role == SystemRoles.Seller && x.SellerId == request.SellerId)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync(cancellationToken) ?? 0;
+
+        dbContext.Invoices.Add(new Domain.Entities.Invoice
+        {
+            InvestorUserId = request.UserId,
+            SellerUserId = sellerUserId,
+            InvoiceNumber = $"INV-REQ-{request.Id}-{DateTime.UtcNow:yyyyMMddHHmmss}",
+            InvoiceCategory = request.Category,
+            SourceChannel = "RequestApproval",
+            SubTotal = request.Amount,
+            TaxAmount = 0,
+            TotalAmount = request.Amount,
+            InvoiceQrCode = string.Empty,
+            IssuedOnUtc = DateTime.UtcNow,
+            Status = "approved",
+            CreatedAtUtc = DateTime.UtcNow
+        });
     }
 }

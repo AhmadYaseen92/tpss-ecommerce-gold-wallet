@@ -12,6 +12,7 @@ defineProps<{ item: TransactionRowView | null }>();
     <p><strong>Investor:</strong> {{ item.investorName }}</p>
     <p><strong>Type:</strong> {{ item.transactionType }}</p>
     <p><strong>Category:</strong> {{ item.productName }}</p>
+    <p><strong>Quantity:</strong> {{ item.quantity }}</p>
     <p><strong>Amount:</strong> {{ item.amount }}</p>
     <p><strong>Unit Price:</strong> {{ item.transactionPrice }}</p>
     <p><strong>Status:</strong> <span :class="statusClass(item.status)">{{ item.status }}</span></p>

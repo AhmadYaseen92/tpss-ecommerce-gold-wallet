@@ -8,5 +8,5 @@ const emit = defineEmits<{ save: []; image: [event: Event] }>();
 </script>
 
 <template>
-  <ProductForm :model="model" :categories="categories" :units="units" @save="emit('save')" @image="emit('image', $event)" />
+  <ProductForm :model="model" :categories="categories" :units="units" :errors="{}" @save="emit('save')" @image="emit('image', $event)" />
 </template>

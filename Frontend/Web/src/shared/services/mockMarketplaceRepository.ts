@@ -17,8 +17,8 @@ export const mockMarketplaceState: MarketplaceState = {
     { id: "i-2", fullName: "Sara Odeh", riskLevel: "low", walletBalance: 12200, status: "review" }
   ],
   requests: [
-    { id: "r-1", investorId: "i-1", type: "withdrawal", amount: 1200, status: "pending", createdAt: "2026-04-13" },
-    { id: "r-2", investorId: "i-2", type: "sell", amount: 740, status: "approved", createdAt: "2026-04-12" }
+    { id: "r-1", investorId: "i-1", investorName: "Ahmad Saleh", type: "withdrawal", category: "Gold", quantity: 2, unitPrice: 600, weight: 10, unit: "gram", purity: 24, amount: 1200, status: "pending", currency: "USD", createdAt: "2026-04-13" },
+    { id: "r-2", investorId: "i-2", investorName: "Sara Odeh", type: "sell", category: "Gold", quantity: 1, unitPrice: 740, weight: 5, unit: "gram", purity: 24, amount: 740, status: "approved", currency: "USD", createdAt: "2026-04-12" }
   ],
   products: [
     {

@@ -24,6 +24,11 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
 
   const saveTransactionStatus = async () => {
     if (!selectedTransactionId.value) return;
+    const selected = transactionsView.value.find((x) => x.id === selectedTransactionId.value);
+    if (selected && selected.status !== "pending") {
+      window.alert("Only pending requests can be updated.");
+      return;
+    }
     const confirmed = window.confirm(`Are you sure you want to change request status to "${transactionStatusDraft.value}"?`);
     if (!confirmed) return;
     await marketplace.updateRequestStatus(selectedTransactionId.value, transactionStatusDraft.value);

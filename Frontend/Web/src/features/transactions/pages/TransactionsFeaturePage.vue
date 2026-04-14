@@ -26,6 +26,11 @@ const updateStatusDraft = (value: "pending" | "approved" | "rejected") => {
 };
 
 const quickStatus = async (id: string, status: "pending" | "approved" | "rejected") => {
+  const current = transactionsView.value.find((x) => x.id === id);
+  if (current && current.status !== "pending") {
+    window.alert("Only pending requests can be updated.");
+    return;
+  }
   const confirmed = window.confirm(`Confirm changing request ${id} to ${status}?`);
   if (!confirmed) return;
   await props.marketplace.updateRequestStatus(id, status);
