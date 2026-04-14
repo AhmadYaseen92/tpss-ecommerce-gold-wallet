@@ -68,7 +68,10 @@ class LoginPage extends StatelessWidget {
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -77,9 +80,17 @@ class LoginPage extends StatelessWidget {
                     LoginForm(),
                     const SizedBox(height: 24),
                     const OrDivider(),
-                    const SizedBox(height: 24),
-                    BiometricButtons(cubit: BlocProvider.of<LoginCubit>(context)),
-                    const SizedBox(height: 24),
+                    if (context.watch<LoginCubit>().biometricType ==
+                        BiometricTypeUI.none)
+                      const SizedBox(height: 0)
+                    else
+                      const SizedBox(height: 24),
+                    if (context.watch<LoginCubit>().biometricType !=
+                        BiometricTypeUI.none)
+                      BiometricButtons(),
+                    if (context.watch<LoginCubit>().biometricType !=
+                        BiometricTypeUI.none)
+                      const SizedBox(height: 24),
                     const SignUpRow(),
                   ],
                 ),

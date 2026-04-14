@@ -637,6 +637,256 @@
         }
       }
     },
+    "/api/products/management": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Products"
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Name": {
+                    "type": "string"
+                  },
+                  "Sku": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "Image": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  },
+                  "ExistingImageUrl": {
+                    "type": "string"
+                  },
+                  "Category": {
+                    "$ref": "#/components/schemas/ProductCategory"
+                  },
+                  "WeightValue": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "WeightUnit": {
+                    "$ref": "#/components/schemas/ProductWeightUnit"
+                  },
+                  "Price": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "AvailableStock": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)$",
+                    "type": [
+                      "integer",
+                      "string"
+                    ],
+                    "format": "int32"
+                  },
+                  "IsActive": {
+                    "type": "boolean"
+                  },
+                  "SellerId": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)$",
+                    "type": [
+                      "integer",
+                      "string"
+                    ],
+                    "format": "int32"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/products/management/{id}": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Name": {
+                    "type": "string"
+                  },
+                  "Sku": {
+                    "type": "string"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "Image": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  },
+                  "ExistingImageUrl": {
+                    "type": "string"
+                  },
+                  "Category": {
+                    "$ref": "#/components/schemas/ProductCategory"
+                  },
+                  "WeightValue": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "WeightUnit": {
+                    "$ref": "#/components/schemas/ProductWeightUnit"
+                  },
+                  "Price": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "AvailableStock": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)$",
+                    "type": [
+                      "integer",
+                      "string"
+                    ],
+                    "format": "int32"
+                  },
+                  "IsActive": {
+                    "type": "boolean"
+                  },
+                  "SellerId": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)$",
+                    "type": [
+                      "integer",
+                      "string"
+                    ],
+                    "format": "int32"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/products/categories": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/products/weight-units": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/profile/by-user": {
       "post": {
         "tags": [
@@ -956,6 +1206,382 @@
           }
         }
       }
+    },
+    "/api/web-admin/summary": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/sellers": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/sellers/{id}/kyc-status": {
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSellerKycRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSellerKycRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSellerKycRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/investors": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/investors/{id}/status": {
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStatusRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStatusRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/requests": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/requests/{id}/status": {
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStatusRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStatusRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/invoices": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebInvoiceDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebInvoiceDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebInvoiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/invoices/{id}": {
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebInvoiceDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebInvoiceDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebInvoiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/fees": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebFeesDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebFeesDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebFeesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/notifications": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/dashboard": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "today"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/notifications/{id}/read": {
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1262,6 +1888,10 @@
           }
         }
       },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
       "LoginRequestDto": {
         "type": "object",
         "properties": {
@@ -1387,6 +2017,9 @@
           }
         }
       },
+      "ProductWeightUnit": {
+        "type": "integer"
+      },
       "RegisterRequestDto": {
         "type": "object",
         "properties": {
@@ -1446,6 +2079,54 @@
               "string"
             ],
             "format": "int32"
+          },
+          "sellerCode": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "street": {
+            "type": "string"
+          },
+          "buildingNumber": {
+            "type": "string"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "companyName": {
+            "type": "string"
+          },
+          "tradeLicenseNumber": {
+            "type": "string"
+          },
+          "vatNumber": {
+            "type": "string"
+          },
+          "nationalIdNumber": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "iban": {
+            "type": "string"
+          },
+          "accountHolderName": {
+            "type": "string"
+          },
+          "nationalIdFrontPath": {
+            "type": "string"
+          },
+          "nationalIdBackPath": {
+            "type": "string"
+          },
+          "tradeLicensePath": {
+            "type": "string"
           }
         }
       },
@@ -1582,6 +2263,16 @@
         }
       },
       "UpdateProfilePersonalInfoRequestDto": {
+        "required": [
+          "userId",
+          "fullName",
+          "email",
+          "phoneNumber",
+          "dateOfBirth",
+          "nationality",
+          "documentType",
+          "idNumber"
+        ],
         "type": "object",
         "properties": {
           "userId": {
@@ -1593,9 +2284,16 @@
             "format": "int32"
           },
           "fullName": {
+            "maxLength": 120,
+            "minLength": 3,
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 256,
             "type": "string"
           },
           "phoneNumber": {
+            "pattern": "^[+0-9]{8,15}$",
             "type": [
               "null",
               "string"
@@ -1609,12 +2307,17 @@
             "format": "date"
           },
           "nationality": {
+            "maxLength": 80,
+            "minLength": 2,
             "type": "string"
           },
           "documentType": {
+            "maxLength": 80,
+            "minLength": 2,
             "type": "string"
           },
           "idNumber": {
+            "pattern": "^[A-Za-z0-9-]{4,30}$",
             "type": "string"
           },
           "profilePhotoUrl": {
@@ -1641,7 +2344,42 @@
           }
         }
       },
+      "UpdateSellerKycRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "reviewNotes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "UpdateStatusRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        }
+      },
       "UpsertLinkedBankAccountRequestDto": {
+        "required": [
+          "userId",
+          "bankName",
+          "ibanMasked",
+          "accountHolderName",
+          "accountNumber",
+          "swiftCode",
+          "branchName",
+          "branchAddress",
+          "country",
+          "city",
+          "currency"
+        ],
         "type": "object",
         "properties": {
           "userId": {
@@ -1662,13 +2400,51 @@
             "format": "int32"
           },
           "bankName": {
+            "maxLength": 120,
+            "minLength": 2,
             "type": "string"
           },
           "ibanMasked": {
+            "pattern": "^[A-Z]{2}[A-Z0-9]{13,32}$",
             "type": "string"
           },
           "isVerified": {
             "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "accountHolderName": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "accountNumber": {
+            "maxLength": 40,
+            "type": "string"
+          },
+          "swiftCode": {
+            "maxLength": 20,
+            "type": "string"
+          },
+          "branchName": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "branchAddress": {
+            "maxLength": 250,
+            "type": "string"
+          },
+          "country": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "city": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "currency": {
+            "maxLength": 10,
+            "type": "string"
           }
         }
       },
@@ -1690,6 +2466,11 @@
         }
       },
       "UpsertPaymentMethodRequestDto": {
+        "required": [
+          "userId",
+          "type",
+          "maskedNumber"
+        ],
         "type": "object",
         "properties": {
           "userId": {
@@ -1710,9 +2491,49 @@
             "format": "int32"
           },
           "type": {
+            "maxLength": 60,
+            "minLength": 2,
             "type": "string"
           },
           "maskedNumber": {
+            "maxLength": 128,
+            "minLength": 4,
+            "type": "string"
+          },
+          "holderName": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "expiry": {
+            "maxLength": 10,
+            "type": "string"
+          },
+          "detailsJson": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "cardNumber": {
+            "maxLength": 30,
+            "type": "string"
+          },
+          "applePayToken": {
+            "maxLength": 128,
+            "type": "string"
+          },
+          "walletProvider": {
+            "maxLength": 60,
+            "type": "string"
+          },
+          "walletNumber": {
+            "maxLength": 30,
+            "type": "string"
+          },
+          "cliqAlias": {
+            "maxLength": 60,
+            "type": "string"
+          },
+          "cliqBankName": {
+            "maxLength": 120,
             "type": "string"
           },
           "isDefault": {
@@ -1761,6 +2582,64 @@
             "format": "int32"
           }
         }
+      },
+      "WebFeesDto": {
+        "type": "object",
+        "properties": {
+          "deliveryFee": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "storageFee": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "serviceChargePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "WebInvoiceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sellerId": {
+            "type": "string"
+          },
+          "investorName": {
+            "type": "string"
+          },
+          "totalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
       }
     }
   },
@@ -1800,6 +2679,9 @@
     },
     {
       "name": "Wallet"
+    },
+    {
+      "name": "WebAdmin"
     }
   ]
 }

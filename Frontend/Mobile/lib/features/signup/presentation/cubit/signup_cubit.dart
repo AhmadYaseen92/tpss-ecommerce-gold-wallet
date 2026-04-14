@@ -1,38 +1,18 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/usecases/register_usecase.dart';
 
 part 'signup_state.dart';
 
 class SignupCubit extends Cubit<SignupState> {
   SignupCubit({required RegisterUseCase registerUseCase})
-    : _registerUseCase = registerUseCase,
-      super(SignupInitial());
+      : _registerUseCase = registerUseCase,
+        super(SignupInitial());
 
   final RegisterUseCase _registerUseCase;
 
   int currentStep = 1;
-
-  String firstName = '';
-  String middleName = '';
-  String lastName = '';
-  String email = '';
-  String phoneCode = '+962';
-  String phoneNumber = '';
-  DateTime? dateOfBirth;
-
-  String nationality = 'Jordanian';
-  String documentType = 'National ID';
-  String idNumber = '';
-  String password = '';
-  String confirmPassword = '';
-  bool termsAgreed = false;
-  bool obscurePassword = true;
-  bool obscureConfirm = true;
-  double passwordStrength = 0.0;
-  String passwordStrengthLabel = '';
 
   void goToStep2() {
     currentStep = 2;
@@ -43,6 +23,14 @@ class SignupCubit extends Cubit<SignupState> {
     currentStep = 1;
     emit(SignupStepChanged(step: 1));
   }
+
+  String firstName = '';
+  String middleName = '';
+  String lastName = '';
+  String email = '';
+  String phoneCode = '+962';
+  String phoneNumber = '';
+  DateTime? dateOfBirth;
 
   void updateFirstName(String value) => firstName = value;
   void updateMiddleName(String value) => middleName = value;
@@ -61,6 +49,13 @@ class SignupCubit extends Cubit<SignupState> {
     emit(SignupDateOfBirthChanged(dateOfBirth: value));
   }
 
+  String nationality = 'Jordanian';
+  String documentType = 'National ID';
+  String idNumber = '';
+  String password = '';
+  String confirmPassword = '';
+  bool termsAgreed = false;
+
   void updateNationality(String value) {
     nationality = value;
     emit(SignupNationalityChanged(nationality: value));
@@ -71,41 +66,22 @@ class SignupCubit extends Cubit<SignupState> {
     emit(SignupDocumentTypeChanged(documentType: value));
   }
 
-  void updateIdNumber(String value) => idNumber = value;
+  void updateIdNumber(String value) {
+    idNumber = value;
+  }
 
   void updatePassword(String value) {
     password = value;
+
     final result = calculateStrength(value);
-    passwordStrength = result.strength;
-    passwordStrengthLabel = result.label;
-    emit(
-      SignupPasswordStrengthChanged(
-        strength: result.strength,
-        strengthLabel: result.label,
-      ),
-    );
+    emit(SignupPasswordStrengthChanged(
+      strength: result.strength,
+      strengthLabel: result.label,
+    ));
   }
 
-  void updateConfirmPassword(String value) => confirmPassword = value;
-
-  void togglePasswordVisibility() {
-    obscurePassword = !obscurePassword;
-    emit(
-      SignupPasswordVisibilityChanged(
-        obscurePassword: obscurePassword,
-        obscureConfirm: obscureConfirm,
-      ),
-    );
-  }
-
-  void toggleConfirmVisibility() {
-    obscureConfirm = !obscureConfirm;
-    emit(
-      SignupPasswordVisibilityChanged(
-        obscurePassword: obscurePassword,
-        obscureConfirm: obscureConfirm,
-      ),
-    );
+  void updateConfirmPassword(String value) {
+    confirmPassword = value;
   }
 
   void toggleTerms(bool value) {
@@ -113,17 +89,48 @@ class SignupCubit extends Cubit<SignupState> {
     emit(SignupTermsChanged(agreed: value));
   }
 
+  bool obscurePassword = true;
+  bool obscureConfirm = true;
+
+  void togglePasswordVisibility() {
+    obscurePassword = !obscurePassword;
+    emit(SignupPasswordVisibilityChanged(
+      obscurePassword: obscurePassword,
+      obscureConfirm: obscureConfirm,
+    ));
+  }
+
+  void toggleConfirmVisibility() {
+    obscureConfirm = !obscureConfirm;
+    emit(SignupPasswordVisibilityChanged(
+      obscurePassword: obscurePassword,
+      obscureConfirm: obscureConfirm,
+    ));
+  }
+
   ({double strength, String label}) calculateStrength(String password) {
     if (password.isEmpty) return (strength: 0.0, label: '');
+
     int score = 0;
+
     if (password.length >= 8) score++;
     if (RegExp(r'[A-Z]').hasMatch(password)) score++;
     if (RegExp(r'[0-9]').hasMatch(password)) score++;
     if (RegExp(r'[!@#\$%^&*]').hasMatch(password)) score++;
-    if (score <= 1) return (strength: 0.25, label: 'Weak');
-    if (score == 2) return (strength: 0.5, label: 'Medium');
-    if (score == 3) return (strength: 0.75, label: 'Strong');
-    return (strength: 1.0, label: 'Very Strong');
+
+    switch (score) {
+      case 0:
+      case 1:
+        return (strength: 0.25, label: 'Weak');
+      case 2:
+        return (strength: 0.5, label: 'Medium');
+      case 3:
+        return (strength: 0.75, label: 'Strong');
+      case 4:
+        return (strength: 1.0, label: 'Very Strong');
+      default:
+        return (strength: 0.0, label: '');
+    }
   }
 
   Future<void> signup() async {
@@ -133,6 +140,7 @@ class SignupCubit extends Cubit<SignupState> {
     }
 
     emit(SignupLoading());
+
     try {
       final message = await _registerUseCase(
         firstName: firstName,
@@ -150,30 +158,12 @@ class SignupCubit extends Cubit<SignupState> {
         preferredTheme: 'light',
         sellerId: 0,
       );
+
       emit(SignupSuccess(message));
     } on DioException catch (e) {
       emit(SignupError(_extractMessage(e)));
     } catch (e) {
       emit(SignupError('Sign up failed: $e'));
-    }
-  }
-
-  void pickDate(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: dateOfBirth ?? DateTime(2000),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: AppColors.primaryColor),
-        ),
-        child: child!,
-      ),
-    );
-
-    if (picked != null) {
-      updateDateOfBirth(picked);
     }
   }
 
@@ -184,23 +174,33 @@ class SignupCubit extends Cubit<SignupState> {
   }
 
   String _extractMessage(DioException e) {
-    final payload = e.response?.data;
-    if (payload is Map<String, dynamic>) {
-      final errors = payload['errors'];
+    final data = e.response?.data;
+
+    if (data is Map<String, dynamic>) {
+      final errors = data['errors'];
       if (errors is List && errors.isNotEmpty) {
         return errors.first.toString();
       }
 
-      final message = payload['message'];
-      if (message is String && message.trim().isNotEmpty) {
+      final message = data['message'];
+      if (message is String && message.isNotEmpty) {
         return message;
       }
     }
 
-    if (e.error is String && (e.error as String).trim().isNotEmpty) {
-      return e.error as String;
-    }
+    return 'Signup failed. Please try again.';
+  }
 
-    return 'Signup failed. Ensure backend has /auth/register endpoint.';
+  void pickDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: dateOfBirth ?? DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      updateDateOfBirth(picked);
+    }
   }
 }

@@ -112,6 +112,7 @@ class SetNewPasswordForm extends StatelessWidget {
               ],
             ],
           ),
+            const SizedBox(height: 28),
           AppButton(
             label: 'Reset Password',
             icon: Icons.arrow_forward,

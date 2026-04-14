@@ -38,3 +38,8 @@ final class LoginServerConfigUpdated extends LoginState {
     required this.timeoutSeconds,
   });
 }
+
+class LoginBiometricDetected extends LoginState {
+  final BiometricTypeUI type;
+  LoginBiometricDetected(this.type);
+}

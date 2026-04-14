@@ -67,8 +67,10 @@ class AppTextField extends StatelessWidget {
           autovalidateMode: autovalidateMode,
           onChanged: onChanged,
           decoration: InputDecoration(
-            labelText: requiredField ? '$label *' : label,
-            floatingLabelBehavior: FloatingLabelBehavior.auto,
+            labelText: label.isNotEmpty ? label : null,
+            floatingLabelBehavior: label.isNotEmpty 
+                ? FloatingLabelBehavior.auto 
+                : FloatingLabelBehavior.never,
             hintText: hint,
             errorText: errorText,
             errorStyle: TextStyle(

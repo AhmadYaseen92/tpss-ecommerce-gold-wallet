@@ -2,29 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 
-/// Allows typing over an existing digit by always keeping the last entered char.
-class _OtpDigitFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) {
-      return const TextEditingValue(
-        text: '',
-        selection: TextSelection.collapsed(offset: 0),
-      );
-    }
-    final char = digits[digits.length - 1];
-    return TextEditingValue(
-      text: char,
-      selection: const TextSelection.collapsed(offset: 1),
-    );
-  }
-}
-
-class OtpInputWidget extends StatelessWidget {
+class OtpInputWidget extends StatefulWidget {
   final int length;
   final String value;
   final ValueChanged<String> onCompleted;
@@ -39,89 +17,143 @@ class OtpInputWidget extends StatelessWidget {
   });
 
   @override
+  State<OtpInputWidget> createState() => _OtpInputWidgetState();
+}
+
+class _OtpInputWidgetState extends State<OtpInputWidget> {
+  late List<TextEditingController> controllers;
+  late List<FocusNode> focusNodes;
+
+  @override
+  void initState() {
+    super.initState();
+
+    controllers = List.generate(
+      widget.length,
+      (_) => TextEditingController(),
+    );
+
+    focusNodes = List.generate(
+      widget.length,
+      (_) => FocusNode(),
+    );
+
+    _syncWithValue(widget.value);
+  }
+
+  @override
+  void didUpdateWidget(covariant OtpInputWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      _syncWithValue(widget.value);
+    }
+  }
+
+  void _syncWithValue(String value) {
+    for (int i = 0; i < widget.length; i++) {
+      controllers[i].text = i < value.length ? value[i] : '';
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var c in controllers) c.dispose();
+    for (var f in focusNodes) f.dispose();
+    super.dispose();
+  }
+
+  void _onChanged(int index, String val) {
+    // Handle paste (multiple digits)
+    if (val.length > 1) {
+      final digits = val.replaceAll(RegExp(r'\D'), '');
+      if (digits.length == widget.length) {
+        widget.onChanged(digits);
+        widget.onCompleted(digits);
+        return;
+      }
+    }
+
+    if (val.isNotEmpty) {
+      final newOtp = _buildOtp(index, val);
+      widget.onChanged(newOtp);
+
+      if (index < widget.length - 1) {
+        focusNodes[index + 1].requestFocus();
+      }
+
+      if (newOtp.length == widget.length) {
+        widget.onCompleted(newOtp);
+      }
+    } else {
+      final newOtp = widget.value.substring(0, index);
+      widget.onChanged(newOtp);
+    }
+  }
+
+  String _buildOtp(int index, String val) {
+    final current = widget.value.padRight(widget.length);
+
+    return current.substring(0, index) +
+        val +
+        current.substring(index + 1).trim();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(length, (index) {
+      children: List.generate(widget.length, (index) {
         return Padding(
-          padding: EdgeInsets.only(right: index < length - 1 ? 10 : 0),
+          padding: EdgeInsets.only(right: index < widget.length - 1 ? 10 : 0),
           child: SizedBox(
             width: 48,
             height: 56,
-            child: Focus(
-              onKeyEvent: (node, event) {
-                // Backspace on an empty box: move to previous and trim the OTP
-                if (event is KeyDownEvent &&
-                    event.logicalKey == LogicalKeyboardKey.backspace &&
-                    index >= value.length &&
-                    index > 0) {
-                  FocusScope.of(context).previousFocus();
-                  if (value.isNotEmpty) {
-                    onChanged(value.substring(0, value.length - 1));
-                  }
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
-              child: TextFormField(
-                key: ValueKey('otp_$index'),
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.center,
-                inputFormatters: [_OtpDigitFormatter()],
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: palette.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  counterText: '',
-                  filled: true,
-                  fillColor: palette.surface,
-                  contentPadding: EdgeInsets.zero,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: palette.border, width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: palette.border, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: palette.primary,
-                      width: 1.5,
-                    ),
-                  ),
-                ),
-                onChanged: (val) {
-                  if (val.isNotEmpty) {
-                    // Replace digit at this position or append sequentially
-                    final String newOtp;
-                    if (index < value.length) {
-                      newOtp = value.substring(0, index) +
-                          val +
-                          value.substring(index + 1);
-                    } else {
-                      newOtp = value + val;
-                    }
-                    onChanged(newOtp);
-                    if (index < length - 1) {
-                      FocusScope.of(context).nextFocus();
-                    }
-                    if (newOtp.length == length) {
-                      onCompleted(newOtp);
-                    }
-                  } else {
-                    // Digit cleared: truncate OTP from this position onwards
-                    if (index < value.length) {
-                      onChanged(value.substring(0, index));
-                    }
-                  }
-                },
+            child: TextFormField(
+              controller: controllers[index],
+              focusNode: focusNodes[index],
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(1),
+              ],
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: palette.textPrimary,
               ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: palette.surface,
+                contentPadding: EdgeInsets.zero,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: palette.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: palette.primary,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              onChanged: (val) => _onChanged(index, val),
+              onTap: () {
+                controllers[index].selection = TextSelection.fromPosition(
+                  TextPosition(offset: controllers[index].text.length),
+                );
+              },
+              onFieldSubmitted: (_) {
+                if (index < widget.length - 1) {
+                  focusNodes[index + 1].requestFocus();
+                }
+              },
+              onEditingComplete: () {},
+              onSaved: (_) {},
+              onTapOutside: (_) => FocusScope.of(context).unfocus(),
             ),
           ),
         );
