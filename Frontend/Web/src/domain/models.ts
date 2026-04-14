@@ -10,7 +10,8 @@ export type NavigationKey =
   | "fees"
   | "inventory"
   | "reports"
-  | "notifications";
+  | "notifications"
+  | "logout";
 
 export interface Seller {
   id: string;
@@ -97,6 +98,7 @@ export interface MarketplaceState {
   fees: FeeConfiguration;
   notifications: NotificationItem[];
   reports: ReportMetric[];
+  currentUserName?: string;
 }
 
 export interface AuthCredentials {

@@ -140,7 +140,11 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 16px;
+  padding: 12px 16px;
+}
+
+.top-bar.compact {
+  min-height: 72px;
 }
 
 .top-bar h2 {
@@ -163,21 +167,23 @@ body {
   font-size: 24px;
 }
 
-.icon-btn {
+.top-action-btn {
   position: relative;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+  min-width: 120px;
+  height: 40px;
+  border-radius: 999px;
   display: inline-flex;
   justify-content: center;
   align-items: center;
+  gap: 8px;
   background: var(--surface-muted);
   border: 1px solid var(--border);
   color: inherit;
-  font-size: 18px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.icon-btn.danger {
+.top-action-btn.danger {
   background: #fff0ef;
   border-color: #ffbdb8;
   color: #d93025;
@@ -186,7 +192,7 @@ body {
 .badge {
   position: absolute;
   top: -4px;
-  right: -2px;
+  right: 8px;
   min-width: 18px;
   height: 18px;
   border-radius: 9px;
@@ -199,22 +205,26 @@ body {
   padding: 0 4px;
 }
 
-.notification-popover {
-  position: absolute;
-  top: 68px;
-  right: 16px;
+.vertical-modal.right {
+  position: fixed;
+  top: 0;
+  right: 0;
   width: 360px;
-  max-height: 360px;
+  max-width: 92vw;
+  height: 100vh;
   overflow: auto;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 14px 35px rgb(0 0 0 / 16%);
-  padding: 12px;
-  z-index: 30;
+  border-left: 1px solid var(--border);
+  box-shadow: -10px 0 30px rgb(0 0 0 / 16%);
+  padding: 16px;
+  z-index: 40;
 }
 
-.notification-popover ul {
+.vertical-modal h4 {
+  margin-top: 0;
+}
+
+.vertical-modal ul {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -222,7 +232,7 @@ body {
   gap: 8px;
 }
 
-.notification-popover li {
+.vertical-modal li {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 8px;
@@ -230,10 +240,15 @@ body {
   gap: 6px;
 }
 
-.notification-popover li p {
+.vertical-modal li p {
   margin: 4px 0 0;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.settings-list {
+  display: grid;
+  gap: 10px;
 }
 
 .section-card,

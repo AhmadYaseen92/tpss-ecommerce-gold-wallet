@@ -12,9 +12,9 @@ A modern web app flow similar to common SaaS dashboards:
 - Dashboard summary cards.
 - Products (server list + seller management actions).
 - Investors and transaction/request management.
-- Invoices and inventory views.
 - Fees module.
-- Reports (notification center moved to top bar bell panel).
+- Reports.
+- Top-bar notifications and settings vertical panels.
 
 ## Clean architecture
 

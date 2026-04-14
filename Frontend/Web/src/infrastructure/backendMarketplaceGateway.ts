@@ -173,6 +173,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
       serviceChargePercent: 2.5
     },
     notifications: mapNotifications(logsResult.items),
-    reports: mapReports(dashboard, logsResult.items)
+    reports: mapReports(dashboard, logsResult.items),
+    currentUserName: dashboard.fullName
   };
 }

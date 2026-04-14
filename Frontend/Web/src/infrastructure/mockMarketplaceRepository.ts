@@ -50,5 +50,6 @@ export const mockMarketplaceState: MarketplaceState = {
       createdAt: "2026-04-14"
     }
   ],
-  reports: [{ title: "Fallback Mode", value: "ON", trend: "Backend unavailable" }]
+  reports: [{ title: "Fallback Mode", value: "ON", trend: "Backend unavailable" }],
+  currentUserName: "Demo User"
 };

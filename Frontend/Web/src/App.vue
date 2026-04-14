@@ -38,9 +38,7 @@ const menuItems = computed(() => {
   const common: Array<{ key: NavigationKey; label: string }> = [
     { key: "overview", label: "Dashboard" },
     { key: "products", label: "Products" },
-    { key: "inventory", label: "Inventory" },
-    { key: "invoices", label: "Invoices" },
-  ];
+      ];
 
   if (marketplace.role.value === "admin") {
     return [
@@ -48,23 +46,21 @@ const menuItems = computed(() => {
       { key: "investors", label: "Investors" },
       { key: "requests", label: "Transactions" },
       { key: "fees", label: "Fees" },
-      { key: "reports", label: "Reports" }
+      { key: "reports", label: "Reports" },
+      { key: "logout", label: "Logout" }
     ];
   }
 
-  return common;
+  return [...common, { key: "reports", label: "Reports" }, { key: "logout", label: "Logout" }];
 });
 
 const welcomeText = computed(() => {
   if (!marketplace.session.value) return "Welcome";
-  return marketplace.role.value === "admin" ? "Welcome back, Admin" : "Welcome back, Seller";
+  const fullName = marketplace.state.value.currentUserName ?? (marketplace.role.value === "admin" ? "Admin User" : "Seller User");
+  return `Welcome back, ${fullName}`;
 });
 
-const inventorySummary = computed(() => {
-  const totalStock = marketplace.state.value.products.reduce((sum, product) => sum + product.stock, 0);
-  const lowStock = marketplace.state.value.products.filter((product) => product.stock < 20).length;
-  return { totalStock, lowStock };
-});
+
 
 const productsForRole = computed(() =>
   marketplace.role.value === "seller" ? marketplace.sellerProducts.value : marketplace.state.value.products
@@ -148,7 +144,7 @@ const submitNewProduct = () => {
     :welcome-text="welcomeText"
     :is-dark="isDark"
     :notifications="marketplace.state.value.notifications"
-    @menu-change="(menu) => (marketplace.activeMenu.value = menu)"
+    @menu-change="(menu) => (menu === 'logout' ? marketplace.logout() : (marketplace.activeMenu.value = menu))"
     @logout="marketplace.logout"
     @theme-toggle="isDark = !isDark"
     @notification-read="marketplace.readNotification"
@@ -250,26 +246,7 @@ const submitNewProduct = () => {
       </table>
     </SectionCard>
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'invoices'" title="Invoices">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Investor</th>
-            <th>Total</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="invoice in marketplace.state.value.invoices" :key="invoice.id">
-            <td>{{ invoice.id }}</td>
-            <td>{{ invoice.investorName }}</td>
-            <td>{{ invoice.totalAmount }}</td>
-            <td>{{ invoice.status }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </SectionCard>
+
 
     <SectionCard v-if="marketplace.activeMenu.value === 'fees'" title="Fees Management">
       <p>Delivery: {{ marketplace.state.value.fees.deliveryFee }}</p>
@@ -277,10 +254,7 @@ const submitNewProduct = () => {
       <p>Service Charge: {{ marketplace.state.value.fees.serviceChargePercent }}%</p>
     </SectionCard>
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'inventory'" title="Inventory">
-      <p>Total Stock: {{ inventorySummary.totalStock }}</p>
-      <p>Low Stock Products: {{ inventorySummary.lowStock }}</p>
-    </SectionCard>
+
 
     <SectionCard v-if="marketplace.activeMenu.value === 'reports'" title="Reports">
       <MetricGrid :metrics="marketplace.adminMetrics.value" />
