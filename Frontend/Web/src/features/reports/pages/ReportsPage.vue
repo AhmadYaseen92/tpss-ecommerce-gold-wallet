@@ -1,5 +1,16 @@
 <script setup lang="ts">
-defineProps<{ reportFilters: { reportType: string; userId: string; userName: string; productName: string; dateRange: string; customFrom: string; customTo: string; stockOnly: boolean }; reportTypeCards: Array<{ key: string; label: string; description: string }>; rows: Array<Record<string, string | number>> }>();
+withDefaults(
+  defineProps<{
+    reportFilters: { reportType: string; userId: string; userName: string; productName: string; dateRange: string; customFrom: string; customTo: string; stockOnly: boolean };
+    reportTypeCards?: Array<{ key: string; label: string; description: string }>;
+    rows?: Array<Record<string, string | number>>;
+  }>(),
+  {
+    reportTypeCards: () => [],
+    rows: () => [],
+  }
+);
+
 const emit = defineEmits<{ generate: []; excel: []; pdf: [] }>();
 </script>
 
