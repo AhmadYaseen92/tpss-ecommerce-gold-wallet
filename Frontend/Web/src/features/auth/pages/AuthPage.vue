@@ -40,7 +40,7 @@ watch(
 
 <template>
   <section class="login-page">
-    <div class="auth-card auth-card-full">
+    <div class="auth-card" :class="{ 'auth-card-register': authScreen === 'register' }">
       <h1>{{ authScreen === 'login' ? 'Welcome Back' : 'Create Seller Account' }}</h1>
       <p v-if="authScreen === 'login'">Sign in to continue to your dashboard.</p>
       <p v-else>Register seller account with KYC details and wait for admin approval.</p>
@@ -144,7 +144,7 @@ watch(
           </div>
         </section>
 
-        <button :disabled="marketplace.loading.value" type="submit" class="full-btn">Create account</button>
+        <button :disabled="marketplace.loading.value" type="submit" class="register-submit-btn">Create account</button>
       </form>
 
       <p class="register-text" v-if="authScreen === 'login'">Don’t have an account? <button class="link-btn" @click="authScreen = 'register'">Register now</button></p>
