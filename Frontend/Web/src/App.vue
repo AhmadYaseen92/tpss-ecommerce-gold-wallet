@@ -470,18 +470,24 @@ const downloadReport = () => {
           </label>
 
           <label>
-            <span>Category *</span>
-            <select v-model.number="productForm.category">
-              <option disabled :value="0">{{ categories.length ? 'Select category' : 'Loading categories...' }}</option>
-              <option v-for="item in categories" :key="item.value" :value="item.value">{{ item.name }}</option>
-            </select>
-            <small>Dropdown values are loaded from backend (with fallback values if unavailable).</small>
+            <span>Product Image</span>
+            <input type="file" accept="image/*" @change="onProductImageChange" />
+            <small>Upload JPG/PNG image for display in product details.</small>
           </label>
 
           <label>
             <span>Price *</span>
             <input v-model.number="productForm.price" type="number" min="0.01" step="0.01" placeholder="e.g. 250.00" required />
             <small>Selling price in system currency.</small>
+          </label>
+
+          <label>
+            <span>Category *</span>
+            <select v-model.number="productForm.category">
+              <option disabled :value="0">{{ categories.length ? 'Select category' : 'Loading categories...' }}</option>
+              <option v-for="item in categories" :key="item.value" :value="item.value">{{ item.name }}</option>
+            </select>
+            <small>Dropdown values are loaded from backend (with fallback values if unavailable).</small>
           </label>
 
           <label>
@@ -505,29 +511,19 @@ const downloadReport = () => {
             <small>Unit dropdown values come from backend (or fallback values).</small>
           </label>
 
-          <label>
+          <label class="field-full">
             <span>Description *</span>
             <input v-model="productForm.description" placeholder="Short details about purity, origin, and packaging" required />
             <small>Describe the product details that buyers need.</small>
           </label>
 
-          <label>
-            <span>Product Image</span>
-            <input type="file" accept="image/*" @change="onProductImageChange" />
-            <small>Upload JPG/PNG image for display in product details.</small>
-          </label>
-
-          <div class="form-toggle-row form-checkbox-field">
+          <div class="form-toggle-row form-checkbox-field field-full">
             <span>Product Status</span>
-            <button
-              type="button"
-              class="modern-toggle"
-              :class="{ active: productForm.isActive }"
-              @click="productForm.isActive = !productForm.isActive"
-            >
-              <span class="toggle-thumb"></span>
-              <span class="toggle-label">{{ productForm.isActive ? 'Active' : 'Inactive' }}</span>
-            </button>
+            <label class="normal-toggle" aria-label="Product status toggle">
+              <span class="toggle-state">{{ productForm.isActive ? 'ON' : 'OFF' }}</span>
+              <input v-model="productForm.isActive" type="checkbox" />
+              <span class="slider"></span>
+            </label>
           </div>
         </div>
 
