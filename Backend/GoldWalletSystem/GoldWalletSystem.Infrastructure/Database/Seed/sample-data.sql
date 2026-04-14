@@ -349,6 +349,68 @@ BEGIN TRY
             NULL
         );
 
+    -- 5.b) Seed wallet assets and cart items for category analytics.
+    DECLARE @WalletInvestorMain int = (SELECT TOP 1 [Id] FROM [Wallets] WHERE [UserId] = @InvestorMain);
+    DECLARE @WalletInvestorImseeh int = (SELECT TOP 1 [Id] FROM [Wallets] WHERE [UserId] = @InvestorImseeh);
+    DECLARE @CartInvestorMain int = (SELECT TOP 1 [Id] FROM [Carts] WHERE [UserId] = @InvestorMain);
+    DECLARE @CartInvestorGoldPal int = (SELECT TOP 1 [Id] FROM [Carts] WHERE [UserId] = @InvestorGoldPal);
+
+    DECLARE @ProductImseehGoldBar int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'IMSEEH-PRD-001');
+    DECLARE @ProductImseehGoldCoin int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'IMSEEH-PRD-002');
+    DECLARE @ProductGoldPalSilver int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'GOLDPAL-PRD-003');
+
+    IF COL_LENGTH('WalletAssets', 'Category') IS NOT NULL AND COL_LENGTH('WalletAssets', 'SellerId') IS NOT NULL
+    BEGIN
+        INSERT INTO [WalletAssets] (
+            [WalletId],[AssetType],[Category],[SellerId],[Weight],[Unit],[Purity],[Quantity],[AverageBuyPrice],[CurrentMarketPrice],[SellerName],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        VALUES
+            (@WalletInvestorMain, 1, 1, @SellerImseeh, 5.000, N'gram', 24.00, 1, 430.00, 435.00, N'Imseeh', DATEADD(DAY, -2, @Now), NULL),
+            (@WalletInvestorMain, 1, 5, @SellerImseeh, 31.104, N'gram', 24.00, 2, 2675.00, 2685.00, N'Imseeh', DATEADD(DAY, -1, @Now), NULL),
+            (@WalletInvestorImseeh, 2, 2, @SellerGoldPal, 31.104, N'gram', 99.99, 3, 37.00, 38.00, N'Gold Palace', DATEADD(DAY, -1, @Now), NULL);
+    END
+    ELSE
+    BEGIN
+        INSERT INTO [WalletAssets] (
+            [WalletId],[AssetType],[Weight],[Unit],[Purity],[Quantity],[AverageBuyPrice],[CurrentMarketPrice],[SellerName],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        VALUES
+            (@WalletInvestorMain, 1, 5.000, N'gram', 24.00, 1, 430.00, 435.00, N'Imseeh', DATEADD(DAY, -2, @Now), NULL),
+            (@WalletInvestorMain, 1, 31.104, N'gram', 24.00, 2, 2675.00, 2685.00, N'Imseeh', DATEADD(DAY, -1, @Now), NULL),
+            (@WalletInvestorImseeh, 2, 31.104, N'gram', 99.99, 3, 37.00, 38.00, N'Gold Palace', DATEADD(DAY, -1, @Now), NULL);
+    END
+
+    IF COL_LENGTH('CartItems', 'Category') IS NOT NULL AND COL_LENGTH('CartItems', 'SellerId') IS NOT NULL
+    BEGIN
+        INSERT INTO [CartItems] (
+            [CartId],[ProductId],[SellerId],[Category],[Quantity],[UnitPrice],[LineTotal],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        VALUES
+            (@CartInvestorMain, @ProductImseehGoldBar, @SellerImseeh, 1, 2, 430.00, 860.00, @Now, NULL),
+            (@CartInvestorMain, @ProductImseehGoldCoin, @SellerImseeh, 5, 1, 2675.00, 2675.00, @Now, NULL),
+            (@CartInvestorGoldPal, @ProductGoldPalSilver, @SellerGoldPal, 2, 4, 37.00, 148.00, @Now, NULL);
+    END
+    ELSE IF COL_LENGTH('CartItems', 'SellerId') IS NOT NULL
+    BEGIN
+        INSERT INTO [CartItems] (
+            [CartId],[ProductId],[SellerId],[Quantity],[UnitPrice],[LineTotal],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        VALUES
+            (@CartInvestorMain, @ProductImseehGoldBar, @SellerImseeh, 2, 430.00, 860.00, @Now, NULL),
+            (@CartInvestorMain, @ProductImseehGoldCoin, @SellerImseeh, 1, 2675.00, 2675.00, @Now, NULL),
+            (@CartInvestorGoldPal, @ProductGoldPalSilver, @SellerGoldPal, 4, 37.00, 148.00, @Now, NULL);
+    END
+    ELSE
+    BEGIN
+        INSERT INTO [CartItems] (
+            [CartId],[ProductId],[Quantity],[UnitPrice],[LineTotal],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        VALUES
+            (@CartInvestorMain, @ProductImseehGoldBar, 2, 430.00, 860.00, @Now, NULL),
+            (@CartInvestorMain, @ProductImseehGoldCoin, 1, 2675.00, 2675.00, @Now, NULL),
+            (@CartInvestorGoldPal, @ProductGoldPalSilver, 4, 37.00, 148.00, @Now, NULL);
+    END
+
     -- 6) Home carousel config.
     MERGE [MobileAppConfigurations] AS T
     USING (
