@@ -11,9 +11,9 @@ A modern web app flow similar to common SaaS dashboards:
 
 - Dashboard summary cards.
 - Products (server list + seller management actions).
-- Investors and transaction/request management.
-- Fees module.
-- Reports.
+- Investors and Transactions modules in side menu.
+- Fees module (admin).
+- Advanced reports generator (type cards, criteria filters, and CSV download).
 - Top-bar notifications vertical panel and settings -> change-password form panel (ESC/close supported).
 
 ## Clean architecture

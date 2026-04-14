@@ -29,6 +29,18 @@ const registerForm = reactive({
 
 const newProduct = reactive({ name: "", category: "Gold Bars", unitPrice: 0, stock: 0 });
 
+const reportFilters = reactive({
+  reportType: "sales",
+  userId: "",
+  userName: "",
+  productName: "",
+  dateRange: "today",
+  customFrom: "",
+  customTo: "",
+  stockOnly: false
+});
+const generatedReports = ref<Array<Record<string, string | number>>>([]);
+
 watch(isDark, (value) => {
   document.documentElement.classList.toggle("dark-mode", value);
 });
@@ -38,20 +50,17 @@ const menuItems = computed(() => {
   const common: Array<{ key: NavigationKey; label: string }> = [
     { key: "overview", label: "Dashboard" },
     { key: "products", label: "Products" },
-      ];
+    { key: "investors", label: "Investors" },
+    { key: "requests", label: "Transactions" },
+    { key: "reports", label: "Reports" },
+    { key: "logout", label: "Logout" }
+  ];
 
   if (marketplace.role.value === "admin") {
-    return [
-      ...common,
-      { key: "investors", label: "Investors" },
-      { key: "requests", label: "Transactions" },
-      { key: "fees", label: "Fees" },
-      { key: "reports", label: "Reports" },
-      { key: "logout", label: "Logout" }
-    ];
+    return [...common, { key: "fees", label: "Fees" }];
   }
 
-  return [...common, { key: "reports", label: "Reports" }, { key: "logout", label: "Logout" }];
+  return common;
 });
 
 const welcomeText = computed(() => {
@@ -84,6 +93,54 @@ const submitNewProduct = () => {
   newProduct.stock = 0;
   showAddProduct.value = false;
 };
+
+
+const reportTypeCards = [
+  { key: "sales", label: "Sales Report", description: "Sales totals by products and users" },
+  { key: "inventory", label: "Inventory Report", description: "Stock status and low stock items" },
+  { key: "transactions", label: "Transactions Report", description: "Requests and approval activity" },
+  { key: "seller", label: "Seller Report", description: "Seller-specific operational summary" }
+];
+
+const generateReports = () => {
+  const rows: Array<Record<string, string | number>> = [];
+
+  for (const product of marketplace.state.value.products) {
+    if (reportFilters.productName && !product.name.toLowerCase().includes(reportFilters.productName.toLowerCase())) continue;
+    if (reportFilters.stockOnly && product.stock <= 0) continue;
+
+    rows.push({
+      type: reportFilters.reportType,
+      userId: reportFilters.userId || "N/A",
+      userName: reportFilters.userName || (marketplace.state.value.currentUserName ?? "N/A"),
+      productName: product.name,
+      stock: product.stock,
+      unitPrice: product.unitPrice,
+      dateRange: reportFilters.dateRange
+    });
+  }
+
+  generatedReports.value = rows;
+};
+
+const downloadReport = () => {
+  if (generatedReports.value.length === 0) return;
+
+  const headers = Object.keys(generatedReports.value[0]);
+  const csvRows = [headers.join(",")];
+  for (const row of generatedReports.value) {
+    csvRows.push(headers.map((header) => JSON.stringify(row[header] ?? "")).join(","));
+  }
+
+  const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `report-${reportFilters.reportType}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
 </script>
 
 <template>
@@ -256,8 +313,67 @@ const submitNewProduct = () => {
 
 
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'reports'" title="Reports">
-      <MetricGrid :metrics="marketplace.adminMetrics.value" />
+    <SectionCard v-if="marketplace.activeMenu.value === 'reports'" title="Reports Generator">
+      <div class="report-type-grid">
+        <button
+          v-for="card in reportTypeCards"
+          :key="card.key"
+          class="report-type-card"
+          :class="{ active: reportFilters.reportType === card.key }"
+          @click="reportFilters.reportType = card.key"
+        >
+          <strong>{{ card.label }}</strong>
+          <small>{{ card.description }}</small>
+        </button>
+      </div>
+
+      <div class="grid-two report-filters">
+        <input v-model="reportFilters.userId" placeholder="User ID" />
+        <input v-model="reportFilters.userName" placeholder="User Name" />
+        <input v-model="reportFilters.productName" placeholder="Product Name" />
+        <select v-model="reportFilters.dateRange">
+          <option value="today">Today</option>
+          <option value="last3days">Last 3 days</option>
+          <option value="lastWeek">Last week</option>
+          <option value="month">Month</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input v-if="reportFilters.dateRange === 'custom'" v-model="reportFilters.customFrom" type="date" />
+        <input v-if="reportFilters.dateRange === 'custom'" v-model="reportFilters.customTo" type="date" />
+        <label class="checkbox-line">
+          <input v-model="reportFilters.stockOnly" type="checkbox" /> In stock only
+        </label>
+      </div>
+
+      <div class="report-actions">
+        <button @click="generateReports">Generate Report</button>
+        <button class="ghost" @click="downloadReport">Download CSV</button>
+      </div>
+
+      <table v-if="generatedReports.length > 0">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>User ID</th>
+            <th>User Name</th>
+            <th>Product</th>
+            <th>Stock</th>
+            <th>Price</th>
+            <th>Date Range</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(row, index) in generatedReports" :key="index">
+            <td>{{ row.type }}</td>
+            <td>{{ row.userId }}</td>
+            <td>{{ row.userName }}</td>
+            <td>{{ row.productName }}</td>
+            <td>{{ row.stock }}</td>
+            <td>{{ row.unitPrice }}</td>
+            <td>{{ row.dateRange }}</td>
+          </tr>
+        </tbody>
+      </table>
     </SectionCard>
 
 
