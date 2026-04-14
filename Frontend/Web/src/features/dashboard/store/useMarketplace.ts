@@ -175,3 +175,6 @@ export function useMarketplace() {
     readNotification
   };
 }
+
+
+export type ReturnTypeUseMarketplace = ReturnType<typeof useMarketplace>;
