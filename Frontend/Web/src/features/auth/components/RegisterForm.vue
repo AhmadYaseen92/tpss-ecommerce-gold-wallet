@@ -9,10 +9,10 @@ const emit = defineEmits<{ submit: []; toLogin: [] }>();
   <form class="register-form" @submit.prevent="emit('submit')">
     <div class="grid-two">
       <input v-model="model.fullName" placeholder="Full Name" required />
-      <input v-model="model.email" type="email" placeholder="Email" required />
+      <input v-model="model.email" type="email" placeholder="Seller Login Email" required />
       <input v-model="model.phoneNumber" placeholder="Contact Phone" required />
-      <input v-model="model.password" type="password" placeholder="Password" required />
-      <input v-model="model.confirmPassword" type="password" placeholder="Confirm Password" required />
+      <input v-model="model.password" type="password" placeholder="Seller Login Password" required />
+      <input v-model="model.confirmPassword" type="password" placeholder="Confirm Seller Login Password" required />
       <input v-model="model.country" placeholder="Country" required />
       <input v-model="model.city" placeholder="City" required />
       <input v-model="model.street" placeholder="Street" required />

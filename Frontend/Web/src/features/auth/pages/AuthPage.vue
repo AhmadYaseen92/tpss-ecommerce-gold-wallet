@@ -26,10 +26,10 @@ const { authScreen, loginForm, registerForm, registerSellerAction } = useAuthPag
       <form v-else class="register-form" @submit.prevent="registerSellerAction">
         <div class="grid-two">
           <input v-model="registerForm.fullName" placeholder="Full Name" required />
-          <input v-model="registerForm.email" type="email" placeholder="Email" required />
+          <input v-model="registerForm.email" type="email" placeholder="Seller Login Email" required />
           <input v-model="registerForm.phoneNumber" placeholder="Contact Phone" required />
-          <input v-model="registerForm.password" type="password" placeholder="Password" required />
-          <input v-model="registerForm.confirmPassword" type="password" placeholder="Confirm Password" required />
+          <input v-model="registerForm.password" type="password" placeholder="Seller Login Password" required />
+          <input v-model="registerForm.confirmPassword" type="password" placeholder="Confirm Seller Login Password" required />
           <input v-model="registerForm.country" placeholder="Country" required />
           <input v-model="registerForm.city" placeholder="City" required />
           <input v-model="registerForm.street" placeholder="Street" required />
