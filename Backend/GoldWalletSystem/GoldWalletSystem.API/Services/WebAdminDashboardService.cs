@@ -1,4 +1,5 @@
 using GoldWalletSystem.API.Models;
+using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
@@ -7,22 +8,34 @@ namespace GoldWalletSystem.API.Services;
 
 public interface IWebAdminDashboardService
 {
-    Task<WebDashboardDto> BuildAsync(string period, IReadOnlyList<WebRequestDto> requests, IReadOnlyList<WebInvestorDto> investors, CancellationToken cancellationToken = default);
+    Task<WebDashboardDto> BuildAsync(string period, CancellationToken cancellationToken = default);
 }
 
 public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboardService
 {
-    public async Task<WebDashboardDto> BuildAsync(string period, IReadOnlyList<WebRequestDto> requests, IReadOnlyList<WebInvestorDto> investors, CancellationToken cancellationToken = default)
+    public async Task<WebDashboardDto> BuildAsync(string period, CancellationToken cancellationToken = default)
     {
         var products = await dbContext.Products.AsNoTracking().ToListAsync(cancellationToken);
+
+        var investors = await dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.Role == SystemRoles.Investor)
+            .ToListAsync(cancellationToken);
+
+        var requests = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(100)
+            .ToListAsync(cancellationToken);
+
         var totalSales = products.Sum(p => p.Price * p.AvailableStock);
         var goldAvg = products.Where(p => p.Category == ProductCategory.Gold).Select(p => p.Price).DefaultIfEmpty(0).Average();
 
         var statusCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
-            ["pending"] = requests.Count(x => x.Status.Equals("pending", StringComparison.OrdinalIgnoreCase)),
-            ["approved"] = requests.Count(x => x.Status.Equals("approved", StringComparison.OrdinalIgnoreCase)),
-            ["rejected"] = requests.Count(x => x.Status.Equals("rejected", StringComparison.OrdinalIgnoreCase))
+            ["pending"] = requests.Count(x => ParseStatus(x.Reference) == "pending"),
+            ["approved"] = requests.Count(x => ParseStatus(x.Reference) == "approved"),
+            ["rejected"] = requests.Count(x => ParseStatus(x.Reference) == "rejected")
         };
 
         var statusTotal = Math.Max(statusCounts.Values.Sum(), 1);
@@ -35,17 +48,16 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
         var categoryTotal = Math.Max(categoryCounts.Sum(x => x.Value), 1);
 
         var recent = requests
-            .OrderByDescending(x => x.CreatedAt)
             .Take(6)
             .Select((request, idx) => new WebRecentTransactionDto
             {
-                Id = request.Id,
-                InvestorName = investors.FirstOrDefault(i => i.Id == request.InvestorId)?.FullName ?? request.InvestorId,
+                Id = $"r-{request.Id}",
+                InvestorName = investors.FirstOrDefault(i => i.Id == request.UserId)?.FullName ?? $"User {request.UserId}",
                 ProductName = products.Count > 0 ? products[idx % products.Count].Name : "N/A",
-                Type = request.Type,
+                Type = request.TransactionType,
                 Amount = request.Amount,
-                Status = request.Status,
-                CreatedAt = request.CreatedAt
+                Status = ParseStatus(request.Reference),
+                CreatedAt = request.CreatedAtUtc
             })
             .ToList();
 
@@ -77,5 +89,12 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
                 .ToList(),
             RecentTransactions = recent
         };
+    }
+
+    public static string ParseStatus(string reference)
+    {
+        if (reference.Contains("status=approved", StringComparison.OrdinalIgnoreCase)) return "approved";
+        if (reference.Contains("status=rejected", StringComparison.OrdinalIgnoreCase)) return "rejected";
+        return "pending";
     }
 }

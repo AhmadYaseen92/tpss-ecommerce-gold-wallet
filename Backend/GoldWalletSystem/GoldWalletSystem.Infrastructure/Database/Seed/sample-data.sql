@@ -113,6 +113,43 @@ BEGIN TRY
     INNER JOIN [Users] U ON U.[Id] = TH.[UserId]
     WHERE U.[Email] IN (SELECT [Email] FROM @Users);
 
+    DELETE N
+    FROM [AppNotifications] N
+    INNER JOIN [Users] U ON U.[Id] = N.[UserId]
+    WHERE U.[Email] IN (SELECT [Email] FROM @Users);
+
+    DELETE I
+    FROM [Invoices] I
+    WHERE I.[InvestorUserId] IN (
+        SELECT [Id] FROM [Users] WHERE [Email] IN (SELECT [Email] FROM @Users)
+    );
+
+    -- 4.b) Seed transaction histories + notifications + invoice records for web-admin endpoints.
+    DECLARE @InvestorMain int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'investor@goldwallet.com');
+    DECLARE @InvestorImseeh int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'imseeh.investor1@example.com');
+    DECLARE @InvestorGoldPal int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'goldpal.investor1@example.com');
+    DECLARE @SellerUserImseeh int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'imseeh.admin@example.com');
+
+    INSERT INTO [TransactionHistories] ([UserId],[TransactionType],[Amount],[Currency],[Reference],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES
+        (@InvestorMain, N'withdrawal', 1200, N'USD', N'channel=webadmin|status=pending', DATEADD(DAY, -1, @Now), NULL),
+        (@InvestorImseeh, N'sell', 740, N'USD', N'channel=webadmin|status=approved', DATEADD(DAY, -2, @Now), NULL),
+        (@InvestorGoldPal, N'transfer', 350, N'USD', N'channel=webadmin|status=rejected', DATEADD(DAY, -3, @Now), NULL);
+
+    INSERT INTO [AppNotifications] ([UserId],[Title],[Body],[IsRead],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES
+        (@InvestorMain, N'KYC Pending', N'A new seller registration is pending approval.', 0, DATEADD(HOUR, -4, @Now), NULL),
+        (@InvestorImseeh, N'Invoice Issued', N'Your latest trade invoice is available.', 0, DATEADD(HOUR, -8, @Now), NULL),
+        (@InvestorGoldPal, N'Request Updated', N'Your latest request status has been updated.', 1, DATEADD(HOUR, -12, @Now), NULL);
+
+    INSERT INTO [Invoices] (
+        [InvestorUserId],[SellerUserId],[InvoiceNumber],[InvoiceCategory],[SourceChannel],
+        [SubTotal],[TaxAmount],[TotalAmount],[InvoiceQrCode],[IssuedOnUtc],[Status],[CreatedAtUtc],[UpdatedAtUtc]
+    )
+    VALUES
+        (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0001', N'Trade', N'WebAdmin', 980, 0, 980, N'', DATEADD(DAY, -1, @Now), N'sent', @Now, NULL),
+        (@InvestorImseeh, @SellerUserImseeh, N'INV-SEED-0002', N'Trade', N'WebAdmin', 1430, 0, 1430, N'', DATEADD(DAY, -2, @Now), N'paid', @Now, NULL);
+
     -- 5) Core products (starter catalog) with REQUIRED weight fields.
     ;WITH SeedProducts AS (
         SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock, CAST(5.000 AS decimal(18,3)) AS WeightValue, 1 AS WeightUnit UNION ALL
@@ -202,6 +239,12 @@ BEGIN TRY
             N'["/images/banners/banner-1.png","/images/banners/banner-2.png","/images/banners/banner-3.png"]',
             CAST(1 AS bit),
             N'Home carousel images stored on local server'
+        ),
+        (
+            N'webadmin.fees',
+            N'{"deliveryFee":12,"storageFee":4,"serviceChargePercent":2.5}',
+            CAST(1 AS bit),
+            N'Web admin fee configuration'
         )
     ) AS S([ConfigKey],[JsonValue],[IsEnabled],[Description])
     ON T.[ConfigKey] = S.[ConfigKey]
