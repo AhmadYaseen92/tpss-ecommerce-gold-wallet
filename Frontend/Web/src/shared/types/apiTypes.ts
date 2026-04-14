@@ -73,6 +73,15 @@ export interface AuditLogDto {
   createdAtUtc: string;
 }
 
+export interface WebRequestDto {
+  id: string;
+  investorId: string;
+  type: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+}
+
 
 export interface ProductManagementDto {
   id: number;

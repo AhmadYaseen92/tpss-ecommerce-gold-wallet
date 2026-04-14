@@ -57,6 +57,7 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
             cart.Items.Add(new CartItem
             {
                 ProductId = productId,
+                SellerId = product.SellerId,
                 Quantity = quantity,
                 UnitPrice = product.Price,
                 LineTotal = product.Price * quantity,

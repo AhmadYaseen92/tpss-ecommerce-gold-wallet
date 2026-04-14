@@ -8,25 +8,31 @@ namespace GoldWalletSystem.API.Services;
 
 public interface IWebAdminDashboardService
 {
-    Task<WebDashboardDto> BuildAsync(string period, CancellationToken cancellationToken = default);
+    Task<WebDashboardDto> BuildAsync(string period, int? sellerId = null, CancellationToken cancellationToken = default);
 }
 
 public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboardService
 {
-    public async Task<WebDashboardDto> BuildAsync(string period, CancellationToken cancellationToken = default)
+    public async Task<WebDashboardDto> BuildAsync(string period, int? sellerId = null, CancellationToken cancellationToken = default)
     {
-        var products = await dbContext.Products.AsNoTracking().ToListAsync(cancellationToken);
+        var productsQuery = dbContext.Products.AsNoTracking().AsQueryable();
+        if (sellerId.HasValue)
+        {
+            productsQuery = productsQuery.Where(x => x.SellerId == sellerId.Value);
+        }
+        var products = await productsQuery.ToListAsync(cancellationToken);
 
         var investors = await dbContext.Users
             .AsNoTracking()
             .Where(x => x.Role == SystemRoles.Investor)
             .ToListAsync(cancellationToken);
 
-        var requests = await dbContext.TransactionHistories
-            .AsNoTracking()
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Take(100)
-            .ToListAsync(cancellationToken);
+        var requestsQuery = dbContext.TransactionHistories.AsNoTracking().AsQueryable();
+        if (sellerId.HasValue)
+        {
+            requestsQuery = requestsQuery.Where(x => x.SellerId == sellerId.Value);
+        }
+        var requests = await requestsQuery.OrderByDescending(x => x.CreatedAtUtc).Take(100).ToListAsync(cancellationToken);
 
         var totalSales = products.Sum(p => p.Price * p.AvailableStock);
         var goldAvg = products.Where(p => p.Category == ProductCategory.Gold).Select(p => p.Price).DefaultIfEmpty(0).Average();

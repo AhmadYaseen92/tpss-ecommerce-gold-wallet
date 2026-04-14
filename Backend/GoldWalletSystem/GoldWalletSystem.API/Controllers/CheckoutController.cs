@@ -125,6 +125,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             dbContext.TransactionHistories.Add(new TransactionHistory
             {
                 UserId = request.UserId,
+                SellerId = product.SellerId,
                 TransactionType = "BUY",
                 Amount = product.Price * quantity,
                 Currency = wallet.CurrencyCode,
