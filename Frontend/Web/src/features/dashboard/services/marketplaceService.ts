@@ -9,7 +9,7 @@ import type {
   Product,
   ReportMetric,
   Seller
-} from "../domain/models";
+} from "../../../shared/types/models";
 
 const nowDate = () => new Date().toISOString().split("T")[0];
 

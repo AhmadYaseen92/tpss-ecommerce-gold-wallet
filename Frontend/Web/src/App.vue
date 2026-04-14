@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import type { NavigationKey } from "./domain/models";
-import AppShell from "./presentation/components/AppShell.vue";
-import MetricGrid from "./presentation/components/MetricGrid.vue";
-import SectionCard from "./presentation/components/SectionCard.vue";
-import { useMarketplace } from "./presentation/composables/useMarketplace";
+import type { NavigationKey } from "./shared/types/models";
+import AppShell from "./shared/layouts/AppShell.vue";
+import MetricGrid from "./shared/components/MetricGrid.vue";
+import SectionCard from "./shared/components/SectionCard.vue";
+import { useMarketplace } from "./features/dashboard/store/useMarketplace";
 import {
   createManagedProduct,
   deleteManagedProduct,
@@ -13,8 +13,8 @@ import {
   fetchWeightUnits,
   updateManagedProduct,
   type ProductFormPayload
-} from "./infrastructure/backendMarketplaceGateway";
-import type { ProductManagementDto, EnumItemDto } from "./infrastructure/apiTypes";
+} from "./shared/services/backendGateway";
+import type { ProductManagementDto, EnumItemDto } from "./shared/types/apiTypes";
 
 const marketplace = useMarketplace();
 const isDark = ref(false);

@@ -9,8 +9,8 @@ import {
   type Seller,
   type SellerRegistration,
   type UserSession
-} from "../domain/models";
-import { HttpError, deleteJson, getJson, postForm, postJson, putForm } from "./api/httpClient";
+} from "../types/models";
+import { HttpError, deleteJson, getJson, postForm, postJson, putForm } from "./httpClient";
 import type {
   AuditLogDto,
   DashboardDto,
@@ -20,7 +20,7 @@ import type {
   ProductManagementDto,
   RegisterResponseDto,
   EnumItemDto
-} from "./apiTypes";
+} from "../types/apiTypes";
 
 const toRole = (role: string): "admin" | "seller" => (role.toLowerCase() === "admin" ? "admin" : "seller");
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import type { Product, Seller } from "../../domain/models";
-import SectionCard from "../components/SectionCard.vue";
+import type { Product, Seller } from "../../../shared/types/models";
+import SectionCard from "../../../shared/components/SectionCard.vue";
 
 const props = defineProps<{
   seller: Seller | undefined;

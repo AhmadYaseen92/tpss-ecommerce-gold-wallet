@@ -1,4 +1,4 @@
-import type { MarketplaceState } from "../domain/models";
+import type { MarketplaceState } from "../types/models";
 
 export const mockMarketplaceState: MarketplaceState = {
   sellers: [

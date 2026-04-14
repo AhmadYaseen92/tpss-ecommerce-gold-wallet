@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, reactive, ref } from "vue";
-import type { NavigationKey, NotificationItem, UserRole } from "../../domain/models";
+import type { NavigationKey, NotificationItem, UserRole } from "../types/models";
 
 defineProps<{
   role: UserRole;

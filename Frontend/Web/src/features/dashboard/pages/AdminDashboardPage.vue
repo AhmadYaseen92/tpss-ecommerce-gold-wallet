@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Product, ReportMetric, Seller } from "../../domain/models";
-import MetricGrid from "../components/MetricGrid.vue";
-import SectionCard from "../components/SectionCard.vue";
+import type { Product, ReportMetric, Seller } from "../../../shared/types/models";
+import MetricGrid from "../../../shared/components/MetricGrid.vue";
+import SectionCard from "../../../shared/components/SectionCard.vue";
 
 defineProps<{
   sellers: Seller[];

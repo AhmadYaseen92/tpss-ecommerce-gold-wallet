@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ReportMetric } from "../../domain/models";
+import type { ReportMetric } from "../types/models";
 
 defineProps<{ metrics: ReportMetric[] }>();
 </script>
