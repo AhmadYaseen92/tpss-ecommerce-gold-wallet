@@ -8,7 +8,7 @@ namespace GoldWalletSystem.API.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(IAuthService authService, ISellerAuthService sellerAuthService) : ControllerBase
 {
     [HttpGet("ping")]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
@@ -42,12 +42,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SellerLogin([FromBody] LoginRequestDto request, CancellationToken cancellationToken = default)
     {
-        var result = await authService.LoginAsync(request, cancellationToken);
-        if (!string.Equals(result.Role, "Seller", StringComparison.OrdinalIgnoreCase))
-        {
-            return Unauthorized(ApiResponse<object>.Fail("Seller login is only allowed for seller accounts."));
-        }
-
+        var result = await sellerAuthService.SellerLoginAsync(request, cancellationToken);
         return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Seller login successful"));
     }
 
