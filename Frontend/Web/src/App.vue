@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { RouterView, useRoute, useRouter } from "vue-router";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import type { NavigationKey } from "./shared/types/models";
 import AppShell from "./shared/layouts/AppShell.vue";
 import AuthPage from "./features/auth/pages/AuthPage.vue";
+import DashboardFeaturePage from "./features/dashboard/pages/DashboardFeaturePage.vue";
+import ProductFeaturePage from "./features/products/pages/ProductFeaturePage.vue";
+import InvestorsFeaturePage from "./features/investors/pages/InvestorsFeaturePage.vue";
+import TransactionsFeaturePage from "./features/transactions/pages/TransactionsFeaturePage.vue";
+import ReportsFeaturePage from "./features/reports/pages/ReportsFeaturePage.vue";
+import FeesFeaturePage from "./features/fees/pages/FeesFeaturePage.vue";
 import { useMarketplace } from "./shared/app/store/useMarketplace";
 
 const marketplace = useMarketplace();
-const route = useRoute();
-const router = useRouter();
 const isDark = ref(false);
 
 const ROUTE_BY_MENU: Record<Exclude<NavigationKey, "logout" | "invoices" | "inventory" | "notifications">, string> = {
@@ -19,6 +22,26 @@ const ROUTE_BY_MENU: Record<Exclude<NavigationKey, "logout" | "invoices" | "inve
   fees: "/fees",
   reports: "/reports"
 };
+
+const readHashPath = () => {
+  const value = window.location.hash.replace(/^#/, "");
+  if (!value) return "/overview";
+  return value.startsWith("/") ? value : "/overview";
+};
+
+const currentPath = ref("/overview");
+const syncHashPath = () => {
+  currentPath.value = readHashPath();
+};
+
+onMounted(() => {
+  syncHashPath();
+  window.addEventListener("hashchange", syncHashPath);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("hashchange", syncHashPath);
+});
 
 watch(isDark, (value) => document.documentElement.classList.toggle("dark-mode", value));
 
@@ -36,17 +59,26 @@ const menuItems = computed(() => {
 });
 
 const activeMenu = computed<NavigationKey>(() => {
-  if (route.path.startsWith("/products")) return "products";
-  if (route.path.startsWith("/investors")) return "investors";
-  if (route.path.startsWith("/transactions")) return "requests";
-  if (route.path.startsWith("/fees")) return "fees";
-  if (route.path.startsWith("/reports")) return "reports";
+  if (currentPath.value.startsWith("/products")) return "products";
+  if (currentPath.value.startsWith("/investors")) return "investors";
+  if (currentPath.value.startsWith("/transactions")) return "requests";
+  if (currentPath.value.startsWith("/fees")) return "fees";
+  if (currentPath.value.startsWith("/reports")) return "reports";
   return "overview";
 });
 
 watch(activeMenu, (menu) => {
   marketplace.activeMenu.value = menu;
 }, { immediate: true });
+
+const activeComponent = computed(() => {
+  if (currentPath.value.startsWith("/products")) return ProductFeaturePage;
+  if (currentPath.value.startsWith("/investors")) return InvestorsFeaturePage;
+  if (currentPath.value.startsWith("/transactions")) return TransactionsFeaturePage;
+  if (currentPath.value.startsWith("/fees")) return FeesFeaturePage;
+  if (currentPath.value.startsWith("/reports")) return ReportsFeaturePage;
+  return DashboardFeaturePage;
+});
 
 const welcomeText = computed(() => {
   if (!marketplace.session.value) return "Welcome";
@@ -57,19 +89,22 @@ const welcomeText = computed(() => {
 const handleMenuChange = (menu: NavigationKey) => {
   if (menu === "logout") {
     marketplace.logout();
-    router.replace("/");
+    window.location.hash = "#/overview";
+    syncHashPath();
     return;
   }
 
   const target = ROUTE_BY_MENU[menu as keyof typeof ROUTE_BY_MENU];
-  if (target && route.path !== target) {
-    router.push(target);
+  if (target) {
+    window.location.hash = `#${target}`;
+    syncHashPath();
   }
 };
 
 const handleLogout = () => {
   marketplace.logout();
-  router.replace("/");
+  window.location.hash = "#/overview";
+  syncHashPath();
 };
 </script>
 
@@ -89,8 +124,6 @@ const handleLogout = () => {
     @theme-toggle="isDark = !isDark"
     @notification-read="marketplace.readNotification"
   >
-    <RouterView v-slot="{ Component }">
-      <component :is="Component" :marketplace="marketplace" />
-    </RouterView>
+    <component :is="activeComponent" :marketplace="marketplace" />
   </AppShell>
 </template>
