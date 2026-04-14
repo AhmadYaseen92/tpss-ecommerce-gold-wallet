@@ -517,8 +517,8 @@ const downloadReport = () => {
             <small>Describe the product details that buyers need.</small>
           </label>
 
-          <div class="form-toggle-row form-checkbox-field field-full">
-            <span>Product Status</span>
+          <div class="form-toggle-row field-full">
+            <span class="status-label">Product Status</span>
             <label class="normal-toggle" aria-label="Product status toggle">
               <span class="toggle-state">{{ productForm.isActive ? 'ON' : 'OFF' }}</span>
               <input v-model="productForm.isActive" type="checkbox" />

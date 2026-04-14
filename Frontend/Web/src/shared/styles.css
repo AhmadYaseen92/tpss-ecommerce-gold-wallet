@@ -1,3 +1,9 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
   font-family: Inter, system-ui, sans-serif;
   color: #201d12;
@@ -198,8 +204,8 @@ body {
   position: absolute;
   top: -4px;
   right: 8px;
-  min-width: 18px;
-  height: 18px;
+  min-width: 16px;
+  height: 16px;
   border-radius: 9px;
   background: #ef4444;
   color: #fff;
@@ -284,6 +290,7 @@ body {
   border-radius: 14px;
   box-shadow: 0 8px 30px rgb(32 29 18 / 8%);
   padding: 16px;
+  overflow-x: hidden;
 }
 
 .section-card header {
@@ -519,6 +526,7 @@ select {
 
 .product-form-contrast {
   width: 100%;
+  max-width: 100%;
   background: #fff;
   border: 1px solid #e8dcc2;
   box-shadow: 0 12px 24px rgb(120 95 42 / 10%);
@@ -533,6 +541,10 @@ select {
   align-items: start;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.form-grid-two > * {
+  min-width: 0;
 }
 
 .form-grid-two > label {
@@ -550,13 +562,14 @@ select {
 }
 
 .form-toggle-row {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #fffdf8;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.status-label {
+  font-weight: 600;
 }
 
 .normal-toggle {
@@ -575,8 +588,8 @@ select {
 }
 
 .normal-toggle .slider {
-  width: 44px;
-  height: 24px;
+  width: 40px;
+  height: 22px;
   border-radius: 999px;
   background: #d1d5db;
   position: relative;
@@ -586,8 +599,8 @@ select {
 .normal-toggle .slider::before {
   content: "";
   position: absolute;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #fff;
   top: 3px;
@@ -600,7 +613,7 @@ select {
 }
 
 .normal-toggle input:checked + .slider::before {
-  transform: translateX(20px);
+  transform: translateX(18px);
 }
 
 .toggle-state {
