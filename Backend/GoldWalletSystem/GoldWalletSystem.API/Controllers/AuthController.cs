@@ -35,6 +35,22 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Login successful"));
     }
 
+
+
+    [HttpPost("seller-login")]
+    [ProducesResponseType(typeof(ApiResponse<LoginResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> SellerLogin([FromBody] LoginRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var result = await authService.LoginAsync(request, cancellationToken);
+        if (!string.Equals(result.Role, "Seller", StringComparison.OrdinalIgnoreCase))
+        {
+            return Unauthorized(ApiResponse<object>.Fail("Seller login is only allowed for seller accounts."));
+        }
+
+        return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Seller login successful"));
+    }
+
     [Authorize]
     [HttpPost("logout")]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
