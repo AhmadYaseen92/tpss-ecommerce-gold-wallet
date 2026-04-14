@@ -1,5 +1,6 @@
 using GoldWalletSystem.API.Extensions;
 using GoldWalletSystem.API.Middleware;
+using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,6 +13,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddOpenApi();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("WebApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Server=localhost;Database=GoldWalletSystemDb;Trusted_Connection=True;TrustServerCertificate=True;";
@@ -41,6 +52,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddScoped<IWebAdminDashboardService, WebAdminDashboardService>();
 
 var app = builder.Build();
 
@@ -51,6 +63,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseStaticFiles();
+app.UseCors("WebApp");
 
 using (var scope = app.Services.CreateScope())
 {
