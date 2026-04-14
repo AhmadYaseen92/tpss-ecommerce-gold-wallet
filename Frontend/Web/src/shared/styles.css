@@ -11,14 +11,62 @@
   --text-muted: #616161;
 }
 
+:root.dark-mode {
+  color: #f5f5f5;
+  background: #121212;
+  --surface: #1e1e1e;
+  --surface-muted: #2a2415;
+  --border: #3a3a3a;
+  --text-muted: #b0b0b0;
+}
+
 body {
   margin: 0;
   background: linear-gradient(180deg, #fdf6e9 0%, #f5f5f5 30%, #f5f5f5 100%);
 }
 
+:root.dark-mode body {
+  background: #121212;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(460px, 96vw);
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  padding: 24px;
+  box-shadow: 0 18px 35px rgb(32 29 18 / 14%);
+}
+
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.register-text {
+  margin-top: 12px;
+}
+
+.link-btn {
+  border: 0;
+  background: transparent;
+  color: var(--secondary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .app-shell {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 270px 1fr;
   min-height: 100vh;
 }
 
@@ -76,30 +124,42 @@ body {
 }
 
 .content {
-  padding: 24px;
+  padding: 20px;
   display: grid;
   gap: 16px;
 }
 
-.hero-card,
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.top-bar h2 {
+  margin: 0;
+}
+
+.top-bar p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+}
+
+.top-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .section-card,
 .metric-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 8px 30px rgb(32 29 18 / 8%);
-}
-
-.hero-card,
-.section-card {
   padding: 16px;
-}
-
-.hero-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, #fff8e8 0%, #fff 70%);
 }
 
 .section-card header {
@@ -113,10 +173,6 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
-}
-
-.metric-card {
-  padding: 14px;
 }
 
 .metric-card h3 {
@@ -144,7 +200,7 @@ table {
 
 th,
 td {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
   text-align: left;
   padding: 10px;
 }
@@ -160,9 +216,14 @@ button {
   color: #201d12;
   border-radius: 10px;
   padding: 8px 12px;
-  margin-right: 6px;
   cursor: pointer;
   font-weight: 600;
+}
+
+button.ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: inherit;
 }
 
 button.danger {
@@ -170,17 +231,14 @@ button.danger {
   color: #fff;
 }
 
-.grid-two {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 14px;
+.full-btn {
+  width: 100%;
 }
 
-.fee-grid {
+.grid-two {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
-  margin-bottom: 12px;
 }
 
 form,
@@ -189,23 +247,22 @@ label {
   gap: 8px;
 }
 
-form {
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-muted);
-}
-
 input {
-  padding: 9px;
+  padding: 10px;
   border-radius: 8px;
   border: 1px solid #d7d7d7;
+  background: var(--surface);
+  color: inherit;
 }
 
-.inline-form {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
+.modal-form {
+  border: 1px dashed var(--border);
+  background: var(--surface-muted);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+  display: grid;
+  gap: 10px;
 }
 
 .notification-list {
@@ -218,7 +275,7 @@ input {
 
 .notification-list li {
   border: 1px solid var(--border);
-  background: #fffaf0;
+  background: var(--surface-muted);
   border-radius: 10px;
   padding: 10px;
 }

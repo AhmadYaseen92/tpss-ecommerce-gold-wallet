@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import type { NavigationKey, UserRole } from "./domain/models";
 import AppShell from "./presentation/components/AppShell.vue";
 import MetricGrid from "./presentation/components/MetricGrid.vue";
@@ -7,8 +7,16 @@ import SectionCard from "./presentation/components/SectionCard.vue";
 import { useMarketplace } from "./presentation/composables/useMarketplace";
 
 const marketplace = useMarketplace();
+const isDark = ref(false);
+const showRegister = ref(false);
+const showAddProduct = ref(false);
 
-const loginForm = reactive({ email: "admin@goldwallet.com", password: "P@ssw0rd" });
+const loginForm = reactive({
+  email: "admin@goldwallet.com",
+  password: "P@ssw0rd",
+  rememberMe: true
+});
+
 const registerForm = reactive({
   firstName: "",
   middleName: "",
@@ -19,25 +27,42 @@ const registerForm = reactive({
   idNumber: ""
 });
 
-const feeForm = reactive({
-  deliveryFee: 12,
-  storageFee: 4,
-  serviceChargePercent: 2.5
+const newProduct = reactive({ name: "", category: "Gold Bars", unitPrice: 0, stock: 0 });
+
+watch(isDark, (value) => {
+  document.documentElement.classList.toggle("dark-mode", value);
 });
 
-const invoiceForm = reactive({ investorName: "", totalAmount: 0 });
+const onRoleChange = (role: UserRole) => {
+  marketplace.role.value = role;
+};
 
-const menuItems = computed(() => [
-  { key: "overview", label: "Overview" },
-  { key: "investors", label: "Investors" },
-  { key: "requests", label: "Transactions / Requests" },
-  { key: "products", label: "Products" },
-  { key: "invoices", label: "Invoices" },
-  { key: "fees", label: "Fees" },
-  { key: "inventory", label: "Inventory" },
-  { key: "reports", label: "Reports" },
-  { key: "notifications", label: "Notifications" }
-] as Array<{ key: NavigationKey; label: string }>);
+const menuItems = computed(() => {
+  const common: Array<{ key: NavigationKey; label: string }> = [
+    { key: "overview", label: "Dashboard" },
+    { key: "products", label: "Products" },
+    { key: "inventory", label: "Inventory" },
+    { key: "invoices", label: "Invoices" },
+    { key: "notifications", label: "Notifications" }
+  ];
+
+  if (marketplace.role.value === "admin") {
+    return [
+      ...common,
+      { key: "investors", label: "Investors" },
+      { key: "requests", label: "Transactions" },
+      { key: "fees", label: "Fees" },
+      { key: "reports", label: "Reports" }
+    ];
+  }
+
+  return common;
+});
+
+const welcomeText = computed(() => {
+  if (!marketplace.session.value) return "Welcome";
+  return marketplace.role.value === "admin" ? "Welcome back, Admin" : "Welcome back, Seller";
+});
 
 const inventorySummary = computed(() => {
   const totalStock = marketplace.state.value.products.reduce((sum, product) => sum + product.stock, 0);
@@ -45,95 +70,134 @@ const inventorySummary = computed(() => {
   return { totalStock, lowStock };
 });
 
-const onRoleChange = (role: UserRole) => {
-  marketplace.role.value = role;
-};
+const productsForRole = computed(() =>
+  marketplace.role.value === "seller" ? marketplace.sellerProducts.value : marketplace.state.value.products
+);
 
-const addProduct = () => {
-  if (!marketplace.activeSeller.value) return;
+const submitNewProduct = () => {
+  if (!marketplace.activeSeller.value || !newProduct.name || newProduct.unitPrice <= 0) return;
 
   marketplace.addProduct({
     sellerId: marketplace.activeSeller.value.id,
-    name: `New Product ${marketplace.state.value.products.length + 1}`,
-    category: "Gold",
-    unitPrice: 100,
-    marketPrice: 110,
-    stock: 20
-  });
-};
-
-const saveInvoice = () => {
-  if (!marketplace.activeSeller.value || !invoiceForm.investorName || !invoiceForm.totalAmount) return;
-
-  marketplace.saveInvoice({
-    id: `inv-${Date.now()}`,
-    sellerId: marketplace.activeSeller.value.id,
-    investorName: invoiceForm.investorName,
-    totalAmount: Number(invoiceForm.totalAmount),
-    issuedAt: new Date().toISOString().split("T")[0],
-    status: "sent"
+    name: newProduct.name,
+    category: newProduct.category,
+    unitPrice: Number(newProduct.unitPrice),
+    marketPrice: Number(newProduct.unitPrice),
+    stock: Number(newProduct.stock)
   });
 
-  invoiceForm.investorName = "";
-  invoiceForm.totalAmount = 0;
+  newProduct.name = "";
+  newProduct.category = "Gold Bars";
+  newProduct.unitPrice = 0;
+  newProduct.stock = 0;
+  showAddProduct.value = false;
 };
 </script>
 
 <template>
-  <AppShell
-    :role="marketplace.role.value"
-    :active-menu="marketplace.activeMenu.value"
-    :menu-items="menuItems"
-    @role-change="onRoleChange"
-    @menu-change="(menu) => (marketplace.activeMenu.value = menu)"
-  >
-    <section class="hero-card">
-      <div>
-        <h2>Modern Gold Wallet Operations</h2>
-        <p>Unified dashboard for investor operations, seller products, fees, reports, inventory and notifications.</p>
-      </div>
-      <button v-if="marketplace.session.value" @click="marketplace.logout">Logout</button>
-    </section>
+  <section v-if="!marketplace.session.value" class="login-page">
+    <div class="auth-card">
+      <h1>Gold Wallet</h1>
+      <p>Sign in to continue to your dashboard.</p>
 
-    <section class="section-card">
-      <header>
-        <h2>Backend Authentication</h2>
-      </header>
+      <form @submit.prevent="marketplace.login({ email: loginForm.email, password: loginForm.password })">
+        <input v-model="loginForm.email" type="email" placeholder="Email" required />
+        <input v-model="loginForm.password" type="password" placeholder="Password" required />
 
-      <p v-if="!marketplace.session.value">Login for live backend summary and role-based control.</p>
-      <p v-else>
-        Connected as #{{ marketplace.session.value.userId }} ({{ marketplace.session.value.role }})
-      </p>
+        <div class="auth-options">
+          <label class="remember">
+            <input v-model="loginForm.rememberMe" type="checkbox" /> Remember me
+          </label>
+          <a href="#">Forgot password?</a>
+        </div>
+
+        <button :disabled="marketplace.loading.value" type="submit" class="full-btn">Login</button>
+      </form>
 
       <p v-if="marketplace.error.value" class="error-text">{{ marketplace.error.value }}</p>
 
-      <div class="grid-two" v-if="!marketplace.session.value">
-        <form @submit.prevent="marketplace.login(loginForm)">
-          <h3>Login</h3>
-          <input v-model="loginForm.email" type="email" placeholder="Email" required />
-          <input v-model="loginForm.password" type="password" placeholder="Password" required />
-          <button :disabled="marketplace.loading.value" type="submit">Login & Sync</button>
-        </form>
+      <p class="register-text">
+        Don’t have an account?
+        <button class="link-btn" @click="showRegister = !showRegister">Register</button>
+      </p>
 
-        <form @submit.prevent="marketplace.registerSeller(registerForm)">
-          <h3>Seller Registration with KYC</h3>
-          <input v-model="registerForm.firstName" placeholder="First Name" required />
-          <input v-model="registerForm.middleName" placeholder="Middle Name" required />
-          <input v-model="registerForm.lastName" placeholder="Last Name" required />
-          <input v-model="registerForm.businessName" placeholder="Business Name" required />
-          <input v-model="registerForm.email" type="email" placeholder="Email" required />
-          <input v-model="registerForm.password" type="password" placeholder="Password" required />
-          <input v-model="registerForm.idNumber" placeholder="National ID" required />
-          <button :disabled="marketplace.loading.value" type="submit">Register Seller</button>
-        </form>
-      </div>
-    </section>
+      <form v-if="showRegister" class="register-form" @submit.prevent="marketplace.registerSeller(registerForm)">
+        <h3>Seller Registration</h3>
+        <input v-model="registerForm.firstName" placeholder="First Name" required />
+        <input v-model="registerForm.middleName" placeholder="Middle Name" required />
+        <input v-model="registerForm.lastName" placeholder="Last Name" required />
+        <input v-model="registerForm.businessName" placeholder="Business Name" required />
+        <input v-model="registerForm.email" type="email" placeholder="Email" required />
+        <input v-model="registerForm.password" type="password" placeholder="Password" required />
+        <input v-model="registerForm.idNumber" placeholder="National ID" required />
+        <button :disabled="marketplace.loading.value" type="submit" class="full-btn">Create account</button>
+      </form>
+    </div>
+  </section>
 
+  <AppShell
+    v-else
+    :role="marketplace.role.value"
+    :active-menu="marketplace.activeMenu.value"
+    :menu-items="menuItems"
+    :welcome-text="welcomeText"
+    :is-dark="isDark"
+    @role-change="onRoleChange"
+    @menu-change="(menu) => (marketplace.activeMenu.value = menu)"
+    @logout="marketplace.logout"
+    @theme-toggle="isDark = !isDark"
+  >
     <section v-if="marketplace.activeMenu.value === 'overview'">
       <MetricGrid :metrics="marketplace.overviewCards.value" />
     </section>
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'investors'" title="Investors Monitoring & Management">
+    <SectionCard v-if="marketplace.activeMenu.value === 'products'" title="Products">
+      <template #actions>
+        <button v-if="marketplace.role.value === 'seller'" @click="showAddProduct = true">Add Product</button>
+      </template>
+
+      <div v-if="showAddProduct" class="modal-form">
+        <h3>New Product</h3>
+        <div class="grid-two">
+          <input v-model="newProduct.name" placeholder="Product name" />
+          <input v-model="newProduct.category" placeholder="Category" />
+          <input v-model.number="newProduct.unitPrice" type="number" placeholder="Price" />
+          <input v-model.number="newProduct.stock" type="number" placeholder="Stock" />
+        </div>
+        <div>
+          <button @click="submitNewProduct">Save Product</button>
+          <button class="ghost" @click="showAddProduct = false">Cancel</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Stock</th>
+            <th>Price</th>
+            <th>Market</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="product in productsForRole" :key="product.id">
+            <td>{{ product.name }}</td>
+            <td>{{ product.category }}</td>
+            <td>{{ product.stock }}</td>
+            <td>{{ product.unitPrice }}</td>
+            <td>{{ product.marketPrice }}</td>
+            <td>
+              <button @click="marketplace.updateProduct(product.id, { stock: product.stock + 5 })">Update</button>
+              <button class="danger" @click="marketplace.deleteProduct(product.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </SectionCard>
+
+    <SectionCard v-if="marketplace.activeMenu.value === 'investors'" title="Investors">
       <table>
         <thead>
           <tr>
@@ -141,30 +205,24 @@ const saveInvoice = () => {
             <th>Risk</th>
             <th>Wallet</th>
             <th>Status</th>
-            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="investor in marketplace.state.value.investors" :key="investor.id">
             <td>{{ investor.fullName }}</td>
             <td>{{ investor.riskLevel }}</td>
-            <td>{{ investor.walletBalance.toFixed(2) }}</td>
+            <td>{{ investor.walletBalance }}</td>
             <td>{{ investor.status }}</td>
-            <td>
-              <button @click="marketplace.updateInvestorStatus(investor.id, 'active')">Activate</button>
-              <button class="danger" @click="marketplace.updateInvestorStatus(investor.id, 'blocked')">Block</button>
-            </td>
           </tr>
         </tbody>
       </table>
     </SectionCard>
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'requests'" title="Investor Transactions / Requests">
+    <SectionCard v-if="marketplace.activeMenu.value === 'requests'" title="Transactions / Requests">
       <table>
         <thead>
           <tr>
             <th>ID</th>
-            <th>Investor</th>
             <th>Type</th>
             <th>Amount</th>
             <th>Status</th>
@@ -174,7 +232,6 @@ const saveInvoice = () => {
         <tbody>
           <tr v-for="request in marketplace.state.value.requests" :key="request.id">
             <td>{{ request.id }}</td>
-            <td>{{ request.investorId }}</td>
             <td>{{ request.type }}</td>
             <td>{{ request.amount }}</td>
             <td>{{ request.status }}</td>
@@ -187,42 +244,7 @@ const saveInvoice = () => {
       </table>
     </SectionCard>
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'products'" title="Seller Products Management">
-      <template #actions>
-        <button @click="addProduct">Add Product</button>
-      </template>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Stock</th>
-            <th>Price</th>
-            <th>Market</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="product in marketplace.sellerProducts.value" :key="product.id">
-            <td>{{ product.name }}</td>
-            <td>{{ product.stock }}</td>
-            <td>{{ product.unitPrice }}</td>
-            <td>{{ product.marketPrice }}</td>
-            <td>
-              <button @click="marketplace.setMarketPrice(product.id, product.marketPrice + 5)">Update Price</button>
-              <button class="danger" @click="marketplace.deleteProduct(product.id)">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </SectionCard>
-
-    <SectionCard v-if="marketplace.activeMenu.value === 'invoices'" title="Seller Invoices CRUD">
-      <div class="inline-form">
-        <input v-model="invoiceForm.investorName" placeholder="Investor Name" />
-        <input v-model.number="invoiceForm.totalAmount" type="number" placeholder="Amount" />
-        <button @click="saveInvoice">Add Invoice</button>
-      </div>
-
+    <SectionCard v-if="marketplace.activeMenu.value === 'invoices'" title="Invoices">
       <table>
         <thead>
           <tr>
@@ -230,7 +252,6 @@ const saveInvoice = () => {
             <th>Investor</th>
             <th>Total</th>
             <th>Status</th>
-            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -239,50 +260,32 @@ const saveInvoice = () => {
             <td>{{ invoice.investorName }}</td>
             <td>{{ invoice.totalAmount }}</td>
             <td>{{ invoice.status }}</td>
-            <td>
-              <button @click="marketplace.saveInvoice({ ...invoice, status: 'paid' })">Mark Paid</button>
-              <button class="danger" @click="marketplace.removeInvoice(invoice.id)">Delete</button>
-            </td>
           </tr>
         </tbody>
       </table>
     </SectionCard>
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'fees'" title="Manage Fees">
-      <div class="fee-grid">
-        <label>
-          Delivery
-          <input v-model.number="feeForm.deliveryFee" type="number" />
-        </label>
-        <label>
-          Storage
-          <input v-model.number="feeForm.storageFee" type="number" />
-        </label>
-        <label>
-          Service Charge %
-          <input v-model.number="feeForm.serviceChargePercent" type="number" />
-        </label>
-      </div>
-      <button @click="marketplace.updateFees(feeForm.deliveryFee, feeForm.storageFee, feeForm.serviceChargePercent)">Save Fees</button>
+    <SectionCard v-if="marketplace.activeMenu.value === 'fees'" title="Fees Management">
+      <p>Delivery: {{ marketplace.state.value.fees.deliveryFee }}</p>
+      <p>Storage: {{ marketplace.state.value.fees.storageFee }}</p>
+      <p>Service Charge: {{ marketplace.state.value.fees.serviceChargePercent }}%</p>
     </SectionCard>
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'inventory'" title="Inventory / Stock Availability">
+    <SectionCard v-if="marketplace.activeMenu.value === 'inventory'" title="Inventory">
       <p>Total Stock: {{ inventorySummary.totalStock }}</p>
-      <p>Low Stock Products (&lt; 20): {{ inventorySummary.lowStock }}</p>
+      <p>Low Stock Products: {{ inventorySummary.lowStock }}</p>
     </SectionCard>
 
     <SectionCard v-if="marketplace.activeMenu.value === 'reports'" title="Reports">
       <MetricGrid :metrics="marketplace.adminMetrics.value" />
-      <p>Generate daily, weekly, and monthly operational reports.</p>
     </SectionCard>
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'notifications'" title="Notifications Center">
+    <SectionCard v-if="marketplace.activeMenu.value === 'notifications'" title="Notifications">
       <ul class="notification-list">
         <li v-for="notice in marketplace.state.value.notifications" :key="notice.id">
           <strong>{{ notice.title }}</strong>
           <p>{{ notice.message }}</p>
-          <small>{{ notice.createdAt }} - {{ notice.severity }}</small>
-          <button @click="marketplace.readNotification(notice.id)">Mark as read</button>
+          <small>{{ notice.createdAt }}</small>
         </li>
       </ul>
     </SectionCard>

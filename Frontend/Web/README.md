@@ -1,26 +1,28 @@
 # Web Frontend - Gold Wallet Control Center (Vue 3 + Modern UI)
 
-A modern side-menu based control center using the same gold/brown visual language as the mobile app theme.
+A modern web app flow similar to common SaaS dashboards:
+
+1. Login page (remember me, register link, forgot password link).
+2. Role-aware dashboard after login (Admin/Seller based on server response).
+3. Top bar with welcome message, theme toggle, settings, and logout.
+4. Left side menu with module navigation.
 
 ## Included modules
 
-- Executive overview dashboard with key summary cards.
-- Investors monitoring and status management.
-- Investor transactions/requests review and approvals.
-- Seller product management (view/add/update/delete).
-- Seller invoice management (view/add/update/delete).
-- Fees management (Delivery, Storage, Service Charge).
-- Inventory / stock availability summary.
-- Report cards and notifications center.
-- Backend integrated auth/data sync for supported endpoints.
+- Dashboard summary cards.
+- Products (server list + seller management actions).
+- Investors and transaction/request management.
+- Invoices and inventory views.
+- Fees module.
+- Reports and notifications.
 
 ## Clean architecture
 
-- `src/domain`: entities and application contracts.
+- `src/domain`: entities and contracts.
 - `src/application`: business rules/use-cases.
-- `src/infrastructure`: HTTP/API layer and backend gateway.
-- `src/presentation`: app shell, pages, and view composables.
-- `src/shared`: visual theme and shared styles.
+- `src/infrastructure`: HTTP/API gateway and mapping.
+- `src/presentation`: shell/components/composables/UI pages.
+- `src/shared`: visual theme and global styles.
 
 ## Backend integration
 
