@@ -108,7 +108,7 @@ const mapNotifications = (logs: AuditLogDto[]): NotificationItem[] =>
   }));
 
 export async function loginWithBackend(credentials: AuthCredentials): Promise<UserSession> {
-  const data = await postJson<LoginResponseDto, AuthCredentials>("/api/auth/login", credentials);
+  const data = await postJson<LoginResponseDto, AuthCredentials>("/api/auth/seller-login", credentials);
   return mapSession(data);
 }
 

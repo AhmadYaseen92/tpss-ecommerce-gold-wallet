@@ -1,6 +1,7 @@
 import type { ApiResponse } from "../types/apiTypes";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5095";
+const GLOBAL_ERROR_MESSAGE = "Something went wrong, please contact system Admin.";
 
 export class HttpError extends Error {
   constructor(message: string, public readonly statusCode?: number) {
@@ -19,6 +20,31 @@ function isWrappedApiResponse<T>(value: unknown): value is ApiResponse<T> {
   return typeof value === "object" && value !== null && "success" in value;
 }
 
+function extractMessageFromUnknown(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+
+  const asRecord = value as Record<string, unknown>;
+
+  if (typeof asRecord.message === "string" && asRecord.message.trim()) return asRecord.message.trim();
+  if (typeof asRecord.title === "string" && asRecord.title.trim()) return asRecord.title.trim();
+  if (typeof asRecord.detail === "string" && asRecord.detail.trim()) return asRecord.detail.trim();
+
+  if (Array.isArray(asRecord.errors) && asRecord.errors.length > 0) {
+    const firstError = asRecord.errors.find((item) => typeof item === "string" && item.trim());
+    if (typeof firstError === "string") return firstError.trim();
+  }
+
+  if (asRecord.errors && typeof asRecord.errors === "object") {
+    const firstErrorsEntry = Object.values(asRecord.errors as Record<string, unknown>).find((entry) => Array.isArray(entry));
+    if (Array.isArray(firstErrorsEntry)) {
+      const firstError = firstErrorsEntry.find((item) => typeof item === "string" && item.trim());
+      if (typeof firstError === "string") return firstError.trim();
+    }
+  }
+
+  return undefined;
+}
+
 async function parseApiResponse<T>(response: Response): Promise<T> {
   const rawText = await response.text();
 
@@ -27,7 +53,7 @@ async function parseApiResponse<T>(response: Response): Promise<T> {
       return undefined as T;
     }
 
-    throw new HttpError(`API request failed with status ${response.status}`, response.status);
+    throw new HttpError(GLOBAL_ERROR_MESSAGE, response.status);
   }
 
   let parsed: unknown;
@@ -38,19 +64,21 @@ async function parseApiResponse<T>(response: Response): Promise<T> {
       return undefined as T;
     }
 
-    throw new HttpError("Received invalid JSON response from API", response.status);
+    const plainMessage = rawText.trim();
+    throw new HttpError(plainMessage || GLOBAL_ERROR_MESSAGE, response.status);
   }
 
   if (isWrappedApiResponse<T>(parsed)) {
     if (!response.ok || !parsed.success) {
-      throw new HttpError(parsed.message || "API request failed", response.status);
+      throw new HttpError(parsed.message || GLOBAL_ERROR_MESSAGE, response.status);
     }
 
     return parsed.data as T;
   }
 
   if (!response.ok) {
-    throw new HttpError(`API request failed with status ${response.status}`, response.status);
+    const extracted = extractMessageFromUnknown(parsed);
+    throw new HttpError(extracted || GLOBAL_ERROR_MESSAGE, response.status);
   }
 
   return parsed as T;
