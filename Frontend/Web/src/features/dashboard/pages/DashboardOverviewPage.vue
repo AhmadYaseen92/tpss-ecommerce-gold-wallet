@@ -68,7 +68,7 @@ const barHeight = (value: number, maxValue: number) => {
             <span class="bar-label">{{ item.label }}</span>
           </div>
         </div>
-        <p class="chart-caption">X: Category name, Y: No. approved transactions.</p>
+        <p class="chart-caption">X: Category name, Y: No. wallet assets records.</p>
       </SectionCard>
 
       <SectionCard title="Cart Analytics (X,Y)">

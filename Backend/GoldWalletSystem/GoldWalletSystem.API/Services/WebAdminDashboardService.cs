@@ -3,7 +3,6 @@ using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
 
 namespace GoldWalletSystem.API.Services;
 
@@ -40,13 +39,11 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
 
         var cartItemsQuery = dbContext.CartItems
             .AsNoTracking()
-            .Include(x => x.Product)
-            .Where(x => x.CreatedAtUtc >= monthStart)
             .AsQueryable();
 
         if (sellerId.HasValue)
         {
-            cartItemsQuery = cartItemsQuery.Where(x => (x.SellerId ?? x.Product.SellerId) == sellerId.Value);
+            cartItemsQuery = cartItemsQuery.Where(x => x.SellerId == sellerId.Value);
         }
 
         var cartItems = await cartItemsQuery.ToListAsync(cancellationToken);
@@ -84,24 +81,30 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             })
             .ToList();
 
-        var productSkuToCategory = products
-            .GroupBy(x => x.Sku, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(g => g.Key, g => g.First().Category.ToString(), StringComparer.OrdinalIgnoreCase);
-
         var allCategoryNames = Enum.GetValues<ProductCategory>().Select(x => x.ToString()).ToList();
         var transactionCountByCategory = allCategoryNames.ToDictionary(x => x, _ => 0, StringComparer.OrdinalIgnoreCase);
+        var cartCountByCategory = allCategoryNames.ToDictionary(x => x, _ => 0, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var request in requests.Where(request => ParseStatus(request.Reference) == "approved"))
+        var walletAssetsQuery = dbContext.WalletAssets.AsNoTracking().AsQueryable();
+        if (sellerId.HasValue)
         {
-            var sku = ExtractSku(request.Reference);
-            if (string.IsNullOrWhiteSpace(sku) || !productSkuToCategory.TryGetValue(sku, out var mappedCategory))
+            walletAssetsQuery = walletAssetsQuery.Where(x => x.SellerId == sellerId.Value);
+        }
+
+        var walletAssetGroups = await walletAssetsQuery
+            .GroupBy(x => x.Category)
+            .Select(group => new { Category = group.Key, Count = group.Sum(x => x.Quantity) })
+            .ToListAsync(cancellationToken);
+
+        foreach (var group in walletAssetGroups)
+        {
+            var categoryName = group.Category.ToString();
+            if (!transactionCountByCategory.ContainsKey(categoryName))
             {
                 continue;
             }
 
-            transactionCountByCategory[mappedCategory] = transactionCountByCategory.TryGetValue(mappedCategory, out var currentCount)
-                ? currentCount + 1
-                : 1;
+            transactionCountByCategory[categoryName] = (int)group.Count;
         }
 
         var categoryTransactionSeries = allCategoryNames
@@ -112,8 +115,7 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             })
             .ToList();
 
-        var cartCountByCategory = allCategoryNames.ToDictionary(x => x, _ => 0, StringComparer.OrdinalIgnoreCase);
-        foreach (var group in cartItems.GroupBy(item => item.Product.Category.ToString()))
+        foreach (var group in cartItems.GroupBy(item => item.Category.ToString()))
         {
             cartCountByCategory[group.Key] = group.Sum(x => x.Quantity);
         }
@@ -165,14 +167,4 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
         return "pending";
     }
 
-    private static string? ExtractSku(string reference)
-    {
-        if (string.IsNullOrWhiteSpace(reference))
-        {
-            return null;
-        }
-
-        var match = Regex.Match(reference, @"SKU:([^|]+)", RegexOptions.IgnoreCase);
-        return match.Success ? match.Groups[1].Value.Trim() : null;
-    }
 }
