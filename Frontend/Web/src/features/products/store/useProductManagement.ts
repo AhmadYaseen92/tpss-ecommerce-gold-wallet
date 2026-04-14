@@ -1,4 +1,4 @@
-import { reactive, ref, watch } from "vue";
+import { onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { createManagedProduct, deleteManagedProduct, fetchManagedProducts, fetchProductCategories, fetchWeightUnits, updateManagedProduct, type ProductFormPayload } from "../../../shared/services/backendGateway";
 import type { EnumItemDto, ProductManagementDto } from "../../../shared/types/apiTypes";
 import { goToProductRoute, syncProductRoute } from "../services/productRoute";
@@ -76,6 +76,19 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   };
 
   watch(() => marketplace.session.value?.accessToken, () => void loadProductManagementData(), { immediate: true });
+
+  onMounted(() => {
+    syncRoute();
+    window.addEventListener("hashchange", syncRoute);
+  });
+
+  onUnmounted(() => {
+    window.removeEventListener("hashchange", syncRoute);
+  });
+
+  watch(managedProducts, () => {
+    syncRoute();
+  });
 
   return { managedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, deleteProductRecord, toggleProductActive };
 }
