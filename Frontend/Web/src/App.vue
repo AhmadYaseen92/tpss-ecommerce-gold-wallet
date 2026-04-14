@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
-import type { NavigationKey, UserRole } from "./domain/models";
+import type { NavigationKey } from "./domain/models";
 import AppShell from "./presentation/components/AppShell.vue";
 import MetricGrid from "./presentation/components/MetricGrid.vue";
 import SectionCard from "./presentation/components/SectionCard.vue";
@@ -33,9 +33,6 @@ watch(isDark, (value) => {
   document.documentElement.classList.toggle("dark-mode", value);
 });
 
-const onRoleChange = (role: UserRole) => {
-  marketplace.role.value = role;
-};
 
 const menuItems = computed(() => {
   const common: Array<{ key: NavigationKey; label: string }> = [
@@ -43,7 +40,6 @@ const menuItems = computed(() => {
     { key: "products", label: "Products" },
     { key: "inventory", label: "Inventory" },
     { key: "invoices", label: "Invoices" },
-    { key: "notifications", label: "Notifications" }
   ];
 
   if (marketplace.role.value === "admin") {
@@ -151,10 +147,11 @@ const submitNewProduct = () => {
     :menu-items="menuItems"
     :welcome-text="welcomeText"
     :is-dark="isDark"
-    @role-change="onRoleChange"
+    :notifications="marketplace.state.value.notifications"
     @menu-change="(menu) => (marketplace.activeMenu.value = menu)"
     @logout="marketplace.logout"
     @theme-toggle="isDark = !isDark"
+    @notification-read="marketplace.readNotification"
   >
     <section v-if="marketplace.activeMenu.value === 'overview'">
       <MetricGrid :metrics="marketplace.overviewCards.value" />
@@ -289,14 +286,6 @@ const submitNewProduct = () => {
       <MetricGrid :metrics="marketplace.adminMetrics.value" />
     </SectionCard>
 
-    <SectionCard v-if="marketplace.activeMenu.value === 'notifications'" title="Notifications">
-      <ul class="notification-list">
-        <li v-for="notice in marketplace.state.value.notifications" :key="notice.id">
-          <strong>{{ notice.title }}</strong>
-          <p>{{ notice.message }}</p>
-          <small>{{ notice.createdAt }}</small>
-        </li>
-      </ul>
-    </SectionCard>
+
   </AppShell>
 </template>

@@ -4,8 +4,8 @@ A modern web app flow similar to common SaaS dashboards:
 
 1. Login page (remember me, register link, forgot password link).
 2. Role-aware dashboard after login (Admin/Seller based on server response).
-3. Top bar with welcome message, theme toggle, settings, and logout.
-4. Left side menu with module navigation.
+3. Common modern top bar with icon actions (notifications, theme, settings, logout).
+4. Left side menu focused only on module navigation (no active role selector).
 
 ## Included modules
 
@@ -14,7 +14,7 @@ A modern web app flow similar to common SaaS dashboards:
 - Investors and transaction/request management.
 - Invoices and inventory views.
 - Fees module.
-- Reports and notifications.
+- Reports (notification center moved to top bar bell panel).
 
 ## Clean architecture
 
