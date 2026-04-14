@@ -3,6 +3,7 @@ using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.API.Models;
 using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Domain.Constants;
+using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -34,6 +35,67 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         };
 
         return Ok(ApiResponse<WebSummaryDto>.Ok(summary));
+    }
+
+    [HttpGet("sellers")]
+    public async Task<IActionResult> GetSellers(CancellationToken cancellationToken)
+    {
+        var sellerIdClaim = User.FindFirst("seller_id")?.Value;
+        var currentSellerId = int.TryParse(sellerIdClaim, out var parsedSellerId) ? parsedSellerId : 0;
+
+        var query = dbContext.Sellers.AsNoTracking();
+        if (!User.IsInRole(SystemRoles.Admin))
+        {
+            query = query.Where(x => x.Id == currentSellerId);
+        }
+
+        var sellers = await query
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new WebSellerDto
+            {
+                Id = $"s-{x.Id}",
+                Name = x.Name,
+                Email = x.Email,
+                BusinessName = x.CompanyName,
+                KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
+                SubmittedAt = x.CreatedAtUtc
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(ApiResponse<List<WebSellerDto>>.Ok(sellers));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpPut("sellers/{id}/kyc-status")]
+    public async Task<IActionResult> UpdateSellerKycStatus(string id, [FromBody] UpdateSellerKycRequest request, CancellationToken cancellationToken)
+    {
+        var sellerId = TryParsePrefixedId(id, "s-");
+        if (sellerId is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
+
+        var seller = await dbContext.Sellers.FirstOrDefaultAsync(x => x.Id == sellerId, cancellationToken);
+        if (seller is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
+
+        if (!Enum.TryParse<KycStatus>(request.Status, true, out var status))
+            return BadRequest(ApiResponse<object>.Fail("Invalid KYC status", 400));
+
+        seller.KycStatus = status;
+        seller.ReviewNotes = request.ReviewNotes;
+        seller.ReviewedAtUtc = DateTime.UtcNow;
+        seller.UpdatedAtUtc = DateTime.UtcNow;
+        seller.IsActive = status == KycStatus.Approved;
+
+        var sellerUsers = await dbContext.Users
+            .Where(x => x.SellerId == seller.Id && x.Role == SystemRoles.Seller)
+            .ToListAsync(cancellationToken);
+
+        foreach (var sellerUser in sellerUsers)
+        {
+            sellerUser.IsActive = status == KycStatus.Approved;
+            sellerUser.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Ok(ApiResponse<string>.Ok("updated"));
     }
 
     [HttpGet("investors")]

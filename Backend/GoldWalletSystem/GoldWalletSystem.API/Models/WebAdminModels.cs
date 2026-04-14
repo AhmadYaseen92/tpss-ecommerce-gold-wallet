@@ -13,6 +13,22 @@ public class WebSummaryDto
     public int UnreadNotificationsCount { get; set; }
 }
 
+public class WebSellerDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string BusinessName { get; set; } = string.Empty;
+    public string KycStatus { get; set; } = "pending";
+    public DateTime SubmittedAt { get; set; }
+}
+
+public class UpdateSellerKycRequest
+{
+    public string Status { get; set; } = "pending";
+    public string? ReviewNotes { get; set; }
+}
+
 public class WebInvestorDto
 {
     public string Id { get; set; } = string.Empty;

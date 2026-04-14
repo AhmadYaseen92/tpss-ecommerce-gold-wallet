@@ -17,10 +17,18 @@ export interface Seller {
   id: string;
   userId: number;
   name: string;
+  code?: string;
   email: string;
   businessName: string;
+  contactPhone?: string;
+  country?: string;
+  city?: string;
+  street?: string;
+  buildingNumber?: string;
+  postalCode?: string;
   kycStatus: KycStatus;
   submittedAt: string;
+  reviewNotes?: string;
 }
 
 export interface Investor {
@@ -112,6 +120,20 @@ export interface SellerRegistration {
   lastName: string;
   email: string;
   password: string;
-  businessName: string;
-  idNumber: string;
+  phoneNumber: string;
+  country: string;
+  city: string;
+  street: string;
+  buildingNumber: string;
+  postalCode: string;
+  companyName: string;
+  tradeLicenseNumber: string;
+  vatNumber: string;
+  nationalIdNumber: string;
+  bankName: string;
+  iban: string;
+  accountHolderName: string;
+  nationalIdFrontPath: string;
+  nationalIdBackPath: string;
+  tradeLicensePath: string;
 }

@@ -13,8 +13,18 @@ public class UserAuthRepository(AppDbContext dbContext) : IUserAuthRepository
     public Task<User?> GetByIdAsync(int userId, CancellationToken cancellationToken = default)
         => dbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
 
+    public Task<Seller?> GetSellerByIdAsync(int sellerId, CancellationToken cancellationToken = default)
+        => dbContext.Sellers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == sellerId, cancellationToken);
+
     public async Task<int> GetDefaultSellerIdAsync(CancellationToken cancellationToken = default)
         => await dbContext.Sellers.AsNoTracking().OrderBy(x => x.Id).Select(x => x.Id).FirstAsync(cancellationToken);
+
+    public async Task<Seller> AddSellerAsync(Seller seller, CancellationToken cancellationToken = default)
+    {
+        dbContext.Sellers.Add(seller);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return seller;
+    }
 
     public async Task<User> AddAsync(User user, UserProfile? profile = null, CancellationToken cancellationToken = default)
     {
