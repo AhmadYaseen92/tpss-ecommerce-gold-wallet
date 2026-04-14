@@ -56,7 +56,7 @@ const barHeight = (value: number, maxValue: number) => {
         </div>
       </SectionCard>
 
-      <SectionCard title="Product Categories Analytics">
+      <SectionCard title="Investors Wallets Analytics">
         <div class="bar-chart">
           <div
             v-for="item in categoryTransactionSeries"
@@ -70,7 +70,7 @@ const barHeight = (value: number, maxValue: number) => {
         </div>
       </SectionCard>
 
-      <SectionCard title="Cart Analytics">
+      <SectionCard title="Investors Carts Analytics">
         <div class="bar-chart">
           <div
             v-for="item in categoryCartSeries"
