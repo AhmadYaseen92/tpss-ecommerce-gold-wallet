@@ -479,3 +479,29 @@ select {
 .product-form {
   margin-top: 12px;
 }
+
+
+.hint-text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.vertical-form {
+  max-width: 640px;
+  margin-top: 12px;
+}
+
+.vertical-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.vertical-form label > span {
+  font-weight: 600;
+}
+
+.vertical-form label > small {
+  color: var(--text-muted);
+  font-size: 12px;
+}

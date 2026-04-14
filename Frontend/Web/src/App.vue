@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import type { NavigationKey } from "./domain/models";
 import AppShell from "./presentation/components/AppShell.vue";
 import MetricGrid from "./presentation/components/MetricGrid.vue";
@@ -52,16 +52,16 @@ const managedProducts = ref<ProductManagementDto[]>([]);
 const categories = ref<EnumItemDto[]>([]);
 const weightUnits = ref<EnumItemDto[]>([]);
 const selectedProduct = ref<ProductManagementDto | null>(null);
-const showProductForm = ref(false);
-const isEditMode = ref(false);
 const productError = ref("");
+const productPage = ref<"list" | "add" | "edit" | "details">("list");
+const productRouteId = ref<number | null>(null);
 const productForm = reactive<ProductFormPayload>({
   name: "",
   sku: "",
   description: "",
-  category: 4,
+  category: 0,
   weightValue: 0,
-  weightUnit: 1,
+  weightUnit: 0,
   price: 0,
   availableStock: 0,
   isActive: true,
@@ -74,9 +74,9 @@ const resetProductForm = () => {
   productForm.name = "";
   productForm.sku = "";
   productForm.description = "";
-  productForm.category = 4;
+  productForm.category = categories.value[0]?.value ?? 0;
   productForm.weightValue = 0;
-  productForm.weightUnit = 1;
+  productForm.weightUnit = weightUnits.value[0]?.value ?? 0;
   productForm.price = 0;
   productForm.availableStock = 0;
   productForm.isActive = true;
@@ -91,6 +91,8 @@ const loadProductManagementData = async () => {
     managedProducts.value = await fetchManagedProducts(marketplace.session.value.accessToken);
     categories.value = await fetchProductCategories(marketplace.session.value.accessToken);
     weightUnits.value = await fetchWeightUnits(marketplace.session.value.accessToken);
+    if (!productForm.category && categories.value.length > 0) productForm.category = categories.value[0].value;
+    if (!productForm.weightUnit && weightUnits.value.length > 0) productForm.weightUnit = weightUnits.value[0].value;
   } catch (error) {
     productError.value = error instanceof Error ? error.message : "Failed to load products";
   }
@@ -104,27 +106,76 @@ watch(
   { immediate: true }
 );
 
-const openAddProduct = () => {
-  resetProductForm();
-  isEditMode.value = false;
-  showProductForm.value = true;
-};
-
-const openEditProduct = (product: ProductManagementDto) => {
-  isEditMode.value = true;
-  showProductForm.value = true;
+const fillProductForm = (product: ProductManagementDto) => {
   productForm.id = product.id;
   productForm.name = product.name;
   productForm.sku = product.sku;
   productForm.description = product.description;
-  productForm.category = categories.value.find((x) => x.name === product.category)?.value ?? 4;
+  productForm.category = categories.value.find((x) => x.name === product.category)?.value ?? categories.value[0]?.value ?? 0;
   productForm.weightValue = Number(product.weightValue);
-  productForm.weightUnit = weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? 1;
+  productForm.weightUnit = weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? weightUnits.value[0]?.value ?? 0;
   productForm.price = Number(product.price);
   productForm.availableStock = product.availableStock;
   productForm.isActive = product.isActive;
   productForm.existingImageUrl = product.imageUrl;
   productForm.imageFile = null;
+};
+
+const syncProductRoute = () => {
+  const hash = window.location.hash || "#/products";
+  const addMatch = hash.match(/^#\/products\/new$/);
+  const editMatch = hash.match(/^#\/products\/(\d+)\/edit$/);
+  const detailsMatch = hash.match(/^#\/products\/(\d+)$/);
+
+  if (addMatch) {
+    productPage.value = "add";
+    productRouteId.value = null;
+    selectedProduct.value = null;
+    resetProductForm();
+    return;
+  }
+
+  if (editMatch) {
+    const id = Number(editMatch[1]);
+    const product = managedProducts.value.find((item) => item.id === id) ?? null;
+    productPage.value = "edit";
+    productRouteId.value = id;
+    selectedProduct.value = product;
+    if (product) fillProductForm(product);
+    return;
+  }
+
+  if (detailsMatch) {
+    const id = Number(detailsMatch[1]);
+    productPage.value = "details";
+    productRouteId.value = id;
+    selectedProduct.value = managedProducts.value.find((item) => item.id === id) ?? null;
+    return;
+  }
+
+  productPage.value = "list";
+  productRouteId.value = null;
+  selectedProduct.value = null;
+};
+
+const goToProductRoute = (path: string) => {
+  window.location.hash = path;
+  syncProductRoute();
+};
+
+const openAddProduct = () => {
+  resetProductForm();
+  goToProductRoute("#/products/new");
+};
+
+const openEditProduct = (product: ProductManagementDto) => {
+  fillProductForm(product);
+  goToProductRoute(`#/products/${product.id}/edit`);
+};
+
+const openProductDetails = (product: ProductManagementDto) => {
+  selectedProduct.value = product;
+  goToProductRoute(`#/products/${product.id}`);
 };
 
 const onProductImageChange = (event: Event) => {
@@ -140,13 +191,15 @@ const saveProduct = async () => {
   }
 
   try {
-    if (isEditMode.value && productForm.id) {
+    if (productPage.value === "edit" && productForm.id) {
       await updateManagedProduct(marketplace.session.value.accessToken, productForm.id, productForm);
+      goToProductRoute(`#/products/${productForm.id}`);
     } else {
       await createManagedProduct(marketplace.session.value.accessToken, productForm);
+      goToProductRoute("#/products");
+      resetProductForm();
     }
 
-    showProductForm.value = false;
     await loadProductManagementData();
   } catch (error) {
     productError.value = error instanceof Error ? error.message : "Failed to save product";
@@ -160,12 +213,27 @@ const deleteProductRecord = async (productId: number) => {
   try {
     await deleteManagedProduct(marketplace.session.value.accessToken, productId);
     await loadProductManagementData();
-    if (selectedProduct.value?.id === productId) selectedProduct.value = null;
+    if (selectedProduct.value?.id === productId) goToProductRoute("#/products");
   } catch (error) {
     productError.value = error instanceof Error ? error.message : "Failed to delete product";
   }
 };
 
+
+onMounted(() => {
+  syncProductRoute();
+  window.addEventListener("hashchange", syncProductRoute);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("hashchange", syncProductRoute);
+});
+
+watch(managedProducts, () => {
+  if (marketplace.activeMenu.value === "products") {
+    syncProductRoute();
+  }
+});
 
 watch(isDark, (value) => {
   document.documentElement.classList.toggle("dark-mode", value);
@@ -305,7 +373,7 @@ const downloadReport = () => {
     :welcome-text="welcomeText"
     :is-dark="isDark"
     :notifications="marketplace.state.value.notifications"
-    @menu-change="(menu) => (menu === 'logout' ? marketplace.logout() : (marketplace.activeMenu.value = menu))"
+    @menu-change="(menu) => { if (menu === 'logout') { marketplace.logout(); } else { marketplace.activeMenu.value = menu; if (menu === 'products' && !window.location.hash.startsWith('#/products')) goToProductRoute('#/products'); } }"
     @logout="marketplace.logout"
     @theme-toggle="isDark = !isDark"
     @notification-read="marketplace.readNotification"
@@ -321,74 +389,134 @@ const downloadReport = () => {
 
       <p v-if="productError" class="error-text">{{ productError }}</p>
 
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>SKU</th>
-            <th>Category</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Active</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="product in managedProducts"
-            :key="product.id"
-            class="clickable-row"
-            @click="selectedProduct = product"
-          >
-            <td>{{ product.id }}</td>
-            <td>{{ product.name }}</td>
-            <td>{{ product.sku }}</td>
-            <td>{{ product.category }}</td>
-            <td>{{ product.price }}</td>
-            <td>{{ product.availableStock }}</td>
-            <td>{{ product.isActive ? 'Yes' : 'No' }}</td>
-            <td>
-              <button @click.stop="openEditProduct(product)">Edit</button>
-              <button class="danger" @click.stop="deleteProductRecord(product.id)">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div v-if="selectedProduct" class="product-details">
-        <h4>Product Details</h4>
-        <p><strong>ID:</strong> {{ selectedProduct.id }}</p>
-        <p><strong>Name:</strong> {{ selectedProduct.name }}</p>
-        <p><strong>SKU:</strong> {{ selectedProduct.sku }}</p>
-        <p><strong>Description:</strong> {{ selectedProduct.description }}</p>
-        <p><strong>Weight:</strong> {{ selectedProduct.weightValue }} {{ selectedProduct.weightUnit }}</p>
-        <p><strong>Image:</strong> <a :href="selectedProduct.imageUrl" target="_blank">Open</a></p>
+      <div v-if="productPage === 'list'">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>SKU</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Active</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="product in managedProducts"
+              :key="product.id"
+              class="clickable-row"
+              @click="openProductDetails(product)"
+            >
+              <td>{{ product.id }}</td>
+              <td>{{ product.name }}</td>
+              <td>{{ product.sku }}</td>
+              <td>{{ product.category }}</td>
+              <td>{{ product.price }}</td>
+              <td>{{ product.availableStock }}</td>
+              <td>{{ product.isActive ? 'Yes' : 'No' }}</td>
+              <td>
+                <button @click.stop="openEditProduct(product)">Edit</button>
+                <button class="danger" @click.stop="deleteProductRecord(product.id)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <div v-if="showProductForm" class="modal-form product-form">
-        <h3>{{ isEditMode ? 'Edit Product' : 'Add Product' }}</h3>
-        <div class="grid-two">
-          <input v-model="productForm.name" placeholder="Name *" required />
-          <input v-model="productForm.sku" placeholder="SKU (unique) *" required />
-          <input v-model="productForm.description" placeholder="Description *" required />
+      <div v-else-if="productPage === 'details'" class="product-details">
+        <h4>Product Details #{{ selectedProduct?.id ?? productRouteId }}</h4>
+        <p v-if="!selectedProduct">Unable to load this product. Please return to list.</p>
+        <template v-else>
+          <p><strong>Name:</strong> {{ selectedProduct.name }}</p>
+          <p><strong>SKU:</strong> {{ selectedProduct.sku }}</p>
+          <p><strong>Description:</strong> {{ selectedProduct.description }}</p>
+          <p><strong>Category:</strong> {{ selectedProduct.category }}</p>
+          <p><strong>Weight:</strong> {{ selectedProduct.weightValue }} {{ selectedProduct.weightUnit }}</p>
+          <p><strong>Price:</strong> {{ selectedProduct.price }}</p>
+          <p><strong>Available Stock:</strong> {{ selectedProduct.availableStock }}</p>
+          <p><strong>Status:</strong> {{ selectedProduct.isActive ? 'Active' : 'Inactive' }}</p>
+          <p><strong>Image:</strong> <a :href="selectedProduct.imageUrl" target="_blank">Open image</a></p>
+        </template>
+        <div class="report-actions">
+          <button class="ghost" @click="goToProductRoute('#/products')">Back to list</button>
+          <button v-if="selectedProduct" @click="openEditProduct(selectedProduct)">Edit Product</button>
+        </div>
+      </div>
+
+      <div v-else class="modal-form product-form vertical-form">
+        <h3>{{ productPage === 'edit' ? 'Edit Product' : 'Add Product' }}</h3>
+        <p class="hint-text">Fill all required fields marked with *.</p>
+
+        <label>
+          <span>Product Name *</span>
+          <input v-model="productForm.name" placeholder="e.g. 24K Gold Bar - 10g" required />
+          <small>Customer-facing name for listings and reports.</small>
+        </label>
+
+        <label>
+          <span>SKU (Unique) *</span>
+          <input v-model="productForm.sku" placeholder="e.g. GB-10G-24K" required />
+          <small>Internal stock keeping unit; cannot be duplicated.</small>
+        </label>
+
+        <label>
+          <span>Description *</span>
+          <input v-model="productForm.description" placeholder="Short details about purity, origin, and packaging" required />
+          <small>Describe the product details that buyers need.</small>
+        </label>
+
+        <label>
+          <span>Category *</span>
           <select v-model.number="productForm.category">
+            <option disabled :value="0">{{ categories.length ? 'Select category' : 'Loading categories...' }}</option>
             <option v-for="item in categories" :key="item.value" :value="item.value">{{ item.name }}</option>
           </select>
-          <input v-model.number="productForm.weightValue" type="number" placeholder="Weight Value *" required />
+          <small>Dropdown values are loaded from backend product categories.</small>
+        </label>
+
+        <label>
+          <span>Weight Value *</span>
+          <input v-model.number="productForm.weightValue" type="number" min="0.01" step="0.01" placeholder="e.g. 10" required />
+          <small>Numeric weight amount before unit.</small>
+        </label>
+
+        <label>
+          <span>Weight Unit *</span>
           <select v-model.number="productForm.weightUnit">
+            <option disabled :value="0">{{ weightUnits.length ? 'Select unit' : 'Loading units...' }}</option>
             <option v-for="item in weightUnits" :key="item.value" :value="item.value">{{ item.name }}</option>
           </select>
-          <input v-model.number="productForm.price" type="number" placeholder="Price *" required />
-          <input v-model.number="productForm.availableStock" type="number" placeholder="Available Stock *" required />
-          <label class="checkbox-line">
-            <input v-model="productForm.isActive" type="checkbox" /> Active
-          </label>
+          <small>Dropdown values are loaded from backend weight units.</small>
+        </label>
+
+        <label>
+          <span>Price *</span>
+          <input v-model.number="productForm.price" type="number" min="0.01" step="0.01" placeholder="e.g. 250.00" required />
+          <small>Selling price in system currency.</small>
+        </label>
+
+        <label>
+          <span>Available Stock *</span>
+          <input v-model.number="productForm.availableStock" type="number" min="0" step="1" placeholder="e.g. 50" required />
+          <small>Current quantity ready for sale.</small>
+        </label>
+
+        <label>
+          <span>Product Image</span>
           <input type="file" accept="image/*" @change="onProductImageChange" />
-        </div>
+          <small>Upload JPG/PNG image for display in product details.</small>
+        </label>
+
+        <label class="checkbox-line">
+          <input v-model="productForm.isActive" type="checkbox" /> Product is active
+        </label>
+
         <div class="report-actions">
           <button @click="saveProduct">Save</button>
-          <button class="ghost" @click="showProductForm = false">Cancel</button>
+          <button class="ghost" @click="goToProductRoute('#/products')">Cancel</button>
         </div>
       </div>
     </SectionCard>
