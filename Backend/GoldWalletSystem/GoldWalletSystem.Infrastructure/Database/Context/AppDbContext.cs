@@ -68,9 +68,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
             entity.Property(x => x.ContactEmail).HasMaxLength(200);
             entity.Property(x => x.ContactPhone).HasMaxLength(50);
-            entity.Property(x => x.Address).HasMaxLength(500);
+            entity.Property(x => x.Country).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.City).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.Street).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.BuildingNumber).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.PostalCode).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.CompanyName).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.TradeLicenseNumber).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.VatNumber).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.NationalIdNumber).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.BankName).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.IBAN).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.AccountHolderName).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.NationalIdFrontPath).IsRequired().HasMaxLength(500);
+            entity.Property(x => x.NationalIdBackPath).IsRequired().HasMaxLength(500);
+            entity.Property(x => x.TradeLicensePath).IsRequired().HasMaxLength(500);
+            entity.Property(x => x.KycStatus).HasConversion<int>();
+            entity.Property(x => x.ReviewNotes).HasMaxLength(1000);
             entity.HasIndex(x => x.Code).IsUnique();
             entity.HasIndex(x => x.Name);
+            entity.HasIndex(x => x.KycStatus);
         });
     }
 

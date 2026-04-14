@@ -25,7 +25,7 @@ import type {
   UserRole,
   UserSession
 } from "../../types/models";
-import { fetchMarketplaceState, loginWithBackend, registerSellerWithBackend } from "../../services/backendGateway";
+import { fetchMarketplaceState, loginWithBackend, registerSellerWithBackend, updateSellerKycStatusByAdmin } from "../../services/backendGateway";
 import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
 
 export function useMarketplace() {
@@ -89,12 +89,18 @@ export function useMarketplace() {
     }
   };
 
-  const approveKyc = (sellerId: string) => {
+  const approveKyc = async (sellerId: string) => {
     state.value.sellers = updateSellerKycStatus(state.value.sellers, sellerId, "approved");
+    if (session.value?.accessToken) {
+      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "approved");
+    }
   };
 
-  const rejectKyc = (sellerId: string) => {
+  const rejectKyc = async (sellerId: string) => {
     state.value.sellers = updateSellerKycStatus(state.value.sellers, sellerId, "rejected");
+    if (session.value?.accessToken) {
+      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "rejected");
+    }
   };
 
   const setMarketPrice = (productId: string, marketPrice: number) => {

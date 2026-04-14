@@ -79,6 +79,21 @@ export async function postJson<TResponse, TPayload = unknown>(
   return parseApiResponse<TResponse>(response);
 }
 
+
+export async function putJson<TResponse, TPayload = unknown>(
+  path: string,
+  payload: TPayload,
+  accessToken?: string
+): Promise<TResponse> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "PUT",
+    headers: buildHeaders(accessToken),
+    body: JSON.stringify(payload)
+  });
+
+  return parseApiResponse<TResponse>(response);
+}
+
 export async function putForm<TResponse>(path: string, formData: FormData, accessToken?: string): Promise<TResponse> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "PUT",

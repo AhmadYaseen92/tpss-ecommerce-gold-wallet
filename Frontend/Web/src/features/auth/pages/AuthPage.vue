@@ -27,10 +27,24 @@ const { authScreen, loginForm, registerForm, registerSellerAction } = useAuthPag
         <div class="grid-two">
           <input v-model="registerForm.fullName" placeholder="Full Name" required />
           <input v-model="registerForm.email" type="email" placeholder="Email" required />
+          <input v-model="registerForm.phoneNumber" placeholder="Contact Phone" required />
           <input v-model="registerForm.password" type="password" placeholder="Password" required />
           <input v-model="registerForm.confirmPassword" type="password" placeholder="Confirm Password" required />
-          <input v-model="registerForm.businessName" placeholder="Business Name" required />
-          <input v-model="registerForm.idNumber" placeholder="National ID" required />
+          <input v-model="registerForm.country" placeholder="Country" required />
+          <input v-model="registerForm.city" placeholder="City" required />
+          <input v-model="registerForm.street" placeholder="Street" required />
+          <input v-model="registerForm.buildingNumber" placeholder="Building Number" required />
+          <input v-model="registerForm.postalCode" placeholder="Postal Code" required />
+          <input v-model="registerForm.companyName" placeholder="Company Name" required />
+          <input v-model="registerForm.tradeLicenseNumber" placeholder="Trade License Number" required />
+          <input v-model="registerForm.vatNumber" placeholder="VAT Number" required />
+          <input v-model="registerForm.nationalIdNumber" placeholder="National ID Number" required />
+          <input v-model="registerForm.bankName" placeholder="Bank Name" required />
+          <input v-model="registerForm.iban" placeholder="IBAN" required />
+          <input v-model="registerForm.accountHolderName" placeholder="Account Holder Name" required />
+          <input v-model="registerForm.nationalIdFrontPath" placeholder="National ID Front Path" required />
+          <input v-model="registerForm.nationalIdBackPath" placeholder="National ID Back Path" required />
+          <input v-model="registerForm.tradeLicensePath" placeholder="Trade License Path" required />
         </div>
         <button :disabled="marketplace.loading.value" type="submit" class="full-btn">Create account</button>
       </form>

@@ -3,6 +3,7 @@ using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Entities;
+using GoldWalletSystem.Domain.Enums;
 
 namespace GoldWalletSystem.Application.Services;
 
@@ -20,6 +21,15 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             throw new UnauthorizedAccessException("Invalid credentials.");
 
         var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
+        if (string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase))
+        {
+            var seller = await userAuthRepository.GetSellerByIdAsync(user.SellerId, cancellationToken);
+            if (seller is null || seller.KycStatus != KycStatus.Approved || !seller.IsActive)
+            {
+                throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
+            }
+        }
+
         var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, user.SellerId);
 
         return new LoginResponseDto
@@ -49,20 +59,23 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
         }
 
         var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
+        var fullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  ", " ").Trim();
 
         var sellerId = request.SellerId > 0
             ? request.SellerId
-            : await userAuthRepository.GetDefaultSellerIdAsync(cancellationToken);
+            : await ResolveSellerIdAsync(request, role, fullName, cancellationToken);
+
+        var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
 
         var user = new User
         {
-            FullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  "," ").Trim(),
+            FullName = fullName,
             Email = request.Email.Trim(),
             PasswordHash = passwordHasher.Hash(request.Password),
             PhoneNumber = request.PhoneNumber?.Trim(),
             Role = role,
             SellerId = sellerId,
-            IsActive = true,
+            IsActive = !isSeller,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
         };
@@ -90,5 +103,84 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             Role = created.Role,
             SellerId = created.SellerId,
         };
+    }
+
+    private async Task<int> ResolveSellerIdAsync(RegisterRequestDto request, string role, string fullName, CancellationToken cancellationToken)
+    {
+        var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
+        if (!isSeller)
+            return await userAuthRepository.GetDefaultSellerIdAsync(cancellationToken);
+
+        ValidateSellerRegistration(request);
+
+        var seller = new Seller
+        {
+            Name = fullName,
+            Code = BuildSellerCode(request),
+            ContactEmail = request.Email.Trim(),
+            ContactPhone = request.PhoneNumber?.Trim(),
+            IsActive = false,
+            Country = request.Country.Trim(),
+            City = request.City.Trim(),
+            Street = request.Street.Trim(),
+            BuildingNumber = request.BuildingNumber.Trim(),
+            PostalCode = request.PostalCode.Trim(),
+            CompanyName = request.CompanyName.Trim(),
+            TradeLicenseNumber = request.TradeLicenseNumber.Trim(),
+            VatNumber = request.VatNumber.Trim(),
+            NationalIdNumber = request.NationalIdNumber.Trim(),
+            BankName = request.BankName.Trim(),
+            IBAN = request.Iban.Trim(),
+            AccountHolderName = request.AccountHolderName.Trim(),
+            NationalIdFrontPath = request.NationalIdFrontPath.Trim(),
+            NationalIdBackPath = request.NationalIdBackPath.Trim(),
+            TradeLicensePath = request.TradeLicensePath.Trim(),
+            KycStatus = KycStatus.Pending,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        var createdSeller = await userAuthRepository.AddSellerAsync(seller, cancellationToken);
+        return createdSeller.Id;
+    }
+
+    private static string BuildSellerCode(RegisterRequestDto request)
+    {
+        if (!string.IsNullOrWhiteSpace(request.SellerCode))
+            return request.SellerCode.Trim().ToUpperInvariant();
+
+        var companySeed = string.IsNullOrWhiteSpace(request.CompanyName)
+            ? "SELL"
+            : new string(request.CompanyName.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
+
+        if (companySeed.Length > 6)
+            companySeed = companySeed[..6];
+
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+        return $"{companySeed}-{timestamp[^6..]}";
+    }
+
+    private static void ValidateSellerRegistration(RegisterRequestDto request)
+    {
+        var requiredFields = new[]
+        {
+            request.Country,
+            request.City,
+            request.Street,
+            request.BuildingNumber,
+            request.PostalCode,
+            request.CompanyName,
+            request.TradeLicenseNumber,
+            request.VatNumber,
+            request.NationalIdNumber,
+            request.BankName,
+            request.Iban,
+            request.AccountHolderName,
+            request.NationalIdFrontPath,
+            request.NationalIdBackPath,
+            request.TradeLicensePath
+        };
+
+        if (requiredFields.Any(string.IsNullOrWhiteSpace))
+            throw new InvalidOperationException("All seller registration and KYC fields are required.");
     }
 }

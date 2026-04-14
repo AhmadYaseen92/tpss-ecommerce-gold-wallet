@@ -10,7 +10,7 @@ import {
   type SellerRegistration,
   type UserSession
 } from "../types/models";
-import { deleteJson, getJson, postForm, postJson, putForm } from "./httpClient";
+import { deleteJson, getJson, postForm, postJson, putForm, putJson } from "./httpClient";
 import type {
   AuditLogDto,
   DashboardDto,
@@ -20,7 +20,8 @@ import type {
   ProductManagementDto,
   RegisterResponseDto,
   EnumItemDto,
-  WebDashboardDto
+  WebDashboardDto,
+  WebSellerDto
 } from "../types/apiTypes";
 
 const toRole = (role: string): "admin" | "seller" => (role.toLowerCase() === "admin" ? "admin" : "seller");
@@ -46,6 +47,16 @@ const mapSession = (dto: LoginResponseDto): UserSession => ({
   sellerId: dto.sellerId,
   role: toRole(dto.role),
   expiresAtUtc: dto.expiresAtUtc
+});
+
+const mapSeller = (dto: WebSellerDto): Seller => ({
+  id: dto.id,
+  userId: Number(dto.id.replace("s-", "")) || 0,
+  name: dto.name,
+  email: dto.email,
+  businessName: dto.businessName,
+  kycStatus: (dto.kycStatus?.toLowerCase() as "pending" | "approved" | "rejected") ?? "pending",
+  submittedAt: dto.submittedAt
 });
 
 const mapProduct = (dto: ProductDto): Product => ({
@@ -108,16 +119,32 @@ export async function registerSellerWithBackend(registration: SellerRegistration
     lastName: registration.lastName,
     email: registration.email,
     password: registration.password,
-    phoneNumber: null,
+    phoneNumber: registration.phoneNumber,
     dateOfBirth: null,
-    nationality: "Jordan",
+    nationality: registration.country,
     documentType: "NationalId",
-    idNumber: registration.idNumber,
+    idNumber: registration.nationalIdNumber,
     profilePhotoUrl: "",
     preferredLanguage: "en",
     preferredTheme: "light",
     role: "Seller",
-    sellerId: 0
+    sellerId: 0,
+    sellerCode: "",
+    country: registration.country,
+    city: registration.city,
+    street: registration.street,
+    buildingNumber: registration.buildingNumber,
+    postalCode: registration.postalCode,
+    companyName: registration.companyName,
+    tradeLicenseNumber: registration.tradeLicenseNumber,
+    vatNumber: registration.vatNumber,
+    nationalIdNumber: registration.nationalIdNumber,
+    bankName: registration.bankName,
+    iban: registration.iban,
+    accountHolderName: registration.accountHolderName,
+    nationalIdFrontPath: registration.nationalIdFrontPath,
+    nationalIdBackPath: registration.nationalIdBackPath,
+    tradeLicensePath: registration.tradeLicensePath
   };
 
   const data = await postJson<RegisterResponseDto, typeof request>("/api/auth/register", request);
@@ -127,10 +154,28 @@ export async function registerSellerWithBackend(registration: SellerRegistration
     userId: data.userId,
     name: data.fullName,
     email: data.email,
-    businessName: registration.businessName,
+    businessName: registration.companyName,
     kycStatus: "pending",
-    submittedAt: new Date().toISOString().split("T")[0]
+    submittedAt: new Date().toISOString()
   };
+}
+
+export async function fetchSellers(accessToken: string): Promise<Seller[]> {
+  const sellers = await getJson<WebSellerDto[]>("/api/web-admin/sellers", accessToken);
+  return sellers.map(mapSeller);
+}
+
+export async function updateSellerKycStatusByAdmin(
+  accessToken: string,
+  sellerId: string,
+  status: "approved" | "rejected",
+  reviewNotes?: string
+): Promise<void> {
+  await putJson<string, { status: string; reviewNotes?: string }>(
+    `/api/web-admin/sellers/${sellerId}/kyc-status`,
+    { status, reviewNotes },
+    accessToken
+  );
 }
 
 export async function fetchMarketplaceState(session: UserSession): Promise<MarketplaceState> {
@@ -155,22 +200,28 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     : { items: [] as AuditLogDto[], totalCount: 0, pageNumber: 1, pageSize: 20 };
 
   const products = productsResult.items.map(mapProduct);
-  const sellers: Seller[] = Array.from(
-    new Map(
-      productsResult.items.map((item) => [
-        item.sellerId,
-        {
-          id: `s-${item.sellerId}`,
-          userId: item.sellerId,
-          name: item.sellerName,
-          email: `${item.sellerName.toLowerCase().replaceAll(" ", ".")}@goldwallet.local`,
-          businessName: item.sellerName,
-          kycStatus: "approved" as const,
-          submittedAt: new Date().toISOString().split("T")[0]
-        }
-      ])
-    ).values()
-  );
+
+  let sellers: Seller[] = [];
+  try {
+    sellers = await fetchSellers(session.accessToken);
+  } catch {
+    sellers = Array.from(
+      new Map(
+        productsResult.items.map((item) => [
+          item.sellerId,
+          {
+            id: `s-${item.sellerId}`,
+            userId: item.sellerId,
+            name: item.sellerName,
+            email: `${item.sellerName.toLowerCase().replaceAll(" ", ".")}@goldwallet.local`,
+            businessName: item.sellerName,
+            kycStatus: "approved" as const,
+            submittedAt: new Date().toISOString().split("T")[0]
+          }
+        ])
+      ).values()
+    );
+  }
 
   return {
     sellers,
