@@ -10,6 +10,16 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS = ["#f59e0b", "#6366f1", "#14b8a6", "#ec4899", "#84cc16"];
+const CATEGORY_NAME_BY_ID: Record<string, string> = {
+  "1": "Gold",
+  "2": "Silver",
+  "3": "Diamond",
+  "4": "Jewelry",
+  "5": "Coins",
+  "6": "SpotMr"
+};
+
+const normalizeCategoryLabel = (rawCategory: string) => CATEGORY_NAME_BY_ID[rawCategory] ?? rawCategory;
 
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
@@ -58,7 +68,10 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
 
   const categorySummary = computed(() => {
     const map = new Map<string, number>();
-    marketplace.state.value.products.forEach((p) => map.set(p.category, (map.get(p.category) ?? 0) + 1));
+    marketplace.state.value.products.forEach((p) => {
+      const categoryName = normalizeCategoryLabel(String(p.category));
+      map.set(categoryName, (map.get(categoryName) ?? 0) + 1);
+    });
     return Array.from(map.entries()).map(([category, count]) => ({ category, count }));
   });
 

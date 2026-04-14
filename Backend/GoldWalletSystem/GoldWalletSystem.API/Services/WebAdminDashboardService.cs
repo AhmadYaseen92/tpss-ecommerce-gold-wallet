@@ -88,37 +88,42 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             .GroupBy(x => x.Sku, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First().Category.ToString(), StringComparer.OrdinalIgnoreCase);
 
-        var categoryTransactionSeries = requests
-            .Where(request => ParseStatus(request.Reference) == "approved")
-            .GroupBy(request =>
-            {
-                var sku = ExtractSku(request.Reference);
-                if (!string.IsNullOrWhiteSpace(sku) && productSkuToCategory.TryGetValue(sku, out var mappedCategory))
-                {
-                    return mappedCategory;
-                }
+        var allCategoryNames = Enum.GetValues<ProductCategory>().Select(x => x.ToString()).ToList();
+        var transactionCountByCategory = allCategoryNames.ToDictionary(x => x, _ => 0, StringComparer.OrdinalIgnoreCase);
 
-                return string.Empty;
-            })
-            .Where(group => !string.IsNullOrWhiteSpace(group.Key))
-            .Select(group => new WebDashboardPointDto
+        foreach (var request in requests.Where(request => ParseStatus(request.Reference) == "approved"))
+        {
+            var sku = ExtractSku(request.Reference);
+            if (string.IsNullOrWhiteSpace(sku) || !productSkuToCategory.TryGetValue(sku, out var mappedCategory))
             {
-                Label = group.Key,
-                Value = group.Count()
+                continue;
+            }
+
+            transactionCountByCategory[mappedCategory] = transactionCountByCategory.TryGetValue(mappedCategory, out var currentCount)
+                ? currentCount + 1
+                : 1;
+        }
+
+        var categoryTransactionSeries = allCategoryNames
+            .Select(categoryName => new WebDashboardPointDto
+            {
+                Label = categoryName,
+                Value = transactionCountByCategory.TryGetValue(categoryName, out var count) ? count : 0
             })
-            .OrderByDescending(x => x.Value)
-            .ThenBy(x => x.Label)
             .ToList();
 
-        var categoryCartSeries = cartItems
-            .GroupBy(item => item.Product.Category.ToString())
-            .Select(group => new WebDashboardPointDto
+        var cartCountByCategory = allCategoryNames.ToDictionary(x => x, _ => 0, StringComparer.OrdinalIgnoreCase);
+        foreach (var group in cartItems.GroupBy(item => item.Product.Category.ToString()))
+        {
+            cartCountByCategory[group.Key] = group.Sum(x => x.Quantity);
+        }
+
+        var categoryCartSeries = allCategoryNames
+            .Select(categoryName => new WebDashboardPointDto
             {
-                Label = group.Key,
-                Value = group.Sum(x => x.Quantity)
+                Label = categoryName,
+                Value = cartCountByCategory.TryGetValue(categoryName, out var count) ? count : 0
             })
-            .OrderByDescending(x => x.Value)
-            .ThenBy(x => x.Label)
             .ToList();
 
         return new WebDashboardDto
