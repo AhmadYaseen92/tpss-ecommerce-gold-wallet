@@ -57,22 +57,34 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const saveProduct = async () => {
     if (!marketplace.session.value?.accessToken) return;
     if (!validateProductForm()) return;
-    if (productPage.value === "edit" && productForm.id) await updateManagedProduct(marketplace.session.value.accessToken, productForm.id, productForm);
-    else await createManagedProduct(marketplace.session.value.accessToken, productForm);
-    await loadProductManagementData();
-    navigate("#/products");
+    try {
+      if (productPage.value === "edit" && productForm.id) await updateManagedProduct(marketplace.session.value.accessToken, productForm.id, productForm);
+      else await createManagedProduct(marketplace.session.value.accessToken, productForm);
+      await loadProductManagementData();
+      navigate("#/products");
+    } catch (error) {
+      productError.value = error instanceof Error ? error.message : "Failed to save product.";
+    }
   };
 
   const deleteProductRecord = async (id: number) => {
     if (!marketplace.session.value?.accessToken) return;
-    await deleteManagedProduct(marketplace.session.value.accessToken, id);
-    await loadProductManagementData();
+    try {
+      await deleteManagedProduct(marketplace.session.value.accessToken, id);
+      await loadProductManagementData();
+    } catch (error) {
+      productError.value = error instanceof Error ? error.message : "Failed to delete product.";
+    }
   };
 
   const toggleProductActive = async (product: ProductManagementDto) => {
     if (!marketplace.session.value?.accessToken) return;
-    await updateManagedProduct(marketplace.session.value.accessToken, product.id, { ...productForm, id: product.id, name: product.name, sku: product.sku, description: product.description, category: categories.value.find((x) => x.name === product.category)?.value ?? 0, weightValue: Number(product.weightValue), weightUnit: weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? 0, price: Number(product.price), availableStock: product.availableStock, isActive: !product.isActive, existingImageUrl: product.imageUrl });
-    await loadProductManagementData();
+    try {
+      await updateManagedProduct(marketplace.session.value.accessToken, product.id, { ...productForm, id: product.id, name: product.name, sku: product.sku, description: product.description, category: categories.value.find((x) => x.name === product.category)?.value ?? 0, weightValue: Number(product.weightValue), weightUnit: weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? 0, price: Number(product.price), availableStock: product.availableStock, isActive: !product.isActive, existingImageUrl: product.imageUrl });
+      await loadProductManagementData();
+    } catch (error) {
+      productError.value = error instanceof Error ? error.message : "Failed to update product state.";
+    }
   };
 
   watch(() => marketplace.session.value?.accessToken, () => void loadProductManagementData(), { immediate: true });

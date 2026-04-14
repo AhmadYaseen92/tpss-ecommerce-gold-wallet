@@ -46,7 +46,7 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
       { title: "Total Products", value: String(products.length), trend: "All" },
       { title: "Active Products", value: String(products.filter((p) => p.stock > 0).length), trend: "Active" },
       { title: "Out of Stock Products", value: String(products.filter((p) => p.stock === 0).length), trend: "AvailableStock=0" },
-      { title: "Gold Market Price", value: `${products.find((p) => p.category.toLowerCase().includes("gold"))?.marketPrice ?? 0}`, trend: "Current" }
+      { title: "Gold Market Price", value: `${products.find((p) => String(p.category).toLowerCase().includes("gold"))?.marketPrice ?? 0}`, trend: "Current" }
     ];
   });
 

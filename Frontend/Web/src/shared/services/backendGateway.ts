@@ -10,7 +10,7 @@ import {
   type SellerRegistration,
   type UserSession
 } from "../types/models";
-import { HttpError, deleteJson, getJson, postForm, postJson, putForm } from "./httpClient";
+import { deleteJson, getJson, postForm, postJson, putForm } from "./httpClient";
 import type {
   AuditLogDto,
   DashboardDto,
@@ -218,57 +218,41 @@ export interface ProductFormPayload {
 }
 
 export async function fetchManagedProducts(accessToken: string): Promise<ProductManagementDto[]> {
-  try {
-    return await getJson<ProductManagementDto[]>("/api/products/management", accessToken);
-  } catch (error) {
-    if (error instanceof HttpError && error.statusCode === 404) {
-      const searchResult = await postJson<PagedResult<ProductDto>, { pageNumber: number; pageSize: number; category: null }>(
-        "/api/products/search",
-        { pageNumber: 1, pageSize: 100, category: null },
-        accessToken
-      );
+  const searchResult = await postJson<PagedResult<ProductDto>, { pageNumber: number; pageSize: number; category: null }>(
+    "/api/products/search",
+    { pageNumber: 1, pageSize: 100, category: null },
+    accessToken
+  );
 
-      return searchResult.items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        sku: item.sku,
-        description: item.description,
-        imageUrl: item.imageUrl,
-        category: item.category,
-        weightValue: item.weightValue,
-        weightUnit: item.weightUnit,
-        price: item.price,
-        availableStock: item.availableStock,
-        isActive: true,
-        sellerId: item.sellerId
-      }));
-    }
-
-    throw error;
-  }
+  return searchResult.items.map((item) => ({
+    id: item.id,
+    name: item.name,
+    sku: item.sku,
+    description: item.description,
+    imageUrl: item.imageUrl,
+    category: item.category,
+    weightValue: item.weightValue,
+    weightUnit: item.weightUnit,
+    price: item.price,
+    availableStock: item.availableStock,
+    isActive: true,
+    sellerId: item.sellerId
+  }));
 }
 
 export async function fetchProductCategories(accessToken: string): Promise<EnumItemDto[]> {
   try {
     return await getJson<EnumItemDto[]>("/api/products/categories", accessToken);
-  } catch (error) {
-    if (error instanceof HttpError && error.statusCode === 404) {
-      return fallbackCategories;
-    }
-
-    throw error;
+  } catch {
+    return fallbackCategories;
   }
 }
 
 export async function fetchWeightUnits(accessToken: string): Promise<EnumItemDto[]> {
   try {
     return await getJson<EnumItemDto[]>("/api/products/weight-units", accessToken);
-  } catch (error) {
-    if (error instanceof HttpError && error.statusCode === 404) {
-      return fallbackWeightUnits;
-    }
-
-    throw error;
+  } catch {
+    return fallbackWeightUnits;
   }
 }
 
