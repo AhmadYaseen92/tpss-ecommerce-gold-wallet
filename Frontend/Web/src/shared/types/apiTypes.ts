@@ -84,3 +84,33 @@ export interface EnumItemDto {
   value: number;
   name: string;
 }
+
+export interface WebDashboardCardDto {
+  title: string;
+  value: string;
+  trend: string;
+}
+
+export interface WebDashboardSegmentDto {
+  key: string;
+  label: string;
+  value: number;
+  percent: number;
+}
+
+export interface WebRecentTransactionDto {
+  id: string;
+  investorName: string;
+  productName: string;
+  type: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+}
+
+export interface WebDashboardDto {
+  cards: WebDashboardCardDto[];
+  statusSegments: WebDashboardSegmentDto[];
+  categorySegments: WebDashboardSegmentDto[];
+  recentTransactions: WebRecentTransactionDto[];
+}

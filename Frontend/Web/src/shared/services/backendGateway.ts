@@ -19,7 +19,8 @@ import type {
   ProductDto,
   ProductManagementDto,
   RegisterResponseDto,
-  EnumItemDto
+  EnumItemDto,
+  WebDashboardDto
 } from "../types/apiTypes";
 
 const toRole = (role: string): "admin" | "seller" => (role.toLowerCase() === "admin" ? "admin" : "seller");
@@ -193,6 +194,10 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     reports: mapReports(dashboard, logsResult.items),
     currentUserName: dashboard.fullName
   };
+}
+
+export async function fetchWebAdminDashboard(accessToken: string, period: "today" | "week" | "month"): Promise<WebDashboardDto> {
+  return getJson<WebDashboardDto>(`/api/web-admin/dashboard?period=${period}`, accessToken);
 }
 
 

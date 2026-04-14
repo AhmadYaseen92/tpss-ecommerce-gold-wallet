@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
 defineProps<{
   dashboardPeriod: "today" | "week" | "month";
   dashboardCards: Array<{ title: string; value: string; trend: string }>;
-  chartPoints: Array<{ x: number; transactions: number; sales: number }>;
   statusSummary: { pending: number; approved: number; rejected: number };
   categorySummary: Array<{ category: string; count: number }>;
   statusRing: Array<{ key: string; label: string; value: number; color: string; percent: number }>;
@@ -14,7 +12,6 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{ changePeriod: [period: "today" | "week" | "month"] }>();
-const activeCard = ref<"transactions" | "sales">("transactions");
 
 const ringBackground = (segments: Array<{ color: string; percent: number }>) => {
   let current = 0;
@@ -25,8 +22,6 @@ const ringBackground = (segments: Array<{ color: string; percent: number }>) => 
   });
   return `conic-gradient(${stops.join(",")})`;
 };
-
-const activeChartLabel = computed(() => (activeCard.value === "transactions" ? "Transactions" : "Sales"));
 </script>
 
 <template>
@@ -40,30 +35,12 @@ const activeChartLabel = computed(() => (activeCard.value === "transactions" ? "
     </SectionCard>
 
     <div class="interactive-metrics">
-      <button
-        v-for="(card, index) in dashboardCards"
-        :key="card.title"
-        class="metric-interactive-card"
-        :class="{ active: (index === 0 && activeCard === 'transactions') || (index === 1 && activeCard === 'sales') }"
-        @click="activeCard = index === 1 ? 'sales' : 'transactions'"
-      >
+      <div v-for="card in dashboardCards" :key="card.title" class="metric-interactive-card">
         <p>{{ card.title }}</p>
         <strong>{{ card.value }}</strong>
         <small>{{ card.trend }}</small>
-      </button>
-    </div>
-
-    <SectionCard :title="`${activeChartLabel} Trend`">
-      <div class="chart-line compact">
-        <div
-          v-for="point in chartPoints"
-          :key="`active-${point.x}`"
-          class="line-point"
-          :class="{ gold: activeCard === 'sales' }"
-          :style="{ height: `${activeCard === 'sales' ? point.sales / 20 : point.transactions * 2}px` }"
-        ></div>
       </div>
-    </SectionCard>
+    </div>
 
     <div class="dashboard-bottom-grid">
       <SectionCard title="Transactions Status (Circular)">

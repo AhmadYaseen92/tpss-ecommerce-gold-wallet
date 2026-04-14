@@ -4,7 +4,7 @@ import { useDashboard } from "../store/useDashboard";
 import DashboardOverviewPage from "./DashboardOverviewPage.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
-const { dashboardPeriod, dashboardCards, chartPoints, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions } = useDashboard(props.marketplace);
+const { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions } = useDashboard(props.marketplace);
 const setDashboardPeriod = (period: "today" | "week" | "month") => {
   dashboardPeriod.value = period;
 };
@@ -14,7 +14,6 @@ const setDashboardPeriod = (period: "today" | "week" | "month") => {
   <DashboardOverviewPage
     :dashboard-period="dashboardPeriod"
     :dashboard-cards="dashboardCards"
-    :chart-points="chartPoints"
     :status-summary="statusSummary"
     :category-summary="categorySummary"
     :status-ring="statusRing"

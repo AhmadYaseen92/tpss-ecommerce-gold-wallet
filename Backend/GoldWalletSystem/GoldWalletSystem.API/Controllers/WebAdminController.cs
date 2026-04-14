@@ -1,4 +1,6 @@
 using GoldWalletSystem.Application.DTOs.Common;
+using GoldWalletSystem.API.Models;
+using GoldWalletSystem.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,7 +9,7 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/web-admin")]
-public class WebAdminController : ControllerBase
+public class WebAdminController(IWebAdminDashboardService dashboardService) : ControllerBase
 {
     private static readonly object Sync = new();
     private static readonly List<WebInvestorDto> Investors =
@@ -141,6 +143,13 @@ public class WebAdminController : ControllerBase
     [HttpGet("notifications")]
     public IActionResult GetNotifications() => Ok(ApiResponse<List<WebNotificationDto>>.Ok(Notifications));
 
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboard([FromQuery] string period = "today", CancellationToken cancellationToken = default)
+    {
+        var dashboard = await dashboardService.BuildAsync(period, Requests, Investors, cancellationToken);
+        return Ok(ApiResponse<WebDashboardDto>.Ok(dashboard));
+    }
+
     [HttpPut("notifications/{id}/read")]
     public IActionResult MarkNotificationAsRead(string id)
     {
@@ -154,62 +163,4 @@ public class WebAdminController : ControllerBase
         return Ok(ApiResponse<string>.Ok("updated"));
     }
 
-    public class UpdateStatusRequest
-    {
-        public string Status { get; set; } = "pending";
-    }
-
-    public class WebSummaryDto
-    {
-        public int InvestorsCount { get; set; }
-        public int PendingRequestsCount { get; set; }
-        public int InvoicesCount { get; set; }
-        public int UnreadNotificationsCount { get; set; }
-    }
-
-    public class WebInvestorDto
-    {
-        public string Id { get; set; } = string.Empty;
-        public string FullName { get; set; } = string.Empty;
-        public string RiskLevel { get; set; } = "medium";
-        public decimal WalletBalance { get; set; }
-        public string Status { get; set; } = "active";
-    }
-
-    public class WebRequestDto
-    {
-        public string Id { get; set; } = string.Empty;
-        public string InvestorId { get; set; } = string.Empty;
-        public string Type { get; set; } = "withdrawal";
-        public decimal Amount { get; set; }
-        public string Status { get; set; } = "pending";
-        public DateTime CreatedAt { get; set; }
-    }
-
-    public class WebInvoiceDto
-    {
-        public string Id { get; set; } = string.Empty;
-        public string SellerId { get; set; } = string.Empty;
-        public string InvestorName { get; set; } = string.Empty;
-        public decimal TotalAmount { get; set; }
-        public DateTime IssuedAt { get; set; }
-        public string Status { get; set; } = "draft";
-    }
-
-    public class WebFeesDto
-    {
-        public decimal DeliveryFee { get; set; }
-        public decimal StorageFee { get; set; }
-        public decimal ServiceChargePercent { get; set; }
-    }
-
-    public class WebNotificationDto
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string Message { get; set; } = string.Empty;
-        public string Severity { get; set; } = "info";
-        public bool IsRead { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
 }

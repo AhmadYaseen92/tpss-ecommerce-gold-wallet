@@ -1,5 +1,6 @@
 using GoldWalletSystem.API.Extensions;
 using GoldWalletSystem.API.Middleware;
+using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -51,6 +52,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddScoped<IWebAdminDashboardService, WebAdminDashboardService>();
 
 var app = builder.Build();
 
