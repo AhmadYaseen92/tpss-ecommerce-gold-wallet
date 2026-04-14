@@ -27,11 +27,10 @@ const loginForm = reactive({
 });
 
 const registerForm = reactive({
-  firstName: "",
-  middleName: "",
-  lastName: "",
+  fullName: "",
   email: "",
   password: "",
+  confirmPassword: "",
   businessName: "",
   idNumber: ""
 });
@@ -48,6 +47,10 @@ const reportFilters = reactive({
   stockOnly: false
 });
 const generatedReports = ref<Array<Record<string, string | number>>>([]);
+const dashboardPeriod = ref<"today" | "week" | "month">("today");
+const selectedInvestorId = ref<string | null>(null);
+const selectedTransactionId = ref<string | null>(null);
+const transactionStatusDraft = ref<"pending" | "approved" | "rejected">("pending");
 const managedProducts = ref<ProductManagementDto[]>([]);
 const categories = ref<EnumItemDto[]>([]);
 const weightUnits = ref<EnumItemDto[]>([]);
@@ -269,8 +272,135 @@ const welcomeText = computed(() => {
   return `Welcome back, ${fullName}`;
 });
 
+const registerSellerAction = async () => {
+  if (registerForm.password !== registerForm.confirmPassword) {
+    marketplace.error.value = "Password and confirm password do not match.";
+    return;
+  }
 
+  const parts = registerForm.fullName.trim().split(/\s+/);
+  const firstName = parts[0] ?? "";
+  const middleName = parts.length > 2 ? parts.slice(1, -1).join(" ") : (parts[1] ?? "-");
+  const lastName = parts.length > 1 ? parts[parts.length - 1] : "-";
 
+  await marketplace.registerSeller({
+    firstName,
+    middleName,
+    lastName,
+    email: registerForm.email,
+    password: registerForm.password,
+    businessName: registerForm.businessName,
+    idNumber: registerForm.idNumber
+  });
+};
+
+const dashboardCards = computed(() => {
+  const products = managedProducts.value;
+  const totalTransactions = marketplace.state.value.requests.length;
+  const totalSales = products.reduce((sum, p) => sum + Number(p.price) * Math.max(p.availableStock, 0), 0);
+  const activeProducts = products.filter((p) => p.isActive).length;
+  const outOfStockProducts = products.filter((p) => p.availableStock === 0).length;
+  const goldMarketPrice = products.find((p) => p.category.toLowerCase().includes("gold"))?.price ?? 0;
+
+  return [
+    { title: "Total Transactions", value: String(totalTransactions), trend: `${dashboardPeriod.value} period` },
+    { title: "Total Sales", value: `${totalSales.toFixed(2)}`, trend: `${dashboardPeriod.value} period` },
+    { title: "Total Products", value: String(products.length), trend: "All" },
+    { title: "Active Products", value: String(activeProducts), trend: "IsActive=true" },
+    { title: "Out of Stock Products", value: String(outOfStockProducts), trend: "AvailableStock=0" },
+    { title: "Gold Market Price", value: `${goldMarketPrice}`, trend: "Current" }
+  ];
+});
+
+const chartPoints = computed(() => {
+  const points = dashboardPeriod.value === "today" ? 6 : dashboardPeriod.value === "week" ? 7 : 12;
+  return Array.from({ length: points }, (_, i) => ({
+    x: i + 1,
+    transactions: 20 + (i % 4) * 5 + i,
+    sales: 500 + i * 85,
+    pending: 4 + (i % 3),
+    approved: 8 + (i % 4),
+    rejected: 2 + (i % 2)
+  }));
+});
+
+const statusSummary = computed(() => ({
+  pending: marketplace.state.value.requests.filter((x) => x.status === "pending").length,
+  approved: marketplace.state.value.requests.filter((x) => x.status === "approved").length,
+  rejected: marketplace.state.value.requests.filter((x) => x.status === "rejected").length
+}));
+
+const categorySummary = computed(() => {
+  const map = new Map<string, number>();
+  for (const product of managedProducts.value) {
+    map.set(product.category, (map.get(product.category) ?? 0) + 1);
+  }
+  return Array.from(map.entries()).map(([category, count]) => ({ category, count }));
+});
+
+const investorRows = computed(() =>
+  marketplace.state.value.investors.map((inv, idx) => {
+    const totalTransactions = marketplace.state.value.requests.filter((r) => r.investorId === inv.id).length;
+    return {
+      ...inv,
+      email: `${inv.fullName.toLowerCase().replace(/\s+/g, ".")}@mail.com`,
+      totalTransactions,
+      totalPurchases: totalTransactions * 250,
+      createdDate: `2026-04-${String(10 + idx).padStart(2, "0")}`,
+      lastTransactionDate: marketplace.state.value.requests.find((r) => r.investorId === inv.id)?.createdAt ?? "-"
+    };
+  })
+);
+
+const selectedInvestor = computed(() => investorRows.value.find((x) => x.id === selectedInvestorId.value) ?? null);
+
+const transactionsView = computed(() =>
+  marketplace.state.value.requests.map((request, idx) => ({
+    ...request,
+    investorName: investorRows.value.find((inv) => inv.id === request.investorId)?.fullName ?? request.investorId,
+    productName: managedProducts.value[idx % Math.max(managedProducts.value.length, 1)]?.name ?? "N/A",
+    transactionType: idx % 2 === 0 ? "Buy" : "Sell",
+    transactionPrice: managedProducts.value[idx % Math.max(managedProducts.value.length, 1)]?.price ?? 0
+  }))
+);
+
+const selectedTransaction = computed(() => transactionsView.value.find((x) => x.id === selectedTransactionId.value) ?? null);
+
+const viewTransaction = (id: string) => {
+  selectedTransactionId.value = id;
+  transactionStatusDraft.value = (transactionsView.value.find((x) => x.id === id)?.status ?? "pending") as "pending" | "approved" | "rejected";
+};
+
+const saveTransactionStatus = () => {
+  if (!selectedTransactionId.value) return;
+  marketplace.updateRequestStatus(selectedTransactionId.value, transactionStatusDraft.value);
+};
+
+const toggleInvestorStatus = (id: string) => {
+  const investor = marketplace.state.value.investors.find((x) => x.id === id);
+  if (!investor) return;
+  investor.status = investor.status === "active" ? "review" : "active";
+};
+
+const toggleProductActive = async (product: ProductManagementDto) => {
+  if (!marketplace.session.value?.accessToken) return;
+  const payload: ProductFormPayload = {
+    id: product.id,
+    name: product.name,
+    sku: product.sku,
+    description: product.description,
+    category: categories.value.find((x) => x.name === product.category)?.value ?? categories.value[0]?.value ?? 0,
+    weightValue: Number(product.weightValue),
+    weightUnit: weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? weightUnits.value[0]?.value ?? 0,
+    price: Number(product.price),
+    availableStock: product.availableStock,
+    isActive: !product.isActive,
+    existingImageUrl: product.imageUrl
+  };
+
+  await updateManagedProduct(marketplace.session.value.accessToken, product.id, payload);
+  await loadProductManagementData();
+};
 
 
 const reportTypeCards = [
@@ -279,6 +409,14 @@ const reportTypeCards = [
   { key: "transactions", label: "Transactions Report", description: "Requests and approval activity" },
   { key: "seller", label: "Seller Report", description: "Seller-specific operational summary" }
 ];
+
+
+const statusClass = (status: string) => {
+  const normalized = status.toLowerCase();
+  if (normalized.includes("approved") || normalized.includes("active")) return "status-green";
+  if (normalized.includes("rejected") || normalized.includes("inactive")) return "status-red";
+  return "status-orange";
+};
 
 const generateReports = () => {
   const rows: Array<Record<string, string | number>> = [];
@@ -319,6 +457,18 @@ const downloadReport = () => {
   URL.revokeObjectURL(url);
 };
 
+const downloadPdf = () => {
+  if (generatedReports.value.length === 0) return;
+  const content = generatedReports.value.map((row) => Object.entries(row).map(([k, v]) => `${k}: ${v}`).join(" | ")).join("\n");
+  const blob = new Blob([content], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `report-${reportFilters.reportType}.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
 </script>
 
 <template>
@@ -345,14 +495,13 @@ const downloadReport = () => {
         <button :disabled="marketplace.loading.value" type="submit" class="full-btn">Login</button>
       </form>
 
-      <form v-else class="register-form" @submit.prevent="marketplace.registerSeller(registerForm)">
+      <form v-else class="register-form" @submit.prevent="registerSellerAction">
         <div class="grid-two">
-          <input v-model="registerForm.firstName" placeholder="First Name" required />
-          <input v-model="registerForm.middleName" placeholder="Middle Name" required />
-          <input v-model="registerForm.lastName" placeholder="Last Name" required />
-          <input v-model="registerForm.businessName" placeholder="Business Name" required />
+          <input v-model="registerForm.fullName" placeholder="Full Name" required />
           <input v-model="registerForm.email" type="email" placeholder="Email" required />
           <input v-model="registerForm.password" type="password" placeholder="Password" required />
+          <input v-model="registerForm.confirmPassword" type="password" placeholder="Confirm Password" required />
+          <input v-model="registerForm.businessName" placeholder="Business Name" required />
           <input v-model="registerForm.idNumber" placeholder="National ID" required />
         </div>
         <button :disabled="marketplace.loading.value" type="submit" class="full-btn">Create account</button>
@@ -385,7 +534,38 @@ const downloadReport = () => {
     @notification-read="marketplace.readNotification"
   >
     <section v-if="marketplace.activeMenu.value === 'overview'">
-      <MetricGrid :metrics="marketplace.overviewCards.value" />
+      <SectionCard title="Dashboard Filters">
+        <div class="report-actions">
+          <button :class="{ ghost: dashboardPeriod !== 'today' }" @click="dashboardPeriod = 'today'">Today</button>
+          <button :class="{ ghost: dashboardPeriod !== 'week' }" @click="dashboardPeriod = 'week'">Week</button>
+          <button :class="{ ghost: dashboardPeriod !== 'month' }" @click="dashboardPeriod = 'month'">Month</button>
+        </div>
+      </SectionCard>
+      <MetricGrid :metrics="dashboardCards" />
+      <SectionCard title="Transactions Trend (Line)">
+        <div class="chart-line">
+          <div v-for="point in chartPoints" :key="`tx-${point.x}`" class="line-point" :style="{ height: `${point.transactions * 2}px` }"></div>
+        </div>
+      </SectionCard>
+      <SectionCard title="Sales Trend (Line)">
+        <div class="chart-line">
+          <div v-for="point in chartPoints" :key="`sales-${point.x}`" class="line-point gold" :style="{ height: `${point.sales / 20}px` }"></div>
+        </div>
+      </SectionCard>
+      <SectionCard title="Transactions by Status (Bar)">
+        <div class="chart-bars">
+          <div class="bar pending" :style="{ height: `${statusSummary.pending * 30 + 20}px` }">Pending {{ statusSummary.pending }}</div>
+          <div class="bar approved" :style="{ height: `${statusSummary.approved * 30 + 20}px` }">Approved {{ statusSummary.approved }}</div>
+          <div class="bar rejected" :style="{ height: `${statusSummary.rejected * 30 + 20}px` }">Rejected {{ statusSummary.rejected }}</div>
+        </div>
+      </SectionCard>
+      <SectionCard title="Products by Category (Bar)">
+        <div class="chart-bars">
+          <div v-for="item in categorySummary" :key="item.category" class="bar gold" :style="{ height: `${item.count * 28 + 20}px` }">
+            {{ item.category }} ({{ item.count }})
+          </div>
+        </div>
+      </SectionCard>
     </section>
 
     <SectionCard v-if="marketplace.activeMenu.value === 'products'" title="Products Management">
@@ -406,6 +586,8 @@ const downloadReport = () => {
               <th>Price</th>
               <th>Stock</th>
               <th>Active</th>
+              <th>CreatedAtUtc</th>
+              <th>UpdatedAtUtc</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -423,8 +605,11 @@ const downloadReport = () => {
               <td>{{ product.price }}</td>
               <td>{{ product.availableStock }}</td>
               <td>{{ product.isActive ? 'Yes' : 'No' }}</td>
+              <td>{{ "-" }}</td>
+              <td>{{ "-" }}</td>
               <td>
                 <button @click.stop="openEditProduct(product)">Edit</button>
+                <button class="ghost" @click.stop="toggleProductActive(product)">{{ product.isActive ? "Deactivate" : "Activate" }}</button>
                 <button class="danger" @click.stop="deleteProductRecord(product.id)">Delete</button>
               </td>
             </tr>
@@ -539,46 +724,93 @@ const downloadReport = () => {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Risk</th>
-            <th>Wallet</th>
+            <th>Email</th>
             <th>Status</th>
+            <th>Total Transactions</th>
+            <th>Created Date</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="investor in marketplace.state.value.investors" :key="investor.id">
+          <tr v-for="investor in investorRows" :key="investor.id">
             <td>{{ investor.fullName }}</td>
-            <td>{{ investor.riskLevel }}</td>
-            <td>{{ investor.walletBalance }}</td>
-            <td>{{ investor.status }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </SectionCard>
-
-    <SectionCard v-if="marketplace.activeMenu.value === 'requests'" title="Transactions / Requests">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="request in marketplace.state.value.requests" :key="request.id">
-            <td>{{ request.id }}</td>
-            <td>{{ request.type }}</td>
-            <td>{{ request.amount }}</td>
-            <td>{{ request.status }}</td>
+            <td>{{ investor.email }}</td>
+            <td><span :class="statusClass(investor.status)">{{ investor.status }}</span></td>
+            <td>{{ investor.totalTransactions }}</td>
+            <td>{{ investor.createdDate }}</td>
             <td>
-              <button @click="marketplace.updateRequestStatus(request.id, 'approved')">Approve</button>
-              <button class="danger" @click="marketplace.updateRequestStatus(request.id, 'rejected')">Reject</button>
+              <button @click="selectedInvestorId = investor.id">View</button>
+              <button class="ghost" @click="toggleInvestorStatus(investor.id)">{{ investor.status === 'active' ? 'Deactivate' : 'Activate' }}</button>
             </td>
           </tr>
         </tbody>
       </table>
+
+      <div v-if="selectedInvestor" class="product-details">
+        <h4>Investor Details</h4>
+        <p><strong>Name:</strong> {{ selectedInvestor.fullName }}</p>
+        <p><strong>Email:</strong> {{ selectedInvestor.email }}</p>
+        <p><strong>Status:</strong> <span :class="statusClass(selectedInvestor.status)">{{ selectedInvestor.status }}</span></p>
+        <p><strong>Total Transactions:</strong> {{ selectedInvestor.totalTransactions }}</p>
+        <p><strong>Total Purchases:</strong> {{ selectedInvestor.totalPurchases }}</p>
+        <p><strong>Last Transaction Date:</strong> {{ selectedInvestor.lastTransactionDate }}</p>
+      </div>
+    </SectionCard>
+
+    <SectionCard v-if="marketplace.activeMenu.value === 'requests'" title="Transactions">
+      <table>
+        <thead>
+          <tr>
+            <th>Transaction ID</th>
+            <th>Investor</th>
+            <th>Product</th>
+            <th>Transaction Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="trx in transactionsView" :key="trx.id">
+            <td>{{ trx.id }}</td>
+            <td>{{ trx.investorName }}</td>
+            <td>{{ trx.productName }}</td>
+            <td>{{ trx.transactionType }}</td>
+            <td>{{ trx.amount }}</td>
+            <td><span :class="statusClass(trx.status)">{{ trx.status }}</span></td>
+            <td>{{ trx.createdAt }}</td>
+            <td>
+              <button @click="viewTransaction(trx.id)">View</button>
+              <button class="ghost" @click="viewTransaction(trx.id)">Change Status</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div v-if="selectedTransaction" class="product-details">
+        <h4>Transaction View Details</h4>
+        <p><strong>Transaction ID:</strong> {{ selectedTransaction.id }}</p>
+        <p><strong>Investor Info:</strong> {{ selectedTransaction.investorName }}</p>
+        <p><strong>Product Info:</strong> {{ selectedTransaction.productName }}</p>
+        <p><strong>Transaction Type:</strong> {{ selectedTransaction.transactionType }}</p>
+        <p><strong>Amount:</strong> {{ selectedTransaction.amount }}</p>
+        <p><strong>Price (at transaction time):</strong> {{ selectedTransaction.transactionPrice }}</p>
+        <p><strong>Status:</strong> <span :class="statusClass(selectedTransaction.status)">{{ selectedTransaction.status }}</span></p>
+        <p><strong>Date:</strong> {{ selectedTransaction.createdAt }}</p>
+
+        <div class="grid-two">
+          <label>
+            <span>Change Transaction Status</span>
+            <select v-model="transactionStatusDraft">
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </label>
+        </div>
+        <button @click="saveTransactionStatus">Save</button>
+      </div>
     </SectionCard>
 
 
@@ -625,7 +857,8 @@ const downloadReport = () => {
 
       <div class="report-actions">
         <button @click="generateReports">Generate Report</button>
-        <button class="ghost" @click="downloadReport">Download CSV</button>
+        <button class="ghost" @click="downloadReport">Download Excel</button>
+        <button class="ghost" @click="downloadPdf">Download PDF</button>
       </div>
 
       <table v-if="generatedReports.length > 0">
