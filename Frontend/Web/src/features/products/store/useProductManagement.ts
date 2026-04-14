@@ -13,10 +13,12 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const productPage = ref<"list" | "add" | "edit" | "details">("list");
   const productRouteId = ref<number | null>(null);
   const productForm = reactive<ProductFormPayload>({ name: "", sku: "", description: "", category: 0, weightValue: 0, weightUnit: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
+  const validationErrors = reactive<Record<string, string>>({});
 
   const resetProductForm = () => {
     Object.assign(productForm, { id: undefined, name: "", sku: "", description: "", category: categories.value[0]?.value ?? 0, weightValue: 0, weightUnit: weightUnits.value[0]?.value ?? 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
     productError.value = "";
+    Object.keys(validationErrors).forEach((k) => delete validationErrors[k]);
   };
 
   const fillProductForm = (product: ProductManagementDto) => {
@@ -38,8 +40,23 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const openProductDetails = (p: ProductManagementDto) => { selectedProduct.value = p; navigate(`#/products/${p.id}`); };
   const onProductImageChange = (event: Event) => { const input = event.target as HTMLInputElement; productForm.imageFile = input.files?.[0] ?? null; };
 
+  
+  const validateProductForm = () => {
+    Object.keys(validationErrors).forEach((k) => delete validationErrors[k]);
+    if (!productForm.name.trim()) validationErrors.name = "Name is required";
+    if (!productForm.sku.trim()) validationErrors.sku = "SKU is required";
+    if (!productForm.description.trim()) validationErrors.description = "Description is required";
+    if (!productForm.category) validationErrors.category = "Category is required";
+    if (!productForm.weightValue || productForm.weightValue <= 0) validationErrors.weightValue = "Weight value must be greater than 0";
+    if (!productForm.weightUnit) validationErrors.weightUnit = "Weight unit is required";
+    if (!productForm.price || productForm.price <= 0) validationErrors.price = "Price must be greater than 0";
+    if (productForm.availableStock == null || productForm.availableStock < 0) validationErrors.availableStock = "Stock cannot be negative";
+    return Object.keys(validationErrors).length === 0;
+  };
+
   const saveProduct = async () => {
     if (!marketplace.session.value?.accessToken) return;
+    if (!validateProductForm()) return;
     if (productPage.value === "edit" && productForm.id) await updateManagedProduct(marketplace.session.value.accessToken, productForm.id, productForm);
     else await createManagedProduct(marketplace.session.value.accessToken, productForm);
     await loadProductManagementData();
@@ -60,5 +77,5 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
 
   watch(() => marketplace.session.value?.accessToken, () => void loadProductManagementData(), { immediate: true });
 
-  return { managedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, deleteProductRecord, toggleProductActive };
+  return { managedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, deleteProductRecord, toggleProductActive };
 }

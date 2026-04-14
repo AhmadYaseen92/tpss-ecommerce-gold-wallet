@@ -31,6 +31,7 @@ const {
   productPage,
   productRouteId,
   productForm,
+  validationErrors,
   syncRoute,
   navigate,
   openAddProduct,
@@ -165,6 +166,7 @@ const welcomeText = computed(() => {
         :product-form="productForm"
         :categories="categories"
         :weight-units="weightUnits"
+        :validation-errors="validationErrors"
         @add="openAddProduct"
         @details="openProductDetails"
         @edit="openEditProduct"

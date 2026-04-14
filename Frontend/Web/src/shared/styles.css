@@ -681,3 +681,29 @@ select {
 .status-green { color: #16a34a; font-weight: 700; }
 .status-red { color: #dc2626; font-weight: 700; }
 .status-orange { color: #f59e0b; font-weight: 700; }
+
+
+.base-field {
+  display: grid;
+  gap: 6px;
+}
+
+.field-label {
+  font-weight: 600;
+}
+
+.field-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px #ef4444 inset;
+}
