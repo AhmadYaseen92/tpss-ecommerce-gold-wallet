@@ -2,8 +2,12 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import type { NavigationKey } from "./shared/types/models";
 import AppShell from "./shared/layouts/AppShell.vue";
-import MetricGrid from "./shared/components/MetricGrid.vue";
 import SectionCard from "./shared/components/SectionCard.vue";
+import DashboardOverviewPage from "./features/dashboard/pages/DashboardOverviewPage.vue";
+import ProductManagementPage from "./features/products/pages/ProductManagementPage.vue";
+import InvestorsPage from "./features/investors/pages/InvestorsPage.vue";
+import TransactionsPage from "./features/transactions/pages/TransactionsPage.vue";
+import ReportsPage from "./features/reports/pages/ReportsPage.vue";
 import { useMarketplace } from "./features/dashboard/store/useMarketplace";
 import {
   createManagedProduct,
@@ -534,283 +538,58 @@ const downloadPdf = () => {
     @notification-read="marketplace.readNotification"
   >
     <section v-if="marketplace.activeMenu.value === 'overview'">
-      <SectionCard title="Dashboard Filters">
-        <div class="report-actions">
-          <button :class="{ ghost: dashboardPeriod !== 'today' }" @click="dashboardPeriod = 'today'">Today</button>
-          <button :class="{ ghost: dashboardPeriod !== 'week' }" @click="dashboardPeriod = 'week'">Week</button>
-          <button :class="{ ghost: dashboardPeriod !== 'month' }" @click="dashboardPeriod = 'month'">Month</button>
-        </div>
-      </SectionCard>
-      <MetricGrid :metrics="dashboardCards" />
-      <SectionCard title="Transactions Trend (Line)">
-        <div class="chart-line">
-          <div v-for="point in chartPoints" :key="`tx-${point.x}`" class="line-point" :style="{ height: `${point.transactions * 2}px` }"></div>
-        </div>
-      </SectionCard>
-      <SectionCard title="Sales Trend (Line)">
-        <div class="chart-line">
-          <div v-for="point in chartPoints" :key="`sales-${point.x}`" class="line-point gold" :style="{ height: `${point.sales / 20}px` }"></div>
-        </div>
-      </SectionCard>
-      <SectionCard title="Transactions by Status (Bar)">
-        <div class="chart-bars">
-          <div class="bar pending" :style="{ height: `${statusSummary.pending * 30 + 20}px` }">Pending {{ statusSummary.pending }}</div>
-          <div class="bar approved" :style="{ height: `${statusSummary.approved * 30 + 20}px` }">Approved {{ statusSummary.approved }}</div>
-          <div class="bar rejected" :style="{ height: `${statusSummary.rejected * 30 + 20}px` }">Rejected {{ statusSummary.rejected }}</div>
-        </div>
-      </SectionCard>
-      <SectionCard title="Products by Category (Bar)">
-        <div class="chart-bars">
-          <div v-for="item in categorySummary" :key="item.category" class="bar gold" :style="{ height: `${item.count * 28 + 20}px` }">
-            {{ item.category }} ({{ item.count }})
-          </div>
-        </div>
-      </SectionCard>
+      <DashboardOverviewPage
+        :dashboard-period="dashboardPeriod"
+        :dashboard-cards="dashboardCards"
+        :chart-points="chartPoints"
+        :status-summary="statusSummary"
+        :category-summary="categorySummary"
+        @change-period="(period) => (dashboardPeriod = period)"
+      />
     </section>
 
     <SectionCard v-if="marketplace.activeMenu.value === 'products'" title="Products Management">
-      <template #actions>
-        <button v-if="marketplace.role.value === 'seller'" @click="openAddProduct">Add Product</button>
-      </template>
-
-      <p v-if="productError" class="error-text">{{ productError }}</p>
-
-      <div v-if="productPage === 'list'">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>SKU</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Stock</th>
-              <th>Active</th>
-              <th>CreatedAtUtc</th>
-              <th>UpdatedAtUtc</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="product in managedProducts"
-              :key="product.id"
-              class="clickable-row"
-              @click="openProductDetails(product)"
-            >
-              <td>{{ product.id }}</td>
-              <td>{{ product.name }}</td>
-              <td>{{ product.sku }}</td>
-              <td>{{ product.category }}</td>
-              <td>{{ product.price }}</td>
-              <td>{{ product.availableStock }}</td>
-              <td>{{ product.isActive ? 'Yes' : 'No' }}</td>
-              <td>{{ "-" }}</td>
-              <td>{{ "-" }}</td>
-              <td>
-                <button @click.stop="openEditProduct(product)">Edit</button>
-                <button class="ghost" @click.stop="toggleProductActive(product)">{{ product.isActive ? "Deactivate" : "Activate" }}</button>
-                <button class="danger" @click.stop="deleteProductRecord(product.id)">Delete</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div v-else-if="productPage === 'details'" class="product-details">
-        <h4>Product Details #{{ selectedProduct?.id ?? productRouteId }}</h4>
-        <p v-if="!selectedProduct">Unable to load this product. Please return to list.</p>
-        <template v-else>
-          <p><strong>Name:</strong> {{ selectedProduct.name }}</p>
-          <p><strong>SKU:</strong> {{ selectedProduct.sku }}</p>
-          <p><strong>Description:</strong> {{ selectedProduct.description }}</p>
-          <p><strong>Category:</strong> {{ selectedProduct.category }}</p>
-          <p><strong>Weight:</strong> {{ selectedProduct.weightValue }} {{ selectedProduct.weightUnit }}</p>
-          <p><strong>Price:</strong> {{ selectedProduct.price }}</p>
-          <p><strong>Available Stock:</strong> {{ selectedProduct.availableStock }}</p>
-          <p><strong>Status:</strong> {{ selectedProduct.isActive ? 'Active' : 'Inactive' }}</p>
-          <p><strong>Image:</strong> <a :href="selectedProduct.imageUrl" target="_blank">Open image</a></p>
-        </template>
-        <div class="report-actions">
-          <button class="ghost" @click="goToProductRoute('#/products')">Back to list</button>
-          <button v-if="selectedProduct" @click="openEditProduct(selectedProduct)">Edit Product</button>
-        </div>
-      </div>
-
-      <div v-else class="modal-form product-form vertical-form product-form-contrast">
-        <h3>{{ productPage === 'edit' ? 'Edit Product' : 'Add Product' }}</h3>
-        <p class="hint-text">Important fields first. Every row has 2 fields.</p>
-
-        <div class="grid-two form-grid-two">
-          <label>
-            <span>Product Name *</span>
-            <input v-model="productForm.name" placeholder="e.g. 24K Gold Bar - 10g" required />
-            <small>Customer-facing name for listings and reports.</small>
-          </label>
-
-          <label>
-            <span>SKU (Unique) *</span>
-            <input v-model="productForm.sku" placeholder="e.g. GB-10G-24K" required />
-            <small>Internal stock keeping unit; cannot be duplicated.</small>
-          </label>
-
-          <label>
-            <span>Product Image</span>
-            <input type="file" accept="image/*" @change="onProductImageChange" />
-            <small>Upload JPG/PNG image for display in product details.</small>
-          </label>
-
-          <label>
-            <span>Price *</span>
-            <input v-model.number="productForm.price" type="number" min="0.01" step="0.01" placeholder="e.g. 250.00" required />
-            <small>Selling price in system currency.</small>
-          </label>
-
-          <label>
-            <span>Category *</span>
-            <select v-model.number="productForm.category">
-              <option disabled :value="0">{{ categories.length ? 'Select category' : 'Loading categories...' }}</option>
-              <option v-for="item in categories" :key="item.value" :value="item.value">{{ item.name }}</option>
-            </select>
-            <small>Dropdown values are loaded from backend (with fallback values if unavailable).</small>
-          </label>
-
-          <label>
-            <span>Available Stock *</span>
-            <input v-model.number="productForm.availableStock" type="number" min="0" step="1" placeholder="e.g. 50" required />
-            <small>Current quantity ready for sale.</small>
-          </label>
-
-          <label>
-            <span>Weight Value *</span>
-            <input v-model.number="productForm.weightValue" type="number" min="0.01" step="0.01" placeholder="e.g. 10" required />
-            <small>Numeric weight amount before unit.</small>
-          </label>
-
-          <label>
-            <span>Weight Unit *</span>
-            <select v-model.number="productForm.weightUnit">
-              <option disabled :value="0">{{ weightUnits.length ? 'Select unit' : 'Loading units...' }}</option>
-              <option v-for="item in weightUnits" :key="item.value" :value="item.value">{{ item.name }}</option>
-            </select>
-            <small>Unit dropdown values come from backend (or fallback values).</small>
-          </label>
-
-          <label class="field-full">
-            <span>Description *</span>
-            <input v-model="productForm.description" placeholder="Short details about purity, origin, and packaging" required />
-            <small>Describe the product details that buyers need.</small>
-          </label>
-
-          <div class="form-toggle-row field-full">
-            <span class="status-label">Product Status</span>
-            <label class="normal-toggle" aria-label="Product status toggle">
-              <span class="toggle-state">{{ productForm.isActive ? 'ON' : 'OFF' }}</span>
-              <input v-model="productForm.isActive" type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-
-        <div class="report-actions">
-          <button @click="saveProduct">Save</button>
-          <button class="ghost" @click="goToProductRoute('#/products')">Cancel</button>
-        </div>
-      </div>
+      <ProductManagementPage
+        :role="marketplace.role.value"
+        :product-error="productError"
+        :product-page="productPage"
+        :product-route-id="productRouteId"
+        :managed-products="managedProducts"
+        :selected-product="selectedProduct"
+        :product-form="productForm"
+        :categories="categories"
+        :weight-units="weightUnits"
+        @add="openAddProduct"
+        @details="openProductDetails"
+        @edit="openEditProduct"
+        @toggle="toggleProductActive"
+        @delete="deleteProductRecord"
+        @back="goToProductRoute('#/products')"
+        @save="saveProduct"
+        @image="onProductImageChange"
+      />
     </SectionCard>
 
     <SectionCard v-if="marketplace.activeMenu.value === 'investors'" title="Investors">
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Status</th>
-            <th>Total Transactions</th>
-            <th>Created Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="investor in investorRows" :key="investor.id">
-            <td>{{ investor.fullName }}</td>
-            <td>{{ investor.email }}</td>
-            <td><span :class="statusClass(investor.status)">{{ investor.status }}</span></td>
-            <td>{{ investor.totalTransactions }}</td>
-            <td>{{ investor.createdDate }}</td>
-            <td>
-              <button @click="selectedInvestorId = investor.id">View</button>
-              <button class="ghost" @click="toggleInvestorStatus(investor.id)">{{ investor.status === 'active' ? 'Deactivate' : 'Activate' }}</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div v-if="selectedInvestor" class="product-details">
-        <h4>Investor Details</h4>
-        <p><strong>Name:</strong> {{ selectedInvestor.fullName }}</p>
-        <p><strong>Email:</strong> {{ selectedInvestor.email }}</p>
-        <p><strong>Status:</strong> <span :class="statusClass(selectedInvestor.status)">{{ selectedInvestor.status }}</span></p>
-        <p><strong>Total Transactions:</strong> {{ selectedInvestor.totalTransactions }}</p>
-        <p><strong>Total Purchases:</strong> {{ selectedInvestor.totalPurchases }}</p>
-        <p><strong>Last Transaction Date:</strong> {{ selectedInvestor.lastTransactionDate }}</p>
-      </div>
+      <InvestorsPage
+        :investors="investorRows"
+        :selected="selectedInvestor"
+        :status-class="statusClass"
+        @view="(id) => (selectedInvestorId = id)"
+        @toggle="toggleInvestorStatus"
+      />
     </SectionCard>
 
     <SectionCard v-if="marketplace.activeMenu.value === 'requests'" title="Transactions">
-      <table>
-        <thead>
-          <tr>
-            <th>Transaction ID</th>
-            <th>Investor</th>
-            <th>Product</th>
-            <th>Transaction Type</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="trx in transactionsView" :key="trx.id">
-            <td>{{ trx.id }}</td>
-            <td>{{ trx.investorName }}</td>
-            <td>{{ trx.productName }}</td>
-            <td>{{ trx.transactionType }}</td>
-            <td>{{ trx.amount }}</td>
-            <td><span :class="statusClass(trx.status)">{{ trx.status }}</span></td>
-            <td>{{ trx.createdAt }}</td>
-            <td>
-              <button @click="viewTransaction(trx.id)">View</button>
-              <button class="ghost" @click="viewTransaction(trx.id)">Change Status</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div v-if="selectedTransaction" class="product-details">
-        <h4>Transaction View Details</h4>
-        <p><strong>Transaction ID:</strong> {{ selectedTransaction.id }}</p>
-        <p><strong>Investor Info:</strong> {{ selectedTransaction.investorName }}</p>
-        <p><strong>Product Info:</strong> {{ selectedTransaction.productName }}</p>
-        <p><strong>Transaction Type:</strong> {{ selectedTransaction.transactionType }}</p>
-        <p><strong>Amount:</strong> {{ selectedTransaction.amount }}</p>
-        <p><strong>Price (at transaction time):</strong> {{ selectedTransaction.transactionPrice }}</p>
-        <p><strong>Status:</strong> <span :class="statusClass(selectedTransaction.status)">{{ selectedTransaction.status }}</span></p>
-        <p><strong>Date:</strong> {{ selectedTransaction.createdAt }}</p>
-
-        <div class="grid-two">
-          <label>
-            <span>Change Transaction Status</span>
-            <select v-model="transactionStatusDraft">
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </label>
-        </div>
-        <button @click="saveTransactionStatus">Save</button>
-      </div>
+      <TransactionsPage
+        :items="transactionsView"
+        :selected="selectedTransaction"
+        :status-draft="transactionStatusDraft"
+        :status-class="statusClass"
+        @view="viewTransaction"
+        @save-status="saveTransactionStatus"
+        @update-status="(value) => (transactionStatusDraft = value)"
+      />
     </SectionCard>
 
 
@@ -824,67 +603,14 @@ const downloadPdf = () => {
 
 
     <SectionCard v-if="marketplace.activeMenu.value === 'reports'" title="Reports Generator">
-      <div class="report-type-grid">
-        <button
-          v-for="card in reportTypeCards"
-          :key="card.key"
-          class="report-type-card"
-          :class="{ active: reportFilters.reportType === card.key }"
-          @click="reportFilters.reportType = card.key"
-        >
-          <strong>{{ card.label }}</strong>
-          <small>{{ card.description }}</small>
-        </button>
-      </div>
-
-      <div class="grid-two report-filters">
-        <input v-model="reportFilters.userId" placeholder="User ID" />
-        <input v-model="reportFilters.userName" placeholder="User Name" />
-        <input v-model="reportFilters.productName" placeholder="Product Name" />
-        <select v-model="reportFilters.dateRange">
-          <option value="today">Today</option>
-          <option value="last3days">Last 3 days</option>
-          <option value="lastWeek">Last week</option>
-          <option value="month">Month</option>
-          <option value="custom">Custom</option>
-        </select>
-        <input v-if="reportFilters.dateRange === 'custom'" v-model="reportFilters.customFrom" type="date" />
-        <input v-if="reportFilters.dateRange === 'custom'" v-model="reportFilters.customTo" type="date" />
-        <label class="checkbox-line">
-          <input v-model="reportFilters.stockOnly" type="checkbox" /> In stock only
-        </label>
-      </div>
-
-      <div class="report-actions">
-        <button @click="generateReports">Generate Report</button>
-        <button class="ghost" @click="downloadReport">Download Excel</button>
-        <button class="ghost" @click="downloadPdf">Download PDF</button>
-      </div>
-
-      <table v-if="generatedReports.length > 0">
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>User ID</th>
-            <th>User Name</th>
-            <th>Product</th>
-            <th>Stock</th>
-            <th>Price</th>
-            <th>Date Range</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, index) in generatedReports" :key="index">
-            <td>{{ row.type }}</td>
-            <td>{{ row.userId }}</td>
-            <td>{{ row.userName }}</td>
-            <td>{{ row.productName }}</td>
-            <td>{{ row.stock }}</td>
-            <td>{{ row.unitPrice }}</td>
-            <td>{{ row.dateRange }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <ReportsPage
+        :report-filters="reportFilters"
+        :report-type-cards="reportTypeCards"
+        :rows="generatedReports"
+        @generate="generateReports"
+        @excel="downloadReport"
+        @pdf="downloadPdf"
+      />
     </SectionCard>
 
 
