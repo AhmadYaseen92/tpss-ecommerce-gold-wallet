@@ -6,14 +6,15 @@ import { statusClass } from "../../../shared/services/statusStyles";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
-const tx = useTransactions(props.marketplace);
+const { transactionStatusDraft, transactionsView, selectedTransaction, viewTransaction, saveTransactionStatus } = useTransactions(props.marketplace);
+
 const updateStatusDraft = (value: "pending" | "approved" | "rejected") => {
-  tx.transactionStatusDraft.value = value;
+  transactionStatusDraft.value = value;
 };
 </script>
 
 <template>
   <SectionCard title="Transactions">
-    <TransactionsPage :items="tx.transactionsView" :selected="tx.selectedTransaction" :status-draft="tx.transactionStatusDraft" :status-class="statusClass" @view="tx.viewTransaction" @save-status="tx.saveTransactionStatus" @update-status="updateStatusDraft" />
+    <TransactionsPage :items="transactionsView" :selected="selectedTransaction" :status-draft="transactionStatusDraft" :status-class="statusClass" @view="viewTransaction" @save-status="saveTransactionStatus" @update-status="updateStatusDraft" />
   </SectionCard>
 </template>

@@ -5,11 +5,11 @@ import ReportsPage from "./ReportsPage.vue";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
-const rp = useReports(props.marketplace);
+const { reportFilters, reportTypeCards, generatedReports, generateReports, downloadReport, downloadPdf } = useReports(props.marketplace);
 </script>
 
 <template>
   <SectionCard title="Reports Generator">
-    <ReportsPage :report-filters="rp.reportFilters" :report-type-cards="rp.reportTypeCards" :rows="rp.generatedReports" @generate="rp.generateReports" @excel="rp.downloadReport" @pdf="rp.downloadPdf" />
+    <ReportsPage :report-filters="reportFilters" :report-type-cards="reportTypeCards" :rows="generatedReports" @generate="generateReports" @excel="downloadReport" @pdf="downloadPdf" />
   </SectionCard>
 </template>

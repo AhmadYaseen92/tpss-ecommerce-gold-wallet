@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import type { TransactionRowView } from "../types/transactionTypes";
 
-defineProps<{
-  items: TransactionRowView[];
-  selected: TransactionRowView | null;
-  statusDraft: "pending" | "approved" | "rejected";
-  statusClass: (status: string) => string;
-}>();
+withDefaults(
+  defineProps<{
+    items?: TransactionRowView[];
+    selected?: TransactionRowView | null;
+    statusDraft?: "pending" | "approved" | "rejected";
+    statusClass: (status?: string | null) => string;
+  }>(),
+  {
+    items: () => [],
+    selected: null,
+    statusDraft: "pending",
+  }
+);
 
 const emit = defineEmits<{ view: [id: string]; saveStatus: []; updateStatus: [status: "pending" | "approved" | "rejected"] }>();
 </script>
