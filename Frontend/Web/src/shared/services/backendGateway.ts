@@ -32,8 +32,7 @@ const fallbackCategories: EnumItemDto[] = [
   { value: 2, name: "Silver" },
   { value: 3, name: "Diamond" },
   { value: 4, name: "Jewelry" },
-  { value: 5, name: "Coins" },
-  { value: 6, name: "SpotMr" }
+  { value: 5, name: "Coins" }
 ];
 
 const fallbackWeightUnits: EnumItemDto[] = [
@@ -311,7 +310,8 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
 
 export async function fetchProductCategories(accessToken: string): Promise<EnumItemDto[]> {
   try {
-    return await getJson<EnumItemDto[]>("/api/products/categories", accessToken);
+    const categories = await getJson<EnumItemDto[]>("/api/products/categories", accessToken);
+    return categories.filter((item) => item.name.toLowerCase() !== "spotmr" && item.value !== 6);
   } catch {
     return fallbackCategories;
   }

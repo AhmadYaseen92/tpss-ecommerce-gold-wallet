@@ -16,10 +16,10 @@ const CATEGORY_NAME_BY_ID: Record<string, string> = {
   "3": "Diamond",
   "4": "Jewelry",
   "5": "Coins",
-  "6": "SpotMr"
 };
 
 const normalizeCategoryLabel = (rawCategory: string) => CATEGORY_NAME_BY_ID[rawCategory] ?? rawCategory;
+const isVisibleCategory = (category: string) => category.trim().toLowerCase() !== "spotmr";
 
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
@@ -70,6 +70,7 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
     const map = new Map<string, number>();
     marketplace.state.value.products.forEach((p) => {
       const categoryName = normalizeCategoryLabel(String(p.category));
+      if (!isVisibleCategory(categoryName)) return;
       map.set(categoryName, (map.get(categoryName) ?? 0) + 1);
     });
     return Array.from(map.entries()).map(([category, count]) => ({ category, count }));
@@ -77,18 +78,22 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
 
   const categoryTransactionSeries = computed(() => {
     if (serverDashboard.value?.categoryTransactionSeries?.length) {
-      return serverDashboard.value.categoryTransactionSeries;
+      return serverDashboard.value.categoryTransactionSeries.filter((item) => isVisibleCategory(item.label));
     }
 
-    return categorySummary.value.map((item) => ({ label: item.category, value: item.count }));
+    return categorySummary.value
+      .filter((item) => isVisibleCategory(item.category))
+      .map((item) => ({ label: item.category, value: item.count }));
   });
 
   const categoryCartSeries = computed(() => {
     if (serverDashboard.value?.categoryCartSeries?.length) {
-      return serverDashboard.value.categoryCartSeries;
+      return serverDashboard.value.categoryCartSeries.filter((item) => isVisibleCategory(item.label));
     }
 
-    return categorySummary.value.map((item) => ({ label: item.category, value: Math.max(0, item.count * 2) }));
+    return categorySummary.value
+      .filter((item) => isVisibleCategory(item.category))
+      .map((item) => ({ label: item.category, value: Math.max(0, item.count * 2) }));
   });
 
   const statusRing = computed(() => {

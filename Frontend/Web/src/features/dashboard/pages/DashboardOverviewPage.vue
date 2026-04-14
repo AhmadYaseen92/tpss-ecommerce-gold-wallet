@@ -56,7 +56,7 @@ const barHeight = (value: number, maxValue: number) => {
         </div>
       </SectionCard>
 
-      <SectionCard title="Product Categories Analytics (X,Y)">
+      <SectionCard title="Product Categories Analytics">
         <div class="bar-chart">
           <div
             v-for="item in categoryTransactionSeries"
@@ -68,10 +68,9 @@ const barHeight = (value: number, maxValue: number) => {
             <span class="bar-label">{{ item.label }}</span>
           </div>
         </div>
-        <p class="chart-caption">X: Category name, Y: No. wallet assets records.</p>
       </SectionCard>
 
-      <SectionCard title="Cart Analytics (X,Y)">
+      <SectionCard title="Cart Analytics">
         <div class="bar-chart">
           <div
             v-for="item in categoryCartSeries"
@@ -83,7 +82,6 @@ const barHeight = (value: number, maxValue: number) => {
             <span class="bar-label">{{ item.label }}</span>
           </div>
         </div>
-        <p class="chart-caption">X: Category name, Y: No. cart items.</p>
       </SectionCard>
     </div>
 
@@ -156,9 +154,4 @@ const barHeight = (value: number, maxValue: number) => {
   font-weight: 600;
 }
 
-.chart-caption {
-  margin-top: 0.5rem;
-  color: #64748b;
-  font-size: 0.8rem;
-}
 </style>
