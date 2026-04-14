@@ -89,6 +89,7 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             .ToDictionary(g => g.Key, g => g.First().Category.ToString(), StringComparer.OrdinalIgnoreCase);
 
         var categoryTransactionSeries = requests
+            .Where(request => ParseStatus(request.Reference) == "approved")
             .GroupBy(request =>
             {
                 var sku = ExtractSku(request.Reference);
@@ -97,8 +98,9 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
                     return mappedCategory;
                 }
 
-                return "Unknown";
+                return string.Empty;
             })
+            .Where(group => !string.IsNullOrWhiteSpace(group.Key))
             .Select(group => new WebDashboardPointDto
             {
                 Label = group.Key,

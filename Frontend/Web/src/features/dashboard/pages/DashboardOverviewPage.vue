@@ -57,31 +57,33 @@ const barHeight = (value: number, maxValue: number) => {
       </SectionCard>
 
       <SectionCard title="Product Categories Analytics (X,Y)">
-        <div class="analytics-chart">
+        <div class="bar-chart">
           <div
             v-for="item in categoryTransactionSeries"
             :key="item.label"
-            class="analytics-bar-group"
+            class="bar-column"
           >
-            <div class="analytics-bar" :style="{ height: barHeight(item.value, Math.max(...categoryTransactionSeries.map((x) => x.value), 1)) }"></div>
-            <span class="analytics-label">{{ item.label }}</span>
-            <small class="analytics-value">{{ item.value }}</small>
+            <small class="bar-value">{{ item.value }}</small>
+            <div class="bar-stick" :style="{ height: barHeight(item.value, Math.max(...categoryTransactionSeries.map((x) => x.value), 1)) }"></div>
+            <span class="bar-label">{{ item.label }}</span>
           </div>
         </div>
+        <p class="chart-caption">X: Category name, Y: No. approved transactions.</p>
       </SectionCard>
 
       <SectionCard title="Cart Analytics (X,Y)">
-        <div class="analytics-chart">
+        <div class="bar-chart">
           <div
             v-for="item in categoryCartSeries"
             :key="item.label"
-            class="analytics-bar-group"
+            class="bar-column"
           >
-            <div class="analytics-bar cart" :style="{ height: barHeight(item.value, Math.max(...categoryCartSeries.map((x) => x.value), 1)) }"></div>
-            <span class="analytics-label">{{ item.label }}</span>
-            <small class="analytics-value">{{ item.value }}</small>
+            <small class="bar-value">{{ item.value }}</small>
+            <div class="bar-stick cart" :style="{ height: barHeight(item.value, Math.max(...categoryCartSeries.map((x) => x.value), 1)) }"></div>
+            <span class="bar-label">{{ item.label }}</span>
           </div>
         </div>
+        <p class="chart-caption">X: Category name, Y: No. cart items.</p>
       </SectionCard>
     </div>
 
@@ -115,40 +117,48 @@ const barHeight = (value: number, maxValue: number) => {
 </template>
 
 <style scoped>
-.analytics-chart {
+.bar-chart {
   display: flex;
   align-items: flex-end;
-  gap: 0.75rem;
-  min-height: 190px;
+  gap: 0.9rem;
+  min-height: 200px;
+  padding: 0.75rem 0.5rem;
   overflow-x: auto;
-  padding: 0.5rem 0;
 }
 
-.analytics-bar-group {
+.bar-column {
   min-width: 90px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
-.analytics-bar {
-  width: 34px;
+.bar-stick {
+  width: 20px;
   border-radius: 8px 8px 2px 2px;
-  background: linear-gradient(180deg, #5b6cff 0%, #3f4ed7 100%);
+  background: linear-gradient(180deg, #5eead4 0%, #14b8a6 100%);
 }
 
-.analytics-bar.cart {
-  background: linear-gradient(180deg, #14b8a6 0%, #0f766e 100%);
+.bar-stick.cart {
+  background: linear-gradient(180deg, #7dd3fc 0%, #22d3ee 100%);
 }
 
-.analytics-label {
+.bar-label {
   font-size: 0.75rem;
   text-align: center;
   line-height: 1.1;
+  max-width: 88px;
 }
 
-.analytics-value {
-  color: #6b7280;
+.bar-value {
+  color: #475569;
+  font-weight: 600;
+}
+
+.chart-caption {
+  margin-top: 0.5rem;
+  color: #64748b;
+  font-size: 0.8rem;
 }
 </style>
