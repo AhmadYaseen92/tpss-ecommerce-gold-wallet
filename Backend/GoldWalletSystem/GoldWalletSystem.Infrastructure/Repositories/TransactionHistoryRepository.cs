@@ -36,6 +36,16 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
             var type = request.TransactionType.Trim();
             query = query.Where(x => x.TransactionType == type);
         }
+        if (!string.IsNullOrWhiteSpace(request.Status))
+        {
+            var status = request.Status.Trim();
+            query = query.Where(x => x.Status == status);
+        }
+        if (!string.IsNullOrWhiteSpace(request.Category))
+        {
+            var category = request.Category.Trim();
+            query = query.Where(x => x.Category == category);
+        }
 
         if (request.DateFromUtc is DateTime dateFromUtc)
             query = query.Where(x => x.CreatedAtUtc >= dateFromUtc);
@@ -49,7 +59,27 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
         var items = await query
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(x => new TransactionHistoryDto(x.Id, x.UserId, x.SellerId, x.TransactionType, x.Amount, x.Currency, x.Reference, x.CreatedAtUtc))
+            .Join(
+                dbContext.Users.AsNoTracking(),
+                history => history.UserId,
+                user => user.Id,
+                (history, user) => new TransactionHistoryDto(
+                    history.Id,
+                    history.UserId,
+                    user.FullName,
+                    history.SellerId,
+                    history.TransactionType,
+                    history.Status,
+                    history.Category,
+                    history.Quantity,
+                    history.UnitPrice,
+                    history.Weight,
+                    history.Unit,
+                    history.Purity,
+                    history.Amount,
+                    history.Currency,
+                    history.Notes,
+                    history.CreatedAtUtc))
             .ToListAsync(cancellationToken);
 
         return new PagedResult<TransactionHistoryDto>(items, totalCount, request.PageNumber, request.PageSize);

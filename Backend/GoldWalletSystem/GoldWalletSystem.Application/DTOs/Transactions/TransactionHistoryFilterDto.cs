@@ -7,6 +7,8 @@ public class TransactionHistoryFilterRequestDto
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 20;
     public string? TransactionType { get; set; }
+    public string? Status { get; set; }
+    public string? Category { get; set; }
     public DateTime? DateFromUtc { get; set; }
     public DateTime? DateToUtc { get; set; }
 }

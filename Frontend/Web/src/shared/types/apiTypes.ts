@@ -76,9 +76,19 @@ export interface AuditLogDto {
 export interface WebRequestDto {
   id: string;
   investorId: string;
+  investorName: string;
   type: string;
+  category: string;
+  quantity: number;
+  unitPrice: number;
+  weight: number;
+  unit: string;
+  purity: number;
   amount: number;
   status: string;
+  currency: string;
+  notes: string;
+  updatedAt?: string;
   createdAt: string;
 }
 

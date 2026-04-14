@@ -22,7 +22,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
     {
         var investorsCount = await dbContext.Users.CountAsync(x => x.Role == SystemRoles.Investor, cancellationToken);
-        var pendingRequestsCount = await dbContext.TransactionHistories.CountAsync(x => x.Reference.Contains("status=pending"), cancellationToken);
+        var pendingRequestsCount = await dbContext.TransactionHistories.CountAsync(x => x.Status == "pending", cancellationToken);
         var invoicesCount = await dbContext.Invoices.CountAsync(cancellationToken);
         var unreadNotificationsCount = await dbContext.AppNotifications.CountAsync(x => !x.IsRead, cancellationToken);
 
@@ -148,15 +148,29 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         var requests = await query
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(100)
-            .Select(x => new WebRequestDto
-            {
-                Id = $"r-{x.Id}",
-                InvestorId = $"i-{x.UserId}",
-                Type = x.TransactionType,
-                Amount = x.Amount,
-                Status = WebAdminDashboardService.ParseStatus(x.Reference),
-                CreatedAt = x.CreatedAtUtc
-            })
+            .Join(
+                dbContext.Users.AsNoTracking(),
+                history => history.UserId,
+                user => user.Id,
+                (history, user) => new WebRequestDto
+                {
+                    Id = $"r-{history.Id}",
+                    InvestorId = $"i-{history.UserId}",
+                    InvestorName = user.FullName,
+                    Type = history.TransactionType,
+                    Category = history.Category,
+                    Quantity = history.Quantity,
+                    UnitPrice = history.UnitPrice,
+                    Weight = history.Weight,
+                    Unit = history.Unit,
+                    Purity = history.Purity,
+                    Amount = history.Amount,
+                    Status = history.Status,
+                    Currency = history.Currency,
+                    Notes = history.Notes,
+                    CreatedAt = history.CreatedAtUtc,
+                    UpdatedAt = history.UpdatedAtUtc
+                })
             .ToListAsync(cancellationToken);
 
         return Ok(ApiResponse<List<WebRequestDto>>.Ok(requests));
@@ -171,11 +185,70 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         var item = await dbContext.TransactionHistories.FirstOrDefaultAsync(x => x.Id == requestId, cancellationToken);
         if (item is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
 
-        item.Reference = SetStatus(item.Reference, request.Status);
+        var nextStatus = request.Status.Trim().ToLowerInvariant();
+        if (nextStatus != "pending" && nextStatus != "approved" && nextStatus != "rejected")
+            return BadRequest(ApiResponse<object>.Fail("Invalid status", 400));
+
+        var previousStatus = item.Status;
+        item.Status = nextStatus;
         item.UpdatedAtUtc = DateTime.UtcNow;
+
+        if (previousStatus == "pending" && nextStatus == "approved")
+        {
+            await ApplyApprovedRequestSideEffectsAsync(item, cancellationToken);
+        }
+
+        dbContext.AuditLogs.Add(new Domain.Entities.AuditLog
+        {
+            UserId = item.UserId,
+            Action = "RequestStatusUpdated",
+            EntityName = "TransactionHistory",
+            EntityId = item.Id,
+            Details = $"Request {item.Id}: {previousStatus} -> {nextStatus}, type={item.TransactionType}, amount={item.Amount} {item.Currency}",
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return Ok(ApiResponse<string>.Ok("updated"));
+    }
+
+    [HttpGet("requests/{id}")]
+    public async Task<IActionResult> GetRequestDetails(string id, CancellationToken cancellationToken)
+    {
+        if (!int.TryParse(id.Replace("r-", string.Empty), out var requestId))
+            return NotFound(ApiResponse<object>.Fail("Request not found", 404));
+
+        var details = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => x.Id == requestId)
+            .Join(
+                dbContext.Users.AsNoTracking(),
+                history => history.UserId,
+                user => user.Id,
+                (history, user) => new WebRequestDto
+                {
+                    Id = $"r-{history.Id}",
+                    InvestorId = $"i-{history.UserId}",
+                    InvestorName = user.FullName,
+                    Type = history.TransactionType,
+                    Category = history.Category,
+                    Quantity = history.Quantity,
+                    UnitPrice = history.UnitPrice,
+                    Weight = history.Weight,
+                    Unit = history.Unit,
+                    Purity = history.Purity,
+                    Amount = history.Amount,
+                    Status = history.Status,
+                    Currency = history.Currency,
+                    Notes = history.Notes,
+                    CreatedAt = history.CreatedAtUtc,
+                    UpdatedAt = history.UpdatedAtUtc
+                })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (details is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
+        return Ok(ApiResponse<WebRequestDto>.Ok(details));
     }
 
     [HttpGet("invoices")]
@@ -361,14 +434,64 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         return int.TryParse(clean, out var id) ? id : null;
     }
 
-    private static string SetStatus(string reference, string status)
+    private async Task ApplyApprovedRequestSideEffectsAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
     {
-        var safeStatus = string.IsNullOrWhiteSpace(status) ? "pending" : status.Trim().ToLowerInvariant();
-        var tokens = (reference ?? string.Empty)
-            .Split('|', StringSplitOptions.RemoveEmptyEntries)
-            .Where(x => !x.StartsWith("status=", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        tokens.Add($"status={safeStatus}");
-        return string.Join('|', tokens);
+        var wallet = await dbContext.Wallets
+            .Include(x => x.Assets)
+            .FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+
+        if (wallet is null)
+        {
+            wallet = new Domain.Entities.Wallet
+            {
+                UserId = request.UserId,
+                CurrencyCode = request.Currency,
+                CashBalance = 0,
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            dbContext.Wallets.Add(wallet);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var action = request.TransactionType.Trim().ToLowerInvariant();
+        if (action == "buy")
+        {
+            wallet.Assets.Add(new Domain.Entities.WalletAsset
+            {
+                WalletId = wallet.Id,
+                SellerId = request.SellerId,
+                SellerName = await dbContext.Sellers.Where(s => s.Id == request.SellerId).Select(s => s.Name).FirstOrDefaultAsync(cancellationToken) ?? string.Empty,
+                Category = Enum.TryParse<ProductCategory>(request.Category, true, out var cat) ? cat : ProductCategory.Gold,
+                AssetType = AssetType.GoldBar,
+                Quantity = Math.Max(1, request.Quantity),
+                AverageBuyPrice = request.UnitPrice,
+                CurrentMarketPrice = request.UnitPrice,
+                Weight = request.Weight,
+                Unit = request.Unit,
+                Purity = request.Purity,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else if (action is "sell" or "pickup" or "transfer" or "gift")
+        {
+            var asset = wallet.Assets.FirstOrDefault(x => x.SellerId == request.SellerId && x.Category.ToString().Equals(request.Category, StringComparison.OrdinalIgnoreCase));
+            if (asset is not null)
+            {
+                var qtyToRemove = Math.Max(1, request.Quantity);
+                asset.Quantity = Math.Max(asset.Quantity - qtyToRemove, 0);
+                asset.Weight = Math.Max(asset.Weight - request.Weight, 0);
+                asset.UpdatedAtUtc = DateTime.UtcNow;
+                if (asset.Quantity == 0 && asset.Weight <= 0)
+                {
+                    dbContext.WalletAssets.Remove(asset);
+                }
+            }
+
+            if (action is "sell" or "pickup")
+            {
+                wallet.CashBalance += request.Amount;
+                wallet.UpdatedAtUtc = DateTime.UtcNow;
+            }
+        }
     }
 }

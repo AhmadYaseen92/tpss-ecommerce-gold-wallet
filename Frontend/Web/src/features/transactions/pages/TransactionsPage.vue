@@ -15,7 +15,12 @@ withDefaults(
   }
 );
 
-const emit = defineEmits<{ view: [id: string]; saveStatus: []; updateStatus: [status: "pending" | "approved" | "rejected"] }>();
+const emit = defineEmits<{
+  view: [id: string];
+  saveStatus: [];
+  updateStatus: [status: "pending" | "approved" | "rejected"];
+  quickStatus: [id: string; status: "pending" | "approved" | "rejected"];
+}>();
 </script>
 
 <template>
@@ -23,8 +28,14 @@ const emit = defineEmits<{ view: [id: string]; saveStatus: []; updateStatus: [st
     <thead><tr><th>Transaction ID</th><th>Investor</th><th>Product</th><th>Type</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
     <tbody>
       <tr v-for="trx in items" :key="trx.id">
-        <td>{{ trx.id }}</td><td>{{ trx.investorName }}</td><td>{{ trx.productName }}</td><td>{{ trx.transactionType }}</td><td>{{ trx.amount }}</td><td><span :class="statusClass(trx.status)">{{ trx.status }}</span></td><td>{{ trx.createdAt }}</td>
-        <td><button @click="emit('view', trx.id)">View</button><button class="ghost" @click="emit('view', trx.id)">Change Status</button></td>
+        <td>{{ trx.id }}</td><td>{{ trx.investorName }}</td><td>{{ trx.productName }}</td><td>{{ trx.transactionType }}</td><td>{{ trx.amount }}</td>
+        <td>
+          <select :value="trx.status" @change="emit('quickStatus', trx.id, ($event.target as HTMLSelectElement).value as 'pending' | 'approved' | 'rejected')">
+            <option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+          </select>
+        </td>
+        <td>{{ trx.createdAt }}</td>
+        <td><button @click="emit('view', trx.id)">View Details</button></td>
       </tr>
     </tbody>
   </table>

@@ -85,58 +85,26 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             if (product.AvailableStock < quantity)
                 throw new InvalidOperationException($"Insufficient stock for {product.Name}. Available {product.AvailableStock}, requested {quantity}.");
 
-            product.AvailableStock -= quantity;
             totalAmount += product.Price * quantity;
 
             var grams = ToGrams(product.WeightValue, product.WeightUnit) * quantity;
-            var assetType = ToAssetType(product.Category);
-            var sellerName = product.Seller?.Name ?? string.Empty;
-            var existingAsset = wallet.Assets.FirstOrDefault(a =>
-                a.AssetType == assetType &&
-                a.Category == product.Category &&
-                a.SellerId == product.SellerId);
-
-            if (existingAsset is null)
-            {
-                wallet.Assets.Add(new WalletAsset
-                {
-                    AssetType = assetType,
-                    Category = product.Category,
-                    SellerId = product.SellerId,
-                    Weight = grams,
-                    Unit = "gram",
-                    Purity = ParsePurity(product.Description),
-                    Quantity = quantity,
-                    AverageBuyPrice = product.Price,
-                    CurrentMarketPrice = product.Price,
-                    SellerName = sellerName,
-                    CreatedAtUtc = DateTime.UtcNow,
-                });
-            }
-            else
-            {
-                var oldQty = Math.Max(existingAsset.Quantity, 0);
-                var newQty = oldQty + quantity;
-                existingAsset.AverageBuyPrice = newQty == 0
-                    ? product.Price
-                    : ((existingAsset.AverageBuyPrice * oldQty) + (product.Price * quantity)) / newQty;
-                existingAsset.Quantity = newQty;
-                existingAsset.Weight += grams;
-                existingAsset.CurrentMarketPrice = product.Price;
-                existingAsset.SellerName = sellerName;
-                existingAsset.Category = product.Category;
-                existingAsset.SellerId = product.SellerId;
-                existingAsset.UpdatedAtUtc = DateTime.UtcNow;
-            }
+            var purity = ParsePurity(product.Description);
 
             dbContext.TransactionHistories.Add(new TransactionHistory
             {
                 UserId = request.UserId,
                 SellerId = product.SellerId,
                 TransactionType = "BUY",
+                Status = "pending",
+                Category = product.Category.ToString(),
+                Quantity = quantity,
+                UnitPrice = product.Price,
+                Weight = grams,
+                Unit = "gram",
+                Purity = purity,
+                Notes = $"Checkout request from {(fromCart ? "cart" : "direct buy")}. SKU={product.Sku}",
                 Amount = product.Price * quantity,
                 Currency = wallet.CurrencyCode,
-                Reference = $"BUY|SKU:{product.Sku}|SELLER:{sellerName}|QTY:{quantity}|TS:{DateTime.UtcNow:yyyyMMddHHmmssfff}",
                 CreatedAtUtc = DateTime.UtcNow,
             });
         }

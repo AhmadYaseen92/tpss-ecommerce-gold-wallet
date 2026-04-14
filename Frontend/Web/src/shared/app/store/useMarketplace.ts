@@ -25,7 +25,13 @@ import type {
   UserRole,
   UserSession
 } from "../../types/models";
-import { fetchMarketplaceState, loginWithBackend, registerSellerWithBackend, updateSellerKycStatusByAdmin } from "../../services/backendGateway";
+import {
+  fetchMarketplaceState,
+  loginWithBackend,
+  registerSellerWithBackend,
+  updateSellerKycStatusByAdmin,
+  updateWebRequestStatus
+} from "../../services/backendGateway";
 import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
 
 export function useMarketplace() {
@@ -139,8 +145,11 @@ export function useMarketplace() {
     state.value.investors = setInvestorStatus(state.value.investors, investorId, status);
   };
 
-  const updateRequestStatus = (requestId: string, status: "approved" | "rejected") => {
+  const updateRequestStatus = async (requestId: string, status: "pending" | "approved" | "rejected") => {
     state.value.requests = setRequestStatus(state.value.requests, requestId, status);
+    if (session.value?.accessToken) {
+      await updateWebRequestStatus(session.value.accessToken, requestId, status);
+    }
   };
 
   const readNotification = (notificationId: string) => {
