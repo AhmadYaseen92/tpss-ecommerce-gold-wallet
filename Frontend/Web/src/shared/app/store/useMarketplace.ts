@@ -25,13 +25,34 @@ import type {
   UserRole,
   UserSession
 } from "../../types/models";
-import { fetchMarketplaceState, loginWithBackend, registerSellerWithBackend, updateSellerKycStatusByAdmin } from "../../services/backendGateway";
+import {
+  fetchMarketplaceState,
+  loginWithBackend,
+  registerSellerWithBackend,
+  updateSellerKycStatusByAdmin,
+  updateWebRequestStatus
+} from "../../services/backendGateway";
 import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
 
+const SESSION_STORAGE_KEY = "goldwallet.web.session";
+
+function readStoredSession(): UserSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as UserSession;
+    return parsed?.accessToken ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export function useMarketplace() {
-  const role = ref<UserRole>("admin");
+  const persistedSession = readStoredSession();
+  const role = ref<UserRole>(persistedSession?.role ?? "admin");
   const activeMenu = ref<NavigationKey>("overview");
-  const session = ref<UserSession | null>(null);
+  const session = ref<UserSession | null>(persistedSession);
   const state = ref<MarketplaceState>(structuredClone(mockMarketplaceState));
   const loading = ref(false);
   const error = ref("");
@@ -63,6 +84,9 @@ export function useMarketplace() {
       session.value = authSession;
       role.value = authSession.role;
       state.value = await fetchMarketplaceState(authSession);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(authSession));
+      }
     } catch (err) {
       if (err instanceof TypeError) {
         error.value = "Cannot reach API server. Check VITE_API_BASE_URL and backend CORS/run status.";
@@ -139,8 +163,12 @@ export function useMarketplace() {
     state.value.investors = setInvestorStatus(state.value.investors, investorId, status);
   };
 
-  const updateRequestStatus = (requestId: string, status: "approved" | "rejected") => {
+  const updateRequestStatus = async (requestId: string, status: "pending" | "approved" | "rejected") => {
     state.value.requests = setRequestStatus(state.value.requests, requestId, status);
+    if (session.value?.accessToken) {
+      await updateWebRequestStatus(session.value.accessToken, requestId, status);
+      state.value = await fetchMarketplaceState(session.value);
+    }
   };
 
   const readNotification = (notificationId: string) => {
@@ -151,6 +179,24 @@ export function useMarketplace() {
     session.value = null;
     role.value = "admin";
     activeMenu.value = "overview";
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(SESSION_STORAGE_KEY);
+    }
+  };
+
+  const refreshMarketplaceState = async () => {
+    if (!session.value?.accessToken) return;
+    try {
+      state.value = await fetchMarketplaceState(session.value);
+    } catch {
+      // Keep current UI state and session on intermittent refresh failures.
+    }
+  };
+
+  const restoreSession = async () => {
+    if (!session.value?.accessToken) return;
+    role.value = session.value.role;
+    await refreshMarketplaceState();
   };
 
   return {
@@ -166,6 +212,7 @@ export function useMarketplace() {
     sellerProducts,
     login,
     logout,
+    restoreSession,
     registerSeller,
     approveKyc,
     rejectKyc,
@@ -178,7 +225,8 @@ export function useMarketplace() {
     updateFees,
     updateInvestorStatus,
     updateRequestStatus,
-    readNotification
+    readNotification,
+    refreshMarketplaceState
   };
 }
 

@@ -24,7 +24,7 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
     [HttpPost("filter")]
     public async Task<IActionResult> Filter([FromBody] TransactionHistoryFilterRequestDto request, CancellationToken cancellationToken = default)
     {
-        var effectiveRequest = BuildScopedFilter(request.UserId, request.PageNumber, request.PageSize, request.TransactionType, request.DateFromUtc, request.DateToUtc);
+        var effectiveRequest = BuildScopedFilter(request.UserId, request.PageNumber, request.PageSize, request.TransactionType, request.Status, request.Category, request.DateFromUtc, request.DateToUtc);
         if (!HasUserAccess(effectiveRequest.UserId)) return ForbidApiResponse();
         var data = await transactionHistoryService.FilterAsync(effectiveRequest, cancellationToken);
         return Ok(ApiResponse<PagedResult<TransactionHistoryDto>>.Ok(data));
@@ -33,16 +33,16 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
     [HttpPost("export-csv")]
     public async Task<IActionResult> ExportCsv([FromBody] TransactionHistoryFilterRequestDto request, CancellationToken cancellationToken = default)
     {
-        var exportRequest = BuildScopedFilter(request.UserId, 1, 5000, request.TransactionType, request.DateFromUtc, request.DateToUtc);
+        var exportRequest = BuildScopedFilter(request.UserId, 1, 5000, request.TransactionType, request.Status, request.Category, request.DateFromUtc, request.DateToUtc);
         if (!HasUserAccess(exportRequest.UserId)) return ForbidApiResponse();
 
         var data = await transactionHistoryService.FilterAsync(exportRequest, cancellationToken);
 
         var csv = new StringBuilder();
-        csv.AppendLine("Id,UserId,TransactionType,Amount,Currency,Reference,CreatedAtUtc");
+        csv.AppendLine("Id,UserId,InvestorName,SellerId,TransactionType,Status,Category,Quantity,UnitPrice,Weight,Unit,Purity,Amount,Currency,Notes,CreatedAtUtc");
         foreach (var item in data.Items)
         {
-            csv.AppendLine($"{item.Id},{item.UserId},\"{item.TransactionType}\",{item.Amount},{item.Currency},\"{item.Reference}\",{item.CreatedAtUtc:O}");
+            csv.AppendLine($"{item.Id},{item.UserId},\"{item.InvestorName}\",{item.SellerId},\"{item.TransactionType}\",\"{item.Status}\",\"{item.Category}\",{item.Quantity},{item.UnitPrice},{item.Weight},\"{item.Unit}\",{item.Purity},{item.Amount},\"{item.Currency}\",\"{item.Notes}\",{item.CreatedAtUtc:O}");
         }
 
         var bytes = Encoding.UTF8.GetBytes(csv.ToString());
@@ -54,6 +54,8 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
         int pageNumber,
         int pageSize,
         string? transactionType = null,
+        string? status = null,
+        string? category = null,
         DateTime? dateFromUtc = null,
         DateTime? dateToUtc = null)
     {
@@ -67,6 +69,8 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
             PageNumber = pageNumber,
             PageSize = pageSize,
             TransactionType = transactionType,
+            Status = status,
+            Category = category,
             DateFromUtc = dateFromUtc,
             DateToUtc = dateToUtc
         };

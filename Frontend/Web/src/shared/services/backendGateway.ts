@@ -91,9 +91,17 @@ const mapRequests = (logs: AuditLogDto[]): InvestorRequest[] =>
   logs.slice(0, 5).map((log, index) => ({
     id: `r-${log.id}`,
     investorId: `i-${log.userId ?? index + 1}`,
+    investorName: `Investor ${index + 1}`,
     type: "withdrawal",
+    category: "Gold",
+    quantity: 1,
+    unitPrice: 150 + index * 35,
+    weight: 1,
+    unit: "gram",
+    purity: 24,
     amount: 150 + index * 35,
     status: "pending",
+    currency: "USD",
     createdAt: log.createdAtUtc
   }));
 
@@ -101,13 +109,23 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
   items.map((item) => ({
     id: item.id,
     investorId: item.investorId,
-    type: ["withdrawal", "pickup", "sell", "transfer"].includes(item.type.toLowerCase())
+    investorName: item.investorName,
+    type: ["withdrawal", "pickup", "sell", "transfer", "buy", "gift"].includes(item.type.toLowerCase())
       ? (item.type.toLowerCase() as InvestorRequest["type"])
       : "withdrawal",
+    category: item.category,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    weight: item.weight,
+    unit: item.unit,
+    purity: item.purity,
     amount: item.amount,
     status: ["pending", "approved", "rejected"].includes(item.status.toLowerCase())
       ? (item.status.toLowerCase() as InvestorRequest["status"])
       : "pending",
+    currency: item.currency,
+    notes: item.notes,
+    updatedAt: item.updatedAt,
     createdAt: item.createdAt
   }));
 
@@ -230,7 +248,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
             id: `s-${item.sellerId}`,
             userId: item.sellerId,
             name: item.sellerName,
-            email: `${item.sellerName.toLowerCase().replaceAll(" ", ".")}@goldwallet.local`,
+            email: `${item.sellerName.toLowerCase().replace(/\s+/g, ".")}@goldwallet.local`,
             businessName: item.sellerName,
             kycStatus: "approved" as const,
             submittedAt: new Date().toISOString().split("T")[0]
@@ -266,6 +284,19 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
 
 export async function fetchWebAdminDashboard(accessToken: string, period: "today" | "week" | "month"): Promise<WebDashboardDto> {
   return getJson<WebDashboardDto>(`/api/web-admin/dashboard?period=${period}`, accessToken);
+}
+
+export async function updateWebRequestStatus(
+  accessToken: string,
+  requestId: string,
+  status: "pending" | "approved" | "rejected"
+): Promise<void> {
+  await putJson<string, { status: string }>(`/api/web-admin/requests/${requestId}/status`, { status }, accessToken);
+}
+
+export async function getWebRequestDetails(accessToken: string, requestId: string): Promise<InvestorRequest> {
+  const item = await getJson<WebRequestDto>(`/api/web-admin/requests/${requestId}`, accessToken);
+  return mapWebRequests([item])[0];
 }
 
 

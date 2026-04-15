@@ -42,9 +42,19 @@ export interface Investor {
 export interface InvestorRequest {
   id: string;
   investorId: string;
-  type: "withdrawal" | "pickup" | "sell" | "transfer";
+  investorName: string;
+  type: "withdrawal" | "pickup" | "sell" | "transfer" | "buy" | "gift";
+  category: string;
+  quantity: number;
+  unitPrice: number;
+  weight: number;
+  unit: string;
+  purity: number;
   amount: number;
   status: "pending" | "approved" | "rejected";
+  currency: string;
+  notes?: string;
+  updatedAt?: string;
   createdAt: string;
 }
 

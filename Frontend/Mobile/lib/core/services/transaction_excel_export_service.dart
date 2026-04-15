@@ -31,26 +31,28 @@ class TransactionExcelExportService {
       ..cell(CellIndex.indexByString('A4')).value = TextCellValue('Status Filter')
       ..cell(CellIndex.indexByString('B4')).value = TextCellValue(selectedStatus)
       ..cell(CellIndex.indexByString('A6')).value = TextCellValue('Transaction ID')
-      ..cell(CellIndex.indexByString('B6')).value = TextCellValue('Title')
+      ..cell(CellIndex.indexByString('B6')).value = TextCellValue('Category')
       ..cell(CellIndex.indexByString('C6')).value = TextCellValue('Type')
       ..cell(CellIndex.indexByString('D6')).value = TextCellValue('Status')
-      ..cell(CellIndex.indexByString('E6')).value = TextCellValue('Date')
-      ..cell(CellIndex.indexByString('F6')).value = TextCellValue('Primary Amount')
-      ..cell(CellIndex.indexByString('G6')).value = TextCellValue('Secondary Amount')
-      ..cell(CellIndex.indexByString('H6')).value = TextCellValue('Seller');
+      ..cell(CellIndex.indexByString('E6')).value = TextCellValue('Quantity')
+      ..cell(CellIndex.indexByString('F6')).value = TextCellValue('Amount')
+      ..cell(CellIndex.indexByString('G6')).value = TextCellValue('Currency')
+      ..cell(CellIndex.indexByString('H6')).value = TextCellValue('Weight/Unit')
+      ..cell(CellIndex.indexByString('I6')).value = TextCellValue('Updated At UTC');
 
     for (var i = 0; i < transactions.length; i++) {
       final row = i + 7;
       final transaction = transactions[i];
       sheet
-        ..cell(CellIndex.indexByString('A$row')).value = TextCellValue(transaction.id)
-        ..cell(CellIndex.indexByString('B$row')).value = TextCellValue(transaction.title)
-        ..cell(CellIndex.indexByString('C$row')).value = TextCellValue(transaction.type)
+        ..cell(CellIndex.indexByString('A$row')).value = TextCellValue('${transaction.id}')
+        ..cell(CellIndex.indexByString('B$row')).value = TextCellValue(transaction.category)
+        ..cell(CellIndex.indexByString('C$row')).value = TextCellValue(transaction.transactionType)
         ..cell(CellIndex.indexByString('D$row')).value = TextCellValue(transaction.status)
-        ..cell(CellIndex.indexByString('E$row')).value = TextCellValue(_dateFormat.format(transaction.date))
-        ..cell(CellIndex.indexByString('F$row')).value = TextCellValue(transaction.amount)
-        ..cell(CellIndex.indexByString('G$row')).value = TextCellValue(transaction.secondaryAmount ?? '-')
-        ..cell(CellIndex.indexByString('H$row')).value = TextCellValue(transaction.sellerName);
+        ..cell(CellIndex.indexByString('E$row')).value = TextCellValue('${transaction.quantity}')
+        ..cell(CellIndex.indexByString('F$row')).value = TextCellValue(transaction.amount.toStringAsFixed(2))
+        ..cell(CellIndex.indexByString('G$row')).value = TextCellValue(transaction.currency)
+        ..cell(CellIndex.indexByString('H$row')).value = TextCellValue('${transaction.weight.toStringAsFixed(3)} ${transaction.unit}')
+        ..cell(CellIndex.indexByString('I$row')).value = TextCellValue(_dateFormat.format(transaction.displayDate.toUtc()));
     }
 
     final rawBytes = excel.encode();

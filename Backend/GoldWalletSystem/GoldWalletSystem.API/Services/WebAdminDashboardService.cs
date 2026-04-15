@@ -53,9 +53,9 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
 
         var statusCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
-            ["pending"] = requests.Count(x => ParseStatus(x.Reference) == "pending"),
-            ["approved"] = requests.Count(x => ParseStatus(x.Reference) == "approved"),
-            ["rejected"] = requests.Count(x => ParseStatus(x.Reference) == "rejected")
+            ["pending"] = requests.Count(x => x.Status == "pending"),
+            ["approved"] = requests.Count(x => x.Status == "approved"),
+            ["rejected"] = requests.Count(x => x.Status == "rejected")
         };
 
         var statusTotal = Math.Max(statusCounts.Values.Sum(), 1);
@@ -76,7 +76,7 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
                 ProductName = products.Count > 0 ? products[idx % products.Count].Name : "N/A",
                 Type = request.TransactionType,
                 Amount = request.Amount,
-                Status = ParseStatus(request.Reference),
+                Status = request.Status,
                 CreatedAt = request.CreatedAtUtc
             })
             .ToList();
@@ -158,13 +158,6 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             CategoryCartSeries = categoryCartSeries,
             RecentTransactions = recent
         };
-    }
-
-    public static string ParseStatus(string reference)
-    {
-        if (reference.Contains("status=approved", StringComparison.OrdinalIgnoreCase)) return "approved";
-        if (reference.Contains("status=rejected", StringComparison.OrdinalIgnoreCase)) return "rejected";
-        return "pending";
     }
 
 }

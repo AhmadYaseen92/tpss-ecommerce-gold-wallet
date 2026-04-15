@@ -42,9 +42,19 @@ public class WebRequestDto
 {
     public string Id { get; set; } = string.Empty;
     public string InvestorId { get; set; } = string.Empty;
+    public string InvestorName { get; set; } = string.Empty;
     public string Type { get; set; } = "withdrawal";
+    public string Category { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal Weight { get; set; }
+    public string Unit { get; set; } = "gram";
+    public decimal Purity { get; set; }
     public decimal Amount { get; set; }
     public string Status { get; set; } = "pending";
+    public string Currency { get; set; } = "USD";
+    public string Notes { get; set; } = string.Empty;
+    public DateTime? UpdatedAt { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 

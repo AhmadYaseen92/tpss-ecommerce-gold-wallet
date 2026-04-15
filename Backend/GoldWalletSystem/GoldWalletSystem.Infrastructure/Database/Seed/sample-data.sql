@@ -238,21 +238,32 @@ BEGIN TRY
     DECLARE @InvestorGoldPal int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'goldpal.investor1@example.com');
     DECLARE @SellerUserImseeh int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'imseeh.seller@example.com');
 
-    IF COL_LENGTH('TransactionHistories', 'SellerId') IS NOT NULL
+    IF COL_LENGTH('TransactionHistories', 'Status') IS NOT NULL
     BEGIN
-        INSERT INTO [TransactionHistories] ([UserId],[SellerId],[TransactionType],[Amount],[Currency],[Reference],[CreatedAtUtc],[UpdatedAtUtc])
+        INSERT INTO [TransactionHistories] (
+            [UserId],[SellerId],[TransactionType],[Status],[Category],[Quantity],
+            [UnitPrice],[Weight],[Unit],[Purity],[Amount],[Currency],[Notes],[CreatedAtUtc],[UpdatedAtUtc]
+        )
         VALUES
-            (@InvestorMain, @SellerImseeh, N'withdrawal', 1200, N'USD', N'channel=webadmin|status=pending', DATEADD(DAY, -1, @Now), NULL),
-            (@InvestorImseeh, @SellerImseeh, N'sell', 740, N'USD', N'channel=webadmin|status=approved', DATEADD(DAY, -2, @Now), NULL),
-            (@InvestorGoldPal, @SellerGoldPal, N'transfer', 350, N'USD', N'channel=webadmin|status=rejected', DATEADD(DAY, -3, @Now), NULL);
+            (@InvestorMain, @SellerImseeh, N'buy', N'pending', N'Gold', 2, 600, 10.000, N'gram', 24, 1200, N'USD', N'Seed request from web-admin', DATEADD(DAY, -1, @Now), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'sell', N'approved', N'Gold', 1, 740, 5.000, N'gram', 24, 740, N'USD', N'Seed approved sell request', DATEADD(DAY, -2, @Now), NULL),
+            (@InvestorGoldPal, @SellerGoldPal, N'transfer', N'rejected', N'Coins', 1, 350, 1.000, N'ounce', 24, 350, N'USD', N'Seed rejected transfer request', DATEADD(DAY, -3, @Now), NULL);
     END
     ELSE
     BEGIN
-        INSERT INTO [TransactionHistories] ([UserId],[TransactionType],[Amount],[Currency],[Reference],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES
-            (@InvestorMain, N'withdrawal', 1200, N'USD', N'channel=webadmin|status=pending', DATEADD(DAY, -1, @Now), NULL),
-            (@InvestorImseeh, N'sell', 740, N'USD', N'channel=webadmin|status=approved', DATEADD(DAY, -2, @Now), NULL),
-            (@InvestorGoldPal, N'transfer', 350, N'USD', N'channel=webadmin|status=rejected', DATEADD(DAY, -3, @Now), NULL);
+        EXEC sp_executesql
+            N'
+            INSERT INTO [TransactionHistories] ([UserId],[TransactionType],[Amount],[Currency],[Reference],[CreatedAtUtc],[UpdatedAtUtc])
+            VALUES
+                (@InvestorMain, N''withdrawal'', 1200, N''USD'', N''channel=webadmin|status=pending'', DATEADD(DAY, -1, @Now), NULL),
+                (@InvestorImseeh, N''sell'', 740, N''USD'', N''channel=webadmin|status=approved'', DATEADD(DAY, -2, @Now), NULL),
+                (@InvestorGoldPal, N''transfer'', 350, N''USD'', N''channel=webadmin|status=rejected'', DATEADD(DAY, -3, @Now), NULL);
+            ',
+            N'@InvestorMain int, @InvestorImseeh int, @InvestorGoldPal int, @Now datetime2',
+            @InvestorMain = @InvestorMain,
+            @InvestorImseeh = @InvestorImseeh,
+            @InvestorGoldPal = @InvestorGoldPal,
+            @Now = @Now;
     END
 
     INSERT INTO [AppNotifications] ([UserId],[Title],[Body],[IsRead],[CreatedAtUtc],[UpdatedAtUtc])
