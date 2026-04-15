@@ -13,20 +13,20 @@ class StatusBadge extends StatelessWidget {
     String label = 'Unknown';
 
     switch (status) {
-      case 'completed':
+      case 'approved':
         dotColor = AppColors.green;
         bgColor = AppColors.lightGreen;
-        label = 'Completed';
+        label = 'Approved';
         break;
       case 'pending':
         dotColor = AppColors.pendingOrange;
         bgColor = AppColors.lightOrange;
         label = 'Pending';
         break;
-      case 'failed':
+      case 'rejected':
         dotColor = AppColors.red;
         bgColor = AppColors.lightRed;
-        label = 'Failed';
+        label = 'Rejected';
         break;
       default:
         dotColor = AppColors.grey;

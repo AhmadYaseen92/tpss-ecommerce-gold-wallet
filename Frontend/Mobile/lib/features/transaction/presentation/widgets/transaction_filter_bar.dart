@@ -18,14 +18,15 @@ class TransactionFilterBar extends StatelessWidget {
     'All Types',
     'Buy',
     'Sell',
-    'Deposit',
-    'Withdraw',
+    'Transfer',
+    'Gift',
+    'Pickup',
   ];
   static const List<String> statuses = [
     'All Statuses',
-    'Completed',
+    'Approved',
     'Pending',
-    'Failed',
+    'Rejected',
   ];
 
   @override
@@ -70,4 +71,3 @@ class TransactionFilterBar extends StatelessWidget {
     );
   }
 }
-

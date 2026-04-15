@@ -1,120 +1,64 @@
 class TransactionModel {
-  final String id;
-  final String title;
-  final String type;
+  final int id;
+  final int userId;
+  final int? sellerId;
+  final String investorName;
+  final String transactionType;
   final String status;
-  final DateTime date;
-  final String amount;
-  final String sellerName;
-  final String? secondaryAmount;
+  final String category;
+  final int quantity;
+  final double unitPrice;
+  final double weight;
+  final String unit;
+  final double purity;
+  final String notes;
+  final double amount;
+  final String currency;
+  final DateTime createdAtUtc;
+  final DateTime? updatedAtUtc;
 
   const TransactionModel({
     required this.id,
-    required this.title,
-    required this.type,
+    required this.userId,
+    required this.sellerId,
+    required this.investorName,
+    required this.transactionType,
     required this.status,
-    required this.date,
+    required this.category,
+    required this.quantity,
+    required this.unitPrice,
+    required this.weight,
+    required this.unit,
+    required this.purity,
+    required this.notes,
     required this.amount,
-    this.sellerName = 'Imseeh',
-    this.secondaryAmount,
+    required this.currency,
+    required this.createdAtUtc,
+    required this.updatedAtUtc,
   });
 
-  TransactionModel copyWith({
-    String? id,
-    String? title,
-    String? type,
-    String? status,
-    DateTime? date,
-    String? amount,
-    String? sellerName,
-    String? secondaryAmount,
-    String? secondaryLabel,
-  }) {
+  factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      type: type ?? this.type,
-      status: status ?? this.status,
-      date: date ?? this.date,
-      amount: amount ?? this.amount,
-      sellerName: sellerName ?? this.sellerName,
-      secondaryAmount: secondaryAmount ?? this.secondaryAmount,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      userId: (json['userId'] as num?)?.toInt() ?? 0,
+      sellerId: (json['sellerId'] as num?)?.toInt(),
+      investorName: (json['investorName'] ?? '') as String,
+      transactionType: (json['transactionType'] ?? '') as String,
+      status: (json['status'] ?? '') as String,
+      category: (json['category'] ?? '') as String,
+      quantity: (json['quantity'] as num?)?.toInt() ?? 0,
+      unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0,
+      weight: (json['weight'] as num?)?.toDouble() ?? 0,
+      unit: (json['unit'] ?? 'gram') as String,
+      purity: (json['purity'] as num?)?.toDouble() ?? 0,
+      notes: (json['notes'] ?? '') as String,
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      currency: (json['currency'] ?? 'USD') as String,
+      createdAtUtc:
+          DateTime.tryParse((json['createdAtUtc'] ?? '').toString()) ?? DateTime.now().toUtc(),
+      updatedAtUtc: DateTime.tryParse((json['updatedAtUtc'] ?? '').toString()),
     );
   }
+
+  DateTime get displayDate => updatedAtUtc ?? createdAtUtc;
 }
-
-final List<TransactionModel> dummyTransactions = [
-  // Within last 7 days
-  TransactionModel(
-    id: 'TRX-8932',
-    title: 'Buy Gold',
-    type: 'buy',
-    status: 'completed',
-    date: DateTime.now().subtract(const Duration(days: 2)),
-    amount: '+ 10g',
-    sellerName: 'Imseeh',
-    secondaryAmount: '- \$650.00',
-  ),
-
-  // Within last 7 days
-  TransactionModel(
-    id: 'TRX-8931',
-    title: 'Deposit Funds',
-    type: 'deposit',
-    status: 'completed',
-    date: DateTime.now().subtract(const Duration(days: 5)),
-    amount: '+ \$1000.00',
-    sellerName: 'Sakkejha',
-    secondaryAmount: null,
-  ),
-
-  // Within last 30 days (not 7)
-  TransactionModel(
-    id: 'TRX-8920',
-    title: 'Sell Silver',
-    type: 'sell',
-    status: 'pending',
-    date: DateTime.now().subtract(const Duration(days: 15)),
-    amount: '+ \$420.00',
-    sellerName: 'Da’naa',
-    secondaryAmount: '- 500g',
-  ),
-
-  // Within last 90 days (not 30)
-  TransactionModel(
-    id: 'TRX-8910',
-    title: 'Sell Gold',
-    type: 'sell',
-    status: 'completed',
-    date: DateTime.now().subtract(const Duration(days: 45)),
-    amount: '+ \$320.00',
-    sellerName: 'Imseeh',
-    secondaryAmount: '- 5g',
-  ),
-
-  // Within last 90 days (not 30)
-  TransactionModel(
-    id: 'TRX-8905',
-    title: 'Withdraw',
-    type: 'withdraw',
-    status: 'failed',
-    date: DateTime.now().subtract(const Duration(days: 60)),
-    amount: '- \$200.00',
-    sellerName: 'Sakkejha',
-    secondaryAmount: null,
-  ),
-
-  // Older than 90 days (only visible in All Periods)
-  TransactionModel(
-    id: 'TRX-8900',
-    title: 'Buy Silver',
-    type: 'buy',
-    status: 'completed',
-    date: DateTime.now().subtract(const Duration(days: 120)),
-    amount: '+ 200g',
-    sellerName: 'Da’naa',
-    secondaryAmount: '- \$180.00',
-  ),
-];
-
-List<TransactionModel> filteredTransactions = [];
