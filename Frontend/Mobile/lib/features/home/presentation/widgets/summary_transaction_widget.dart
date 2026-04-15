@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 
+import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
+
 class SummaryTransactionWidget extends StatelessWidget {
-  const SummaryTransactionWidget({super.key, required this.onViewAllHistory});
+  const SummaryTransactionWidget({super.key, required this.onViewAllHistory, required this.transactions});
 
   final VoidCallback onViewAllHistory;
+  final List<TransactionModel> transactions;
 
   @override
   Widget build(BuildContext context) {
@@ -58,38 +61,42 @@ class SummaryTransactionWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20.0),
-          _buildTransactionItem(context, 'Buy Gold', '+ \$500'),
-          Divider(height: 20.0, thickness: 1.0, color: palette.border),
-          _buildTransactionItem(context, 'Sell Gold', '- \$200'),
-          Divider(height: 20.0, thickness: 1.0, color: palette.border),
-          _buildTransactionItem(context, 'Transfer to Omar', '- \$100'),
-          Divider(height: 20.0, thickness: 1.0, color: palette.border),
-          _buildTransactionItem(context, 'Transfer to Omar', '- \$100'),
+          ...transactions.map((tx) => Column(
+            children: [
+              _buildTransactionItem(context, tx),
+              if (tx != transactions.last)
+                Divider(height: 20.0, thickness: 1.0, color: palette.border),
+            ],
+          )),
+          if (transactions.isEmpty)
+            Text('No recent transactions', style: TextStyle(color: palette.textSecondary)),
         ],
       ),
     );
   }
 
-  Widget _buildTransactionItem(
-    BuildContext context,
-    String title,
-    String amount,
-  ) {
+  Widget _buildTransactionItem(BuildContext context, TransactionModel tx) {
+    final isNegative = tx.amount < 0;
+    final amountStr = (isNegative ? '- ' : '+ ') + '\$${tx.amount.abs().toStringAsFixed(2)}';
     return Row(
       children: [
         Icon(
-          amount.startsWith('-')
-              ? CupertinoIcons.arrow_down
-              : CupertinoIcons.arrow_up,
-          color: amount.startsWith('-') ? AppColors.red : AppColors.green,
+          isNegative ? CupertinoIcons.arrow_down : CupertinoIcons.arrow_up,
+          color: isNegative ? AppColors.red : AppColors.green,
         ),
         const SizedBox(width: 8.0),
-        Text(title, style: TextStyle(color: context.appPalette.textSecondary)),
+        Expanded(
+          child: Text(
+            tx.transactionType + (tx.investorName.isNotEmpty ? ' (${tx.investorName})' : ''),
+            style: TextStyle(color: context.appPalette.textSecondary),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
         const Spacer(),
         Text(
-          amount,
+          amountStr,
           style: TextStyle(
-            color: amount.startsWith('-') ? AppColors.red : AppColors.green,
+            color: isNegative ? AppColors.red : AppColors.green,
           ),
         ),
       ],
