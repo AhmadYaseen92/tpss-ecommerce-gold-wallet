@@ -722,6 +722,22 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "CreateWalletActionRequest",
+    "RelativePath": "api/wallet/actions/request",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.WalletController\u002BWalletActionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
     "Method": "GetByUser",
     "RelativePath": "api/wallet/by-user",
     "HttpMethod": "POST",
@@ -906,6 +922,22 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "GetRequestDetails",
+    "RelativePath": "api/web-admin/requests/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {

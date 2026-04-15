@@ -67,7 +67,7 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
         void loadDashboard();
         void marketplace.refreshMarketplaceState();
       }
-    }, 10000);
+    }, 4000);
   });
 
   onUnmounted(() => {

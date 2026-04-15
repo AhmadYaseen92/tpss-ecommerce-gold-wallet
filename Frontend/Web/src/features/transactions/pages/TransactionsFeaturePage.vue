@@ -18,7 +18,7 @@ let refreshTimer: ReturnType<typeof setInterval> | null = null;
 onMounted(() => {
   refreshTimer = setInterval(() => {
     void props.marketplace.refreshMarketplaceState();
-  }, 10000);
+  }, 4000);
 });
 onUnmounted(() => {
   window.removeEventListener("hashchange", syncPath);

@@ -270,16 +270,30 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
+                    SellerId = table.Column<int>(type: "int", nullable: true),
                     TransactionType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    Weight = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
+                    Unit = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Purity = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Currency = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    Reference = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TransactionHistories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TransactionHistories_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_TransactionHistories_Users_UserId",
                         column: x => x.UserId,
@@ -347,6 +361,8 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CartId = table.Column<int>(type: "int", nullable: false),
                     ProductId = table.Column<int>(type: "int", nullable: false),
+                    SellerId = table.Column<int>(type: "int", nullable: true),
+                    Category = table.Column<int>(type: "int", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     UnitPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     LineTotal = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
@@ -366,6 +382,12 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         name: "FK_CartItems_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_CartItems_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -493,6 +515,8 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     WalletId = table.Column<int>(type: "int", nullable: false),
                     AssetType = table.Column<int>(type: "int", nullable: false),
+                    Category = table.Column<int>(type: "int", nullable: false),
+                    SellerId = table.Column<int>(type: "int", nullable: true),
                     Weight = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
                     Unit = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Purity = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
@@ -506,6 +530,12 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_WalletAssets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_WalletAssets_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_WalletAssets_Wallets_WalletId",
                         column: x => x.WalletId,
@@ -652,9 +682,19 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 columns: new[] { "CartId", "ProductId" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CartItems_Category",
+                table: "CartItems",
+                column: "Category");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CartItems_ProductId",
                 table: "CartItems",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CartItems_SellerId",
+                table: "CartItems",
+                column: "SellerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Carts_UserId",
@@ -791,15 +831,24 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 column: "Name");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TransactionHistories_Category",
+                table: "TransactionHistories",
+                column: "Category");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TransactionHistories_CreatedAtUtc",
                 table: "TransactionHistories",
                 column: "CreatedAtUtc");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionHistories_Reference",
+                name: "IX_TransactionHistories_SellerId",
                 table: "TransactionHistories",
-                column: "Reference",
-                unique: true);
+                column: "SellerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionHistories_Status",
+                table: "TransactionHistories",
+                column: "Status");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionHistories_UserId",
@@ -826,6 +875,16 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Users_SellerId",
                 table: "Users",
+                column: "SellerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WalletAssets_Category",
+                table: "WalletAssets",
+                column: "Category");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WalletAssets_SellerId",
+                table: "WalletAssets",
                 column: "SellerId");
 
             migrationBuilder.CreateIndex(

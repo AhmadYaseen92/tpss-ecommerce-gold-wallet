@@ -91,6 +91,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
 
   // Use SignalR for real-time updates
   useRealtimeSync({
+    token: marketplace.session.value?.accessToken,
     onProductUpdate: async () => {
       signalRActive.value = true;
       await loadProductManagementData();
@@ -103,7 +104,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     if (!signalRActive.value) {
       const timer = setInterval(() => {
         if (!signalRActive.value) void loadProductManagementData();
-      }, 15000);
+      }, 4000);
       onUnmounted(() => clearInterval(timer));
     }
   });
