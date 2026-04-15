@@ -1,50 +1,68 @@
 <script setup lang="ts">
 import type { TransactionRowView } from "../types/transactionTypes";
+import { formatCurrency, formatDateTime } from "../../../shared/services/formatters";
 
 withDefaults(
   defineProps<{
     items?: TransactionRowView[];
-    selected?: TransactionRowView | null;
-    statusDraft?: "pending" | "approved" | "rejected";
     statusClass: (status?: string | null) => string;
   }>(),
   {
     items: () => [],
-    selected: null,
-    statusDraft: "pending",
   }
 );
 
 const emit = defineEmits<{
   (e: "view", id: string): void;
-  (e: "saveStatus"): void;
-  (e: "updateStatus", status: "pending" | "approved" | "rejected"): void;
   (e: "quickStatus", id: string, status: "pending" | "approved" | "rejected"): void;
 }>();
+
+const formatAmount = (amount: number, currency: string) => formatCurrency(amount, currency);
+const formatWeight = (weight: number, unit: string) => `${weight.toFixed(3)} ${unit}`;
+const formatQty = (quantity: number) => quantity.toLocaleString();
 </script>
 
 <template>
   <table>
-    <thead><tr><th>Transaction ID</th><th>Investor</th><th>Product</th><th>Type</th><th>Qty</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+    <thead>
+      <tr>
+        <th>Transaction ID</th>
+        <th>Investor</th>
+        <th>Category</th>
+        <th>Type</th>
+        <th>Qty</th>
+        <th>Weight</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Updated</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
     <tbody>
       <tr v-for="trx in items" :key="trx.id">
-        <td>{{ trx.id }}</td><td>{{ trx.investorName }}</td><td>{{ trx.productName }}</td><td>{{ trx.transactionType }}</td><td>{{ trx.quantity }}</td><td>{{ trx.amount }}</td>
+        <td>{{ trx.id }}</td>
+        <td>{{ trx.investorName }}</td>
+        <td>{{ trx.category }}</td>
+        <td>{{ trx.transactionType }}</td>
+        <td>{{ formatQty(trx.quantity) }}</td>
+        <td>{{ formatWeight(trx.weight, trx.unit) }}</td>
+        <td>{{ formatAmount(trx.amount, trx.currency) }}</td>
         <td>
-          <select :class="statusClass(trx.status)" :value="trx.status" @change="emit('quickStatus', trx.id, ($event.target as HTMLSelectElement).value as 'pending' | 'approved' | 'rejected')">
+          <select
+            v-if="trx.status === 'pending'"
+            :class="statusClass(trx.status)"
+            :value="trx.status"
+            @change="emit('quickStatus', trx.id, ($event.target as HTMLSelectElement).value as 'pending' | 'approved' | 'rejected')"
+          >
             <option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
           </select>
+          <span v-else :class="statusClass(trx.status)">{{ trx.status }}</span>
         </td>
-        <td>{{ trx.createdAt }}</td>
+        <td>{{ formatDateTime(trx.createdAt) }}</td>
+        <td>{{ trx.updatedAt ? formatDateTime(trx.updatedAt) : "—" }}</td>
         <td><button @click="emit('view', trx.id)">View Details</button></td>
       </tr>
     </tbody>
   </table>
-
-  <div v-if="selected" class="product-details">
-    <p><strong>Transaction ID:</strong> {{ selected.id }}</p><p><strong>Investor Info:</strong> {{ selected.investorName }}</p><p><strong>Product Info:</strong> {{ selected.productName }}</p>
-    <p><strong>Type:</strong> {{ selected.transactionType }}</p><p><strong>Quantity:</strong> {{ selected.quantity }}</p><p><strong>Amount:</strong> {{ selected.amount }}</p><p><strong>Price:</strong> {{ selected.transactionPrice }}</p>
-    <p><strong>Status:</strong> <span :class="statusClass(selected.status)">{{ selected.status }}</span></p>
-    <label>Change Status<select :value="statusDraft" @change="emit('updateStatus', ($event.target as HTMLSelectElement).value as 'pending' | 'approved' | 'rejected')"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></label>
-    <button @click="emit('saveStatus')">Save</button>
-  </div>
 </template>

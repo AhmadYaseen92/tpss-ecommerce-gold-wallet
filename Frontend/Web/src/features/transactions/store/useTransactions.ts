@@ -9,9 +9,7 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
     marketplace.state.value.requests.map((request) => ({
       ...request,
       investorName: request.investorName,
-      productName: request.category,
-      transactionType: request.type,
-      transactionPrice: request.unitPrice
+      transactionType: request.type
     }))
   );
 

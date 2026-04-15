@@ -33,7 +33,10 @@ class TransactionItemWidget extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    TransactionIcon(type: transaction.transactionType),
+                    TransactionIcon(
+                      type: transaction.transactionType,
+                      status: transaction.status,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(

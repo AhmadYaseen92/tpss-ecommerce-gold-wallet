@@ -8,7 +8,7 @@ import { statusClass } from "../../../shared/services/statusStyles";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
-const { transactionStatusDraft, transactionsView, selectedTransaction, viewTransaction, saveTransactionStatus } = useTransactions(props.marketplace);
+const { transactionsView, viewTransaction } = useTransactions(props.marketplace);
 const currentPath = ref(window.location.hash.replace(/^#/, ""));
 const syncPath = () => {
   currentPath.value = window.location.hash.replace(/^#/, "");
@@ -31,10 +31,6 @@ const detailsId = computed(() => {
   return match?.[1] ?? null;
 });
 const detailsItem = computed(() => transactionsView.value.find((item) => item.id === detailsId.value) ?? null);
-
-const updateStatusDraft = (value: "pending" | "approved" | "rejected") => {
-  transactionStatusDraft.value = value;
-};
 
 const quickStatus = async (id: string, status: "pending" | "approved" | "rejected") => {
   const current = transactionsView.value.find((x) => x.id === id);
@@ -63,6 +59,6 @@ const goList = () => {
     <TransactionDetailsPage :item="detailsItem" />
   </SectionCard>
   <SectionCard v-else title="Transactions">
-    <TransactionsPage :items="transactionsView" :selected="selectedTransaction" :status-draft="transactionStatusDraft" :status-class="statusClass" @view="goDetails" @save-status="saveTransactionStatus" @update-status="updateStatusDraft" @quick-status="quickStatus" />
+    <TransactionsPage :items="transactionsView" :status-class="statusClass" @view="goDetails" @quick-status="quickStatus" />
   </SectionCard>
 </template>

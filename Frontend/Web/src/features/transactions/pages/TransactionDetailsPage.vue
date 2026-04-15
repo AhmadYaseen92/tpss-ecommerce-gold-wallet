@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TransactionRowView } from "../types/transactionTypes";
 import { statusClass } from "../../../shared/services/statusStyles";
+import { formatCurrency, formatDateTime } from "../../../shared/services/formatters";
 
 defineProps<{ item: TransactionRowView | null }>();
 </script>
@@ -9,14 +10,20 @@ defineProps<{ item: TransactionRowView | null }>();
   <section v-if="item" class="tx-details-card">
     <h3>Transaction Details</h3>
     <p><strong>ID:</strong> {{ item.id }}</p>
+    <p><strong>Investor ID:</strong> {{ item.investorId }}</p>
     <p><strong>Investor:</strong> {{ item.investorName }}</p>
     <p><strong>Type:</strong> {{ item.transactionType }}</p>
-    <p><strong>Category:</strong> {{ item.productName }}</p>
-    <p><strong>Quantity:</strong> {{ item.quantity }}</p>
-    <p><strong>Amount:</strong> {{ item.amount }}</p>
-    <p><strong>Unit Price:</strong> {{ item.transactionPrice }}</p>
+    <p><strong>Category:</strong> {{ item.category }}</p>
+    <p><strong>Quantity:</strong> {{ item.quantity.toLocaleString() }}</p>
+    <p><strong>Weight:</strong> {{ item.weight.toFixed(3) }} {{ item.unit }}</p>
+    <p><strong>Purity:</strong> {{ item.purity }}%</p>
+    <p><strong>Unit Price:</strong> {{ formatCurrency(item.unitPrice, item.currency) }}</p>
+    <p><strong>Amount:</strong> {{ formatCurrency(item.amount, item.currency) }}</p>
+    <p><strong>Currency:</strong> {{ item.currency }}</p>
+    <p><strong>Notes:</strong> {{ item.notes || "—" }}</p>
     <p><strong>Status:</strong> <span :class="statusClass(item.status)">{{ item.status }}</span></p>
-    <p><strong>Created At:</strong> {{ item.createdAt }}</p>
+    <p><strong>Created At:</strong> {{ formatDateTime(item.createdAt) }}</p>
+    <p><strong>Updated At:</strong> {{ item.updatedAt ? formatDateTime(item.updatedAt) : "—" }}</p>
   </section>
   <section v-else>
     <p>Transaction not found.</p>
