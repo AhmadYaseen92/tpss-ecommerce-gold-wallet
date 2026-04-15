@@ -1,3 +1,4 @@
+import { useRealtimeSync } from "../../services/useRealtimeSync";
 import { computed, ref } from "vue";
 import {
   addSellerProduct,
@@ -56,6 +57,27 @@ export function useMarketplace() {
   const state = ref<MarketplaceState>(structuredClone(mockMarketplaceState));
   const loading = ref(false);
   const error = ref("");
+
+  let signalRActive = ref(false);
+  // Use SignalR for real-time updates
+  useRealtimeSync({
+    onStockUpdate: async () => {
+      signalRActive.value = true;
+      await refreshMarketplaceState();
+    },
+    onProductUpdate: async () => {
+      signalRActive.value = true;
+      await refreshMarketplaceState();
+    },
+    onWalletUpdate: async () => {
+      signalRActive.value = true;
+      await refreshMarketplaceState();
+    },
+    onTransactionUpdate: async () => {
+      signalRActive.value = true;
+      await refreshMarketplaceState();
+    }
+  });
 
   const activeSeller = computed(() => {
     if (!session.value?.sellerId) return state.value.sellers[0];

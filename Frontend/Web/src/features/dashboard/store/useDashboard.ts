@@ -1,4 +1,5 @@
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { useRealtimeSync } from "../../../shared/services/useRealtimeSync";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { fetchWebAdminDashboard } from "../../../shared/services/backendGateway";
 import type { WebDashboardDto } from "../../../shared/types/apiTypes";
@@ -25,6 +26,7 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
   const serverDashboard = ref<WebDashboardDto | null>(null);
   let dashboardRefreshTimer: ReturnType<typeof setInterval> | null = null;
+  let signalRActive = ref(false);
 
   const loadDashboard = async () => {
     if (!marketplace.session.value?.accessToken) {
@@ -43,17 +45,36 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
     void loadDashboard();
   }, { immediate: true });
 
+
+  // Use SignalR for real-time updates
+  useRealtimeSync({
+    onStockUpdate: async () => {
+      signalRActive.value = true;
+      await loadDashboard();
+      await marketplace.refreshMarketplaceState();
+    },
+    onTransactionUpdate: async () => {
+      signalRActive.value = true;
+      await loadDashboard();
+      await marketplace.refreshMarketplaceState();
+    }
+  });
+
+  // Polling fallback if SignalR is not active
   onMounted(() => {
     dashboardRefreshTimer = setInterval(() => {
-      void loadDashboard();
-      void marketplace.refreshMarketplaceState();
+      if (!signalRActive.value) {
+        void loadDashboard();
+        void marketplace.refreshMarketplaceState();
+      }
     }, 10000);
   });
 
   onUnmounted(() => {
-    if (!dashboardRefreshTimer) return;
-    clearInterval(dashboardRefreshTimer);
-    dashboardRefreshTimer = null;
+    if (dashboardRefreshTimer) {
+      clearInterval(dashboardRefreshTimer);
+      dashboardRefreshTimer = null;
+    }
   });
 
   const dashboardCards = computed(() => {

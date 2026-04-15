@@ -1,3 +1,5 @@
+using GoldWalletSystem.API.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using GoldWalletSystem.API.Extensions;
 using GoldWalletSystem.API.Middleware;
 using GoldWalletSystem.API.Services;
@@ -54,6 +56,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IWebAdminDashboardService, WebAdminDashboardService>();
 
+// Add SignalR
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -79,4 +84,6 @@ app.UseAuthentication();
 app.UseMiddleware<AuditTrailMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+// Map SignalR hub
+app.MapHub<RealtimeHub>("/realtimeHub");
 app.Run();

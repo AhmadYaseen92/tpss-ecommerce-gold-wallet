@@ -1,4 +1,5 @@
 import { onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { useRealtimeSync } from "../../../shared/services/useRealtimeSync";
 import { createManagedProduct, deleteManagedProduct, fetchManagedProducts, fetchProductCategories, fetchWeightUnits, updateManagedProduct, type ProductFormPayload } from "../../../shared/services/backendGateway";
 import type { EnumItemDto, ProductManagementDto } from "../../../shared/types/apiTypes";
 import { goToProductRoute, syncProductRoute } from "../services/productRoute";
@@ -25,6 +26,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     Object.assign(productForm, { id: product.id, name: product.name, sku: product.sku, description: product.description, category: categories.value.find((x) => x.name === product.category)?.value ?? categories.value[0]?.value ?? 0, weightValue: Number(product.weightValue), weightUnit: weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? weightUnits.value[0]?.value ?? 0, price: Number(product.price), availableStock: product.availableStock, isActive: product.isActive, existingImageUrl: product.imageUrl, imageFile: null });
   };
 
+  const signalRActive = ref(false);
   const loadProductManagementData = async () => {
     if (!marketplace.session.value?.accessToken) return;
     managedProducts.value = await fetchManagedProducts(marketplace.session.value.accessToken);
@@ -40,7 +42,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const openProductDetails = (p: ProductManagementDto) => { selectedProduct.value = p; navigate(`#/products/${p.id}`); };
   const onProductImageChange = (event: Event) => { const input = event.target as HTMLInputElement; productForm.imageFile = input.files?.[0] ?? null; };
 
-  
+
   const validateProductForm = () => {
     Object.keys(validationErrors).forEach((k) => delete validationErrors[k]);
     if (!productForm.name.trim()) validationErrors.name = "Name is required";
@@ -87,7 +89,24 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     }
   };
 
+  // Use SignalR for real-time updates
+  useRealtimeSync({
+    onProductUpdate: async () => {
+      signalRActive.value = true;
+      await loadProductManagementData();
+    }
+  });
+
+  // Polling fallback if SignalR is not active
   watch(() => marketplace.session.value?.accessToken, () => void loadProductManagementData(), { immediate: true });
+  onMounted(() => {
+    if (!signalRActive.value) {
+      const timer = setInterval(() => {
+        if (!signalRActive.value) void loadProductManagementData();
+      }, 15000);
+      onUnmounted(() => clearInterval(timer));
+    }
+  });
 
   onMounted(() => {
     syncRoute();
