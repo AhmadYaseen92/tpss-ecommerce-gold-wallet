@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
@@ -14,7 +13,6 @@ class ProductPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeSeller = context.watch<AppCubit>().state.selectedSeller;
     return BlocProvider(
       create: (context) {
         final productCubit = ProductCubit(
@@ -24,7 +22,10 @@ class ProductPage extends StatelessWidget {
           addProductToCartUseCase: InjectionContainer.addProductToCartUseCase(),
           watchMarketSymbolsUseCase: InjectionContainer.watchMarketSymbolsUseCase(),
         );
-        productCubit.loadProducts(seller: activeSeller);
+
+        productCubit.loadProducts(
+          seller: context.read<AppCubit>().state.selectedSeller,
+        );
         return productCubit;
       },
       child: Builder(
@@ -36,8 +37,7 @@ class ProductPage extends StatelessWidget {
               child: BlocListener<AppCubit, AppState>(
                 listenWhen: (previous, current) =>
                     previous.selectedSeller != current.selectedSeller ||
-                    previous.checkoutRefreshTick !=
-                        current.checkoutRefreshTick,
+                    previous.checkoutRefreshTick != current.checkoutRefreshTick,
                 listener: (context, state) {
                   context.read<ProductCubit>().loadProducts(
                     seller: state.selectedSeller,
@@ -47,12 +47,11 @@ class ProductPage extends StatelessWidget {
                 child: Column(
                   children: [
                     TabBar(
-                      labelStyle: Theme.of(context).textTheme.titleMedium!
-                          .copyWith(fontWeight: FontWeight.bold),
+                      labelStyle: Theme.of(context).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
                       labelColor: context.appPalette.primary,
                       unselectedLabelColor: context.appPalette.textSecondary,
                       indicatorColor: context.appPalette.primary,
-                      tabs: [
+                      tabs: const [
                         Tab(text: 'Catalog'),
                         Tab(text: 'Market Watch'),
                       ],
@@ -62,28 +61,18 @@ class ProductPage extends StatelessWidget {
                       child: TabBarView(
                         children: [
                           RefreshIndicator(
-                            onRefresh: () => context
-                                .read<ProductCubit>()
-                                .loadProducts(
-                                  seller:
-                                      context.read<ProductCubit>().activeSeller,
-                                  categoryId: context
-                                      .read<ProductCubit>()
-                                      .selectedCategoryId,
-                                ),
-                            child: CatalogTabWidget(),
+                            onRefresh: () => context.read<ProductCubit>().loadProducts(
+                              seller: context.read<ProductCubit>().activeSeller,
+                              categoryId: context.read<ProductCubit>().selectedCategoryId,
+                            ),
+                            child: const CatalogTabWidget(),
                           ),
                           RefreshIndicator(
-                            onRefresh: () => context
-                                .read<ProductCubit>()
-                                .loadProducts(
-                                  seller:
-                                      context.read<ProductCubit>().activeSeller,
-                                  categoryId: context
-                                      .read<ProductCubit>()
-                                      .selectedCategoryId,
-                                ),
-                            child: MarketWatchTabWidget(),
+                            onRefresh: () => context.read<ProductCubit>().loadProducts(
+                              seller: context.read<ProductCubit>().activeSeller,
+                              categoryId: context.read<ProductCubit>().selectedCategoryId,
+                            ),
+                            child: const MarketWatchTabWidget(),
                           ),
                         ],
                       ),

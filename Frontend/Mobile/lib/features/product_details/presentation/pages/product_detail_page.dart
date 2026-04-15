@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
 import '../widgets/product_detail_widget.dart';
 
@@ -29,7 +29,7 @@ class ProductDetailPage extends StatelessWidget {
       child: BlocBuilder<ProductCubit, ProductState>(
         builder: (context, state) {
           final palette = context.appPalette;
-          final cubit = BlocProvider.of<ProductCubit>(context);
+          final cubit = context.read<ProductCubit>();
           final isFavorite = state is ProductDetailLoaded ? state.product.isFavorite : product.isFavorite;
 
           PreferredSizeWidget appBar() => AppBar(
@@ -55,9 +55,7 @@ class ProductDetailPage extends StatelessWidget {
           }
 
           if (state is ProductDetailLoaded || state is ProductQuantityChanged) {
-            final loadedProduct = state is ProductDetailLoaded
-                ? state.product
-                : product;
+            final loadedProduct = state is ProductDetailLoaded ? state.product : product;
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: appBar(),
