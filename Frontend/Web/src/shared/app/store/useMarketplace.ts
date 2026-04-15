@@ -1,4 +1,5 @@
 import { computed, ref } from "vue";
+import { MarketplaceRealtime } from "../../services/marketplaceRealtime";
 import {
   addSellerProduct,
   buildFallbackAdminMetrics,
@@ -76,6 +77,52 @@ export function useMarketplace() {
     { title: "Fees", value: `${state.value.fees.serviceChargePercent}%`, trend: "Service charge" }
   ]);
 
+
+  const realtime = new MarketplaceRealtime();
+  const signalRConnected = ref(false);
+  let fallbackPollingTimer: ReturnType<typeof setInterval> | null = null;
+
+  const stopFallbackPolling = () => {
+    if (!fallbackPollingTimer) return;
+    clearInterval(fallbackPollingTimer);
+    fallbackPollingTimer = null;
+  };
+
+  const startFallbackPolling = () => {
+    if (fallbackPollingTimer || signalRConnected.value || !session.value?.accessToken) return;
+    fallbackPollingTimer = setInterval(() => {
+      void refreshMarketplaceState();
+    }, 5000);
+  };
+
+  const configureRealtime = async () => {
+    if (!session.value?.accessToken) {
+      signalRConnected.value = false;
+      stopFallbackPolling();
+      await realtime.stop();
+      return;
+    }
+
+    await realtime.start({
+      accessTokenFactory: () => session.value?.accessToken ?? "",
+      onRefreshRequested: () => {
+        void refreshMarketplaceState();
+      },
+      onConnectionStateChanged: (connected) => {
+        signalRConnected.value = connected;
+        if (connected) {
+          stopFallbackPolling();
+          return;
+        }
+        startFallbackPolling();
+      }
+    });
+
+    if (!signalRConnected.value) {
+      startFallbackPolling();
+    }
+  };
+
   const login = async (credentials: AuthCredentials) => {
     loading.value = true;
     error.value = "";
@@ -84,6 +131,7 @@ export function useMarketplace() {
       session.value = authSession;
       role.value = authSession.role;
       state.value = await fetchMarketplaceState(authSession);
+      await configureRealtime();
       if (typeof window !== "undefined") {
         window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(authSession));
       }
@@ -176,6 +224,9 @@ export function useMarketplace() {
   };
 
   const logout = () => {
+    void realtime.stop();
+    signalRConnected.value = false;
+    stopFallbackPolling();
     session.value = null;
     role.value = "admin";
     activeMenu.value = "overview";
@@ -197,6 +248,7 @@ export function useMarketplace() {
     if (!session.value?.accessToken) return;
     role.value = session.value.role;
     await refreshMarketplaceState();
+    await configureRealtime();
   };
 
   return {
@@ -226,7 +278,8 @@ export function useMarketplace() {
     updateInvestorStatus,
     updateRequestStatus,
     readNotification,
-    refreshMarketplaceState
+    refreshMarketplaceState,
+    signalRConnected
   };
 }
 

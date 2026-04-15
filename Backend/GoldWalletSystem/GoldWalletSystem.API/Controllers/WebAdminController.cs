@@ -14,7 +14,7 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/web-admin")]
-public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardService dashboardService) : ControllerBase
+public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardService dashboardService, IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
 {
     private const string FeesConfigKey = "webadmin.fees";
 
@@ -129,6 +129,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         investor.IsActive = !request.Status.Equals("blocked", StringComparison.OrdinalIgnoreCase);
         investor.UpdatedAtUtc = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"investor-status:{userId}:{request.Status}", cancellationToken);
 
         return Ok(ApiResponse<string>.Ok("updated"));
     }
@@ -199,6 +200,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         if (previousStatus == "pending" && nextStatus == "approved")
         {
             await ApplyApprovedRequestSideEffectsAsync(item, cancellationToken);
+            await ApplyApprovedRequestStockSideEffectsAsync(item, cancellationToken);
             await CreateInvoiceForApprovedRequestAsync(item, cancellationToken);
         }
 
@@ -221,6 +223,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{nextStatus}", cancellationToken);
 
         return Ok(ApiResponse<string>.Ok("updated"));
     }
@@ -505,6 +508,40 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 wallet.UpdatedAtUtc = DateTime.UtcNow;
             }
         }
+    }
+
+    private async Task ApplyApprovedRequestStockSideEffectsAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
+    {
+        if (request.SellerId is null || request.Quantity <= 0) return;
+
+        var action = request.TransactionType.Trim().ToLowerInvariant();
+        var normalizedCategory = request.Category.Trim();
+
+        var product = await dbContext.Products
+            .Where(x => x.SellerId == request.SellerId
+                        && x.Category.ToString().Equals(normalizedCategory, StringComparison.OrdinalIgnoreCase)
+                        && x.IsActive)
+            .OrderBy(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (product is null) return;
+
+        var quantity = Math.Max(1, request.Quantity);
+        if (action == "buy")
+        {
+            if (product.AvailableStock < quantity)
+            {
+                throw new InvalidOperationException($"Insufficient stock for {product.Name}. Available {product.AvailableStock}, requested {quantity}.");
+            }
+
+            product.AvailableStock -= quantity;
+        }
+        else if (action is "sell" or "pickup" or "transfer" or "gift")
+        {
+            product.AvailableStock += quantity;
+        }
+
+        product.UpdatedAtUtc = DateTime.UtcNow;
     }
 
     private async Task CreateInvoiceForApprovedRequestAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)

@@ -20,7 +20,7 @@ class WalletRepositoryImpl implements IWalletRepository {
   @override
   Stream<List<wallet_entity.WalletEntity>> watchWallets() async* {
     yield await loadWallets();
-    yield* Stream.periodic(const Duration(seconds: 20)).asyncMap((_) => loadWallets());
+    yield* Stream.periodic(const Duration(seconds: 4)).asyncMap((_) => loadWallets());
   }
 
   List<wallet_entity.WalletEntity> _toWalletEntities(WalletRemoteModel wallet) {

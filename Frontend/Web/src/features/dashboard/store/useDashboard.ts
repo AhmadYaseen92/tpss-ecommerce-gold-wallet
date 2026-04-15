@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { fetchWebAdminDashboard } from "../../../shared/services/backendGateway";
 import type { WebDashboardDto } from "../../../shared/types/apiTypes";
@@ -24,38 +24,6 @@ const isVisibleCategory = (category: string) => category.trim().toLowerCase() !=
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
   const serverDashboard = ref<WebDashboardDto | null>(null);
-  let dashboardRefreshTimer: ReturnType<typeof setInterval> | null = null;
-
-  const loadDashboard = async () => {
-    if (!marketplace.session.value?.accessToken) {
-      serverDashboard.value = null;
-      return;
-    }
-
-    try {
-      serverDashboard.value = await fetchWebAdminDashboard(marketplace.session.value.accessToken, "month");
-    } catch {
-      serverDashboard.value = null;
-    }
-  };
-
-  watch([() => marketplace.session.value?.accessToken, dashboardPeriod], () => {
-    void loadDashboard();
-  }, { immediate: true });
-
-  onMounted(() => {
-    dashboardRefreshTimer = setInterval(() => {
-      void loadDashboard();
-      void marketplace.refreshMarketplaceState();
-    }, 10000);
-  });
-
-  onUnmounted(() => {
-    if (!dashboardRefreshTimer) return;
-    clearInterval(dashboardRefreshTimer);
-    dashboardRefreshTimer = null;
-  });
-
   const dashboardCards = computed(() => {
     if (serverDashboard.value?.cards?.length) {
       return serverDashboard.value.cards;
