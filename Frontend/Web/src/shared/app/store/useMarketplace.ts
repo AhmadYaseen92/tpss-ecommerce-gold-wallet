@@ -34,13 +34,30 @@ import {
 } from "../../services/backendGateway";
 import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
 
+const SESSION_STORAGE_KEY = "goldwallet.web.session";
+const AUTO_REFRESH_MS = 10000;
+
+function readStoredSession(): UserSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as UserSession;
+    return parsed?.accessToken ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export function useMarketplace() {
-  const role = ref<UserRole>("admin");
+  const persistedSession = readStoredSession();
+  const role = ref<UserRole>(persistedSession?.role ?? "admin");
   const activeMenu = ref<NavigationKey>("overview");
-  const session = ref<UserSession | null>(null);
+  const session = ref<UserSession | null>(persistedSession);
   const state = ref<MarketplaceState>(structuredClone(mockMarketplaceState));
   const loading = ref(false);
   const error = ref("");
+  let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   const activeSeller = computed(() => {
     if (!session.value?.sellerId) return state.value.sellers[0];
@@ -69,6 +86,10 @@ export function useMarketplace() {
       session.value = authSession;
       role.value = authSession.role;
       state.value = await fetchMarketplaceState(authSession);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(authSession));
+      }
+      startAutoRefresh();
     } catch (err) {
       if (err instanceof TypeError) {
         error.value = "Cannot reach API server. Check VITE_API_BASE_URL and backend CORS/run status.";
@@ -161,7 +182,43 @@ export function useMarketplace() {
     session.value = null;
     role.value = "admin";
     activeMenu.value = "overview";
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(SESSION_STORAGE_KEY);
+    }
+    stopAutoRefresh();
   };
+
+  const refreshMarketplaceState = async () => {
+    if (!session.value?.accessToken) return;
+    try {
+      state.value = await fetchMarketplaceState(session.value);
+    } catch {
+      // Keep current UI state and session on intermittent refresh failures.
+    }
+  };
+
+  const startAutoRefresh = () => {
+    if (refreshTimer || !session.value?.accessToken) return;
+    refreshTimer = setInterval(() => {
+      void refreshMarketplaceState();
+    }, AUTO_REFRESH_MS);
+  };
+
+  const stopAutoRefresh = () => {
+    if (!refreshTimer) return;
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  };
+
+  const restoreSession = async () => {
+    if (!session.value?.accessToken) return;
+    role.value = session.value.role;
+    await refreshMarketplaceState();
+    startAutoRefresh();
+  };
+
+  // Auto-restore on page refresh.
+  void restoreSession();
 
   return {
     role,
@@ -176,6 +233,7 @@ export function useMarketplace() {
     sellerProducts,
     login,
     logout,
+    restoreSession,
     registerSeller,
     approveKyc,
     rejectKyc,
