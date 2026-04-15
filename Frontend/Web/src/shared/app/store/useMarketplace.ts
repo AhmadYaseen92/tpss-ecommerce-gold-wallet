@@ -39,6 +39,7 @@ import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
 import { createMarketplaceRealtimeClient, type MarketplaceRealtimeClient, type MarketplaceRealtimeEvent } from "../../realtime/marketplaceRealtimeClient";
 
 const SESSION_STORAGE_KEY = "goldwallet.web.session";
+const ENABLE_REALTIME_FALLBACK_POLLING = false; // Temporary: disabled to validate pure SignalR behavior.
 
 function readStoredSession(): UserSession | null {
   if (typeof window === "undefined") return null;
@@ -258,6 +259,7 @@ export function useMarketplace() {
   };
 
   const ensureFallbackPolling = () => {
+    if (!ENABLE_REALTIME_FALLBACK_POLLING) return;
     if (fallbackRefreshTimer) return;
     fallbackRefreshTimer = setInterval(() => {
       void refreshMarketplaceState();

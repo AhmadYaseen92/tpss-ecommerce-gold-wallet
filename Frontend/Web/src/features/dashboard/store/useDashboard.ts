@@ -20,6 +20,7 @@ const CATEGORY_NAME_BY_ID: Record<string, string> = {
 
 const normalizeCategoryLabel = (rawCategory: string) => CATEGORY_NAME_BY_ID[rawCategory] ?? rawCategory;
 const isVisibleCategory = (category: string) => category.trim().toLowerCase() !== "spotmr";
+const ENABLE_REALTIME_FALLBACK_POLLING = false; // Temporary: disabled to validate pure SignalR behavior.
 
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
@@ -53,6 +54,7 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   };
 
   const ensureFallbackTimer = () => {
+    if (!ENABLE_REALTIME_FALLBACK_POLLING) return;
     if (fallbackDashboardTimer) return;
     fallbackDashboardTimer = setInterval(() => {
       void loadDashboard();
