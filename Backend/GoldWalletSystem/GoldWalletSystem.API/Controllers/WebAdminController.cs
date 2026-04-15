@@ -515,11 +515,14 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         if (request.SellerId is null || request.Quantity <= 0) return;
 
         var action = request.TransactionType.Trim().ToLowerInvariant();
-        var normalizedCategory = request.Category.Trim();
+        if (!Enum.TryParse<ProductCategory>(request.Category.Trim(), true, out var parsedCategory))
+        {
+            return;
+        }
 
         var product = await dbContext.Products
             .Where(x => x.SellerId == request.SellerId
-                        && x.Category.ToString().Equals(normalizedCategory, StringComparison.OrdinalIgnoreCase)
+                        && x.Category == parsedCategory
                         && x.IsActive)
             .OrderBy(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken);
