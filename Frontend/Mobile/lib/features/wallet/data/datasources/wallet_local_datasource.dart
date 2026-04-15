@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/data/datasources/market_order_legacy_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/models/wallet_model.dart';
 
@@ -29,6 +30,7 @@ class WalletLocalDataSource {
 
   void _startFeedIfNeeded() {
     if (_marketTimer != null) return;
+    if (!AppReleaseConfig.enablePollingFallback) return;
 
     _marketTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       _tick++;

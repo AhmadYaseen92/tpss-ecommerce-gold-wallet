@@ -35,6 +35,12 @@ class ProductRepositoryImpl implements IProductRepository {
       pageNumber++;
     } while (allModels.length < totalCount && totalCount > 0);
 
+    allModels.sort((a, b) {
+      final aTimestamp = a.updatedAtUtc.isAfter(a.createdAtUtc) ? a.updatedAtUtc : a.createdAtUtc;
+      final bTimestamp = b.updatedAtUtc.isAfter(b.createdAtUtc) ? b.updatedAtUtc : b.createdAtUtc;
+      return bTimestamp.compareTo(aTimestamp);
+    });
+
     return allModels.map(_toEntity).toList();
   }
 
@@ -95,6 +101,8 @@ class ProductRepositoryImpl implements IProductRepository {
       isInCart: false,
       quantity: 1,
       sellerName: model.sellerName,
+      createdAtUtc: model.createdAtUtc,
+      updatedAtUtc: model.updatedAtUtc,
     );
   }
 

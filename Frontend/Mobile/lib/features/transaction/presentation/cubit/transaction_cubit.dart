@@ -24,6 +24,10 @@ class TransactionCubit extends Cubit<TransactionState> {
   bool _isLoading = false;
 
   TransactionCubit() : super(TransactionInitial()) {
+    if (!AppReleaseConfig.enablePollingFallback) {
+      return;
+    }
+
     _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (AuthSessionStore.userId != null && !_isLoading) {
         loadTransactions(seller: activeSeller, silent: true);

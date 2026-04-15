@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/models/market_symbol_model.dart';
 
 class ProductLocalDataSource {
@@ -23,6 +24,7 @@ class ProductLocalDataSource {
 
   void _startFeedIfNeeded() {
     if (_marketTimer != null) return;
+    if (!AppReleaseConfig.enablePollingFallback) return;
     final random = Random();
     _marketTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _symbols = _symbols.map((symbol) {

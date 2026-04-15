@@ -42,6 +42,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("hashchange", syncHashPath);
+  void marketplace.stopRealtimeSync();
 });
 
 watch(isDark, (value) => document.documentElement.classList.toggle("dark-mode", value));

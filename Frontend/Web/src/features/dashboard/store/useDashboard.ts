@@ -20,12 +20,12 @@ const CATEGORY_NAME_BY_ID: Record<string, string> = {
 
 const normalizeCategoryLabel = (rawCategory: string) => CATEGORY_NAME_BY_ID[rawCategory] ?? rawCategory;
 const isVisibleCategory = (category: string) => category.trim().toLowerCase() !== "spotmr";
+const ENABLE_REALTIME_FALLBACK_POLLING = false; // Temporary: disabled to validate pure SignalR behavior.
 
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
   const serverDashboard = ref<WebDashboardDto | null>(null);
-  let dashboardRefreshTimer: ReturnType<typeof setInterval> | null = null;
-
+  let fallbackDashboardTimer: ReturnType<typeof setInterval> | null = null;
   const loadDashboard = async () => {
     if (!marketplace.session.value?.accessToken) {
       serverDashboard.value = null;
@@ -43,17 +43,41 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
     void loadDashboard();
   }, { immediate: true });
 
-  onMounted(() => {
-    dashboardRefreshTimer = setInterval(() => {
-      void loadDashboard();
-      void marketplace.refreshMarketplaceState();
-    }, 10000);
+  watch(() => marketplace.stateVersion.value, () => {
+    void loadDashboard();
   });
 
+  const stopFallbackTimer = () => {
+    if (!fallbackDashboardTimer) return;
+    clearInterval(fallbackDashboardTimer);
+    fallbackDashboardTimer = null;
+  };
+
+  const ensureFallbackTimer = () => {
+    if (!ENABLE_REALTIME_FALLBACK_POLLING) return;
+    if (fallbackDashboardTimer) return;
+    fallbackDashboardTimer = setInterval(() => {
+      void loadDashboard();
+    }, 30000);
+  };
+
+  watch(() => marketplace.realtimeConnected.value, (connected) => {
+    if (connected) {
+      stopFallbackTimer();
+      return;
+    }
+
+    ensureFallbackTimer();
+  }, { immediate: true });
+
+  const handleRealtime = () => {
+    void loadDashboard();
+  };
+
+  onMounted(() => window.addEventListener("marketplace-realtime-event", handleRealtime));
   onUnmounted(() => {
-    if (!dashboardRefreshTimer) return;
-    clearInterval(dashboardRefreshTimer);
-    dashboardRefreshTimer = null;
+    window.removeEventListener("marketplace-realtime-event", handleRealtime);
+    stopFallbackTimer();
   });
 
   const dashboardCards = computed(() => {

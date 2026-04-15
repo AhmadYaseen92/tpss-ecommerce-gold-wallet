@@ -30,6 +30,9 @@ class MarketOrderCubit extends Cubit<MarketOrderState> {
     emit(MarketOrderLoading());
     _emitFiltered();
     _refreshTimer?.cancel();
+    if (!AppReleaseConfig.enablePollingFallback) {
+      return;
+    }
     _refreshTimer = Timer.periodic(_refreshInterval, (_) => _emitFiltered());
   }
 

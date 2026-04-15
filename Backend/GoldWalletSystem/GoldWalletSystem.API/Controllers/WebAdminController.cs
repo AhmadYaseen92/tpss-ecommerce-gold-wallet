@@ -1,5 +1,7 @@
 using System.Text.Json;
 using GoldWalletSystem.Application.DTOs.Common;
+using GoldWalletSystem.Application.Interfaces.Realtime;
+using GoldWalletSystem.Application.Realtime;
 using GoldWalletSystem.API.Models;
 using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Domain.Constants;
@@ -14,7 +16,10 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/web-admin")]
-public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardService dashboardService) : ControllerBase
+public class WebAdminController(
+    AppDbContext dbContext,
+    IWebAdminDashboardService dashboardService,
+    IMarketplaceRealtimeEventPublisher realtimeEventPublisher) : ControllerBase
 {
     private const string FeesConfigKey = "webadmin.fees";
 
@@ -95,6 +100,12 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(MarketplaceRealtimeEntities.Seller, "kyc-updated", id, sellerId: seller.Id),
+            cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(MarketplaceRealtimeEntities.Dashboard, "updated"),
+            cancellationToken);
         return Ok(ApiResponse<string>.Ok("updated"));
     }
 
@@ -129,6 +140,17 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         investor.IsActive = !request.Status.Equals("blocked", StringComparison.OrdinalIgnoreCase);
         investor.UpdatedAtUtc = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(
+                MarketplaceRealtimeEntities.Investor,
+                "status-updated",
+                id,
+                userId: investor.Id,
+                metadata: new Dictionary<string, string> { ["status"] = investor.IsActive ? "active" : "blocked" }),
+            cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(MarketplaceRealtimeEntities.Dashboard, "updated"),
+            cancellationToken);
 
         return Ok(ApiResponse<string>.Ok("updated"));
     }
@@ -221,6 +243,24 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(
+                MarketplaceRealtimeEntities.Request,
+                "status-updated",
+                id,
+                userId: item.UserId,
+                sellerId: item.SellerId,
+                metadata: new Dictionary<string, string> { ["status"] = nextStatus }),
+            cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(MarketplaceRealtimeEntities.Wallet, "updated", userId: item.UserId, sellerId: item.SellerId),
+            cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(MarketplaceRealtimeEntities.Notification, "created", userId: item.UserId),
+            cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(MarketplaceRealtimeEntities.Dashboard, "updated", userId: item.UserId, sellerId: item.SellerId),
+            cancellationToken);
 
         return Ok(ApiResponse<string>.Ok("updated"));
     }
@@ -311,6 +351,14 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         dbContext.Invoices.Add(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(
+                MarketplaceRealtimeEntities.Invoice,
+                "created",
+                $"inv-{entity.Id}",
+                userId: entity.InvestorUserId,
+                sellerId: entity.SellerUserId),
+            cancellationToken);
 
         request.Id = $"inv-{entity.Id}";
         return Ok(ApiResponse<WebInvoiceDto>.Ok(request));
@@ -331,6 +379,14 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         invoice.UpdatedAtUtc = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(
+                MarketplaceRealtimeEntities.Invoice,
+                "updated",
+                id,
+                userId: invoice.InvestorUserId,
+                sellerId: invoice.SellerUserId),
+            cancellationToken);
         return Ok(ApiResponse<string>.Ok("updated"));
     }
 
@@ -345,6 +401,14 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         dbContext.Invoices.Remove(invoice);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(
+                MarketplaceRealtimeEntities.Invoice,
+                "deleted",
+                id,
+                userId: invoice.InvestorUserId,
+                sellerId: invoice.SellerUserId),
+            cancellationToken);
         return Ok(ApiResponse<string>.Ok("deleted"));
     }
 
@@ -379,6 +443,9 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(MarketplaceRealtimeEntities.Dashboard, "fees-updated"),
+            cancellationToken);
         return Ok(ApiResponse<WebFeesDto>.Ok(request));
     }
 
@@ -425,6 +492,9 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         item.IsRead = true;
         item.UpdatedAtUtc = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(MarketplaceRealtimeEntities.Notification, "read", id, userId: item.UserId),
+            cancellationToken);
         return Ok(ApiResponse<string>.Ok("updated"));
     }
 

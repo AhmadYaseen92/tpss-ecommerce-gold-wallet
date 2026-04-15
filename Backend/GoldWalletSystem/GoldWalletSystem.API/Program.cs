@@ -1,6 +1,9 @@
 using GoldWalletSystem.API.Extensions;
+using GoldWalletSystem.API.Hubs;
 using GoldWalletSystem.API.Middleware;
+using GoldWalletSystem.API.Realtime;
 using GoldWalletSystem.API.Services;
+using GoldWalletSystem.Application.Interfaces.Realtime;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddOpenApi();
+builder.Services.AddSignalR();
 
 builder.Services.AddCors(options =>
 {
@@ -20,7 +24,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -37,6 +42,21 @@ var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "GoldWalletClient";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrWhiteSpace(accessToken) && path.StartsWithSegments("/hubs/marketplace"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -53,6 +73,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IWebAdminDashboardService, WebAdminDashboardService>();
+builder.Services.AddSingleton<MarketplaceRealtimeEventQueue>();
+builder.Services.AddSingleton<IMarketplaceRealtimeEventPublisher>(sp => sp.GetRequiredService<MarketplaceRealtimeEventQueue>());
+builder.Services.AddHostedService<MarketplaceRealtimeDispatcher>();
 
 var app = builder.Build();
 
@@ -79,4 +102,5 @@ app.UseAuthentication();
 app.UseMiddleware<AuditTrailMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<MarketplaceHub>("/hubs/marketplace");
 app.Run();

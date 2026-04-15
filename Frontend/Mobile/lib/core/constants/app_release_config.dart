@@ -10,6 +10,9 @@ class AppReleaseConfig {
   /// Feature flag for displaying calculated gram labels in UI.
   static const bool showWeightInGrams = true;
 
+  /// Temporary flag: disable periodic polling to validate SignalR-only behavior.
+  static const bool enablePollingFallback = false;
+
   static bool get showSellerUi => !isIndividualSellerRelease;
 
   static String get defaultSeller =>

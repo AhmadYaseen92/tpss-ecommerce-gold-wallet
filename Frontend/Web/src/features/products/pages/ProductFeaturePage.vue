@@ -4,6 +4,7 @@ import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMark
 import { useProductManagement } from "../store/useProductManagement";
 import ProductManagementPage from "./ProductManagementPage.vue";
 import SectionCard from "../../../shared/components/SectionCard.vue";
+import CommonModal from "../../../shared/components/CommonModal.vue";
 
 const { marketplace } = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
 const pm = useProductManagement(marketplace);
@@ -39,4 +40,10 @@ const weightUnits = computed(() => pm.weightUnits.value);
       @image="pm.onProductImageChange"
     />
   </SectionCard>
+  <CommonModal
+    :open="pm.actionModal.value.open"
+    :title="pm.actionModal.value.title"
+    :message="pm.actionModal.value.message"
+    @close="pm.closeActionModal"
+  />
 </template>

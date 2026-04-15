@@ -3,6 +3,7 @@ import { createManagedProduct, deleteManagedProduct, fetchManagedProducts, fetch
 import type { EnumItemDto, ProductManagementDto } from "../../../shared/types/apiTypes";
 import { goToProductRoute, syncProductRoute } from "../services/productRoute";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
+import { useActionModal } from "../../../shared/composables/useActionModal";
 
 export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const managedProducts = ref<ProductManagementDto[]>([]);
@@ -14,6 +15,13 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const productRouteId = ref<number | null>(null);
   const productForm = reactive<ProductFormPayload>({ name: "", sku: "", description: "", category: 0, weightValue: 0, weightUnit: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
   const validationErrors = reactive<Record<string, string>>({});
+  const { modal: actionModal, showSuccess, showError, close: closeActionModal } = useActionModal();
+
+  const isProductEntityEvent = (entity?: string) => {
+    const normalized = entity?.trim().toLowerCase();
+    if (!normalized) return false;
+    return normalized === "product" || normalized === "products";
+  };
 
   const resetProductForm = () => {
     Object.assign(productForm, { id: undefined, name: "", sku: "", description: "", category: categories.value[0]?.value ?? 0, weightValue: 0, weightUnit: weightUnits.value[0]?.value ?? 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
@@ -30,6 +38,9 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     managedProducts.value = await fetchManagedProducts(marketplace.session.value.accessToken);
     categories.value = await fetchProductCategories(marketplace.session.value.accessToken);
     weightUnits.value = await fetchWeightUnits(marketplace.session.value.accessToken);
+    if (selectedProduct.value) {
+      selectedProduct.value = managedProducts.value.find((item) => item.id === selectedProduct.value?.id) ?? null;
+    }
   };
 
   const syncRoute = () => syncProductRoute(managedProducts, productPage, productRouteId, selectedProduct, resetProductForm, fillProductForm);
@@ -58,12 +69,19 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     if (!marketplace.session.value?.accessToken) return;
     if (!validateProductForm()) return;
     try {
-      if (productPage.value === "edit" && productForm.id) await updateManagedProduct(marketplace.session.value.accessToken, productForm.id, productForm);
-      else await createManagedProduct(marketplace.session.value.accessToken, productForm);
+      if (productPage.value === "edit" && productForm.id) {
+        await updateManagedProduct(marketplace.session.value.accessToken, productForm.id, productForm);
+        showSuccess("Product updated successfully.");
+      } else {
+        await createManagedProduct(marketplace.session.value.accessToken, productForm);
+        showSuccess("Product created successfully.");
+      }
       await loadProductManagementData();
       navigate("#/products");
     } catch (error) {
-      productError.value = error instanceof Error ? error.message : "Failed to save product.";
+      const message = error instanceof Error ? error.message : "Failed to save product.";
+      productError.value = message;
+      showError(message);
     }
   };
 
@@ -72,8 +90,11 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     try {
       await deleteManagedProduct(marketplace.session.value.accessToken, id);
       await loadProductManagementData();
+      showSuccess("Product deleted successfully.");
     } catch (error) {
-      productError.value = error instanceof Error ? error.message : "Failed to delete product.";
+      const message = error instanceof Error ? error.message : "Failed to delete product.";
+      productError.value = message;
+      showError(message);
     }
   };
 
@@ -82,25 +103,63 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     try {
       await updateManagedProduct(marketplace.session.value.accessToken, product.id, { ...productForm, id: product.id, name: product.name, sku: product.sku, description: product.description, category: categories.value.find((x) => x.name === product.category)?.value ?? 0, weightValue: Number(product.weightValue), weightUnit: weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? 0, price: Number(product.price), availableStock: product.availableStock, isActive: !product.isActive, existingImageUrl: product.imageUrl });
       await loadProductManagementData();
+      showSuccess(`Product ${!product.isActive ? "activated" : "deactivated"} successfully.`);
     } catch (error) {
-      productError.value = error instanceof Error ? error.message : "Failed to update product state.";
+      const message = error instanceof Error ? error.message : "Failed to update product state.";
+      productError.value = message;
+      showError(message);
     }
   };
 
   watch(() => marketplace.session.value?.accessToken, () => void loadProductManagementData(), { immediate: true });
+  watch(() => marketplace.stateVersion.value, () => {
+    void loadProductManagementData();
+  });
+
+  const onRealtimeEvent = (event: Event) => {
+    const customEvent = event as CustomEvent<{ entity?: string }>;
+    if (!isProductEntityEvent(customEvent.detail?.entity)) return;
+    void loadProductManagementData();
+  };
 
   onMounted(() => {
     syncRoute();
     window.addEventListener("hashchange", syncRoute);
+    window.addEventListener("marketplace-realtime-event", onRealtimeEvent);
   });
 
   onUnmounted(() => {
     window.removeEventListener("hashchange", syncRoute);
+    window.removeEventListener("marketplace-realtime-event", onRealtimeEvent);
   });
 
   watch(managedProducts, () => {
     syncRoute();
   });
 
-  return { managedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, deleteProductRecord, toggleProductActive };
+  return {
+    managedProducts,
+    categories,
+    weightUnits,
+    selectedProduct,
+    productError,
+    productPage,
+    productRouteId,
+    productForm,
+    validationErrors,
+    actionModal,
+    closeActionModal,
+    resetProductForm,
+    loadProductManagementData,
+    fillProductForm,
+    syncRoute,
+    navigate,
+    openAddProduct,
+    openEditProduct,
+    openProductDetails,
+    onProductImageChange,
+    saveProduct,
+    deleteProductRecord,
+    toggleProductActive
+  };
 }

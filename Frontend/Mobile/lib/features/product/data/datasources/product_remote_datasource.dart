@@ -55,6 +55,8 @@ class ProductRemoteModel {
     required this.weightUnit,
     required this.sellerId,
     required this.sellerName,
+    required this.createdAtUtc,
+    required this.updatedAtUtc,
   });
 
   final int id;
@@ -69,6 +71,8 @@ class ProductRemoteModel {
   final String weightUnit;
   final int sellerId;
   final String sellerName;
+  final DateTime createdAtUtc;
+  final DateTime updatedAtUtc;
 
   factory ProductRemoteModel.fromJson(Map<String, dynamic> json) {
     return ProductRemoteModel(
@@ -84,7 +88,15 @@ class ProductRemoteModel {
       weightUnit: _parseWeightUnit(json['weightUnit']),
       sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
       sellerName: (json['sellerName'] ?? '') as String,
+      createdAtUtc: _parseDateTime(json['createdAtUtc']),
+      updatedAtUtc: _parseDateTime(json['updatedAtUtc'] ?? json['createdAtUtc']),
     );
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    final rawValue = (value ?? '').toString();
+    final parsed = DateTime.tryParse(rawValue)?.toUtc();
+    return parsed ?? DateTime.now().toUtc();
   }
 
   static int _parseCategoryId(dynamic categoryValue) {
