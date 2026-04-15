@@ -4,6 +4,7 @@ using GoldWalletSystem.API.Middleware;
 using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.DependencyInjection;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -72,6 +73,7 @@ app.UseCors("WebApp");
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await BaselineInitialMigrationForExistingDatabaseAsync(dbContext);
     await dbContext.Database.MigrateAsync();
 }
 
@@ -85,3 +87,52 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<MarketplaceHub>("/hubs/marketplace");
 app.Run();
+
+static async Task BaselineInitialMigrationForExistingDatabaseAsync(AppDbContext dbContext)
+{
+    const string initialMigrationId = "20260414122117_InitialCreate";
+    const string productVersion = "10.0.5";
+    const string baselineTableName = "MobileAppConfigurations";
+
+    var connectionString = dbContext.Database.GetConnectionString()
+        ?? throw new InvalidOperationException("Database connection string is not configured.");
+    await using var connection = new SqlConnection(connectionString);
+    await connection.OpenAsync();
+
+    await using var detectCommand = connection.CreateCommand();
+    detectCommand.CommandText = """
+                                SELECT CASE
+                                    WHEN OBJECT_ID(N'[dbo].[' + @TableName + ']', N'U') IS NOT NULL THEN 1
+                                    ELSE 0
+                                END;
+                                """;
+    detectCommand.Parameters.AddWithValue("@TableName", baselineTableName);
+
+    var tableExists = Convert.ToInt32(await detectCommand.ExecuteScalarAsync()) == 1;
+    if (!tableExists)
+    {
+        return;
+    }
+
+    await using var baselineCommand = connection.CreateCommand();
+    baselineCommand.CommandText = """
+                                  IF OBJECT_ID(N'[__EFMigrationsHistory]', N'U') IS NULL
+                                  BEGIN
+                                      CREATE TABLE [__EFMigrationsHistory]
+                                      (
+                                          [MigrationId] nvarchar(150) NOT NULL,
+                                          [ProductVersion] nvarchar(32) NOT NULL,
+                                          CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+                                      );
+                                  END;
+
+                                  IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = @MigrationId)
+                                  BEGIN
+                                      INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+                                      VALUES (@MigrationId, @ProductVersion);
+                                  END;
+                                  """;
+    baselineCommand.Parameters.AddWithValue("@MigrationId", initialMigrationId);
+    baselineCommand.Parameters.AddWithValue("@ProductVersion", productVersion);
+    await baselineCommand.ExecuteNonQueryAsync();
+}
