@@ -224,7 +224,7 @@ public class ProductsController(
     {
         if (image is null || image.Length == 0)
         {
-            return existingImageUrl ?? string.Empty;
+            return NormalizeStoredImagePath(existingImageUrl);
         }
 
         var root = environment.WebRootPath;
@@ -244,6 +244,21 @@ public class ProductsController(
         await image.CopyToAsync(stream, cancellationToken);
 
         return $"/images/products/{fileName}";
+    }
+
+    private string NormalizeStoredImagePath(string? rawPath)
+    {
+        if (string.IsNullOrWhiteSpace(rawPath))
+        {
+            return string.Empty;
+        }
+
+        if (Uri.TryCreate(rawPath, UriKind.Absolute, out var absoluteUri))
+        {
+            return absoluteUri.AbsolutePath;
+        }
+
+        return rawPath.StartsWith('/') ? rawPath : $"/{rawPath}";
     }
 
     private string ToAbsoluteAssetUrl(string path)

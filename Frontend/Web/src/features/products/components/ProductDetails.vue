@@ -6,6 +6,10 @@ defineProps<{ product: ProductListItem | null }>();
 
 <template>
   <div class="product-details" v-if="product">
+    <p v-if="product.imageUrl">
+      <strong>Image:</strong><br />
+      <img :src="product.imageUrl" :alt="product.name" style="max-width: 260px; border-radius: 10px; margin-top: 8px;" />
+    </p>
     <p><strong>Name:</strong> {{ product.name }}</p>
     <p><strong>Sku:</strong> {{ product.sku }}</p>
     <p><strong>Description:</strong> {{ product.description }}</p>

@@ -50,12 +50,19 @@ class ProductCubit extends Cubit<ProductState> {
   int quantity = 1;
 
   StreamSubscription<List<MarketSymbolEntity>>? _marketSubscription;
+  Timer? _productsAutoRefreshTimer;
+  bool _isRefreshingProducts = false;
 
   Future<void> loadProducts({
     String seller = AppReleaseConfig.allSellersLabel,
     int? categoryId,
+    bool silent = false,
   }) async {
-    emit(ProductLoading());
+    if (_isRefreshingProducts) return;
+    _isRefreshingProducts = true;
+    if (!silent) {
+      emit(ProductLoading());
+    }
     try {
       selectedCategoryId = categoryId;
       allProducts = await _getProductsUseCase(categoryId: selectedCategoryId);
@@ -65,8 +72,11 @@ class ProductCubit extends Cubit<ProductState> {
 
       _emitCatalog();
       await _startMarketWatch();
+      _startProductsAutoRefresh();
     } catch (e) {
       emit(ProductError('Failed to load products: $e'));
+    } finally {
+      _isRefreshingProducts = false;
     }
   }
 
@@ -136,6 +146,19 @@ class ProductCubit extends Cubit<ProductState> {
     });
   }
 
+  void _startProductsAutoRefresh() {
+    if (_productsAutoRefreshTimer != null) return;
+    _productsAutoRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      unawaited(
+        loadProducts(
+          seller: activeSeller,
+          categoryId: selectedCategoryId,
+          silent: true,
+        ),
+      );
+    });
+  }
+
   void _emitCatalog() {
     visibleCatalogProducts = _filterProductsUseCase(
       products: allProducts,
@@ -167,6 +190,7 @@ class ProductCubit extends Cubit<ProductState> {
 
   @override
   Future<void> close() async {
+    _productsAutoRefreshTimer?.cancel();
     await _marketSubscription?.cancel();
     return super.close();
   }
