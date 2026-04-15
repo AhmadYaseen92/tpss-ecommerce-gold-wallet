@@ -129,7 +129,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         investor.IsActive = !request.Status.Equals("blocked", StringComparison.OrdinalIgnoreCase);
         investor.UpdatedAtUtc = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
-        await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{nextStatus}", cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"investor-status:{userId}:{request.Status}", cancellationToken);
 
         return Ok(ApiResponse<string>.Ok("updated"));
     }
