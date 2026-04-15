@@ -6,10 +6,10 @@ public sealed record MarketplaceRealtimeEvent(
     string? ItemId = null,
     int? UserId = null,
     int? SellerId = null,
-    DateTime? OccurredAtUtc = null,
+    DateTime? EventOccurredAtUtc = null,
     Dictionary<string, string>? Metadata = null)
 {
-    public DateTime OccurredAtUtc { get; init; } = OccurredAtUtc ?? DateTime.UtcNow;
+    public DateTime OccurredAtUtc { get; init; } = EventOccurredAtUtc ?? DateTime.UtcNow;
 
     public static MarketplaceRealtimeEvent Build(
         string entity,
