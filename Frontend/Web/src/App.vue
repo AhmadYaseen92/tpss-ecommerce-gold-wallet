@@ -35,6 +35,7 @@ const syncHashPath = () => {
 };
 
 onMounted(() => {
+  void marketplace.restoreSession();
   syncHashPath();
   window.addEventListener("hashchange", syncHashPath);
 });

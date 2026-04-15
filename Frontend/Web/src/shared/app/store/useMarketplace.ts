@@ -35,7 +35,6 @@ import {
 import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
 
 const SESSION_STORAGE_KEY = "goldwallet.web.session";
-const AUTO_REFRESH_MS = 10000;
 
 function readStoredSession(): UserSession | null {
   if (typeof window === "undefined") return null;
@@ -57,7 +56,6 @@ export function useMarketplace() {
   const state = ref<MarketplaceState>(structuredClone(mockMarketplaceState));
   const loading = ref(false);
   const error = ref("");
-  let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   const activeSeller = computed(() => {
     if (!session.value?.sellerId) return state.value.sellers[0];
@@ -89,7 +87,6 @@ export function useMarketplace() {
       if (typeof window !== "undefined") {
         window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(authSession));
       }
-      startAutoRefresh();
     } catch (err) {
       if (err instanceof TypeError) {
         error.value = "Cannot reach API server. Check VITE_API_BASE_URL and backend CORS/run status.";
@@ -185,7 +182,6 @@ export function useMarketplace() {
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(SESSION_STORAGE_KEY);
     }
-    stopAutoRefresh();
   };
 
   const refreshMarketplaceState = async () => {
@@ -197,28 +193,11 @@ export function useMarketplace() {
     }
   };
 
-  const startAutoRefresh = () => {
-    if (refreshTimer || !session.value?.accessToken) return;
-    refreshTimer = setInterval(() => {
-      void refreshMarketplaceState();
-    }, AUTO_REFRESH_MS);
-  };
-
-  const stopAutoRefresh = () => {
-    if (!refreshTimer) return;
-    clearInterval(refreshTimer);
-    refreshTimer = null;
-  };
-
   const restoreSession = async () => {
     if (!session.value?.accessToken) return;
     role.value = session.value.role;
     await refreshMarketplaceState();
-    startAutoRefresh();
   };
-
-  // Auto-restore on page refresh.
-  void restoreSession();
 
   return {
     role,
@@ -246,7 +225,8 @@ export function useMarketplace() {
     updateFees,
     updateInvestorStatus,
     updateRequestStatus,
-    readNotification
+    readNotification,
+    refreshMarketplaceState
   };
 }
 

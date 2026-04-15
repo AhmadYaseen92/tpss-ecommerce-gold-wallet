@@ -1,5 +1,6 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
@@ -19,12 +20,21 @@ class TransactionCubit extends Cubit<TransactionState> {
 
   final Dio _dio = DioFactory.create();
   List<TransactionModel> _allTransactions = [];
+  Timer? _refreshTimer;
+  bool _isLoading = false;
 
-  TransactionCubit() : super(TransactionInitial());
+  TransactionCubit() : super(TransactionInitial()) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (AuthSessionStore.userId != null && !_isLoading) {
+        loadTransactions(seller: activeSeller);
+      }
+    });
+  }
 
   Future<void> loadTransactions({
     String seller = AppReleaseConfig.allSellersLabel,
   }) async {
+    if (_isLoading) return;
     activeSeller = AppReleaseConfig.isIndividualSellerRelease
         ? AppReleaseConfig.individualSellerName
         : seller;
@@ -36,6 +46,7 @@ class TransactionCubit extends Cubit<TransactionState> {
     }
 
     emit(TransactionLoading());
+    _isLoading = true;
     try {
       final response = await _dio.post(
         '/transaction-history/filter',
@@ -57,6 +68,8 @@ class TransactionCubit extends Cubit<TransactionState> {
       emit(TransactionLoaded(transactions: _applyAllFilters()));
     } catch (e) {
       emit(TransactionError('Failed to load transactions: $e'));
+    } finally {
+      _isLoading = false;
     }
   }
 
@@ -123,5 +136,11 @@ class TransactionCubit extends Cubit<TransactionState> {
   void filterByCategory(int? categoryId) {
     selectedCategoryId = categoryId;
     applyFilters(selectedPeriod, selectedType, selectedStatus);
+  }
+
+  @override
+  Future<void> close() {
+    _refreshTimer?.cancel();
+    return super.close();
   }
 }

@@ -14,7 +14,18 @@ const syncPath = () => {
   currentPath.value = window.location.hash.replace(/^#/, "");
 };
 onMounted(() => window.addEventListener("hashchange", syncPath));
-onUnmounted(() => window.removeEventListener("hashchange", syncPath));
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+onMounted(() => {
+  refreshTimer = setInterval(() => {
+    void props.marketplace.refreshMarketplaceState();
+  }, 10000);
+});
+onUnmounted(() => {
+  window.removeEventListener("hashchange", syncPath);
+  if (!refreshTimer) return;
+  clearInterval(refreshTimer);
+  refreshTimer = null;
+});
 const detailsId = computed(() => {
   const match = currentPath.value.match(/^\/transactions\/(.+)$/);
   return match?.[1] ?? null;
