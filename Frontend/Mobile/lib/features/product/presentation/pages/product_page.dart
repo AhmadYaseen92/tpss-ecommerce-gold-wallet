@@ -9,24 +9,39 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/p
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/catalog_tab_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/market_watch_tab_widget.dart';
 
-class ProductPage extends StatelessWidget {
+class ProductPage extends StatefulWidget {
   const ProductPage({super.key});
 
   @override
+  State<ProductPage> createState() => _ProductPageState();
+}
+
+class _ProductPageState extends State<ProductPage> {
+  late final ProductCubit _productCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _productCubit = ProductCubit(
+      getProductsUseCase: InjectionContainer.getProductsUseCase(),
+      getProductDetailUseCase: InjectionContainer.getProductDetailUseCase(),
+      toggleProductFavoriteUseCase: InjectionContainer.toggleProductFavoriteUseCase(),
+      addProductToCartUseCase: InjectionContainer.addProductToCartUseCase(),
+      watchMarketSymbolsUseCase: InjectionContainer.watchMarketSymbolsUseCase(),
+    );
+    _productCubit.loadProducts(seller: context.read<AppCubit>().state.selectedSeller);
+  }
+
+  @override
+  void dispose() {
+    _productCubit.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final activeSeller = context.watch<AppCubit>().state.selectedSeller;
-    return BlocProvider(
-      create: (context) {
-        final productCubit = ProductCubit(
-          getProductsUseCase: InjectionContainer.getProductsUseCase(),
-          getProductDetailUseCase: InjectionContainer.getProductDetailUseCase(),
-          toggleProductFavoriteUseCase: InjectionContainer.toggleProductFavoriteUseCase(),
-          addProductToCartUseCase: InjectionContainer.addProductToCartUseCase(),
-          watchMarketSymbolsUseCase: InjectionContainer.watchMarketSymbolsUseCase(),
-        );
-        productCubit.loadProducts(seller: activeSeller);
-        return productCubit;
-      },
+    return BlocProvider.value(
+      value: _productCubit,
       child: Builder(
         builder: (context) {
           return DefaultTabController(
