@@ -287,54 +287,64 @@ class TransactionPage extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
-        final rows = <MapEntry<String, String>>[
-          MapEntry('Id', '${transaction.id}'),
-          MapEntry('UserId', '${transaction.userId}'),
-          MapEntry('SellerId', '${transaction.sellerId ?? '-'}'),
-          MapEntry('Investor Name', transaction.investorName),
-          MapEntry('TransactionType', transaction.transactionType),
-          MapEntry('Status', transaction.status),
-          MapEntry('Category', transaction.category),
-          MapEntry('Quantity', '${transaction.quantity}'),
-          MapEntry('UnitPrice', transaction.unitPrice.toStringAsFixed(2)),
-          MapEntry('Weight', transaction.weight.toStringAsFixed(3)),
-          MapEntry('Unit', transaction.unit),
-          MapEntry('Purity', transaction.purity.toStringAsFixed(2)),
-          MapEntry('Amount', '${transaction.amount.toStringAsFixed(2)} ${transaction.currency}'),
-          MapEntry('Notes', transaction.notes.isEmpty ? '-' : transaction.notes),
-          MapEntry('CreatedAtUtc', _dateFormat.format(transaction.createdAtUtc.toLocal())),
-          MapEntry(
-            'UpdatedAtUtc',
-            transaction.updatedAtUtc == null ? '-' : _dateFormat.format(transaction.updatedAtUtc!.toLocal()),
-          ),
-        ];
+        final updatedText = _dateFormat.format(transaction.displayDate.toLocal());
+        final createdText = _dateFormat.format(transaction.createdAtUtc.toLocal());
 
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Transaction Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
+                const Text(
+                  'Transaction Details',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${transaction.amount.toStringAsFixed(2)} ${transaction.currency}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _detailChip('Type', transaction.transactionType),
+                            _detailChip('Status', transaction.status),
+                            _detailChip('Category', transaction.category),
+                            _detailChip('Qty', '${transaction.quantity}'),
+                            _detailChip('Weight', '${transaction.weight.toStringAsFixed(3)} ${transaction.unit}'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Flexible(
                   child: SingleChildScrollView(
                     child: Column(
-                      children: rows
-                          .map(
-                            (entry) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(width: 120, child: Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w600))),
-                                  const SizedBox(width: 8),
-                                  Expanded(child: Text(entry.value)),
-                                ],
-                              ),
-                            ),
-                          )
-                          .toList(),
+                      children: [
+                        _detailRow('Id', '${transaction.id}'),
+                        _detailRow('UserId', '${transaction.userId}'),
+                        _detailRow('SellerId', '${transaction.sellerId ?? '-'}'),
+                        _detailRow('Unit Price', transaction.unitPrice.toStringAsFixed(2)),
+                        _detailRow('Purity', transaction.purity.toStringAsFixed(2)),
+                        _detailRow('Created', createdText),
+                        _detailRow('Updated', updatedText),
+                        _detailRow('Notes', transaction.notes.isEmpty ? '-' : transaction.notes),
+                      ],
                     ),
                   ),
                 ),
@@ -343,6 +353,37 @@ class TransactionPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.black.withOpacity(0.06),
+      ),
+      child: Text('$label: $value'),
     );
   }
 }

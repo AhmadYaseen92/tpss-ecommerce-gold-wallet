@@ -26,13 +26,14 @@ class TransactionCubit extends Cubit<TransactionState> {
   TransactionCubit() : super(TransactionInitial()) {
     _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (AuthSessionStore.userId != null && !_isLoading) {
-        loadTransactions(seller: activeSeller);
+        loadTransactions(seller: activeSeller, silent: true);
       }
     });
   }
 
   Future<void> loadTransactions({
     String seller = AppReleaseConfig.allSellersLabel,
+    bool silent = false,
   }) async {
     if (_isLoading) return;
     activeSeller = AppReleaseConfig.isIndividualSellerRelease
@@ -45,7 +46,9 @@ class TransactionCubit extends Cubit<TransactionState> {
       return;
     }
 
-    emit(TransactionLoading());
+    if (!silent) {
+      emit(TransactionLoading());
+    }
     _isLoading = true;
     try {
       final response = await _dio.post(

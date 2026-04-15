@@ -56,7 +56,9 @@ class TransactionModel {
       currency: (json['currency'] ?? 'USD') as String,
       createdAtUtc:
           DateTime.tryParse((json['createdAtUtc'] ?? '').toString()) ?? DateTime.now().toUtc(),
-      updatedAtUtc: DateTime.tryParse((json['updatedAtUtc'] ?? '').toString()),
+      updatedAtUtc: DateTime.tryParse(
+        (json['updatedAtUtc'] ?? json['updatedAt'] ?? '').toString(),
+      ),
     );
   }
 
