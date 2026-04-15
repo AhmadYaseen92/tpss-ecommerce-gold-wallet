@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
@@ -9,39 +8,26 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/p
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/catalog_tab_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/market_watch_tab_widget.dart';
 
-class ProductPage extends StatefulWidget {
+class ProductPage extends StatelessWidget {
   const ProductPage({super.key});
 
   @override
-  State<ProductPage> createState() => _ProductPageState();
-}
-
-class _ProductPageState extends State<ProductPage> {
-  late final ProductCubit _productCubit;
-
-  @override
-  void initState() {
-    super.initState();
-    _productCubit = ProductCubit(
-      getProductsUseCase: InjectionContainer.getProductsUseCase(),
-      getProductDetailUseCase: InjectionContainer.getProductDetailUseCase(),
-      toggleProductFavoriteUseCase: InjectionContainer.toggleProductFavoriteUseCase(),
-      addProductToCartUseCase: InjectionContainer.addProductToCartUseCase(),
-      watchMarketSymbolsUseCase: InjectionContainer.watchMarketSymbolsUseCase(),
-    );
-    _productCubit.loadProducts(seller: context.read<AppCubit>().state.selectedSeller);
-  }
-
-  @override
-  void dispose() {
-    _productCubit.close();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _productCubit,
+    return BlocProvider(
+      create: (context) {
+        final productCubit = ProductCubit(
+          getProductsUseCase: InjectionContainer.getProductsUseCase(),
+          getProductDetailUseCase: InjectionContainer.getProductDetailUseCase(),
+          toggleProductFavoriteUseCase: InjectionContainer.toggleProductFavoriteUseCase(),
+          addProductToCartUseCase: InjectionContainer.addProductToCartUseCase(),
+          watchMarketSymbolsUseCase: InjectionContainer.watchMarketSymbolsUseCase(),
+        );
+
+        productCubit.loadProducts(
+          seller: context.read<AppCubit>().state.selectedSeller,
+        );
+        return productCubit;
+      },
       child: Builder(
         builder: (context) {
           return DefaultTabController(
@@ -51,8 +37,7 @@ class _ProductPageState extends State<ProductPage> {
               child: BlocListener<AppCubit, AppState>(
                 listenWhen: (previous, current) =>
                     previous.selectedSeller != current.selectedSeller ||
-                    previous.checkoutRefreshTick !=
-                        current.checkoutRefreshTick,
+                    previous.checkoutRefreshTick != current.checkoutRefreshTick,
                 listener: (context, state) {
                   context.read<ProductCubit>().loadProducts(
                     seller: state.selectedSeller,
@@ -62,12 +47,11 @@ class _ProductPageState extends State<ProductPage> {
                 child: Column(
                   children: [
                     TabBar(
-                      labelStyle: Theme.of(context).textTheme.titleMedium!
-                          .copyWith(fontWeight: FontWeight.bold),
+                      labelStyle: Theme.of(context).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold),
                       labelColor: context.appPalette.primary,
                       unselectedLabelColor: context.appPalette.textSecondary,
                       indicatorColor: context.appPalette.primary,
-                      tabs: [
+                      tabs: const [
                         Tab(text: 'Catalog'),
                         Tab(text: 'Market Watch'),
                       ],
@@ -77,28 +61,18 @@ class _ProductPageState extends State<ProductPage> {
                       child: TabBarView(
                         children: [
                           RefreshIndicator(
-                            onRefresh: () => context
-                                .read<ProductCubit>()
-                                .loadProducts(
-                                  seller:
-                                      context.read<ProductCubit>().activeSeller,
-                                  categoryId: context
-                                      .read<ProductCubit>()
-                                      .selectedCategoryId,
-                                ),
-                            child: CatalogTabWidget(),
+                            onRefresh: () => context.read<ProductCubit>().loadProducts(
+                              seller: context.read<ProductCubit>().activeSeller,
+                              categoryId: context.read<ProductCubit>().selectedCategoryId,
+                            ),
+                            child: const CatalogTabWidget(),
                           ),
                           RefreshIndicator(
-                            onRefresh: () => context
-                                .read<ProductCubit>()
-                                .loadProducts(
-                                  seller:
-                                      context.read<ProductCubit>().activeSeller,
-                                  categoryId: context
-                                      .read<ProductCubit>()
-                                      .selectedCategoryId,
-                                ),
-                            child: MarketWatchTabWidget(),
+                            onRefresh: () => context.read<ProductCubit>().loadProducts(
+                              seller: context.read<ProductCubit>().activeSeller,
+                              categoryId: context.read<ProductCubit>().selectedCategoryId,
+                            ),
+                            child: const MarketWatchTabWidget(),
                           ),
                         ],
                       ),
