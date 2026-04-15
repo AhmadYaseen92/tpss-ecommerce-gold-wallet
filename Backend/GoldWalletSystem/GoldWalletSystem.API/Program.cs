@@ -1,4 +1,5 @@
 using GoldWalletSystem.API.Extensions;
+using GoldWalletSystem.API.Hubs;
 using GoldWalletSystem.API.Middleware;
 using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
@@ -20,7 +21,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -52,7 +54,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddSignalR();
 builder.Services.AddScoped<IWebAdminDashboardService, WebAdminDashboardService>();
+builder.Services.AddScoped<IMarketplaceRealtimeNotifier, MarketplaceRealtimeNotifier>();
 
 var app = builder.Build();
 
@@ -79,4 +83,5 @@ app.UseAuthentication();
 app.UseMiddleware<AuditTrailMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<MarketplaceHub>("/hubs/marketplace");
 app.Run();

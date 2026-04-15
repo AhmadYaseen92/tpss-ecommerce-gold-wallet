@@ -50,6 +50,7 @@ class ProductCubit extends Cubit<ProductState> {
   int quantity = 1;
 
   StreamSubscription<List<MarketSymbolEntity>>? _marketSubscription;
+  Timer? _productRefreshTimer;
 
   Future<void> loadProducts({
     String seller = AppReleaseConfig.allSellersLabel,
@@ -65,6 +66,7 @@ class ProductCubit extends Cubit<ProductState> {
 
       _emitCatalog();
       await _startMarketWatch();
+      _startProductAutoRefresh();
     } catch (e) {
       emit(ProductError('Failed to load products: $e'));
     }
@@ -128,6 +130,23 @@ class ProductCubit extends Cubit<ProductState> {
     return quantity;
   }
 
+
+  Future<void> _silentRefreshProducts() async {
+    try {
+      allProducts = await _getProductsUseCase(categoryId: selectedCategoryId);
+      _emitCatalog();
+    } catch (_) {
+      // Keep last rendered catalog on background refresh failures.
+    }
+  }
+
+  void _startProductAutoRefresh() {
+    _productRefreshTimer?.cancel();
+    _productRefreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      unawaited(_silentRefreshProducts());
+    });
+  }
+
   Future<void> _startMarketWatch() async {
     await _marketSubscription?.cancel();
     _marketSubscription = _watchMarketSymbolsUseCase().listen((symbols) {
@@ -167,6 +186,7 @@ class ProductCubit extends Cubit<ProductState> {
 
   @override
   Future<void> close() async {
+    _productRefreshTimer?.cancel();
     await _marketSubscription?.cancel();
     return super.close();
   }
