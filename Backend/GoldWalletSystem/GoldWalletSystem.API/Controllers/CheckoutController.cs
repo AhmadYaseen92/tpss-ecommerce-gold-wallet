@@ -1,5 +1,7 @@
 using GoldWalletSystem.Application.DTOs.Common;
+using GoldWalletSystem.Application.Interfaces.Realtime;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.Application.Realtime;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
@@ -12,7 +14,10 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/checkout")]
-public class CheckoutController(AppDbContext dbContext, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
+public class CheckoutController(
+    AppDbContext dbContext,
+    ICurrentUserService currentUser,
+    IMarketplaceRealtimeEventPublisher realtimeEventPublisher) : SecuredControllerBase(currentUser)
 {
     [HttpPost("confirm")]
     public async Task<IActionResult> Confirm([FromBody] CheckoutConfirmRequest request, CancellationToken cancellationToken = default)
@@ -90,7 +95,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             var grams = ToGrams(product.WeightValue, product.WeightUnit) * quantity;
             var purity = ParsePurity(product.Description);
 
-            dbContext.TransactionHistories.Add(new TransactionHistory
+            var transaction = new TransactionHistory
             {
                 UserId = request.UserId,
                 SellerId = product.SellerId,
@@ -106,7 +111,9 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
                 Amount = product.Price * quantity,
                 Currency = wallet.CurrencyCode,
                 CreatedAtUtc = DateTime.UtcNow,
-            });
+            };
+
+            dbContext.TransactionHistories.Add(transaction);
         }
 
         if (fromCart && cart is not null)
@@ -133,6 +140,21 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        foreach (var (product, _) in lines)
+        {
+            await realtimeEventPublisher.PublishAsync(
+                MarketplaceRealtimeEvent.Build(
+                    MarketplaceRealtimeEntities.Request,
+                    "created",
+                    null,
+                    userId: request.UserId,
+                    sellerId: product.SellerId),
+                cancellationToken);
+        }
+
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(MarketplaceRealtimeEntities.Dashboard, "updated", userId: request.UserId),
+            cancellationToken);
 
         return Ok(ApiResponse<object>.Ok(new
         {

@@ -89,13 +89,21 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
 
   watch(() => marketplace.session.value?.accessToken, () => void loadProductManagementData(), { immediate: true });
 
+  const onRealtimeEvent = (event: Event) => {
+    const customEvent = event as CustomEvent<{ entity?: string }>;
+    if (customEvent.detail?.entity?.toLowerCase() !== "product") return;
+    void loadProductManagementData();
+  };
+
   onMounted(() => {
     syncRoute();
     window.addEventListener("hashchange", syncRoute);
+    window.addEventListener("marketplace-realtime-event", onRealtimeEvent);
   });
 
   onUnmounted(() => {
     window.removeEventListener("hashchange", syncRoute);
+    window.removeEventListener("marketplace-realtime-event", onRealtimeEvent);
   });
 
   watch(managedProducts, () => {

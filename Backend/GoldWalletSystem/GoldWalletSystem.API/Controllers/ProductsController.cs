@@ -1,6 +1,8 @@
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Products;
+using GoldWalletSystem.Application.Interfaces.Realtime;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.Application.Realtime;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
@@ -14,7 +16,11 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/products")]
-public class ProductsController(IProductService productService, AppDbContext dbContext, IWebHostEnvironment environment) : ControllerBase
+public class ProductsController(
+    IProductService productService,
+    AppDbContext dbContext,
+    IWebHostEnvironment environment,
+    IMarketplaceRealtimeEventPublisher realtimeEventPublisher) : ControllerBase
 {
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] ProductSearchRequestDto request, CancellationToken cancellationToken = default)
@@ -115,6 +121,14 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
         dbContext.Products.Add(product);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(
+                MarketplaceRealtimeEntities.Product,
+                "created",
+                $"p-{product.Id}",
+                sellerId: product.SellerId,
+                metadata: new Dictionary<string, string> { ["stock"] = product.AvailableStock.ToString(), ["active"] = product.IsActive.ToString() }),
+            cancellationToken);
 
         return Ok(ApiResponse<string>.Ok("Created"));
     }
@@ -147,6 +161,14 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.SellerId = ResolveSellerId(request.SellerId, product.SellerId);
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(
+                MarketplaceRealtimeEntities.Product,
+                "updated",
+                $"p-{product.Id}",
+                sellerId: product.SellerId,
+                metadata: new Dictionary<string, string> { ["stock"] = product.AvailableStock.ToString(), ["active"] = product.IsActive.ToString(), ["price"] = product.Price.ToString("0.####") }),
+            cancellationToken);
         return Ok(ApiResponse<string>.Ok("Updated"));
     }
 
@@ -161,6 +183,13 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
         dbContext.Products.Remove(product);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeEventPublisher.PublishAsync(
+            MarketplaceRealtimeEvent.Build(
+                MarketplaceRealtimeEntities.Product,
+                "deleted",
+                $"p-{id}",
+                sellerId: product.SellerId),
+            cancellationToken);
         return Ok(ApiResponse<string>.Ok("Deleted"));
     }
 

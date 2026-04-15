@@ -24,8 +24,6 @@ const isVisibleCategory = (category: string) => category.trim().toLowerCase() !=
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
   const serverDashboard = ref<WebDashboardDto | null>(null);
-  let dashboardRefreshTimer: ReturnType<typeof setInterval> | null = null;
-
   const loadDashboard = async () => {
     if (!marketplace.session.value?.accessToken) {
       serverDashboard.value = null;
@@ -43,18 +41,12 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
     void loadDashboard();
   }, { immediate: true });
 
-  onMounted(() => {
-    dashboardRefreshTimer = setInterval(() => {
-      void loadDashboard();
-      void marketplace.refreshMarketplaceState();
-    }, 10000);
-  });
+  const handleRealtime = () => {
+    void loadDashboard();
+  };
 
-  onUnmounted(() => {
-    if (!dashboardRefreshTimer) return;
-    clearInterval(dashboardRefreshTimer);
-    dashboardRefreshTimer = null;
-  });
+  onMounted(() => window.addEventListener("marketplace-realtime-event", handleRealtime));
+  onUnmounted(() => window.removeEventListener("marketplace-realtime-event", handleRealtime));
 
   const dashboardCards = computed(() => {
     if (serverDashboard.value?.cards?.length) {

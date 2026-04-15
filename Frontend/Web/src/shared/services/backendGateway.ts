@@ -211,11 +211,7 @@ export async function updateSellerKycStatusByAdmin(
 }
 
 export async function fetchMarketplaceState(session: UserSession): Promise<MarketplaceState> {
-  const productsResult = await postJson<PagedResult<ProductDto>, { pageNumber: number; pageSize: number; category: null }>(
-    "/api/products/search",
-    { pageNumber: 1, pageSize: 50, category: null },
-    session.accessToken
-  );
+  const productsResult = await fetchProductsResult(session.accessToken, 50);
 
   const dashboard = await postJson<DashboardDto, { userId: number }>(
     "/api/dashboard/by-user",
@@ -280,6 +276,28 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     reports: mapReports(dashboard, requests.length),
     currentUserName: dashboard.fullName
   };
+}
+
+async function fetchProductsResult(accessToken: string, pageSize: number): Promise<PagedResult<ProductDto>> {
+  return postJson<PagedResult<ProductDto>, { pageNumber: number; pageSize: number; category: null }>(
+    "/api/products/search",
+    { pageNumber: 1, pageSize, category: null },
+    accessToken
+  );
+}
+
+export async function fetchMarketplaceProducts(accessToken: string): Promise<Product[]> {
+  const productsResult = await fetchProductsResult(accessToken, 100);
+  return productsResult.items.map(mapProduct);
+}
+
+export async function fetchMarketplaceRequests(accessToken: string): Promise<InvestorRequest[]> {
+  const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", accessToken);
+  return mapWebRequests(webRequests);
+}
+
+export async function fetchMarketplaceSellers(accessToken: string): Promise<Seller[]> {
+  return fetchSellers(accessToken);
 }
 
 export async function fetchWebAdminDashboard(accessToken: string, period: "today" | "week" | "month"): Promise<WebDashboardDto> {

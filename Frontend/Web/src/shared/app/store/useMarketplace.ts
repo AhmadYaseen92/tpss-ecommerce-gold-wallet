@@ -26,6 +26,9 @@ import type {
   UserSession
 } from "../../types/models";
 import {
+  fetchMarketplaceProducts,
+  fetchMarketplaceRequests,
+  fetchMarketplaceSellers,
   fetchMarketplaceState,
   loginWithBackend,
   registerSellerWithBackend,
@@ -33,6 +36,7 @@ import {
   updateWebRequestStatus
 } from "../../services/backendGateway";
 import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
+import { createMarketplaceRealtimeClient, type MarketplaceRealtimeClient, type MarketplaceRealtimeEvent } from "../../realtime/marketplaceRealtimeClient";
 
 const SESSION_STORAGE_KEY = "goldwallet.web.session";
 
@@ -56,6 +60,9 @@ export function useMarketplace() {
   const state = ref<MarketplaceState>(structuredClone(mockMarketplaceState));
   const loading = ref(false);
   const error = ref("");
+  const realtimeConnected = ref(false);
+  let realtimeClient: MarketplaceRealtimeClient | null = null;
+  let fallbackRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
   const activeSeller = computed(() => {
     if (!session.value?.sellerId) return state.value.sellers[0];
@@ -84,6 +91,7 @@ export function useMarketplace() {
       session.value = authSession;
       role.value = authSession.role;
       state.value = await fetchMarketplaceState(authSession);
+      await ensureRealtimeSync();
       if (typeof window !== "undefined") {
         window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(authSession));
       }
@@ -176,6 +184,7 @@ export function useMarketplace() {
   };
 
   const logout = () => {
+    void stopRealtimeSync();
     session.value = null;
     role.value = "admin";
     activeMenu.value = "overview";
@@ -193,10 +202,112 @@ export function useMarketplace() {
     }
   };
 
+  const refreshProductsOnly = async () => {
+    if (!session.value?.accessToken) return;
+    try {
+      state.value.products = await fetchMarketplaceProducts(session.value.accessToken);
+    } catch {
+      // Keep current rendered products on transient errors.
+    }
+  };
+
+  const refreshRequestsOnly = async () => {
+    if (!session.value?.accessToken) return;
+    try {
+      state.value.requests = await fetchMarketplaceRequests(session.value.accessToken);
+    } catch {
+      // Keep current rendered requests on transient errors.
+    }
+  };
+
+  const refreshSellersOnly = async () => {
+    if (!session.value?.accessToken) return;
+    try {
+      state.value.sellers = await fetchMarketplaceSellers(session.value.accessToken);
+    } catch {
+      // Keep current rendered sellers on transient errors.
+    }
+  };
+
+  const stopFallbackPolling = () => {
+    if (!fallbackRefreshTimer) return;
+    clearInterval(fallbackRefreshTimer);
+    fallbackRefreshTimer = null;
+  };
+
+  const ensureFallbackPolling = () => {
+    if (fallbackRefreshTimer) return;
+    fallbackRefreshTimer = setInterval(() => {
+      void refreshMarketplaceState();
+    }, 30000);
+  };
+
+  const onRealtimeAvailabilityChange = (isAvailable: boolean) => {
+    realtimeConnected.value = isAvailable;
+    if (isAvailable) {
+      stopFallbackPolling();
+      return;
+    }
+
+    ensureFallbackPolling();
+  };
+
+  const handleRealtimeEvent = async (event: MarketplaceRealtimeEvent) => {
+    const entity = event.entity.trim().toLowerCase();
+    switch (entity) {
+      case "product":
+        await refreshProductsOnly();
+        break;
+      case "request":
+      case "order":
+        await refreshRequestsOnly();
+        break;
+      case "seller":
+        await refreshSellersOnly();
+        break;
+      case "wallet":
+      case "invoice":
+      case "dashboard":
+      case "investor":
+      case "notification":
+      default:
+        await refreshMarketplaceState();
+        break;
+    }
+  };
+
+  const stopRealtimeSync = async () => {
+    stopFallbackPolling();
+    realtimeConnected.value = false;
+    if (!realtimeClient) return;
+    await realtimeClient.stop();
+    realtimeClient = null;
+  };
+
+  const ensureRealtimeSync = async () => {
+    if (!session.value?.accessToken) {
+      await stopRealtimeSync();
+      return;
+    }
+
+    if (realtimeClient) return;
+
+    realtimeClient = createMarketplaceRealtimeClient({
+      accessToken: session.value.accessToken,
+      onEvent: (event) => {
+        void handleRealtimeEvent(event);
+      },
+      onAvailabilityChange: onRealtimeAvailabilityChange
+    });
+
+    await realtimeClient.start();
+  };
+
   const restoreSession = async () => {
     if (!session.value?.accessToken) return;
     role.value = session.value.role;
     await refreshMarketplaceState();
+    await ensureRealtimeSync();
   };
 
   return {
@@ -206,6 +317,7 @@ export function useMarketplace() {
     state,
     loading,
     error,
+    realtimeConnected,
     adminMetrics,
     overviewCards,
     activeSeller,
@@ -226,7 +338,11 @@ export function useMarketplace() {
     updateInvestorStatus,
     updateRequestStatus,
     readNotification,
-    refreshMarketplaceState
+    refreshMarketplaceState,
+    refreshProductsOnly,
+    refreshRequestsOnly,
+    ensureRealtimeSync,
+    stopRealtimeSync
   };
 }
 
