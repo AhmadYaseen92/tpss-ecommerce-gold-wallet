@@ -14,4 +14,6 @@ public sealed record ProductDto(
     decimal Price,
     int AvailableStock,
     int SellerId,
-    string SellerName);
+    string SellerName,
+    DateTime CreatedAtUtc,
+    DateTime? UpdatedAtUtc);

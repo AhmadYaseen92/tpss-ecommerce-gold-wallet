@@ -16,6 +16,8 @@ class ProductEntity {
     required this.isInCart,
     required this.quantity,
     required this.sellerName,
+    required this.createdAtUtc,
+    required this.updatedAtUtc,
   });
 
   final String id;
@@ -34,6 +36,8 @@ class ProductEntity {
   final bool isInCart;
   final int quantity;
   final String sellerName;
+  final DateTime createdAtUtc;
+  final DateTime updatedAtUtc;
 
   ProductEntity copyWith({
     String? id,
@@ -52,6 +56,8 @@ class ProductEntity {
     bool? isInCart,
     int? quantity,
     String? sellerName,
+    DateTime? createdAtUtc,
+    DateTime? updatedAtUtc,
   }) {
     return ProductEntity(
       id: id ?? this.id,
@@ -70,6 +76,8 @@ class ProductEntity {
       isInCart: isInCart ?? this.isInCart,
       quantity: quantity ?? this.quantity,
       sellerName: sellerName ?? this.sellerName,
+      createdAtUtc: createdAtUtc ?? this.createdAtUtc,
+      updatedAtUtc: updatedAtUtc ?? this.updatedAtUtc,
     );
   }
 }

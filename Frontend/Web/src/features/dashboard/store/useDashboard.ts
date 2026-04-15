@@ -24,6 +24,7 @@ const isVisibleCategory = (category: string) => category.trim().toLowerCase() !=
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
   const serverDashboard = ref<WebDashboardDto | null>(null);
+  let fallbackDashboardTimer: ReturnType<typeof setInterval> | null = null;
   const loadDashboard = async () => {
     if (!marketplace.session.value?.accessToken) {
       serverDashboard.value = null;
@@ -41,12 +42,41 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
     void loadDashboard();
   }, { immediate: true });
 
+  watch(() => marketplace.stateVersion.value, () => {
+    void loadDashboard();
+  });
+
+  const stopFallbackTimer = () => {
+    if (!fallbackDashboardTimer) return;
+    clearInterval(fallbackDashboardTimer);
+    fallbackDashboardTimer = null;
+  };
+
+  const ensureFallbackTimer = () => {
+    if (fallbackDashboardTimer) return;
+    fallbackDashboardTimer = setInterval(() => {
+      void loadDashboard();
+    }, 30000);
+  };
+
+  watch(() => marketplace.realtimeConnected.value, (connected) => {
+    if (connected) {
+      stopFallbackTimer();
+      return;
+    }
+
+    ensureFallbackTimer();
+  }, { immediate: true });
+
   const handleRealtime = () => {
     void loadDashboard();
   };
 
   onMounted(() => window.addEventListener("marketplace-realtime-event", handleRealtime));
-  onUnmounted(() => window.removeEventListener("marketplace-realtime-event", handleRealtime));
+  onUnmounted(() => {
+    window.removeEventListener("marketplace-realtime-event", handleRealtime);
+    stopFallbackTimer();
+  });
 
   const dashboardCards = computed(() => {
     if (serverDashboard.value?.cards?.length) {

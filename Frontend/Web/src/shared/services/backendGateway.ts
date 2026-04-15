@@ -67,8 +67,37 @@ const mapProduct = (dto: ProductDto): Product => ({
   unitPrice: dto.price,
   marketPrice: dto.price,
   stock: dto.availableStock,
-  updatedAt: new Date().toISOString().split("T")[0]
+  updatedAt: normalizeProductTimestamp(dto.updatedAtUtc ?? dto.createdAtUtc)
 });
+
+const normalizeProductTimestamp = (rawTimestamp?: string): string => {
+  if (!rawTimestamp) {
+    return new Date().toISOString();
+  }
+
+  const parsed = new Date(rawTimestamp);
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date().toISOString();
+  }
+
+  return parsed.toISOString();
+};
+
+const toTimestampSortValue = (rawTimestamp?: string): number => {
+  if (!rawTimestamp) return 0;
+  const parsed = new Date(rawTimestamp).getTime();
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const mapAndSortProducts = (items: ProductDto[]): Product[] =>
+  items
+    .slice()
+    .sort((a, b) => {
+      const left = toTimestampSortValue(a.updatedAtUtc ?? a.createdAtUtc);
+      const right = toTimestampSortValue(b.updatedAtUtc ?? b.createdAtUtc);
+      return right - left;
+    })
+    .map(mapProduct);
 
 const mapReports = (dashboard: DashboardDto, requestsCount: number): ReportMetric[] => [
   { title: "Wallet Balance", value: `${dashboard.walletBalance.toFixed(2)} JOD`, trend: "Live from dashboard" },
@@ -230,7 +259,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
   const requests = mapWebRequests(webRequests);
 
-  const products = productsResult.items.map(mapProduct);
+  const products = mapAndSortProducts(productsResult.items);
 
   let sellers: Seller[] = [];
   try {
@@ -288,7 +317,7 @@ async function fetchProductsResult(accessToken: string, pageSize: number): Promi
 
 export async function fetchMarketplaceProducts(accessToken: string): Promise<Product[]> {
   const productsResult = await fetchProductsResult(accessToken, 100);
-  return productsResult.items.map(mapProduct);
+  return mapAndSortProducts(productsResult.items);
 }
 
 export async function fetchMarketplaceRequests(accessToken: string): Promise<InvestorRequest[]> {
@@ -341,7 +370,8 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
     accessToken
   );
 
-  return searchResult.items.map((item) => ({
+  return searchResult.items
+    .map((item) => ({
     id: item.id,
     name: item.name,
     sku: item.sku,
@@ -353,8 +383,15 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
     price: item.price,
     availableStock: item.availableStock,
     isActive: true,
-    sellerId: item.sellerId
-  }));
+    sellerId: item.sellerId,
+    createdAtUtc: normalizeProductTimestamp(item.createdAtUtc),
+    updatedAtUtc: normalizeProductTimestamp(item.updatedAtUtc ?? item.createdAtUtc)
+  }))
+    .sort((a, b) => {
+      const left = toTimestampSortValue(a.updatedAtUtc ?? a.createdAtUtc);
+      const right = toTimestampSortValue(b.updatedAtUtc ?? b.createdAtUtc);
+      return right - left;
+    });
 }
 
 export async function fetchProductCategories(accessToken: string): Promise<EnumItemDto[]> {

@@ -27,6 +27,15 @@ const emit = defineEmits<{
   save: [];
   image: [event: Event];
 }>();
+
+const formatUtc = (value?: string) => {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleString();
+};
+
+const resolveUpdatedAt = (updatedAt?: string, createdAt?: string) => updatedAt ?? createdAt;
 </script>
 
 <template>
@@ -39,7 +48,7 @@ const emit = defineEmits<{
         <thead><tr><th>ID</th><th>Name</th><th>SKU</th><th>Category</th><th>Price</th><th>Stock</th><th>Active</th><th>CreatedAtUtc</th><th>UpdatedAtUtc</th><th>Actions</th></tr></thead>
         <tbody>
           <tr v-for="product in managedProducts" :key="product.id" class="clickable-row" @click="emit('details', product)">
-            <td>{{ product.id }}</td><td>{{ product.name }}</td><td>{{ product.sku }}</td><td>{{ product.category }}</td><td>{{ product.price }}</td><td>{{ product.availableStock }}</td><td>{{ product.isActive ? 'Yes' : 'No' }}</td><td>-</td><td>-</td>
+            <td>{{ product.id }}</td><td>{{ product.name }}</td><td>{{ product.sku }}</td><td>{{ product.category }}</td><td>{{ product.price }}</td><td>{{ product.availableStock }}</td><td>{{ product.isActive ? 'Yes' : 'No' }}</td><td>{{ formatUtc(product.createdAtUtc) }}</td><td>{{ formatUtc(resolveUpdatedAt(product.updatedAtUtc, product.createdAtUtc)) }}</td>
             <td>
               <button @click.stop="emit('edit', product)">Edit</button>
               <button class="ghost" @click.stop="emit('toggle', product)">{{ product.isActive ? 'Deactivate' : 'Activate' }}</button>

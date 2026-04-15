@@ -61,6 +61,8 @@ export interface ProductDto {
   availableStock: number;
   sellerId: number;
   sellerName: string;
+  createdAtUtc?: string;
+  updatedAtUtc?: string;
 }
 
 export interface AuditLogDto {
@@ -106,6 +108,8 @@ export interface ProductManagementDto {
   availableStock: number;
   isActive: boolean;
   sellerId: number;
+  createdAtUtc?: string;
+  updatedAtUtc?: string;
 }
 
 export interface EnumItemDto {
