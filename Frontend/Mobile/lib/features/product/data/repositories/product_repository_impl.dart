@@ -109,10 +109,6 @@ class ProductRepositoryImpl implements IProductRepository {
       price: model.price,
       change: model.change,
       sellerName: model.sellerName,
-      offerType: model.offerType,
-      offerPercent: model.offerPercent,
-      offerNewPrice: model.offerNewPrice,
-      finalPrice: model.finalPrice,
     );
   }
 
