@@ -41,6 +41,7 @@ const weightUnits = computed(() => pm.weightUnits.value);
       @back="pm.navigate('#/products')"
       @save="pm.saveProduct"
       @save-market-prices="pm.saveMarketPrices"
+      @update-market-price="pm.updateMarketPriceField"
       @image="pm.onProductImageChange"
       @update:search-term="pm.productSearchTerm.value = $event"
       @update:active-filter="pm.activeFilter.value = $event"

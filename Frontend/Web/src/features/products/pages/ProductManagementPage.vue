@@ -34,6 +34,7 @@ const emit = defineEmits<{
   "update:active-filter": [value: "all" | "active" | "inactive"];
   "update:category-filter": [value: string];
   "save-market-prices": [];
+  "update-market-price": [field: "goldPerOunce" | "silverPerOunce" | "diamondPerCarat", value: number];
 }>();
 </script>
 
@@ -43,10 +44,19 @@ const emit = defineEmits<{
     <div class="report-actions" v-if="role === 'seller'"><button @click="emit('add')">Add Product</button></div>
 
     <div v-if="productPage === 'list'">
-      <div class="filters" style="grid-template-columns: repeat(4, minmax(120px, 1fr)); margin-bottom: 16px;">
-        <input v-model.number="marketPrices.goldPerOunce" type="number" min="0" placeholder="Gold / oz" />
-        <input v-model.number="marketPrices.silverPerOunce" type="number" min="0" placeholder="Silver / oz" />
-        <input v-model.number="marketPrices.diamondPerCarat" type="number" min="0" placeholder="Diamond / carat" />
+      <div class="filters" style="grid-template-columns: repeat(4, minmax(140px, 1fr)); margin-bottom: 16px; align-items:end;">
+        <label>
+          Gold Price (per ounce)
+          <input :value="marketPrices.goldPerOunce" type="number" min="0" step="0.01" @input="emit('update-market-price', 'goldPerOunce', Number(($event.target as HTMLInputElement).value || 0))" />
+        </label>
+        <label>
+          Silver Price (per ounce)
+          <input :value="marketPrices.silverPerOunce" type="number" min="0" step="0.01" @input="emit('update-market-price', 'silverPerOunce', Number(($event.target as HTMLInputElement).value || 0))" />
+        </label>
+        <label>
+          Diamond Base (per carat)
+          <input :value="marketPrices.diamondPerCarat" type="number" min="0" step="0.01" @input="emit('update-market-price', 'diamondPerCarat', Number(($event.target as HTMLInputElement).value || 0))" />
+        </label>
         <button @click="emit('save-market-prices')">Save Provider Market Prices</button>
       </div>
       <div class="filters">

@@ -44,6 +44,7 @@ const toPurityKaratValue = (name: string) => {
   const activeFilter = ref<"all" | "active" | "inactive">("all");
   const categoryFilter = ref("all");
   const marketPrices = reactive<MarketPriceConfigDto>({ goldPerOunce: 0, silverPerOunce: 0, diamondPerCarat: 0 });
+  const marketPricesDirty = ref(false);
 
   const resetProductForm = () => {
     Object.assign(productForm, { id: undefined, name: "", sku: "", description: "", materialType: 1, formType: 1, pricingMode: 1, purityKarat: 0, purityFactor: 1, weightValue: 0, baseMarketPrice: 0, manualSellPrice: 0, deliveryFee: 0, storageFee: 0, serviceCharge: 0, offerType: 0, offerPercent: 0, offerNewPrice: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
@@ -60,7 +61,9 @@ const toPurityKaratValue = (name: string) => {
     managedProducts.value = await fetchManagedProducts(marketplace.session.value.accessToken);
     categories.value = await fetchProductCategories(marketplace.session.value.accessToken);
     weightUnits.value = await fetchWeightUnits(marketplace.session.value.accessToken);
-    Object.assign(marketPrices, await fetchGlobalMarketPrices(marketplace.session.value.accessToken));
+    if (!marketPricesDirty.value) {
+      Object.assign(marketPrices, await fetchGlobalMarketPrices(marketplace.session.value.accessToken));
+    }
   };
 
   const syncRoute = () => syncProductRoute(managedProducts, productPage, productRouteId, selectedProduct, resetProductForm, fillProductForm);
@@ -126,10 +129,17 @@ const toPurityKaratValue = (name: string) => {
     }
   };
 
+  const updateMarketPriceField = (field: "goldPerOunce" | "silverPerOunce" | "diamondPerCarat", value: number) => {
+    marketPricesDirty.value = true;
+    marketPrices[field] = Number.isFinite(value) ? value : 0;
+  };
+
   const saveMarketPrices = async () => {
     if (!marketplace.session.value?.accessToken) return;
     try {
       await updateGlobalMarketPrices(marketplace.session.value.accessToken, marketPrices);
+      marketPricesDirty.value = false;
+      Object.assign(marketPrices, await fetchGlobalMarketPrices(marketplace.session.value.accessToken));
       productError.value = "";
     } catch (error) {
       productError.value = error instanceof Error ? error.message : "Failed to update global market prices.";
@@ -195,5 +205,5 @@ const toPurityKaratValue = (name: string) => {
     }
   });
 
-  return { managedProducts, filteredManagedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, productSearchTerm, activeFilter, categoryFilter, marketPrices, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, saveMarketPrices, deleteProductRecord, toggleProductActive };
+  return { managedProducts, filteredManagedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, productSearchTerm, activeFilter, categoryFilter, marketPrices, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, saveMarketPrices, updateMarketPriceField, deleteProductRecord, toggleProductActive };
 }
