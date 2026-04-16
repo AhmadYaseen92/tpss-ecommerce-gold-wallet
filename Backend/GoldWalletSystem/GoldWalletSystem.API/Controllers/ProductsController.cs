@@ -9,6 +9,7 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace GoldWalletSystem.API.Controllers;
 
@@ -141,7 +142,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             PurityFactor = request.PurityFactor,
             WeightValue = request.WeightValue,
             WeightUnit = ProductWeightUnit.Gram,
-            BaseMarketPrice = request.BaseMarketPrice,
+            BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, cancellationToken),
             ManualSellPrice = request.ManualSellPrice,
             DeliveryFee = request.DeliveryFee,
             StorageFee = request.StorageFee,
@@ -149,7 +150,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             OfferPercent = request.OfferPercent,
             OfferNewPrice = request.OfferNewPrice,
             OfferType = request.OfferType,
-            Price = ResolveFinalPrice(request),
+            Price = await ResolveFinalPriceAsync(request, cancellationToken),
             AvailableStock = request.AvailableStock,
             IsActive = request.IsActive,
             SellerId = sellerId
@@ -188,7 +189,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.PurityFactor = request.PurityFactor;
         product.WeightValue = request.WeightValue;
         product.WeightUnit = ProductWeightUnit.Gram;
-        product.BaseMarketPrice = request.BaseMarketPrice;
+        product.BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, cancellationToken);
         product.ManualSellPrice = request.ManualSellPrice;
         product.DeliveryFee = request.DeliveryFee;
         product.StorageFee = request.StorageFee;
@@ -196,7 +197,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.OfferPercent = request.OfferPercent;
         product.OfferNewPrice = request.OfferNewPrice;
         product.OfferType = request.OfferType;
-        product.Price = ResolveFinalPrice(request);
+        product.Price = await ResolveFinalPriceAsync(request, cancellationToken);
         product.AvailableStock = request.AvailableStock;
         product.IsActive = request.IsActive;
         product.SellerId = ResolveSellerId(request.SellerId, product.SellerId);
@@ -269,13 +270,14 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
-    private static decimal ResolveFinalPrice(ProductUpsertRequest request)
+    private async Task<decimal> ResolveFinalPriceAsync(ProductUpsertRequest request, CancellationToken cancellationToken)
     {
+        var marketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, cancellationToken);
         var sellPrice = request.PricingMode == ProductPricingMode.Manual
             ? request.ManualSellPrice
             : ProductPricingCalculator.CalculateAutoPrice(
                 request.MaterialType,
-                request.BaseMarketPrice,
+                marketPrice,
                 request.WeightValue,
                 request.PurityFactor,
                 request.DeliveryFee,
@@ -283,6 +285,67 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 request.ServiceCharge);
 
         return ProductPricingCalculator.ApplyOffer(sellPrice, request.OfferType, request.OfferPercent, request.OfferNewPrice);
+    }
+
+    [HttpGet("market-prices")]
+    public async Task<IActionResult> GetMarketPrices(CancellationToken cancellationToken = default)
+    {
+        var config = await GetMarketPriceConfigAsync(cancellationToken);
+        return Ok(ApiResponse<MarketPriceConfigDto>.Ok(config));
+    }
+
+    [HttpPost("market-prices")]
+    [Authorize(Roles = SystemRoles.Admin)]
+    public async Task<IActionResult> UpsertMarketPrices([FromBody] MarketPriceConfigDto request, CancellationToken cancellationToken = default)
+    {
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == MarketPriceConfigKey, cancellationToken);
+        var payload = JsonSerializer.Serialize(request);
+
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new MobileAppConfiguration
+            {
+                ConfigKey = MarketPriceConfigKey,
+                JsonValue = payload,
+                Description = "Global material market prices",
+                IsEnabled = true,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            config.JsonValue = payload;
+            config.IsEnabled = true;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Ok(ApiResponse<MarketPriceConfigDto>.Ok(request));
+    }
+
+    private const string MarketPriceConfigKey = "GlobalMarketPrices";
+
+    private async Task<decimal> ResolveMarketPriceByMaterialAsync(ProductMaterialType materialType, CancellationToken cancellationToken)
+    {
+        var config = await GetMarketPriceConfigAsync(cancellationToken);
+        return materialType switch
+        {
+            ProductMaterialType.Gold => config.GoldPerOunce,
+            ProductMaterialType.Silver => config.SilverPerOunce,
+            ProductMaterialType.Diamond => config.DiamondPerCarat,
+            _ => 0m
+        };
+    }
+
+    private async Task<MarketPriceConfigDto> GetMarketPriceConfigAsync(CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == MarketPriceConfigKey, cancellationToken);
+        if (config is null || string.IsNullOrWhiteSpace(config.JsonValue))
+        {
+            return new MarketPriceConfigDto();
+        }
+
+        return JsonSerializer.Deserialize<MarketPriceConfigDto>(config.JsonValue) ?? new MarketPriceConfigDto();
     }
 
     private static ProductCategory ToLegacyCategory(ProductMaterialType materialType)
@@ -369,7 +432,6 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         public decimal PurityFactor { get; set; }
         public decimal WeightValue { get; set; }
         public ProductWeightUnit WeightUnit { get; set; }
-        public decimal BaseMarketPrice { get; set; }
         public decimal ManualSellPrice { get; set; }
         public decimal DeliveryFee { get; set; }
         public decimal StorageFee { get; set; }
@@ -381,6 +443,14 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         public int AvailableStock { get; set; }
         public bool IsActive { get; set; }
         public int SellerId { get; set; }
+    }
+
+
+    public sealed class MarketPriceConfigDto
+    {
+        public decimal GoldPerOunce { get; set; }
+        public decimal SilverPerOunce { get; set; }
+        public decimal DiamondPerCarat { get; set; }
     }
 
     public sealed class ProductUpsertRequest
@@ -397,7 +467,6 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         public decimal PurityFactor { get; set; }
         public decimal WeightValue { get; set; }
         public ProductWeightUnit WeightUnit { get; set; } = ProductWeightUnit.Gram;
-        public decimal BaseMarketPrice { get; set; }
         public decimal ManualSellPrice { get; set; }
         public decimal DeliveryFee { get; set; }
         public decimal StorageFee { get; set; }

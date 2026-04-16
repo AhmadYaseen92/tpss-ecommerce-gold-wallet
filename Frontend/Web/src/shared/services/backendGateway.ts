@@ -409,7 +409,6 @@ function buildProductForm(payload: ProductFormPayload): FormData {
   form.append("PurityFactor", String(payload.purityFactor));
   form.append("WeightValue", String(payload.weightValue));
   form.append("WeightUnit", "1");
-  form.append("BaseMarketPrice", String(payload.baseMarketPrice));
   form.append("ManualSellPrice", String(payload.manualSellPrice));
   form.append("DeliveryFee", String(payload.deliveryFee));
   form.append("StorageFee", String(payload.storageFee));

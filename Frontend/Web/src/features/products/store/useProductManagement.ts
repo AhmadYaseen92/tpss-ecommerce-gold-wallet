@@ -68,7 +68,6 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     if (!productForm.materialType) validationErrors.materialType = "Material type is required";
     if (!productForm.formType) validationErrors.formType = "Product form is required";
     if (!productForm.weightValue || productForm.weightValue <= 0) validationErrors.weightValue = "Weight (grams) must be greater than 0";
-    if (!productForm.baseMarketPrice || productForm.baseMarketPrice <= 0) validationErrors.baseMarketPrice = "Market/base price must be greater than 0";
     if (productForm.availableStock == null || productForm.availableStock < 0) validationErrors.availableStock = "Stock cannot be negative";
     return Object.keys(validationErrors).length === 0;
   };

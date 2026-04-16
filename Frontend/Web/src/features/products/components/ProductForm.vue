@@ -69,11 +69,8 @@ const emit = defineEmits<{ save: []; image: [event: Event] }>();
       <input v-model.number="model.purityFactor" type="number" min="0" step="0.0001" />
     </BaseFormField>
 
-    <BaseFormField label="Market/Base Price" required hint="Gold/Silver per ounce, Diamond per carat." :error="errors.baseMarketPrice">
-      <input v-model.number="model.baseMarketPrice" :class="{ 'input-error': !!errors.baseMarketPrice }" type="number" min="0" />
-    </BaseFormField>
-
-    <BaseFormField label="Manual Sell Price" hint="Used only when pricing mode = Manual.">
+    
+    <BaseFormField label="Manual Sell Price" hint="Used only when pricing mode = Manual. Auto mode uses global market price configured by admin.">
       <input v-model.number="model.manualSellPrice" type="number" min="0" />
     </BaseFormField>
 
