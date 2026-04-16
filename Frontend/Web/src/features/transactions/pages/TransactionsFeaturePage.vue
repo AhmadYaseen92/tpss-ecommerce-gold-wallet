@@ -8,7 +8,7 @@ import { statusClass } from "../../../shared/services/statusStyles";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
-const { transactionsView, viewTransaction } = useTransactions(props.marketplace);
+const { transactionsView, viewTransaction, searchTerm, statusFilter, typeFilter } = useTransactions(props.marketplace);
 const currentPath = ref(window.location.hash.replace(/^#/, ""));
 const syncPath = () => {
   currentPath.value = window.location.hash.replace(/^#/, "");
@@ -50,6 +50,41 @@ const goList = () => {
     <TransactionDetailsPage :item="detailsItem" />
   </SectionCard>
   <SectionCard v-else title="Transactions">
+    <div class="filters">
+      <input v-model="searchTerm" placeholder="Search by ID, investor, product, category..." />
+      <select v-model="statusFilter">
+        <option value="all">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <select v-model="typeFilter">
+        <option value="all">All types</option>
+        <option value="buy">Buy</option>
+        <option value="sell">Sell</option>
+        <option value="transfer">Transfer</option>
+        <option value="gift">Gift</option>
+        <option value="pickup">Pickup</option>
+        <option value="withdrawal">Withdrawal</option>
+      </select>
+    </div>
     <TransactionsPage :items="transactionsView" :status-class="statusClass" @view="goDetails" @quick-status="quickStatus" />
   </SectionCard>
 </template>
+
+
+<style scoped>
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 180px 180px;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.filters input,
+.filters select {
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+</style>

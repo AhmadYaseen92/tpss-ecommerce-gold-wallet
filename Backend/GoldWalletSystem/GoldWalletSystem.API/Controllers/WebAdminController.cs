@@ -159,6 +159,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                     InvestorId = $"i-{history.UserId}",
                     InvestorName = user.FullName,
                     Type = history.TransactionType,
+                    ProductName = history.Category,
                     Category = history.Category,
                     Quantity = history.Quantity,
                     UnitPrice = history.UnitPrice,
@@ -174,6 +175,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 })
             .ToListAsync(cancellationToken);
 
+        await PopulateRequestProductNamesAsync(requests, cancellationToken);
         return Ok(ApiResponse<List<WebRequestDto>>.Ok(requests));
     }
 
@@ -197,11 +199,15 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         item.Status = nextStatus;
         item.UpdatedAtUtc = DateTime.UtcNow;
 
-        if (previousStatus == "pending" && nextStatus == "approved")
+        if (previousStatus == "pending")
         {
-            await ApplyApprovedRequestSideEffectsAsync(item, cancellationToken);
-            await ApplyApprovedRequestStockSideEffectsAsync(item, cancellationToken);
-            await CreateInvoiceForApprovedRequestAsync(item, cancellationToken);
+            await ApplyRequestStockSideEffectsAsync(item, nextStatus, cancellationToken);
+
+            if (nextStatus == "approved")
+            {
+                await ApplyApprovedRequestSideEffectsAsync(item, cancellationToken);
+                await CreateInvoiceForApprovedRequestAsync(item, cancellationToken);
+            }
         }
 
         dbContext.AuditLogs.Add(new Domain.Entities.AuditLog
@@ -247,6 +253,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                     InvestorId = $"i-{history.UserId}",
                     InvestorName = user.FullName,
                     Type = history.TransactionType,
+                    ProductName = history.Category,
                     Category = history.Category,
                     Quantity = history.Quantity,
                     UnitPrice = history.UnitPrice,
@@ -263,6 +270,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             .FirstOrDefaultAsync(cancellationToken);
 
         if (details is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
+        await PopulateRequestProductNamesAsync([details], cancellationToken);
         return Ok(ApiResponse<WebRequestDto>.Ok(details));
     }
 
@@ -431,6 +439,63 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         return Ok(ApiResponse<string>.Ok("updated"));
     }
 
+    private async Task PopulateRequestProductNamesAsync(List<WebRequestDto> requests, CancellationToken cancellationToken)
+    {
+        if (requests.Count == 0) return;
+
+        var requestIds = requests
+            .Select(x => TryParsePrefixedId(x.Id, "r-"))
+            .Where(x => x.HasValue)
+            .Select(x => x!.Value)
+            .ToList();
+        if (requestIds.Count == 0) return;
+
+        var histories = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => requestIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.SellerId, x.Notes, x.Category })
+            .ToListAsync(cancellationToken);
+
+        var skuByRequestId = histories
+            .Select(x => new { x.Id, x.SellerId, Sku = TryExtractSku(x.Notes) })
+            .Where(x => x.SellerId.HasValue && !string.IsNullOrWhiteSpace(x.Sku))
+            .ToList();
+
+        var sellerIds = skuByRequestId.Select(x => x.SellerId!.Value).Distinct().ToList();
+        var skuValues = skuByRequestId.Select(x => x.Sku!).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+        var products = await dbContext.Products
+            .AsNoTracking()
+            .Where(x => sellerIds.Contains(x.SellerId) && skuValues.Contains(x.Sku))
+            .Select(x => new { x.SellerId, x.Sku, x.Name })
+            .ToListAsync(cancellationToken);
+
+        var productLookup = products.ToDictionary(x => (x.SellerId, x.Sku), x => x.Name);
+
+        foreach (var request in requests)
+        {
+            var requestId = TryParsePrefixedId(request.Id, "r-");
+            if (!requestId.HasValue) continue;
+
+            var history = histories.FirstOrDefault(x => x.Id == requestId.Value);
+            if (history is null)
+            {
+                request.ProductName = request.Category;
+                continue;
+            }
+
+            var sku = TryExtractSku(history.Notes);
+            if (history.SellerId.HasValue && !string.IsNullOrWhiteSpace(sku) && productLookup.TryGetValue((history.SellerId.Value, sku), out var productName))
+            {
+                request.ProductName = productName;
+            }
+            else
+            {
+                request.ProductName = history.Category;
+            }
+        }
+    }
+
     private async Task<WebFeesDto> ReadFeesAsync(CancellationToken cancellationToken)
     {
         var config = await dbContext.MobileAppConfigurations
@@ -510,41 +575,78 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         }
     }
 
-    private async Task ApplyApprovedRequestStockSideEffectsAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
+    private async Task ApplyRequestStockSideEffectsAsync(
+        Domain.Entities.TransactionHistory request,
+        string nextStatus,
+        CancellationToken cancellationToken)
     {
         if (request.SellerId is null || request.Quantity <= 0) return;
 
         var action = request.TransactionType.Trim().ToLowerInvariant();
-        if (!Enum.TryParse<ProductCategory>(request.Category.Trim(), true, out var parsedCategory))
+        var categoryValue = request.Category.Trim();
+
+        var productsQuery = dbContext.Products
+            .Where(x => x.SellerId == request.SellerId && x.IsActive);
+
+        var skuFromNotes = TryExtractSku(request.Notes);
+        if (!string.IsNullOrWhiteSpace(skuFromNotes))
         {
-            return;
+            productsQuery = productsQuery.Where(x => x.Sku == skuFromNotes);
+        }
+        else if (Enum.TryParse<ProductCategory>(categoryValue, true, out var parsedCategory))
+        {
+            productsQuery = productsQuery.Where(x => x.Category == parsedCategory);
+        }
+        else
+        {
+            var categoryLower = categoryValue.ToLowerInvariant();
+            productsQuery = productsQuery.Where(x => x.Category.ToString().ToLower().Contains(categoryLower));
         }
 
-        var product = await dbContext.Products
-            .Where(x => x.SellerId == request.SellerId
-                        && x.Category == parsedCategory
-                        && x.IsActive)
-            .OrderBy(x => x.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
+        var product = await productsQuery.OrderBy(x => x.Id).FirstOrDefaultAsync(cancellationToken);
         if (product is null) return;
 
         var quantity = Math.Max(1, request.Quantity);
+
         if (action == "buy")
         {
-            if (product.AvailableStock < quantity)
+            if (nextStatus == "approved")
             {
-                throw new InvalidOperationException($"Insufficient stock for {product.Name}. Available {product.AvailableStock}, requested {quantity}.");
-            }
+                if (product.AvailableStock < quantity)
+                {
+                    throw new InvalidOperationException($"Insufficient stock for {product.Name}. Available {product.AvailableStock}, requested {quantity}.");
+                }
 
-            product.AvailableStock -= quantity;
+                product.AvailableStock -= quantity;
+            }
         }
         else if (action is "sell" or "pickup" or "transfer" or "gift")
         {
-            product.AvailableStock += quantity;
+            if (nextStatus == "approved")
+            {
+                product.AvailableStock += quantity;
+            }
         }
 
         product.UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    private static string? TryExtractSku(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+
+        const string marker = "SKU=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+
+        var tail = notes[valueStart..].Trim();
+        if (tail.Length == 0) return null;
+
+        var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
+        return stopAt > 0 ? tail[..stopAt].Trim() : tail;
     }
 
     private async Task CreateInvoiceForApprovedRequestAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)

@@ -4,13 +4,36 @@ import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMark
 export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
   const selectedTransactionId = ref<string | null>(null);
   const transactionStatusDraft = ref<"pending" | "approved" | "rejected">("pending");
+  const searchTerm = ref("");
+  const statusFilter = ref<"all" | "pending" | "approved" | "rejected">("all");
+  const typeFilter = ref<"all" | "withdrawal" | "pickup" | "sell" | "transfer" | "buy" | "gift">("all");
 
   const transactionsView = computed(() =>
-    marketplace.state.value.requests.map((request) => ({
-      ...request,
-      investorName: request.investorName,
-      transactionType: request.type
-    }))
+    marketplace.state.value.requests
+      .map((request) => ({
+        ...request,
+        investorName: request.investorName,
+        transactionType: request.type,
+        productName: request.productName || request.category
+      }))
+      .filter((request) => {
+        if (statusFilter.value !== "all" && request.status !== statusFilter.value) return false;
+        if (typeFilter.value !== "all" && request.transactionType !== typeFilter.value) return false;
+        if (!searchTerm.value.trim()) return true;
+
+        const term = searchTerm.value.trim().toLowerCase();
+        return [
+          request.id,
+          request.investorName,
+          request.productName,
+          request.category,
+          request.transactionType,
+          request.notes || ""
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(term);
+      })
   );
 
   const selectedTransaction = computed(() => transactionsView.value.find((x) => x.id === selectedTransactionId.value) ?? null);
@@ -32,5 +55,15 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
     await marketplace.updateRequestStatus(selectedTransactionId.value, transactionStatusDraft.value);
   };
 
-  return { selectedTransactionId, transactionStatusDraft, transactionsView, selectedTransaction, viewTransaction, saveTransactionStatus };
+  return {
+    selectedTransactionId,
+    transactionStatusDraft,
+    transactionsView,
+    selectedTransaction,
+    viewTransaction,
+    saveTransactionStatus,
+    searchTerm,
+    statusFilter,
+    typeFilter
+  };
 }

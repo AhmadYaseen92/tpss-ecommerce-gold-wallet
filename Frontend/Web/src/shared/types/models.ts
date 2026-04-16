@@ -44,6 +44,7 @@ export interface InvestorRequest {
   investorId: string;
   investorName: string;
   type: "withdrawal" | "pickup" | "sell" | "transfer" | "buy" | "gift";
+  productName: string;
   category: string;
   quantity: number;
   unitPrice: number;

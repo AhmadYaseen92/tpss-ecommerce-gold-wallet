@@ -13,6 +13,7 @@ defineProps<{ item: TransactionRowView | null }>();
     <p><strong>Investor ID:</strong> {{ item.investorId }}</p>
     <p><strong>Investor:</strong> {{ item.investorName }}</p>
     <p><strong>Type:</strong> {{ item.transactionType }}</p>
+    <p><strong>Product:</strong> {{ item.productName }}</p>
     <p><strong>Category:</strong> {{ item.category }}</p>
     <p><strong>Quantity:</strong> {{ item.quantity.toLocaleString() }}</p>
     <p><strong>Weight:</strong> {{ item.weight.toFixed(3) }} {{ item.unit }}</p>

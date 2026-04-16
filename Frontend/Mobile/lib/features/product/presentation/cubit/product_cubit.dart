@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/market_symbol_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/usecases/add_product_to_cart_usecase.dart';
@@ -50,7 +51,7 @@ class ProductCubit extends Cubit<ProductState> {
   int quantity = 1;
 
   StreamSubscription<List<MarketSymbolEntity>>? _marketSubscription;
-  Timer? _productRefreshTimer;
+  StreamSubscription<String>? _realtimeSubscription;
 
   Future<void> loadProducts({
     String seller = AppReleaseConfig.allSellersLabel,
@@ -66,7 +67,7 @@ class ProductCubit extends Cubit<ProductState> {
 
       _emitCatalog();
       await _startMarketWatch();
-      _startProductAutoRefresh();
+      await _startProductAutoRefresh();
     } catch (e) {
       emit(ProductError('Failed to load products: $e'));
     }
@@ -140,9 +141,10 @@ class ProductCubit extends Cubit<ProductState> {
     }
   }
 
-  void _startProductAutoRefresh() {
-    _productRefreshTimer?.cancel();
-    _productRefreshTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+  Future<void> _startProductAutoRefresh() async {
+    await InjectionContainer.realtimeRefreshService().ensureStarted();
+    await _realtimeSubscription?.cancel();
+    _realtimeSubscription = InjectionContainer.realtimeRefreshService().refreshes.listen((_) {
       unawaited(_silentRefreshProducts());
     });
   }
@@ -186,7 +188,7 @@ class ProductCubit extends Cubit<ProductState> {
 
   @override
   Future<void> close() async {
-    _productRefreshTimer?.cancel();
+    await _realtimeSubscription?.cancel();
     await _marketSubscription?.cancel();
     return super.close();
   }

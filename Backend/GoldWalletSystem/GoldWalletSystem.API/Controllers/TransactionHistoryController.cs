@@ -39,7 +39,7 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
         var data = await transactionHistoryService.FilterAsync(exportRequest, cancellationToken);
 
         var csv = new StringBuilder();
-        csv.AppendLine("Id,UserId,InvestorName,SellerId,TransactionType,Status,Category,Quantity,UnitPrice,Weight,Unit,Purity,Amount,Currency,Notes,CreatedAtUtc");
+        csv.AppendLine("Id,UserId,InvestorName,SellerId,TransactionType,Status,ProductName,Category,Quantity,UnitPrice,Weight,Unit,Purity,Amount,Currency,Notes,CreatedAtUtc");
         foreach (var item in data.Items)
         {
             csv.AppendLine($"{item.Id},{item.UserId},\"{item.InvestorName}\",{item.SellerId},\"{item.TransactionType}\",\"{item.Status}\",\"{item.Category}\",{item.Quantity},{item.UnitPrice},{item.Weight},\"{item.Unit}\",{item.Purity},{item.Amount},\"{item.Currency}\",\"{item.Notes}\",{item.CreatedAtUtc:O}");

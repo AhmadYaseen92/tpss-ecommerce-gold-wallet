@@ -88,13 +88,17 @@ export class MarketplaceRealtime {
       options.onRefreshRequested(payload?.reason ?? "signalr");
     });
 
-    connection.onreconnected(() => options.onConnectionStateChanged(true));
+    connection.onreconnected(() => {
+      options.onConnectionStateChanged(true);
+      options.onRefreshRequested("reconnected");
+    });
     connection.onreconnecting(() => options.onConnectionStateChanged(false));
     connection.onclose(() => options.onConnectionStateChanged(false));
 
     try {
       await connection.start();
       options.onConnectionStateChanged(true);
+      options.onRefreshRequested("connected");
     } catch {
       options.onConnectionStateChanged(false);
     }

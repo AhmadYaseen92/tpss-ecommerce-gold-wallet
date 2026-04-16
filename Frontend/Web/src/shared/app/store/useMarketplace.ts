@@ -57,6 +57,7 @@ export function useMarketplace() {
   const state = ref<MarketplaceState>(structuredClone(mockMarketplaceState));
   const loading = ref(false);
   const error = ref("");
+  const realtimeRefreshTick = ref(0);
 
   const activeSeller = computed(() => {
     if (!session.value?.sellerId) return state.value.sellers[0];
@@ -106,6 +107,7 @@ export function useMarketplace() {
     await realtime.start({
       accessTokenFactory: () => session.value?.accessToken ?? "",
       onRefreshRequested: () => {
+        realtimeRefreshTick.value += 1;
         void refreshMarketplaceState();
       },
       onConnectionStateChanged: (connected) => {
@@ -216,6 +218,7 @@ export function useMarketplace() {
     if (session.value?.accessToken) {
       await updateWebRequestStatus(session.value.accessToken, requestId, status);
       state.value = await fetchMarketplaceState(session.value);
+      realtimeRefreshTick.value += 1;
     }
   };
 
@@ -239,6 +242,7 @@ export function useMarketplace() {
     if (!session.value?.accessToken) return;
     try {
       state.value = await fetchMarketplaceState(session.value);
+      realtimeRefreshTick.value += 1;
     } catch {
       // Keep current UI state and session on intermittent refresh failures.
     }
@@ -279,7 +283,8 @@ export function useMarketplace() {
     updateRequestStatus,
     readNotification,
     refreshMarketplaceState,
-    signalRConnected
+    signalRConnected,
+    realtimeRefreshTick
   };
 }
 

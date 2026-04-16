@@ -58,6 +58,18 @@ class TransactionPage extends StatelessWidget {
                     ),
                   ),
                   Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'Search by product, category, type, notes...',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      onChanged: context.read<TransactionCubit>().filterBySearch,
+                    ),
+                  ),
+                  Padding(
                     padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,

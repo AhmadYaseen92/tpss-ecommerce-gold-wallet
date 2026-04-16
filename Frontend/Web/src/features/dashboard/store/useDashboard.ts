@@ -24,6 +24,21 @@ const isVisibleCategory = (category: string) => category.trim().toLowerCase() !=
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
   const serverDashboard = ref<WebDashboardDto | null>(null);
+  const loadServerDashboard = async () => {
+    const accessToken = marketplace.session.value?.accessToken;
+    if (!accessToken) {
+      serverDashboard.value = null;
+      return;
+    }
+
+    try {
+      serverDashboard.value = await fetchWebAdminDashboard(accessToken, dashboardPeriod.value);
+    } catch {
+      // Keep fallback computed metrics when dashboard endpoint is temporarily unavailable.
+      serverDashboard.value = null;
+    }
+  };
+
   const dashboardCards = computed(() => {
     if (serverDashboard.value?.cards?.length) {
       return serverDashboard.value.cards;
@@ -133,6 +148,22 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
         productName: marketplace.state.value.products[idx % Math.max(marketplace.state.value.products.length, 1)]?.name ?? "N/A"
       }));
   });
+
+
+  watch(
+    [() => marketplace.session.value?.accessToken, dashboardPeriod],
+    () => {
+      void loadServerDashboard();
+    },
+    { immediate: true }
+  );
+
+  watch(
+    () => marketplace.realtimeRefreshTick.value,
+    () => {
+      void loadServerDashboard();
+    }
+  );
 
   return { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions, categoryTransactionSeries, categoryCartSeries };
 }

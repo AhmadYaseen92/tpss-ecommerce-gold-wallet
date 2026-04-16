@@ -93,6 +93,7 @@ const mapRequests = (logs: AuditLogDto[]): InvestorRequest[] =>
     investorId: `i-${log.userId ?? index + 1}`,
     investorName: `Investor ${index + 1}`,
     type: "withdrawal",
+    productName: "Gold",
     category: "Gold",
     quantity: 1,
     unitPrice: 150 + index * 35,
@@ -113,6 +114,7 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
     type: ["withdrawal", "pickup", "sell", "transfer", "buy", "gift"].includes(item.type.toLowerCase())
       ? (item.type.toLowerCase() as InvestorRequest["type"])
       : "withdrawal",
+    productName: item.productName || item.category,
     category: item.category,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
