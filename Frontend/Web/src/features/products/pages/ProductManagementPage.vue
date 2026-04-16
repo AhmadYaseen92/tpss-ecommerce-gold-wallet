@@ -36,10 +36,10 @@ const emit = defineEmits<{
 
     <div v-if="productPage === 'list'">
       <table>
-        <thead><tr><th>ID</th><th>Name</th><th>SKU</th><th>Category</th><th>Price</th><th>Stock</th><th>Active</th><th>CreatedAtUtc</th><th>UpdatedAtUtc</th><th>Actions</th></tr></thead>
+        <thead><tr><th>ID</th><th>Image</th><th>Name</th><th>SKU</th><th>Category</th><th>Price</th><th>Stock</th><th>Active</th><th>CreatedAtUtc</th><th>UpdatedAtUtc</th><th>Actions</th></tr></thead>
         <tbody>
           <tr v-for="product in managedProducts" :key="product.id" class="clickable-row" @click="emit('details', product)">
-            <td>{{ product.id }}</td><td>{{ product.name }}</td><td>{{ product.sku }}</td><td>{{ product.category }}</td><td>{{ product.price }}</td><td>{{ product.availableStock }}</td><td>{{ product.isActive ? 'Yes' : 'No' }}</td><td>-</td><td>-</td>
+            <td>{{ product.id }}</td><td><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-thumb" /><span v-else class="product-thumb-placeholder">No image</span></td><td>{{ product.name }}</td><td>{{ product.sku }}</td><td>{{ product.category }}</td><td>{{ product.price }}</td><td>{{ product.availableStock }}</td><td>{{ product.isActive ? 'Yes' : 'No' }}</td><td>-</td><td>-</td>
             <td>
               <button @click.stop="emit('edit', product)">Edit</button>
               <button class="ghost" @click.stop="emit('toggle', product)">{{ product.isActive ? 'Deactivate' : 'Activate' }}</button>
@@ -64,3 +64,26 @@ const emit = defineEmits<{
     </div>
   </section>
 </template>
+
+
+<style scoped>
+.product-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #d9d9d9;
+}
+
+.product-thumb-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  border: 1px dashed #d9d9d9;
+  color: #7a7a7a;
+  font-size: 11px;
+}
+</style>

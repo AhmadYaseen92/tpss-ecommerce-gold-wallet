@@ -89,6 +89,10 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
 
   watch(() => marketplace.session.value?.accessToken, () => void loadProductManagementData(), { immediate: true });
 
+  watch(() => marketplace.realtimeRefreshTick.value, () => {
+    void loadProductManagementData();
+  });
+
   onMounted(() => {
     syncRoute();
     window.addEventListener("hashchange", syncRoute);
