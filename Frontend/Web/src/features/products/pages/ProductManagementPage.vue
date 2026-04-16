@@ -43,11 +43,11 @@ const emit = defineEmits<{
     <div class="report-actions" v-if="role === 'seller'"><button @click="emit('add')">Add Product</button></div>
 
     <div v-if="productPage === 'list'">
-      <div v-if="role === 'admin'" class="filters" style="grid-template-columns: repeat(4, minmax(120px, 1fr)); margin-bottom: 16px;">
+      <div class="filters" style="grid-template-columns: repeat(4, minmax(120px, 1fr)); margin-bottom: 16px;">
         <input v-model.number="marketPrices.goldPerOunce" type="number" min="0" placeholder="Gold / oz" />
         <input v-model.number="marketPrices.silverPerOunce" type="number" min="0" placeholder="Silver / oz" />
         <input v-model.number="marketPrices.diamondPerCarat" type="number" min="0" placeholder="Diamond / carat" />
-        <button @click="emit('save-market-prices')">Save Global Market Prices</button>
+        <button @click="emit('save-market-prices')">Save Provider Market Prices</button>
       </div>
       <div class="filters">
         <input :value="searchTerm" @input="emit('update:search-term', ($event.target as HTMLInputElement).value)" placeholder="Search by name, SKU, description..." />
