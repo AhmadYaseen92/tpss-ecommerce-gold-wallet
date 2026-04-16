@@ -6,23 +6,48 @@ import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMark
 
 export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
 
-const toMaterialTypeValue = (name: string) => {
-  const key = name.toLowerCase();
+const enumText = (value: unknown) => {
+  if (typeof value === "string") return value.toLowerCase();
+  if (typeof value === "number") return String(value).toLowerCase();
+  return "";
+};
+
+const toMaterialTypeValue = (name: unknown) => {
+  const key = enumText(name);
+  if (key === "2") return 2;
+  if (key === "3") return 3;
   if (key.includes('silver')) return 2;
   if (key.includes('diamond')) return 3;
   return 1;
 };
-const toFormTypeValue = (name: string) => {
-  const key = name.toLowerCase();
+const toFormTypeValue = (name: unknown) => {
+  const key = enumText(name);
+  if (key === "2") return 2;
+  if (key === "3") return 3;
+  if (key === "4") return 4;
   if (key.includes('coin')) return 2;
   if (key.includes('bar')) return 3;
   if (key.includes('other')) return 4;
   return 1;
 };
-const toPricingModeValue = (name: string) => name.toLowerCase().includes('manual') ? 2 : 1;
-const toOfferTypeValue = (name: string) => name.toLowerCase().includes('fixed') ? 2 : (name.toLowerCase().includes('percent') ? 1 : 0);
-const toPurityKaratValue = (name: string) => {
-  const key = name.toLowerCase().replace(' ', '');
+const toPricingModeValue = (name: unknown) => {
+  const key = enumText(name);
+  if (key === "2") return 2;
+  return key.includes('manual') ? 2 : 1;
+};
+const toOfferTypeValue = (name: unknown) => {
+  const key = enumText(name);
+  if (key === "2") return 2;
+  if (key === "1") return 1;
+  return key.includes('fixed') ? 2 : (key.includes('percent') ? 1 : 0);
+};
+const toPurityKaratValue = (name: unknown) => {
+  const key = enumText(name).replace(/\s+/g, '');
+  if (key === "1") return 1;
+  if (key === "2") return 2;
+  if (key === "3") return 3;
+  if (key === "4") return 4;
+  if (key === "5") return 5;
   if (key.includes('24')) return 1;
   if (key.includes('22')) return 2;
   if (key.includes('21')) return 3;
