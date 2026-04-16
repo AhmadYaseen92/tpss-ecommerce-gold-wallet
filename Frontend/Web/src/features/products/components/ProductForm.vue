@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import BaseFormField from "../../../shared/components/BaseFormField.vue";
 import type { ProductEnumItem } from "../types/productTypes";
 import type { ProductFormPayload } from "../../../shared/services/backendGateway";
 import type { MarketPriceConfigDto } from "../../../shared/types/apiTypes";
 
-const props = defineProps<{ model: ProductFormPayload; categories: ProductEnumItem[]; units: ProductEnumItem[]; errors: Record<string, string>; marketPrices: MarketPriceConfigDto }>();
+const props = withDefaults(defineProps<{ model: ProductFormPayload; categories: ProductEnumItem[]; units: ProductEnumItem[]; errors: Record<string, string>; marketPrices?: MarketPriceConfigDto }>(), {
+  marketPrices: () => ({ goldPerOunce: 0, silverPerOunce: 0, diamondPerCarat: 0 })
+});
 const emit = defineEmits<{ save: []; image: [event: Event] }>();
 
 const isAutoMode = computed(() => props.model.pricingMode === 1);
@@ -57,6 +59,31 @@ const offerEnabled = computed({
 });
 
 const selectedMarketPrice = computed(() => (isGold.value ? props.marketPrices.goldPerOunce : isSilver.value ? props.marketPrices.silverPerOunce : props.marketPrices.diamondPerCarat));
+const imagePreviewUrl = ref<string>("");
+
+watch(
+  () => props.model.imageFile,
+  (file) => {
+    if (imagePreviewUrl.value.startsWith("blob:")) URL.revokeObjectURL(imagePreviewUrl.value);
+    if (file instanceof File) {
+      imagePreviewUrl.value = URL.createObjectURL(file);
+      return;
+    }
+    imagePreviewUrl.value = props.model.existingImageUrl || "";
+  },
+  { immediate: true }
+);
+
+watch(
+  () => props.model.existingImageUrl,
+  (url) => {
+    if (!(props.model.imageFile instanceof File)) imagePreviewUrl.value = url || "";
+  }
+);
+
+onBeforeUnmount(() => {
+  if (imagePreviewUrl.value.startsWith("blob:")) URL.revokeObjectURL(imagePreviewUrl.value);
+});
 
 const estimatedAutoPrice = computed(() => {
   const weight = Number(props.model.weightValue || 0);
@@ -86,7 +113,12 @@ const sellPriceSummary = computed(() => `${materialLabel.value} ${Number(props.m
       <BaseFormField label="Description" required :error="errors.description">
         <textarea v-model="model.description" rows="5" class="description-input"></textarea>
       </BaseFormField>
-      <BaseFormField label="Image"><input type="file" @change="emit('image', $event)" /></BaseFormField>
+      <BaseFormField label="Image">
+        <input type="file" accept="image/*" @change="emit('image', $event)" />
+        <div v-if="imagePreviewUrl" class="image-preview-wrap">
+          <img :src="imagePreviewUrl" :alt="`${model.name || 'Product'} preview`" class="image-preview" />
+        </div>
+      </BaseFormField>
     </section>
 
     <section class="section-card">
@@ -138,5 +170,7 @@ const sellPriceSummary = computed(() => `${materialLabel.value} ${Number(props.m
 .full-row { grid-column: 1 / -1; }
 .muted { color:#475569; font-size:13px; }
 .description-input { min-height: 120px; resize: vertical; }
+.image-preview-wrap { margin-top: 8px; }
+.image-preview { width: 100%; max-width: 220px; max-height: 220px; object-fit: cover; border-radius: 10px; border: 1px solid #d4d4d8; }
 @media (max-width: 900px) { .form-sections-grid { grid-template-columns: 1fr; } }
 </style>
