@@ -55,6 +55,10 @@ class ProductRemoteModel {
     required this.weightUnit,
     required this.sellerId,
     required this.sellerName,
+    required this.offerType,
+    required this.offerPercent,
+    required this.offerNewPrice,
+    required this.finalPrice,
   });
 
   final int id;
@@ -69,6 +73,10 @@ class ProductRemoteModel {
   final String weightUnit;
   final int sellerId;
   final String sellerName;
+  final String offerType;
+  final double offerPercent;
+  final double offerNewPrice;
+  final double finalPrice;
 
   factory ProductRemoteModel.fromJson(Map<String, dynamic> json) {
     return ProductRemoteModel(
@@ -84,6 +92,10 @@ class ProductRemoteModel {
       weightUnit: _parseWeightUnit(json['weightUnit']),
       sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
       sellerName: (json['sellerName'] ?? '') as String,
+      offerType: (json['offerType'] ?? 'None').toString(),
+      offerPercent: (json['offerPercent'] as num?)?.toDouble() ?? 0,
+      offerNewPrice: (json['offerNewPrice'] as num?)?.toDouble() ?? 0,
+      finalPrice: (json['finalPrice'] as num?)?.toDouble() ?? ((json['price'] as num?)?.toDouble() ?? 0),
     );
   }
 

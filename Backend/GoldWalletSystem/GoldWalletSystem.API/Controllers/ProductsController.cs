@@ -1,6 +1,7 @@
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Products;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.Application.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
@@ -52,8 +53,22 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 Description = x.Description,
                 ImageUrl = ToAbsoluteAssetUrl(x.ImageUrl),
                 Category = x.Category,
+                MaterialType = x.MaterialType,
+                FormType = x.FormType,
+                DisplayCategoryLabel = $"{x.MaterialType} {x.FormType}",
+                PricingMode = x.PricingMode,
+                PurityKarat = x.PurityKarat,
+                PurityFactor = x.PurityFactor,
                 WeightValue = x.WeightValue,
                 WeightUnit = x.WeightUnit,
+                BaseMarketPrice = x.BaseMarketPrice,
+                ManualSellPrice = x.ManualSellPrice,
+                DeliveryFee = x.DeliveryFee,
+                StorageFee = x.StorageFee,
+                ServiceCharge = x.ServiceCharge,
+                OfferPercent = x.OfferPercent,
+                OfferNewPrice = x.OfferNewPrice,
+                OfferType = x.OfferType,
                 Price = x.Price,
                 AvailableStock = x.AvailableStock,
                 IsActive = x.IsActive,
@@ -75,8 +90,22 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             Description = x.Description,
             ImageUrl = ToAbsoluteAssetUrl(x.ImageUrl),
             Category = x.Category,
+            MaterialType = x.MaterialType,
+            FormType = x.FormType,
+            DisplayCategoryLabel = $"{x.MaterialType} {x.FormType}",
+            PricingMode = x.PricingMode,
+            PurityKarat = x.PurityKarat,
+            PurityFactor = x.PurityFactor,
             WeightValue = x.WeightValue,
             WeightUnit = x.WeightUnit,
+            BaseMarketPrice = x.BaseMarketPrice,
+            ManualSellPrice = x.ManualSellPrice,
+            DeliveryFee = x.DeliveryFee,
+            StorageFee = x.StorageFee,
+            ServiceCharge = x.ServiceCharge,
+            OfferPercent = x.OfferPercent,
+            OfferNewPrice = x.OfferNewPrice,
+            OfferType = x.OfferType,
             Price = x.Price,
             AvailableStock = x.AvailableStock,
             IsActive = x.IsActive,
@@ -104,10 +133,23 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             Sku = request.Sku,
             Description = request.Description,
             ImageUrl = await SaveImageAsync(request.Image, request.ExistingImageUrl, cancellationToken),
-            Category = request.Category,
+            Category = ToLegacyCategory(request.MaterialType),
+            MaterialType = request.MaterialType,
+            FormType = request.FormType,
+            PricingMode = request.PricingMode,
+            PurityKarat = request.PurityKarat,
+            PurityFactor = request.PurityFactor,
             WeightValue = request.WeightValue,
-            WeightUnit = request.WeightUnit,
-            Price = request.Price,
+            WeightUnit = ProductWeightUnit.Gram,
+            BaseMarketPrice = request.BaseMarketPrice,
+            ManualSellPrice = request.ManualSellPrice,
+            DeliveryFee = request.DeliveryFee,
+            StorageFee = request.StorageFee,
+            ServiceCharge = request.ServiceCharge,
+            OfferPercent = request.OfferPercent,
+            OfferNewPrice = request.OfferNewPrice,
+            OfferType = request.OfferType,
+            Price = ResolveFinalPrice(request),
             AvailableStock = request.AvailableStock,
             IsActive = request.IsActive,
             SellerId = sellerId
@@ -138,10 +180,23 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.Sku = request.Sku;
         product.Description = request.Description;
         product.ImageUrl = await SaveImageAsync(request.Image, request.ExistingImageUrl ?? product.ImageUrl, cancellationToken);
-        product.Category = request.Category;
+        product.Category = ToLegacyCategory(request.MaterialType);
+        product.MaterialType = request.MaterialType;
+        product.FormType = request.FormType;
+        product.PricingMode = request.PricingMode;
+        product.PurityKarat = request.PurityKarat;
+        product.PurityFactor = request.PurityFactor;
         product.WeightValue = request.WeightValue;
-        product.WeightUnit = request.WeightUnit;
-        product.Price = request.Price;
+        product.WeightUnit = ProductWeightUnit.Gram;
+        product.BaseMarketPrice = request.BaseMarketPrice;
+        product.ManualSellPrice = request.ManualSellPrice;
+        product.DeliveryFee = request.DeliveryFee;
+        product.StorageFee = request.StorageFee;
+        product.ServiceCharge = request.ServiceCharge;
+        product.OfferPercent = request.OfferPercent;
+        product.OfferNewPrice = request.OfferNewPrice;
+        product.OfferType = request.OfferType;
+        product.Price = ResolveFinalPrice(request);
         product.AvailableStock = request.AvailableStock;
         product.IsActive = request.IsActive;
         product.SellerId = ResolveSellerId(request.SellerId, product.SellerId);
@@ -176,6 +231,69 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     {
         var data = Enum.GetValues<ProductWeightUnit>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+
+    [HttpGet("material-types")]
+    public IActionResult GetMaterialTypes()
+    {
+        var data = Enum.GetValues<ProductMaterialType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+    [HttpGet("form-types")]
+    public IActionResult GetFormTypes()
+    {
+        var data = Enum.GetValues<ProductFormType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+    [HttpGet("pricing-modes")]
+    public IActionResult GetPricingModes()
+    {
+        var data = Enum.GetValues<ProductPricingMode>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+    [HttpGet("purity-karats")]
+    public IActionResult GetPurityKarats()
+    {
+        var data = Enum.GetValues<ProductPurityKarat>().Select(x => new EnumItemDto((int)x, x.ToString().Replace("K", "K ").Trim())).ToList();
+        return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+    [HttpGet("offer-types")]
+    public IActionResult GetOfferTypes()
+    {
+        var data = Enum.GetValues<ProductOfferType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+    private static decimal ResolveFinalPrice(ProductUpsertRequest request)
+    {
+        var sellPrice = request.PricingMode == ProductPricingMode.Manual
+            ? request.ManualSellPrice
+            : ProductPricingCalculator.CalculateAutoPrice(
+                request.MaterialType,
+                request.BaseMarketPrice,
+                request.WeightValue,
+                request.PurityFactor,
+                request.DeliveryFee,
+                request.StorageFee,
+                request.ServiceCharge);
+
+        return ProductPricingCalculator.ApplyOffer(sellPrice, request.OfferType, request.OfferPercent, request.OfferNewPrice);
+    }
+
+    private static ProductCategory ToLegacyCategory(ProductMaterialType materialType)
+    {
+        return materialType switch
+        {
+            ProductMaterialType.Gold => ProductCategory.Gold,
+            ProductMaterialType.Silver => ProductCategory.Silver,
+            ProductMaterialType.Diamond => ProductCategory.Diamond,
+            _ => ProductCategory.Gold
+        };
     }
 
     private int ResolveSellerId(int? requestedSellerId, int fallbackSellerId = 0)
@@ -243,8 +361,22 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         public string Description { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public ProductCategory Category { get; set; }
+        public ProductMaterialType MaterialType { get; set; }
+        public ProductFormType FormType { get; set; }
+        public string DisplayCategoryLabel { get; set; } = string.Empty;
+        public ProductPricingMode PricingMode { get; set; }
+        public ProductPurityKarat PurityKarat { get; set; }
+        public decimal PurityFactor { get; set; }
         public decimal WeightValue { get; set; }
         public ProductWeightUnit WeightUnit { get; set; }
+        public decimal BaseMarketPrice { get; set; }
+        public decimal ManualSellPrice { get; set; }
+        public decimal DeliveryFee { get; set; }
+        public decimal StorageFee { get; set; }
+        public decimal ServiceCharge { get; set; }
+        public decimal OfferPercent { get; set; }
+        public decimal OfferNewPrice { get; set; }
+        public ProductOfferType OfferType { get; set; }
         public decimal Price { get; set; }
         public int AvailableStock { get; set; }
         public bool IsActive { get; set; }
@@ -258,10 +390,21 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         public string Description { get; set; } = string.Empty;
         public IFormFile? Image { get; set; }
         public string? ExistingImageUrl { get; set; }
-        public ProductCategory Category { get; set; } = ProductCategory.Jewelry;
+        public ProductMaterialType MaterialType { get; set; } = ProductMaterialType.Gold;
+        public ProductFormType FormType { get; set; } = ProductFormType.Jewelry;
+        public ProductPricingMode PricingMode { get; set; } = ProductPricingMode.Auto;
+        public ProductPurityKarat PurityKarat { get; set; } = ProductPurityKarat.None;
+        public decimal PurityFactor { get; set; }
         public decimal WeightValue { get; set; }
         public ProductWeightUnit WeightUnit { get; set; } = ProductWeightUnit.Gram;
-        public decimal Price { get; set; }
+        public decimal BaseMarketPrice { get; set; }
+        public decimal ManualSellPrice { get; set; }
+        public decimal DeliveryFee { get; set; }
+        public decimal StorageFee { get; set; }
+        public decimal ServiceCharge { get; set; }
+        public decimal OfferPercent { get; set; }
+        public decimal OfferNewPrice { get; set; }
+        public ProductOfferType OfferType { get; set; } = ProductOfferType.None;
         public int AvailableStock { get; set; }
         public bool IsActive { get; set; } = true;
         public int? SellerId { get; set; }

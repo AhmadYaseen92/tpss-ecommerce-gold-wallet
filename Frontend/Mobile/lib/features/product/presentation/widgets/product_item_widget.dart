@@ -44,9 +44,16 @@ class ProductItemWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '\$${product.price.toStringAsFixed(2)}',
+                      '\$${product.finalPrice.toStringAsFixed(2)}',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.textPrimary),
                     ),
+                    if (product.offerType.toLowerCase() != 'none')
+                      Text(
+                        product.offerType.toLowerCase().contains('percent')
+                            ? 'Offer: ${product.offerPercent.toStringAsFixed(1)}% off'
+                            : 'Offer Price: \$${product.offerNewPrice.toStringAsFixed(2)}',
+                        style: TextStyle(fontSize: 12, color: palette.primary, fontWeight: FontWeight.w600),
+                      ),
                   ],
                 ),
               ),

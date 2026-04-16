@@ -95,6 +95,10 @@ class ProductRepositoryImpl implements IProductRepository {
       isInCart: false,
       quantity: 1,
       sellerName: model.sellerName,
+      offerType: model.offerType,
+      offerPercent: model.offerPercent,
+      offerNewPrice: model.offerNewPrice,
+      finalPrice: model.finalPrice,
     );
   }
 
@@ -105,6 +109,10 @@ class ProductRepositoryImpl implements IProductRepository {
       price: model.price,
       change: model.change,
       sellerName: model.sellerName,
+      offerType: model.offerType,
+      offerPercent: model.offerPercent,
+      offerNewPrice: model.offerNewPrice,
+      finalPrice: model.finalPrice,
     );
   }
 

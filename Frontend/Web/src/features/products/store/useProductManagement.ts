@@ -12,20 +12,20 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const productError = ref("");
   const productPage = ref<"list" | "add" | "edit" | "details">("list");
   const productRouteId = ref<number | null>(null);
-  const productForm = reactive<ProductFormPayload>({ name: "", sku: "", description: "", category: 0, weightValue: 0, weightUnit: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
+  const productForm = reactive<ProductFormPayload>({ name: "", sku: "", description: "", materialType: 1, formType: 1, pricingMode: 1, purityKarat: 0, purityFactor: 1, weightValue: 0, baseMarketPrice: 0, manualSellPrice: 0, deliveryFee: 0, storageFee: 0, serviceCharge: 0, offerType: 0, offerPercent: 0, offerNewPrice: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
   const validationErrors = reactive<Record<string, string>>({});
   const productSearchTerm = ref("");
   const activeFilter = ref<"all" | "active" | "inactive">("all");
   const categoryFilter = ref("all");
 
   const resetProductForm = () => {
-    Object.assign(productForm, { id: undefined, name: "", sku: "", description: "", category: categories.value[0]?.value ?? 0, weightValue: 0, weightUnit: weightUnits.value[0]?.value ?? 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
+    Object.assign(productForm, { id: undefined, name: "", sku: "", description: "", materialType: 1, formType: 1, pricingMode: 1, purityKarat: 0, purityFactor: 1, weightValue: 0, baseMarketPrice: 0, manualSellPrice: 0, deliveryFee: 0, storageFee: 0, serviceCharge: 0, offerType: 0, offerPercent: 0, offerNewPrice: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
     productError.value = "";
     Object.keys(validationErrors).forEach((k) => delete validationErrors[k]);
   };
 
   const fillProductForm = (product: ProductManagementDto) => {
-    Object.assign(productForm, { id: product.id, name: product.name, sku: product.sku, description: product.description, category: categories.value.find((x) => x.name === product.category)?.value ?? categories.value[0]?.value ?? 0, weightValue: Number(product.weightValue), weightUnit: weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? weightUnits.value[0]?.value ?? 0, price: Number(product.price), availableStock: product.availableStock, isActive: product.isActive, existingImageUrl: product.imageUrl, imageFile: null });
+    Object.assign(productForm, { id: product.id, name: product.name, sku: product.sku, description: product.description, materialType: categories.value.find((x) => x.name === product.materialType)?.value ?? 1, formType: categories.value.find((x) => x.name === product.formType)?.value ?? 1, pricingMode: categories.value.find((x) => x.name === product.pricingMode)?.value ?? 1, purityKarat: categories.value.find((x) => x.name === product.purityKarat)?.value ?? 0, purityFactor: Number(product.purityFactor), weightValue: Number(product.weightValue), baseMarketPrice: Number(product.baseMarketPrice), manualSellPrice: Number(product.manualSellPrice), deliveryFee: Number(product.deliveryFee), storageFee: Number(product.storageFee), serviceCharge: Number(product.serviceCharge), offerType: categories.value.find((x) => x.name === product.offerType)?.value ?? 0, offerPercent: Number(product.offerPercent), offerNewPrice: Number(product.offerNewPrice), price: Number(product.price), availableStock: product.availableStock, isActive: product.isActive, existingImageUrl: product.imageUrl, imageFile: null });
   };
 
   const loadProductManagementData = async () => {
@@ -65,10 +65,10 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     if (!productForm.name.trim()) validationErrors.name = "Name is required";
     if (!productForm.sku.trim()) validationErrors.sku = "SKU is required";
     if (!productForm.description.trim()) validationErrors.description = "Description is required";
-    if (!productForm.category) validationErrors.category = "Category is required";
-    if (!productForm.weightValue || productForm.weightValue <= 0) validationErrors.weightValue = "Weight value must be greater than 0";
-    if (!productForm.weightUnit) validationErrors.weightUnit = "Weight unit is required";
-    if (!productForm.price || productForm.price <= 0) validationErrors.price = "Price must be greater than 0";
+    if (!productForm.materialType) validationErrors.materialType = "Material type is required";
+    if (!productForm.formType) validationErrors.formType = "Product form is required";
+    if (!productForm.weightValue || productForm.weightValue <= 0) validationErrors.weightValue = "Weight (grams) must be greater than 0";
+    if (!productForm.baseMarketPrice || productForm.baseMarketPrice <= 0) validationErrors.baseMarketPrice = "Market/base price must be greater than 0";
     if (productForm.availableStock == null || productForm.availableStock < 0) validationErrors.availableStock = "Stock cannot be negative";
     return Object.keys(validationErrors).length === 0;
   };
@@ -109,9 +109,20 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
         name: product.name,
         sku: product.sku,
         description: product.description,
-        category: categories.value.find((x) => x.name === product.category)?.value ?? categories.value[0]?.value ?? 0,
+        materialType: categories.value.find((x) => x.name === product.materialType)?.value ?? 1,
+        formType: categories.value.find((x) => x.name === product.formType)?.value ?? 1,
+        pricingMode: categories.value.find((x) => x.name === product.pricingMode)?.value ?? 1,
+        purityKarat: categories.value.find((x) => x.name === product.purityKarat)?.value ?? 0,
+        purityFactor: Number(product.purityFactor),
         weightValue: Number(product.weightValue),
-        weightUnit: weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? weightUnits.value[0]?.value ?? 0,
+        baseMarketPrice: Number(product.baseMarketPrice),
+        manualSellPrice: Number(product.manualSellPrice),
+        deliveryFee: Number(product.deliveryFee),
+        storageFee: Number(product.storageFee),
+        serviceCharge: Number(product.serviceCharge),
+        offerType: categories.value.find((x) => x.name === product.offerType)?.value ?? 0,
+        offerPercent: Number(product.offerPercent),
+        offerNewPrice: Number(product.offerNewPrice),
         price: Number(product.price),
         availableStock: product.availableStock,
         isActive: !product.isActive,

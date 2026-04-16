@@ -307,9 +307,20 @@ export interface ProductFormPayload {
   name: string;
   sku: string;
   description: string;
-  category: number;
+  materialType: number;
+  formType: number;
+  pricingMode: number;
+  purityKarat: number;
+  purityFactor: number;
   weightValue: number;
-  weightUnit: number;
+  baseMarketPrice: number;
+  manualSellPrice: number;
+  deliveryFee: number;
+  storageFee: number;
+  serviceCharge: number;
+  offerType: number;
+  offerPercent: number;
+  offerNewPrice: number;
   price: number;
   availableStock: number;
   isActive: boolean;
@@ -331,9 +342,23 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
     sku: item.sku,
     description: item.description,
     imageUrl: item.imageUrl,
-    category: item.category,
+    category: item.displayCategoryLabel,
+    materialType: item.materialType,
+    formType: item.formType,
+    displayCategoryLabel: item.displayCategoryLabel,
+    pricingMode: item.pricingMode,
+    purityKarat: item.purityKarat,
+    purityFactor: item.purityFactor,
     weightValue: item.weightValue,
     weightUnit: item.weightUnit,
+    baseMarketPrice: item.baseMarketPrice,
+    manualSellPrice: item.price,
+    deliveryFee: item.deliveryFee,
+    storageFee: item.storageFee,
+    serviceCharge: item.serviceCharge,
+    offerType: item.offerType,
+    offerPercent: item.offerPercent,
+    offerNewPrice: item.offerNewPrice,
     price: item.price,
     availableStock: item.availableStock,
     isActive: true,
@@ -377,10 +402,21 @@ function buildProductForm(payload: ProductFormPayload): FormData {
   form.append("Name", payload.name);
   form.append("Sku", payload.sku);
   form.append("Description", payload.description);
-  form.append("Category", String(payload.category));
+  form.append("MaterialType", String(payload.materialType));
+  form.append("FormType", String(payload.formType));
+  form.append("PricingMode", String(payload.pricingMode));
+  form.append("PurityKarat", String(payload.purityKarat));
+  form.append("PurityFactor", String(payload.purityFactor));
   form.append("WeightValue", String(payload.weightValue));
-  form.append("WeightUnit", String(payload.weightUnit));
-  form.append("Price", String(payload.price));
+  form.append("WeightUnit", "1");
+  form.append("BaseMarketPrice", String(payload.baseMarketPrice));
+  form.append("ManualSellPrice", String(payload.manualSellPrice));
+  form.append("DeliveryFee", String(payload.deliveryFee));
+  form.append("StorageFee", String(payload.storageFee));
+  form.append("ServiceCharge", String(payload.serviceCharge));
+  form.append("OfferType", String(payload.offerType));
+  form.append("OfferPercent", String(payload.offerPercent));
+  form.append("OfferNewPrice", String(payload.offerNewPrice));
   form.append("AvailableStock", String(payload.availableStock));
   form.append("IsActive", String(payload.isActive));
   if (payload.sellerId) form.append("SellerId", String(payload.sellerId));
