@@ -14,7 +14,7 @@ const isGold = computed(() => props.model.materialType === 1);
 const isSilver = computed(() => props.model.materialType === 2);
 const isDiamond = computed(() => props.model.materialType === 3);
 
-const karatFactorMap: Record<number, number> = { 0: 1, 1: 1, 2: 0.9167, 3: 0.875, 4: 0.75, 5: 0.585 };
+const karatFactorMap: Record<number, number> = { 0: 1, 1: 1, 2: 0.916, 3: 0.875, 4: 0.75, 5: 0.585 };
 
 watch(
   () => [props.model.materialType, props.model.purityKarat],
@@ -31,7 +31,10 @@ watch(
     }
 
     if (isSilver.value) {
-      props.model.purityFactor = props.model.purityKarat > 0 ? 0.999 : 1;
+      if (![0.999, 0.925].includes(Number(props.model.purityFactor))) {
+        props.model.purityFactor = 0.999;
+      }
+      props.model.purityKarat = 0;
     }
   },
   { immediate: true }
@@ -64,12 +67,6 @@ const estimatedAutoPrice = computed(() => {
   const base = isDiamond.value ? (weight / 0.2) * market : (weight / 31.1035) * market;
   const fees = Number(props.model.deliveryFee || 0) + Number(props.model.storageFee || 0) + Number(props.model.serviceCharge || 0);
   let total = base * Number(props.model.purityFactor || 1) + fees;
-
-  if (props.model.offerType === 1 && props.model.offerPercent > 0) {
-    total = total * (1 - props.model.offerPercent / 100);
-  } else if (props.model.offerType === 2 && props.model.offerNewPrice > 0) {
-    total = props.model.offerNewPrice;
-  }
 
   return Number.isFinite(total) ? total : 0;
 });
@@ -109,11 +106,18 @@ const finalSellPrice = computed(() => {
       <select v-model.number="model.pricingMode"><option :value="1">Auto</option><option :value="2">Manual</option></select>
     </BaseFormField>
 
-    <BaseFormField v-if="isGold || isSilver" label="Purity/Karat" hint="Selecting karat updates purity factor automatically.">
+    <BaseFormField v-if="isGold" label="Purity/Karat" hint="Gold karat purity is applied automatically.">
       <select v-model.number="model.purityKarat"><option :value="0">Not applicable</option><option :value="1">24K</option><option :value="2">22K</option><option :value="3">21K</option><option :value="4">18K</option><option :value="5">14K</option></select>
     </BaseFormField>
 
-    <BaseFormField v-if="!isDiamond" label="Purity Factor"><input v-model.number="model.purityFactor" type="number" min="0" step="0.0001" /></BaseFormField>
+
+    <BaseFormField v-if="isSilver" label="Silver Purity" hint="Silver purity factor (not karat).">
+      <select :value="model.purityFactor" @change="model.purityFactor = Number(($event.target as HTMLSelectElement).value)">
+        <option :value="0.999">999 (0.999)</option>
+        <option :value="0.925">925 (0.925)</option>
+      </select>
+    </BaseFormField>
+    <BaseFormField v-if="!isDiamond" label="Purity Factor"><input :value="model.purityFactor" type="number" readonly /></BaseFormField>
 
     <BaseFormField v-if="isManualMode" label="Manual Sell Price" :error="errors.manualSellPrice"><input v-model.number="model.manualSellPrice" type="number" min="0" /></BaseFormField>
 
@@ -135,9 +139,11 @@ const finalSellPrice = computed(() => {
     <BaseFormField label="Available Stock" required :error="errors.availableStock"><input v-model.number="model.availableStock" type="number" /></BaseFormField>
     <BaseFormField label="Status" class="field-full"><label class="checkbox-line"><input v-model="model.isActive" type="checkbox" /> Is Active</label></BaseFormField>
 
-    <div class="field-full muted">Selected market price source: <strong>{{ selectedMarketPrice.toFixed(2) }}</strong> ({{ isGold ? 'Gold/oz' : isSilver ? 'Silver/oz' : 'Diamond/carat' }}).</div>
-    <div class="field-full muted">Auto Calculated Price (Market + Weight + Purity + Fees): <strong>{{ estimatedAutoPrice.toFixed(2) }}</strong></div>
-    <div class="field-full muted">Final Sell Price (after offer): <strong>{{ finalSellPrice.toFixed(2) }}</strong></div>
+    <div v-if="isAutoMode" class="field-full muted">Selected Market Price Source: <strong>{{ selectedMarketPrice.toFixed(2) }}</strong> ({{ isGold ? 'Gold per ounce' : isSilver ? 'Silver per ounce' : 'Diamond per carat' }}).</div>
+    <div v-if="isAutoMode" class="field-full muted">Auto Calculated Price: <strong>{{ estimatedAutoPrice.toFixed(2) }}</strong></div>
+    <BaseFormField label="Sell Price" class="field-full" hint="This is the final investor price including all applicable pricing rules, fees, and offer logic.">
+      <input :value="finalSellPrice.toFixed(2)" readonly />
+    </BaseFormField>
   </div>
   <button @click="emit('save')">Save</button>
 </template>
