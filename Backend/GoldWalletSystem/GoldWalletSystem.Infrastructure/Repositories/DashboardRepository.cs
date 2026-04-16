@@ -10,30 +10,90 @@ public class DashboardRepository(AppDbContext dbContext, ICurrentUserService cur
 {
     public async Task<DashboardDto> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
-        var user = await dbContext.Users.AsNoTracking().FirstAsync(x => x.Id == userId, cancellationToken);
-        var sellerScope = !currentUser.IsInRole("Admin") ? currentUser.SellerId : null;
+        var isAdmin = currentUser.IsInRole("Admin");
+        var sellerId = currentUser.SellerId;
 
-        var walletBalance = await dbContext.Wallets.Where(x => x.UserId == userId).Select(x => x.CashBalance).FirstOrDefaultAsync(cancellationToken);
-        var cartItemsQuery = dbContext.CartItems.AsNoTracking().AsQueryable();
-        if (sellerScope.HasValue)
+        string displayName;
+
+        if (!isAdmin && sellerId.HasValue)
         {
-            cartItemsQuery = cartItemsQuery.Where(x => (x.SellerId ?? x.Product.SellerId) == sellerScope.Value);
+            // ✅ Get seller instead of user
+            var seller = await dbContext.Sellers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == sellerId.Value, cancellationToken);
+
+            if (seller == null)
+                throw new KeyNotFoundException($"Seller with ID {sellerId.Value} not found.");
+
+            displayName = seller.Name;
         }
         else
         {
-            cartItemsQuery = cartItemsQuery.Where(x => x.Cart.UserId == userId);
+            // Admin fallback → use user
+            var user = await dbContext.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+
+            if (user == null)
+                throw new KeyNotFoundException($"User with ID {userId} not found.");
+
+            displayName = user.FullName;
         }
 
-        var cartItemsCount = await cartItemsQuery.SumAsync(x => (int?)x.Quantity, cancellationToken) ?? 0;
-        var unreadNotifications = await dbContext.AppNotifications.CountAsync(x => x.UserId == userId && !x.IsRead, cancellationToken);
+        // Wallet balance (still per user)
+        var walletBalance = await dbContext.Wallets
+            .Where(x => x.UserId == userId)
+            .Select(x => x.CashBalance)
+            .FirstOrDefaultAsync(cancellationToken);
 
+        // Cart items
+        var cartItemsQuery = dbContext.CartItems.AsNoTracking();
+
+        if (!isAdmin && sellerId.HasValue)
+        {
+            cartItemsQuery = cartItemsQuery
+                .Where(x => (x.SellerId ?? x.Product.SellerId) == sellerId.Value);
+        }
+        else
+        {
+            cartItemsQuery = cartItemsQuery
+                .Where(x => x.Cart.UserId == userId);
+        }
+
+        var cartItemsCount = await cartItemsQuery
+            .SumAsync(x => (int?)x.Quantity, cancellationToken) ?? 0;
+
+        // Notifications (still user-based)
+        var unreadNotifications = await dbContext.AppNotifications
+            .CountAsync(x => x.UserId == userId && !x.IsRead, cancellationToken);
+
+        // Monthly spent
         var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
-        var monthlySpentQuery = dbContext.TransactionHistories.Where(x => x.TransactionType == "Purchase" && x.CreatedAtUtc >= monthStart);
-        monthlySpentQuery = sellerScope.HasValue
-            ? monthlySpentQuery.Where(x => x.SellerId == sellerScope.Value)
-            : monthlySpentQuery.Where(x => x.UserId == userId);
-        var monthlySpent = await monthlySpentQuery.SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0;
 
-        return new DashboardDto(userId, user.FullName, walletBalance, cartItemsCount, unreadNotifications, monthlySpent);
+        var monthlySpentQuery = dbContext.TransactionHistories
+            .Where(x => x.CreatedAtUtc >= monthStart);
+
+        if (!isAdmin && sellerId.HasValue)
+        {
+            monthlySpentQuery = monthlySpentQuery
+                .Where(x => x.SellerId == sellerId.Value);
+        }
+        else
+        {
+            monthlySpentQuery = monthlySpentQuery
+                .Where(x => x.UserId == userId);
+        }
+
+        var monthlySpent = await monthlySpentQuery
+            .SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0;
+
+        return new DashboardDto(
+            userId,
+            displayName, // ✅ now from Seller when needed
+            walletBalance,
+            cartItemsCount,
+            unreadNotifications,
+            monthlySpent
+        );
     }
 }

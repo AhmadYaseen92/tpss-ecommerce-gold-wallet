@@ -410,6 +410,16 @@
         "IsRequired": false
       },
       {
+        "Name": "PricingMaterialType",
+        "Type": "GoldWalletSystem.Domain.Enums.PricingMaterialType",
+        "IsRequired": false
+      },
+      {
+        "Name": "PricingMode",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductPricingMode",
+        "IsRequired": false
+      },
+      {
         "Name": "WeightValue",
         "Type": "System.Decimal",
         "IsRequired": false
@@ -417,6 +427,31 @@
       {
         "Name": "WeightUnit",
         "Type": "GoldWalletSystem.Domain.Enums.ProductWeightUnit",
+        "IsRequired": false
+      },
+      {
+        "Name": "PurityKarat",
+        "Type": "System.Nullable\u00601[[System.Decimal, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "MarketUnitPrice",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "DeliveryFee",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "StorageFee",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "ServiceCharge",
+        "Type": "System.Decimal",
         "IsRequired": false
       },
       {
@@ -502,6 +537,16 @@
         "IsRequired": false
       },
       {
+        "Name": "PricingMaterialType",
+        "Type": "GoldWalletSystem.Domain.Enums.PricingMaterialType",
+        "IsRequired": false
+      },
+      {
+        "Name": "PricingMode",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductPricingMode",
+        "IsRequired": false
+      },
+      {
         "Name": "WeightValue",
         "Type": "System.Decimal",
         "IsRequired": false
@@ -509,6 +554,31 @@
       {
         "Name": "WeightUnit",
         "Type": "GoldWalletSystem.Domain.Enums.ProductWeightUnit",
+        "IsRequired": false
+      },
+      {
+        "Name": "PurityKarat",
+        "Type": "System.Nullable\u00601[[System.Decimal, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "MarketUnitPrice",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "DeliveryFee",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "StorageFee",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "ServiceCharge",
+        "Type": "System.Decimal",
         "IsRequired": false
       },
       {
@@ -548,6 +618,26 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
+    "Method": "GetPricingMaterialTypes",
+    "RelativePath": "api/products/pricing-material-types",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
+    "Method": "GetPricingModes",
+    "RelativePath": "api/products/pricing-modes",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -722,6 +812,22 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "CreateWalletActionRequest",
+    "RelativePath": "api/wallet/actions/request",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.WalletController\u002BWalletActionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
     "Method": "GetByUser",
     "RelativePath": "api/wallet/by-user",
     "HttpMethod": "POST",
@@ -874,6 +980,32 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "GetMarketPrices",
+    "RelativePath": "api/web-admin/market-prices",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "UpdateMarketPrices",
+    "RelativePath": "api/web-admin/market-prices",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Models.UpdateMarketPricesRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
     "Method": "GetNotifications",
     "RelativePath": "api/web-admin/notifications",
     "HttpMethod": "GET",
@@ -906,6 +1038,22 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "GetRequestDetails",
+    "RelativePath": "api/web-admin/requests/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {

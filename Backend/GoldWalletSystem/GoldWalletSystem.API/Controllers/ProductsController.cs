@@ -36,47 +36,80 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     public async Task<IActionResult> GetManagementList(CancellationToken cancellationToken = default)
     {
         var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
-        var sellerIdClaim = int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var parsedSellerId)
+
+        var sellerIdClaim = int.TryParse(
+            User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value,
+            out var parsedSellerId)
             ? parsedSellerId
             : 0;
 
         var query = dbContext.Products.AsNoTracking().AsQueryable();
+
         if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase) && sellerIdClaim > 0)
         {
             query = query.Where(x => x.SellerId == sellerIdClaim);
         }
 
+        // STEP 1: Fetch from DB (pure EF projection only)
         var items = await query
             .OrderByDescending(x => x.CreatedAtUtc)
             .ThenByDescending(x => x.Id)
-            .Select(x => new ProductManagementDto
+            .Select(x => new
             {
-                Id = x.Id,
-                Name = x.Name,
-                Sku = x.Sku,
-                Description = x.Description,
-                ImageUrl = ToAbsoluteAssetUrl(x.ImageUrl),
-                Category = x.Category,
-                PricingMaterialType = x.PricingMaterialType,
-                PricingMode = x.PricingMode,
-                WeightValue = x.WeightValue,
-                WeightUnit = x.WeightUnit,
-                PurityKarat = x.PurityKarat,
-                MarketUnitPrice = x.MarketUnitPrice,
-                DeliveryFee = x.DeliveryFee,
-                StorageFee = x.StorageFee,
-                ServiceCharge = x.ServiceCharge,
-                FinalSellPrice = x.FinalSellPrice,
-                Price = x.Price,
-                AvailableStock = x.AvailableStock,
-                IsActive = x.IsActive,
-                SellerId = x.SellerId,
-                CreatedAtUtc = x.CreatedAtUtc,
-                UpdatedAtUtc = x.UpdatedAtUtc
+                x.Id,
+                x.Name,
+                x.Sku,
+                x.Description,
+                x.ImageUrl,
+                x.Category,
+                x.PricingMaterialType,
+                x.PricingMode,
+                x.WeightValue,
+                x.WeightUnit,
+                x.PurityKarat,
+                x.MarketUnitPrice,
+                x.DeliveryFee,
+                x.StorageFee,
+                x.ServiceCharge,
+                x.FinalSellPrice,
+                x.Price,
+                x.AvailableStock,
+                x.IsActive,
+                x.SellerId,
+                x.CreatedAtUtc,
+                x.UpdatedAtUtc
             })
             .ToListAsync(cancellationToken);
 
-        return Ok(ApiResponse<List<ProductManagementDto>>.Ok(items));
+        // STEP 2: Map in memory (safe to use custom methods)
+        var result = items.Select(x => new ProductManagementDto
+        {
+            Id = x.Id,
+            Name = x.Name,
+            Sku = x.Sku,
+            Description = x.Description,
+            ImageUrl = ToAbsoluteAssetUrl(x.ImageUrl), // ✅ FIXED location
+            Category = x.Category,
+            PricingMaterialType = x.PricingMaterialType,
+            PricingMode = x.PricingMode,
+            WeightValue = x.WeightValue,
+            WeightUnit = x.WeightUnit,
+            PurityKarat = x.PurityKarat,
+            MarketUnitPrice = x.MarketUnitPrice,
+            DeliveryFee = x.DeliveryFee,
+            StorageFee = x.StorageFee,
+            ServiceCharge = x.ServiceCharge,
+            FinalSellPrice = x.FinalSellPrice,
+            Price = x.Price,
+            AvailableStock = x.AvailableStock,
+            IsActive = x.IsActive,
+            SellerId = x.SellerId,
+            CreatedAtUtc = x.CreatedAtUtc,
+            UpdatedAtUtc = x.UpdatedAtUtc
+        }).ToList();
+
+        // ✅ FIX: return result NOT items
+        return Ok(ApiResponse<List<ProductManagementDto>>.Ok(result));
     }
 
     [HttpGet("management/{id:int}")]
