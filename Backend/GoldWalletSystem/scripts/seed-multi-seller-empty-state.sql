@@ -227,15 +227,32 @@ BEGIN TRY
             T.[Price] = S.[Price],
             T.[AvailableStock] = S.[AvailableStock],
             T.[Category] = CASE
-                WHEN S.[Name] LIKE N'%Gift Card%' THEN 10
-                WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
+                WHEN S.[Name] LIKE N'%Diamond%' THEN 3
                 WHEN S.[Name] LIKE N'%Coin%' THEN 5
-                WHEN (S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%') AND S.[Name] LIKE N'%Silver%' THEN 9
-                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' THEN 8
+                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' OR S.[Name] LIKE N'%Gift Card%' THEN 4
                 WHEN S.[Name] LIKE N'%Silver%' THEN 2
-                WHEN S.[Name] LIKE N'%Bar%' THEN 3
+                WHEN S.[Name] LIKE N'%Bar%' THEN 1
                 ELSE 1
             END,
+            T.[PricingMaterialType] = CASE
+                WHEN S.[Name] LIKE N'%Diamond%' THEN 3
+                WHEN S.[Name] LIKE N'%Silver%' THEN 2
+                ELSE 1
+            END,
+            T.[PricingMode] = 2,
+            T.[PurityKarat] = CASE
+                WHEN S.[Name] LIKE N'%Diamond%' THEN NULL
+                WHEN S.[Name] LIKE N'%22K%' THEN 22
+                WHEN S.[Name] LIKE N'%18K%' THEN 18
+                ELSE 24
+            END,
+            T.[MarketUnitPrice] = S.[Price],
+            T.[DeliveryFee] = 0,
+            T.[StorageFee] = 0,
+            T.[ServiceCharge] = 0,
+            T.[FinalSellPrice] = S.[Price],
+            T.[WeightValue] = CASE WHEN S.[Name] LIKE N'%1oz%' THEN 1.000 WHEN S.[Name] LIKE N'%1/2oz%' THEN 0.500 WHEN S.[Name] LIKE N'%1/4oz%' THEN 0.250 WHEN S.[Name] LIKE N'%10g%' THEN 10.000 WHEN S.[Name] LIKE N'%20g%' THEN 20.000 WHEN S.[Name] LIKE N'%50g%' THEN 50.000 WHEN S.[Name] LIKE N'%100g%' THEN 100.000 WHEN S.[Name] LIKE N'%2.5g%' THEN 2.500 WHEN S.[Name] LIKE N'%1g%' THEN 1.000 ELSE 1.000 END,
+            T.[WeightUnit] = CASE WHEN S.[Name] LIKE N'%oz%' THEN 3 ELSE 1 END,
             T.[ImageUrl] = CASE
                 WHEN S.[Name] LIKE N'%Silver%' THEN N'/images/products/silver.png'
                 WHEN S.[Name] LIKE N'%Coin%' THEN N'/images/products/gold-coin.png'
@@ -246,7 +263,7 @@ BEGIN TRY
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[Category],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[Category],[PricingMaterialType],[PricingMode],[PurityKarat],[MarketUnitPrice],[DeliveryFee],[StorageFee],[ServiceCharge],[FinalSellPrice],[WeightValue],[WeightUnit],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
         VALUES (
             S.[SellerId],
             S.[Name],
@@ -255,15 +272,32 @@ BEGIN TRY
             S.[Price],
             S.[AvailableStock],
             CASE
-                WHEN S.[Name] LIKE N'%Gift Card%' THEN 10
-                WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
+                WHEN S.[Name] LIKE N'%Diamond%' THEN 3
                 WHEN S.[Name] LIKE N'%Coin%' THEN 5
-                WHEN (S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%') AND S.[Name] LIKE N'%Silver%' THEN 9
-                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' THEN 8
+                WHEN S.[Name] LIKE N'%Bracelet%' OR S.[Name] LIKE N'%Necklace%' OR S.[Name] LIKE N'%Wedding Set%' OR S.[Name] LIKE N'%Gift Card%' THEN 4
                 WHEN S.[Name] LIKE N'%Silver%' THEN 2
-                WHEN S.[Name] LIKE N'%Bar%' THEN 3
+                WHEN S.[Name] LIKE N'%Bar%' THEN 1
                 ELSE 1
             END,
+            CASE
+                WHEN S.[Name] LIKE N'%Diamond%' THEN 3
+                WHEN S.[Name] LIKE N'%Silver%' THEN 2
+                ELSE 1
+            END,
+            2,
+            CASE
+                WHEN S.[Name] LIKE N'%Diamond%' THEN NULL
+                WHEN S.[Name] LIKE N'%22K%' THEN 22
+                WHEN S.[Name] LIKE N'%18K%' THEN 18
+                ELSE 24
+            END,
+            S.[Price],
+            0,
+            0,
+            0,
+            S.[Price],
+            CASE WHEN S.[Name] LIKE N'%1oz%' THEN 1.000 WHEN S.[Name] LIKE N'%1/2oz%' THEN 0.500 WHEN S.[Name] LIKE N'%1/4oz%' THEN 0.250 WHEN S.[Name] LIKE N'%10g%' THEN 10.000 WHEN S.[Name] LIKE N'%20g%' THEN 20.000 WHEN S.[Name] LIKE N'%50g%' THEN 50.000 WHEN S.[Name] LIKE N'%100g%' THEN 100.000 WHEN S.[Name] LIKE N'%2.5g%' THEN 2.500 WHEN S.[Name] LIKE N'%1g%' THEN 1.000 ELSE 1.000 END,
+            CASE WHEN S.[Name] LIKE N'%oz%' THEN 3 ELSE 1 END,
             CASE
                 WHEN S.[Name] LIKE N'%Silver%' THEN N'/images/products/silver.png'
                 WHEN S.[Name] LIKE N'%Coin%' THEN N'/images/products/gold-coin.png'
@@ -292,6 +326,18 @@ BEGIN TRY
             NULL
         );
     END
+
+    IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'market.price.gold')
+        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [JsonValue], [IsEnabled], [Description], [CreatedAtUtc], [UpdatedAtUtc])
+        VALUES (N'market.price.gold', N'86.0', 1, N'Market unit price for gold (per gram).', @Now, NULL);
+
+    IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'market.price.silver')
+        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [JsonValue], [IsEnabled], [Description], [CreatedAtUtc], [UpdatedAtUtc])
+        VALUES (N'market.price.silver', N'1.1', 1, N'Market unit price for silver (per gram).', @Now, NULL);
+
+    IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'market.price.diamond')
+        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [JsonValue], [IsEnabled], [Description], [CreatedAtUtc], [UpdatedAtUtc])
+        VALUES (N'market.price.diamond', N'500', 1, N'Market unit price for diamond base.', @Now, NULL);
 
     ------------------------------------------------------------
     -- 7) Audit logs

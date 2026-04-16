@@ -424,12 +424,12 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
     {
         var entries = await dbContext.MobileAppConfigurations
             .AsNoTracking()
-            .Where(x => x.Key == MarketPriceGoldKey || x.Key == MarketPriceSilverKey || x.Key == MarketPriceDiamondKey)
+            .Where(x => x.IsEnabled && (x.ConfigKey == MarketPriceGoldKey || x.ConfigKey == MarketPriceSilverKey || x.ConfigKey == MarketPriceDiamondKey))
             .ToListAsync(cancellationToken);
 
         decimal ParseValue(string key)
         {
-            var raw = entries.FirstOrDefault(x => x.Key == key)?.Value;
+            var raw = entries.FirstOrDefault(x => x.ConfigKey == key)?.JsonValue;
             return decimal.TryParse(raw, out var parsed) ? parsed : 0m;
         }
 
@@ -454,19 +454,22 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
     private async Task UpsertConfigValueAsync(string key, decimal value, CancellationToken cancellationToken)
     {
-        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
         if (config is null)
         {
             dbContext.MobileAppConfigurations.Add(new Domain.Entities.MobileAppConfiguration
             {
-                Key = key,
-                Value = value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                ConfigKey = key,
+                JsonValue = value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                IsEnabled = true,
+                Description = $"Market unit price for {key}",
                 UpdatedAtUtc = DateTime.UtcNow
             });
             return;
         }
 
-        config.Value = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        config.JsonValue = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        config.IsEnabled = true;
         config.UpdatedAtUtc = DateTime.UtcNow;
     }
 

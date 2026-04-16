@@ -384,8 +384,8 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
         var value = await dbContext.MobileAppConfigurations
             .AsNoTracking()
-            .Where(x => x.Key == key)
-            .Select(x => x.Value)
+            .Where(x => x.ConfigKey == key && x.IsEnabled)
+            .Select(x => x.JsonValue)
             .FirstOrDefaultAsync(cancellationToken);
 
         return decimal.TryParse(value, out var parsed) ? parsed : 0;

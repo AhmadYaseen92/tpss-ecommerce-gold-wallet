@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { fetchWebAdminDashboard } from "../../../shared/services/backendGateway";
 import type { WebDashboardDto } from "../../../shared/types/apiTypes";
@@ -25,20 +25,6 @@ const isVisibleCategory = (category: string) => category.trim().toLowerCase() !=
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
   const serverDashboard = ref<WebDashboardDto | null>(null);
-  let refreshTimer: ReturnType<typeof setInterval> | null = null;
-
-  const startAutoRefresh = () => {
-    if (refreshTimer || !marketplace.session.value?.accessToken) return;
-    refreshTimer = setInterval(() => {
-      void loadServerDashboard();
-    }, 10000);
-  };
-
-  const stopAutoRefresh = () => {
-    if (!refreshTimer) return;
-    clearInterval(refreshTimer);
-    refreshTimer = null;
-  };
 
   const toCategorySeriesWithDefaults = (items: Array<{ label: string; value: number }>) => {
     const map = new Map<string, number>();
@@ -173,21 +159,17 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
 
   watch(() => marketplace.session.value?.accessToken, () => {
     void loadServerDashboard();
-    stopAutoRefresh();
-    startAutoRefresh();
   }, { immediate: true });
 
-  watch(() => marketplace.state.value.requests.length, () => {
+  // SignalR in useMarketplace triggers marketplace state refresh.
+  // We refresh dashboard data when marketplace state gets refreshed.
+  watch(() => [marketplace.state.value.requests.length, marketplace.state.value.products.length, marketplace.signalRConnected.value], () => {
+    if (!marketplace.signalRConnected.value) return;
     void loadServerDashboard();
   });
 
   onMounted(() => {
     void loadServerDashboard();
-    startAutoRefresh();
-  });
-
-  onUnmounted(() => {
-    stopAutoRefresh();
   });
 
   return { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions, categoryTransactionSeries, categoryCartSeries };
