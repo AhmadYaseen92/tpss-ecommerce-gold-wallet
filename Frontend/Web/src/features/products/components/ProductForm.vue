@@ -73,6 +73,18 @@ const estimatedAutoPrice = computed(() => {
 
   return Number.isFinite(total) ? total : 0;
 });
+
+const finalSellPrice = computed(() => {
+  const base = isAutoMode.value ? estimatedAutoPrice.value : Number(props.model.manualSellPrice || 0);
+  if (props.model.offerType === 1 && props.model.offerPercent > 0) {
+    return base * (1 - props.model.offerPercent / 100);
+  }
+  if (props.model.offerType === 2 && props.model.offerNewPrice > 0) {
+    return Number(props.model.offerNewPrice || 0);
+  }
+  return base;
+});
+
 </script>
 
 <template>
@@ -124,7 +136,8 @@ const estimatedAutoPrice = computed(() => {
     <BaseFormField label="Status" class="field-full"><label class="checkbox-line"><input v-model="model.isActive" type="checkbox" /> Is Active</label></BaseFormField>
 
     <div class="field-full muted">Selected market price source: <strong>{{ selectedMarketPrice.toFixed(2) }}</strong> ({{ isGold ? 'Gold/oz' : isSilver ? 'Silver/oz' : 'Diamond/carat' }}).</div>
-    <div class="field-full muted">Estimated {{ isAutoMode ? 'Auto' : 'Final (with manual mode + offers)' }} Price: <strong>{{ (isAutoMode ? estimatedAutoPrice : (model.offerType === 1 ? (model.manualSellPrice * (1 - model.offerPercent / 100)) : model.offerType === 2 ? model.offerNewPrice : model.manualSellPrice)).toFixed(2) }}</strong></div>
+    <div class="field-full muted">Auto Calculated Price (Market + Weight + Purity + Fees): <strong>{{ estimatedAutoPrice.toFixed(2) }}</strong></div>
+    <div class="field-full muted">Final Sell Price (after offer): <strong>{{ finalSellPrice.toFixed(2) }}</strong></div>
   </div>
   <button @click="emit('save')">Save</button>
 </template>

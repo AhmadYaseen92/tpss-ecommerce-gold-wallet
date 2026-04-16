@@ -175,7 +175,9 @@ const toPurityKaratValue = (name: string) => {
   watch(() => marketplace.session.value?.accessToken, () => void loadProductManagementData(), { immediate: true });
 
   watch(() => marketplace.realtimeRefreshTick.value, () => {
-    void loadProductManagementData();
+    if (productPage.value === "list") {
+      void loadProductManagementData();
+    }
   });
 
   onMounted(() => {
@@ -188,7 +190,9 @@ const toPurityKaratValue = (name: string) => {
   });
 
   watch(managedProducts, () => {
-    syncRoute();
+    if (productPage.value === "list" || productPage.value === "details") {
+      syncRoute();
+    }
   });
 
   return { managedProducts, filteredManagedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, productSearchTerm, activeFilter, categoryFilter, marketPrices, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, saveMarketPrices, deleteProductRecord, toggleProductActive };
