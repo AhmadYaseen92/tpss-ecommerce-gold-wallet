@@ -100,7 +100,10 @@ const emit = defineEmits<{
       <h4>Product Details #{{ selectedProduct?.id ?? productRouteId }}</h4>
       <p v-if="!selectedProduct">Unable to load this product.</p>
       <ProductDetails v-else :product="selectedProduct" />
-      <button class="ghost" @click="emit('back')">Back to list</button>
+      <div class="detail-actions">
+        <button v-if="selectedProduct" @click="emit('edit', selectedProduct)">Edit Product</button>
+        <button class="ghost" @click="emit('back')">Back to list</button>
+      </div>
     </div>
 
     <div v-else class="modal-form product-form vertical-form product-form-contrast">
@@ -152,5 +155,11 @@ const emit = defineEmits<{
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
 }
 </style>

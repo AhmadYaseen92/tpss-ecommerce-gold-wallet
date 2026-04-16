@@ -38,7 +38,7 @@ const toPurityKaratValue = (name: string) => {
   const productError = ref("");
   const productPage = ref<"list" | "add" | "edit" | "details">("list");
   const productRouteId = ref<number | null>(null);
-  const productForm = reactive<ProductFormPayload>({ name: "", sku: "", description: "", materialType: 1, formType: 1, pricingMode: 1, purityKarat: 0, purityFactor: 1, weightValue: 0, baseMarketPrice: 0, manualSellPrice: 0, deliveryFee: 0, storageFee: 0, serviceCharge: 0, offerType: 0, offerPercent: 0, offerNewPrice: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
+  const productForm = reactive<ProductFormPayload>({ name: "", sku: "", description: "", materialType: 1, formType: 1, pricingMode: 1, purityKarat: 3, purityFactor: 0.875, weightValue: 0, baseMarketPrice: 0, manualSellPrice: 0, deliveryFee: 0, storageFee: 0, serviceCharge: 0, offerType: 0, offerPercent: 0, offerNewPrice: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
   const validationErrors = reactive<Record<string, string>>({});
   const productSearchTerm = ref("");
   const activeFilter = ref<"all" | "active" | "inactive">("all");
@@ -47,13 +47,14 @@ const toPurityKaratValue = (name: string) => {
   const marketPricesDirty = ref(false);
 
   const resetProductForm = () => {
-    Object.assign(productForm, { id: undefined, name: "", sku: "", description: "", materialType: 1, formType: 1, pricingMode: 1, purityKarat: 0, purityFactor: 1, weightValue: 0, baseMarketPrice: 0, manualSellPrice: 0, deliveryFee: 0, storageFee: 0, serviceCharge: 0, offerType: 0, offerPercent: 0, offerNewPrice: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
+    Object.assign(productForm, { id: undefined, name: "", sku: "", description: "", materialType: 1, formType: 1, pricingMode: 1, purityKarat: 3, purityFactor: 0.875, weightValue: 0, baseMarketPrice: 0, manualSellPrice: 0, deliveryFee: 0, storageFee: 0, serviceCharge: 0, offerType: 0, offerPercent: 0, offerNewPrice: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
     productError.value = "";
     Object.keys(validationErrors).forEach((k) => delete validationErrors[k]);
   };
 
   const fillProductForm = (product: ProductManagementDto) => {
-    Object.assign(productForm, { id: product.id, name: product.name, sku: product.sku, description: product.description, materialType: toMaterialTypeValue(product.materialType), formType: toFormTypeValue(product.formType), pricingMode: toPricingModeValue(product.pricingMode), purityKarat: toPurityKaratValue(product.purityKarat), purityFactor: Number(product.purityFactor), weightValue: Number(product.weightValue), baseMarketPrice: Number(product.baseMarketPrice), manualSellPrice: Number(product.manualSellPrice), deliveryFee: Number(product.deliveryFee), storageFee: Number(product.storageFee), serviceCharge: Number(product.serviceCharge), offerType: toOfferTypeValue(product.offerType), offerPercent: Number(product.offerPercent), offerNewPrice: Number(product.offerNewPrice), price: Number(product.price), availableStock: product.availableStock, isActive: product.isActive, existingImageUrl: product.imageUrl, imageFile: null });
+    const resolvedPurityKarat = toPurityKaratValue(product.purityKarat) || 3;
+    Object.assign(productForm, { id: product.id, name: product.name, sku: product.sku, description: product.description, materialType: toMaterialTypeValue(product.materialType), formType: toFormTypeValue(product.formType), pricingMode: toPricingModeValue(product.pricingMode), purityKarat: resolvedPurityKarat, purityFactor: Number(product.purityFactor) || 0.875, weightValue: Number(product.weightValue), baseMarketPrice: Number(product.baseMarketPrice), manualSellPrice: Number(product.manualSellPrice), deliveryFee: Number(product.deliveryFee), storageFee: Number(product.storageFee), serviceCharge: Number(product.serviceCharge), offerType: toOfferTypeValue(product.offerType), offerPercent: Number(product.offerPercent), offerNewPrice: Number(product.offerNewPrice), price: Number(product.price), availableStock: product.availableStock, isActive: product.isActive, existingImageUrl: product.imageUrl, imageFile: null });
   };
 
   const loadProductManagementData = async () => {
@@ -96,11 +97,20 @@ const toPurityKaratValue = (name: string) => {
     if (!productForm.name.trim()) validationErrors.name = "Name is required";
     if (!productForm.sku.trim()) validationErrors.sku = "SKU is required";
     if (!productForm.description.trim()) validationErrors.description = "Description is required";
+    else if (productForm.description.trim().length < 20) validationErrors.description = "Description should be at least 20 characters";
     if (!productForm.materialType) validationErrors.materialType = "Material type is required";
     if (!productForm.formType) validationErrors.formType = "Product form is required";
     if (!productForm.weightValue || productForm.weightValue <= 0) validationErrors.weightValue = "Weight (grams) must be greater than 0";
+    if (productForm.materialType === 1 && productForm.purityKarat === 0) validationErrors.purityKarat = "Please choose a karat value";
+    if (productForm.materialType !== 3 && (!productForm.purityFactor || productForm.purityFactor <= 0)) validationErrors.purityFactor = "Purity factor must be greater than 0";
     if (productForm.pricingMode === 2 && (!productForm.manualSellPrice || productForm.manualSellPrice <= 0)) validationErrors.manualSellPrice = "Manual price must be greater than 0";
+    if (productForm.deliveryFee < 0) validationErrors.deliveryFee = "Delivery fee cannot be negative";
+    if (productForm.storageFee < 0) validationErrors.storageFee = "Storage fee cannot be negative";
+    if (productForm.serviceCharge < 0) validationErrors.serviceCharge = "Service charge cannot be negative";
+    if (productForm.offerType === 1 && (productForm.offerPercent <= 0 || productForm.offerPercent > 100)) validationErrors.offerPercent = "Offer percent must be between 0 and 100";
+    if (productForm.offerType === 2 && productForm.offerNewPrice <= 0) validationErrors.offerNewPrice = "Offer new price must be greater than 0";
     if (productForm.availableStock == null || productForm.availableStock < 0) validationErrors.availableStock = "Stock cannot be negative";
+    if (!Number.isInteger(productForm.availableStock)) validationErrors.availableStock = "Stock must be a whole number";
     return Object.keys(validationErrors).length === 0;
   };
 
