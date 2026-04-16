@@ -1,6 +1,7 @@
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Products;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.Application.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
@@ -8,6 +9,7 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace GoldWalletSystem.API.Controllers;
 
@@ -52,8 +54,22 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 Description = x.Description,
                 ImageUrl = ToAbsoluteAssetUrl(x.ImageUrl),
                 Category = x.Category,
+                MaterialType = x.MaterialType,
+                FormType = x.FormType,
+                DisplayCategoryLabel = $"{x.MaterialType} {x.FormType}",
+                PricingMode = x.PricingMode,
+                PurityKarat = x.PurityKarat,
+                PurityFactor = x.PurityFactor,
                 WeightValue = x.WeightValue,
                 WeightUnit = x.WeightUnit,
+                BaseMarketPrice = x.BaseMarketPrice,
+                ManualSellPrice = x.ManualSellPrice,
+                DeliveryFee = x.DeliveryFee,
+                StorageFee = x.StorageFee,
+                ServiceCharge = x.ServiceCharge,
+                OfferPercent = x.OfferPercent,
+                OfferNewPrice = x.OfferNewPrice,
+                OfferType = x.OfferType,
                 Price = x.Price,
                 AvailableStock = x.AvailableStock,
                 IsActive = x.IsActive,
@@ -75,8 +91,22 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             Description = x.Description,
             ImageUrl = ToAbsoluteAssetUrl(x.ImageUrl),
             Category = x.Category,
+            MaterialType = x.MaterialType,
+            FormType = x.FormType,
+            DisplayCategoryLabel = $"{x.MaterialType} {x.FormType}",
+            PricingMode = x.PricingMode,
+            PurityKarat = x.PurityKarat,
+            PurityFactor = x.PurityFactor,
             WeightValue = x.WeightValue,
             WeightUnit = x.WeightUnit,
+            BaseMarketPrice = x.BaseMarketPrice,
+            ManualSellPrice = x.ManualSellPrice,
+            DeliveryFee = x.DeliveryFee,
+            StorageFee = x.StorageFee,
+            ServiceCharge = x.ServiceCharge,
+            OfferPercent = x.OfferPercent,
+            OfferNewPrice = x.OfferNewPrice,
+            OfferType = x.OfferType,
             Price = x.Price,
             AvailableStock = x.AvailableStock,
             IsActive = x.IsActive,
@@ -104,10 +134,23 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             Sku = request.Sku,
             Description = request.Description,
             ImageUrl = await SaveImageAsync(request.Image, request.ExistingImageUrl, cancellationToken),
-            Category = request.Category,
+            Category = ToLegacyCategory(request.MaterialType),
+            MaterialType = request.MaterialType,
+            FormType = request.FormType,
+            PricingMode = request.PricingMode,
+            PurityKarat = request.PurityKarat,
+            PurityFactor = request.PurityFactor,
             WeightValue = request.WeightValue,
-            WeightUnit = request.WeightUnit,
-            Price = request.Price,
+            WeightUnit = ProductWeightUnit.Gram,
+            BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, sellerId, cancellationToken),
+            ManualSellPrice = request.ManualSellPrice,
+            DeliveryFee = request.DeliveryFee,
+            StorageFee = request.StorageFee,
+            ServiceCharge = request.ServiceCharge,
+            OfferPercent = request.OfferPercent,
+            OfferNewPrice = request.OfferNewPrice,
+            OfferType = request.OfferType,
+            Price = await ResolveFinalPriceAsync(request, sellerId, cancellationToken),
             AvailableStock = request.AvailableStock,
             IsActive = request.IsActive,
             SellerId = sellerId
@@ -134,17 +177,32 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             return BadRequest(ApiResponse<object>.Fail("SKU already exists", 400));
         }
 
+        var nextSellerId = ResolveSellerId(request.SellerId, product.SellerId);
+
         product.Name = request.Name;
         product.Sku = request.Sku;
         product.Description = request.Description;
         product.ImageUrl = await SaveImageAsync(request.Image, request.ExistingImageUrl ?? product.ImageUrl, cancellationToken);
-        product.Category = request.Category;
+        product.Category = ToLegacyCategory(request.MaterialType);
+        product.MaterialType = request.MaterialType;
+        product.FormType = request.FormType;
+        product.PricingMode = request.PricingMode;
+        product.PurityKarat = request.PurityKarat;
+        product.PurityFactor = request.PurityFactor;
         product.WeightValue = request.WeightValue;
-        product.WeightUnit = request.WeightUnit;
-        product.Price = request.Price;
+        product.WeightUnit = ProductWeightUnit.Gram;
+        product.BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, nextSellerId, cancellationToken);
+        product.ManualSellPrice = request.ManualSellPrice;
+        product.DeliveryFee = request.DeliveryFee;
+        product.StorageFee = request.StorageFee;
+        product.ServiceCharge = request.ServiceCharge;
+        product.OfferPercent = request.OfferPercent;
+        product.OfferNewPrice = request.OfferNewPrice;
+        product.OfferType = request.OfferType;
+        product.Price = await ResolveFinalPriceAsync(request, nextSellerId, cancellationToken);
         product.AvailableStock = request.AvailableStock;
         product.IsActive = request.IsActive;
-        product.SellerId = ResolveSellerId(request.SellerId, product.SellerId);
+        product.SellerId = nextSellerId;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ApiResponse<string>.Ok("Updated"));
@@ -176,6 +234,192 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     {
         var data = Enum.GetValues<ProductWeightUnit>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+
+    [HttpGet("material-types")]
+    public IActionResult GetMaterialTypes()
+    {
+        var data = Enum.GetValues<ProductMaterialType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+    [HttpGet("form-types")]
+    public IActionResult GetFormTypes()
+    {
+        var data = Enum.GetValues<ProductFormType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+    [HttpGet("pricing-modes")]
+    public IActionResult GetPricingModes()
+    {
+        var data = Enum.GetValues<ProductPricingMode>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+    [HttpGet("purity-karats")]
+    public IActionResult GetPurityKarats()
+    {
+        var data = Enum.GetValues<ProductPurityKarat>().Select(x => new EnumItemDto((int)x, x.ToString().Replace("K", "K ").Trim())).ToList();
+        return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+    [HttpGet("offer-types")]
+    public IActionResult GetOfferTypes()
+    {
+        var data = Enum.GetValues<ProductOfferType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
+    }
+
+    private async Task<decimal> ResolveFinalPriceAsync(ProductUpsertRequest request, int sellerId, CancellationToken cancellationToken)
+    {
+        var marketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, sellerId, cancellationToken);
+        var sellPrice = request.PricingMode == ProductPricingMode.Manual
+            ? request.ManualSellPrice
+            : ProductPricingCalculator.CalculateAutoPrice(
+                request.MaterialType,
+                marketPrice,
+                request.WeightValue,
+                request.PurityFactor,
+                request.DeliveryFee,
+                request.StorageFee,
+                request.ServiceCharge);
+
+        return ProductPricingCalculator.ApplyOffer(sellPrice, request.OfferType, request.OfferPercent, request.OfferNewPrice);
+    }
+
+    [HttpGet("market-prices")]
+    public async Task<IActionResult> GetMarketPrices(CancellationToken cancellationToken = default)
+    {
+        var sellerId = ResolveSellerScope();
+        var config = await GetMarketPriceConfigAsync(sellerId, cancellationToken);
+        return Ok(ApiResponse<MarketPriceConfigDto>.Ok(config));
+    }
+
+    [HttpPost("market-prices")]
+    public async Task<IActionResult> UpsertMarketPrices([FromBody] MarketPriceConfigDto request, CancellationToken cancellationToken = default)
+    {
+        var sellerId = ResolveSellerScope();
+        var key = GetMarketPriceConfigKey(sellerId);
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        var payload = JsonSerializer.Serialize(request);
+
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new MobileAppConfiguration
+            {
+                ConfigKey = key,
+                JsonValue = payload,
+                Description = sellerId.HasValue ? $"Seller #{sellerId.Value} material market prices" : "Global material market prices",
+                IsEnabled = true,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            config.JsonValue = payload;
+            config.IsEnabled = true;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await RecalculateAutoPricedProductsAsync(sellerId, cancellationToken);
+        return Ok(ApiResponse<MarketPriceConfigDto>.Ok(request));
+    }
+
+    private const string GlobalMarketPriceConfigKey = "GlobalMarketPrices";
+    private const string SellerMarketPriceConfigKeyPrefix = "SellerMarketPrices_";
+
+    private async Task<decimal> ResolveMarketPriceByMaterialAsync(ProductMaterialType materialType, int sellerId, CancellationToken cancellationToken)
+    {
+        var config = await GetMarketPriceConfigAsync(sellerId, cancellationToken);
+        return materialType switch
+        {
+            ProductMaterialType.Gold => config.GoldPerOunce,
+            ProductMaterialType.Silver => config.SilverPerOunce,
+            ProductMaterialType.Diamond => config.DiamondPerCarat,
+            _ => 0m
+        };
+    }
+
+    private async Task<MarketPriceConfigDto> GetMarketPriceConfigAsync(int? sellerId, CancellationToken cancellationToken)
+    {
+        if (sellerId.HasValue)
+        {
+            var sellerConfig = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == GetMarketPriceConfigKey(sellerId), cancellationToken);
+            if (sellerConfig is not null && !string.IsNullOrWhiteSpace(sellerConfig.JsonValue))
+            {
+                return JsonSerializer.Deserialize<MarketPriceConfigDto>(sellerConfig.JsonValue) ?? new MarketPriceConfigDto();
+            }
+        }
+
+        var globalConfig = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == GlobalMarketPriceConfigKey, cancellationToken);
+        if (globalConfig is null || string.IsNullOrWhiteSpace(globalConfig.JsonValue))
+        {
+            return new MarketPriceConfigDto();
+        }
+
+        return JsonSerializer.Deserialize<MarketPriceConfigDto>(globalConfig.JsonValue) ?? new MarketPriceConfigDto();
+    }
+
+    private static string GetMarketPriceConfigKey(int? sellerId)
+        => sellerId.HasValue ? $"{SellerMarketPriceConfigKeyPrefix}{sellerId.Value}" : GlobalMarketPriceConfigKey;
+
+    private async Task RecalculateAutoPricedProductsAsync(int? scopeSellerId, CancellationToken cancellationToken)
+    {
+        var productsQuery = dbContext.Products.Where(x => x.PricingMode == ProductPricingMode.Auto);
+        if (scopeSellerId.HasValue)
+        {
+            productsQuery = productsQuery.Where(x => x.SellerId == scopeSellerId.Value);
+        }
+
+        var products = await productsQuery.ToListAsync(cancellationToken);
+        foreach (var product in products)
+        {
+            var marketPrice = await ResolveMarketPriceByMaterialAsync(product.MaterialType, product.SellerId, cancellationToken);
+            var autoPrice = ProductPricingCalculator.CalculateAutoPrice(
+                product.MaterialType,
+                marketPrice,
+                product.WeightValue,
+                product.PurityFactor,
+                product.DeliveryFee,
+                product.StorageFee,
+                product.ServiceCharge);
+
+            product.BaseMarketPrice = marketPrice;
+            product.Price = ProductPricingCalculator.ApplyOffer(autoPrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
+            product.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        if (products.Count > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private int? ResolveSellerScope()
+    {
+        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
+        if (string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var sellerId)
+            ? sellerId
+            : null;
+    }
+
+    private static ProductCategory ToLegacyCategory(ProductMaterialType materialType)
+    {
+        return materialType switch
+        {
+            ProductMaterialType.Gold => ProductCategory.Gold,
+            ProductMaterialType.Silver => ProductCategory.Silver,
+            ProductMaterialType.Diamond => ProductCategory.Diamond,
+            _ => ProductCategory.Gold
+        };
     }
 
     private int ResolveSellerId(int? requestedSellerId, int fallbackSellerId = 0)
@@ -243,12 +487,34 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         public string Description { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public ProductCategory Category { get; set; }
+        public ProductMaterialType MaterialType { get; set; }
+        public ProductFormType FormType { get; set; }
+        public string DisplayCategoryLabel { get; set; } = string.Empty;
+        public ProductPricingMode PricingMode { get; set; }
+        public ProductPurityKarat PurityKarat { get; set; }
+        public decimal PurityFactor { get; set; }
         public decimal WeightValue { get; set; }
         public ProductWeightUnit WeightUnit { get; set; }
+        public decimal BaseMarketPrice { get; set; }
+        public decimal ManualSellPrice { get; set; }
+        public decimal DeliveryFee { get; set; }
+        public decimal StorageFee { get; set; }
+        public decimal ServiceCharge { get; set; }
+        public decimal OfferPercent { get; set; }
+        public decimal OfferNewPrice { get; set; }
+        public ProductOfferType OfferType { get; set; }
         public decimal Price { get; set; }
         public int AvailableStock { get; set; }
         public bool IsActive { get; set; }
         public int SellerId { get; set; }
+    }
+
+
+    public sealed class MarketPriceConfigDto
+    {
+        public decimal GoldPerOunce { get; set; }
+        public decimal SilverPerOunce { get; set; }
+        public decimal DiamondPerCarat { get; set; }
     }
 
     public sealed class ProductUpsertRequest
@@ -258,10 +524,20 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         public string Description { get; set; } = string.Empty;
         public IFormFile? Image { get; set; }
         public string? ExistingImageUrl { get; set; }
-        public ProductCategory Category { get; set; } = ProductCategory.Jewelry;
+        public ProductMaterialType MaterialType { get; set; } = ProductMaterialType.Gold;
+        public ProductFormType FormType { get; set; } = ProductFormType.Jewelry;
+        public ProductPricingMode PricingMode { get; set; } = ProductPricingMode.Auto;
+        public ProductPurityKarat PurityKarat { get; set; } = ProductPurityKarat.None;
+        public decimal PurityFactor { get; set; }
         public decimal WeightValue { get; set; }
         public ProductWeightUnit WeightUnit { get; set; } = ProductWeightUnit.Gram;
-        public decimal Price { get; set; }
+        public decimal ManualSellPrice { get; set; }
+        public decimal DeliveryFee { get; set; }
+        public decimal StorageFee { get; set; }
+        public decimal ServiceCharge { get; set; }
+        public decimal OfferPercent { get; set; }
+        public decimal OfferNewPrice { get; set; }
+        public ProductOfferType OfferType { get; set; } = ProductOfferType.None;
         public int AvailableStock { get; set; }
         public bool IsActive { get; set; } = true;
         public int? SellerId { get; set; }

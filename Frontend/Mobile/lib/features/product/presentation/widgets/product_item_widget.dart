@@ -33,6 +33,11 @@ class ProductItemWidget extends StatelessWidget {
                     Text(product.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.textPrimary)),
                     if (AppReleaseConfig.showWeightInGrams && product.weight.trim().isNotEmpty)
                       GramsHintLabel(grams: GramsConverter.fromWeightText(product.weight), prefix: 'Weight:'),
+                    if (product.purity.trim().isNotEmpty)
+                      Text(
+                        'Purity: ${product.purity}',
+                        style: TextStyle(fontSize: 12, color: palette.textSecondary, fontWeight: FontWeight.w600),
+                      ),
                     if (AppReleaseConfig.showSellerUi)
                       Text('Seller: ${product.sellerName}', style: TextStyle(fontSize: 12, color: palette.primary)),
                     const SizedBox(height: 6),
@@ -44,9 +49,16 @@ class ProductItemWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '\$${product.price.toStringAsFixed(2)}',
+                      '\$${product.finalPrice.toStringAsFixed(2)}',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.textPrimary),
                     ),
+                    if (product.offerType.toLowerCase() != 'none')
+                      Text(
+                        product.offerType.toLowerCase().contains('percent')
+                            ? 'Offer: ${product.offerPercent.toStringAsFixed(1)}% off'
+                            : 'Offer Price: \$${product.offerNewPrice.toStringAsFixed(2)}',
+                        style: TextStyle(fontSize: 12, color: palette.primary, fontWeight: FontWeight.w600),
+                      ),
                   ],
                 ),
               ),

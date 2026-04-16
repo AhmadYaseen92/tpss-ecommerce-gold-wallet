@@ -24,7 +24,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
             query = query.Where(x => x.Category == category.Value);
         }
 
-        query = query.OrderBy(x => x.Id);
+        query = query.OrderByDescending(x => x.CreatedAtUtc).ThenByDescending(x => x.Id);
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(x => new ProductDto(
@@ -34,8 +34,22 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.Description,
                 x.ImageUrl,
                 x.Category,
+                x.MaterialType,
+                x.FormType,
+                $"{x.MaterialType} {x.FormType}",
+                x.PricingMode,
+                x.PurityKarat,
+                x.PurityFactor,
                 x.WeightValue,
                 x.WeightUnit,
+                x.BaseMarketPrice,
+                x.DeliveryFee,
+                x.StorageFee,
+                x.ServiceCharge,
+                x.OfferPercent,
+                x.OfferNewPrice,
+                x.OfferType,
+                x.Price,
                 x.Price,
                 x.AvailableStock,
                 x.SellerId,

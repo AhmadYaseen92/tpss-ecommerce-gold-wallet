@@ -55,9 +55,23 @@ export interface ProductDto {
   description: string;
   imageUrl: string;
   category: string;
+  materialType: string;
+  formType: string;
+  displayCategoryLabel: string;
+  pricingMode: string;
+  purityKarat: string;
+  purityFactor: number;
   weightValue: number;
   weightUnit: string;
+  baseMarketPrice: number;
+  deliveryFee: number;
+  storageFee: number;
+  serviceCharge: number;
+  offerPercent: number;
+  offerNewPrice: number;
+  offerType: string;
   price: number;
+  finalPrice: number;
   availableStock: number;
   sellerId: number;
   sellerName: string;
@@ -101,8 +115,22 @@ export interface ProductManagementDto {
   description: string;
   imageUrl: string;
   category: string;
+  materialType: string;
+  formType: string;
+  displayCategoryLabel: string;
+  pricingMode: string;
+  purityKarat: string;
+  purityFactor: number;
   weightValue: number;
   weightUnit: string;
+  baseMarketPrice: number;
+  manualSellPrice: number;
+  deliveryFee: number;
+  storageFee: number;
+  serviceCharge: number;
+  offerType: string;
+  offerPercent: number;
+  offerNewPrice: number;
   price: number;
   availableStock: number;
   isActive: boolean;
@@ -149,4 +177,11 @@ export interface WebDashboardDto {
   categoryTransactionSeries: WebDashboardPointDto[];
   categoryCartSeries: WebDashboardPointDto[];
   recentTransactions: WebRecentTransactionDto[];
+}
+
+
+export interface MarketPriceConfigDto {
+  goldPerOunce: number;
+  silverPerOunce: number;
+  diamondPerCarat: number;
 }

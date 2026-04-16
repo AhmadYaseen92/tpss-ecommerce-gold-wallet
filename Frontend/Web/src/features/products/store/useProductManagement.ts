@@ -1,10 +1,61 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import { createManagedProduct, deleteManagedProduct, fetchManagedProducts, fetchProductCategories, fetchWeightUnits, updateManagedProduct, type ProductFormPayload } from "../../../shared/services/backendGateway";
-import type { EnumItemDto, ProductManagementDto } from "../../../shared/types/apiTypes";
+import { createManagedProduct, deleteManagedProduct, fetchManagedProducts, fetchProductCategories, fetchWeightUnits, fetchGlobalMarketPrices, updateGlobalMarketPrices, updateManagedProduct, type ProductFormPayload } from "../../../shared/services/backendGateway";
+import type { EnumItemDto, ProductManagementDto, MarketPriceConfigDto } from "../../../shared/types/apiTypes";
 import { goToProductRoute, syncProductRoute } from "../services/productRoute";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 
 export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
+
+const enumText = (value: unknown) => {
+  if (typeof value === "string") return value.toLowerCase();
+  if (typeof value === "number") return String(value).toLowerCase();
+  return "";
+};
+
+const toMaterialTypeValue = (name: unknown) => {
+  const key = enumText(name);
+  if (key === "2") return 2;
+  if (key === "3") return 3;
+  if (key.includes('silver')) return 2;
+  if (key.includes('diamond')) return 3;
+  return 1;
+};
+const toFormTypeValue = (name: unknown) => {
+  const key = enumText(name);
+  if (key === "2") return 2;
+  if (key === "3") return 3;
+  if (key === "4") return 4;
+  if (key.includes('coin')) return 2;
+  if (key.includes('bar')) return 3;
+  if (key.includes('other')) return 4;
+  return 1;
+};
+const toPricingModeValue = (name: unknown) => {
+  const key = enumText(name);
+  if (key === "2") return 2;
+  return key.includes('manual') ? 2 : 1;
+};
+const toOfferTypeValue = (name: unknown) => {
+  const key = enumText(name);
+  if (key === "2") return 2;
+  if (key === "1") return 1;
+  return key.includes('fixed') ? 2 : (key.includes('percent') ? 1 : 0);
+};
+const toPurityKaratValue = (name: unknown) => {
+  const key = enumText(name).replace(/\s+/g, '');
+  if (key === "1") return 1;
+  if (key === "2") return 2;
+  if (key === "3") return 3;
+  if (key === "4") return 4;
+  if (key === "5") return 5;
+  if (key.includes('24')) return 1;
+  if (key.includes('22')) return 2;
+  if (key.includes('21')) return 3;
+  if (key.includes('18')) return 4;
+  if (key.includes('14')) return 5;
+  return 0;
+};
+
   const managedProducts = ref<ProductManagementDto[]>([]);
   const categories = ref<EnumItemDto[]>([]);
   const weightUnits = ref<EnumItemDto[]>([]);
@@ -12,20 +63,23 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const productError = ref("");
   const productPage = ref<"list" | "add" | "edit" | "details">("list");
   const productRouteId = ref<number | null>(null);
-  const productForm = reactive<ProductFormPayload>({ name: "", sku: "", description: "", category: 0, weightValue: 0, weightUnit: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
+  const productForm = reactive<ProductFormPayload>({ name: "", sku: "", description: "", materialType: 1, formType: 1, pricingMode: 1, purityKarat: 3, purityFactor: 0.875, weightValue: 0, baseMarketPrice: 0, manualSellPrice: 0, deliveryFee: 0, storageFee: 0, serviceCharge: 0, offerType: 0, offerPercent: 0, offerNewPrice: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
   const validationErrors = reactive<Record<string, string>>({});
   const productSearchTerm = ref("");
   const activeFilter = ref<"all" | "active" | "inactive">("all");
   const categoryFilter = ref("all");
+  const marketPrices = reactive<MarketPriceConfigDto>({ goldPerOunce: 0, silverPerOunce: 0, diamondPerCarat: 0 });
+  const marketPricesDirty = ref(false);
 
   const resetProductForm = () => {
-    Object.assign(productForm, { id: undefined, name: "", sku: "", description: "", category: categories.value[0]?.value ?? 0, weightValue: 0, weightUnit: weightUnits.value[0]?.value ?? 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
+    Object.assign(productForm, { id: undefined, name: "", sku: "", description: "", materialType: 1, formType: 1, pricingMode: 1, purityKarat: 3, purityFactor: 0.875, weightValue: 0, baseMarketPrice: 0, manualSellPrice: 0, deliveryFee: 0, storageFee: 0, serviceCharge: 0, offerType: 0, offerPercent: 0, offerNewPrice: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
     productError.value = "";
     Object.keys(validationErrors).forEach((k) => delete validationErrors[k]);
   };
 
   const fillProductForm = (product: ProductManagementDto) => {
-    Object.assign(productForm, { id: product.id, name: product.name, sku: product.sku, description: product.description, category: categories.value.find((x) => x.name === product.category)?.value ?? categories.value[0]?.value ?? 0, weightValue: Number(product.weightValue), weightUnit: weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? weightUnits.value[0]?.value ?? 0, price: Number(product.price), availableStock: product.availableStock, isActive: product.isActive, existingImageUrl: product.imageUrl, imageFile: null });
+    const resolvedPurityKarat = toPurityKaratValue(product.purityKarat) || 3;
+    Object.assign(productForm, { id: product.id, name: product.name, sku: product.sku, description: product.description, materialType: toMaterialTypeValue(product.materialType), formType: toFormTypeValue(product.formType), pricingMode: toPricingModeValue(product.pricingMode), purityKarat: resolvedPurityKarat, purityFactor: Number(product.purityFactor) || 0.875, weightValue: Number(product.weightValue), baseMarketPrice: Number(product.baseMarketPrice), manualSellPrice: Number(product.manualSellPrice), deliveryFee: Number(product.deliveryFee), storageFee: Number(product.storageFee), serviceCharge: Number(product.serviceCharge), offerType: toOfferTypeValue(product.offerType), offerPercent: Number(product.offerPercent), offerNewPrice: Number(product.offerNewPrice), price: Number(product.price), availableStock: product.availableStock, isActive: product.isActive, existingImageUrl: product.imageUrl, imageFile: null });
   };
 
   const loadProductManagementData = async () => {
@@ -33,6 +87,9 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     managedProducts.value = await fetchManagedProducts(marketplace.session.value.accessToken);
     categories.value = await fetchProductCategories(marketplace.session.value.accessToken);
     weightUnits.value = await fetchWeightUnits(marketplace.session.value.accessToken);
+    if (!marketPricesDirty.value) {
+      Object.assign(marketPrices, await fetchGlobalMarketPrices(marketplace.session.value.accessToken));
+    }
   };
 
   const syncRoute = () => syncProductRoute(managedProducts, productPage, productRouteId, selectedProduct, resetProductForm, fillProductForm);
@@ -65,11 +122,20 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     if (!productForm.name.trim()) validationErrors.name = "Name is required";
     if (!productForm.sku.trim()) validationErrors.sku = "SKU is required";
     if (!productForm.description.trim()) validationErrors.description = "Description is required";
-    if (!productForm.category) validationErrors.category = "Category is required";
-    if (!productForm.weightValue || productForm.weightValue <= 0) validationErrors.weightValue = "Weight value must be greater than 0";
-    if (!productForm.weightUnit) validationErrors.weightUnit = "Weight unit is required";
-    if (!productForm.price || productForm.price <= 0) validationErrors.price = "Price must be greater than 0";
+    else if (productForm.description.trim().length < 20) validationErrors.description = "Description should be at least 20 characters";
+    if (!productForm.materialType) validationErrors.materialType = "Material type is required";
+    if (!productForm.formType) validationErrors.formType = "Product form is required";
+    if (!productForm.weightValue || productForm.weightValue <= 0) validationErrors.weightValue = "Weight (grams) must be greater than 0";
+    if (productForm.materialType === 1 && productForm.purityKarat === 0) validationErrors.purityKarat = "Please choose a karat value";
+    if (productForm.materialType !== 3 && (!productForm.purityFactor || productForm.purityFactor <= 0)) validationErrors.purityFactor = "Purity factor must be greater than 0";
+    if (productForm.pricingMode === 2 && (!productForm.manualSellPrice || productForm.manualSellPrice <= 0)) validationErrors.manualSellPrice = "Manual price must be greater than 0";
+    if (productForm.deliveryFee < 0) validationErrors.deliveryFee = "Delivery fee cannot be negative";
+    if (productForm.storageFee < 0) validationErrors.storageFee = "Storage fee cannot be negative";
+    if (productForm.serviceCharge < 0) validationErrors.serviceCharge = "Service charge cannot be negative";
+    if (productForm.offerType === 1 && (productForm.offerPercent <= 0 || productForm.offerPercent > 100)) validationErrors.offerPercent = "Offer percent must be between 0 and 100";
+    if (productForm.offerType === 2 && productForm.offerNewPrice <= 0) validationErrors.offerNewPrice = "Offer new price must be greater than 0";
     if (productForm.availableStock == null || productForm.availableStock < 0) validationErrors.availableStock = "Stock cannot be negative";
+    if (!Number.isInteger(productForm.availableStock)) validationErrors.availableStock = "Stock must be a whole number";
     return Object.keys(validationErrors).length === 0;
   };
 
@@ -98,6 +164,27 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     }
   };
 
+  const updateMarketPriceField = (field: "goldPerOunce" | "silverPerOunce" | "diamondPerCarat", value: number) => {
+    marketPricesDirty.value = true;
+    marketPrices[field] = Number.isFinite(value) ? value : 0;
+  };
+
+  const saveMarketPrices = async () => {
+    if (!marketplace.session.value?.accessToken) return;
+    try {
+      await updateGlobalMarketPrices(marketplace.session.value.accessToken, marketPrices);
+      marketPricesDirty.value = false;
+      Object.assign(marketPrices, await fetchGlobalMarketPrices(marketplace.session.value.accessToken));
+      await loadProductManagementData();
+      if (selectedProduct.value) {
+        selectedProduct.value = managedProducts.value.find((x) => x.id === selectedProduct.value?.id) ?? selectedProduct.value;
+      }
+      productError.value = "";
+    } catch (error) {
+      productError.value = error instanceof Error ? error.message : "Failed to update global market prices.";
+    }
+  };
+
   const toggleProductActive = async (product: ProductManagementDto) => {
     if (!marketplace.session.value?.accessToken) return;
     const nextState = product.isActive ? "deactivate" : "activate";
@@ -109,9 +196,20 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
         name: product.name,
         sku: product.sku,
         description: product.description,
-        category: categories.value.find((x) => x.name === product.category)?.value ?? categories.value[0]?.value ?? 0,
+        materialType: toMaterialTypeValue(product.materialType),
+        formType: toFormTypeValue(product.formType),
+        pricingMode: toPricingModeValue(product.pricingMode),
+        purityKarat: toPurityKaratValue(product.purityKarat),
+        purityFactor: Number(product.purityFactor),
         weightValue: Number(product.weightValue),
-        weightUnit: weightUnits.value.find((x) => x.name === product.weightUnit)?.value ?? weightUnits.value[0]?.value ?? 0,
+        baseMarketPrice: Number(product.baseMarketPrice),
+        manualSellPrice: Number(product.manualSellPrice),
+        deliveryFee: Number(product.deliveryFee),
+        storageFee: Number(product.storageFee),
+        serviceCharge: Number(product.serviceCharge),
+        offerType: toOfferTypeValue(product.offerType),
+        offerPercent: Number(product.offerPercent),
+        offerNewPrice: Number(product.offerNewPrice),
         price: Number(product.price),
         availableStock: product.availableStock,
         isActive: !product.isActive,
@@ -126,7 +224,9 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   watch(() => marketplace.session.value?.accessToken, () => void loadProductManagementData(), { immediate: true });
 
   watch(() => marketplace.realtimeRefreshTick.value, () => {
-    void loadProductManagementData();
+    if (productPage.value === "list") {
+      void loadProductManagementData();
+    }
   });
 
   onMounted(() => {
@@ -139,8 +239,10 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   });
 
   watch(managedProducts, () => {
-    syncRoute();
+    if (productPage.value === "list" || productPage.value === "details") {
+      syncRoute();
+    }
   });
 
-  return { managedProducts, filteredManagedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, productSearchTerm, activeFilter, categoryFilter, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, deleteProductRecord, toggleProductActive };
+  return { managedProducts, filteredManagedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, productSearchTerm, activeFilter, categoryFilter, marketPrices, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, saveMarketPrices, updateMarketPriceField, deleteProductRecord, toggleProductActive };
 }

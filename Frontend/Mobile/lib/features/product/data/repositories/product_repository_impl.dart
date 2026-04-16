@@ -35,6 +35,7 @@ class ProductRepositoryImpl implements IProductRepository {
       pageNumber++;
     } while (allModels.length < totalCount && totalCount > 0);
 
+    allModels.sort((a, b) => b.id.compareTo(a.id));
     return allModels.map(_toEntity).toList();
   }
 
@@ -89,12 +90,16 @@ class ProductRepositoryImpl implements IProductRepository {
       category: _categoryLabelById(model.categoryId),
       categoryId: model.categoryId,
       isFavorite: _favoriteProductIds.contains(model.id.toString()),
-      purity: _purityByDescription(model.description),
+      purity: _resolvePurity(model),
       weight: _weightText(model.weightValue, model.weightUnit),
       metal: _metalByName(model.name),
       isInCart: false,
       quantity: 1,
       sellerName: model.sellerName,
+      offerType: model.offerType,
+      offerPercent: model.offerPercent,
+      offerNewPrice: model.offerNewPrice,
+      finalPrice: model.finalPrice,
     );
   }
 
@@ -135,6 +140,20 @@ class ProductRepositoryImpl implements IProductRepository {
     if (normalized.contains('18k')) return '18k';
     if (normalized.contains('999.9')) return '999.9';
     return '';
+  }
+
+  String _resolvePurity(ProductRemoteModel model) {
+    final karatValue = model.purityKarat.trim();
+    if (karatValue.isNotEmpty && !karatValue.toLowerCase().contains('none')) {
+      final normalized = karatValue.replaceAll(' ', '');
+      return normalized.toUpperCase().contains('K') ? normalized.toUpperCase() : '${normalized.toUpperCase()}K';
+    }
+
+    if (model.purityFactor > 0) {
+      return model.purityFactor.toStringAsFixed(3).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+    }
+
+    return _purityByDescription(model.description);
   }
 
   String _weightText(double weightValue, String weightUnit) {

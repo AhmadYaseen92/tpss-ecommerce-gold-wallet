@@ -16,6 +16,10 @@ class ProductEntity {
     required this.isInCart,
     required this.quantity,
     required this.sellerName,
+    required this.offerType,
+    required this.offerPercent,
+    required this.offerNewPrice,
+    required this.finalPrice,
   });
 
   final String id;
@@ -34,6 +38,10 @@ class ProductEntity {
   final bool isInCart;
   final int quantity;
   final String sellerName;
+  final String offerType;
+  final double offerPercent;
+  final double offerNewPrice;
+  final double finalPrice;
 
   ProductEntity copyWith({
     String? id,
@@ -52,6 +60,10 @@ class ProductEntity {
     bool? isInCart,
     int? quantity,
     String? sellerName,
+    String? offerType,
+    double? offerPercent,
+    double? offerNewPrice,
+    double? finalPrice,
   }) {
     return ProductEntity(
       id: id ?? this.id,
@@ -70,6 +82,10 @@ class ProductEntity {
       isInCart: isInCart ?? this.isInCart,
       quantity: quantity ?? this.quantity,
       sellerName: sellerName ?? this.sellerName,
+      offerType: offerType ?? this.offerType,
+      offerPercent: offerPercent ?? this.offerPercent,
+      offerNewPrice: offerNewPrice ?? this.offerNewPrice,
+      finalPrice: finalPrice ?? this.finalPrice,
     );
   }
 }

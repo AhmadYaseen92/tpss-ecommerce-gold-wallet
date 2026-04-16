@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { MarketplaceRealtime } from "../../services/marketplaceRealtime";
 import {
   addSellerProduct,
@@ -37,13 +37,34 @@ import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
 
 const SESSION_STORAGE_KEY = "goldwallet.web.session";
 
+function persistSession(session: UserSession | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (!session?.accessToken) {
+      window.localStorage.removeItem(SESSION_STORAGE_KEY);
+      window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      return;
+    }
+    const serialized = JSON.stringify(session);
+    window.localStorage.setItem(SESSION_STORAGE_KEY, serialized);
+    window.sessionStorage.setItem(SESSION_STORAGE_KEY, serialized);
+  } catch {
+    // Ignore storage availability errors.
+  }
+}
+
 function readStoredSession(): UserSession | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
+    const raw = window.localStorage.getItem(SESSION_STORAGE_KEY) ?? window.sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as UserSession;
-    return parsed?.accessToken ? parsed : null;
+    if (!parsed?.accessToken) return null;
+    if (parsed.expiresAtUtc && new Date(parsed.expiresAtUtc).getTime() <= Date.now()) {
+      persistSession(null);
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -132,11 +153,9 @@ export function useMarketplace() {
       const authSession = await loginWithBackend(credentials);
       session.value = authSession;
       role.value = authSession.role;
+      persistSession(authSession);
       state.value = await fetchMarketplaceState(authSession);
       await configureRealtime();
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(authSession));
-      }
     } catch (err) {
       if (err instanceof TypeError) {
         error.value = "Cannot reach API server. Check VITE_API_BASE_URL and backend CORS/run status.";
@@ -234,7 +253,7 @@ export function useMarketplace() {
     role.value = "admin";
     activeMenu.value = "overview";
     if (typeof window !== "undefined") {
-      window.localStorage.removeItem(SESSION_STORAGE_KEY);
+      persistSession(null);
     }
   };
 
@@ -251,9 +270,12 @@ export function useMarketplace() {
   const restoreSession = async () => {
     if (!session.value?.accessToken) return;
     role.value = session.value.role;
+    persistSession(session.value);
     await refreshMarketplaceState();
     await configureRealtime();
   };
+
+  watch(session, (value) => persistSession(value), { deep: true });
 
   return {
     role,
