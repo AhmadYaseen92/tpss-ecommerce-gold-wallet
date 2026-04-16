@@ -28,6 +28,7 @@ const formatQty = (quantity: number) => quantity.toLocaleString();
       <tr>
         <th>Transaction ID</th>
         <th>Investor</th>
+        <th>Product</th>
         <th>Category</th>
         <th>Type</th>
         <th>Qty</th>
@@ -43,6 +44,7 @@ const formatQty = (quantity: number) => quantity.toLocaleString();
       <tr v-for="trx in items" :key="trx.id">
         <td>{{ trx.id }}</td>
         <td>{{ trx.investorName }}</td>
+        <td>{{ trx.productName }}</td>
         <td>{{ trx.category }}</td>
         <td>{{ trx.transactionType }}</td>
         <td>{{ formatQty(trx.quantity) }}</td>

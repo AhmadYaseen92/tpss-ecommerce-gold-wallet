@@ -78,6 +78,7 @@ export interface WebRequestDto {
   investorId: string;
   investorName: string;
   type: string;
+  productName: string;
   category: string;
   quantity: number;
   unitPrice: number;

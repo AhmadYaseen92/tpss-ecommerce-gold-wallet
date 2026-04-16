@@ -10,7 +10,7 @@ const pm = useProductManagement(marketplace);
 const productError = computed(() => pm.productError.value);
 const productPage = computed(() => pm.productPage.value);
 const productRouteId = computed(() => pm.productRouteId.value);
-const managedProducts = computed(() => pm.managedProducts.value);
+const managedProducts = computed(() => pm.filteredManagedProducts.value);
 const selectedProduct = computed(() => pm.selectedProduct.value);
 const categories = computed(() => pm.categories.value);
 const weightUnits = computed(() => pm.weightUnits.value);
@@ -29,6 +29,9 @@ const weightUnits = computed(() => pm.weightUnits.value);
       :categories="categories"
       :weight-units="weightUnits"
       :validation-errors="pm.validationErrors"
+      :search-term="pm.productSearchTerm.value"
+      :active-filter="pm.activeFilter.value"
+      :category-filter="pm.categoryFilter.value"
       @add="pm.openAddProduct"
       @details="pm.openProductDetails"
       @edit="pm.openEditProduct"
@@ -37,6 +40,9 @@ const weightUnits = computed(() => pm.weightUnits.value);
       @back="pm.navigate('#/products')"
       @save="pm.saveProduct"
       @image="pm.onProductImageChange"
+      @update:search-term="pm.productSearchTerm.value = $event"
+      @update:active-filter="pm.activeFilter.value = $event"
+      @update:category-filter="pm.categoryFilter.value = $event"
     />
   </SectionCard>
 </template>

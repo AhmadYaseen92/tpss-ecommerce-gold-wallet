@@ -159,6 +159,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                     InvestorId = $"i-{history.UserId}",
                     InvestorName = user.FullName,
                     Type = history.TransactionType,
+                    ProductName = history.Category,
                     Category = history.Category,
                     Quantity = history.Quantity,
                     UnitPrice = history.UnitPrice,
@@ -174,6 +175,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 })
             .ToListAsync(cancellationToken);
 
+        await PopulateRequestProductNamesAsync(requests, cancellationToken);
         return Ok(ApiResponse<List<WebRequestDto>>.Ok(requests));
     }
 
@@ -251,6 +253,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                     InvestorId = $"i-{history.UserId}",
                     InvestorName = user.FullName,
                     Type = history.TransactionType,
+                    ProductName = history.Category,
                     Category = history.Category,
                     Quantity = history.Quantity,
                     UnitPrice = history.UnitPrice,
@@ -267,6 +270,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             .FirstOrDefaultAsync(cancellationToken);
 
         if (details is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
+        await PopulateRequestProductNamesAsync([details], cancellationToken);
         return Ok(ApiResponse<WebRequestDto>.Ok(details));
     }
 
@@ -433,6 +437,63 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         item.UpdatedAtUtc = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ApiResponse<string>.Ok("updated"));
+    }
+
+    private async Task PopulateRequestProductNamesAsync(List<WebRequestDto> requests, CancellationToken cancellationToken)
+    {
+        if (requests.Count == 0) return;
+
+        var requestIds = requests
+            .Select(x => TryParsePrefixedId(x.Id, "r-"))
+            .Where(x => x.HasValue)
+            .Select(x => x!.Value)
+            .ToList();
+        if (requestIds.Count == 0) return;
+
+        var histories = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => requestIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.SellerId, x.Notes, x.Category })
+            .ToListAsync(cancellationToken);
+
+        var skuByRequestId = histories
+            .Select(x => new { x.Id, x.SellerId, Sku = TryExtractSku(x.Notes) })
+            .Where(x => x.SellerId.HasValue && !string.IsNullOrWhiteSpace(x.Sku))
+            .ToList();
+
+        var sellerIds = skuByRequestId.Select(x => x.SellerId!.Value).Distinct().ToList();
+        var skuValues = skuByRequestId.Select(x => x.Sku!).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+        var products = await dbContext.Products
+            .AsNoTracking()
+            .Where(x => sellerIds.Contains(x.SellerId) && skuValues.Contains(x.Sku))
+            .Select(x => new { x.SellerId, x.Sku, x.Name })
+            .ToListAsync(cancellationToken);
+
+        var productLookup = products.ToDictionary(x => (x.SellerId, x.Sku), x => x.Name);
+
+        foreach (var request in requests)
+        {
+            var requestId = TryParsePrefixedId(request.Id, "r-");
+            if (!requestId.HasValue) continue;
+
+            var history = histories.FirstOrDefault(x => x.Id == requestId.Value);
+            if (history is null)
+            {
+                request.ProductName = request.Category;
+                continue;
+            }
+
+            var sku = TryExtractSku(history.Notes);
+            if (history.SellerId.HasValue && !string.IsNullOrWhiteSpace(sku) && productLookup.TryGetValue((history.SellerId.Value, sku), out var productName))
+            {
+                request.ProductName = productName;
+            }
+            else
+            {
+                request.ProductName = history.Category;
+            }
+        }
     }
 
     private async Task<WebFeesDto> ReadFeesAsync(CancellationToken cancellationToken)

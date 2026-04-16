@@ -15,6 +15,9 @@ defineProps<{
   categories: EnumItemDto[];
   weightUnits: EnumItemDto[];
   validationErrors: Record<string, string>;
+  searchTerm: string;
+  activeFilter: "all" | "active" | "inactive";
+  categoryFilter: string;
 }>();
 
 const emit = defineEmits<{
@@ -26,6 +29,9 @@ const emit = defineEmits<{
   back: [];
   save: [];
   image: [event: Event];
+  "update:search-term": [value: string];
+  "update:active-filter": [value: "all" | "active" | "inactive"];
+  "update:category-filter": [value: string];
 }>();
 </script>
 
@@ -35,11 +41,33 @@ const emit = defineEmits<{
     <div class="report-actions" v-if="role === 'seller'"><button @click="emit('add')">Add Product</button></div>
 
     <div v-if="productPage === 'list'">
+      <div class="filters">
+        <input :value="searchTerm" @input="emit('update:search-term', ($event.target as HTMLInputElement).value)" placeholder="Search by name, SKU, description..." />
+        <select :value="activeFilter" @change="emit('update:active-filter', ($event.target as HTMLSelectElement).value as 'all' | 'active' | 'inactive')">
+          <option value="all">All statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <select :value="categoryFilter" @change="emit('update:category-filter', ($event.target as HTMLSelectElement).value)">
+          <option value="all">All categories</option>
+          <option v-for="category in categories" :key="category.value" :value="category.name">{{ category.name }}</option>
+        </select>
+      </div>
+
       <table>
-        <thead><tr><th>ID</th><th>Image</th><th>Name</th><th>SKU</th><th>Category</th><th>Price</th><th>Stock</th><th>Active</th><th>CreatedAtUtc</th><th>UpdatedAtUtc</th><th>Actions</th></tr></thead>
+        <thead><tr><th>ID</th><th>Image</th><th>Name</th><th>SKU</th><th>Description</th><th>Category</th><th>Weight</th><th>Price</th><th>Stock</th><th>Active</th><th>Actions</th></tr></thead>
         <tbody>
           <tr v-for="product in managedProducts" :key="product.id" class="clickable-row" @click="emit('details', product)">
-            <td>{{ product.id }}</td><td><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-thumb" /><span v-else class="product-thumb-placeholder">No image</span></td><td>{{ product.name }}</td><td>{{ product.sku }}</td><td>{{ product.category }}</td><td>{{ product.price }}</td><td>{{ product.availableStock }}</td><td>{{ product.isActive ? 'Yes' : 'No' }}</td><td>-</td><td>-</td>
+            <td>{{ product.id }}</td>
+            <td><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-thumb" /><span v-else class="product-thumb-placeholder">No image</span></td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.sku }}</td>
+            <td class="description">{{ product.description }}</td>
+            <td>{{ product.category }}</td>
+            <td>{{ product.weightValue }} {{ product.weightUnit }}</td>
+            <td>{{ product.price }}</td>
+            <td>{{ product.availableStock }}</td>
+            <td>{{ product.isActive ? 'Yes' : 'No' }}</td>
             <td>
               <button @click.stop="emit('edit', product)">Edit</button>
               <button class="ghost" @click.stop="emit('toggle', product)">{{ product.isActive ? 'Deactivate' : 'Activate' }}</button>
@@ -67,6 +95,20 @@ const emit = defineEmits<{
 
 
 <style scoped>
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 180px 180px;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.filters input,
+.filters select {
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
 .product-thumb {
   width: 48px;
   height: 48px;
@@ -85,5 +127,12 @@ const emit = defineEmits<{
   border: 1px dashed #d9d9d9;
   color: #7a7a7a;
   font-size: 11px;
+}
+
+.description {
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

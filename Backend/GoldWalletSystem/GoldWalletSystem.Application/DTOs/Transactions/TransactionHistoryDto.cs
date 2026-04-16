@@ -7,6 +7,7 @@ public sealed record TransactionHistoryDto(
     int? SellerId,
     string TransactionType,
     string Status,
+    string ProductName,
     string Category,
     int Quantity,
     decimal UnitPrice,

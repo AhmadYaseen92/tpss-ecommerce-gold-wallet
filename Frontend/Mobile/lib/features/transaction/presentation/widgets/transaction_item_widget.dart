@@ -43,7 +43,7 @@ class TransactionItemWidget extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            transaction.category,
+                            transaction.productName,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
@@ -52,7 +52,7 @@ class TransactionItemWidget extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            transaction.transactionType.toUpperCase(),
+                            '${transaction.category} • ${transaction.transactionType.toUpperCase()}',
                             style: TextStyle(fontSize: 12, color: palette.primary),
                           ),
                           const SizedBox(height: 2),

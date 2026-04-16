@@ -16,6 +16,7 @@ class TransactionCubit extends Cubit<TransactionState> {
   String selectedPeriod = 'All Periods';
   String selectedType = 'All Types';
   String selectedStatus = 'All Statuses';
+  String searchQuery = '';
   int? selectedCategoryId;
   String activeSeller = AppReleaseConfig.defaultSeller;
 
@@ -115,7 +116,10 @@ class TransactionCubit extends Cubit<TransactionState> {
               ) ==
               selectedCategoryId;
 
-      return periodMatch && typeMatch && statusMatch && categoryMatch;
+      final searchable = '${transaction.productName} ${transaction.category} ${transaction.transactionType} ${transaction.notes}'.toLowerCase();
+      final searchMatch = searchQuery.trim().isEmpty || searchable.contains(searchQuery.trim().toLowerCase());
+
+      return periodMatch && typeMatch && statusMatch && categoryMatch && searchMatch;
     }).toList();
   }
 
@@ -145,6 +149,11 @@ class TransactionCubit extends Cubit<TransactionState> {
 
   void filterByCategory(int? categoryId) {
     selectedCategoryId = categoryId;
+    applyFilters(selectedPeriod, selectedType, selectedStatus);
+  }
+
+  void filterBySearch(String value) {
+    searchQuery = value;
     applyFilters(selectedPeriod, selectedType, selectedStatus);
   }
 
