@@ -55,12 +55,22 @@ export interface ProductDto {
   description: string;
   imageUrl: string;
   category: string;
+  pricingMaterialType: string;
+  pricingMode: string;
   weightValue: number;
   weightUnit: string;
+  purityKarat?: number;
+  marketUnitPrice: number;
+  deliveryFee: number;
+  storageFee: number;
+  serviceCharge: number;
+  finalSellPrice: number;
   price: number;
   availableStock: number;
   sellerId: number;
   sellerName: string;
+  createdAtUtc: string;
+  updatedAtUtc?: string;
 }
 
 export interface AuditLogDto {
@@ -100,12 +110,22 @@ export interface ProductManagementDto {
   description: string;
   imageUrl: string;
   category: string;
+  pricingMaterialType: string;
+  pricingMode: string;
   weightValue: number;
   weightUnit: string;
+  purityKarat?: number;
+  marketUnitPrice: number;
+  deliveryFee: number;
+  storageFee: number;
+  serviceCharge: number;
+  finalSellPrice: number;
   price: number;
   availableStock: number;
   isActive: boolean;
   sellerId: number;
+  createdAtUtc: string;
+  updatedAtUtc?: string;
 }
 
 export interface EnumItemDto {
@@ -148,4 +168,10 @@ export interface WebDashboardDto {
   categoryTransactionSeries: WebDashboardPointDto[];
   categoryCartSeries: WebDashboardPointDto[];
   recentTransactions: WebRecentTransactionDto[];
+}
+
+export interface WebMarketPricesDto {
+  gold: number;
+  silver: number;
+  diamond: number;
 }

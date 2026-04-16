@@ -51,8 +51,16 @@ class ProductRemoteModel {
     required this.price,
     required this.availableStock,
     required this.categoryId,
+    required this.pricingMaterialType,
+    required this.pricingMode,
     required this.weightValue,
     required this.weightUnit,
+    required this.purityKarat,
+    required this.marketUnitPrice,
+    required this.deliveryFee,
+    required this.storageFee,
+    required this.serviceCharge,
+    required this.finalSellPrice,
     required this.sellerId,
     required this.sellerName,
   });
@@ -65,8 +73,16 @@ class ProductRemoteModel {
   final double price;
   final int availableStock;
   final int categoryId;
+  final String pricingMaterialType;
+  final String pricingMode;
   final double weightValue;
   final String weightUnit;
+  final double purityKarat;
+  final double marketUnitPrice;
+  final double deliveryFee;
+  final double storageFee;
+  final double serviceCharge;
+  final double finalSellPrice;
   final int sellerId;
   final String sellerName;
 
@@ -80,8 +96,16 @@ class ProductRemoteModel {
       price: (json['price'] as num?)?.toDouble() ?? 0,
       availableStock: (json['availableStock'] as num?)?.toInt() ?? 0,
       categoryId: _parseCategoryId(json['category']),
+      pricingMaterialType: (json['pricingMaterialType'] ?? 'Gold') as String,
+      pricingMode: (json['pricingMode'] ?? 'Auto') as String,
       weightValue: (json['weightValue'] as num?)?.toDouble() ?? 0,
       weightUnit: _parseWeightUnit(json['weightUnit']),
+      purityKarat: (json['purityKarat'] as num?)?.toDouble() ?? 0,
+      marketUnitPrice: (json['marketUnitPrice'] as num?)?.toDouble() ?? 0,
+      deliveryFee: (json['deliveryFee'] as num?)?.toDouble() ?? 0,
+      storageFee: (json['storageFee'] as num?)?.toDouble() ?? 0,
+      serviceCharge: (json['serviceCharge'] as num?)?.toDouble() ?? 0,
+      finalSellPrice: (json['finalSellPrice'] as num?)?.toDouble() ?? ((json['price'] as num?)?.toDouble() ?? 0),
       sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
       sellerName: (json['sellerName'] ?? '') as String,
     );

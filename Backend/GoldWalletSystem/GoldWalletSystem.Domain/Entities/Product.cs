@@ -11,6 +11,14 @@ public class Product : BaseEntity
     public ProductCategory Category { get; set; } = ProductCategory.Gold;
     public decimal WeightValue { get; set; }
     public ProductWeightUnit WeightUnit { get; set; } = ProductWeightUnit.Gram;
+    public PricingMaterialType PricingMaterialType { get; set; } = PricingMaterialType.Gold;
+    public ProductPricingMode PricingMode { get; set; } = ProductPricingMode.Auto;
+    public decimal? PurityKarat { get; set; }
+    public decimal MarketUnitPrice { get; set; }
+    public decimal DeliveryFee { get; set; }
+    public decimal StorageFee { get; set; }
+    public decimal ServiceCharge { get; set; }
+    public decimal FinalSellPrice { get; set; }
     public decimal Price { get; set; }
     public int AvailableStock { get; set; }
     public bool IsActive { get; set; } = true;

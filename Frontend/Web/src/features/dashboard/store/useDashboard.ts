@@ -1,4 +1,4 @@
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { fetchWebAdminDashboard } from "../../../shared/services/backendGateway";
 import type { WebDashboardDto } from "../../../shared/types/apiTypes";
@@ -17,6 +17,7 @@ const CATEGORY_NAME_BY_ID: Record<string, string> = {
   "4": "Jewelry",
   "5": "Coins",
 };
+const ANALYTICS_CATEGORIES = ["Gold", "Silver", "Diamond", "Jewelry", "Coins"];
 
 const normalizeCategoryLabel = (rawCategory: string) => CATEGORY_NAME_BY_ID[rawCategory] ?? rawCategory;
 const isVisibleCategory = (category: string) => category.trim().toLowerCase() !== "spotmr";
@@ -24,6 +25,46 @@ const isVisibleCategory = (category: string) => category.trim().toLowerCase() !=
 export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   const dashboardPeriod = ref<"month">("month");
   const serverDashboard = ref<WebDashboardDto | null>(null);
+  let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+  const startAutoRefresh = () => {
+    if (refreshTimer || !marketplace.session.value?.accessToken) return;
+    refreshTimer = setInterval(() => {
+      void loadServerDashboard();
+    }, 10000);
+  };
+
+  const stopAutoRefresh = () => {
+    if (!refreshTimer) return;
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  };
+
+  const toCategorySeriesWithDefaults = (items: Array<{ label: string; value: number }>) => {
+    const map = new Map<string, number>();
+    ANALYTICS_CATEGORIES.forEach((category) => map.set(category, 0));
+    items.forEach((item) => {
+      const category = normalizeCategoryLabel(item.label);
+      if (!isVisibleCategory(category)) return;
+      if (!map.has(category)) return;
+      map.set(category, item.value);
+    });
+
+    return ANALYTICS_CATEGORIES.map((category) => ({ label: category, value: map.get(category) ?? 0 }));
+  };
+
+  const loadServerDashboard = async () => {
+    if (!marketplace.session.value?.accessToken) {
+      serverDashboard.value = null;
+      return;
+    }
+
+    try {
+      serverDashboard.value = await fetchWebAdminDashboard(marketplace.session.value.accessToken, "month");
+    } catch {
+      // Keep previous payload on transient failure.
+    }
+  };
   const dashboardCards = computed(() => {
     if (serverDashboard.value?.cards?.length) {
       return serverDashboard.value.cards;
@@ -49,10 +90,10 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
   }));
 
   const categorySummary = computed(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, number>(ANALYTICS_CATEGORIES.map((category) => [category, 0]));
     marketplace.state.value.products.forEach((p) => {
       const categoryName = normalizeCategoryLabel(String(p.category));
-      if (!isVisibleCategory(categoryName)) return;
+      if (!isVisibleCategory(categoryName) || !map.has(categoryName)) return;
       map.set(categoryName, (map.get(categoryName) ?? 0) + 1);
     });
     return Array.from(map.entries()).map(([category, count]) => ({ category, count }));
@@ -60,22 +101,18 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
 
   const categoryTransactionSeries = computed(() => {
     if (serverDashboard.value?.categoryTransactionSeries?.length) {
-      return serverDashboard.value.categoryTransactionSeries.filter((item) => isVisibleCategory(item.label));
+      return toCategorySeriesWithDefaults(serverDashboard.value.categoryTransactionSeries);
     }
 
-    return categorySummary.value
-      .filter((item) => isVisibleCategory(item.category))
-      .map((item) => ({ label: item.category, value: item.count }));
+    return toCategorySeriesWithDefaults(categorySummary.value.map((item) => ({ label: item.category, value: item.count })));
   });
 
   const categoryCartSeries = computed(() => {
     if (serverDashboard.value?.categoryCartSeries?.length) {
-      return serverDashboard.value.categoryCartSeries.filter((item) => isVisibleCategory(item.label));
+      return toCategorySeriesWithDefaults(serverDashboard.value.categoryCartSeries);
     }
 
-    return categorySummary.value
-      .filter((item) => isVisibleCategory(item.category))
-      .map((item) => ({ label: item.category, value: Math.max(0, item.count * 2) }));
+    return toCategorySeriesWithDefaults(categorySummary.value.map((item) => ({ label: item.category, value: Math.max(0, item.count * 2) })));
   });
 
   const statusRing = computed(() => {
@@ -132,6 +169,25 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
         investorName: marketplace.state.value.investors.find((inv) => inv.id === request.investorId)?.fullName ?? request.investorId,
         productName: marketplace.state.value.products[idx % Math.max(marketplace.state.value.products.length, 1)]?.name ?? "N/A"
       }));
+  });
+
+  watch(() => marketplace.session.value?.accessToken, () => {
+    void loadServerDashboard();
+    stopAutoRefresh();
+    startAutoRefresh();
+  }, { immediate: true });
+
+  watch(() => marketplace.state.value.requests.length, () => {
+    void loadServerDashboard();
+  });
+
+  onMounted(() => {
+    void loadServerDashboard();
+    startAutoRefresh();
+  });
+
+  onUnmounted(() => {
+    stopAutoRefresh();
   });
 
   return { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions, categoryTransactionSeries, categoryCartSeries };

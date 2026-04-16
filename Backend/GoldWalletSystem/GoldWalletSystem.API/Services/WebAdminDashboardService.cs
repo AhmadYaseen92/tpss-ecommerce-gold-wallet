@@ -60,9 +60,15 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
 
         var statusTotal = Math.Max(statusCounts.Values.Sum(), 1);
 
+        var categoriesForAnalytics = Enum.GetValues<ProductCategory>()
+            .Where(x => x != ProductCategory.SpotMr)
+            .Select(x => x.ToString())
+            .ToList();
+
         var categoryCounts = products
             .GroupBy(p => p.Category.ToString())
             .Select(g => new { Key = g.Key, Value = g.Count() })
+            .Where(x => categoriesForAnalytics.Contains(x.Key))
             .OrderByDescending(x => x.Value)
             .ToList();
         var categoryTotal = Math.Max(categoryCounts.Sum(x => x.Value), 1);
@@ -81,7 +87,7 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             })
             .ToList();
 
-        var allCategoryNames = Enum.GetValues<ProductCategory>().Select(x => x.ToString()).ToList();
+        var allCategoryNames = categoriesForAnalytics;
         var transactionCountByCategory = allCategoryNames.ToDictionary(x => x, _ => 0, StringComparer.OrdinalIgnoreCase);
         var cartCountByCategory = allCategoryNames.ToDictionary(x => x, _ => 0, StringComparer.OrdinalIgnoreCase);
 
@@ -145,13 +151,17 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
                 new WebDashboardSegmentDto { Key = "approved", Label = "Approved", Value = statusCounts["approved"], Percent = (int)Math.Round((statusCounts["approved"] * 100m) / statusTotal) },
                 new WebDashboardSegmentDto { Key = "rejected", Label = "Rejected", Value = statusCounts["rejected"], Percent = (int)Math.Round((statusCounts["rejected"] * 100m) / statusTotal) }
             ],
-            CategorySegments = categoryCounts
-                .Select(x => new WebDashboardSegmentDto
+            CategorySegments = allCategoryNames
+                .Select(categoryName =>
                 {
-                    Key = x.Key,
-                    Label = x.Key,
-                    Value = x.Value,
-                    Percent = (int)Math.Round((x.Value * 100m) / categoryTotal)
+                    var count = categoryCounts.FirstOrDefault(x => x.Key == categoryName)?.Value ?? 0;
+                    return new WebDashboardSegmentDto
+                    {
+                        Key = categoryName,
+                        Label = categoryName,
+                        Value = count,
+                        Percent = (int)Math.Round((count * 100m) / categoryTotal)
+                    };
                 })
                 .ToList(),
             CategoryTransactionSeries = categoryTransactionSeries,
