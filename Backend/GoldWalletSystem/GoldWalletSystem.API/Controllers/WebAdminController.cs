@@ -17,6 +17,9 @@ namespace GoldWalletSystem.API.Controllers;
 public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardService dashboardService, IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
 {
     private const string FeesConfigKey = "webadmin.fees";
+    private const string MarketPriceGoldKey = "market.price.gold";
+    private const string MarketPriceSilverKey = "market.price.silver";
+    private const string MarketPriceDiamondKey = "market.price.diamond";
 
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
@@ -414,6 +417,60 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         var scopedSellerId = User.IsInRole(SystemRoles.Admin) ? null : currentSellerId;
         var dashboard = await dashboardService.BuildAsync(period, scopedSellerId, cancellationToken);
         return Ok(ApiResponse<WebDashboardDto>.Ok(dashboard));
+    }
+
+    [HttpGet("market-prices")]
+    public async Task<IActionResult> GetMarketPrices(CancellationToken cancellationToken)
+    {
+        var entries = await dbContext.MobileAppConfigurations
+            .AsNoTracking()
+            .Where(x => x.IsEnabled && (x.ConfigKey == MarketPriceGoldKey || x.ConfigKey == MarketPriceSilverKey || x.ConfigKey == MarketPriceDiamondKey))
+            .ToListAsync(cancellationToken);
+
+        decimal ParseValue(string key)
+        {
+            var raw = entries.FirstOrDefault(x => x.ConfigKey == key)?.JsonValue;
+            return decimal.TryParse(raw, out var parsed) ? parsed : 0m;
+        }
+
+        return Ok(ApiResponse<WebMarketPricesDto>.Ok(new WebMarketPricesDto
+        {
+            Gold = ParseValue(MarketPriceGoldKey),
+            Silver = ParseValue(MarketPriceSilverKey),
+            Diamond = ParseValue(MarketPriceDiamondKey)
+        }));
+    }
+
+    [HttpPut("market-prices")]
+    public async Task<IActionResult> UpdateMarketPrices([FromBody] UpdateMarketPricesRequest request, CancellationToken cancellationToken)
+    {
+        await UpsertConfigValueAsync(MarketPriceGoldKey, request.Gold, cancellationToken);
+        await UpsertConfigValueAsync(MarketPriceSilverKey, request.Silver, cancellationToken);
+        await UpsertConfigValueAsync(MarketPriceDiamondKey, request.Diamond, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync("market-prices:updated", cancellationToken);
+        return Ok(ApiResponse<string>.Ok("updated"));
+    }
+
+    private async Task UpsertConfigValueAsync(string key, decimal value, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = key,
+                JsonValue = value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                IsEnabled = true,
+                Description = $"Market unit price for {key}",
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+            return;
+        }
+
+        config.JsonValue = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        config.IsEnabled = true;
+        config.UpdatedAtUtc = DateTime.UtcNow;
     }
 
     [HttpPut("notifications/{id}/read")]

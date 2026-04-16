@@ -91,7 +91,7 @@ class ProductRepositoryImpl implements IProductRepository {
       isFavorite: _favoriteProductIds.contains(model.id.toString()),
       purity: _purityByDescription(model.description),
       weight: _weightText(model.weightValue, model.weightUnit),
-      metal: _metalByName(model.name),
+      metal: model.pricingMaterialType,
       isInCart: false,
       quantity: 1,
       sellerName: model.sellerName,
@@ -118,14 +118,6 @@ class ProductRepositoryImpl implements IProductRepository {
       6 => 'Spot MR',
       _ => 'Gold',
     };
-  }
-
-  String _metalByName(String name) {
-    final value = name.toLowerCase();
-    if (value.contains('silver')) return 'Silver';
-    if (value.contains('platinum')) return 'Platinum';
-    if (value.contains('palladium')) return 'Palladium';
-    return 'Gold';
   }
 
   String _purityByDescription(String description) {

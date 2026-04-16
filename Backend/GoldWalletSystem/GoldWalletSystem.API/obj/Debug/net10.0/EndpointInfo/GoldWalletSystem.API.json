@@ -745,6 +745,12 @@
                   "Category": {
                     "$ref": "#/components/schemas/ProductCategory"
                   },
+                  "PricingMaterialType": {
+                    "$ref": "#/components/schemas/PricingMaterialType"
+                  },
+                  "PricingMode": {
+                    "$ref": "#/components/schemas/ProductPricingMode"
+                  },
                   "WeightValue": {
                     "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
                     "type": [
@@ -755,6 +761,46 @@
                   },
                   "WeightUnit": {
                     "$ref": "#/components/schemas/ProductWeightUnit"
+                  },
+                  "PurityKarat": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "MarketUnitPrice": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "DeliveryFee": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "StorageFee": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "ServiceCharge": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
                   },
                   "Price": {
                     "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
@@ -859,6 +905,12 @@
                   "Category": {
                     "$ref": "#/components/schemas/ProductCategory"
                   },
+                  "PricingMaterialType": {
+                    "$ref": "#/components/schemas/PricingMaterialType"
+                  },
+                  "PricingMode": {
+                    "$ref": "#/components/schemas/ProductPricingMode"
+                  },
                   "WeightValue": {
                     "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
                     "type": [
@@ -869,6 +921,46 @@
                   },
                   "WeightUnit": {
                     "$ref": "#/components/schemas/ProductWeightUnit"
+                  },
+                  "PurityKarat": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "MarketUnitPrice": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "DeliveryFee": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "StorageFee": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
+                  },
+                  "ServiceCharge": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+                    "type": [
+                      "number",
+                      "string"
+                    ],
+                    "format": "double"
                   },
                   "Price": {
                     "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
@@ -945,6 +1037,30 @@
       }
     },
     "/api/products/weight-units": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/products/pricing-material-types": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/products/pricing-modes": {
       "get": {
         "tags": [
           "Products"
@@ -1276,6 +1392,38 @@
         }
       }
     },
+    "/api/wallet/actions/request": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletActionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletActionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/web-admin/summary": {
       "get": {
         "tags": [
@@ -1443,6 +1591,28 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/requests/{id}": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1623,6 +1793,48 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/market-prices": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarketPricesRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarketPricesRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarketPricesRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -2052,7 +2264,13 @@
           }
         }
       },
+      "PricingMaterialType": {
+        "type": "integer"
+      },
       "ProductCategory": {
+        "type": "integer"
+      },
+      "ProductPricingMode": {
         "type": "integer"
       },
       "ProductSearchRequestDto": {
@@ -2245,6 +2463,15 @@
             ],
             "format": "int32"
           },
+          "sellerId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
           "pageNumber": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
@@ -2262,6 +2489,18 @@
             "format": "int32"
           },
           "transactionType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "category": {
             "type": [
               "null",
               "string"
@@ -2309,6 +2548,35 @@
               "string"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "UpdateMarketPricesRequest": {
+        "type": "object",
+        "properties": {
+          "gold": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "silver": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "diamond": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },
@@ -2649,6 +2917,83 @@
               "string"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "WalletActionRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "sellerId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "actionType": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "purity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

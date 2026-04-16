@@ -229,6 +229,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Category).HasConversion<int>();
             entity.Property(x => x.WeightValue).HasPrecision(18, 3);
             entity.Property(x => x.WeightUnit).HasConversion<int>();
+            entity.Property(x => x.PricingMaterialType).HasConversion<int>();
+            entity.Property(x => x.PricingMode).HasConversion<int>();
+            entity.Property(x => x.PurityKarat).HasPrecision(10, 2);
+            entity.Property(x => x.MarketUnitPrice).HasPrecision(18, 4);
+            entity.Property(x => x.DeliveryFee).HasPrecision(18, 2);
+            entity.Property(x => x.StorageFee).HasPrecision(18, 2);
+            entity.Property(x => x.ServiceCharge).HasPrecision(18, 2);
+            entity.Property(x => x.FinalSellPrice).HasPrecision(18, 2);
             entity.Property(x => x.Price).HasPrecision(18, 2);
             entity.HasIndex(x => x.Sku).IsUnique();
             entity.HasIndex(x => x.Name);

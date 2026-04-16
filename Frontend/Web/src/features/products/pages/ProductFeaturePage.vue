@@ -14,6 +14,9 @@ const managedProducts = computed(() => pm.managedProducts.value);
 const selectedProduct = computed(() => pm.selectedProduct.value);
 const categories = computed(() => pm.categories.value);
 const weightUnits = computed(() => pm.weightUnits.value);
+const pricingMaterialTypes = computed(() => pm.pricingMaterialTypes.value);
+const pricingModes = computed(() => pm.pricingModes.value);
+const marketPrices = computed(() => pm.marketPrices);
 </script>
 
 <template>
@@ -28,6 +31,9 @@ const weightUnits = computed(() => pm.weightUnits.value);
       :product-form="pm.productForm"
       :categories="categories"
       :weight-units="weightUnits"
+      :pricing-material-types="pricingMaterialTypes"
+      :pricing-modes="pricingModes"
+      :market-prices="marketPrices"
       :validation-errors="pm.validationErrors"
       @add="pm.openAddProduct"
       @details="pm.openProductDetails"
@@ -36,6 +42,7 @@ const weightUnits = computed(() => pm.weightUnits.value);
       @delete="pm.deleteProductRecord"
       @back="pm.navigate('#/products')"
       @save="pm.saveProduct"
+      @save-market-prices="pm.saveMarketPrices"
       @image="pm.onProductImageChange"
     />
   </SectionCard>

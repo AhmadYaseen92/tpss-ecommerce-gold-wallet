@@ -110,20 +110,20 @@ BEGIN TRY
       AND NOT EXISTS (SELECT 1 FROM [Carts] C WHERE C.[UserId] = U.[Id]);
 
     ------------------------------------------------------------
-    -- Products (Category + Weight fields included)
+    -- Products (Category + pricing structure fields included)
     ------------------------------------------------------------
     ;WITH SeedProducts AS (
-        SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock, 3 AS Category, CAST(5.000 AS decimal(18,3)) AS WeightValue, 1 AS WeightUnit, N'/images/products/gold-bar.png' AS ImageUrl UNION ALL
-        SELECT @SellerImseeh, N'IMSEEH-PRD-002', N'Imseeh 1oz Gold Coin', N'Fine gold investment coin', CAST(2675.00 AS decimal(18,2)), 80, 5, CAST(1.000 AS decimal(18,3)), 3, N'/images/products/gold-coin.png' UNION ALL
-        SELECT @SellerImseeh, N'IMSEEH-PRD-003', N'Imseeh Silver 1oz Coin', N'Investment silver coin', CAST(36.00 AS decimal(18,2)), 500, 6, CAST(1.000 AS decimal(18,3)), 3, N'/images/products/silver.png' UNION ALL
+        SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock, 1 AS Category, 1 AS PricingMaterialType, 2 AS PricingMode, CAST(24.00 AS decimal(10,2)) AS PurityKarat, CAST(86.0000 AS decimal(18,4)) AS MarketUnitPrice, CAST(5.00 AS decimal(18,2)) AS DeliveryFee, CAST(2.00 AS decimal(18,2)) AS StorageFee, CAST(1.00 AS decimal(18,2)) AS ServiceCharge, CAST(430.00 AS decimal(18,2)) AS FinalSellPrice, CAST(5.000 AS decimal(18,3)) AS WeightValue, 1 AS WeightUnit, N'/images/products/gold-bar.png' AS ImageUrl UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-002', N'Imseeh 1oz Gold Coin', N'Fine gold investment coin', CAST(2675.00 AS decimal(18,2)), 80, 5, 1, 2, CAST(24.00 AS decimal(10,2)), CAST(86.0000 AS decimal(18,4)), CAST(6.00 AS decimal(18,2)), CAST(3.00 AS decimal(18,2)), CAST(1.00 AS decimal(18,2)), CAST(2675.00 AS decimal(18,2)), CAST(1.000 AS decimal(18,3)), 3, N'/images/products/gold-coin.png' UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-003', N'Imseeh Silver 1oz Coin', N'Investment silver coin', CAST(36.00 AS decimal(18,2)), 500, 5, 2, 2, CAST(24.00 AS decimal(10,2)), CAST(1.1000 AS decimal(18,4)), CAST(2.00 AS decimal(18,2)), CAST(1.00 AS decimal(18,2)), CAST(0.50 AS decimal(18,2)), CAST(36.00 AS decimal(18,2)), CAST(1.000 AS decimal(18,3)), 3, N'/images/products/silver.png' UNION ALL
 
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-001', N'GoldPal 10g Gold Bar', N'24K minted bar - 10 grams', CAST(862.00 AS decimal(18,2)), 100, 3, CAST(10.000 AS decimal(18,3)), 1, N'/images/products/gold-bar.png' UNION ALL
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-002', N'GoldPal 22K Necklace', N'Premium necklace', CAST(1492.00 AS decimal(18,2)), 40, 8, CAST(18.000 AS decimal(18,3)), 1, N'/images/products/jewelry.png' UNION ALL
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-003', N'GoldPal Gift Card 500', N'Store value card', CAST(500.00 AS decimal(18,2)), 999, 10, CAST(1.000 AS decimal(18,3)), 1, N'/images/products/gift-card.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-001', N'GoldPal 10g Gold Bar', N'24K minted bar - 10 grams', CAST(862.00 AS decimal(18,2)), 100, 1, 1, 2, CAST(24.00 AS decimal(10,2)), CAST(86.0000 AS decimal(18,4)), CAST(5.00 AS decimal(18,2)), CAST(2.00 AS decimal(18,2)), CAST(1.00 AS decimal(18,2)), CAST(862.00 AS decimal(18,2)), CAST(10.000 AS decimal(18,3)), 1, N'/images/products/gold-bar.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-002', N'GoldPal 22K Necklace', N'Premium necklace', CAST(1492.00 AS decimal(18,2)), 40, 4, 1, 2, CAST(22.00 AS decimal(10,2)), CAST(86.0000 AS decimal(18,4)), CAST(8.00 AS decimal(18,2)), CAST(3.00 AS decimal(18,2)), CAST(2.00 AS decimal(18,2)), CAST(1492.00 AS decimal(18,2)), CAST(18.000 AS decimal(18,3)), 1, N'/images/products/jewelry.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-003', N'GoldPal Diamond Ring', N'Diamond jewelry piece', CAST(500.00 AS decimal(18,2)), 999, 4, 3, 2, NULL, CAST(500.0000 AS decimal(18,4)), CAST(12.00 AS decimal(18,2)), CAST(4.00 AS decimal(18,2)), CAST(3.00 AS decimal(18,2)), CAST(500.00 AS decimal(18,2)), CAST(1.000 AS decimal(18,3)), 1, N'/images/products/jewelry.png' UNION ALL
 
-        SELECT @SellerBullion, N'BULLION-PRD-001', N'Bullion 20g Gold Bar', N'24K minted bar - 20 grams', CAST(1715.00 AS decimal(18,2)), 100, 3, CAST(20.000 AS decimal(18,3)), 1, N'/images/products/gold-bar.png' UNION ALL
-        SELECT @SellerBullion, N'BULLION-PRD-002', N'Bullion 1/2oz Gold Coin', N'Half ounce coin', CAST(1355.00 AS decimal(18,2)), 90, 5, CAST(0.500 AS decimal(18,3)), 3, N'/images/products/gold-coin.png' UNION ALL
-        SELECT @SellerBullion, N'BULLION-PRD-003', N'Bullion Silver 10oz Bar', N'Fine silver bar', CAST(344.00 AS decimal(18,2)), 200, 2, CAST(10.000 AS decimal(18,3)), 3, N'/images/products/silver.png'
+        SELECT @SellerBullion, N'BULLION-PRD-001', N'Bullion 20g Gold Bar', N'24K minted bar - 20 grams', CAST(1715.00 AS decimal(18,2)), 100, 1, 1, 2, CAST(24.00 AS decimal(10,2)), CAST(86.0000 AS decimal(18,4)), CAST(5.00 AS decimal(18,2)), CAST(2.00 AS decimal(18,2)), CAST(1.00 AS decimal(18,2)), CAST(1715.00 AS decimal(18,2)), CAST(20.000 AS decimal(18,3)), 1, N'/images/products/gold-bar.png' UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-002', N'Bullion 1/2oz Gold Coin', N'Half ounce coin', CAST(1355.00 AS decimal(18,2)), 90, 5, 1, 2, CAST(24.00 AS decimal(10,2)), CAST(86.0000 AS decimal(18,4)), CAST(6.00 AS decimal(18,2)), CAST(2.00 AS decimal(18,2)), CAST(1.00 AS decimal(18,2)), CAST(1355.00 AS decimal(18,2)), CAST(0.500 AS decimal(18,3)), 3, N'/images/products/gold-coin.png' UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-003', N'Bullion Silver 10oz Bar', N'Fine silver bar', CAST(344.00 AS decimal(18,2)), 200, 2, 2, 2, CAST(24.00 AS decimal(10,2)), CAST(1.1000 AS decimal(18,4)), CAST(4.00 AS decimal(18,2)), CAST(2.00 AS decimal(18,2)), CAST(1.00 AS decimal(18,2)), CAST(344.00 AS decimal(18,2)), CAST(10.000 AS decimal(18,3)), 3, N'/images/products/silver.png'
     )
     MERGE [Products] AS T
     USING SeedProducts AS S
@@ -136,14 +136,22 @@ BEGIN TRY
             T.[Price] = S.[Price],
             T.[AvailableStock] = S.[AvailableStock],
             T.[Category] = S.[Category],
+            T.[PricingMaterialType] = S.[PricingMaterialType],
+            T.[PricingMode] = S.[PricingMode],
+            T.[PurityKarat] = S.[PurityKarat],
+            T.[MarketUnitPrice] = S.[MarketUnitPrice],
+            T.[DeliveryFee] = S.[DeliveryFee],
+            T.[StorageFee] = S.[StorageFee],
+            T.[ServiceCharge] = S.[ServiceCharge],
+            T.[FinalSellPrice] = S.[FinalSellPrice],
             T.[WeightValue] = S.[WeightValue],
             T.[WeightUnit] = S.[WeightUnit],
             T.[ImageUrl] = S.[ImageUrl],
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[Category],[WeightValue],[WeightUnit],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[Price],S.[AvailableStock],S.[Category],S.[WeightValue],S.[WeightUnit],S.[ImageUrl],1,@Now,NULL);
+        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[Category],[PricingMaterialType],[PricingMode],[PurityKarat],[MarketUnitPrice],[DeliveryFee],[StorageFee],[ServiceCharge],[FinalSellPrice],[WeightValue],[WeightUnit],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[Price],S.[AvailableStock],S.[Category],S.[PricingMaterialType],S.[PricingMode],S.[PurityKarat],S.[MarketUnitPrice],S.[DeliveryFee],S.[StorageFee],S.[ServiceCharge],S.[FinalSellPrice],S.[WeightValue],S.[WeightUnit],S.[ImageUrl],1,@Now,NULL);
 
     ------------------------------------------------------------
     -- WalletAssets portfolio rows
@@ -179,6 +187,18 @@ BEGIN TRY
             NULL
         );
     END
+
+    IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'market.price.gold')
+        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [JsonValue], [IsEnabled], [Description], [CreatedAtUtc], [UpdatedAtUtc])
+        VALUES (N'market.price.gold', N'86.0', 1, N'Market unit price for gold (per gram).', @Now, NULL);
+
+    IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'market.price.silver')
+        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [JsonValue], [IsEnabled], [Description], [CreatedAtUtc], [UpdatedAtUtc])
+        VALUES (N'market.price.silver', N'1.1', 1, N'Market unit price for silver (per gram).', @Now, NULL);
+
+    IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'market.price.diamond')
+        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [JsonValue], [IsEnabled], [Description], [CreatedAtUtc], [UpdatedAtUtc])
+        VALUES (N'market.price.diamond', N'500', 1, N'Market unit price for diamond base.', @Now, NULL);
 
     ------------------------------------------------------------
     -- Seed marker in audit

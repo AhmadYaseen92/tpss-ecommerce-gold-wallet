@@ -126,3 +126,17 @@ public class WebDashboardPointDto
     public string Label { get; set; } = string.Empty;
     public int Value { get; set; }
 }
+
+public class WebMarketPricesDto
+{
+    public decimal Gold { get; set; }
+    public decimal Silver { get; set; }
+    public decimal Diamond { get; set; }
+}
+
+public class UpdateMarketPricesRequest
+{
+    public decimal Gold { get; set; }
+    public decimal Silver { get; set; }
+    public decimal Diamond { get; set; }
+}

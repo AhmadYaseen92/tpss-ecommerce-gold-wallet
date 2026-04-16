@@ -20,6 +20,7 @@ import type {
   ProductManagementDto,
   RegisterResponseDto,
   EnumItemDto,
+  WebMarketPricesDto,
   WebDashboardDto,
   WebRequestDto,
   WebSellerDto
@@ -306,8 +307,16 @@ export interface ProductFormPayload {
   sku: string;
   description: string;
   category: number;
+  pricingMaterialType: number;
+  pricingMode: number;
   weightValue: number;
   weightUnit: number;
+  purityKarat?: number | null;
+  marketUnitPrice: number;
+  deliveryFee: number;
+  storageFee: number;
+  serviceCharge: number;
+  finalSellPrice?: number;
   price: number;
   availableStock: number;
   isActive: boolean;
@@ -317,26 +326,7 @@ export interface ProductFormPayload {
 }
 
 export async function fetchManagedProducts(accessToken: string): Promise<ProductManagementDto[]> {
-  const searchResult = await postJson<PagedResult<ProductDto>, { pageNumber: number; pageSize: number; category: null }>(
-    "/api/products/search",
-    { pageNumber: 1, pageSize: 100, category: null },
-    accessToken
-  );
-
-  return searchResult.items.map((item) => ({
-    id: item.id,
-    name: item.name,
-    sku: item.sku,
-    description: item.description,
-    imageUrl: item.imageUrl,
-    category: item.category,
-    weightValue: item.weightValue,
-    weightUnit: item.weightUnit,
-    price: item.price,
-    availableStock: item.availableStock,
-    isActive: true,
-    sellerId: item.sellerId
-  }));
+  return getJson<ProductManagementDto[]>("/api/products/management", accessToken);
 }
 
 export async function fetchProductCategories(accessToken: string): Promise<EnumItemDto[]> {
@@ -354,6 +344,38 @@ export async function fetchWeightUnits(accessToken: string): Promise<EnumItemDto
   } catch {
     return fallbackWeightUnits;
   }
+}
+
+export async function fetchPricingMaterialTypes(accessToken: string): Promise<EnumItemDto[]> {
+  try {
+    return await getJson<EnumItemDto[]>("/api/products/pricing-material-types", accessToken);
+  } catch {
+    return [
+      { value: 1, name: "Gold" },
+      { value: 2, name: "Silver" },
+      { value: 3, name: "Diamond" },
+      { value: 4, name: "Custom" }
+    ];
+  }
+}
+
+export async function fetchPricingModes(accessToken: string): Promise<EnumItemDto[]> {
+  try {
+    return await getJson<EnumItemDto[]>("/api/products/pricing-modes", accessToken);
+  } catch {
+    return [
+      { value: 1, name: "Auto" },
+      { value: 2, name: "Manual" }
+    ];
+  }
+}
+
+export async function fetchMarketPrices(accessToken: string): Promise<WebMarketPricesDto> {
+  return getJson<WebMarketPricesDto>("/api/web-admin/market-prices", accessToken);
+}
+
+export async function updateMarketPrices(accessToken: string, payload: WebMarketPricesDto): Promise<string> {
+  return putJson<string, WebMarketPricesDto>("/api/web-admin/market-prices", payload, accessToken);
 }
 
 export async function createManagedProduct(accessToken: string, payload: ProductFormPayload): Promise<string> {
@@ -376,8 +398,15 @@ function buildProductForm(payload: ProductFormPayload): FormData {
   form.append("Sku", payload.sku);
   form.append("Description", payload.description);
   form.append("Category", String(payload.category));
+  form.append("PricingMaterialType", String(payload.pricingMaterialType));
+  form.append("PricingMode", String(payload.pricingMode));
   form.append("WeightValue", String(payload.weightValue));
   form.append("WeightUnit", String(payload.weightUnit));
+  if (payload.purityKarat != null) form.append("PurityKarat", String(payload.purityKarat));
+  form.append("MarketUnitPrice", String(payload.marketUnitPrice));
+  form.append("DeliveryFee", String(payload.deliveryFee));
+  form.append("StorageFee", String(payload.storageFee));
+  form.append("ServiceCharge", String(payload.serviceCharge));
   form.append("Price", String(payload.price));
   form.append("AvailableStock", String(payload.availableStock));
   form.append("IsActive", String(payload.isActive));

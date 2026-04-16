@@ -3,7 +3,7 @@ import BaseFormField from "../../../shared/components/BaseFormField.vue";
 import type { ProductEnumItem } from "../types/productTypes";
 import type { ProductFormPayload } from "../../../shared/services/backendGateway";
 
-defineProps<{ model: ProductFormPayload; categories: ProductEnumItem[]; units: ProductEnumItem[]; errors: Record<string, string> }>();
+defineProps<{ model: ProductFormPayload; categories: ProductEnumItem[]; units: ProductEnumItem[]; pricingMaterialTypes: ProductEnumItem[]; pricingModes: ProductEnumItem[]; errors: Record<string, string> }>();
 const emit = defineEmits<{ save: []; image: [event: Event] }>();
 </script>
 
@@ -36,6 +36,22 @@ const emit = defineEmits<{ save: []; image: [event: Event] }>();
       <input v-model.number="model.weightValue" :class="{ 'input-error': !!errors.weightValue }" type="number" placeholder="WeightValue" />
     </BaseFormField>
 
+    <BaseFormField label="Material Type" required hint="Source used for pricing." :error="errors.pricingMaterialType">
+      <select v-model.number="model.pricingMaterialType" :class="{ 'input-error': !!errors.pricingMaterialType }">
+        <option v-for="m in pricingMaterialTypes" :key="m.value" :value="m.value">{{ m.name }}</option>
+      </select>
+    </BaseFormField>
+
+    <BaseFormField label="Pricing Mode" required hint="Auto uses market+fees, manual uses entered price." :error="errors.pricingMode">
+      <select v-model.number="model.pricingMode" :class="{ 'input-error': !!errors.pricingMode }">
+        <option v-for="mode in pricingModes" :key="mode.value" :value="mode.value">{{ mode.name }}</option>
+      </select>
+    </BaseFormField>
+
+    <BaseFormField label="Purity / Karat" hint="Used for Gold/Silver auto pricing.">
+      <input v-model.number="model.purityKarat" type="number" placeholder="e.g. 24 or 18" />
+    </BaseFormField>
+
     <BaseFormField label="Weight Unit" required hint="Unit for weight." :error="errors.weightUnit">
       <select v-model.number="model.weightUnit" :class="{ 'input-error': !!errors.weightUnit }">
         <option :value="0" disabled>Select unit</option>
@@ -45,6 +61,22 @@ const emit = defineEmits<{ save: []; image: [event: Event] }>();
 
     <BaseFormField label="Price" required hint="Selling price." :error="errors.price">
       <input v-model.number="model.price" :class="{ 'input-error': !!errors.price }" type="number" placeholder="Price" />
+    </BaseFormField>
+
+    <BaseFormField label="Market Unit Price" hint="Price per gram for auto mode.">
+      <input v-model.number="model.marketUnitPrice" type="number" placeholder="MarketUnitPrice" />
+    </BaseFormField>
+
+    <BaseFormField label="Delivery Fee" hint="Fixed fee.">
+      <input v-model.number="model.deliveryFee" type="number" placeholder="DeliveryFee" />
+    </BaseFormField>
+
+    <BaseFormField label="Storage Fee" hint="Fixed fee.">
+      <input v-model.number="model.storageFee" type="number" placeholder="StorageFee" />
+    </BaseFormField>
+
+    <BaseFormField label="Service Charge" hint="Fixed service amount.">
+      <input v-model.number="model.serviceCharge" type="number" placeholder="ServiceCharge" />
     </BaseFormField>
 
     <BaseFormField label="Available Stock" required hint="Quantity available." :error="errors.availableStock">
