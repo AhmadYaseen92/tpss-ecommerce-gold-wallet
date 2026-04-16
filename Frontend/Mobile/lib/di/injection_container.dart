@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/network/dio_factory.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/realtime/realtime_refresh_service.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/data/datasources/auth_api_service.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/data/repositories/auth_repository_impl.dart';
@@ -64,6 +65,7 @@ class InjectionContainer {
   static final TransferLocalDataSource _transferLocalDataSource =
       TransferLocalDataSource();
   static final SellLocalDataSource _sellLocalDataSource = SellLocalDataSource();
+  static final RealtimeRefreshService _realtimeRefreshService = RealtimeRefreshService();
 
   static final GetIt sl = GetIt.instance;
 
@@ -203,7 +205,10 @@ class InjectionContainer {
   }
 
   static IWalletRepository walletRepository() {
-    return WalletRepositoryImpl(WalletRemoteDataSource(sl<Dio>()));
+    return WalletRepositoryImpl(
+      WalletRemoteDataSource(sl<Dio>()),
+      _realtimeRefreshService,
+    );
   }
 
   static LoadWalletsUseCase loadWalletsUseCase() {
@@ -229,4 +234,9 @@ class InjectionContainer {
   static UpdateCartProductQuantityUseCase updateCartProductQuantityUseCase() {
     return UpdateCartProductQuantityUseCase(cartRepository());
   }
+
+  static RealtimeRefreshService realtimeRefreshService() {
+    return _realtimeRefreshService;
+  }
 }
+

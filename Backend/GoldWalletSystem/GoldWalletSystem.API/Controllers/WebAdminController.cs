@@ -197,11 +197,15 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         item.Status = nextStatus;
         item.UpdatedAtUtc = DateTime.UtcNow;
 
-        if (previousStatus == "pending" && nextStatus == "approved")
+        if (previousStatus == "pending")
         {
-            await ApplyApprovedRequestSideEffectsAsync(item, cancellationToken);
-            await ApplyApprovedRequestStockSideEffectsAsync(item, cancellationToken);
-            await CreateInvoiceForApprovedRequestAsync(item, cancellationToken);
+            await ApplyRequestStockSideEffectsAsync(item, nextStatus, cancellationToken);
+
+            if (nextStatus == "approved")
+            {
+                await ApplyApprovedRequestSideEffectsAsync(item, cancellationToken);
+                await CreateInvoiceForApprovedRequestAsync(item, cancellationToken);
+            }
         }
 
         dbContext.AuditLogs.Add(new Domain.Entities.AuditLog
@@ -510,38 +514,56 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         }
     }
 
-    private async Task ApplyApprovedRequestStockSideEffectsAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
+    private async Task ApplyRequestStockSideEffectsAsync(
+        Domain.Entities.TransactionHistory request,
+        string nextStatus,
+        CancellationToken cancellationToken)
     {
         if (request.SellerId is null || request.Quantity <= 0) return;
 
         var action = request.TransactionType.Trim().ToLowerInvariant();
-        if (!Enum.TryParse<ProductCategory>(request.Category.Trim(), true, out var parsedCategory))
+        var categoryValue = request.Category.Trim();
+
+        var productsQuery = dbContext.Products
+            .Where(x => x.SellerId == request.SellerId && x.IsActive);
+
+        if (Enum.TryParse<ProductCategory>(categoryValue, true, out var parsedCategory))
         {
-            return;
+            productsQuery = productsQuery.Where(x => x.Category == parsedCategory);
+        }
+        else
+        {
+            var categoryLower = categoryValue.ToLowerInvariant();
+            productsQuery = productsQuery.Where(x => x.Category.ToString().ToLower().Contains(categoryLower));
         }
 
-        var product = await dbContext.Products
-            .Where(x => x.SellerId == request.SellerId
-                        && x.Category == parsedCategory
-                        && x.IsActive)
-            .OrderBy(x => x.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
+        var product = await productsQuery.OrderBy(x => x.Id).FirstOrDefaultAsync(cancellationToken);
         if (product is null) return;
 
         var quantity = Math.Max(1, request.Quantity);
+
         if (action == "buy")
         {
-            if (product.AvailableStock < quantity)
+            if (nextStatus == "approved")
             {
-                throw new InvalidOperationException($"Insufficient stock for {product.Name}. Available {product.AvailableStock}, requested {quantity}.");
-            }
+                if (product.AvailableStock < quantity)
+                {
+                    throw new InvalidOperationException($"Insufficient stock for {product.Name}. Available {product.AvailableStock}, requested {quantity}.");
+                }
 
-            product.AvailableStock -= quantity;
+                product.AvailableStock -= quantity;
+            }
+            else if (nextStatus == "rejected")
+            {
+                product.AvailableStock += quantity;
+            }
         }
         else if (action is "sell" or "pickup" or "transfer" or "gift")
         {
-            product.AvailableStock += quantity;
+            if (nextStatus == "approved")
+            {
+                product.AvailableStock += quantity;
+            }
         }
 
         product.UpdatedAtUtc = DateTime.UtcNow;

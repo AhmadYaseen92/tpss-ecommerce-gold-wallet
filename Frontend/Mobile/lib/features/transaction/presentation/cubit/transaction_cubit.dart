@@ -7,6 +7,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/network/dio_factory.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
 
 part 'transaction_state.dart';
@@ -20,13 +21,19 @@ class TransactionCubit extends Cubit<TransactionState> {
 
   final Dio _dio = DioFactory.create();
   List<TransactionModel> _allTransactions = [];
-  Timer? _refreshTimer;
+  StreamSubscription<String>? _realtimeSubscription;
   bool _isLoading = false;
 
   TransactionCubit() : super(TransactionInitial()) {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    unawaited(_startRealtimeRefresh());
+  }
+
+  Future<void> _startRealtimeRefresh() async {
+    await InjectionContainer.realtimeRefreshService().ensureStarted();
+    await _realtimeSubscription?.cancel();
+    _realtimeSubscription = InjectionContainer.realtimeRefreshService().refreshes.listen((_) {
       if (AuthSessionStore.userId != null && !_isLoading) {
-        loadTransactions(seller: activeSeller, silent: true);
+        unawaited(loadTransactions(seller: activeSeller, silent: true));
       }
     });
   }
@@ -142,8 +149,8 @@ class TransactionCubit extends Cubit<TransactionState> {
   }
 
   @override
-  Future<void> close() {
-    _refreshTimer?.cancel();
+  Future<void> close() async {
+    await _realtimeSubscription?.cancel();
     return super.close();
   }
 }

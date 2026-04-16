@@ -1,15 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/realtime/realtime_refresh_service.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/datasources/wallet_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart'
     as wallet_entity;
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/repositories/wallet_repository.dart';
 
 class WalletRepositoryImpl implements IWalletRepository {
-  WalletRepositoryImpl(this._remoteDataSource);
+  WalletRepositoryImpl(this._remoteDataSource, this._realtimeRefreshService);
 
   final WalletRemoteDataSource _remoteDataSource;
+  final RealtimeRefreshService _realtimeRefreshService;
 
   @override
   Future<List<wallet_entity.WalletEntity>> loadWallets() async {
@@ -19,8 +21,10 @@ class WalletRepositoryImpl implements IWalletRepository {
 
   @override
   Stream<List<wallet_entity.WalletEntity>> watchWallets() async* {
+    await _realtimeRefreshService.ensureStarted();
     yield await loadWallets();
-    yield* Stream.periodic(const Duration(seconds: 4)).asyncMap((_) => loadWallets());
+
+    yield* _realtimeRefreshService.refreshes.asyncMap((_) => loadWallets());
   }
 
   List<wallet_entity.WalletEntity> _toWalletEntities(WalletRemoteModel wallet) {
