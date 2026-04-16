@@ -83,7 +83,9 @@ const sellPriceSummary = computed(() => `${materialLabel.value} ${Number(props.m
       <h4>1) Product Basics</h4>
       <BaseFormField label="Name" required :error="errors.name"><input v-model="model.name" /></BaseFormField>
       <BaseFormField label="SKU" required :error="errors.sku"><input v-model="model.sku" /></BaseFormField>
-      <BaseFormField label="Description" required :error="errors.description"><input v-model="model.description" /></BaseFormField>
+      <BaseFormField label="Description" required :error="errors.description">
+        <textarea v-model="model.description" rows="5" class="description-input"></textarea>
+      </BaseFormField>
       <BaseFormField label="Image"><input type="file" @change="emit('image', $event)" /></BaseFormField>
     </section>
 
@@ -135,5 +137,6 @@ const sellPriceSummary = computed(() => `${materialLabel.value} ${Number(props.m
 .section-card h4 { margin:0 0 6px; }
 .full-row { grid-column: 1 / -1; }
 .muted { color:#475569; font-size:13px; }
+.description-input { min-height: 120px; resize: vertical; }
 @media (max-width: 900px) { .form-sections-grid { grid-template-columns: 1fr; } }
 </style>
