@@ -432,6 +432,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         public decimal PurityFactor { get; set; }
         public decimal WeightValue { get; set; }
         public ProductWeightUnit WeightUnit { get; set; }
+        public decimal BaseMarketPrice { get; set; }
         public decimal ManualSellPrice { get; set; }
         public decimal DeliveryFee { get; set; }
         public decimal StorageFee { get; set; }
