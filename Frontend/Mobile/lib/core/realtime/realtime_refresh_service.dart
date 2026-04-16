@@ -41,7 +41,9 @@ class RealtimeRefreshService {
           .withAutomaticReconnect()
           .build();
 
-      connection.onclose((_) => _startFallbackTimer());
+      connection.onclose(({Exception? error}) {
+        _startFallbackTimer();
+      });
       connection.on('MarketplaceRefreshRequested', (arguments) {
         final reason = arguments?.isNotEmpty == true
             ? arguments?.first?.toString() ?? 'signalr'
