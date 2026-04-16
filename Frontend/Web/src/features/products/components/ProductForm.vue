@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import BaseFormField from "../../../shared/components/BaseFormField.vue";
 import type { ProductEnumItem } from "../types/productTypes";
 import type { ProductFormPayload } from "../../../shared/services/backendGateway";
+import type { MarketPriceConfigDto } from "../../../shared/types/apiTypes";
 
-const props = defineProps<{ model: ProductFormPayload; categories: ProductEnumItem[]; units: ProductEnumItem[]; errors: Record<string, string> }>();
+const props = defineProps<{ model: ProductFormPayload; categories: ProductEnumItem[]; units: ProductEnumItem[]; errors: Record<string, string>; marketPrices: MarketPriceConfigDto }>();
 const emit = defineEmits<{ save: []; image: [event: Event] }>();
 
 const isAutoMode = computed(() => props.model.pricingMode === 1);
@@ -12,6 +13,30 @@ const isManualMode = computed(() => props.model.pricingMode === 2);
 const isGold = computed(() => props.model.materialType === 1);
 const isSilver = computed(() => props.model.materialType === 2);
 const isDiamond = computed(() => props.model.materialType === 3);
+
+const karatFactorMap: Record<number, number> = { 0: 1, 1: 1, 2: 0.9167, 3: 0.875, 4: 0.75, 5: 0.585 };
+
+watch(
+  () => [props.model.materialType, props.model.purityKarat],
+  () => {
+    if (isDiamond.value) {
+      props.model.purityKarat = 0;
+      props.model.purityFactor = 1;
+      return;
+    }
+
+    if (isGold.value) {
+      props.model.purityFactor = karatFactorMap[props.model.purityKarat] ?? 1;
+      return;
+    }
+
+    if (isSilver.value) {
+      props.model.purityFactor = props.model.purityKarat > 0 ? 0.999 : 1;
+    }
+  },
+  { immediate: true }
+);
+
 const offerEnabled = computed({
   get: () => props.model.offerType !== 0,
   set: (value: boolean) => {
@@ -23,6 +48,30 @@ const offerEnabled = computed({
       props.model.offerType = 1;
     }
   }
+});
+
+const selectedMarketPrice = computed(() => {
+  if (isGold.value) return props.marketPrices.goldPerOunce;
+  if (isSilver.value) return props.marketPrices.silverPerOunce;
+  return props.marketPrices.diamondPerCarat;
+});
+
+const estimatedAutoPrice = computed(() => {
+  const weight = Number(props.model.weightValue || 0);
+  const market = Number(selectedMarketPrice.value || 0);
+  if (weight <= 0 || market <= 0) return 0;
+
+  const base = isDiamond.value ? (weight / 0.2) * market : (weight / 31.1035) * market;
+  const fees = Number(props.model.deliveryFee || 0) + Number(props.model.storageFee || 0) + Number(props.model.serviceCharge || 0);
+  let total = base * Number(props.model.purityFactor || 1) + fees;
+
+  if (props.model.offerType === 1 && props.model.offerPercent > 0) {
+    total = total * (1 - props.model.offerPercent / 100);
+  } else if (props.model.offerType === 2 && props.model.offerNewPrice > 0) {
+    total = props.model.offerNewPrice;
+  }
+
+  return Number.isFinite(total) ? total : 0;
 });
 </script>
 
@@ -41,18 +90,18 @@ const offerEnabled = computed({
     </BaseFormField>
 
     <BaseFormField label="Weight (grams)" required hint="All product weights must be entered in grams." :error="errors.weightValue">
-      <input v-model.number="model.weightValue" type="number" min="0" />
+      <input v-model.number="model.weightValue" type="number" min="0" step="0.01" />
     </BaseFormField>
 
-    <BaseFormField label="Pricing Mode" hint="Auto uses global market prices configured once for the whole app.">
+    <BaseFormField label="Pricing Mode" hint="Auto uses provider market prices configured on this page.">
       <select v-model.number="model.pricingMode"><option :value="1">Auto</option><option :value="2">Manual</option></select>
     </BaseFormField>
 
-    <BaseFormField v-if="isGold || isSilver" label="Purity/Karat" hint="Used in auto pricing when applicable.">
+    <BaseFormField v-if="isGold || isSilver" label="Purity/Karat" hint="Selecting karat updates purity factor automatically.">
       <select v-model.number="model.purityKarat"><option :value="0">Not applicable</option><option :value="1">24K</option><option :value="2">22K</option><option :value="3">21K</option><option :value="4">18K</option><option :value="5">14K</option></select>
     </BaseFormField>
 
-    <BaseFormField v-if="!isDiamond" label="Purity Factor" hint="Example: 24K=1.0, 22K=0.9167"><input v-model.number="model.purityFactor" type="number" min="0" step="0.0001" /></BaseFormField>
+    <BaseFormField v-if="!isDiamond" label="Purity Factor"><input v-model.number="model.purityFactor" type="number" min="0" step="0.0001" /></BaseFormField>
 
     <BaseFormField v-if="isManualMode" label="Manual Sell Price" :error="errors.manualSellPrice"><input v-model.number="model.manualSellPrice" type="number" min="0" /></BaseFormField>
 
@@ -74,9 +123,8 @@ const offerEnabled = computed({
     <BaseFormField label="Available Stock" required :error="errors.availableStock"><input v-model.number="model.availableStock" type="number" /></BaseFormField>
     <BaseFormField label="Status" class="field-full"><label class="checkbox-line"><input v-model="model.isActive" type="checkbox" /> Is Active</label></BaseFormField>
 
-    <div class="field-full muted">
-      {{ isAutoMode ? 'Auto pricing = global market price × weight × purity + fees, then offer adjustment.' : 'Manual pricing uses your manual sell price, then applies offer if enabled.' }}
-    </div>
+    <div class="field-full muted">Selected market price source: <strong>{{ selectedMarketPrice.toFixed(2) }}</strong> ({{ isGold ? 'Gold/oz' : isSilver ? 'Silver/oz' : 'Diamond/carat' }}).</div>
+    <div class="field-full muted">Estimated {{ isAutoMode ? 'Auto' : 'Final (with manual mode + offers)' }} Price: <strong>{{ (isAutoMode ? estimatedAutoPrice : (model.offerType === 1 ? (model.manualSellPrice * (1 - model.offerPercent / 100)) : model.offerType === 2 ? model.offerNewPrice : model.manualSellPrice)).toFixed(2) }}</strong></div>
   </div>
   <button @click="emit('save')">Save</button>
 </template>

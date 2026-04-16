@@ -95,7 +95,7 @@ const emit = defineEmits<{
 
     <div v-else class="modal-form product-form vertical-form product-form-contrast">
       <h3>{{ productPage === 'edit' ? 'Edit Product' : 'Add Product' }}</h3>
-      <ProductForm :model="productForm" :categories="categories" :units="weightUnits" :errors="validationErrors" @save="emit('save')" @image="emit('image', $event)" />
+      <ProductForm :model="productForm" :categories="categories" :units="weightUnits" :errors="validationErrors" :market-prices="marketPrices" @save="emit('save')" @image="emit('image', $event)" />
       <div class="report-actions"><button class="ghost" @click="emit('back')">Cancel</button></div>
     </div>
   </section>
