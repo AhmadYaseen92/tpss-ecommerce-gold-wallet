@@ -527,7 +527,12 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         var productsQuery = dbContext.Products
             .Where(x => x.SellerId == request.SellerId && x.IsActive);
 
-        if (Enum.TryParse<ProductCategory>(categoryValue, true, out var parsedCategory))
+        var skuFromNotes = TryExtractSku(request.Notes);
+        if (!string.IsNullOrWhiteSpace(skuFromNotes))
+        {
+            productsQuery = productsQuery.Where(x => x.Sku == skuFromNotes);
+        }
+        else if (Enum.TryParse<ProductCategory>(categoryValue, true, out var parsedCategory))
         {
             productsQuery = productsQuery.Where(x => x.Category == parsedCategory);
         }
@@ -553,10 +558,6 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
                 product.AvailableStock -= quantity;
             }
-            else if (nextStatus == "rejected")
-            {
-                product.AvailableStock += quantity;
-            }
         }
         else if (action is "sell" or "pickup" or "transfer" or "gift")
         {
@@ -567,6 +568,24 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         }
 
         product.UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    private static string? TryExtractSku(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+
+        const string marker = "SKU=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+
+        var tail = notes[valueStart..].Trim();
+        if (tail.Length == 0) return null;
+
+        var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
+        return stopAt > 0 ? tail[..stopAt].Trim() : tail;
     }
 
     private async Task CreateInvoiceForApprovedRequestAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
