@@ -18,6 +18,7 @@ import type {
   PagedResult,
   ProductDto,
   ProductManagementDto,
+  MarketPriceConfigDto,
   RegisterResponseDto,
   EnumItemDto,
   WebDashboardDto,
@@ -381,6 +382,15 @@ export async function fetchWeightUnits(accessToken: string): Promise<EnumItemDto
   } catch {
     return fallbackWeightUnits;
   }
+}
+
+
+export async function fetchGlobalMarketPrices(accessToken: string): Promise<MarketPriceConfigDto> {
+  return getJson<MarketPriceConfigDto>("/api/products/market-prices", accessToken);
+}
+
+export async function updateGlobalMarketPrices(accessToken: string, payload: MarketPriceConfigDto): Promise<MarketPriceConfigDto> {
+  return postJson<MarketPriceConfigDto, MarketPriceConfigDto>("/api/products/market-prices", payload, accessToken);
 }
 
 export async function createManagedProduct(accessToken: string, payload: ProductFormPayload): Promise<string> {

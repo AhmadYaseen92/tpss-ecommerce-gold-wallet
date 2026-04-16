@@ -178,3 +178,10 @@ export interface WebDashboardDto {
   categoryCartSeries: WebDashboardPointDto[];
   recentTransactions: WebRecentTransactionDto[];
 }
+
+
+export interface MarketPriceConfigDto {
+  goldPerOunce: number;
+  silverPerOunce: number;
+  diamondPerCarat: number;
+}

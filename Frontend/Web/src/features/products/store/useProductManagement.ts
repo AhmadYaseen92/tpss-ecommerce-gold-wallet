@@ -1,10 +1,36 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import { createManagedProduct, deleteManagedProduct, fetchManagedProducts, fetchProductCategories, fetchWeightUnits, updateManagedProduct, type ProductFormPayload } from "../../../shared/services/backendGateway";
-import type { EnumItemDto, ProductManagementDto } from "../../../shared/types/apiTypes";
+import { createManagedProduct, deleteManagedProduct, fetchManagedProducts, fetchProductCategories, fetchWeightUnits, fetchGlobalMarketPrices, updateGlobalMarketPrices, updateManagedProduct, type ProductFormPayload } from "../../../shared/services/backendGateway";
+import type { EnumItemDto, ProductManagementDto, MarketPriceConfigDto } from "../../../shared/types/apiTypes";
 import { goToProductRoute, syncProductRoute } from "../services/productRoute";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 
 export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
+
+const toMaterialTypeValue = (name: string) => {
+  const key = name.toLowerCase();
+  if (key.includes('silver')) return 2;
+  if (key.includes('diamond')) return 3;
+  return 1;
+};
+const toFormTypeValue = (name: string) => {
+  const key = name.toLowerCase();
+  if (key.includes('coin')) return 2;
+  if (key.includes('bar')) return 3;
+  if (key.includes('other')) return 4;
+  return 1;
+};
+const toPricingModeValue = (name: string) => name.toLowerCase().includes('manual') ? 2 : 1;
+const toOfferTypeValue = (name: string) => name.toLowerCase().includes('fixed') ? 2 : (name.toLowerCase().includes('percent') ? 1 : 0);
+const toPurityKaratValue = (name: string) => {
+  const key = name.toLowerCase().replace(' ', '');
+  if (key.includes('24')) return 1;
+  if (key.includes('22')) return 2;
+  if (key.includes('21')) return 3;
+  if (key.includes('18')) return 4;
+  if (key.includes('14')) return 5;
+  return 0;
+};
+
   const managedProducts = ref<ProductManagementDto[]>([]);
   const categories = ref<EnumItemDto[]>([]);
   const weightUnits = ref<EnumItemDto[]>([]);
@@ -17,6 +43,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const productSearchTerm = ref("");
   const activeFilter = ref<"all" | "active" | "inactive">("all");
   const categoryFilter = ref("all");
+  const marketPrices = reactive<MarketPriceConfigDto>({ goldPerOunce: 0, silverPerOunce: 0, diamondPerCarat: 0 });
 
   const resetProductForm = () => {
     Object.assign(productForm, { id: undefined, name: "", sku: "", description: "", materialType: 1, formType: 1, pricingMode: 1, purityKarat: 0, purityFactor: 1, weightValue: 0, baseMarketPrice: 0, manualSellPrice: 0, deliveryFee: 0, storageFee: 0, serviceCharge: 0, offerType: 0, offerPercent: 0, offerNewPrice: 0, price: 0, availableStock: 0, isActive: true, imageFile: null, existingImageUrl: "" });
@@ -25,7 +52,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   };
 
   const fillProductForm = (product: ProductManagementDto) => {
-    Object.assign(productForm, { id: product.id, name: product.name, sku: product.sku, description: product.description, materialType: categories.value.find((x) => x.name === product.materialType)?.value ?? 1, formType: categories.value.find((x) => x.name === product.formType)?.value ?? 1, pricingMode: categories.value.find((x) => x.name === product.pricingMode)?.value ?? 1, purityKarat: categories.value.find((x) => x.name === product.purityKarat)?.value ?? 0, purityFactor: Number(product.purityFactor), weightValue: Number(product.weightValue), baseMarketPrice: Number(product.baseMarketPrice), manualSellPrice: Number(product.manualSellPrice), deliveryFee: Number(product.deliveryFee), storageFee: Number(product.storageFee), serviceCharge: Number(product.serviceCharge), offerType: categories.value.find((x) => x.name === product.offerType)?.value ?? 0, offerPercent: Number(product.offerPercent), offerNewPrice: Number(product.offerNewPrice), price: Number(product.price), availableStock: product.availableStock, isActive: product.isActive, existingImageUrl: product.imageUrl, imageFile: null });
+    Object.assign(productForm, { id: product.id, name: product.name, sku: product.sku, description: product.description, materialType: toMaterialTypeValue(product.materialType), formType: toFormTypeValue(product.formType), pricingMode: toPricingModeValue(product.pricingMode), purityKarat: toPurityKaratValue(product.purityKarat), purityFactor: Number(product.purityFactor), weightValue: Number(product.weightValue), baseMarketPrice: Number(product.baseMarketPrice), manualSellPrice: Number(product.manualSellPrice), deliveryFee: Number(product.deliveryFee), storageFee: Number(product.storageFee), serviceCharge: Number(product.serviceCharge), offerType: toOfferTypeValue(product.offerType), offerPercent: Number(product.offerPercent), offerNewPrice: Number(product.offerNewPrice), price: Number(product.price), availableStock: product.availableStock, isActive: product.isActive, existingImageUrl: product.imageUrl, imageFile: null });
   };
 
   const loadProductManagementData = async () => {
@@ -33,6 +60,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     managedProducts.value = await fetchManagedProducts(marketplace.session.value.accessToken);
     categories.value = await fetchProductCategories(marketplace.session.value.accessToken);
     weightUnits.value = await fetchWeightUnits(marketplace.session.value.accessToken);
+    Object.assign(marketPrices, await fetchGlobalMarketPrices(marketplace.session.value.accessToken));
   };
 
   const syncRoute = () => syncProductRoute(managedProducts, productPage, productRouteId, selectedProduct, resetProductForm, fillProductForm);
@@ -68,6 +96,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     if (!productForm.materialType) validationErrors.materialType = "Material type is required";
     if (!productForm.formType) validationErrors.formType = "Product form is required";
     if (!productForm.weightValue || productForm.weightValue <= 0) validationErrors.weightValue = "Weight (grams) must be greater than 0";
+    if (productForm.pricingMode === 2 && (!productForm.manualSellPrice || productForm.manualSellPrice <= 0)) validationErrors.manualSellPrice = "Manual price must be greater than 0";
     if (productForm.availableStock == null || productForm.availableStock < 0) validationErrors.availableStock = "Stock cannot be negative";
     return Object.keys(validationErrors).length === 0;
   };
@@ -97,6 +126,16 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     }
   };
 
+  const saveMarketPrices = async () => {
+    if (!marketplace.session.value?.accessToken) return;
+    try {
+      await updateGlobalMarketPrices(marketplace.session.value.accessToken, marketPrices);
+      productError.value = "";
+    } catch (error) {
+      productError.value = error instanceof Error ? error.message : "Failed to update global market prices.";
+    }
+  };
+
   const toggleProductActive = async (product: ProductManagementDto) => {
     if (!marketplace.session.value?.accessToken) return;
     const nextState = product.isActive ? "deactivate" : "activate";
@@ -108,10 +147,10 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
         name: product.name,
         sku: product.sku,
         description: product.description,
-        materialType: categories.value.find((x) => x.name === product.materialType)?.value ?? 1,
-        formType: categories.value.find((x) => x.name === product.formType)?.value ?? 1,
-        pricingMode: categories.value.find((x) => x.name === product.pricingMode)?.value ?? 1,
-        purityKarat: categories.value.find((x) => x.name === product.purityKarat)?.value ?? 0,
+        materialType: toMaterialTypeValue(product.materialType),
+        formType: toFormTypeValue(product.formType),
+        pricingMode: toPricingModeValue(product.pricingMode),
+        purityKarat: toPurityKaratValue(product.purityKarat),
         purityFactor: Number(product.purityFactor),
         weightValue: Number(product.weightValue),
         baseMarketPrice: Number(product.baseMarketPrice),
@@ -119,7 +158,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
         deliveryFee: Number(product.deliveryFee),
         storageFee: Number(product.storageFee),
         serviceCharge: Number(product.serviceCharge),
-        offerType: categories.value.find((x) => x.name === product.offerType)?.value ?? 0,
+        offerType: toOfferTypeValue(product.offerType),
         offerPercent: Number(product.offerPercent),
         offerNewPrice: Number(product.offerNewPrice),
         price: Number(product.price),
@@ -152,5 +191,5 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     syncRoute();
   });
 
-  return { managedProducts, filteredManagedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, productSearchTerm, activeFilter, categoryFilter, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, deleteProductRecord, toggleProductActive };
+  return { managedProducts, filteredManagedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, productSearchTerm, activeFilter, categoryFilter, marketPrices, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, saveMarketPrices, deleteProductRecord, toggleProductActive };
 }

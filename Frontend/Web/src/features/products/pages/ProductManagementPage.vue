@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ProductForm from "../components/ProductForm.vue";
 import ProductDetails from "../components/ProductDetails.vue";
-import type { ProductManagementDto, EnumItemDto } from "../../../shared/types/apiTypes";
+import type { ProductManagementDto, EnumItemDto, MarketPriceConfigDto } from "../../../shared/types/apiTypes";
 import type { ProductFormPayload } from "../../../shared/services/backendGateway";
 
 defineProps<{
@@ -18,6 +18,7 @@ defineProps<{
   searchTerm: string;
   activeFilter: "all" | "active" | "inactive";
   categoryFilter: string;
+  marketPrices: MarketPriceConfigDto;
 }>();
 
 const emit = defineEmits<{
@@ -32,6 +33,7 @@ const emit = defineEmits<{
   "update:search-term": [value: string];
   "update:active-filter": [value: "all" | "active" | "inactive"];
   "update:category-filter": [value: string];
+  "save-market-prices": [];
 }>();
 </script>
 
@@ -41,6 +43,12 @@ const emit = defineEmits<{
     <div class="report-actions" v-if="role === 'seller'"><button @click="emit('add')">Add Product</button></div>
 
     <div v-if="productPage === 'list'">
+      <div v-if="role === 'admin'" class="filters" style="grid-template-columns: repeat(4, minmax(120px, 1fr)); margin-bottom: 16px;">
+        <input v-model.number="marketPrices.goldPerOunce" type="number" min="0" placeholder="Gold / oz" />
+        <input v-model.number="marketPrices.silverPerOunce" type="number" min="0" placeholder="Silver / oz" />
+        <input v-model.number="marketPrices.diamondPerCarat" type="number" min="0" placeholder="Diamond / carat" />
+        <button @click="emit('save-market-prices')">Save Global Market Prices</button>
+      </div>
       <div class="filters">
         <input :value="searchTerm" @input="emit('update:search-term', ($event.target as HTMLInputElement).value)" placeholder="Search by name, SKU, description..." />
         <select :value="activeFilter" @change="emit('update:active-filter', ($event.target as HTMLSelectElement).value as 'all' | 'active' | 'inactive')">
