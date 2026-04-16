@@ -150,6 +150,10 @@ const toPurityKaratValue = (name: string) => {
       await updateGlobalMarketPrices(marketplace.session.value.accessToken, marketPrices);
       marketPricesDirty.value = false;
       Object.assign(marketPrices, await fetchGlobalMarketPrices(marketplace.session.value.accessToken));
+      await loadProductManagementData();
+      if (selectedProduct.value) {
+        selectedProduct.value = managedProducts.value.find((x) => x.id === selectedProduct.value?.id) ?? selectedProduct.value;
+      }
       productError.value = "";
     } catch (error) {
       productError.value = error instanceof Error ? error.message : "Failed to update global market prices.";

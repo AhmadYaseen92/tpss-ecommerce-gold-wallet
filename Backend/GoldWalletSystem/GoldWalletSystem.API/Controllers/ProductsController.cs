@@ -324,6 +324,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await RecalculateAutoPricedProductsAsync(sellerId, cancellationToken);
         return Ok(ApiResponse<MarketPriceConfigDto>.Ok(request));
     }
 
@@ -364,6 +365,38 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
     private static string GetMarketPriceConfigKey(int? sellerId)
         => sellerId.HasValue ? $"{SellerMarketPriceConfigKeyPrefix}{sellerId.Value}" : GlobalMarketPriceConfigKey;
+
+    private async Task RecalculateAutoPricedProductsAsync(int? scopeSellerId, CancellationToken cancellationToken)
+    {
+        var productsQuery = dbContext.Products.Where(x => x.PricingMode == ProductPricingMode.Auto);
+        if (scopeSellerId.HasValue)
+        {
+            productsQuery = productsQuery.Where(x => x.SellerId == scopeSellerId.Value);
+        }
+
+        var products = await productsQuery.ToListAsync(cancellationToken);
+        foreach (var product in products)
+        {
+            var marketPrice = await ResolveMarketPriceByMaterialAsync(product.MaterialType, product.SellerId, cancellationToken);
+            var autoPrice = ProductPricingCalculator.CalculateAutoPrice(
+                product.MaterialType,
+                marketPrice,
+                product.WeightValue,
+                product.PurityFactor,
+                product.DeliveryFee,
+                product.StorageFee,
+                product.ServiceCharge);
+
+            product.BaseMarketPrice = marketPrice;
+            product.Price = ProductPricingCalculator.ApplyOffer(autoPrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
+            product.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        if (products.Count > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+    }
 
     private int? ResolveSellerScope()
     {

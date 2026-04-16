@@ -59,6 +59,8 @@ class ProductRemoteModel {
     required this.offerPercent,
     required this.offerNewPrice,
     required this.finalPrice,
+    required this.purityKarat,
+    required this.purityFactor,
   });
 
   final int id;
@@ -77,6 +79,8 @@ class ProductRemoteModel {
   final double offerPercent;
   final double offerNewPrice;
   final double finalPrice;
+  final String purityKarat;
+  final double purityFactor;
 
   factory ProductRemoteModel.fromJson(Map<String, dynamic> json) {
     return ProductRemoteModel(
@@ -96,6 +100,8 @@ class ProductRemoteModel {
       offerPercent: (json['offerPercent'] as num?)?.toDouble() ?? 0,
       offerNewPrice: (json['offerNewPrice'] as num?)?.toDouble() ?? 0,
       finalPrice: (json['finalPrice'] as num?)?.toDouble() ?? ((json['price'] as num?)?.toDouble() ?? 0),
+      purityKarat: (json['purityKarat'] ?? '').toString(),
+      purityFactor: (json['purityFactor'] as num?)?.toDouble() ?? 0,
     );
   }
 

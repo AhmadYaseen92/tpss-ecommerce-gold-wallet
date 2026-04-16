@@ -24,7 +24,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
             query = query.Where(x => x.Category == category.Value);
         }
 
-        query = query.OrderBy(x => x.Id);
+        query = query.OrderByDescending(x => x.CreatedAtUtc).ThenByDescending(x => x.Id);
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(x => new ProductDto(
