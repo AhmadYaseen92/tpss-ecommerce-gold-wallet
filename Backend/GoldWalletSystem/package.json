@@ -1,0 +1,11 @@
+{
+  "name": "goldwallet-backend-shell",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Convenience npm scripts for running the web client from Backend/GoldWalletSystem directory.",
+  "scripts": {
+    "dev": "npm --prefix ../../Frontend/Web run dev",
+    "build": "npm --prefix ../../Frontend/Web run build",
+    "install:web": "npm --prefix ../../Frontend/Web install"
+  }
+}
