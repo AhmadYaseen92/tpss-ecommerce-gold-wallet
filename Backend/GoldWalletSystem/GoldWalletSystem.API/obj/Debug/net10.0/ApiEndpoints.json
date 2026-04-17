@@ -363,6 +363,16 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
+    "Method": "GetFormTypes",
+    "RelativePath": "api/products/form-types",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
     "Method": "GetManagementList",
     "RelativePath": "api/products/management",
     "HttpMethod": "GET",
@@ -405,8 +415,28 @@
         "IsRequired": false
       },
       {
-        "Name": "Category",
-        "Type": "GoldWalletSystem.Domain.Enums.ProductCategory",
+        "Name": "MaterialType",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductMaterialType",
+        "IsRequired": false
+      },
+      {
+        "Name": "FormType",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductFormType",
+        "IsRequired": false
+      },
+      {
+        "Name": "PricingMode",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductPricingMode",
+        "IsRequired": false
+      },
+      {
+        "Name": "PurityKarat",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductPurityKarat",
+        "IsRequired": false
+      },
+      {
+        "Name": "PurityFactor",
+        "Type": "System.Decimal",
         "IsRequired": false
       },
       {
@@ -420,8 +450,38 @@
         "IsRequired": false
       },
       {
-        "Name": "Price",
+        "Name": "ManualSellPrice",
         "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "DeliveryFee",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "StorageFee",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "ServiceCharge",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "OfferPercent",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "OfferNewPrice",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "OfferType",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductOfferType",
         "IsRequired": false
       },
       {
@@ -497,8 +557,28 @@
         "IsRequired": false
       },
       {
-        "Name": "Category",
-        "Type": "GoldWalletSystem.Domain.Enums.ProductCategory",
+        "Name": "MaterialType",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductMaterialType",
+        "IsRequired": false
+      },
+      {
+        "Name": "FormType",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductFormType",
+        "IsRequired": false
+      },
+      {
+        "Name": "PricingMode",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductPricingMode",
+        "IsRequired": false
+      },
+      {
+        "Name": "PurityKarat",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductPurityKarat",
+        "IsRequired": false
+      },
+      {
+        "Name": "PurityFactor",
+        "Type": "System.Decimal",
         "IsRequired": false
       },
       {
@@ -512,8 +592,38 @@
         "IsRequired": false
       },
       {
-        "Name": "Price",
+        "Name": "ManualSellPrice",
         "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "DeliveryFee",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "StorageFee",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "ServiceCharge",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "OfferPercent",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "OfferNewPrice",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "OfferType",
+        "Type": "GoldWalletSystem.Domain.Enums.ProductOfferType",
         "IsRequired": false
       },
       {
@@ -548,6 +658,72 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
+    "Method": "GetMarketPrices",
+    "RelativePath": "api/products/market-prices",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
+    "Method": "UpsertMarketPrices",
+    "RelativePath": "api/products/market-prices",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.ProductsController\u002BMarketPriceConfigDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
+    "Method": "GetMaterialTypes",
+    "RelativePath": "api/products/material-types",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
+    "Method": "GetOfferTypes",
+    "RelativePath": "api/products/offer-types",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
+    "Method": "GetPricingModes",
+    "RelativePath": "api/products/pricing-modes",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProductsController",
+    "Method": "GetPurityKarats",
+    "RelativePath": "api/products/purity-karats",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -722,6 +898,48 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "ExecuteWalletAction",
+    "RelativePath": "api/wallet/actions/execute",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.WalletController\u002BExecuteWalletActionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "CreateWalletActionRequest",
+    "RelativePath": "api/wallet/actions/request",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.WalletController\u002BWalletActionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "GetSellConfiguration",
+    "RelativePath": "api/wallet/actions/sell-configuration",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
     "Method": "GetByUser",
     "RelativePath": "api/wallet/by-user",
     "HttpMethod": "POST",
@@ -732,6 +950,38 @@
         "Name": "request",
         "Type": "GoldWalletSystem.Application.DTOs.Common.UserRequestDto",
         "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "GetInvestors",
+    "RelativePath": "api/wallet/investors",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "query",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "LookupInvestor",
+    "RelativePath": "api/wallet/investors/lookup",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "accountNumber",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -910,6 +1160,22 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "GetRequestDetails",
+    "RelativePath": "api/web-admin/requests/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
     "Method": "UpdateRequestStatus",
     "RelativePath": "api/web-admin/requests/{id}/status",
     "HttpMethod": "PUT",
@@ -968,6 +1234,32 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "GetWalletSellConfiguration",
+    "RelativePath": "api/web-admin/wallet/sell-configuration",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "UpdateWalletSellConfiguration",
+    "RelativePath": "api/web-admin/wallet/sell-configuration",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "System.Text.Json.JsonElement",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   }
 ]

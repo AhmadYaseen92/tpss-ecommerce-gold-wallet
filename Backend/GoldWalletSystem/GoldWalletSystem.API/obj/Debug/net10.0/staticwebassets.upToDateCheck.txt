@@ -1,0 +1,3 @@
+wwwroot\images\banners\.gitkeep
+wwwroot\images\products\.gitkeep
+wwwroot\images\profiles\.gitkeep
