@@ -78,8 +78,12 @@ class LoginPage extends StatelessWidget {
                     const LoginHeader(),
                     const SizedBox(height: 36),
                     LoginForm(),
-                    const SizedBox(height: 24),
-                    const OrDivider(),
+                    if (context.watch<LoginCubit>().biometricType !=
+                        BiometricTypeUI.none)
+                      const SizedBox(height: 24),
+                    if (context.watch<LoginCubit>().biometricType !=
+                        BiometricTypeUI.none)
+                      const OrDivider(),
                     if (context.watch<LoginCubit>().biometricType ==
                         BiometricTypeUI.none)
                       const SizedBox(height: 0)

@@ -333,4 +333,3 @@ C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\GoldWalletSystem.API.pdb
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\GoldWalletSystem.API.genruntimeconfig.cache
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\ref\GoldWalletSystem.API.dll
-C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

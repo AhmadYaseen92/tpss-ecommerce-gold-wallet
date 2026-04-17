@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/cubit/forgot_password_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/widgets/otp_input_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/otp_input_widget.dart';
 
 class VerifyOtpForm extends StatelessWidget {
   const VerifyOtpForm({super.key, required this.cubit});
