@@ -9,6 +9,7 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace GoldWalletSystem.API.Controllers;
@@ -33,6 +34,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpGet("management")]
     public async Task<IActionResult> GetManagementList(CancellationToken cancellationToken = default)
     {
+        if (!IsSellerOrAdmin()) return Forbid();
         var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
         var sellerIdClaim = int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var parsedSellerId)
             ? parsedSellerId
@@ -83,7 +85,18 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpGet("management/{id:int}")]
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
     {
-        var item = await dbContext.Products.AsNoTracking().Where(x => x.Id == id).Select(x => new ProductManagementDto
+        if (!IsSellerOrAdmin()) return Forbid();
+        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
+        var sellerScope = ResolveSellerScope();
+
+        var query = dbContext.Products.AsNoTracking().Where(x => x.Id == id);
+        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!sellerScope.HasValue) return Forbid();
+            query = query.Where(x => x.SellerId == sellerScope.Value);
+        }
+
+        var item = await query.Select(x => new ProductManagementDto
         {
             Id = x.Id,
             Name = x.Name,
@@ -121,6 +134,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpPost("management")]
     public async Task<IActionResult> Create([FromForm] ProductUpsertRequest request, CancellationToken cancellationToken = default)
     {
+        if (!IsSellerOrAdmin()) return Forbid();
         if (await dbContext.Products.AnyAsync(x => x.Sku == request.Sku, cancellationToken))
         {
             return BadRequest(ApiResponse<object>.Fail("SKU already exists", 400));
@@ -165,10 +179,21 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpPut("management/{id:int}")]
     public async Task<IActionResult> Update(int id, [FromForm] ProductUpsertRequest request, CancellationToken cancellationToken = default)
     {
+        if (!IsSellerOrAdmin()) return Forbid();
         var product = await dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (product is null)
         {
             return NotFound(ApiResponse<object>.Fail("Product not found", 404));
+        }
+
+        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
+        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        {
+            var sellerScope = ResolveSellerScope();
+            if (!sellerScope.HasValue || product.SellerId != sellerScope.Value)
+            {
+                return Forbid();
+            }
         }
 
         if (!string.Equals(product.Sku, request.Sku, StringComparison.OrdinalIgnoreCase)
@@ -211,10 +236,21 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpDelete("management/{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
     {
+        if (!IsSellerOrAdmin()) return Forbid();
         var product = await dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (product is null)
         {
             return NotFound(ApiResponse<object>.Fail("Product not found", 404));
+        }
+
+        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
+        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        {
+            var sellerScope = ResolveSellerScope();
+            if (!sellerScope.HasValue || product.SellerId != sellerScope.Value)
+            {
+                return Forbid();
+            }
         }
 
         dbContext.Products.Remove(product);
@@ -292,6 +328,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpGet("market-prices")]
     public async Task<IActionResult> GetMarketPrices(CancellationToken cancellationToken = default)
     {
+        if (!IsSellerOrAdmin()) return Forbid();
         var sellerId = ResolveSellerScope();
         var config = await GetMarketPriceConfigAsync(sellerId, cancellationToken);
         return Ok(ApiResponse<MarketPriceConfigDto>.Ok(config));
@@ -300,6 +337,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpPost("market-prices")]
     public async Task<IActionResult> UpsertMarketPrices([FromBody] MarketPriceConfigDto request, CancellationToken cancellationToken = default)
     {
+        if (!IsSellerOrAdmin()) return Forbid();
         var sellerId = ResolveSellerScope();
         var key = GetMarketPriceConfigKey(sellerId);
         var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
@@ -400,15 +438,22 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
     private int? ResolveSellerScope()
     {
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
+        var role = GetRoleClaim();
         if (string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }
 
-        return int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var sellerId)
+        return int.TryParse(GetSellerIdClaim(), out var sellerId)
             ? sellerId
             : null;
+    }
+
+    private bool IsSellerOrAdmin()
+    {
+        var role = GetRoleClaim();
+        return string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
     }
 
     private static ProductCategory ToLegacyCategory(ProductMaterialType materialType)
@@ -424,16 +469,27 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
     private int ResolveSellerId(int? requestedSellerId, int fallbackSellerId = 0)
     {
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
+        var role = GetRoleClaim();
         if (string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
         {
-            return requestedSellerId ?? fallbackSellerId;
+            var resolved = requestedSellerId ?? fallbackSellerId;
+            if (resolved <= 0) throw new InvalidOperationException("SellerId is required for admin operations.");
+            return resolved;
         }
 
-        return int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var sellerId)
-            ? sellerId
-            : fallbackSellerId;
+        if (int.TryParse(GetSellerIdClaim(), out var sellerId) && sellerId > 0)
+            return sellerId;
+
+        throw new UnauthorizedAccessException("Seller scope is required.");
     }
+
+    private string GetRoleClaim()
+        => User.Claims.FirstOrDefault(c => c.Type == "role")?.Value?.Trim()
+           ?? User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value?.Trim()
+           ?? string.Empty;
+
+    private string? GetSellerIdClaim()
+        => User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value?.Trim();
 
     private async Task<string> SaveImageAsync(IFormFile? image, string? existingImageUrl, CancellationToken cancellationToken)
     {

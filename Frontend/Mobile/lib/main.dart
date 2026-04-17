@@ -5,5 +5,6 @@ import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await InjectionContainer.setup();
+  await InjectionContainer.syncReleaseConfiguration();
   runApp(const GoldWalletApp());
 }

@@ -30,7 +30,7 @@ class WalletRepositoryImpl implements IWalletRepository {
   List<wallet_entity.WalletEntity> _toWalletEntities(WalletRemoteModel wallet) {
     final byCategory = <wallet_entity.WalletCategory, List<WalletAssetRemoteModel>>{};
     for (final asset in wallet.assets) {
-      final category = _toCategory(asset.assetType);
+      final category = _toCategory(asset.category, asset.assetType);
       byCategory.putIfAbsent(category, () => []).add(asset);
     }
 
@@ -82,6 +82,7 @@ class WalletRepositoryImpl implements IWalletRepository {
     final signed = changePercent >= 0 ? '+' : '';
 
     return wallet_entity.WalletTransactionEntity(
+      id: asset.id,
       name: asset.assetType,
       category: category,
       assetType: _toAssetType(asset.assetType),
@@ -103,7 +104,13 @@ class WalletRepositoryImpl implements IWalletRepository {
     return weight;
   }
 
-  wallet_entity.WalletCategory _toCategory(String assetType) {
+  wallet_entity.WalletCategory _toCategory(String category, String assetType) {
+    final categoryValue = category.toLowerCase();
+    if (categoryValue.contains('silver')) return wallet_entity.WalletCategory.silver;
+    if (categoryValue.contains('diamond')) return wallet_entity.WalletCategory.diamond;
+    if (categoryValue.contains('jewel')) return wallet_entity.WalletCategory.jewelry;
+    if (categoryValue.contains('coin')) return wallet_entity.WalletCategory.coins;
+
     final value = assetType.toLowerCase();
     if (value.contains('diamond')) return wallet_entity.WalletCategory.diamond;
     if (value.contains('silver')) return wallet_entity.WalletCategory.silver;

@@ -28,9 +28,11 @@ import type {
 } from "../../types/models";
 import {
   fetchMarketplaceState,
+  fetchWalletSellConfiguration,
   loginWithBackend,
   registerSellerWithBackend,
   updateSellerKycStatusByAdmin,
+  updateWalletSellConfiguration,
   updateWebRequestStatus
 } from "../../services/backendGateway";
 import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
@@ -79,6 +81,10 @@ export function useMarketplace() {
   const loading = ref(false);
   const error = ref("");
   const realtimeRefreshTick = ref(0);
+  const walletSellConfiguration = ref<{ mode: "locked_30_seconds" | "live_price"; lockSeconds: number }>({
+    mode: "locked_30_seconds",
+    lockSeconds: 30
+  });
 
   const activeSeller = computed(() => {
     if (!session.value?.sellerId) return state.value.sellers[0];
@@ -155,6 +161,7 @@ export function useMarketplace() {
       role.value = authSession.role;
       persistSession(authSession);
       state.value = await fetchMarketplaceState(authSession);
+      await loadWalletSellConfiguration();
       await configureRealtime();
     } catch (err) {
       if (err instanceof TypeError) {
@@ -267,11 +274,27 @@ export function useMarketplace() {
     }
   };
 
+  const saveWalletSellConfiguration = async (mode: "locked_30_seconds" | "live_price", lockSeconds = 30) => {
+    walletSellConfiguration.value = { mode, lockSeconds };
+    if (!session.value?.accessToken) return;
+    await updateWalletSellConfiguration(session.value.accessToken, walletSellConfiguration.value);
+  };
+
+  const loadWalletSellConfiguration = async () => {
+    if (!session.value?.accessToken) return;
+    try {
+      walletSellConfiguration.value = await fetchWalletSellConfiguration(session.value.accessToken);
+    } catch {
+      walletSellConfiguration.value = { mode: "locked_30_seconds", lockSeconds: 30 };
+    }
+  };
+
   const restoreSession = async () => {
     if (!session.value?.accessToken) return;
     role.value = session.value.role;
     persistSession(session.value);
     await refreshMarketplaceState();
+    await loadWalletSellConfiguration();
     await configureRealtime();
   };
 
@@ -306,7 +329,9 @@ export function useMarketplace() {
     readNotification,
     refreshMarketplaceState,
     signalRConnected,
-    realtimeRefreshTick
+    realtimeRefreshTick,
+    walletSellConfiguration,
+    saveWalletSellConfiguration
   };
 }
 

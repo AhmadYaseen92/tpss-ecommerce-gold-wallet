@@ -25,7 +25,7 @@ class MarketOrderCubit extends Cubit<MarketOrderState> {
   String _sellerFilter = AppReleaseConfig.allSellersLabel;
   MarketOrderStatusFilter _statusFilter = MarketOrderStatusFilter.all;
 
-  void load({String sellerFilter = AppReleaseConfig.allSellersLabel}) {
+  void load({String sellerFilter = AppReleaseConfig.defaultAllSellersLabel}) {
     _sellerFilter = sellerFilter;
     emit(MarketOrderLoading());
     _emitFiltered();

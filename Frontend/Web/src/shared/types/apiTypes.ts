@@ -19,7 +19,7 @@ export interface LoginResponseDto {
   expiresAtUtc: string;
   role: string;
   userId: number;
-  sellerId: number;
+  sellerId: number | null;
 }
 
 export interface RegisterResponseDto {
@@ -27,7 +27,7 @@ export interface RegisterResponseDto {
   email: string;
   fullName: string;
   role: string;
-  sellerId: number;
+  sellerId: number | null;
 }
 
 export interface WebSellerDto {
@@ -184,4 +184,27 @@ export interface MarketPriceConfigDto {
   goldPerOunce: number;
   silverPerOunce: number;
   diamondPerCarat: number;
+}
+
+
+export interface WalletAssetDto {
+  id: number;
+  assetType: string;
+  category: string;
+  sellerId?: number;
+  sellerName: string;
+  weight: number;
+  unit: string;
+  purity: number;
+  quantity: number;
+  averageBuyPrice: number;
+  currentMarketPrice: number;
+}
+
+export interface WalletDto {
+  id: number;
+  userId: number;
+  cashBalance: number;
+  currencyCode: string;
+  assets: WalletAssetDto[];
 }

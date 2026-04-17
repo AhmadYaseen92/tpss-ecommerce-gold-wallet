@@ -6,5 +6,5 @@ public class LoginResponseDto
     public required DateTime ExpiresAtUtc { get; init; }
     public required string Role { get; init; }
     public required int UserId { get; init; }
-    public required int SellerId { get; init; }
+    public int? SellerId { get; init; }
 }

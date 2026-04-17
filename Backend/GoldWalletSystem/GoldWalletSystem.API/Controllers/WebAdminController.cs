@@ -17,13 +17,28 @@ namespace GoldWalletSystem.API.Controllers;
 public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardService dashboardService, IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
 {
     private const string FeesConfigKey = "webadmin.fees";
+    private const string WalletSellConfigKey = "wallet.sell.execution";
 
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
     {
+        var sellerScope = ResolveSellerScope();
         var investorsCount = await dbContext.Users.CountAsync(x => x.Role == SystemRoles.Investor, cancellationToken);
-        var pendingRequestsCount = await dbContext.TransactionHistories.CountAsync(x => x.Status == "pending", cancellationToken);
-        var invoicesCount = await dbContext.Invoices.CountAsync(cancellationToken);
+
+        var pendingRequestsQuery = dbContext.TransactionHistories.Where(x => x.Status == "pending");
+        if (sellerScope.HasValue)
+        {
+            pendingRequestsQuery = pendingRequestsQuery.Where(x => x.SellerId == sellerScope.Value);
+        }
+        var pendingRequestsCount = await pendingRequestsQuery.CountAsync(cancellationToken);
+
+        var invoicesQuery = dbContext.Invoices.AsQueryable();
+        if (sellerScope.HasValue)
+        {
+            invoicesQuery = invoicesQuery.Where(x => dbContext.Users
+                .Any(u => u.Id == x.SellerUserId && u.SellerId == sellerScope.Value));
+        }
+        var invoicesCount = await invoicesQuery.CountAsync(cancellationToken);
         var unreadNotificationsCount = await dbContext.AppNotifications.CountAsync(x => !x.IsRead, cancellationToken);
 
         var summary = new WebSummaryDto
@@ -187,6 +202,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         var item = await dbContext.TransactionHistories.FirstOrDefaultAsync(x => x.Id == requestId, cancellationToken);
         if (item is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
+        if (!CanAccessSellerData(item.SellerId)) return Forbid();
 
         if (!string.Equals(item.Status, "pending", StringComparison.OrdinalIgnoreCase))
             return BadRequest(ApiResponse<object>.Fail("Only pending requests can be changed.", 400));
@@ -270,6 +286,14 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             .FirstOrDefaultAsync(cancellationToken);
 
         if (details is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
+
+        var sellerId = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => x.Id == requestId)
+            .Select(x => x.SellerId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!CanAccessSellerData(sellerId)) return Forbid();
+
         await PopulateRequestProductNamesAsync([details], cancellationToken);
         return Ok(ApiResponse<WebRequestDto>.Ok(details));
     }
@@ -277,8 +301,18 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices(CancellationToken cancellationToken)
     {
-        var invoices = await dbContext.Invoices
+        var sellerScope = ResolveSellerScope();
+        var invoicesQuery = dbContext.Invoices
             .AsNoTracking()
+            .AsQueryable();
+
+        if (sellerScope.HasValue)
+        {
+            invoicesQuery = invoicesQuery.Where(x => dbContext.Users
+                .Any(u => u.Id == x.SellerUserId && u.SellerId == sellerScope.Value));
+        }
+
+        var invoices = await invoicesQuery
             .OrderByDescending(x => x.IssuedOnUtc)
             .Select(x => new WebInvoiceDto
             {
@@ -303,6 +337,11 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         var sellerUserId = TryParsePrefixedId(request.SellerId, "s-") ??
                            await dbContext.Users.Where(x => x.Role == SystemRoles.Seller).Select(x => (int?)x.Id).FirstOrDefaultAsync(cancellationToken) ?? 0;
+        var sellerUserSellerId = await dbContext.Users
+            .Where(x => x.Id == sellerUserId)
+            .Select(x => x.SellerId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
         var entity = new Domain.Entities.Invoice
         {
@@ -335,6 +374,11 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         var invoice = await dbContext.Invoices.FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null) return NotFound(ApiResponse<object>.Fail("Invoice not found", 404));
+        var sellerUserSellerId = await dbContext.Users
+            .Where(x => x.Id == invoice.SellerUserId)
+            .Select(x => x.SellerId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
         invoice.TotalAmount = request.TotalAmount;
         invoice.SubTotal = request.TotalAmount;
@@ -353,6 +397,11 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         var invoice = await dbContext.Invoices.FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null) return NotFound(ApiResponse<object>.Fail("Invoice not found", 404));
+        var sellerUserSellerId = await dbContext.Users
+            .Where(x => x.Id == invoice.SellerUserId)
+            .Select(x => x.SellerId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
         dbContext.Invoices.Remove(invoice);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -391,6 +440,68 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ApiResponse<WebFeesDto>.Ok(request));
+    }
+
+
+    [HttpGet("wallet/sell-configuration")]
+    public async Task<IActionResult> GetWalletSellConfiguration(CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ConfigKey == WalletSellConfigKey && x.IsEnabled, cancellationToken);
+
+        var payload = config?.JsonValue;
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            payload = JsonSerializer.Serialize(new { mode = "locked_30_seconds", lockSeconds = 30 });
+        }
+
+        return Ok(ApiResponse<string>.Ok(payload));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpPut("wallet/sell-configuration")]
+    public async Task<IActionResult> UpdateWalletSellConfiguration([FromBody] JsonElement request, CancellationToken cancellationToken)
+    {
+        var mode = request.TryGetProperty("mode", out var modeElement)
+            ? (modeElement.GetString() ?? string.Empty).Trim().ToLowerInvariant()
+            : string.Empty;
+
+        if (mode is not ("locked_30_seconds" or "live_price"))
+        {
+            return BadRequest(ApiResponse<object>.Fail("mode must be locked_30_seconds or live_price", 400));
+        }
+
+        var lockSeconds = request.TryGetProperty("lockSeconds", out var lockElement)
+            ? Math.Clamp(lockElement.GetInt32(), 5, 300)
+            : 30;
+
+        var payload = JsonSerializer.Serialize(new { mode, lockSeconds });
+
+        var config = await dbContext.MobileAppConfigurations
+            .FirstOrDefaultAsync(x => x.ConfigKey == WalletSellConfigKey, cancellationToken);
+
+        if (config is null)
+        {
+            config = new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = WalletSellConfigKey,
+                JsonValue = payload,
+                IsEnabled = true,
+                Description = "Wallet sell execution behavior",
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            dbContext.MobileAppConfigurations.Add(config);
+        }
+        else
+        {
+            config.JsonValue = payload;
+            config.IsEnabled = true;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Ok(ApiResponse<string>.Ok(payload));
     }
 
     [HttpGet("notifications")]
@@ -514,6 +625,19 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         return int.TryParse(clean, out var id) ? id : null;
     }
 
+    private int? ResolveSellerScope()
+    {
+        if (User.IsInRole(SystemRoles.Admin)) return null;
+        var sellerIdClaim = User.FindFirst("seller_id")?.Value;
+        return int.TryParse(sellerIdClaim, out var parsedSellerId) ? parsedSellerId : (int?)null;
+    }
+
+    private bool CanAccessSellerData(int? resourceSellerId)
+    {
+        var sellerScope = ResolveSellerScope();
+        return !sellerScope.HasValue || (resourceSellerId.HasValue && resourceSellerId.Value == sellerScope.Value);
+    }
+
     private async Task ApplyApprovedRequestSideEffectsAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
     {
         var wallet = await dbContext.Wallets
@@ -554,7 +678,10 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         }
         else if (action is "sell" or "pickup" or "transfer" or "gift")
         {
-            var asset = wallet.Assets.FirstOrDefault(x => x.SellerId == request.SellerId && x.Category.ToString().Equals(request.Category, StringComparison.OrdinalIgnoreCase));
+            var walletAssetId = TryExtractWalletAssetId(request.Notes);
+            var asset = walletAssetId.HasValue
+                ? wallet.Assets.FirstOrDefault(x => x.Id == walletAssetId.Value)
+                : wallet.Assets.FirstOrDefault(x => x.SellerId == request.SellerId && x.Category.ToString().Equals(request.Category, StringComparison.OrdinalIgnoreCase));
             if (asset is not null)
             {
                 var qtyToRemove = Math.Max(1, request.Quantity);
@@ -647,6 +774,24 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
         return stopAt > 0 ? tail[..stopAt].Trim() : tail;
+    }
+
+
+    private static int? TryExtractWalletAssetId(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+
+        const string marker = "wallet_asset_id=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+
+        var tail = notes[valueStart..].Trim();
+        var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
+        var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail;
+        return int.TryParse(rawValue, out var id) ? id : null;
     }
 
     private async Task CreateInvoiceForApprovedRequestAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)

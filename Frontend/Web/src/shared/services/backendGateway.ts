@@ -8,7 +8,8 @@ import {
   type ReportMetric,
   type Seller,
   type SellerRegistration,
-  type UserSession
+  type UserSession,
+  type WalletAssetItem
 } from "../types/models";
 import { deleteJson, getJson, postForm, postJson, putForm, putJson } from "./httpClient";
 import type {
@@ -23,7 +24,8 @@ import type {
   EnumItemDto,
   WebDashboardDto,
   WebRequestDto,
-  WebSellerDto
+  WebSellerDto,
+  WalletDto
 } from "../types/apiTypes";
 
 const toRole = (role: string): "admin" | "seller" => (role.toLowerCase() === "admin" ? "admin" : "seller");
@@ -45,7 +47,7 @@ const fallbackWeightUnits: EnumItemDto[] = [
 const mapSession = (dto: LoginResponseDto): UserSession => ({
   accessToken: dto.accessToken,
   userId: dto.userId,
-  sellerId: dto.sellerId,
+  sellerId: dto.sellerId ?? 0,
   role: toRole(dto.role),
   expiresAtUtc: dto.expiresAtUtc
 });
@@ -132,6 +134,21 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
     createdAt: item.createdAt
   }));
 
+const mapWalletAssets = (wallet: WalletDto): WalletAssetItem[] =>
+  (wallet.assets ?? []).map((item) => ({
+    id: item.id,
+    assetType: item.assetType,
+    category: item.category,
+    sellerId: item.sellerId,
+    sellerName: item.sellerName,
+    weight: item.weight,
+    unit: item.unit,
+    purity: item.purity,
+    quantity: item.quantity,
+    averageBuyPrice: item.averageBuyPrice,
+    currentMarketPrice: item.currentMarketPrice
+  }));
+
 const mapNotifications = (logs: AuditLogDto[]): NotificationItem[] =>
   logs.slice(0, 6).map((log) => ({
     id: `n-${log.id}`,
@@ -195,6 +212,29 @@ export async function registerSellerWithBackend(registration: SellerRegistration
   };
 }
 
+export interface WalletSellConfigurationDto {
+  mode: "locked_30_seconds" | "live_price";
+  lockSeconds: number;
+}
+
+export async function fetchWalletSellConfiguration(accessToken: string): Promise<WalletSellConfigurationDto> {
+  try {
+    const raw = await getJson<string>("/api/web-admin/wallet/sell-configuration", accessToken);
+    const parsed = JSON.parse(raw) as WalletSellConfigurationDto;
+    return { mode: parsed.mode, lockSeconds: parsed.lockSeconds ?? 30 };
+  } catch {
+    return { mode: "locked_30_seconds", lockSeconds: 30 };
+  }
+}
+
+export async function updateWalletSellConfiguration(
+  accessToken: string,
+  payload: WalletSellConfigurationDto
+): Promise<WalletSellConfigurationDto> {
+  await putJson<string, WalletSellConfigurationDto>("/api/web-admin/wallet/sell-configuration", payload, accessToken);
+  return payload;
+}
+
 export async function fetchSellers(accessToken: string): Promise<Seller[]> {
   const sellers = await getJson<WebSellerDto[]>("/api/web-admin/sellers", accessToken);
   return sellers.map(mapSeller);
@@ -235,6 +275,12 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     : { items: [] as AuditLogDto[], totalCount: 0, pageNumber: 1, pageSize: 20 };
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
+
+  const wallet = await postJson<WalletDto, { userId: number }>(
+    "/api/wallet/by-user",
+    { userId: session.userId },
+    session.accessToken
+  );
   const requests = mapWebRequests(webRequests);
 
   const products = productsResult.items.map(mapProduct);
@@ -266,6 +312,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     investors: mapInvestors(dashboard),
     requests,
     products,
+    walletAssets: mapWalletAssets(wallet),
     invoices: products.slice(0, 5).map((product, index) => ({
       id: `inv-${index + 1}`,
       sellerId: product.sellerId,

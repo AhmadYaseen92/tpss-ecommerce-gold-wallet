@@ -88,7 +88,11 @@ const toPurityKaratValue = (name: unknown) => {
     categories.value = await fetchProductCategories(marketplace.session.value.accessToken);
     weightUnits.value = await fetchWeightUnits(marketplace.session.value.accessToken);
     if (!marketPricesDirty.value) {
-      Object.assign(marketPrices, await fetchGlobalMarketPrices(marketplace.session.value.accessToken));
+      try {
+        Object.assign(marketPrices, await fetchGlobalMarketPrices(marketplace.session.value.accessToken));
+      } catch {
+        // Keep product-management usable even when market-prices endpoint is temporarily forbidden/unavailable.
+      }
     }
   };
 
