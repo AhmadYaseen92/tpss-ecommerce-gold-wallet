@@ -40,7 +40,7 @@ class TransactionCubit extends Cubit<TransactionState> {
   }
 
   Future<void> loadTransactions({
-    String seller = AppReleaseConfig.allSellersLabel,
+    String seller = AppReleaseConfig.defaultAllSellersLabel,
     bool silent = false,
   }) async {
     if (_isLoading) return;

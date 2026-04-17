@@ -58,18 +58,7 @@ class GoldWalletPage extends StatelessWidget {
                 );
               }
               final wallet = state.wallets.first;
-              final totalPortfolioValue = state.wallets.fold<double>(
-                0,
-                (sum, item) =>
-                    sum +
-                    (double.tryParse(
-                          item.totalMarketValue.replaceAll(
-                            RegExp(r'[^0-9.]'),
-                            '',
-                          ),
-                        ) ??
-                        0),
-              );
+              final totalPortfolioValue = state.totalPortfolioValue;
               return RefreshIndicator(
                 onRefresh: () => context.read<WalletCubit>().loadWallets(),
                 child: SingleChildScrollView(

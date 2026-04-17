@@ -6,7 +6,7 @@ public sealed record CartItemDto(
     string ProductName,
     string ProductDescription,
     string ProductImageUrl,
-    int SellerId,
+    int? SellerId,
     string SellerName,
     int AvailableStock,
     decimal UnitPrice,

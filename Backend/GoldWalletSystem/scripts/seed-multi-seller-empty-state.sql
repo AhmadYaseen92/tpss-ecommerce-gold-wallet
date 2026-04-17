@@ -67,26 +67,26 @@ BEGIN TRY
         Email nvarchar(200),
         PasswordHash nvarchar(500),
         Role nvarchar(50),
-        SellerId int,
+        SellerId int NULL,
         PhoneNumber nvarchar(30)
     );
 
     INSERT INTO @Users (FullName, Email, PasswordHash, Role, SellerId, PhoneNumber)
     VALUES
-        (N'Imseeh Admin',         N'imseeh.admin@example.com',        N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerImseeh,  N'+15551010001'),
-        (N'Imseeh Investor 1',    N'imseeh.investor1@example.com',    N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerImseeh,  N'+15551010002'),
-        (N'Imseeh Investor 2',    N'imseeh.investor2@example.com',    N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', @SellerImseeh,  N'+15551010003'),
+        (N'Imseeh Admin',         N'imseeh.admin@example.com',        N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,  N'+15551010001'),
+        (N'Imseeh Investor 1',    N'imseeh.investor1@example.com',    N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', NULL,  N'+15551010002'),
+        (N'Imseeh Investor 2',    N'imseeh.investor2@example.com',    N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', NULL,  N'+15551010003'),
 
-        (N'GoldPal Admin',        N'goldpal.admin@example.com',       N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerGoldPal, N'+15551020001'),
-        (N'GoldPal Investor1',    N'goldpal.investor1@example.com',   N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerGoldPal, N'+15551020002'),
-        (N'GoldPal Investor2',    N'goldpal.investor2@example.com',   N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', @SellerGoldPal, N'+15551020003'),
+        (N'GoldPal Admin',        N'goldpal.admin@example.com',       N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL, N'+15551020001'),
+        (N'GoldPal Investor1',    N'goldpal.investor1@example.com',   N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', NULL, N'+15551020002'),
+        (N'GoldPal Investor2',    N'goldpal.investor2@example.com',   N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', NULL, N'+15551020003'),
 
-        (N'Bullion Admin',        N'bullion.admin@example.com',       N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerBullion, N'+15551030001'),
-        (N'Bullion Investor1',    N'bullion.investor1@example.com',   N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerBullion, N'+15551030002'),
-        (N'Bullion Investor2',    N'bullion.investor2@example.com',   N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', @SellerBullion, N'+15551030003'),
+        (N'Bullion Admin',        N'bullion.admin@example.com',       N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL, N'+15551030001'),
+        (N'Bullion Investor1',    N'bullion.investor1@example.com',   N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', NULL, N'+15551030002'),
+        (N'Bullion Investor2',    N'bullion.investor2@example.com',   N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', NULL, N'+15551030003'),
 
         -- Requested new user
-        (N'Gold Wallet Investor', N'investoe@goldwallet.com',         N'NN53R1Ggd5QH71EKW6wALA==.UbTyu0VUnNi27SE8JQbIjY5d8gs3jgo+SiUsNtLtt8I=.100000', N'Investor', @SellerImseeh,  N'+962790000999');
+        (N'Gold Wallet Investor', N'investoe@goldwallet.com',         N'NN53R1Ggd5QH71EKW6wALA==.UbTyu0VUnNi27SE8JQbIjY5d8gs3jgo+SiUsNtLtt8I=.100000', N'Investor', NULL,  N'+962790000999');
 
     MERGE [Users] AS T
     USING @Users AS S

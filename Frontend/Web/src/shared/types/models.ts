@@ -79,6 +79,21 @@ export interface Invoice {
   status: "draft" | "sent" | "paid";
 }
 
+
+export interface WalletAssetItem {
+  id: number;
+  assetType: string;
+  category: string;
+  sellerId?: number;
+  sellerName: string;
+  weight: number;
+  unit: string;
+  purity: number;
+  quantity: number;
+  averageBuyPrice: number;
+  currentMarketPrice: number;
+}
+
 export interface FeeConfiguration {
   deliveryFee: number;
   storageFee: number;
@@ -113,6 +128,7 @@ export interface MarketplaceState {
   investors: Investor[];
   requests: InvestorRequest[];
   products: Product[];
+  walletAssets: WalletAssetItem[];
   invoices: Invoice[];
   fees: FeeConfiguration;
   notifications: NotificationItem[];

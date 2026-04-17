@@ -32,6 +32,7 @@ export const mockMarketplaceState: MarketplaceState = {
       updatedAt: "2026-04-13"
     }
   ],
+  walletAssets: [],
   invoices: [
     { id: "inv-1", sellerId: "s-100", investorName: "Ahmad Saleh", totalAmount: 980, issuedAt: "2026-04-13", status: "sent" }
   ],

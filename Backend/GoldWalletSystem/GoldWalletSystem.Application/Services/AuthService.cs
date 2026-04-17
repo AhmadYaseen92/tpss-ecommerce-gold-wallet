@@ -21,16 +21,20 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             throw new UnauthorizedAccessException("Invalid credentials.");
 
         var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
+        var sellerId = await userAuthRepository.GetSellerIdForUserAsync(user.Id, cancellationToken);
         if (string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase))
         {
-            var seller = await userAuthRepository.GetSellerByIdAsync(user.SellerId, cancellationToken);
+            if (!sellerId.HasValue)
+                throw new UnauthorizedAccessException("Seller account is not linked.");
+
+            var seller = await userAuthRepository.GetSellerByIdAsync(sellerId.Value, cancellationToken);
             if (seller is null || seller.KycStatus != KycStatus.Approved || !seller.IsActive)
             {
                 throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
             }
         }
 
-        var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, user.SellerId);
+        var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, sellerId);
 
         return new LoginResponseDto
         {
@@ -38,7 +42,7 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             ExpiresAtUtc = token.ExpiresAtUtc,
             Role = role,
             UserId = user.Id,
-            SellerId = user.SellerId
+            SellerId = sellerId
         };
     }
 
@@ -61,11 +65,10 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
         var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
         var fullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  ", " ").Trim();
 
-        var sellerId = request.SellerId > 0
+        var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
+        var sellerId = isSeller && request.SellerId.HasValue && request.SellerId.Value > 0
             ? request.SellerId
             : await ResolveSellerIdAsync(request, role, fullName, cancellationToken);
-
-        var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
 
         var user = new User
         {
@@ -101,15 +104,15 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             Email = created.Email,
             FullName = created.FullName,
             Role = created.Role,
-            SellerId = created.SellerId,
+            SellerId = sellerId,
         };
     }
 
-    private async Task<int> ResolveSellerIdAsync(RegisterRequestDto request, string role, string fullName, CancellationToken cancellationToken)
+    private async Task<int?> ResolveSellerIdAsync(RegisterRequestDto request, string role, string fullName, CancellationToken cancellationToken)
     {
         var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
         if (!isSeller)
-            return await userAuthRepository.GetDefaultSellerIdAsync(cancellationToken);
+            return null;
 
         ValidateSellerRegistration(request);
 

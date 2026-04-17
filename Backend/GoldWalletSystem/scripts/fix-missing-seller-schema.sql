@@ -38,7 +38,7 @@ IF COL_LENGTH('UserProfiles', 'ProfilePhotoUrl') IS NULL
     ALTER TABLE [UserProfiles] ADD [ProfilePhotoUrl] nvarchar(500) NOT NULL CONSTRAINT [DF_UserProfiles_ProfilePhotoUrl] DEFAULT N'';
 
 IF COL_LENGTH('Users', 'SellerId') IS NULL
-    ALTER TABLE [Users] ADD [SellerId] int NOT NULL CONSTRAINT [DF_Users_SellerId] DEFAULT 1;
+    ALTER TABLE [Users] ADD [SellerId] int NULL;
 
 IF COL_LENGTH('Products', 'SellerId') IS NULL
     ALTER TABLE [Products] ADD [SellerId] int NOT NULL CONSTRAINT [DF_Products_SellerId] DEFAULT 1;

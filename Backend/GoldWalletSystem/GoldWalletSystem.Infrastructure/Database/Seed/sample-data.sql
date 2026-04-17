@@ -151,7 +151,7 @@ BEGIN TRY
         Email nvarchar(200),
         PasswordHash nvarchar(500),
         Role nvarchar(50),
-        SellerId int,
+        SellerId int NULL,
         PhoneNumber nvarchar(30)
     );
 
@@ -160,13 +160,13 @@ BEGIN TRY
         (N'Imseeh Seller',        N'imseeh.seller@example.com',      N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller',   @SellerImseeh,  N'+962700000001'),
         (N'GoldPal Seller',       N'goldpal.seller@example.com',     N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller',   @SellerGoldPal, N'+15550000002'),
         (N'Bullion Seller',       N'bullion.seller@example.com',     N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller',   @SellerBullion, N'+15550000003'),
-        (N'Imseeh Admin',         N'imseeh.admin@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerImseeh,  N'+15551010001'),
-        (N'GoldPal Admin',        N'goldpal.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerGoldPal, N'+15551020001'),
-        (N'Bullion Admin',        N'bullion.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', @SellerBullion, N'+15551030001'),
-        (N'Gold Wallet Investor', N'investor@goldwallet.com',       N'NN53R1Ggd5QH71EKW6wALA==.UbTyu0VUnNi27SE8JQbIjY5d8gs3jgo+SiUsNtLtt8I=.100000', N'Investor', @SellerImseeh,  N'+962790000999'),
-        (N'Imseeh Investor 1',    N'imseeh.investor1@example.com',  N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerImseeh,  N'+15551010002'),
-        (N'GoldPal Investor 1',   N'goldpal.investor1@example.com', N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerGoldPal, N'+15551020002'),
-        (N'Bullion Investor 1',   N'bullion.investor1@example.com', N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', @SellerBullion, N'+15551030002');
+        (N'Imseeh Admin',         N'imseeh.admin@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,            N'+15551010001'),
+        (N'GoldPal Admin',        N'goldpal.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,            N'+15551020001'),
+        (N'Bullion Admin',        N'bullion.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,            N'+15551030001'),
+        (N'Gold Wallet Investor', N'investor@goldwallet.com',       N'NN53R1Ggd5QH71EKW6wALA==.UbTyu0VUnNi27SE8JQbIjY5d8gs3jgo+SiUsNtLtt8I=.100000', N'Investor', NULL,            N'+962790000999'),
+        (N'Imseeh Investor 1',    N'imseeh.investor1@example.com',  N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', NULL,            N'+15551010002'),
+        (N'GoldPal Investor 1',   N'goldpal.investor1@example.com', N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', NULL,            N'+15551020002'),
+        (N'Bullion Investor 1',   N'bullion.investor1@example.com', N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', NULL,            N'+15551030002');
 
     MERGE [Users] AS T
     USING @Users AS S
@@ -476,6 +476,18 @@ BEGIN TRY
             N'{"deliveryFee":12,"storageFee":4,"serviceChargePercent":2.5}',
             CAST(1 AS bit),
             N'Web admin fee configuration'
+        ),
+        (
+            N'wallet.sell.execution',
+            N'{"mode":"locked_30_seconds","lockSeconds":30}',
+            CAST(1 AS bit),
+            N'Wallet sell execution behavior for mobile and web'
+        ),
+        (
+            N'mobile.release-config',
+            N'{"isIndividualSellerRelease":false,"individualSellerName":"Imseeh","allSellersLabel":"All Sellers","showWeightInGrams":true}',
+            CAST(1 AS bit),
+            N'Mobile release configuration synced with backend defaults'
         )
     ) AS S([ConfigKey],[JsonValue],[IsEnabled],[Description])
     ON T.[ConfigKey] = S.[ConfigKey]

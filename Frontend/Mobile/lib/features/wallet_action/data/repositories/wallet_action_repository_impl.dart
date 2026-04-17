@@ -1,4 +1,5 @@
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/datasources/wallet_action_remote_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 
 class WalletActionRepositoryImpl implements IWalletActionRepository {
@@ -19,5 +20,15 @@ class WalletActionRepositoryImpl implements IWalletActionRepository {
   @override
   Future<double> lockUnitPrice(double requestedUnitPrice) {
     return _remoteDataSource.lockUnitPrice(requestedUnitPrice);
+  }
+
+  @override
+  Future<SellExecutionMode> getSellExecutionMode() {
+    return _remoteDataSource.getSellExecutionMode();
+  }
+
+  @override
+  Future<WalletActionExecutionResult> executeWalletAction(WalletActionExecutionRequest request) {
+    return _remoteDataSource.executeWalletAction(request);
   }
 }

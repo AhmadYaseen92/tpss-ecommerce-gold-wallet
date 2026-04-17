@@ -74,6 +74,7 @@ class WalletEntity {
 
 class WalletTransactionEntity {
   const WalletTransactionEntity({
+    required this.id,
     required this.name,
     required this.category,
     required this.assetType,
@@ -89,6 +90,7 @@ class WalletTransactionEntity {
     this.certificateUrl,
   });
 
+  final int id;
   final String name;
   final WalletCategory category;
   final AssetType assetType;
@@ -126,6 +128,7 @@ class WalletTransactionEntity {
   }
 
   WalletTransactionEntity copyWith({
+    int? id,
     String? name,
     WalletCategory? category,
     AssetType? assetType,
@@ -141,6 +144,7 @@ class WalletTransactionEntity {
     String? certificateUrl,
   }) {
     return WalletTransactionEntity(
+      id: id ?? this.id,
       name: name ?? this.name,
       category: category ?? this.category,
       assetType: assetType ?? this.assetType,

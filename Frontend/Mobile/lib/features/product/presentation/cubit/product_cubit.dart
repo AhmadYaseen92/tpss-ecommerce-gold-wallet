@@ -54,7 +54,7 @@ class ProductCubit extends Cubit<ProductState> {
   StreamSubscription<String>? _realtimeSubscription;
 
   Future<void> loadProducts({
-    String seller = AppReleaseConfig.allSellersLabel,
+    String seller = AppReleaseConfig.defaultAllSellersLabel,
     int? categoryId,
   }) async {
     emit(ProductLoading());
