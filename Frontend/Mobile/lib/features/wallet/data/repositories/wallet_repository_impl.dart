@@ -82,6 +82,7 @@ class WalletRepositoryImpl implements IWalletRepository {
     final signed = changePercent >= 0 ? '+' : '';
 
     return wallet_entity.WalletTransactionEntity(
+      id: asset.id,
       name: asset.assetType,
       category: category,
       assetType: _toAssetType(asset.assetType),

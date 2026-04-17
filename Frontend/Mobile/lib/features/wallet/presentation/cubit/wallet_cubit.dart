@@ -54,10 +54,16 @@ class WalletCubit extends Cubit<WalletState> {
     final filtered = _selectedCategoryId == null
         ? List<WalletEntity>.from(_wallets)
         : _wallets.where((wallet) => _toCategoryId(wallet.category) == _selectedCategoryId).toList();
+    final totalPortfolioValue = _wallets.fold<double>(0, (sum, item) {
+      final parsed = double.tryParse(item.totalMarketValue.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
+      return sum + parsed;
+    });
+
     emit(
       WalletLoaded(
         wallets: List.unmodifiable(filtered),
         selectedCategoryId: _selectedCategoryId,
+        totalPortfolioValue: totalPortfolioValue,
       ),
     );
   }

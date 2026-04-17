@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/widgets/otp_input_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/readonly_info_row.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 
 class ActionConfirmationPage extends StatefulWidget {
   final WalletActionSummary summary;
@@ -18,10 +20,15 @@ class ActionConfirmationPage extends StatefulWidget {
 
 class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
   static const int _lockSeconds = 30;
+  final IWalletActionRepository _walletActionRepository = InjectionContainer.walletActionRepository();
+
   int _secondsLeft = _lockSeconds;
   Timer? _timer;
   String _otp = '';
   bool _isCompleted = false;
+  bool _isSubmitting = false;
+  String? _backendReference;
+  SellExecutionMode _sellExecutionMode = SellExecutionMode.locked30Seconds;
 
   bool get _isSellFlow => widget.summary.actionType == WalletActionType.sell;
   bool get _isExpired => _secondsLeft == 0 && !_isCompleted;
@@ -29,9 +36,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
   @override
   void initState() {
     super.initState();
-    if (_isSellFlow) {
-      _startLockTimer();
-    }
+    _loadConfig();
   }
 
   @override
@@ -52,9 +57,11 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: _isSellFlow
-                    ? (_isExpired || _isCompleted ? null : _completeSellWithOtp)
-                    : null,
+                onPressed: _isSubmitting
+                    ? null
+                    : _isSellFlow
+                        ? (_isExpired || _isCompleted ? null : _completeSellWithOtp)
+                        : (_isCompleted ? null : _completeNonSellAction),
                 child: Text(_isCompleted ? 'Completed' : 'Confirm & Complete'),
               ),
             ),
@@ -104,12 +111,12 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                     ReadonlyInfoRow(label: widget.summary.destinationLabel, value: widget.summary.destinationValue),
                     if (widget.summary.note != null && widget.summary.note!.isNotEmpty)
                       ReadonlyInfoRow(label: 'Note', value: widget.summary.note!),
-                    ReadonlyInfoRow(label: 'Reference', value: widget.summary.referenceNumber),
+                    ReadonlyInfoRow(label: 'Reference', value: _backendReference ?? widget.summary.referenceNumber),
                     ReadonlyInfoRow(label: 'Date', value: DateFormat('dd MMM yyyy, hh:mm a').format(widget.summary.createdAt)),
                   ],
                 ),
               ),
-              if (_isSellFlow && !_isCompleted) ...[
+              if (_isSellFlow && !_isCompleted && _sellExecutionMode == SellExecutionMode.locked30Seconds) ...[
                 const SizedBox(height: 12),
                 ActionSectionCard(
                   title: 'Locked Quote & OTP',
@@ -119,9 +126,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                       ReadonlyInfoRow(label: 'Locked Price', value: widget.summary.totalValue),
                       ReadonlyInfoRow(label: 'Timer', value: _formatSeconds(_secondsLeft)),
                       const SizedBox(height: 8),
-                      const Text(
-                        'This price is locked for 30 seconds. Enter OTP and tap Confirm & Complete. If timer expires, quote is cancelled and you can retry with live price.',
-                      ),
+                      const Text('This price is locked for 30 seconds. Enter OTP and tap Confirm & Complete.'),
                       const SizedBox(height: 12),
                       OtpInputWidget(
                         value: _otp,
@@ -135,13 +140,26 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
               if (_isCompleted)
                 const Padding(
                   padding: EdgeInsets.only(top: 10),
-                  child: Text('Transaction completed successfully at the locked price.'),
+                  child: Text('Transaction completed successfully and wallet data will refresh automatically.'),
                 ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _loadConfig() async {
+    if (!_isSellFlow) return;
+    try {
+      _sellExecutionMode = await _walletActionRepository.getSellExecutionMode();
+      if (_sellExecutionMode == SellExecutionMode.locked30Seconds) {
+        _startLockTimer();
+      }
+      if (mounted) setState(() {});
+    } catch (_) {
+      _startLockTimer();
+    }
   }
 
   void _startLockTimer() {
@@ -165,19 +183,47 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
     return '$mm:$ss';
   }
 
-  void _completeSellWithOtp() {
-    if (_isExpired) return;
-    if (_otp.length < 6) {
+  Future<void> _completeSellWithOtp() async {
+    if (_isSellFlow && _sellExecutionMode == SellExecutionMode.locked30Seconds && _isExpired) return;
+    if (_sellExecutionMode == SellExecutionMode.locked30Seconds && _otp.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter the full 6-digit OTP before timer ends.')),
       );
       return;
     }
-    _timer?.cancel();
-    setState(() => _isCompleted = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sell request completed at locked price.')),
-    );
+
+    await _submitAction();
+  }
+
+  Future<void> _completeNonSellAction() async {
+    await _submitAction();
+  }
+
+  Future<void> _submitAction() async {
+    setState(() => _isSubmitting = true);
+    try {
+      final result = await _walletActionRepository.executeWalletAction(
+        WalletActionExecutionRequest(
+          walletAssetId: widget.summary.asset.id,
+          actionType: widget.summary.actionType,
+          quantity: int.tryParse(widget.summary.primaryValue.split(' ').first) ?? 1,
+          unitPrice: widget.summary.asset.marketPricePerGram,
+          weight: widget.summary.asset.weightInGrams,
+          amount: widget.summary.asset.marketValueAmount,
+          notes: widget.summary.note,
+        ),
+      );
+
+      _timer?.cancel();
+      setState(() {
+        _isCompleted = true;
+        _backendReference = result.referenceId;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   void _onQuoteExpired() {

@@ -195,6 +195,29 @@ export async function registerSellerWithBackend(registration: SellerRegistration
   };
 }
 
+export interface WalletSellConfigurationDto {
+  mode: "locked_30_seconds" | "live_price";
+  lockSeconds: number;
+}
+
+export async function fetchWalletSellConfiguration(accessToken: string): Promise<WalletSellConfigurationDto> {
+  const raw = await getJson<string>("/api/web-admin/wallet/sell-configuration", accessToken);
+  try {
+    const parsed = JSON.parse(raw) as WalletSellConfigurationDto;
+    return { mode: parsed.mode, lockSeconds: parsed.lockSeconds ?? 30 };
+  } catch {
+    return { mode: "locked_30_seconds", lockSeconds: 30 };
+  }
+}
+
+export async function updateWalletSellConfiguration(
+  accessToken: string,
+  payload: WalletSellConfigurationDto
+): Promise<WalletSellConfigurationDto> {
+  await putJson<string, WalletSellConfigurationDto>("/api/web-admin/wallet/sell-configuration", payload, accessToken);
+  return payload;
+}
+
 export async function fetchSellers(accessToken: string): Promise<Seller[]> {
   const sellers = await getJson<WebSellerDto[]>("/api/web-admin/sellers", accessToken);
   return sellers.map(mapSeller);

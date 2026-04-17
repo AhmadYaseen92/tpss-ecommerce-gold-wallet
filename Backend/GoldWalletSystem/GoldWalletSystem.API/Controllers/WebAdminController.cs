@@ -17,6 +17,7 @@ namespace GoldWalletSystem.API.Controllers;
 public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardService dashboardService, IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
 {
     private const string FeesConfigKey = "webadmin.fees";
+    private const string WalletSellConfigKey = "wallet.sell.execution";
 
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
@@ -391,6 +392,69 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ApiResponse<WebFeesDto>.Ok(request));
+    }
+
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpGet("wallet/sell-configuration")]
+    public async Task<IActionResult> GetWalletSellConfiguration(CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ConfigKey == WalletSellConfigKey && x.IsEnabled, cancellationToken);
+
+        var payload = config?.JsonValue;
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            payload = JsonSerializer.Serialize(new { mode = "locked_30_seconds", lockSeconds = 30 });
+        }
+
+        return Ok(ApiResponse<string>.Ok(payload));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpPut("wallet/sell-configuration")]
+    public async Task<IActionResult> UpdateWalletSellConfiguration([FromBody] JsonElement request, CancellationToken cancellationToken)
+    {
+        var mode = request.TryGetProperty("mode", out var modeElement)
+            ? (modeElement.GetString() ?? string.Empty).Trim().ToLowerInvariant()
+            : string.Empty;
+
+        if (mode is not ("locked_30_seconds" or "live_price"))
+        {
+            return BadRequest(ApiResponse<object>.Fail("mode must be locked_30_seconds or live_price", 400));
+        }
+
+        var lockSeconds = request.TryGetProperty("lockSeconds", out var lockElement)
+            ? Math.Clamp(lockElement.GetInt32(), 5, 300)
+            : 30;
+
+        var payload = JsonSerializer.Serialize(new { mode, lockSeconds });
+
+        var config = await dbContext.MobileAppConfigurations
+            .FirstOrDefaultAsync(x => x.ConfigKey == WalletSellConfigKey, cancellationToken);
+
+        if (config is null)
+        {
+            config = new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = WalletSellConfigKey,
+                JsonValue = payload,
+                IsEnabled = true,
+                Description = "Wallet sell execution behavior",
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            dbContext.MobileAppConfigurations.Add(config);
+        }
+        else
+        {
+            config.JsonValue = payload;
+            config.IsEnabled = true;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Ok(ApiResponse<string>.Ok(payload));
     }
 
     [HttpGet("notifications")]

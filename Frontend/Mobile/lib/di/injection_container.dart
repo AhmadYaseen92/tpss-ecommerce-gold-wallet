@@ -113,7 +113,7 @@ class InjectionContainer {
   }
 
   static IWalletActionRepository walletActionRepository() {
-    return WalletActionRepositoryImpl(WalletActionRemoteDataSource());
+    return WalletActionRepositoryImpl(WalletActionRemoteDataSource(sl<Dio>()));
   }
 
   static IProductRepository productRepository() {
