@@ -10,6 +10,8 @@ public sealed record WalletDto(
 public sealed record WalletAssetDto(
     int Id,
     string AssetType,
+    string Category,
+    int? SellerId,
     string SellerName,
     decimal Weight,
     string Unit,

@@ -618,7 +618,10 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         }
         else if (action is "sell" or "pickup" or "transfer" or "gift")
         {
-            var asset = wallet.Assets.FirstOrDefault(x => x.SellerId == request.SellerId && x.Category.ToString().Equals(request.Category, StringComparison.OrdinalIgnoreCase));
+            var walletAssetId = TryExtractWalletAssetId(request.Notes);
+            var asset = walletAssetId.HasValue
+                ? wallet.Assets.FirstOrDefault(x => x.Id == walletAssetId.Value)
+                : wallet.Assets.FirstOrDefault(x => x.SellerId == request.SellerId && x.Category.ToString().Equals(request.Category, StringComparison.OrdinalIgnoreCase));
             if (asset is not null)
             {
                 var qtyToRemove = Math.Max(1, request.Quantity);
@@ -711,6 +714,24 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
         return stopAt > 0 ? tail[..stopAt].Trim() : tail;
+    }
+
+
+    private static int? TryExtractWalletAssetId(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+
+        const string marker = "wallet_asset_id=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+
+        var tail = notes[valueStart..].Trim();
+        var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
+        var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail;
+        return int.TryParse(rawValue, out var id) ? id : null;
     }
 
     private async Task CreateInvoiceForApprovedRequestAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)

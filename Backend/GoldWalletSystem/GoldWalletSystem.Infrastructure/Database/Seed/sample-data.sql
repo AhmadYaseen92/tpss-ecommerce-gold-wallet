@@ -476,6 +476,18 @@ BEGIN TRY
             N'{"deliveryFee":12,"storageFee":4,"serviceChargePercent":2.5}',
             CAST(1 AS bit),
             N'Web admin fee configuration'
+        ),
+        (
+            N'wallet.sell.execution',
+            N'{"mode":"locked_30_seconds","lockSeconds":30}',
+            CAST(1 AS bit),
+            N'Wallet sell execution behavior for mobile and web'
+        ),
+        (
+            N'mobile.release-config',
+            N'{"isIndividualSellerRelease":false,"individualSellerName":"Imseeh","allSellersLabel":"All Sellers","showWeightInGrams":true}',
+            CAST(1 AS bit),
+            N'Mobile release configuration synced with backend defaults'
         )
     ) AS S([ConfigKey],[JsonValue],[IsEnabled],[Description])
     ON T.[ConfigKey] = S.[ConfigKey]

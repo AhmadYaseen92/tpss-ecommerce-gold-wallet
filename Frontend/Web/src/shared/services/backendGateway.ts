@@ -8,7 +8,8 @@ import {
   type ReportMetric,
   type Seller,
   type SellerRegistration,
-  type UserSession
+  type UserSession,
+  type WalletAssetItem
 } from "../types/models";
 import { deleteJson, getJson, postForm, postJson, putForm, putJson } from "./httpClient";
 import type {
@@ -23,7 +24,8 @@ import type {
   EnumItemDto,
   WebDashboardDto,
   WebRequestDto,
-  WebSellerDto
+  WebSellerDto,
+  WalletDto
 } from "../types/apiTypes";
 
 const toRole = (role: string): "admin" | "seller" => (role.toLowerCase() === "admin" ? "admin" : "seller");
@@ -130,6 +132,21 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
     notes: item.notes,
     updatedAt: item.updatedAt,
     createdAt: item.createdAt
+  }));
+
+const mapWalletAssets = (wallet: WalletDto): WalletAssetItem[] =>
+  (wallet.assets ?? []).map((item) => ({
+    id: item.id,
+    assetType: item.assetType,
+    category: item.category,
+    sellerId: item.sellerId,
+    sellerName: item.sellerName,
+    weight: item.weight,
+    unit: item.unit,
+    purity: item.purity,
+    quantity: item.quantity,
+    averageBuyPrice: item.averageBuyPrice,
+    currentMarketPrice: item.currentMarketPrice
   }));
 
 const mapNotifications = (logs: AuditLogDto[]): NotificationItem[] =>
@@ -258,6 +275,12 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     : { items: [] as AuditLogDto[], totalCount: 0, pageNumber: 1, pageSize: 20 };
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
+
+  const wallet = await postJson<WalletDto, { userId: number }>(
+    "/api/wallet/by-user",
+    { userId: session.userId },
+    session.accessToken
+  );
   const requests = mapWebRequests(webRequests);
 
   const products = productsResult.items.map(mapProduct);
@@ -289,6 +312,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     investors: mapInvestors(dashboard),
     requests,
     products,
+    walletAssets: mapWalletAssets(wallet),
     invoices: products.slice(0, 5).map((product, index) => ({
       id: `inv-${index + 1}`,
       sellerId: product.sellerId,

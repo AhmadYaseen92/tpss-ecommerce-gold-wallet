@@ -21,6 +21,8 @@ public class WalletService(IWalletRepository walletRepository) : IWalletService
                 .Select(x => new WalletAssetDto(
                     x.Id,
                     x.AssetType.ToString(),
+                    x.Category.ToString(),
+                    x.SellerId,
                     x.SellerName,
                     x.Weight,
                     x.Unit,

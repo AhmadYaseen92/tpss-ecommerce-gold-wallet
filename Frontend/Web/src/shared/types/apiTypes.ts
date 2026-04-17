@@ -185,3 +185,26 @@ export interface MarketPriceConfigDto {
   silverPerOunce: number;
   diamondPerCarat: number;
 }
+
+
+export interface WalletAssetDto {
+  id: number;
+  assetType: string;
+  category: string;
+  sellerId?: number;
+  sellerName: string;
+  weight: number;
+  unit: string;
+  purity: number;
+  quantity: number;
+  averageBuyPrice: number;
+  currentMarketPrice: number;
+}
+
+export interface WalletDto {
+  id: number;
+  userId: number;
+  cashBalance: number;
+  currencyCode: string;
+  assets: WalletAssetDto[];
+}

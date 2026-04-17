@@ -28,6 +28,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
   bool _isCompleted = false;
   bool _isSubmitting = false;
   String? _backendReference;
+  bool _resultPendingApproval = false;
   SellExecutionMode _sellExecutionMode = SellExecutionMode.locked30Seconds;
 
   bool get _isSellFlow => widget.summary.actionType == WalletActionType.sell;
@@ -47,7 +48,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final statusText = _isCompleted ? 'Completed' : 'Submitted';
+    final statusText = _isCompleted ? (_resultPendingApproval ? 'Submitted' : 'Completed') : 'Submitted';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Confirmation')),
@@ -62,7 +63,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                     : _isSellFlow
                         ? (_isExpired || _isCompleted ? null : _completeSellWithOtp)
                         : (_isCompleted ? null : _completeNonSellAction),
-                child: Text(_isCompleted ? 'Completed' : 'Confirm & Complete'),
+                child: Text(_isCompleted ? (_resultPendingApproval ? 'Submitted' : 'Completed') : 'Confirm & Complete'),
               ),
             ),
             const SizedBox(width: 10),
@@ -138,9 +139,11 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                 ),
               ],
               if (_isCompleted)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 10),
-                  child: Text('Transaction completed successfully and wallet data will refresh automatically.'),
+                  child: Text(_resultPendingApproval
+                      ? 'Transaction submitted successfully and is pending seller approval.'
+                      : 'Transaction completed successfully and wallet data will refresh automatically.'),
                 ),
             ],
           ),
@@ -218,6 +221,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
       setState(() {
         _isCompleted = true;
         _backendReference = result.referenceId;
+        _resultPendingApproval = result.status.toLowerCase() == 'pending';
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));

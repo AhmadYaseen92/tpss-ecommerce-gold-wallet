@@ -69,7 +69,7 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
 
         var sellConfig = await ReadSellExecutionConfigurationAsync(cancellationToken);
         var executionMode = sellConfig.Mode;
-        var lockUntilUtc = executionMode == "locked_30_seconds" ? DateTime.UtcNow.AddSeconds(30) : (DateTime?)null;
+        var lockUntilUtc = executionMode == "locked_30_seconds" ? DateTime.UtcNow.AddSeconds(Math.Max(5, sellConfig.LockSeconds)) : (DateTime?)null;
 
         if (actionType == "sell" && executionMode == "locked_30_seconds" && request.QuoteLockedUntilUtc is DateTime lockedUntil && lockedUntil < DateTime.UtcNow)
             return BadRequest(ApiResponse<object>.Fail("Locked sell quote expired. Please refresh and retry.", 400));
@@ -78,7 +78,10 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
         var oldWeight = asset.Weight;
         var oldCash = wallet.CashBalance;
 
-        if (actionType is "sell" or "transfer" or "gift" or "pickup")
+        var shouldRequireSellerApproval = actionType == "sell";
+        var status = shouldRequireSellerApproval ? "pending" : "approved";
+
+        if (!shouldRequireSellerApproval && actionType is "sell" or "transfer" or "gift" or "pickup")
         {
             asset.Quantity = Math.Max(0, asset.Quantity - request.Quantity);
             asset.Weight = Math.Max(0, asset.Weight - requestedWeight);
@@ -90,7 +93,7 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
             }
         }
 
-        if (actionType is "sell")
+        if (!shouldRequireSellerApproval && actionType is "sell")
         {
             wallet.CashBalance += grossAmount;
         }
@@ -102,7 +105,7 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
             UserId = request.UserId,
             SellerId = asset.SellerId,
             TransactionType = actionType,
-            Status = "approved",
+            Status = status,
             Category = asset.Category.ToString(),
             Quantity = request.Quantity,
             UnitPrice = unitPrice,
@@ -116,7 +119,7 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
         };
         dbContext.TransactionHistories.Add(history);
 
-        if (actionType is "certificate" or "invoice" or "sell" or "pickup")
+        if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell" or "pickup")
         {
             var sellerUserId = await dbContext.Users
                 .Where(x => x.Role == "Seller" && x.SellerId == asset.SellerId)
@@ -135,7 +138,7 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
                 TotalAmount = grossAmount,
                 InvoiceQrCode = string.Empty,
                 IssuedOnUtc = DateTime.UtcNow,
-                Status = "approved",
+                Status = status,
                 CreatedAtUtc = DateTime.UtcNow
             });
         }
@@ -143,18 +146,20 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
         dbContext.AuditLogs.Add(new AuditLog
         {
             UserId = request.UserId,
-            Action = "WalletActionExecuted",
+            Action = shouldRequireSellerApproval ? "WalletActionRequested" : "WalletActionExecuted",
             EntityName = nameof(WalletAsset),
             EntityId = request.WalletAssetId,
-            Details = $"action={actionType}, qty={oldQty}->{Math.Max(oldQty - request.Quantity, 0)}, weight={oldWeight}->{Math.Max(oldWeight - requestedWeight, 0)}, cash={oldCash}->{wallet.CashBalance}",
+            Details = $"action={actionType}, status={status}, qty={oldQty}->{Math.Max(oldQty - request.Quantity, 0)}, weight={oldWeight}->{Math.Max(oldWeight - requestedWeight, 0)}, cash={oldCash}->{wallet.CashBalance}",
             CreatedAtUtc = DateTime.UtcNow
         });
 
         dbContext.AppNotifications.Add(new AppNotification
         {
             UserId = request.UserId,
-            Title = "Wallet action completed",
-            Body = $"{actionType} completed for {request.Quantity} unit(s).",
+            Title = shouldRequireSellerApproval ? "Wallet action submitted" : "Wallet action completed",
+            Body = shouldRequireSellerApproval
+                ? $"{actionType} request submitted and pending seller approval."
+                : $"{actionType} completed for {request.Quantity} unit(s).",
             IsRead = false,
             CreatedAtUtc = DateTime.UtcNow
         });
@@ -170,11 +175,11 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
         return Ok(ApiResponse<ExecuteWalletActionResponse>.Ok(new ExecuteWalletActionResponse
         {
             ReferenceId = $"wtx-{history.Id}",
-            Status = "approved",
+            Status = status,
             LockedPriceUntilUtc = lockUntilUtc,
             CashBalance = wallet.CashBalance,
             TotalPortfolioValue = portfolioValue,
-            Message = "Wallet action processed successfully."
+            Message = shouldRequireSellerApproval ? "Sell request submitted and pending seller approval." : "Wallet action processed successfully."
         }));
     }
 
@@ -220,9 +225,12 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
     }
 
     private static string BuildNotes(ExecuteWalletActionRequest request, string executionMode)
-        => string.IsNullOrWhiteSpace(request.Notes)
-            ? $"execution_mode={executionMode}"
-            : $"{request.Notes.Trim()} | execution_mode={executionMode}";
+    {
+        var meta = $"execution_mode={executionMode}|wallet_asset_id={request.WalletAssetId}";
+        return string.IsNullOrWhiteSpace(request.Notes)
+            ? meta
+            : $"{request.Notes.Trim()} | {meta}";
+    }
 
     private async Task<SellExecutionConfigurationResponse> ReadSellExecutionConfigurationAsync(CancellationToken cancellationToken)
     {

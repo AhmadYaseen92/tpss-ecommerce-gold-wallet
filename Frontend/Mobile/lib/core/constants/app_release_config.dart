@@ -1,14 +1,17 @@
 class AppReleaseConfig {
+  /// Key used by backend MobileAppConfigurations to sync release setup with mobile.
+  static const String configKey = 'mobile.release-config';
+
   /// Set to true when this build is dedicated to one seller only.
-  static const bool isIndividualSellerRelease = false;
+  static bool isIndividualSellerRelease = false;
 
   /// Used only when [isIndividualSellerRelease] is true.
-  static const String individualSellerName = 'Imseeh';
+  static String individualSellerName = 'Imseeh';
 
-  static const String allSellersLabel = 'All Sellers';
+  static String allSellersLabel = 'All Sellers';
 
   /// Feature flag for displaying calculated gram labels in UI.
-  static const bool showWeightInGrams = true;
+  static bool showWeightInGrams = true;
 
   static bool get showSellerUi => !isIndividualSellerRelease;
 
@@ -20,5 +23,14 @@ class AppReleaseConfig {
       return itemSeller == individualSellerName;
     }
     return activeSeller == allSellersLabel || itemSeller == activeSeller;
+  }
+
+  static void applyFromJson(Map<String, dynamic> json) {
+    isIndividualSellerRelease =
+        (json['isIndividualSellerRelease'] as bool?) ?? isIndividualSellerRelease;
+    individualSellerName =
+        (json['individualSellerName'] as String?) ?? individualSellerName;
+    allSellersLabel = (json['allSellersLabel'] as String?) ?? allSellersLabel;
+    showWeightInGrams = (json['showWeightInGrams'] as bool?) ?? showWeightInGrams;
   }
 }
