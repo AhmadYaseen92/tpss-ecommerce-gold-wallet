@@ -333,6 +333,8 @@ class TransactionPage extends StatelessWidget {
                           runSpacing: 8,
                           children: [
                             _detailChip('Type', transaction.transactionType),
+                            if (transaction.isGiftReceived)
+                              _detailChip('Gift', 'Received'),
                             _detailChip('Status', transaction.status),
                             _detailChip('Category', transaction.category),
                             _detailChip('Qty', '${transaction.quantity}'),
@@ -351,6 +353,8 @@ class TransactionPage extends StatelessWidget {
                         _detailRow('Id', '${transaction.id}'),
                         _detailRow('UserId', '${transaction.userId}'),
                         _detailRow('SellerId', '${transaction.sellerId ?? '-'}'),
+                        if (transaction.isGiftReceived && (transaction.fromInvestorName?.isNotEmpty ?? false))
+                          _detailRow('Gift From', transaction.fromInvestorName!),
                         _detailRow('Unit Price', transaction.unitPrice.toStringAsFixed(2)),
                         _detailRow('Purity', transaction.purity.toStringAsFixed(2)),
                         _detailRow('Created', createdText),

@@ -160,6 +160,50 @@ public class WalletController(
             }
         }
 
+        if (!shouldRequireSellerApproval && actionType is "transfer" or "gift" && request.RecipientInvestorUserId.HasValue)
+        {
+            var recipientWallet = await GetOrCreateWalletAsync(request.RecipientInvestorUserId.Value, wallet.CurrencyCode, cancellationToken);
+            AddOrUpdateRecipientAsset(
+                recipientWallet,
+                asset,
+                request.Quantity,
+                requestedWeight,
+                unitPrice);
+            recipientWallet.UpdatedAtUtc = DateTime.UtcNow;
+
+            var senderName = await dbContext.Users
+                .Where(x => x.Id == request.UserId)
+                .Select(x => x.FullName)
+                .FirstOrDefaultAsync(cancellationToken) ?? $"Investor {request.UserId}";
+
+            dbContext.TransactionHistories.Add(new TransactionHistory
+            {
+                UserId = request.RecipientInvestorUserId.Value,
+                SellerId = asset.SellerId,
+                TransactionType = actionType,
+                Status = status,
+                Category = asset.Category.ToString(),
+                Quantity = request.Quantity,
+                UnitPrice = unitPrice,
+                Weight = requestedWeight,
+                Unit = asset.Unit,
+                Purity = asset.Purity,
+                Amount = grossAmount,
+                Currency = recipientWallet.CurrencyCode,
+                Notes = $"direction=received|from_investor_user_id={request.UserId}|from_investor_name={senderName}|{BuildNotes(request, executionMode)}",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+
+            dbContext.AppNotifications.Add(new AppNotification
+            {
+                UserId = request.RecipientInvestorUserId.Value,
+                Title = actionType == "gift" ? "Gift received" : "Transfer received",
+                Body = $"{request.Quantity} unit(s) received from {senderName}.",
+                IsRead = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
         if (!shouldRequireSellerApproval && actionType is "sell")
         {
             wallet.CashBalance += grossAmount;
@@ -233,6 +277,12 @@ public class WalletController(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-action:{actionType}:{request.UserId}", cancellationToken);
+        if (!shouldRequireSellerApproval && actionType is "transfer" or "gift" && request.RecipientInvestorUserId.HasValue)
+        {
+            await realtimeNotifier.BroadcastRefreshHintAsync(
+                $"wallet-action:{actionType}:{request.RecipientInvestorUserId.Value}",
+                cancellationToken);
+        }
 
         var portfolioValue = await dbContext.WalletAssets
             .Where(x => x.WalletId == wallet.Id)
@@ -302,6 +352,72 @@ public class WalletController(
         return string.IsNullOrWhiteSpace(request.Notes)
             ? meta
             : $"{request.Notes.Trim()} | {meta}";
+    }
+
+    private async Task<Wallet> GetOrCreateWalletAsync(int userId, string currencyCode, CancellationToken cancellationToken)
+    {
+        var wallet = await dbContext.Wallets
+            .Include(x => x.Assets)
+            .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
+        if (wallet is not null) return wallet;
+
+        wallet = new Wallet
+        {
+            UserId = userId,
+            CurrencyCode = string.IsNullOrWhiteSpace(currencyCode) ? "USD" : currencyCode,
+            CashBalance = 0,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        };
+        dbContext.Wallets.Add(wallet);
+        return wallet;
+    }
+
+    private static void AddOrUpdateRecipientAsset(
+        Wallet recipientWallet,
+        WalletAsset sourceAsset,
+        int quantity,
+        decimal weight,
+        decimal unitPrice)
+    {
+        var qtyToAdd = Math.Max(1, quantity);
+        var weightToAdd = Math.Max(0.001m, weight);
+
+        var existing = recipientWallet.Assets.FirstOrDefault(x =>
+            x.SellerId == sourceAsset.SellerId &&
+            x.Category == sourceAsset.Category &&
+            x.Unit == sourceAsset.Unit &&
+            x.Purity == sourceAsset.Purity);
+
+        if (existing is null)
+        {
+            recipientWallet.Assets.Add(new WalletAsset
+            {
+                SellerId = sourceAsset.SellerId,
+                SellerName = sourceAsset.SellerName,
+                Category = sourceAsset.Category,
+                AssetType = sourceAsset.AssetType,
+                Quantity = qtyToAdd,
+                Weight = weightToAdd,
+                Unit = sourceAsset.Unit,
+                Purity = sourceAsset.Purity,
+                AverageBuyPrice = unitPrice,
+                CurrentMarketPrice = sourceAsset.CurrentMarketPrice > 0 ? sourceAsset.CurrentMarketPrice : unitPrice,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+            return;
+        }
+
+        var newTotalQty = existing.Quantity + qtyToAdd;
+        existing.AverageBuyPrice = newTotalQty <= 0
+            ? existing.AverageBuyPrice
+            : ((existing.AverageBuyPrice * existing.Quantity) + (unitPrice * qtyToAdd)) / newTotalQty;
+        existing.Quantity = newTotalQty;
+        existing.Weight += weightToAdd;
+        existing.CurrentMarketPrice = sourceAsset.CurrentMarketPrice > 0 ? sourceAsset.CurrentMarketPrice : unitPrice;
+        existing.UpdatedAtUtc = DateTime.UtcNow;
     }
 
     private async Task<SellExecutionConfigurationResponse> ReadSellExecutionConfigurationAsync(CancellationToken cancellationToken)

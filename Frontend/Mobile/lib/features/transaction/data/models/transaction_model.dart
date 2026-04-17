@@ -66,4 +66,33 @@ class TransactionModel {
   }
 
   DateTime get displayDate => updatedAtUtc ?? createdAtUtc;
+
+  bool get isGiftReceived =>
+      transactionType.toLowerCase() == 'gift' &&
+      (_readNoteValue('direction')?.toLowerCase() == 'received');
+
+  String? get fromInvestorName => _readNoteValue('from_investor_name');
+
+  String? _readNoteValue(String key) {
+    if (notes.isEmpty) return null;
+    final marker = '$key=';
+    final start = notes.toLowerCase().indexOf(marker.toLowerCase());
+    if (start < 0) return null;
+    final valueStart = start + marker.length;
+    if (valueStart >= notes.length) return null;
+    final tail = notes.substring(valueStart).trim();
+    if (tail.isEmpty) return null;
+
+    final separators = ['|', ',', ';'];
+    var stopIndex = tail.length;
+    for (final separator in separators) {
+      final index = tail.indexOf(separator);
+      if (index >= 0 && index < stopIndex) {
+        stopIndex = index;
+      }
+    }
+
+    final value = tail.substring(0, stopIndex).trim();
+    return value.isEmpty ? null : value;
+  }
 }
