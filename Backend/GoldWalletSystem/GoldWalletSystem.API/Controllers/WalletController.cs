@@ -168,9 +168,8 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
 
         var portfolioValue = await dbContext.WalletAssets
             .Where(x => x.WalletId == wallet.Id)
-            .Select(x => x.CurrentMarketPrice * x.Quantity)
-            .DefaultIfEmpty(0)
-            .SumAsync(cancellationToken);
+            .Select(x => (decimal?)(x.CurrentMarketPrice * x.Quantity))
+            .SumAsync(cancellationToken) ?? 0m;
 
         return Ok(ApiResponse<ExecuteWalletActionResponse>.Ok(new ExecuteWalletActionResponse
         {
