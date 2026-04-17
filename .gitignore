@@ -1,37 +1,99 @@
-# Visual Studio
-.vs/
-*.user
-*.suo
-*.userosscache
-*.sln.docstates
-
-# Monorepo root ignore rules
+# -----------------------------
+# Flutter / Dart
+# -----------------------------
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
 .pub/
 build/
-.android/
-android/
-ios/
-linux/
-macos/
-windows/
-web/
-lib/
-test/
-assets/
 .metadata
-analysis_options.yaml
 devtools_options.yaml
-pubspec.yaml
-pubspec.lock
+
+# Pub cache (optional local)
+.pub-cache/
+
+# -----------------------------
+# Android
+# -----------------------------
+**/android/.gradle/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/android/local.properties
+**/android/key.properties
+**/android/.cxx/
+
 .gradle/
+*.iml
+*.hprof
 
-# IDE/system
+# -----------------------------
+# iOS
+# -----------------------------
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Runner.xcworkspace/xcuserdata/
+**/ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/ios/Runner.xcodeproj/xcuserdata/
+**/ios/Flutter/ephemeral/
+
+# CocoaPods
+Pods/
+
+# -----------------------------
+# Web
+# -----------------------------
+web/build/
+
+# -----------------------------
+# Linux
+# -----------------------------
+linux/flutter/ephemeral/
+linux/build/
+
+# -----------------------------
+# Windows
+# -----------------------------
+windows/flutter/ephemeral/
+windows/build/
+
+# -----------------------------
+# macOS
+# -----------------------------
+macos/flutter/ephemeral/
+macos/build/
+**/macos/Pods/
+
+# -----------------------------
+# IDEs
+# -----------------------------
+.vs/
 .idea/
-.DS_Store
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
 
-# Frontend web dependencies
+# -----------------------------
+# VS Code
+# -----------------------------
+.vscode/
+
+# -----------------------------
+# OS files
+# -----------------------------
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# Logs
+# -----------------------------
+*.log
+
+# -----------------------------
+# Frontend dependencies (if any)
+# -----------------------------
 Frontend/Web/node_modules/
