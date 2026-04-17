@@ -696,11 +696,21 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             var asset = walletAssetId.HasValue
                 ? wallet.Assets.FirstOrDefault(x => x.Id == walletAssetId.Value)
                 : wallet.Assets.FirstOrDefault(x => x.SellerId == request.SellerId && x.Category.ToString().Equals(request.Category, StringComparison.OrdinalIgnoreCase));
+            var weightToRemove = 0m;
             if (asset is not null)
             {
                 var qtyToRemove = Math.Max(1, request.Quantity);
+                var perUnitWeight = asset.Quantity == 0 ? 0 : asset.Weight / asset.Quantity;
+                var maxWeightForRequestedQty = perUnitWeight > 0 ? perUnitWeight * qtyToRemove : request.Weight;
+                weightToRemove = request.Weight > 0 ? request.Weight : maxWeightForRequestedQty;
+                if (maxWeightForRequestedQty > 0)
+                {
+                    weightToRemove = Math.Min(weightToRemove, maxWeightForRequestedQty);
+                }
+                weightToRemove = Math.Min(weightToRemove, asset.Weight);
+
                 asset.Quantity = Math.Max(asset.Quantity - qtyToRemove, 0);
-                asset.Weight = Math.Max(asset.Weight - request.Weight, 0);
+                asset.Weight = Math.Max(asset.Weight - weightToRemove, 0);
                 asset.UpdatedAtUtc = DateTime.UtcNow;
                 if (asset.Quantity == 0 && asset.Weight <= 0)
                 {
@@ -716,7 +726,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                     var recipientWallet = await GetOrCreateWalletForUserAsync(recipientInvestorId.Value, wallet.CurrencyCode, cancellationToken);
                     if (asset is not null)
                     {
-                        AddOrUpdateRecipientAsset(recipientWallet, asset, request.Quantity, request.Weight, request.UnitPrice);
+                        AddOrUpdateRecipientAsset(recipientWallet, asset, request.Quantity, weightToRemove, request.UnitPrice);
                     }
 
                     var senderName = await dbContext.Users
@@ -733,10 +743,12 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                         Category = request.Category,
                         Quantity = request.Quantity,
                         UnitPrice = request.UnitPrice,
-                        Weight = request.Weight,
+                        Weight = weightToRemove > 0 ? weightToRemove : request.Weight,
                         Unit = request.Unit,
                         Purity = request.Purity,
-                        Amount = request.Amount,
+                        Amount = weightToRemove > 0 && request.UnitPrice > 0
+                            ? request.UnitPrice * weightToRemove
+                            : request.Amount,
                         Currency = recipientWallet.CurrencyCode,
                         Notes = $"direction=received|from_investor_user_id={request.UserId}|from_investor_name={senderName}|source_request_id={request.Id}",
                         CreatedAtUtc = DateTime.UtcNow

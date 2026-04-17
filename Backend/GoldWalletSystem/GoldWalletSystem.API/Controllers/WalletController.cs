@@ -115,6 +115,12 @@ public class WalletController(
 
         var perUnitWeight = asset.Quantity == 0 ? 0 : asset.Weight / asset.Quantity;
         var requestedWeight = request.Weight > 0 ? request.Weight : perUnitWeight * request.Quantity;
+        var maxWeightForRequestedQty = perUnitWeight > 0 ? perUnitWeight * request.Quantity : requestedWeight;
+        if (maxWeightForRequestedQty > 0)
+        {
+            requestedWeight = Math.Min(requestedWeight, maxWeightForRequestedQty);
+        }
+        requestedWeight = Math.Min(requestedWeight, asset.Weight);
         if (requestedWeight <= 0)
             return BadRequest(ApiResponse<object>.Fail("Weight must be greater than zero.", 400));
 
