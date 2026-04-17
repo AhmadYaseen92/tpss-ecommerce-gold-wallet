@@ -353,8 +353,10 @@ class TransactionPage extends StatelessWidget {
                         _detailRow('Id', '${transaction.id}'),
                         _detailRow('UserId', '${transaction.userId}'),
                         _detailRow('SellerId', '${transaction.sellerId ?? '-'}'),
-                        if (transaction.isGiftReceived && (transaction.fromInvestorName?.isNotEmpty ?? false))
-                          _detailRow('Gift From', transaction.fromInvestorName!),
+                        if (transaction.isTransferOrGift) ...[
+                          _detailRow('Transfer From', transaction.transferFromLabel),
+                          _detailRow('Transfer To', transaction.transferToLabel),
+                        ],
                         _detailRow('Unit Price', transaction.unitPrice.toStringAsFixed(2)),
                         _detailRow('Purity', transaction.purity.toStringAsFixed(2)),
                         _detailRow('Created', createdText),

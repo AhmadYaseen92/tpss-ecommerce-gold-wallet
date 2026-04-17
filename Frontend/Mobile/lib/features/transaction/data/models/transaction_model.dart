@@ -71,7 +71,35 @@ class TransactionModel {
       transactionType.toLowerCase() == 'gift' &&
       (_readNoteValue('direction')?.toLowerCase() == 'received');
 
+  bool get isTransferOrGift {
+    final type = transactionType.toLowerCase();
+    return type == 'transfer' || type == 'gift';
+  }
+
+  bool get isIncomingTransferOrGift =>
+      isTransferOrGift && (_readNoteValue('direction')?.toLowerCase() == 'received');
+
   String? get fromInvestorName => _readNoteValue('from_investor_name');
+
+  String? get toInvestorName => _readNoteValue('recipient_investor_name');
+
+  String? get fromInvestorUserId => _readNoteValue('from_investor_user_id');
+
+  String? get toInvestorUserId => _readNoteValue('recipient_investor_user_id');
+
+  String get transferFromLabel {
+    if (!isTransferOrGift) return '-';
+    if (isIncomingTransferOrGift) {
+      return fromInvestorName ?? _formatInvestorId(fromInvestorUserId);
+    }
+    return investorName;
+  }
+
+  String get transferToLabel {
+    if (!isTransferOrGift) return '-';
+    if (isIncomingTransferOrGift) return investorName;
+    return toInvestorName ?? _formatInvestorId(toInvestorUserId);
+  }
 
   String? _readNoteValue(String key) {
     if (notes.isEmpty) return null;
@@ -94,5 +122,10 @@ class TransactionModel {
 
     final value = tail.substring(0, stopIndex).trim();
     return value.isEmpty ? null : value;
+  }
+
+  String _formatInvestorId(String? id) {
+    if (id == null || id.isEmpty) return 'Unknown';
+    return 'Investor #$id';
   }
 }

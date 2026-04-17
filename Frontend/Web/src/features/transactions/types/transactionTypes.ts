@@ -14,6 +14,8 @@ export interface TransactionRowView {
   currency: string;
   status: string;
   notes?: string;
+  transferFrom?: string;
+  transferTo?: string;
   createdAt: string;
   updatedAt?: string;
 }

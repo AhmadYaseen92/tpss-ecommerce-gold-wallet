@@ -13,6 +13,10 @@ defineProps<{ item: TransactionRowView | null }>();
     <p><strong>Investor ID:</strong> {{ item.investorId }}</p>
     <p><strong>Investor:</strong> {{ item.investorName }}</p>
     <p><strong>Type:</strong> {{ item.transactionType }}</p>
+    <template v-if="['transfer', 'gift'].includes((item.transactionType || '').toLowerCase())">
+      <p><strong>Transfer From:</strong> {{ item.transferFrom || "—" }}</p>
+      <p><strong>Transfer To:</strong> {{ item.transferTo || "—" }}</p>
+    </template>
     <p><strong>Product:</strong> {{ item.productName }}</p>
     <p><strong>Category:</strong> {{ item.category }}</p>
     <p><strong>Quantity:</strong> {{ item.quantity.toLocaleString() }}</p>

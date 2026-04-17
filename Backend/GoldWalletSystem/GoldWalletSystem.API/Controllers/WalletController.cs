@@ -141,16 +141,19 @@ public class WalletController(
         var shouldRequireSellerApproval = actionType == "sell";
         var status = shouldRequireSellerApproval ? "pending" : "approved";
 
+        string? recipientInvestorName = null;
         if (actionType is "transfer" or "gift")
         {
             if (request.RecipientInvestorUserId is null || request.RecipientInvestorUserId <= 0)
                 return BadRequest(ApiResponse<object>.Fail("Recipient investor is required for transfer/gift.", 400));
 
-            var recipientExists = await dbContext.Users
+            recipientInvestorName = await dbContext.Users
                 .AsNoTracking()
-                .AnyAsync(x => x.Id == request.RecipientInvestorUserId.Value && x.Role == "Investor" && x.IsActive, cancellationToken);
+                .Where(x => x.Id == request.RecipientInvestorUserId.Value && x.Role == "Investor" && x.IsActive)
+                .Select(x => x.FullName)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (!recipientExists)
+            if (string.IsNullOrWhiteSpace(recipientInvestorName))
                 return BadRequest(ApiResponse<object>.Fail("Recipient investor account does not exist.", 400));
         }
 
@@ -231,7 +234,7 @@ public class WalletController(
             Purity = asset.Purity,
             Amount = grossAmount,
             Currency = wallet.CurrencyCode,
-            Notes = BuildNotes(request, executionMode),
+            Notes = BuildNotes(request, executionMode, recipientInvestorName),
             CreatedAtUtc = DateTime.UtcNow
         };
         dbContext.TransactionHistories.Add(history);
@@ -348,12 +351,16 @@ public class WalletController(
         return Ok(ApiResponse<object>.Ok(new { id = $"r-{entity.Id}", status = entity.Status }, "Request submitted"));
     }
 
-    private static string BuildNotes(ExecuteWalletActionRequest request, string executionMode)
+    private static string BuildNotes(ExecuteWalletActionRequest request, string executionMode, string? recipientInvestorName = null)
     {
         var meta = $"execution_mode={executionMode}|wallet_asset_id={request.WalletAssetId}";
         if (request.RecipientInvestorUserId.HasValue)
         {
             meta = $"{meta}|recipient_investor_user_id={request.RecipientInvestorUserId.Value}";
+            if (!string.IsNullOrWhiteSpace(recipientInvestorName))
+            {
+                meta = $"{meta}|recipient_investor_name={recipientInvestorName}";
+            }
         }
         return string.IsNullOrWhiteSpace(request.Notes)
             ? meta

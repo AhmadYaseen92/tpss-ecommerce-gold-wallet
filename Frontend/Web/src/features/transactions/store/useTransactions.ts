@@ -1,6 +1,28 @@
 import { computed, ref } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 
+function readNoteValue(notes: string | undefined, key: string): string | null {
+  if (!notes) return null;
+  const marker = `${key}=`;
+  const lower = notes.toLowerCase();
+  const index = lower.indexOf(marker.toLowerCase());
+  if (index < 0) return null;
+
+  const rawTail = notes.slice(index + marker.length).trim();
+  if (!rawTail) return null;
+
+  const stopCandidates = ["|", ",", ";", " "]
+    .map((separator) => rawTail.indexOf(separator))
+    .filter((value) => value >= 0);
+  const stop = stopCandidates.length ? Math.min(...stopCandidates) : rawTail.length;
+  const value = rawTail.slice(0, stop).trim();
+  return value || null;
+}
+
+function formatInvestor(id: string | null): string {
+  return id ? `Investor #${id}` : "Unknown";
+}
+
 export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
   const selectedTransactionId = ref<string | null>(null);
   const transactionStatusDraft = ref<"pending" | "approved" | "rejected">("pending");
@@ -14,7 +36,27 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
         ...request,
         investorName: request.investorName,
         transactionType: request.type,
-        productName: request.productName || request.category
+        productName: request.productName || request.category,
+        transferFrom: (() => {
+          const type = (request.type || "").toLowerCase();
+          if (type !== "transfer" && type !== "gift") return undefined;
+          const direction = (readNoteValue(request.notes, "direction") || "").toLowerCase();
+          if (direction === "received") {
+            return readNoteValue(request.notes, "from_investor_name")
+              || formatInvestor(readNoteValue(request.notes, "from_investor_user_id"));
+          }
+          return request.investorName;
+        })(),
+        transferTo: (() => {
+          const type = (request.type || "").toLowerCase();
+          if (type !== "transfer" && type !== "gift") return undefined;
+          const direction = (readNoteValue(request.notes, "direction") || "").toLowerCase();
+          if (direction === "received") {
+            return request.investorName;
+          }
+          return readNoteValue(request.notes, "recipient_investor_name")
+            || formatInvestor(readNoteValue(request.notes, "recipient_investor_user_id"));
+        })()
       }))
       .filter((request) => {
         if (statusFilter.value !== "all" && request.status !== statusFilter.value) return false;
