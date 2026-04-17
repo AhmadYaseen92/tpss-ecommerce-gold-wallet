@@ -22,9 +22,23 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
     {
+        var sellerScope = ResolveSellerScope();
         var investorsCount = await dbContext.Users.CountAsync(x => x.Role == SystemRoles.Investor, cancellationToken);
-        var pendingRequestsCount = await dbContext.TransactionHistories.CountAsync(x => x.Status == "pending", cancellationToken);
-        var invoicesCount = await dbContext.Invoices.CountAsync(cancellationToken);
+
+        var pendingRequestsQuery = dbContext.TransactionHistories.Where(x => x.Status == "pending");
+        if (sellerScope.HasValue)
+        {
+            pendingRequestsQuery = pendingRequestsQuery.Where(x => x.SellerId == sellerScope.Value);
+        }
+        var pendingRequestsCount = await pendingRequestsQuery.CountAsync(cancellationToken);
+
+        var invoicesQuery = dbContext.Invoices.AsQueryable();
+        if (sellerScope.HasValue)
+        {
+            invoicesQuery = invoicesQuery.Where(x => dbContext.Users
+                .Any(u => u.Id == x.SellerUserId && u.SellerId == sellerScope.Value));
+        }
+        var invoicesCount = await invoicesQuery.CountAsync(cancellationToken);
         var unreadNotificationsCount = await dbContext.AppNotifications.CountAsync(x => !x.IsRead, cancellationToken);
 
         var summary = new WebSummaryDto
@@ -188,6 +202,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         var item = await dbContext.TransactionHistories.FirstOrDefaultAsync(x => x.Id == requestId, cancellationToken);
         if (item is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
+        if (!CanAccessSellerData(item.SellerId)) return Forbid();
 
         if (!string.Equals(item.Status, "pending", StringComparison.OrdinalIgnoreCase))
             return BadRequest(ApiResponse<object>.Fail("Only pending requests can be changed.", 400));
@@ -271,6 +286,14 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             .FirstOrDefaultAsync(cancellationToken);
 
         if (details is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
+
+        var sellerId = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => x.Id == requestId)
+            .Select(x => x.SellerId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!CanAccessSellerData(sellerId)) return Forbid();
+
         await PopulateRequestProductNamesAsync([details], cancellationToken);
         return Ok(ApiResponse<WebRequestDto>.Ok(details));
     }
@@ -278,8 +301,18 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
     [HttpGet("invoices")]
     public async Task<IActionResult> GetInvoices(CancellationToken cancellationToken)
     {
-        var invoices = await dbContext.Invoices
+        var sellerScope = ResolveSellerScope();
+        var invoicesQuery = dbContext.Invoices
             .AsNoTracking()
+            .AsQueryable();
+
+        if (sellerScope.HasValue)
+        {
+            invoicesQuery = invoicesQuery.Where(x => dbContext.Users
+                .Any(u => u.Id == x.SellerUserId && u.SellerId == sellerScope.Value));
+        }
+
+        var invoices = await invoicesQuery
             .OrderByDescending(x => x.IssuedOnUtc)
             .Select(x => new WebInvoiceDto
             {
@@ -304,6 +337,11 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         var sellerUserId = TryParsePrefixedId(request.SellerId, "s-") ??
                            await dbContext.Users.Where(x => x.Role == SystemRoles.Seller).Select(x => (int?)x.Id).FirstOrDefaultAsync(cancellationToken) ?? 0;
+        var sellerUserSellerId = await dbContext.Users
+            .Where(x => x.Id == sellerUserId)
+            .Select(x => x.SellerId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
         var entity = new Domain.Entities.Invoice
         {
@@ -336,6 +374,11 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         var invoice = await dbContext.Invoices.FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null) return NotFound(ApiResponse<object>.Fail("Invoice not found", 404));
+        var sellerUserSellerId = await dbContext.Users
+            .Where(x => x.Id == invoice.SellerUserId)
+            .Select(x => x.SellerId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
         invoice.TotalAmount = request.TotalAmount;
         invoice.SubTotal = request.TotalAmount;
@@ -354,6 +397,11 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         var invoice = await dbContext.Invoices.FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null) return NotFound(ApiResponse<object>.Fail("Invoice not found", 404));
+        var sellerUserSellerId = await dbContext.Users
+            .Where(x => x.Id == invoice.SellerUserId)
+            .Select(x => x.SellerId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
         dbContext.Invoices.Remove(invoice);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -576,6 +624,19 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
     {
         var clean = value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? value[prefix.Length..] : value;
         return int.TryParse(clean, out var id) ? id : null;
+    }
+
+    private int? ResolveSellerScope()
+    {
+        if (User.IsInRole(SystemRoles.Admin)) return null;
+        var sellerIdClaim = User.FindFirst("seller_id")?.Value;
+        return int.TryParse(sellerIdClaim, out var parsedSellerId) ? parsedSellerId : (int?)null;
+    }
+
+    private bool CanAccessSellerData(int? resourceSellerId)
+    {
+        var sellerScope = ResolveSellerScope();
+        return !sellerScope.HasValue || (resourceSellerId.HasValue && resourceSellerId.Value == sellerScope.Value);
     }
 
     private async Task ApplyApprovedRequestSideEffectsAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)

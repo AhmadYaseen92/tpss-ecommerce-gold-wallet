@@ -21,19 +21,20 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             throw new UnauthorizedAccessException("Invalid credentials.");
 
         var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
+        var sellerId = await userAuthRepository.GetSellerIdForUserAsync(user.Id, cancellationToken);
         if (string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase))
         {
-            if (!user.SellerId.HasValue)
+            if (!sellerId.HasValue)
                 throw new UnauthorizedAccessException("Seller account is not linked.");
 
-            var seller = await userAuthRepository.GetSellerByIdAsync(user.SellerId.Value, cancellationToken);
+            var seller = await userAuthRepository.GetSellerByIdAsync(sellerId.Value, cancellationToken);
             if (seller is null || seller.KycStatus != KycStatus.Approved || !seller.IsActive)
             {
                 throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
             }
         }
 
-        var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, user.SellerId);
+        var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, sellerId);
 
         return new LoginResponseDto
         {
@@ -41,7 +42,7 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             ExpiresAtUtc = token.ExpiresAtUtc,
             Role = role,
             UserId = user.Id,
-            SellerId = user.SellerId ?? 0
+            SellerId = sellerId
         };
     }
 
@@ -103,7 +104,7 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             Email = created.Email,
             FullName = created.FullName,
             Role = created.Role,
-            SellerId = created.SellerId ?? 0,
+            SellerId = sellerId,
         };
     }
 

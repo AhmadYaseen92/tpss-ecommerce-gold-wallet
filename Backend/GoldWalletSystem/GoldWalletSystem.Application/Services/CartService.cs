@@ -125,7 +125,7 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
                 i.Product?.Name ?? $"Product #{i.ProductId}",
                 i.Product?.Description ?? string.Empty,
                 i.Product?.ImageUrl ?? string.Empty,
-                i.Product?.SellerId ?? 0,
+                i.SellerId ?? i.Product?.SellerId,
                 i.Product?.Seller?.Name ?? string.Empty,
                 i.Product?.AvailableStock ?? 0,
                 i.UnitPrice,
