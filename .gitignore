@@ -32,3 +32,6 @@ pubspec.lock
 # IDE/system
 .idea/
 .DS_Store
+
+# Frontend web dependencies
+Frontend/Web/node_modules/
