@@ -14,7 +14,7 @@ type SignalRConnection = {
   onreconnected: (callback: () => void) => void;
   onreconnecting: (callback: () => void) => void;
   onclose: (callback: () => void) => void;
-  state?: string;
+  state?: string | number;
 };
 
 type SignalRGlobal = {
@@ -25,6 +25,7 @@ type SignalRGlobal = {
     build: () => SignalRConnection;
   };
   LogLevel: { Warning: unknown };
+  HubConnectionState?: { Disconnected: string | number };
 };
 
 declare global {
@@ -42,6 +43,11 @@ async function ensureSignalRLoaded(): Promise<SignalRGlobal | null> {
   await new Promise<void>((resolve, reject) => {
     const existing = document.querySelector(`script[data-signalr='true']`) as HTMLScriptElement | null;
     if (existing) {
+      if (window.signalR) {
+        resolve();
+        return;
+      }
+
       existing.addEventListener("load", () => resolve(), { once: true });
       existing.addEventListener("error", () => reject(new Error("failed to load signalr")), { once: true });
       return;
@@ -59,17 +65,26 @@ async function ensureSignalRLoaded(): Promise<SignalRGlobal | null> {
   return window.signalR ?? null;
 }
 
+function isConnectionDisconnected(connection: SignalRConnection, signalR: SignalRGlobal | null): boolean {
+  const disconnectedState = signalR?.HubConnectionState?.Disconnected;
+  if (typeof disconnectedState !== "undefined") {
+    return connection.state === disconnectedState;
+  }
+
+  return connection.state === "Disconnected" || connection.state === 0;
+}
+
 export class MarketplaceRealtime {
   private connection: SignalRConnection | null = null;
 
   async start(options: StartOptions): Promise<void> {
-    if (this.connection && this.connection.state !== "Disconnected") {
-      return;
-    }
-
     const signalR = await ensureSignalRLoaded().catch(() => null);
     if (!signalR) {
       options.onConnectionStateChanged(false);
+      return;
+    }
+
+    if (this.connection && !isConnectionDisconnected(this.connection, signalR)) {
       return;
     }
 
