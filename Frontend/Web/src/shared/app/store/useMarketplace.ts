@@ -109,11 +109,18 @@ export function useMarketplace() {
   const realtime = new MarketplaceRealtime();
   const signalRConnected = ref(false);
   let fallbackPollingTimer: ReturnType<typeof setInterval> | null = null;
+  let safetyPollingTimer: ReturnType<typeof setInterval> | null = null;
 
   const stopFallbackPolling = () => {
     if (!fallbackPollingTimer) return;
     clearInterval(fallbackPollingTimer);
     fallbackPollingTimer = null;
+  };
+
+  const stopSafetyPolling = () => {
+    if (!safetyPollingTimer) return;
+    clearInterval(safetyPollingTimer);
+    safetyPollingTimer = null;
   };
 
   const startFallbackPolling = () => {
@@ -123,13 +130,23 @@ export function useMarketplace() {
     }, 5000);
   };
 
+  const startSafetyPolling = () => {
+    if (safetyPollingTimer || !session.value?.accessToken) return;
+    safetyPollingTimer = setInterval(() => {
+      void refreshMarketplaceState();
+    }, 10000);
+  };
+
   const configureRealtime = async () => {
     if (!session.value?.accessToken) {
       signalRConnected.value = false;
       stopFallbackPolling();
+      stopSafetyPolling();
       await realtime.stop();
       return;
     }
+
+    startSafetyPolling();
 
     await realtime.start({
       accessTokenFactory: () => session.value?.accessToken ?? "",
@@ -256,6 +273,7 @@ export function useMarketplace() {
     void realtime.stop();
     signalRConnected.value = false;
     stopFallbackPolling();
+    stopSafetyPolling();
     session.value = null;
     role.value = "admin";
     activeMenu.value = "overview";
