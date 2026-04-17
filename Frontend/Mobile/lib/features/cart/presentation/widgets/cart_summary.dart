@@ -7,13 +7,15 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 
 class CartSummary extends StatelessWidget {
   final CartSummaryEntity summary;
-  final List<String> cartProductIds;
+  final List<int> cartProductIds;
+  final String? selectedSellerName;
   final Future<void> Function()? onCheckoutCompleted;
 
   const CartSummary({
     super.key,
     required this.summary,
     required this.cartProductIds,
+    this.selectedSellerName,
     this.onCheckoutCompleted,
   });
 
@@ -92,6 +94,7 @@ class CartSummary extends StatelessWidget {
                     'fromCart': true,
                     'productIds': cartProductIds,
                     'amount': summary.total,
+                    'seller': selectedSellerName,
                   },
                 );
                 if (result == true) {

@@ -19,7 +19,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var isDirectCheckout = request.ProductId.HasValue && request.Quantity.HasValue && request.Quantity.Value > 0;
-        var fromCart = !isDirectCheckout;
+        var fromCart = request.FromCart && !isDirectCheckout;
 
         var wallet = await dbContext.Wallets
             .Include(x => x.Assets)
@@ -40,6 +40,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
 
         var lines = new List<(Product Product, int Quantity)>();
         Cart? cart = null;
+        List<CartItem>? selectedCartItems = null;
 
         if (fromCart)
         {
@@ -53,18 +54,27 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             if (cart.Items.Count == 0)
                 throw new InvalidOperationException("Cart is empty.");
 
-            var selectedItems = cart.Items.AsEnumerable();
+            selectedCartItems = cart.Items.ToList();
+
             if (request.ProductIds is { Count: > 0 })
             {
                 var productIdSet = request.ProductIds.ToHashSet();
-                selectedItems = selectedItems.Where(item => productIdSet.Contains(item.ProductId));
+                selectedCartItems = selectedCartItems
+                    .Where(item => productIdSet.Contains(item.ProductId))
+                    .ToList();
+            }
+            else if (!string.IsNullOrWhiteSpace(request.SellerName)
+                     && !request.SellerName.Equals("All Sellers", StringComparison.OrdinalIgnoreCase))
+            {
+                selectedCartItems = selectedCartItems
+                    .Where(item => string.Equals(item.Product.Seller?.Name, request.SellerName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
             }
 
-            var selectedList = selectedItems.ToList();
-            if (selectedList.Count == 0)
+            if (selectedCartItems.Count == 0)
                 throw new InvalidOperationException("No matching cart items were selected for checkout.");
 
-            lines.AddRange(selectedList.Select(item => (item.Product, item.Quantity)));
+            lines.AddRange(selectedCartItems.Select(item => (item.Product, item.Quantity)));
         }
         else
         {
@@ -109,18 +119,9 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
             });
         }
 
-        if (fromCart && cart is not null)
+        if (fromCart && selectedCartItems is { Count: > 0 })
         {
-            if (request.ProductIds is { Count: > 0 })
-            {
-                var productIdSet = request.ProductIds.ToHashSet();
-                var matchedItems = cart.Items.Where(x => productIdSet.Contains(x.ProductId)).ToList();
-                dbContext.CartItems.RemoveRange(matchedItems);
-            }
-            else
-            {
-                dbContext.CartItems.RemoveRange(cart.Items);
-            }
+            dbContext.CartItems.RemoveRange(selectedCartItems);
         }
 
         dbContext.AuditLogs.Add(new AuditLog
@@ -176,5 +177,6 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
         public List<int>? ProductIds { get; set; }
         public int? ProductId { get; set; }
         public int? Quantity { get; set; }
+        public string? SellerName { get; set; }
     }
 }
