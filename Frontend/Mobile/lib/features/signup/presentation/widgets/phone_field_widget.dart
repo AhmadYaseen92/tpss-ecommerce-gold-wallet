@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 
 class PhoneField extends StatelessWidget {
   final String selectedCode;
@@ -86,10 +87,7 @@ class PhoneField extends StatelessWidget {
             validator: validator,
             decoration: InputDecoration(
               hintText: 'Phone Number',
-              hintStyle: TextStyle(
-                color: AppColors.greyShade400,
-                fontSize: 14,
-              ),
+              hintStyle: TextStyle(color: context.appPalette.textSecondary, fontSize: 14),
               filled: true,
               fillColor: AppColors.white,
               contentPadding: const EdgeInsets.symmetric(

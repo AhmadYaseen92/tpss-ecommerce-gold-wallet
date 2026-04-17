@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Infrastructure\\GoldWalletSystem.Infrastructure.csproj": {}
+    "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Infrastructure\\GoldWalletSystem.Infrastructure.csproj": {}
   },
   "projects": {
-    "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\GoldWalletSystem.Application.csproj": {
+    "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\GoldWalletSystem.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\GoldWalletSystem.Application.csproj",
+        "projectUniqueName": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\GoldWalletSystem.Application.csproj",
         "projectName": "GoldWalletSystem.Application",
-        "projectPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\GoldWalletSystem.Application.csproj",
-        "packagesPath": "C:\\Users\\dell\\.nuget\\packages\\",
-        "outputPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\obj\\",
+        "projectPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\GoldWalletSystem.Application.csproj",
+        "packagesPath": "C:\\Users\\obash\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\dell\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\obash\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,16 +26,14 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj": {
-                "projectPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj"
+              "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj": {
+                "projectPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj"
               }
             }
           }
@@ -54,7 +52,6 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "imports": [
             "net461",
@@ -350,20 +347,20 @@
         }
       }
     },
-    "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj": {
+    "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj",
         "projectName": "GoldWalletSystem.Domain",
-        "projectPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj",
-        "packagesPath": "C:\\Users\\dell\\.nuget\\packages\\",
-        "outputPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\obj\\",
+        "projectPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj",
+        "packagesPath": "C:\\Users\\obash\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\dell\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\obash\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -372,12 +369,10 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -396,7 +391,6 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "imports": [
             "net461",
@@ -692,20 +686,20 @@
         }
       }
     },
-    "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Infrastructure\\GoldWalletSystem.Infrastructure.csproj": {
+    "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Infrastructure\\GoldWalletSystem.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Infrastructure\\GoldWalletSystem.Infrastructure.csproj",
+        "projectUniqueName": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Infrastructure\\GoldWalletSystem.Infrastructure.csproj",
         "projectName": "GoldWalletSystem.Infrastructure",
-        "projectPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Infrastructure\\GoldWalletSystem.Infrastructure.csproj",
-        "packagesPath": "C:\\Users\\dell\\.nuget\\packages\\",
-        "outputPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Infrastructure\\obj\\",
+        "projectPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Infrastructure\\GoldWalletSystem.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\obash\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\dell\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\obash\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -714,19 +708,17 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\GoldWalletSystem.Application.csproj": {
-                "projectPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\GoldWalletSystem.Application.csproj"
+              "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\GoldWalletSystem.Application.csproj": {
+                "projectPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Application\\GoldWalletSystem.Application.csproj"
               },
-              "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj": {
-                "projectPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj"
+              "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj": {
+                "projectPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj"
               }
             }
           }
@@ -745,7 +737,6 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "Microsoft.EntityFrameworkCore": {

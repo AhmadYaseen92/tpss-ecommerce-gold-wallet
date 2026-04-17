@@ -46,17 +46,8 @@ class LoginForm extends StatelessWidget {
             style: TextStyle(fontSize: 12, color: palette.textSecondary),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Email',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: palette.textPrimary,
-            ),
-          ),
           AppTextField(
             initialValue: cubit.identifier,
-            label: 'Email',
             hint: 'Enter your email',
             prefixIcon: Icons.mail_outline,
             keyboardType: TextInputType.emailAddress,
@@ -65,22 +56,17 @@ class LoginForm extends StatelessWidget {
               if (value == null || value.isEmpty) {
                 return 'Please enter your email.';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              if (!RegExp(
+                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+              ).hasMatch(value)) {
                 return 'Please enter a valid email.';
               }
               return null;
             },
             onChanged: cubit.updateIdentifier,
+            label: 'Email',
           ),
           const SizedBox(height: 18),
-          Text(
-            'Password',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: palette.textPrimary,
-            ),
-          ),
           AppTextField(
             initialValue: cubit.password,
             label: 'Password',
@@ -115,7 +101,10 @@ class LoginForm extends StatelessWidget {
     );
   }
 
-  Future<void> _openServerSettings(BuildContext context, LoginCubit cubit) async {
+  Future<void> _openServerSettings(
+    BuildContext context,
+    LoginCubit cubit,
+  ) async {
     final baseUrlController = TextEditingController(text: cubit.currentBaseUrl);
     final timeoutController = TextEditingController(
       text: cubit.currentTimeoutSeconds.toString(),
@@ -155,7 +144,8 @@ class LoginForm extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                final timeout = int.tryParse(timeoutController.text.trim()) ?? 20;
+                final timeout =
+                    int.tryParse(timeoutController.text.trim()) ?? 20;
                 cubit.updateServerConfig(
                   baseUrl: baseUrlController.text.trim(),
                   timeoutSeconds: timeout,
@@ -166,7 +156,8 @@ class LoginForm extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {
-                final timeout = int.tryParse(timeoutController.text.trim()) ?? 20;
+                final timeout =
+                    int.tryParse(timeoutController.text.trim()) ?? 20;
                 cubit.updateServerConfig(
                   baseUrl: baseUrlController.text.trim(),
                   timeoutSeconds: timeout,

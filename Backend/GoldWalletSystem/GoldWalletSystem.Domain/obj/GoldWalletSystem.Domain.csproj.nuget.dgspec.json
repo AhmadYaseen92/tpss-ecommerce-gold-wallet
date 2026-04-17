@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj": {}
+    "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj": {}
   },
   "projects": {
-    "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj": {
+    "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj",
         "projectName": "GoldWalletSystem.Domain",
-        "projectPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj",
-        "packagesPath": "C:\\Users\\dell\\.nuget\\packages\\",
-        "outputPath": "D:\\TPSS\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\obj\\",
+        "projectPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\GoldWalletSystem.Domain.csproj",
+        "packagesPath": "C:\\Users\\obash\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\obash\\tpss_projects\\tpss-ecommerce-gold-wallet\\Backend\\GoldWalletSystem\\GoldWalletSystem.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\dell\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\obash\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,12 +26,10 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -50,7 +48,6 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "imports": [
             "net461",
