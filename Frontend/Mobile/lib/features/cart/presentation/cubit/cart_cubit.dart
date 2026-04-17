@@ -42,7 +42,7 @@ class CartCubit extends Cubit<CartState> {
   int? _categoryFilter;
   List<CartItemEntity> _allItems = [];
 
-  Future<void> loadCartProducts({String sellerFilter = AppReleaseConfig.allSellersLabel}) async {
+  Future<void> loadCartProducts({String sellerFilter = AppReleaseConfig.defaultAllSellersLabel}) async {
     emit(CartLoading());
     try {
       _allItems = await _getCartItemsUseCase();

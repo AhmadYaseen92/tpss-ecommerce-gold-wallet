@@ -23,7 +23,7 @@ class MarketOrderListPage extends StatelessWidget {
 class MarketOrderListView extends StatelessWidget {
   const MarketOrderListView({
     super.key,
-    this.sellerFilter = AppReleaseConfig.allSellersLabel,
+    this.sellerFilter = AppReleaseConfig.defaultAllSellersLabel,
     this.showStatusFilter = false,
   });
 

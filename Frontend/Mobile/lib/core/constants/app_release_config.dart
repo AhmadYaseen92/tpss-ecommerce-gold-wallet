@@ -8,7 +8,8 @@ class AppReleaseConfig {
   /// Used only when [isIndividualSellerRelease] is true.
   static String individualSellerName = 'Imseeh';
 
-  static String allSellersLabel = 'All Sellers';
+  static const String defaultAllSellersLabel = 'All Sellers';
+  static String allSellersLabel = defaultAllSellersLabel;
 
   /// Feature flag for displaying calculated gram labels in UI.
   static bool showWeightInGrams = true;
