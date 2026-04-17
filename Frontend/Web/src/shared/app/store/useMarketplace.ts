@@ -35,6 +35,7 @@ import {
   updateWalletSellConfiguration,
   updateWebRequestStatus
 } from "../../services/backendGateway";
+import { HttpError } from "../../services/httpClient";
 import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
 
 const SESSION_STORAGE_KEY = "goldwallet.web.session";
@@ -300,7 +301,14 @@ export function useMarketplace() {
 
   const loadWalletSellConfiguration = async () => {
     if (!session.value?.accessToken) return;
-    walletSellConfiguration.value = await fetchWalletSellConfiguration(session.value.accessToken);
+    if (session.value.role !== "admin") return;
+    try {
+      walletSellConfiguration.value = await fetchWalletSellConfiguration(session.value.accessToken);
+    } catch (err) {
+      if (!(err instanceof HttpError) || err.statusCode !== 403) {
+        throw err;
+      }
+    }
   };
 
   const restoreSession = async () => {

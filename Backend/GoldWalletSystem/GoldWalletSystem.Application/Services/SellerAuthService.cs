@@ -25,17 +25,17 @@ public class SellerAuthService(
         if (!seller.IsActive || seller.KycStatus != KycStatus.Approved)
             throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
 
-        //var user = await sellerAuthRepository.GetUserBySellerIdAsync(seller.Id, cancellationToken)
-        //    ?? throw new UnauthorizedAccessException("Seller account is not linked to an active user.");
+        var user = await sellerAuthRepository.GetUserBySellerIdAsync(seller.Id, cancellationToken)
+            ?? throw new UnauthorizedAccessException("Seller account is not linked to an active user.");
 
-        var token = tokenService.GenerateAccessToken(seller.Id, seller.Email, SystemRoles.Seller, seller.Id);
+        var token = tokenService.GenerateAccessToken(user.Id, user.Email, SystemRoles.Seller, seller.Id);
 
         return new LoginResponseDto
         {
             AccessToken = token.Token,
             ExpiresAtUtc = token.ExpiresAtUtc,
             Role = SystemRoles.Seller,
-            UserId = seller.Id,
+            UserId = user.Id,
             SellerId = seller.Id
         };
     }
