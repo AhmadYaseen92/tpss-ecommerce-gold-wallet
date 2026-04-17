@@ -108,7 +108,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(x => x.Email).IsUnique();
             entity.HasIndex(x => x.Role);
             entity.HasIndex(x => x.SellerId);
-            entity.HasOne(x => x.Seller).WithMany(x => x.Users).HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Seller).WithMany(x => x.Users).HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict).IsRequired(false);
         });
     }
 

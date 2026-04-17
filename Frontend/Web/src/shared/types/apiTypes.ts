@@ -19,7 +19,7 @@ export interface LoginResponseDto {
   expiresAtUtc: string;
   role: string;
   userId: number;
-  sellerId: number;
+  sellerId: number | null;
 }
 
 export interface RegisterResponseDto {
@@ -27,7 +27,7 @@ export interface RegisterResponseDto {
   email: string;
   fullName: string;
   role: string;
-  sellerId: number;
+  sellerId: number | null;
 }
 
 export interface WebSellerDto {

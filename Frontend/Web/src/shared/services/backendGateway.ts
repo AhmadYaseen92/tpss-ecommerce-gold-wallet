@@ -47,7 +47,7 @@ const fallbackWeightUnits: EnumItemDto[] = [
 const mapSession = (dto: LoginResponseDto): UserSession => ({
   accessToken: dto.accessToken,
   userId: dto.userId,
-  sellerId: dto.sellerId,
+  sellerId: dto.sellerId ?? 0,
   role: toRole(dto.role),
   expiresAtUtc: dto.expiresAtUtc
 });
