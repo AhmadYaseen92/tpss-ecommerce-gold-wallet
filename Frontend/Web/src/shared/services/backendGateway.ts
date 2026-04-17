@@ -46,15 +46,16 @@ const fallbackWeightUnits: EnumItemDto[] = [
 
 const mapSession = (dto: LoginResponseDto): UserSession => ({
   accessToken: dto.accessToken,
-  userId: dto.userId,
-  sellerId: dto.sellerId ?? 0,
+  userId: dto.userId ?? null,
+  sellerId: dto.sellerId ?? null,
   role: toRole(dto.role),
-  expiresAtUtc: dto.expiresAtUtc
+  expiresAtUtc: dto.expiresAtUtc,
+  displayName: dto.displayName ?? null
 });
 
 const mapSeller = (dto: WebSellerDto): Seller => ({
   id: dto.id,
-  userId: Number(dto.id.replace("s-", "")) || 0,
+  sellerId: Number(dto.id.replace("s-", "")) || 0,
   name: dto.name,
   email: dto.email,
   businessName: dto.businessName,
@@ -202,8 +203,8 @@ export async function registerSellerWithBackend(registration: SellerRegistration
   const data = await postJson<RegisterResponseDto, typeof request>("/api/auth/register", request);
 
   return {
-    id: `s-${data.sellerId || data.userId}`,
-    userId: data.userId,
+    id: `s-${data.sellerId || data.userId || 0}`,
+    sellerId: data.sellerId || data.userId || 0,
     name: data.fullName,
     email: data.email,
     businessName: registration.companyName,
@@ -260,11 +261,13 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     session.accessToken
   );
 
-  const dashboard = await postJson<DashboardDto, { userId: number }>(
-    "/api/dashboard/by-user",
-    { userId: session.userId },
-    session.accessToken
-  );
+  const dashboard = session.role === "seller" || !session.userId
+    ? null
+    : await postJson<DashboardDto, { userId: number }>(
+        "/api/dashboard/by-user",
+        { userId: session.userId },
+        session.accessToken
+      );
 
   const logsResult = session.role === "admin"
     ? await postJson<PagedResult<AuditLogDto>, { pageNumber: number; pageSize: number }>(
@@ -276,11 +279,13 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
 
-  const wallet = await postJson<WalletDto, { userId: number }>(
-    "/api/wallet/by-user",
-    { userId: session.userId },
-    session.accessToken
-  );
+  const wallet = session.role === "seller" || !session.userId
+    ? null
+    : await postJson<WalletDto, { userId: number }>(
+        "/api/wallet/by-user",
+        { userId: session.userId },
+        session.accessToken
+      );
   const requests = mapWebRequests(webRequests);
 
   const products = productsResult.items.map(mapProduct);
@@ -295,7 +300,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
           item.sellerId,
           {
             id: `s-${item.sellerId}`,
-            userId: item.sellerId,
+            sellerId: item.sellerId,
             name: item.sellerName,
             email: `${item.sellerName.toLowerCase().replace(/\s+/g, ".")}@goldwallet.local`,
             businessName: item.sellerName,
@@ -309,10 +314,10 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
 
   return {
     sellers,
-    investors: mapInvestors(dashboard),
+    investors: dashboard ? mapInvestors(dashboard) : [],
     requests,
     products,
-    walletAssets: mapWalletAssets(wallet),
+    walletAssets: wallet ? mapWalletAssets(wallet) : [],
     invoices: products.slice(0, 5).map((product, index) => ({
       id: `inv-${index + 1}`,
       sellerId: product.sellerId,
@@ -327,8 +332,8 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
       serviceChargePercent: 2.5
     },
     notifications: mapNotifications(logsResult.items),
-    reports: mapReports(dashboard, requests.length),
-    currentUserName: dashboard.fullName
+    reports: dashboard ? mapReports(dashboard, requests.length) : [],
+    currentUserName: session.displayName ?? dashboard?.fullName
   };
 }
 

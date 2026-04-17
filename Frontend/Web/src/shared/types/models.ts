@@ -15,7 +15,7 @@ export type NavigationKey =
 
 export interface Seller {
   id: string;
-  userId: number;
+  sellerId: number;
   name: string;
   code?: string;
   email: string;
@@ -117,10 +117,11 @@ export interface ReportMetric {
 
 export interface UserSession {
   accessToken: string;
-  userId: number;
-  sellerId: number;
+  userId: number | null;
+  sellerId: number | null;
   role: UserRole;
   expiresAtUtc: string;
+  displayName?: string | null;
 }
 
 export interface MarketplaceState {

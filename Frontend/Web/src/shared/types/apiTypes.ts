@@ -18,8 +18,9 @@ export interface LoginResponseDto {
   accessToken: string;
   expiresAtUtc: string;
   role: string;
-  userId: number;
+  userId: number | null;
   sellerId: number | null;
+  displayName?: string | null;
 }
 
 export interface RegisterResponseDto {
