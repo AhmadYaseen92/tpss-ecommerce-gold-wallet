@@ -79,18 +79,22 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
         var productsBySellerSku = await dbContext.Products
             .AsNoTracking()
             .Where(x => sellerIds.Contains(x.SellerId))
-            .Select(x => new { x.SellerId, x.Sku, x.Name })
+            .Select(x => new { x.SellerId, x.Sku, x.Name, x.ImageUrl })
             .ToListAsync(cancellationToken);
 
         var productLookup = productsBySellerSku.ToDictionary(
             x => (x.SellerId, x.Sku),
-            x => x.Name,
+            x => (x.Name, x.ImageUrl),
             EqualityComparer<(int SellerId, string Sku)>.Default);
 
         var items = rows
             .Select(row =>
             {
-                var productName = ResolveProductName(row.history.SellerId, row.history.Notes, row.history.Category, productLookup);
+                var (productName, productImageUrl) = ResolveProductInfo(
+                    row.history.SellerId,
+                    row.history.Notes,
+                    row.history.Category,
+                    productLookup);
                 return new TransactionHistoryDto(
                     row.history.Id,
                     row.history.UserId,
@@ -108,23 +112,26 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
                     row.history.Amount,
                     row.history.Currency,
                     row.history.Notes,
-                    row.history.CreatedAtUtc);
+                    row.history.CreatedAtUtc,
+                    productImageUrl);
             })
             .ToList();
 
         return new PagedResult<TransactionHistoryDto>(items, totalCount, request.PageNumber, request.PageSize);
     }
 
-    private static string ResolveProductName(
+    private static (string ProductName, string ProductImageUrl) ResolveProductInfo(
         int? sellerId,
         string? notes,
         string fallback,
-        IReadOnlyDictionary<(int SellerId, string Sku), string> productLookup)
+        IReadOnlyDictionary<(int SellerId, string Sku), (string Name, string ImageUrl)> productLookup)
     {
-        if (!sellerId.HasValue) return fallback;
+        if (!sellerId.HasValue) return (fallback, string.Empty);
         var sku = TryExtractSku(notes);
-        if (string.IsNullOrWhiteSpace(sku)) return fallback;
-        return productLookup.TryGetValue((sellerId.Value, sku), out var name) ? name : fallback;
+        if (string.IsNullOrWhiteSpace(sku)) return (fallback, string.Empty);
+        return productLookup.TryGetValue((sellerId.Value, sku), out var product)
+            ? (product.Name, product.ImageUrl)
+            : (fallback, string.Empty);
     }
 
     private static string? TryExtractSku(string? notes)

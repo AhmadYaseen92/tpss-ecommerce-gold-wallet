@@ -31,4 +31,14 @@ class WalletActionRepositoryImpl implements IWalletActionRepository {
   Future<WalletActionExecutionResult> executeWalletAction(WalletActionExecutionRequest request) {
     return _remoteDataSource.executeWalletAction(request);
   }
+
+  @override
+  Future<List<InvestorRecipient>> searchInvestors(String query) {
+    return _remoteDataSource.searchInvestors(query);
+  }
+
+  @override
+  Future<InvestorRecipient?> lookupInvestor(String accountNumber) {
+    return _remoteDataSource.lookupInvestor(accountNumber);
+  }
 }

@@ -14,7 +14,11 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/wallet")]
-public class WalletController(IWalletService walletService, ICurrentUserService currentUser, AppDbContext dbContext) : SecuredControllerBase(currentUser)
+public class WalletController(
+    IWalletService walletService,
+    ICurrentUserService currentUser,
+    AppDbContext dbContext,
+    API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     private const string SellExecutionConfigKey = "wallet.sell.execution";
 
@@ -31,6 +35,56 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
     {
         var data = await ReadSellExecutionConfigurationAsync(cancellationToken);
         return Ok(ApiResponse<SellExecutionConfigurationResponse>.Ok(data));
+    }
+
+    [HttpGet("investors")]
+    public async Task<IActionResult> GetInvestors([FromQuery] string? query = null, CancellationToken cancellationToken = default)
+    {
+        var investorsQuery = dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.Role == "Investor" && x.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var term = query.Trim();
+            investorsQuery = investorsQuery.Where(x =>
+                x.FullName.Contains(term) ||
+                x.Email.Contains(term) ||
+                x.Id.ToString() == term);
+        }
+
+        var investors = await investorsQuery
+            .OrderBy(x => x.FullName)
+            .Take(50)
+            .Select(x => new InvestorRecipientDto
+            {
+                InvestorUserId = x.Id,
+                InvestorName = x.FullName,
+                AccountNumber = x.Id.ToString()
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(ApiResponse<List<InvestorRecipientDto>>.Ok(investors));
+    }
+
+    [HttpGet("investors/lookup")]
+    public async Task<IActionResult> LookupInvestor([FromQuery] string accountNumber, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(accountNumber))
+            return Ok(ApiResponse<InvestorRecipientDto?>.Ok(null));
+
+        var investor = await dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.Role == "Investor" && x.IsActive && x.Id.ToString() == accountNumber.Trim())
+            .Select(x => new InvestorRecipientDto
+            {
+                InvestorUserId = x.Id,
+                InvestorName = x.FullName,
+                AccountNumber = x.Id.ToString()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return Ok(ApiResponse<InvestorRecipientDto?>.Ok(investor));
     }
 
     [HttpPost("actions/execute")]
@@ -61,6 +115,12 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
 
         var perUnitWeight = asset.Quantity == 0 ? 0 : asset.Weight / asset.Quantity;
         var requestedWeight = request.Weight > 0 ? request.Weight : perUnitWeight * request.Quantity;
+        var maxWeightForRequestedQty = perUnitWeight > 0 ? perUnitWeight * request.Quantity : requestedWeight;
+        if (maxWeightForRequestedQty > 0)
+        {
+            requestedWeight = Math.Min(requestedWeight, maxWeightForRequestedQty);
+        }
+        requestedWeight = Math.Min(requestedWeight, asset.Weight);
         if (requestedWeight <= 0)
             return BadRequest(ApiResponse<object>.Fail("Weight must be greater than zero.", 400));
 
@@ -81,6 +141,22 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
         var shouldRequireSellerApproval = actionType == "sell";
         var status = shouldRequireSellerApproval ? "pending" : "approved";
 
+        string? recipientInvestorName = null;
+        if (actionType is "transfer" or "gift")
+        {
+            if (request.RecipientInvestorUserId is null || request.RecipientInvestorUserId <= 0)
+                return BadRequest(ApiResponse<object>.Fail("Recipient investor is required for transfer/gift.", 400));
+
+            recipientInvestorName = await dbContext.Users
+                .AsNoTracking()
+                .Where(x => x.Id == request.RecipientInvestorUserId.Value && x.Role == "Investor" && x.IsActive)
+                .Select(x => x.FullName)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(recipientInvestorName))
+                return BadRequest(ApiResponse<object>.Fail("Recipient investor account does not exist.", 400));
+        }
+
         if (!shouldRequireSellerApproval && actionType is "sell" or "transfer" or "gift" or "pickup")
         {
             asset.Quantity = Math.Max(0, asset.Quantity - request.Quantity);
@@ -91,6 +167,50 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
             {
                 dbContext.WalletAssets.Remove(asset);
             }
+        }
+
+        if (!shouldRequireSellerApproval && actionType is "transfer" or "gift" && request.RecipientInvestorUserId.HasValue)
+        {
+            var recipientWallet = await GetOrCreateWalletAsync(request.RecipientInvestorUserId.Value, wallet.CurrencyCode, cancellationToken);
+            AddOrUpdateRecipientAsset(
+                recipientWallet,
+                asset,
+                request.Quantity,
+                requestedWeight,
+                unitPrice);
+            recipientWallet.UpdatedAtUtc = DateTime.UtcNow;
+
+            var senderName = await dbContext.Users
+                .Where(x => x.Id == request.UserId)
+                .Select(x => x.FullName)
+                .FirstOrDefaultAsync(cancellationToken) ?? $"Investor {request.UserId}";
+
+            dbContext.TransactionHistories.Add(new TransactionHistory
+            {
+                UserId = request.RecipientInvestorUserId.Value,
+                SellerId = asset.SellerId,
+                TransactionType = actionType,
+                Status = status,
+                Category = asset.Category.ToString(),
+                Quantity = request.Quantity,
+                UnitPrice = unitPrice,
+                Weight = requestedWeight,
+                Unit = asset.Unit,
+                Purity = asset.Purity,
+                Amount = grossAmount,
+                Currency = recipientWallet.CurrencyCode,
+                Notes = $"direction=received|from_investor_user_id={request.UserId}|from_investor_name={senderName}|{BuildNotes(request, executionMode)}",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+
+            dbContext.AppNotifications.Add(new AppNotification
+            {
+                UserId = request.RecipientInvestorUserId.Value,
+                Title = actionType == "gift" ? "Gift received" : "Transfer received",
+                Body = $"{request.Quantity} unit(s) received from {senderName}.",
+                IsRead = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
         }
 
         if (!shouldRequireSellerApproval && actionType is "sell")
@@ -114,7 +234,7 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
             Purity = asset.Purity,
             Amount = grossAmount,
             Currency = wallet.CurrencyCode,
-            Notes = BuildNotes(request, executionMode),
+            Notes = BuildNotes(request, executionMode, recipientInvestorName),
             CreatedAtUtc = DateTime.UtcNow
         };
         dbContext.TransactionHistories.Add(history);
@@ -165,6 +285,13 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-action:{actionType}:{request.UserId}", cancellationToken);
+        if (!shouldRequireSellerApproval && actionType is "transfer" or "gift" && request.RecipientInvestorUserId.HasValue)
+        {
+            await realtimeNotifier.BroadcastRefreshHintAsync(
+                $"wallet-action:{actionType}:{request.RecipientInvestorUserId.Value}",
+                cancellationToken);
+        }
 
         var portfolioValue = await dbContext.WalletAssets
             .Where(x => x.WalletId == wallet.Id)
@@ -219,16 +346,91 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
             CreatedAtUtc = DateTime.UtcNow
         });
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-request:{entity.TransactionType}:{request.UserId}", cancellationToken);
 
         return Ok(ApiResponse<object>.Ok(new { id = $"r-{entity.Id}", status = entity.Status }, "Request submitted"));
     }
 
-    private static string BuildNotes(ExecuteWalletActionRequest request, string executionMode)
+    private static string BuildNotes(ExecuteWalletActionRequest request, string executionMode, string? recipientInvestorName = null)
     {
         var meta = $"execution_mode={executionMode}|wallet_asset_id={request.WalletAssetId}";
+        if (request.RecipientInvestorUserId.HasValue)
+        {
+            meta = $"{meta}|recipient_investor_user_id={request.RecipientInvestorUserId.Value}";
+            if (!string.IsNullOrWhiteSpace(recipientInvestorName))
+            {
+                meta = $"{meta}|recipient_investor_name={recipientInvestorName}";
+            }
+        }
         return string.IsNullOrWhiteSpace(request.Notes)
             ? meta
             : $"{request.Notes.Trim()} | {meta}";
+    }
+
+    private async Task<Wallet> GetOrCreateWalletAsync(int userId, string currencyCode, CancellationToken cancellationToken)
+    {
+        var wallet = await dbContext.Wallets
+            .Include(x => x.Assets)
+            .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
+        if (wallet is not null) return wallet;
+
+        wallet = new Wallet
+        {
+            UserId = userId,
+            CurrencyCode = string.IsNullOrWhiteSpace(currencyCode) ? "USD" : currencyCode,
+            CashBalance = 0,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        };
+        dbContext.Wallets.Add(wallet);
+        return wallet;
+    }
+
+    private static void AddOrUpdateRecipientAsset(
+        Wallet recipientWallet,
+        WalletAsset sourceAsset,
+        int quantity,
+        decimal weight,
+        decimal unitPrice)
+    {
+        var qtyToAdd = Math.Max(1, quantity);
+        var weightToAdd = Math.Max(0.001m, weight);
+
+        var existing = recipientWallet.Assets.FirstOrDefault(x =>
+            x.SellerId == sourceAsset.SellerId &&
+            x.Category == sourceAsset.Category &&
+            x.Unit == sourceAsset.Unit &&
+            x.Purity == sourceAsset.Purity);
+
+        if (existing is null)
+        {
+            recipientWallet.Assets.Add(new WalletAsset
+            {
+                SellerId = sourceAsset.SellerId,
+                SellerName = sourceAsset.SellerName,
+                Category = sourceAsset.Category,
+                AssetType = sourceAsset.AssetType,
+                Quantity = qtyToAdd,
+                Weight = weightToAdd,
+                Unit = sourceAsset.Unit,
+                Purity = sourceAsset.Purity,
+                AverageBuyPrice = unitPrice,
+                CurrentMarketPrice = sourceAsset.CurrentMarketPrice > 0 ? sourceAsset.CurrentMarketPrice : unitPrice,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+            return;
+        }
+
+        var newTotalQty = existing.Quantity + qtyToAdd;
+        existing.AverageBuyPrice = newTotalQty <= 0
+            ? existing.AverageBuyPrice
+            : ((existing.AverageBuyPrice * existing.Quantity) + (unitPrice * qtyToAdd)) / newTotalQty;
+        existing.Quantity = newTotalQty;
+        existing.Weight += weightToAdd;
+        existing.CurrentMarketPrice = sourceAsset.CurrentMarketPrice > 0 ? sourceAsset.CurrentMarketPrice : unitPrice;
+        existing.UpdatedAtUtc = DateTime.UtcNow;
     }
 
     private async Task<SellExecutionConfigurationResponse> ReadSellExecutionConfigurationAsync(CancellationToken cancellationToken)
@@ -270,8 +472,16 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
         public decimal UnitPrice { get; set; }
         public decimal Weight { get; set; }
         public decimal Amount { get; set; }
+        public int? RecipientInvestorUserId { get; set; }
         public string? Notes { get; set; }
         public DateTime? QuoteLockedUntilUtc { get; set; }
+    }
+
+    public sealed class InvestorRecipientDto
+    {
+        public int InvestorUserId { get; set; }
+        public string InvestorName { get; set; } = string.Empty;
+        public string AccountNumber { get; set; } = string.Empty;
     }
 
     public sealed class ExecuteWalletActionResponse

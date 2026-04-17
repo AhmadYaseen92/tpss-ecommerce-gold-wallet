@@ -6,6 +6,7 @@ class TransactionModel {
   final String transactionType;
   final String status;
   final String productName;
+  final String productImageUrl;
   final String category;
   final int quantity;
   final double unitPrice;
@@ -26,6 +27,7 @@ class TransactionModel {
     required this.transactionType,
     required this.status,
     required this.productName,
+    required this.productImageUrl,
     required this.category,
     required this.quantity,
     required this.unitPrice,
@@ -48,6 +50,7 @@ class TransactionModel {
       transactionType: (json['transactionType'] ?? '') as String,
       status: (json['status'] ?? '') as String,
       productName: (json['productName'] ?? json['category'] ?? '') as String,
+      productImageUrl: (json['productImageUrl'] ?? '') as String,
       category: (json['category'] ?? '') as String,
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0,
@@ -66,4 +69,66 @@ class TransactionModel {
   }
 
   DateTime get displayDate => updatedAtUtc ?? createdAtUtc;
+
+  bool get isGiftReceived =>
+      transactionType.toLowerCase() == 'gift' &&
+      (_readNoteValue('direction')?.toLowerCase() == 'received');
+
+  bool get isTransferOrGift {
+    final type = transactionType.toLowerCase();
+    return type == 'transfer' || type == 'gift';
+  }
+
+  bool get isIncomingTransferOrGift =>
+      isTransferOrGift && (_readNoteValue('direction')?.toLowerCase() == 'received');
+
+  String? get fromInvestorName => _readNoteValue('from_investor_name');
+
+  String? get toInvestorName => _readNoteValue('recipient_investor_name');
+
+  String? get fromInvestorUserId => _readNoteValue('from_investor_user_id');
+
+  String? get toInvestorUserId => _readNoteValue('recipient_investor_user_id');
+
+  String get transferFromLabel {
+    if (!isTransferOrGift) return '-';
+    if (isIncomingTransferOrGift) {
+      return fromInvestorName ?? _formatInvestorId(fromInvestorUserId);
+    }
+    return investorName;
+  }
+
+  String get transferToLabel {
+    if (!isTransferOrGift) return '-';
+    if (isIncomingTransferOrGift) return investorName;
+    return toInvestorName ?? _formatInvestorId(toInvestorUserId);
+  }
+
+  String? _readNoteValue(String key) {
+    if (notes.isEmpty) return null;
+    final marker = '$key=';
+    final start = notes.toLowerCase().indexOf(marker.toLowerCase());
+    if (start < 0) return null;
+    final valueStart = start + marker.length;
+    if (valueStart >= notes.length) return null;
+    final tail = notes.substring(valueStart).trim();
+    if (tail.isEmpty) return null;
+
+    final separators = ['|', ',', ';'];
+    var stopIndex = tail.length;
+    for (final separator in separators) {
+      final index = tail.indexOf(separator);
+      if (index >= 0 && index < stopIndex) {
+        stopIndex = index;
+      }
+    }
+
+    final value = tail.substring(0, stopIndex).trim();
+    return value.isEmpty ? null : value;
+  }
+
+  String _formatInvestorId(String? id) {
+    if (id == null || id.isEmpty) return 'Unknown';
+    return 'Investor #$id';
+  }
 }

@@ -15,6 +15,7 @@ class WalletActionSummary {
   final String totalValue;
   final String destinationLabel;
   final String destinationValue;
+  final int? recipientInvestorUserId;
   final String? note;
   final String referenceNumber;
   final DateTime createdAt;
@@ -29,6 +30,7 @@ class WalletActionSummary {
     required this.totalValue,
     required this.destinationLabel,
     required this.destinationValue,
+    this.recipientInvestorUserId,
     this.note,
     required this.referenceNumber,
     required this.createdAt,
@@ -44,6 +46,7 @@ class WalletActionExecutionRequest {
   final double weight;
   final double amount;
   final String? notes;
+  final int? recipientInvestorUserId;
 
   const WalletActionExecutionRequest({
     required this.walletAssetId,
@@ -53,6 +56,7 @@ class WalletActionExecutionRequest {
     required this.weight,
     required this.amount,
     this.notes,
+    this.recipientInvestorUserId,
   });
 }
 
@@ -70,4 +74,24 @@ class WalletActionExecutionResult {
     required this.totalPortfolioValue,
     this.lockedPriceUntilUtc,
   });
+}
+
+class InvestorRecipient {
+  final int investorUserId;
+  final String investorName;
+  final String accountNumber;
+
+  const InvestorRecipient({
+    required this.investorUserId,
+    required this.investorName,
+    required this.accountNumber,
+  });
+
+  factory InvestorRecipient.fromJson(Map<String, dynamic> json) {
+    return InvestorRecipient(
+      investorUserId: (json['investorUserId'] as num?)?.toInt() ?? 0,
+      investorName: (json['investorName'] ?? '').toString(),
+      accountNumber: (json['accountNumber'] ?? '').toString(),
+    );
+  }
 }

@@ -327,12 +327,27 @@ class TransactionPage extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        if (transaction.productImageUrl.trim().isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              transaction.productImageUrl,
+                              width: 64,
+                              height: 64,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_outlined),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 6),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: [
                             _detailChip('Type', transaction.transactionType),
+                            if (transaction.isGiftReceived)
+                              _detailChip('Gift', 'Received'),
                             _detailChip('Status', transaction.status),
                             _detailChip('Category', transaction.category),
                             _detailChip('Qty', '${transaction.quantity}'),
@@ -351,6 +366,10 @@ class TransactionPage extends StatelessWidget {
                         _detailRow('Id', '${transaction.id}'),
                         _detailRow('UserId', '${transaction.userId}'),
                         _detailRow('SellerId', '${transaction.sellerId ?? '-'}'),
+                        if (transaction.isTransferOrGift) ...[
+                          _detailRow('Transfer From', transaction.transferFromLabel),
+                          _detailRow('Transfer To', transaction.transferToLabel),
+                        ],
                         _detailRow('Unit Price', transaction.unitPrice.toStringAsFixed(2)),
                         _detailRow('Purity', transaction.purity.toStringAsFixed(2)),
                         _detailRow('Created', createdText),

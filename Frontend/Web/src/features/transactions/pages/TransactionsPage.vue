@@ -44,7 +44,17 @@ const formatQty = (quantity: number) => quantity.toLocaleString();
       <tr v-for="trx in items" :key="trx.id">
         <td>{{ trx.id }}</td>
         <td>{{ trx.investorName }}</td>
-        <td>{{ trx.productName }}</td>
+        <td>
+          <div class="product-cell">
+            <img
+              v-if="trx.productImageUrl"
+              :src="trx.productImageUrl"
+              :alt="trx.productName"
+              class="product-thumb"
+            />
+            <span>{{ trx.productName }}</span>
+          </div>
+        </td>
         <td>{{ trx.category }}</td>
         <td>{{ trx.transactionType }}</td>
         <td>{{ formatQty(trx.quantity) }}</td>
@@ -68,3 +78,19 @@ const formatQty = (quantity: number) => quantity.toLocaleString();
     </tbody>
   </table>
 </template>
+
+<style scoped>
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-thumb {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+</style>

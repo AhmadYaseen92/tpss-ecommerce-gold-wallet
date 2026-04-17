@@ -9,6 +9,7 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace GoldWalletSystem.API.Controllers;
@@ -437,20 +438,20 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
     private int? ResolveSellerScope()
     {
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
+        var role = GetRoleClaim();
         if (string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }
 
-        return int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var sellerId)
+        return int.TryParse(GetSellerIdClaim(), out var sellerId)
             ? sellerId
             : null;
     }
 
     private bool IsSellerOrAdmin()
     {
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
+        var role = GetRoleClaim();
         return string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase)
                || string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
     }
@@ -468,7 +469,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
     private int ResolveSellerId(int? requestedSellerId, int fallbackSellerId = 0)
     {
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
+        var role = GetRoleClaim();
         if (string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
         {
             var resolved = requestedSellerId ?? fallbackSellerId;
@@ -476,11 +477,19 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             return resolved;
         }
 
-        if (int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var sellerId) && sellerId > 0)
+        if (int.TryParse(GetSellerIdClaim(), out var sellerId) && sellerId > 0)
             return sellerId;
 
         throw new UnauthorizedAccessException("Seller scope is required.");
     }
+
+    private string GetRoleClaim()
+        => User.Claims.FirstOrDefault(c => c.Type == "role")?.Value?.Trim()
+           ?? User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value?.Trim()
+           ?? string.Empty;
+
+    private string? GetSellerIdClaim()
+        => User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value?.Trim();
 
     private async Task<string> SaveImageAsync(IFormFile? image, string? existingImageUrl, CancellationToken cancellationToken)
     {

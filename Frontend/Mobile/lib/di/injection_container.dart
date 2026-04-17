@@ -74,7 +74,7 @@ class InjectionContainer {
   static final ProductLocalDataSource _productLocalDataSource =
       ProductLocalDataSource();
   static final TransferLocalDataSource _transferLocalDataSource =
-      TransferLocalDataSource();
+      TransferLocalDataSource(sl<Dio>());
   static final SellLocalDataSource _sellLocalDataSource = SellLocalDataSource();
   static final RealtimeRefreshService _realtimeRefreshService = RealtimeRefreshService();
 
@@ -274,4 +274,3 @@ class InjectionContainer {
     return _realtimeRefreshService;
   }
 }
-

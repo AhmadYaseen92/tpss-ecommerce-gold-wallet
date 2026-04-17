@@ -33,10 +33,25 @@ class TransactionItemWidget extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    TransactionIcon(
-                      type: transaction.transactionType,
-                      status: transaction.status,
-                    ),
+                    if (transaction.productImageUrl.trim().isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          transaction.productImageUrl,
+                          width: 42,
+                          height: 42,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => TransactionIcon(
+                            type: transaction.transactionType,
+                            status: transaction.status,
+                          ),
+                        ),
+                      )
+                    else
+                      TransactionIcon(
+                        type: transaction.transactionType,
+                        status: transaction.status,
+                      ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(

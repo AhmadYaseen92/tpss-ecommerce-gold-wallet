@@ -282,7 +282,11 @@ export function useMarketplace() {
 
   const loadWalletSellConfiguration = async () => {
     if (!session.value?.accessToken) return;
-    walletSellConfiguration.value = await fetchWalletSellConfiguration(session.value.accessToken);
+    try {
+      walletSellConfiguration.value = await fetchWalletSellConfiguration(session.value.accessToken);
+    } catch {
+      walletSellConfiguration.value = { mode: "locked_30_seconds", lockSeconds: 30 };
+    }
   };
 
   const restoreSession = async () => {

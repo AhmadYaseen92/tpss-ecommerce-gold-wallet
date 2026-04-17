@@ -205,14 +205,24 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
   Future<void> _submitAction() async {
     setState(() => _isSubmitting = true);
     try {
+      final requestedQuantity = int.tryParse(widget.summary.primaryValue.split(' ').first) ?? 1;
+      final safeQuantity = requestedQuantity.clamp(1, widget.summary.asset.quantity).toInt();
+      final perUnitWeight = widget.summary.asset.quantity == 0
+          ? 0.0
+          : widget.summary.asset.weightInGrams / widget.summary.asset.quantity;
+      final requestedWeight = perUnitWeight * safeQuantity.toDouble();
+      final unitPricePerGram = widget.summary.asset.marketPricePerGram;
+      final requestedAmount = unitPricePerGram * requestedWeight;
+
       final result = await _walletActionRepository.executeWalletAction(
         WalletActionExecutionRequest(
           walletAssetId: widget.summary.asset.id,
           actionType: widget.summary.actionType,
-          quantity: int.tryParse(widget.summary.primaryValue.split(' ').first) ?? 1,
-          unitPrice: widget.summary.asset.marketPricePerGram,
-          weight: widget.summary.asset.weightInGrams,
-          amount: widget.summary.asset.marketValueAmount,
+          quantity: safeQuantity,
+          unitPrice: unitPricePerGram,
+          weight: requestedWeight,
+          amount: requestedAmount,
+          recipientInvestorUserId: widget.summary.recipientInvestorUserId,
           notes: widget.summary.note,
         ),
       );

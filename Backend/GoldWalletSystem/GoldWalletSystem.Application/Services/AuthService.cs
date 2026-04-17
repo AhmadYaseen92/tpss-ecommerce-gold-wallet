@@ -42,7 +42,8 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             ExpiresAtUtc = token.ExpiresAtUtc,
             Role = role,
             UserId = user.Id,
-            SellerId = sellerId
+            SellerId = sellerId,
+            DisplayName = user.FullName
         };
     }
 

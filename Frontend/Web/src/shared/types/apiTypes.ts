@@ -18,8 +18,9 @@ export interface LoginResponseDto {
   accessToken: string;
   expiresAtUtc: string;
   role: string;
-  userId: number;
+  userId: number | null;
   sellerId: number | null;
+  displayName?: string | null;
 }
 
 export interface RegisterResponseDto {
@@ -93,6 +94,7 @@ export interface WebRequestDto {
   investorName: string;
   type: string;
   productName: string;
+  productImageUrl?: string;
   category: string;
   quantity: number;
   unitPrice: number;

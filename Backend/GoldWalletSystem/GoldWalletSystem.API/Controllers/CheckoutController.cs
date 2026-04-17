@@ -12,7 +12,10 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/checkout")]
-public class CheckoutController(AppDbContext dbContext, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
+public class CheckoutController(
+    AppDbContext dbContext,
+    ICurrentUserService currentUser,
+    API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     [HttpPost("confirm")]
     public async Task<IActionResult> Confirm([FromBody] CheckoutConfirmRequest request, CancellationToken cancellationToken = default)
@@ -133,6 +136,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"checkout:{request.UserId}", cancellationToken);
 
         return Ok(ApiResponse<object>.Ok(new
         {

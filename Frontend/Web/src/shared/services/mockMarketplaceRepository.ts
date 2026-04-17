@@ -4,7 +4,7 @@ export const mockMarketplaceState: MarketplaceState = {
   sellers: [
     {
       id: "s-100",
-      userId: 100,
+      sellerId: 100,
       name: "Lina Kareem",
       email: "lina@desertbullion.com",
       businessName: "Desert Bullion",

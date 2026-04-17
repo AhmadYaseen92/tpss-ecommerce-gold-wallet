@@ -2,22 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 
 part 'transfer_asset_action_state.dart';
 
 class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
-  TransferAssetActionCubit({required this.asset})
+  TransferAssetActionCubit({required this.asset, required IWalletActionRepository walletActionRepository})
     : recipientNameController = TextEditingController(),
       recipientContactController = TextEditingController(),
       quantityController = TextEditingController(text: '1'),
       messageController = TextEditingController(),
+      _walletActionRepository = walletActionRepository,
       super(TransferAssetActionInitial()) {
     quantityController.addListener(_emitUpdated);
     recipientContactController.addListener(_onRecipientChanged);
   }
 
   final WalletTransactionEntity asset;
+  final IWalletActionRepository _walletActionRepository;
 
   final TextEditingController recipientNameController;
   final TextEditingController recipientContactController;
@@ -26,8 +29,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
 
   WalletActionType transferType = WalletActionType.transfer;
   bool isRecipientVerified = false;
-
-  final Set<String> _registeredAccounts = {'1001', '1002'};
+  int? recipientInvestorUserId;
 
   int get maxQuantity => asset.quantity;
   double get unitPrice => _parseCurrency(asset.marketValue) / maxQuantity;
@@ -69,10 +71,26 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
     return null;
   }
 
-  void verifyRecipientAccount() {
+  Future<void> verifyRecipientAccount() async {
     final accountNo = recipientContactController.text.trim();
-    isRecipientVerified =
-        accountNo.isNotEmpty && _registeredAccounts.contains(accountNo);
+    if (accountNo.isEmpty) {
+      isRecipientVerified = false;
+      recipientInvestorUserId = null;
+      _emitUpdated();
+      return;
+    }
+
+    try {
+      final investor = await _walletActionRepository.lookupInvestor(accountNo);
+      isRecipientVerified = investor != null;
+      recipientInvestorUserId = investor?.investorUserId;
+      if (investor != null && recipientNameController.text.trim().isEmpty) {
+        recipientNameController.text = investor.investorName;
+      }
+    } catch (_) {
+      isRecipientVerified = false;
+      recipientInvestorUserId = null;
+    }
     _emitUpdated();
   }
 
@@ -95,6 +113,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
       totalValue: formatCurrency(estimatedValue),
       destinationLabel: 'Recipient Account No.',
       destinationValue: recipientContactController.text.trim(),
+      recipientInvestorUserId: recipientInvestorUserId,
       note: messageController.text.trim(),
       referenceNumber: 'TRX-${DateTime.now().millisecondsSinceEpoch}',
       createdAt: DateTime.now(),

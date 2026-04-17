@@ -246,6 +246,20 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{nextStatus}", cancellationToken);
+        if (nextStatus == "approved" && item.TransactionType is not null)
+        {
+            var action = item.TransactionType.Trim().ToLowerInvariant();
+            if (action is "transfer" or "gift")
+            {
+                var recipientInvestorId = TryExtractRecipientInvestorUserId(item.Notes);
+                if (recipientInvestorId.HasValue)
+                {
+                    await realtimeNotifier.BroadcastRefreshHintAsync(
+                        $"wallet-action:{action}:{recipientInvestorId.Value}",
+                        cancellationToken);
+                }
+            }
+        }
 
         return Ok(ApiResponse<string>.Ok("updated"));
     }
@@ -443,7 +457,6 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
     }
 
 
-    [Authorize(Roles = SystemRoles.Admin)]
     [HttpGet("wallet/sell-configuration")]
     public async Task<IActionResult> GetWalletSellConfiguration(CancellationToken cancellationToken)
     {
@@ -579,10 +592,12 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         var products = await dbContext.Products
             .AsNoTracking()
             .Where(x => sellerIds.Contains(x.SellerId) && skuValues.Contains(x.Sku))
-            .Select(x => new { x.SellerId, x.Sku, x.Name })
+            .Select(x => new { x.SellerId, x.Sku, x.Name, x.ImageUrl })
             .ToListAsync(cancellationToken);
 
-        var productLookup = products.ToDictionary(x => (x.SellerId, x.Sku), x => x.Name);
+        var productLookup = products.ToDictionary(
+            x => (x.SellerId, x.Sku),
+            x => (x.Name, x.ImageUrl));
 
         foreach (var request in requests)
         {
@@ -593,19 +608,34 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             if (history is null)
             {
                 request.ProductName = request.Category;
+                request.ProductImageUrl = string.Empty;
                 continue;
             }
 
             var sku = TryExtractSku(history.Notes);
-            if (history.SellerId.HasValue && !string.IsNullOrWhiteSpace(sku) && productLookup.TryGetValue((history.SellerId.Value, sku), out var productName))
+            if (history.SellerId.HasValue &&
+                !string.IsNullOrWhiteSpace(sku) &&
+                productLookup.TryGetValue((history.SellerId.Value, sku), out var product))
             {
-                request.ProductName = productName;
+                request.ProductName = product.Name;
+                request.ProductImageUrl = ToAbsoluteAssetUrl(product.ImageUrl);
             }
             else
             {
                 request.ProductName = history.Category;
+                request.ProductImageUrl = string.Empty;
             }
         }
+    }
+
+    private string ToAbsoluteAssetUrl(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl)) return string.Empty;
+        if (Uri.TryCreate(imageUrl, UriKind.Absolute, out _)) return imageUrl;
+
+        var request = HttpContext.Request;
+        var normalized = imageUrl.StartsWith('/') ? imageUrl : $"/{imageUrl}";
+        return $"{request.Scheme}://{request.Host}{normalized}";
     }
 
     private async Task<WebFeesDto> ReadFeesAsync(CancellationToken cancellationToken)
@@ -683,15 +713,72 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             var asset = walletAssetId.HasValue
                 ? wallet.Assets.FirstOrDefault(x => x.Id == walletAssetId.Value)
                 : wallet.Assets.FirstOrDefault(x => x.SellerId == request.SellerId && x.Category.ToString().Equals(request.Category, StringComparison.OrdinalIgnoreCase));
+            var weightToRemove = 0m;
             if (asset is not null)
             {
                 var qtyToRemove = Math.Max(1, request.Quantity);
+                var perUnitWeight = asset.Quantity == 0 ? 0 : asset.Weight / asset.Quantity;
+                var maxWeightForRequestedQty = perUnitWeight > 0 ? perUnitWeight * qtyToRemove : request.Weight;
+                weightToRemove = request.Weight > 0 ? request.Weight : maxWeightForRequestedQty;
+                if (maxWeightForRequestedQty > 0)
+                {
+                    weightToRemove = Math.Min(weightToRemove, maxWeightForRequestedQty);
+                }
+                weightToRemove = Math.Min(weightToRemove, asset.Weight);
+
                 asset.Quantity = Math.Max(asset.Quantity - qtyToRemove, 0);
-                asset.Weight = Math.Max(asset.Weight - request.Weight, 0);
+                asset.Weight = Math.Max(asset.Weight - weightToRemove, 0);
                 asset.UpdatedAtUtc = DateTime.UtcNow;
                 if (asset.Quantity == 0 && asset.Weight <= 0)
                 {
                     dbContext.WalletAssets.Remove(asset);
+                }
+            }
+
+            if (action is "transfer" or "gift")
+            {
+                var recipientInvestorId = TryExtractRecipientInvestorUserId(request.Notes);
+                if (recipientInvestorId.HasValue && recipientInvestorId.Value > 0)
+                {
+                    var recipientWallet = await GetOrCreateWalletForUserAsync(recipientInvestorId.Value, wallet.CurrencyCode, cancellationToken);
+                    if (asset is not null)
+                    {
+                        AddOrUpdateRecipientAsset(recipientWallet, asset, request.Quantity, weightToRemove, request.UnitPrice);
+                    }
+
+                    var senderName = await dbContext.Users
+                        .Where(x => x.Id == request.UserId)
+                        .Select(x => x.FullName)
+                        .FirstOrDefaultAsync(cancellationToken) ?? $"Investor {request.UserId}";
+
+                    dbContext.TransactionHistories.Add(new Domain.Entities.TransactionHistory
+                    {
+                        UserId = recipientInvestorId.Value,
+                        SellerId = request.SellerId,
+                        TransactionType = action,
+                        Status = "approved",
+                        Category = request.Category,
+                        Quantity = request.Quantity,
+                        UnitPrice = request.UnitPrice,
+                        Weight = weightToRemove > 0 ? weightToRemove : request.Weight,
+                        Unit = request.Unit,
+                        Purity = request.Purity,
+                        Amount = weightToRemove > 0 && request.UnitPrice > 0
+                            ? request.UnitPrice * weightToRemove
+                            : request.Amount,
+                        Currency = recipientWallet.CurrencyCode,
+                        Notes = $"direction=received|from_investor_user_id={request.UserId}|from_investor_name={senderName}|source_request_id={request.Id}",
+                        CreatedAtUtc = DateTime.UtcNow
+                    });
+
+                    dbContext.AppNotifications.Add(new Domain.Entities.AppNotification
+                    {
+                        UserId = recipientInvestorId.Value,
+                        Title = action == "gift" ? "Gift received" : "Transfer received",
+                        Body = $"{request.Quantity} unit(s) received from {senderName}.",
+                        IsRead = false,
+                        CreatedAtUtc = DateTime.UtcNow
+                    });
                 }
             }
 
@@ -748,7 +835,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 product.AvailableStock -= quantity;
             }
         }
-        else if (action is "sell" or "pickup" or "transfer" or "gift")
+        else if (action is "sell" or "pickup")
         {
             if (nextStatus == "approved")
             {
@@ -793,6 +880,89 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
         var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail;
         return int.TryParse(rawValue, out var id) ? id : null;
+    }
+
+    private static int? TryExtractRecipientInvestorUserId(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+
+        const string marker = "recipient_investor_user_id=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+
+        var tail = notes[valueStart..].Trim();
+        var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
+        var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail;
+        return int.TryParse(rawValue, out var id) ? id : null;
+    }
+
+    private async Task<Domain.Entities.Wallet> GetOrCreateWalletForUserAsync(int userId, string currencyCode, CancellationToken cancellationToken)
+    {
+        var wallet = await dbContext.Wallets
+            .Include(x => x.Assets)
+            .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
+        if (wallet is not null) return wallet;
+
+        wallet = new Domain.Entities.Wallet
+        {
+            UserId = userId,
+            CurrencyCode = string.IsNullOrWhiteSpace(currencyCode) ? "USD" : currencyCode,
+            CashBalance = 0,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        };
+        dbContext.Wallets.Add(wallet);
+        return wallet;
+    }
+
+    private static void AddOrUpdateRecipientAsset(
+        Domain.Entities.Wallet recipientWallet,
+        Domain.Entities.WalletAsset sourceAsset,
+        int quantity,
+        decimal weight,
+        decimal unitPrice)
+    {
+        var qtyToAdd = Math.Max(1, quantity);
+        var weightToAdd = Math.Max(0.001m, weight);
+
+        var existing = recipientWallet.Assets.FirstOrDefault(x =>
+            x.SellerId == sourceAsset.SellerId &&
+            x.Category == sourceAsset.Category &&
+            x.Unit == sourceAsset.Unit &&
+            x.Purity == sourceAsset.Purity);
+
+        if (existing is null)
+        {
+            recipientWallet.Assets.Add(new Domain.Entities.WalletAsset
+            {
+                SellerId = sourceAsset.SellerId,
+                SellerName = sourceAsset.SellerName,
+                Category = sourceAsset.Category,
+                AssetType = sourceAsset.AssetType,
+                Quantity = qtyToAdd,
+                Weight = weightToAdd,
+                Unit = sourceAsset.Unit,
+                Purity = sourceAsset.Purity,
+                AverageBuyPrice = unitPrice,
+                CurrentMarketPrice = sourceAsset.CurrentMarketPrice > 0 ? sourceAsset.CurrentMarketPrice : unitPrice,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+            return;
+        }
+
+        var newTotalQty = existing.Quantity + qtyToAdd;
+        existing.AverageBuyPrice = newTotalQty <= 0
+            ? existing.AverageBuyPrice
+            : ((existing.AverageBuyPrice * existing.Quantity) + (unitPrice * qtyToAdd)) / newTotalQty;
+        existing.Quantity = newTotalQty;
+        existing.Weight += weightToAdd;
+        existing.CurrentMarketPrice = sourceAsset.CurrentMarketPrice > 0 ? sourceAsset.CurrentMarketPrice : unitPrice;
+        existing.UpdatedAtUtc = DateTime.UtcNow;
     }
 
     private async Task CreateInvoiceForApprovedRequestAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)

@@ -13,6 +13,14 @@ defineProps<{ item: TransactionRowView | null }>();
     <p><strong>Investor ID:</strong> {{ item.investorId }}</p>
     <p><strong>Investor:</strong> {{ item.investorName }}</p>
     <p><strong>Type:</strong> {{ item.transactionType }}</p>
+    <p v-if="item.productImageUrl" class="detail-image-row">
+      <strong>Item Image:</strong>
+      <img :src="item.productImageUrl" :alt="item.productName" class="detail-image" />
+    </p>
+    <template v-if="['transfer', 'gift'].includes((item.transactionType || '').toLowerCase())">
+      <p><strong>Transfer From:</strong> {{ item.transferFrom || "—" }}</p>
+      <p><strong>Transfer To:</strong> {{ item.transferTo || "—" }}</p>
+    </template>
     <p><strong>Product:</strong> {{ item.productName }}</p>
     <p><strong>Category:</strong> {{ item.category }}</p>
     <p><strong>Quantity:</strong> {{ item.quantity.toLocaleString() }}</p>
@@ -38,5 +46,19 @@ defineProps<{ item: TransactionRowView | null }>();
   padding: 20px;
   background: var(--card-bg, #fff);
   box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+.detail-image-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-image {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
 }
 </style>

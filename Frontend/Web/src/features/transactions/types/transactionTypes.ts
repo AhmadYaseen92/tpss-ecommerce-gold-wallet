@@ -3,6 +3,7 @@ export interface TransactionRowView {
   investorId: string;
   investorName: string;
   productName: string;
+  productImageUrl?: string;
   category: string;
   transactionType: string;
   quantity: number;
@@ -14,6 +15,8 @@ export interface TransactionRowView {
   currency: string;
   status: string;
   notes?: string;
+  transferFrom?: string;
+  transferTo?: string;
   createdAt: string;
   updatedAt?: string;
 }
