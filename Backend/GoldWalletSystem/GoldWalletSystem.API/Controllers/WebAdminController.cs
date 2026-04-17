@@ -592,10 +592,12 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         var products = await dbContext.Products
             .AsNoTracking()
             .Where(x => sellerIds.Contains(x.SellerId) && skuValues.Contains(x.Sku))
-            .Select(x => new { x.SellerId, x.Sku, x.Name })
+            .Select(x => new { x.SellerId, x.Sku, x.Name, x.ImageUrl })
             .ToListAsync(cancellationToken);
 
-        var productLookup = products.ToDictionary(x => (x.SellerId, x.Sku), x => x.Name);
+        var productLookup = products.ToDictionary(
+            x => (x.SellerId, x.Sku),
+            x => (x.Name, x.ImageUrl));
 
         foreach (var request in requests)
         {
@@ -606,19 +608,34 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             if (history is null)
             {
                 request.ProductName = request.Category;
+                request.ProductImageUrl = string.Empty;
                 continue;
             }
 
             var sku = TryExtractSku(history.Notes);
-            if (history.SellerId.HasValue && !string.IsNullOrWhiteSpace(sku) && productLookup.TryGetValue((history.SellerId.Value, sku), out var productName))
+            if (history.SellerId.HasValue &&
+                !string.IsNullOrWhiteSpace(sku) &&
+                productLookup.TryGetValue((history.SellerId.Value, sku), out var product))
             {
-                request.ProductName = productName;
+                request.ProductName = product.Name;
+                request.ProductImageUrl = ToAbsoluteAssetUrl(product.ImageUrl);
             }
             else
             {
                 request.ProductName = history.Category;
+                request.ProductImageUrl = string.Empty;
             }
         }
+    }
+
+    private string ToAbsoluteAssetUrl(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl)) return string.Empty;
+        if (Uri.TryCreate(imageUrl, UriKind.Absolute, out _)) return imageUrl;
+
+        var request = HttpContext.Request;
+        var normalized = imageUrl.StartsWith('/') ? imageUrl : $"/{imageUrl}";
+        return $"{request.Scheme}://{request.Host}{normalized}";
     }
 
     private async Task<WebFeesDto> ReadFeesAsync(CancellationToken cancellationToken)

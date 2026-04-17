@@ -327,6 +327,19 @@ class TransactionPage extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        if (transaction.productImageUrl.trim().isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              transaction.productImageUrl,
+                              width: 64,
+                              height: 64,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_outlined),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 6),
                         Wrap(
                           spacing: 8,

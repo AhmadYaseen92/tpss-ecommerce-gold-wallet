@@ -17,4 +17,5 @@ public sealed record TransactionHistoryDto(
     decimal Amount,
     string Currency,
     string Notes,
-    DateTime CreatedAtUtc);
+    DateTime CreatedAtUtc,
+    string ProductImageUrl);

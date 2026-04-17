@@ -17,7 +17,7 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
     {
         var effectiveRequest = BuildScopedFilter(request.UserId, request.PageNumber, request.PageSize);
         if (!HasUserAccess(effectiveRequest.UserId)) return ForbidApiResponse();
-        var data = await transactionHistoryService.FilterAsync(effectiveRequest, cancellationToken);
+        var data = NormalizeImageUrls(await transactionHistoryService.FilterAsync(effectiveRequest, cancellationToken));
         return Ok(ApiResponse<PagedResult<TransactionHistoryDto>>.Ok(data));
     }
 
@@ -26,7 +26,7 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
     {
         var effectiveRequest = BuildScopedFilter(request.UserId, request.PageNumber, request.PageSize, request.TransactionType, request.Status, request.Category, request.DateFromUtc, request.DateToUtc);
         if (!HasUserAccess(effectiveRequest.UserId)) return ForbidApiResponse();
-        var data = await transactionHistoryService.FilterAsync(effectiveRequest, cancellationToken);
+        var data = NormalizeImageUrls(await transactionHistoryService.FilterAsync(effectiveRequest, cancellationToken));
         return Ok(ApiResponse<PagedResult<TransactionHistoryDto>>.Ok(data));
     }
 
@@ -74,5 +74,31 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
             DateFromUtc = dateFromUtc,
             DateToUtc = dateToUtc
         };
+    }
+
+    private PagedResult<TransactionHistoryDto> NormalizeImageUrls(PagedResult<TransactionHistoryDto> source)
+    {
+        var mapped = source.Items
+            .Select(item => item with
+            {
+                ProductImageUrl = ToAbsoluteAssetUrl(item.ProductImageUrl)
+            })
+            .ToList();
+
+        return new PagedResult<TransactionHistoryDto>(
+            mapped,
+            source.TotalCount,
+            source.PageNumber,
+            source.PageSize);
+    }
+
+    private string ToAbsoluteAssetUrl(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl)) return string.Empty;
+        if (Uri.TryCreate(imageUrl, UriKind.Absolute, out _)) return imageUrl;
+
+        var request = HttpContext.Request;
+        var normalized = imageUrl.StartsWith('/') ? imageUrl : $"/{imageUrl}";
+        return $"{request.Scheme}://{request.Host}{normalized}";
     }
 }

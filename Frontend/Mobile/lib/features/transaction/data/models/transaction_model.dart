@@ -6,6 +6,7 @@ class TransactionModel {
   final String transactionType;
   final String status;
   final String productName;
+  final String productImageUrl;
   final String category;
   final int quantity;
   final double unitPrice;
@@ -26,6 +27,7 @@ class TransactionModel {
     required this.transactionType,
     required this.status,
     required this.productName,
+    required this.productImageUrl,
     required this.category,
     required this.quantity,
     required this.unitPrice,
@@ -48,6 +50,7 @@ class TransactionModel {
       transactionType: (json['transactionType'] ?? '') as String,
       status: (json['status'] ?? '') as String,
       productName: (json['productName'] ?? json['category'] ?? '') as String,
+      productImageUrl: (json['productImageUrl'] ?? '') as String,
       category: (json['category'] ?? '') as String,
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0,

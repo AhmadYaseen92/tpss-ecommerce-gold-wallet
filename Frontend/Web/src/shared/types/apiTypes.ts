@@ -94,6 +94,7 @@ export interface WebRequestDto {
   investorName: string;
   type: string;
   productName: string;
+  productImageUrl?: string;
   category: string;
   quantity: number;
   unitPrice: number;

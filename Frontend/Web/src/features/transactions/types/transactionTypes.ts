@@ -3,6 +3,7 @@ export interface TransactionRowView {
   investorId: string;
   investorName: string;
   productName: string;
+  productImageUrl?: string;
   category: string;
   transactionType: string;
   quantity: number;

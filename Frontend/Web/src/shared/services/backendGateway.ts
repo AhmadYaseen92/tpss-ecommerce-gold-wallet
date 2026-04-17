@@ -119,6 +119,7 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
       ? (item.type.toLowerCase() as InvestorRequest["type"])
       : "withdrawal",
     productName: item.productName || item.category,
+    productImageUrl: item.productImageUrl,
     category: item.category,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
