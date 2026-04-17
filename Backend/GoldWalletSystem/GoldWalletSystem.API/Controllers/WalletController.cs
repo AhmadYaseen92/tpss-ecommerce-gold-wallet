@@ -37,6 +37,56 @@ public class WalletController(
         return Ok(ApiResponse<SellExecutionConfigurationResponse>.Ok(data));
     }
 
+    [HttpGet("investors")]
+    public async Task<IActionResult> GetInvestors([FromQuery] string? query = null, CancellationToken cancellationToken = default)
+    {
+        var investorsQuery = dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.Role == "Investor" && x.IsActive);
+
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var term = query.Trim();
+            investorsQuery = investorsQuery.Where(x =>
+                x.FullName.Contains(term) ||
+                x.Email.Contains(term) ||
+                x.Id.ToString() == term);
+        }
+
+        var investors = await investorsQuery
+            .OrderBy(x => x.FullName)
+            .Take(50)
+            .Select(x => new InvestorRecipientDto
+            {
+                InvestorUserId = x.Id,
+                InvestorName = x.FullName,
+                AccountNumber = x.Id.ToString()
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(ApiResponse<List<InvestorRecipientDto>>.Ok(investors));
+    }
+
+    [HttpGet("investors/lookup")]
+    public async Task<IActionResult> LookupInvestor([FromQuery] string accountNumber, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(accountNumber))
+            return Ok(ApiResponse<InvestorRecipientDto?>.Ok(null));
+
+        var investor = await dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.Role == "Investor" && x.IsActive && x.Id.ToString() == accountNumber.Trim())
+            .Select(x => new InvestorRecipientDto
+            {
+                InvestorUserId = x.Id,
+                InvestorName = x.FullName,
+                AccountNumber = x.Id.ToString()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return Ok(ApiResponse<InvestorRecipientDto?>.Ok(investor));
+    }
+
     [HttpPost("actions/execute")]
     public async Task<IActionResult> ExecuteWalletAction([FromBody] ExecuteWalletActionRequest request, CancellationToken cancellationToken = default)
     {
@@ -84,6 +134,19 @@ public class WalletController(
 
         var shouldRequireSellerApproval = actionType == "sell";
         var status = shouldRequireSellerApproval ? "pending" : "approved";
+
+        if (actionType is "transfer" or "gift")
+        {
+            if (request.RecipientInvestorUserId is null || request.RecipientInvestorUserId <= 0)
+                return BadRequest(ApiResponse<object>.Fail("Recipient investor is required for transfer/gift.", 400));
+
+            var recipientExists = await dbContext.Users
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == request.RecipientInvestorUserId.Value && x.Role == "Investor" && x.IsActive, cancellationToken);
+
+            if (!recipientExists)
+                return BadRequest(ApiResponse<object>.Fail("Recipient investor account does not exist.", 400));
+        }
 
         if (!shouldRequireSellerApproval && actionType is "sell" or "transfer" or "gift" or "pickup")
         {
@@ -232,6 +295,10 @@ public class WalletController(
     private static string BuildNotes(ExecuteWalletActionRequest request, string executionMode)
     {
         var meta = $"execution_mode={executionMode}|wallet_asset_id={request.WalletAssetId}";
+        if (request.RecipientInvestorUserId.HasValue)
+        {
+            meta = $"{meta}|recipient_investor_user_id={request.RecipientInvestorUserId.Value}";
+        }
         return string.IsNullOrWhiteSpace(request.Notes)
             ? meta
             : $"{request.Notes.Trim()} | {meta}";
@@ -276,8 +343,16 @@ public class WalletController(
         public decimal UnitPrice { get; set; }
         public decimal Weight { get; set; }
         public decimal Amount { get; set; }
+        public int? RecipientInvestorUserId { get; set; }
         public string? Notes { get; set; }
         public DateTime? QuoteLockedUntilUtc { get; set; }
+    }
+
+    public sealed class InvestorRecipientDto
+    {
+        public int InvestorUserId { get; set; }
+        public string InvestorName { get; set; } = string.Empty;
+        public string AccountNumber { get; set; } = string.Empty;
     }
 
     public sealed class ExecuteWalletActionResponse

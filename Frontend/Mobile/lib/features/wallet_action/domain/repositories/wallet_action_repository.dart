@@ -10,4 +10,8 @@ abstract class IWalletActionRepository {
   Future<SellExecutionMode> getSellExecutionMode();
 
   Future<WalletActionExecutionResult> executeWalletAction(WalletActionExecutionRequest request);
+
+  Future<List<InvestorRecipient>> searchInvestors(String query);
+
+  Future<InvestorRecipient?> lookupInvestor(String accountNumber);
 }

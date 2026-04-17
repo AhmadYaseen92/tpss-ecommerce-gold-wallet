@@ -1,13 +1,17 @@
+import 'package:dio/dio.dart';
+
 class TransferLocalDataSource {
-  static const Set<String> _registeredAccounts = {
-    '10001',
-    '10002',
-    '20011',
-    '77889',
-  };
+  TransferLocalDataSource(this._dio);
+
+  final Dio _dio;
 
   Future<bool> isRegisteredAccount(String accountNumber) async {
-    await Future<void>.delayed(const Duration(milliseconds: 120));
-    return _registeredAccounts.contains(accountNumber);
+    if (accountNumber.trim().isEmpty) return false;
+    final response = await _dio.get(
+      '/wallet/investors/lookup',
+      queryParameters: {'accountNumber': accountNumber.trim()},
+    );
+    final payload = (response.data as Map<String, dynamic>)['data'];
+    return payload is Map<String, dynamic>;
   }
 }

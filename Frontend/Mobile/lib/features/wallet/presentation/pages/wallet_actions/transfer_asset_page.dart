@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/presentation/cubit/transfer_asset_action_cubit.dart';
@@ -20,7 +21,10 @@ class TransferAssetPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => TransferAssetActionCubit(asset: asset),
+      create: (_) => TransferAssetActionCubit(
+        asset: asset,
+        walletActionRepository: InjectionContainer.walletActionRepository(),
+      ),
       child: BlocBuilder<TransferAssetActionCubit, TransferAssetActionState>(
         builder: (context, state) {
           final cubit = context.read<TransferAssetActionCubit>();

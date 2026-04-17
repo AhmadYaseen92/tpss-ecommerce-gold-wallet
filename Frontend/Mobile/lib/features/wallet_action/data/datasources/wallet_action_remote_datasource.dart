@@ -45,6 +45,7 @@ class WalletActionRemoteDataSource {
         'unitPrice': request.unitPrice,
         'weight': request.weight,
         'amount': request.amount,
+        'recipientInvestorUserId': request.recipientInvestorUserId,
         'notes': request.notes,
       },
     );
@@ -57,6 +58,21 @@ class WalletActionRemoteDataSource {
       totalPortfolioValue: (data['totalPortfolioValue'] as num?)?.toDouble() ?? 0,
       lockedPriceUntilUtc: DateTime.tryParse((data['lockedPriceUntilUtc'] ?? '').toString()),
     );
+  }
+
+  Future<List<InvestorRecipient>> searchInvestors(String query) async {
+    final response = await _dio.get('/wallet/investors', queryParameters: {'query': query});
+    final payload = (response.data as Map<String, dynamic>)['data'] as List<dynamic>? ?? [];
+    return payload
+        .map((item) => InvestorRecipient.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<InvestorRecipient?> lookupInvestor(String accountNumber) async {
+    final response = await _dio.get('/wallet/investors/lookup', queryParameters: {'accountNumber': accountNumber});
+    final payload = (response.data as Map<String, dynamic>)['data'];
+    if (payload is! Map<String, dynamic>) return null;
+    return InvestorRecipient.fromJson(payload);
   }
 
   String _mapActionType(WalletActionType type) => switch (type) {

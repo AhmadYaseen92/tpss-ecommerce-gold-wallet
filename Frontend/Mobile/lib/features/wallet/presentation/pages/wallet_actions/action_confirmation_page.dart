@@ -213,6 +213,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
           unitPrice: widget.summary.asset.marketPricePerGram,
           weight: widget.summary.asset.weightInGrams,
           amount: widget.summary.asset.marketValueAmount,
+          recipientInvestorUserId: widget.summary.recipientInvestorUserId,
           notes: widget.summary.note,
         ),
       );
