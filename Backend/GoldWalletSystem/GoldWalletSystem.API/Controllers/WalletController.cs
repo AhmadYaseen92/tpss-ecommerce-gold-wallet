@@ -2,6 +2,7 @@ using System.Text.Json;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Wallet;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
@@ -14,7 +15,7 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/wallet")]
-public class WalletController(IWalletService walletService, ICurrentUserService currentUser, AppDbContext dbContext) : SecuredControllerBase(currentUser)
+public class WalletController(IWalletService walletService, ICurrentUserService currentUser, AppDbContext dbContext, IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     private const string SellExecutionConfigKey = "wallet.sell.execution";
 
@@ -165,6 +166,7 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"wallet:action-{actionType}:user-{request.UserId}", cancellationToken);
 
         var portfolioValue = await dbContext.WalletAssets
             .Where(x => x.WalletId == wallet.Id)
@@ -219,6 +221,7 @@ public class WalletController(IWalletService walletService, ICurrentUserService 
             CreatedAtUtc = DateTime.UtcNow
         });
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"wallet:request-created:user-{request.UserId}", cancellationToken);
 
         return Ok(ApiResponse<object>.Ok(new { id = $"r-{entity.Id}", status = entity.Status }, "Request submitted"));
     }

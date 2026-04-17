@@ -74,7 +74,7 @@ export class MarketplaceRealtime {
     }
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5055"}/hubs/marketplace`, {
+      .withUrl(`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5095"}/hubs/marketplace`, {
         accessTokenFactory: options.accessTokenFactory
       })
       .withAutomaticReconnect([0, 1000, 3000, 5000])

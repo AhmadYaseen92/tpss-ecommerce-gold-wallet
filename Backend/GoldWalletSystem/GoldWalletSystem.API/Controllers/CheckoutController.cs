@@ -1,5 +1,6 @@
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
@@ -12,7 +13,7 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/checkout")]
-public class CheckoutController(AppDbContext dbContext, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
+public class CheckoutController(AppDbContext dbContext, ICurrentUserService currentUser, IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     [HttpPost("confirm")]
     public async Task<IActionResult> Confirm([FromBody] CheckoutConfirmRequest request, CancellationToken cancellationToken = default)
@@ -133,6 +134,7 @@ public class CheckoutController(AppDbContext dbContext, ICurrentUserService curr
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"checkout:confirmed:user-{request.UserId}", cancellationToken);
 
         return Ok(ApiResponse<object>.Ok(new
         {

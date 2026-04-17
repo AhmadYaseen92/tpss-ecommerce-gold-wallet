@@ -141,7 +141,10 @@ const toPurityKaratValue = (name: unknown) => {
 
   const saveProduct = async () => {
     if (!marketplace.session.value?.accessToken) return;
-    if (!validateProductForm()) return;
+    if (!validateProductForm()) {
+      productError.value = "Please fix the highlighted form fields before saving.";
+      return;
+    }
     try {
       if (productPage.value === "edit" && productForm.id) await updateManagedProduct(marketplace.session.value.accessToken, productForm.id, productForm);
       else await createManagedProduct(marketplace.session.value.accessToken, productForm);

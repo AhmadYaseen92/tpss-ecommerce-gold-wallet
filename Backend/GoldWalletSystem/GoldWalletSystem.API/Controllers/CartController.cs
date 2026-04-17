@@ -1,6 +1,7 @@
 using GoldWalletSystem.Application.DTOs.Cart;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,7 +10,7 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/cart")]
-public class CartController(ICartService cartService, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
+public class CartController(ICartService cartService, ICurrentUserService currentUser, IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     [HttpPost("by-user")]
     public async Task<IActionResult> GetByUser([FromBody] UserRequestDto request, CancellationToken cancellationToken = default)
@@ -28,6 +29,7 @@ public class CartController(ICartService cartService, ICurrentUserService curren
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var data = await cartService.AddItemAsync(request.UserId, request.ProductId, request.Quantity, cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"cart:item-added:user-{request.UserId}", cancellationToken);
         return Ok(ApiResponse<CartDto>.Ok(data, "Item added"));
     }
 
@@ -36,6 +38,7 @@ public class CartController(ICartService cartService, ICurrentUserService curren
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var data = await cartService.UpdateItemQuantityAsync(request.UserId, request.ProductId, request.Quantity, cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"cart:item-updated:user-{request.UserId}", cancellationToken);
         return Ok(ApiResponse<CartDto>.Ok(data, "Item quantity updated"));
     }
 
@@ -44,6 +47,7 @@ public class CartController(ICartService cartService, ICurrentUserService curren
     {
         if (!HasUserAccess(userId)) return ForbidApiResponse();
         var data = await cartService.RemoveItemAsync(userId, productId, cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"cart:item-removed:user-{userId}", cancellationToken);
         return Ok(ApiResponse<CartDto>.Ok(data, "Item removed"));
     }
 
