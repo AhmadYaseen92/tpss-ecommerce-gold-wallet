@@ -208,9 +208,9 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
       final requestedQuantity = int.tryParse(widget.summary.primaryValue.split(' ').first) ?? 1;
       final safeQuantity = requestedQuantity.clamp(1, widget.summary.asset.quantity).toInt();
       final perUnitWeight = widget.summary.asset.quantity == 0
-          ? 0
+          ? 0.0
           : widget.summary.asset.weightInGrams / widget.summary.asset.quantity;
-      final requestedWeight = perUnitWeight * safeQuantity;
+      final requestedWeight = perUnitWeight * safeQuantity.toDouble();
       final unitPricePerGram = widget.summary.asset.marketPricePerGram;
       final requestedAmount = unitPricePerGram * requestedWeight;
 
