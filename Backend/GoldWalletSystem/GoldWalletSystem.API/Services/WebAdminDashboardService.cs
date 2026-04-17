@@ -39,11 +39,12 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
 
         var cartItemsQuery = dbContext.CartItems
             .AsNoTracking()
+            .Include(x => x.Product)
             .AsQueryable();
 
         if (sellerId.HasValue)
         {
-            cartItemsQuery = cartItemsQuery.Where(x => x.SellerId == sellerId.Value);
+            cartItemsQuery = cartItemsQuery.Where(x => (x.SellerId ?? x.Product.SellerId) == sellerId.Value);
         }
 
         var cartItems = await cartItemsQuery.ToListAsync(cancellationToken);
@@ -115,7 +116,7 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             })
             .ToList();
 
-        foreach (var group in cartItems.GroupBy(item => item.Category.ToString()))
+        foreach (var group in cartItems.GroupBy(item => (item.Category == default ? item.Product.Category : item.Category).ToString()))
         {
             cartCountByCategory[group.Key] = group.Sum(x => x.Quantity);
         }
