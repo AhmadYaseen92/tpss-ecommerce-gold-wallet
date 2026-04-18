@@ -30,17 +30,21 @@ public class WalletController(
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var data = await walletService.GetByUserIdAsync(request.UserId, cancellationToken);
 
-        var statusByAssetId = await ResolveAssetStatusesAsync(request.UserId, data.Assets, cancellationToken);
+        var (statusByAssetId, detailsByAssetId) = await ResolveAssetStatusesAsync(request.UserId, data.Assets, cancellationToken);
         var assets = data.Assets
             .Select(asset =>
             {
                 var status = statusByAssetId.TryGetValue(asset.Id, out var resolvedStatus)
                     ? resolvedStatus
                     : "Bought";
+                var statusDetails = detailsByAssetId.TryGetValue(asset.Id, out var resolvedDetails)
+                    ? resolvedDetails
+                    : null;
                 return asset with
                 {
                     Status = status,
-                    IsDelivered = status == "Delivered"
+                    IsDelivered = status == "Delivered",
+                    StatusDetails = statusDetails
                 };
             })
             .ToList();
@@ -530,7 +534,7 @@ public class WalletController(
         public int LockSeconds { get; set; } = 30;
     }
 
-    private async Task<Dictionary<int, string>> ResolveAssetStatusesAsync(
+    private async Task<(Dictionary<int, string> StatusByAssetId, Dictionary<int, string?> DetailsByAssetId)> ResolveAssetStatusesAsync(
         int userId,
         IReadOnlyList<WalletAssetDto> assets,
         CancellationToken cancellationToken)
@@ -550,6 +554,7 @@ public class WalletController(
             .ToListAsync(cancellationToken);
 
         var results = assets.ToDictionary(x => x.Id, _ => "Bought");
+        var details = assets.ToDictionary(x => x.Id, _ => (string?)null);
 
         foreach (var history in histories)
         {
@@ -557,6 +562,7 @@ public class WalletController(
             if (walletAssetId.HasValue && results.ContainsKey(walletAssetId.Value))
             {
                 results[walletAssetId.Value] = MapStatus(history.TransactionType, history.Status, isReceived: false);
+                details[walletAssetId.Value] = null;
                 continue;
             }
 
@@ -574,10 +580,11 @@ public class WalletController(
             if (candidateAsset is not null)
             {
                 results[candidateAsset.Id] = status;
+                details[candidateAsset.Id] = BuildReceivedStatusDetails(history.TransactionType, history.Notes);
             }
         }
 
-        return results;
+        return (results, details);
     }
 
     private static string MapStatus(string? transactionType, string? status, bool isReceived)
@@ -612,6 +619,37 @@ public class WalletController(
         var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
         var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail;
         return int.TryParse(rawValue, out var id) ? id : null;
+    }
+
+    private static string? BuildReceivedStatusDetails(string? transactionType, string? notes)
+    {
+        var type = (transactionType ?? string.Empty).Trim().ToLowerInvariant();
+        if (type is not ("gift" or "transfer")) return null;
+
+        var sourceInvestorName = TryExtractMeta(notes, "from_investor_name")
+            ?? TryExtractMeta(notes, "from_investor_user_id");
+        if (string.IsNullOrWhiteSpace(sourceInvestorName)) return null;
+
+        return type == "gift"
+            ? $"Received as Gift from {sourceInvestorName}"
+            : $"Received as Transfer from {sourceInvestorName}";
+    }
+
+    private static string? TryExtractMeta(string? notes, string key)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+
+        var marker = $"{key}=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+
+        var tail = notes[valueStart..].Trim();
+        var stopAt = tail.IndexOfAny(['|', ',', ';']);
+        var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail.Trim();
+        return string.IsNullOrWhiteSpace(rawValue) ? null : rawValue;
     }
 
     private async Task<string?> SaveInvoiceDocumentAsync(

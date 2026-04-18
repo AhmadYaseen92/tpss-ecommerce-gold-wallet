@@ -96,6 +96,7 @@ class WalletRepositoryImpl implements IWalletRepository {
       sellerName: asset.sellerName.isEmpty ? 'Unknown Seller' : asset.sellerName,
       isDelivered: asset.isDelivered,
       status: asset.status,
+      statusDetails: asset.statusDetails,
     );
   }
 

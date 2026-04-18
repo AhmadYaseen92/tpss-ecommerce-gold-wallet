@@ -24,9 +24,9 @@ class WalletHoldingItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
-    final isDelivered = item.isDelivered;
     final isPending = item.status.toLowerCase().startsWith('pending');
-    final isActionBlocked = isDelivered || isPending;
+    final isLockedByFinalStatus = item.status == 'Gifted' || item.status == 'Transferred';
+    final isActionBlocked = isPending || isLockedByFinalStatus;
     final status = item.status;
     final pnlAmount = item.marketValueAmount - item.estimatedPurchaseValue;
     final pnlLabel = pnlAmount >= 0 ? 'Profit' : 'Loss';
@@ -82,6 +82,18 @@ class WalletHoldingItemWidget extends StatelessWidget {
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
+                          ),
+                          const SizedBox(height: 6),
+                        ],
+                        if (item.statusDetails != null && item.statusDetails!.isNotEmpty) ...[
+                          Text(
+                            item.statusDetails!,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: palette.textSecondary,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 6),
                         ],

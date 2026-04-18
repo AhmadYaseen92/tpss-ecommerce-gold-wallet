@@ -90,6 +90,7 @@ class WalletTransactionEntity {
     this.certificateUrl,
     this.isDelivered = false,
     this.status = 'Bought',
+    this.statusDetails,
   });
 
   final int id;
@@ -108,6 +109,7 @@ class WalletTransactionEntity {
   final String? certificateUrl;
   final bool isDelivered;
   final String status;
+  final String? statusDetails;
 
   double get weightInKg => weightInGrams / 1000;
   double get weightInOz => weightInGrams / 31.1035;
@@ -148,6 +150,7 @@ class WalletTransactionEntity {
     String? certificateUrl,
     bool? isDelivered,
     String? status,
+    String? statusDetails,
   }) {
     return WalletTransactionEntity(
       id: id ?? this.id,
@@ -166,6 +169,7 @@ class WalletTransactionEntity {
       certificateUrl: certificateUrl ?? this.certificateUrl,
       isDelivered: isDelivered ?? this.isDelivered,
       status: status ?? this.status,
+      statusDetails: statusDetails ?? this.statusDetails,
     );
   }
 

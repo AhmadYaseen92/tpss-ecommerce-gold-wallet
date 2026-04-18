@@ -34,8 +34,10 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
         onPressed: _isSubmitting
             ? null
             : () async {
-                if (widget.summary.actionType == WalletActionType.sell) {
-                  await _submitDirectSell();
+                if (widget.summary.actionType == WalletActionType.sell ||
+                    widget.summary.actionType == WalletActionType.transfer ||
+                    widget.summary.actionType == WalletActionType.gift) {
+                  await _submitDirectAction(widget.summary.actionType);
                   return;
                 }
                 if (!context.mounted) return;
@@ -112,7 +114,7 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
     );
   }
 
-  Future<void> _submitDirectSell() async {
+  Future<void> _submitDirectAction(WalletActionType actionType) async {
     setState(() => _isSubmitting = true);
     try {
       final requestedQuantity = int.tryParse(widget.summary.primaryValue.split(' ').first) ?? 1;
@@ -127,7 +129,7 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
       await _walletActionRepository.executeWalletAction(
         WalletActionExecutionRequest(
           walletAssetId: widget.summary.asset.id,
-          actionType: WalletActionType.sell,
+          actionType: actionType,
           quantity: safeQuantity,
           unitPrice: unitPricePerGram,
           weight: requestedWeight,
@@ -139,8 +141,16 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
       if (!mounted) return;
       await AppModalAlert.show(
         context,
-        title: 'Sell Submitted',
-        message: 'Sell request submitted successfully.',
+        title: actionType == WalletActionType.sell
+            ? 'Sell Submitted'
+            : actionType == WalletActionType.gift
+            ? 'Gift Completed'
+            : 'Transfer Completed',
+        message: actionType == WalletActionType.sell
+            ? 'Sell request submitted successfully.'
+            : actionType == WalletActionType.gift
+            ? 'Gift completed successfully.'
+            : 'Transfer completed successfully.',
         variant: AppModalAlertVariant.success,
       );
       if (!mounted) return;
@@ -152,7 +162,7 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
       if (!mounted) return;
       await AppModalAlert.show(
         context,
-        title: 'Sell Failed',
+        title: actionType == WalletActionType.sell ? 'Sell Failed' : 'Action Failed',
         message: 'Failed: $e',
         variant: AppModalAlertVariant.failed,
       );
