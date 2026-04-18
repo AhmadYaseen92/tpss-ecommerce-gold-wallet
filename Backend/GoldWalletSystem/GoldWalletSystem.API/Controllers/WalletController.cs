@@ -555,16 +555,18 @@ public class WalletController(
 
         var results = assets.ToDictionary(x => x.Id, _ => "Bought");
         var details = assets.ToDictionary(x => x.Id, _ => (string?)null);
+        var resolvedAssetIds = new HashSet<int>();
 
         foreach (var history in histories)
         {
             var walletAssetId = TryExtractWalletAssetId(history.Notes);
             if (walletAssetId.HasValue && results.ContainsKey(walletAssetId.Value))
             {
-                if (results[walletAssetId.Value] == "Bought")
+                if (!resolvedAssetIds.Contains(walletAssetId.Value))
                 {
                     results[walletAssetId.Value] = MapStatus(history.TransactionType, history.Status, isReceived: false);
                     details[walletAssetId.Value] = null;
+                    resolvedAssetIds.Add(walletAssetId.Value);
                 }
                 continue;
             }
@@ -584,6 +586,7 @@ public class WalletController(
             {
                 results[candidateAsset.Id] = status;
                 details[candidateAsset.Id] = BuildReceivedStatusDetails(history.TransactionType, history.Notes);
+                resolvedAssetIds.Add(candidateAsset.Id);
             }
         }
 
@@ -599,12 +602,9 @@ public class WalletController(
         {
             ("sell", "pending", _) => "Pending - Sell",
             ("pickup", "pending", _) => "Pending - Pickup",
-            ("pickup", "approved", _) => "Delivered",
+            ("pickup", "approved", _) => "Pending - Delivered",
+            ("pickup", "pending_delivered", _) => "Pending - Delivered",
             ("delivered_completed", _, _) => "Delivered",
-            ("gift", _, true) => "Received - Gift",
-            ("transfer", _, true) => "Received - Transfer",
-            ("gift", _, false) => "Gifted",
-            ("transfer", _, false) => "Transferred",
             _ => "Bought"
         };
     }

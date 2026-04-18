@@ -209,20 +209,30 @@ public class WebAdminController(
         if (item is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
         if (!CanAccessSellerData(item.SellerId)) return Forbid();
 
-        if (!string.Equals(item.Status, "pending", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(ApiResponse<object>.Fail("Only pending requests can be changed.", 400));
-
         var nextStatus = request.Status.Trim().ToLowerInvariant();
-        if (nextStatus != "approved" && nextStatus != "rejected")
+        if (nextStatus != "approved" && nextStatus != "rejected" && nextStatus != "delivered")
             return BadRequest(ApiResponse<object>.Fail("Invalid status", 400));
 
+        var action = item.TransactionType.Trim().ToLowerInvariant();
+        var canTransitionFromPending = string.Equals(item.Status, "pending", StringComparison.OrdinalIgnoreCase)
+                                       && nextStatus is "approved" or "rejected";
+        var canTransitionPickupToDelivered =
+            action == "pickup"
+            && string.Equals(item.Status, "pending_delivered", StringComparison.OrdinalIgnoreCase)
+            && nextStatus == "delivered";
+
+        if (!canTransitionFromPending && !canTransitionPickupToDelivered)
+            return BadRequest(ApiResponse<object>.Fail("Invalid status transition for this request.", 400));
+
         var previousStatus = item.Status;
-        item.Status = nextStatus;
+        item.Status = action == "pickup" && nextStatus == "approved"
+            ? "pending_delivered"
+            : nextStatus;
         item.UpdatedAtUtc = DateTime.UtcNow;
 
-        if (previousStatus == "pending")
+        if (canTransitionFromPending)
         {
-            await ApplyRequestStockSideEffectsAsync(item, nextStatus, cancellationToken);
+            await ApplyRequestStockSideEffectsAsync(item, item.Status, cancellationToken);
 
             if (nextStatus == "approved")
             {
@@ -231,26 +241,47 @@ public class WebAdminController(
             }
         }
 
+        if (canTransitionPickupToDelivered)
+        {
+            dbContext.TransactionHistories.Add(new Domain.Entities.TransactionHistory
+            {
+                UserId = item.UserId,
+                SellerId = item.SellerId,
+                TransactionType = "delivered_completed",
+                Status = "approved",
+                Category = item.Category,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                Weight = item.Weight,
+                Unit = item.Unit,
+                Purity = item.Purity,
+                Amount = item.Amount,
+                Currency = item.Currency,
+                Notes = item.Notes,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
         dbContext.AuditLogs.Add(new Domain.Entities.AuditLog
         {
             UserId = item.UserId,
             Action = "RequestStatusUpdated",
             EntityName = "TransactionHistory",
             EntityId = item.Id,
-            Details = $"Request {item.Id}: {previousStatus} -> {nextStatus}, type={item.TransactionType}, amount={item.Amount} {item.Currency}",
+            Details = $"Request {item.Id}: {previousStatus} -> {item.Status}, type={item.TransactionType}, amount={item.Amount} {item.Currency}",
             CreatedAtUtc = DateTime.UtcNow
         });
         dbContext.AppNotifications.Add(new Domain.Entities.AppNotification
         {
             UserId = item.UserId,
             Title = "Request Status Updated",
-            Body = $"Your {item.TransactionType} request was {nextStatus}.",
+            Body = $"Your {item.TransactionType} request was {item.Status}.",
             IsRead = false,
             CreatedAtUtc = DateTime.UtcNow
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{nextStatus}", cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{item.Status}", cancellationToken);
         if (nextStatus == "approved" && item.TransactionType is not null)
         {
             var action = item.TransactionType.Trim().ToLowerInvariant();
@@ -266,7 +297,7 @@ public class WebAdminController(
             }
         }
 
-        return Ok(ApiResponse<string>.Ok("updated"));
+        return Ok(ApiResponse<object>.Ok(new { status = item.Status }, "updated"));
     }
 
     [HttpGet("requests/{id}")]
@@ -796,26 +827,6 @@ public class WebAdminController(
                 wallet.UpdatedAtUtc = DateTime.UtcNow;
             }
 
-            if (action == "pickup")
-            {
-                dbContext.TransactionHistories.Add(new Domain.Entities.TransactionHistory
-                {
-                    UserId = request.UserId,
-                    SellerId = request.SellerId,
-                    TransactionType = "delivered_completed",
-                    Status = "approved",
-                    Category = request.Category,
-                    Quantity = request.Quantity,
-                    UnitPrice = request.UnitPrice,
-                    Weight = request.Weight,
-                    Unit = request.Unit,
-                    Purity = request.Purity,
-                    Amount = request.Amount,
-                    Currency = request.Currency,
-                    Notes = request.Notes,
-                    CreatedAtUtc = DateTime.UtcNow
-                });
-            }
         }
     }
 
