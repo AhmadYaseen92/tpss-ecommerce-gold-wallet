@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.API.Models;
 using GoldWalletSystem.API.Services;
@@ -14,7 +15,11 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/web-admin")]
-public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardService dashboardService, IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
+public class WebAdminController(
+    AppDbContext dbContext,
+    IWebAdminDashboardService dashboardService,
+    IMarketplaceRealtimeNotifier realtimeNotifier,
+    IWebHostEnvironment environment) : ControllerBase
 {
     private const string FeesConfigKey = "webadmin.fees";
     private const string WalletSellConfigKey = "wallet.sell.execution";
@@ -726,12 +731,15 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 }
                 weightToRemove = Math.Min(weightToRemove, asset.Weight);
 
-                asset.Quantity = Math.Max(asset.Quantity - qtyToRemove, 0);
-                asset.Weight = Math.Max(asset.Weight - weightToRemove, 0);
-                asset.UpdatedAtUtc = DateTime.UtcNow;
-                if (asset.Quantity == 0 && asset.Weight <= 0)
+                if (action != "pickup")
                 {
-                    dbContext.WalletAssets.Remove(asset);
+                    asset.Quantity = Math.Max(asset.Quantity - qtyToRemove, 0);
+                    asset.Weight = Math.Max(asset.Weight - weightToRemove, 0);
+                    asset.UpdatedAtUtc = DateTime.UtcNow;
+                    if (asset.Quantity == 0 && asset.Weight <= 0)
+                    {
+                        dbContext.WalletAssets.Remove(asset);
+                    }
                 }
             }
 
@@ -782,10 +790,31 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 }
             }
 
-            if (action is "sell" or "pickup")
+            if (action is "sell")
             {
                 wallet.CashBalance += request.Amount;
                 wallet.UpdatedAtUtc = DateTime.UtcNow;
+            }
+
+            if (action == "pickup")
+            {
+                dbContext.TransactionHistories.Add(new Domain.Entities.TransactionHistory
+                {
+                    UserId = request.UserId,
+                    SellerId = request.SellerId,
+                    TransactionType = "delivered_completed",
+                    Status = "approved",
+                    Category = request.Category,
+                    Quantity = request.Quantity,
+                    UnitPrice = request.UnitPrice,
+                    Weight = request.Weight,
+                    Unit = request.Unit,
+                    Purity = request.Purity,
+                    Amount = request.Amount,
+                    Currency = request.Currency,
+                    Notes = request.Notes,
+                    CreatedAtUtc = DateTime.UtcNow
+                });
             }
         }
     }
@@ -982,10 +1011,93 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             SubTotal = request.Amount,
             TaxAmount = 0,
             TotalAmount = request.Amount,
-            InvoiceQrCode = string.Empty,
+            InvoiceQrCode = await SaveInvoiceDocumentAsync(request, cancellationToken) ?? string.Empty,
             IssuedOnUtc = DateTime.UtcNow,
             Status = "approved",
             CreatedAtUtc = DateTime.UtcNow
         });
+    }
+
+    private async Task<string?> SaveInvoiceDocumentAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
+    {
+        var root = environment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(root))
+        {
+            root = Path.Combine(environment.ContentRootPath, "wwwroot");
+        }
+
+        var folder = Path.Combine(root, "Certificats", request.UserId.ToString());
+        Directory.CreateDirectory(folder);
+
+        var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
+        var filePath = Path.Combine(folder, fileName);
+        var lines = new[]
+        {
+            "Gold Wallet Invoice",
+            $"Date (UTC): {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}",
+            $"Action: {request.TransactionType}",
+            $"Investor User Id: {request.UserId}",
+            $"Quantity: {request.Quantity}",
+            $"Weight: {request.Weight} {request.Unit}",
+            $"Purity: {request.Purity}",
+            $"Amount: {request.Amount}"
+        };
+        var pdfBytes = BuildSimplePdf(lines);
+        await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
+        return $"/Certificats/{request.UserId}/{fileName}";
+    }
+
+    private static byte[] BuildSimplePdf(IEnumerable<string> lines)
+    {
+        static string EscapePdf(string value) => value
+            .Replace("\\", "\\\\")
+            .Replace("(", "\\(")
+            .Replace(")", "\\)");
+
+        var contentBuilder = new StringBuilder();
+        contentBuilder.AppendLine("BT");
+        contentBuilder.AppendLine("/F1 12 Tf");
+        contentBuilder.AppendLine("50 780 Td");
+        var first = true;
+        foreach (var line in lines)
+        {
+            if (!first)
+            {
+                contentBuilder.AppendLine("0 -16 Td");
+            }
+            contentBuilder.AppendLine($"({EscapePdf(line)}) Tj");
+            first = false;
+        }
+        contentBuilder.AppendLine("ET");
+
+        var streamContent = contentBuilder.ToString();
+        var objects = new List<string>
+        {
+            "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+            "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+            "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+            $"4 0 obj\n<< /Length {Encoding.ASCII.GetByteCount(streamContent)} >>\nstream\n{streamContent}endstream\nendobj\n",
+            "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
+        };
+
+        var pdf = new StringBuilder();
+        pdf.Append("%PDF-1.4\n");
+        var offsets = new List<int> { 0 };
+        foreach (var obj in objects)
+        {
+            offsets.Add(Encoding.ASCII.GetByteCount(pdf.ToString()));
+            pdf.Append(obj);
+        }
+
+        var xrefStart = Encoding.ASCII.GetByteCount(pdf.ToString());
+        pdf.Append($"xref\n0 {objects.Count + 1}\n");
+        pdf.Append("0000000000 65535 f \n");
+        foreach (var offset in offsets.Skip(1))
+        {
+            pdf.Append($"{offset:D10} 00000 n \n");
+        }
+        pdf.Append($"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xrefStart}\n%%EOF");
+
+        return Encoding.ASCII.GetBytes(pdf.ToString());
     }
 }

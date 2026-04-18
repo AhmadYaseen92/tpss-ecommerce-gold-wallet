@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 
@@ -16,6 +20,8 @@ class PickupRequestPage extends StatefulWidget {
 class _PickupRequestPageState extends State<PickupRequestPage> {
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
+  final IWalletActionRepository _walletActionRepository = InjectionContainer.walletActionRepository();
+  bool _isSubmitting = false;
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -98,7 +104,7 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
             ),
           ),
           FilledButton(
-            onPressed: () {
+            onPressed: _isSubmitting ? null : () {
               if (selectedDate == null || selectedTime == null) {
                 AppModalAlert.show(
                   context,
@@ -108,17 +114,59 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
                 return;
               }
 
-              AppModalAlert.show(
-                context,
-                title: 'Pickup Confirmed',
-                message: 'Pickup scheduled for $dateText at $timeText.',
-              );
+              _submitPickupRequest(dateText, timeText);
             },
-            child: const Text('Confirm Pickup'),
+            child: _isSubmitting
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('Confirm Pickup'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _submitPickupRequest(String dateText, String timeText) async {
+    setState(() => _isSubmitting = true);
+    try {
+      final quantity = widget.asset.quantity > 0 ? 1 : 0;
+      final perUnitWeight = widget.asset.quantity == 0 ? 0.0 : widget.asset.weightInGrams / widget.asset.quantity;
+      final unitPrice = widget.asset.marketPricePerGram;
+
+      await _walletActionRepository.executeWalletAction(
+        WalletActionExecutionRequest(
+          walletAssetId: widget.asset.id,
+          actionType: WalletActionType.pickup,
+          quantity: quantity <= 0 ? 1 : quantity,
+          unitPrice: unitPrice,
+          weight: perUnitWeight <= 0 ? widget.asset.weightInGrams : perUnitWeight,
+          amount: unitPrice * (perUnitWeight <= 0 ? widget.asset.weightInGrams : perUnitWeight),
+          notes: 'pickup_schedule=$dateText $timeText',
+        ),
+      );
+
+      if (!mounted) return;
+      await AppModalAlert.show(
+        context,
+        title: 'Pickup Submitted',
+        message: 'Pickup request submitted successfully.',
+        variant: AppModalAlertVariant.success,
+      );
+      if (!mounted) return;
+      Navigator.popUntil(
+        context,
+        (route) => route.settings.name == AppRoutes.walletItemsRoute || route.isFirst,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      await AppModalAlert.show(
+        context,
+        title: 'Pickup Failed',
+        message: 'Failed: $e',
+        variant: AppModalAlertVariant.failed,
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 }
 

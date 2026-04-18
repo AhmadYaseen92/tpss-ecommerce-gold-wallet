@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/otp_input_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/readonly_info_row.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
@@ -29,9 +31,14 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
   bool _isSubmitting = false;
   String? _backendReference;
   bool _resultPendingApproval = false;
+  String? _invoiceUrl;
   SellExecutionMode _sellExecutionMode = SellExecutionMode.locked30Seconds;
 
   bool get _isSellFlow => widget.summary.actionType == WalletActionType.sell;
+  bool get _shouldAutoReturnAfterSubmit =>
+      widget.summary.actionType == WalletActionType.transfer ||
+      widget.summary.actionType == WalletActionType.gift ||
+      widget.summary.actionType == WalletActionType.pickup;
   bool get _isExpired => _secondsLeft == 0 && !_isCompleted;
 
   @override
@@ -70,7 +77,10 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
             Expanded(
               child: OutlinedButton(
                 onPressed: () {
-                  Navigator.popUntil(context, (route) => route.isFirst);
+                  Navigator.popUntil(
+                    context,
+                    (route) => route.settings.name == AppRoutes.walletItemsRoute || route.isFirst,
+                  );
                 },
                 child: const Text('Back to Wallet'),
               ),
@@ -228,13 +238,51 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
       );
 
       _timer?.cancel();
+      if (_shouldAutoReturnAfterSubmit) {
+        if (!mounted) return;
+        await AppModalAlert.show(
+          context,
+          title: _resultPendingApproval ? 'Request Submitted' : 'Action Completed',
+          message: _resultPendingApproval
+              ? '${widget.summary.title} submitted and pending seller approval.'
+              : '${widget.summary.title} completed successfully.',
+          variant: AppModalAlertVariant.success,
+        );
+        if (!mounted) return;
+        Navigator.popUntil(
+          context,
+          (route) => route.settings.name == AppRoutes.walletItemsRoute || route.isFirst,
+        );
+        return;
+      }
+
       setState(() {
         _isCompleted = true;
         _backendReference = result.referenceId;
         _resultPendingApproval = result.status.toLowerCase() == 'pending';
+        _invoiceUrl = result.invoiceUrl;
       });
+
+      if (!mounted) return;
+      final isPending = result.status.toLowerCase() == 'pending';
+      AppModalAlert.show(
+        context,
+        title: isPending ? 'Request Submitted' : 'Action Completed',
+        message: isPending
+            ? '${widget.summary.title} request submitted and pending seller approval.'
+            : _invoiceUrl == null
+            ? '${widget.summary.title} completed successfully.'
+            : '${widget.summary.title} completed. Invoice: $_invoiceUrl',
+        variant: AppModalAlertVariant.success,
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+      if (!mounted) return;
+      AppModalAlert.show(
+        context,
+        title: 'Action Failed',
+        message: 'Failed: $e',
+        variant: AppModalAlertVariant.failed,
+      );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -246,7 +294,10 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
     );
     Future.delayed(const Duration(milliseconds: 400), () {
       if (!mounted) return;
-      Navigator.popUntil(context, (route) => route.isFirst);
+      Navigator.popUntil(
+        context,
+        (route) => route.settings.name == AppRoutes.walletItemsRoute || route.isFirst,
+      );
     });
   }
 }
