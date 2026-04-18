@@ -187,7 +187,7 @@ public class WebAdminController(
                     Unit = history.Unit,
                     Purity = history.Purity,
                     Amount = history.Amount,
-                    Status = history.Status,
+                    Status = MapRequestStatusForView(history.TransactionType, history.Status),
                     Currency = history.Currency,
                     Notes = history.Notes,
                     CreatedAt = history.CreatedAtUtc,
@@ -327,7 +327,7 @@ public class WebAdminController(
                     Unit = history.Unit,
                     Purity = history.Purity,
                     Amount = history.Amount,
-                    Status = history.Status,
+                    Status = MapRequestStatusForView(history.TransactionType, history.Status),
                     Currency = history.Currency,
                     Notes = history.Notes,
                     CreatedAt = history.CreatedAtUtc,
@@ -703,6 +703,19 @@ public class WebAdminController(
     {
         var sellerScope = ResolveSellerScope();
         return !sellerScope.HasValue || (resourceSellerId.HasValue && resourceSellerId.Value == sellerScope.Value);
+    }
+
+    private static string MapRequestStatusForView(string? transactionType, string? status)
+    {
+        var type = (transactionType ?? string.Empty).Trim().ToLowerInvariant();
+        var normalizedStatus = (status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (type == "pickup" && normalizedStatus == "approved")
+        {
+            return "pending_delivered";
+        }
+
+        return normalizedStatus;
     }
 
     private async Task ApplyApprovedRequestSideEffectsAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)

@@ -246,7 +246,7 @@ BEGIN TRY
         )
         VALUES
             (@InvestorMain, @SellerImseeh, N'sell', N'pending', N'Gold', 1, 740, 5.000, N'gram', 24, 740, N'USD', N'execution_mode=locked_30_seconds|wallet_asset_id=1', DATEADD(HOUR, -6, @Now), NULL),
-            (@InvestorMain, @SellerImseeh, N'pickup', N'pending', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, N'USD', N'pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'pickup', N'pending_delivered', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, N'USD', N'pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
             (@InvestorImseeh, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', N'execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=9|recipient_investor_name=GoldPal Investor 1', DATEADD(DAY, -2, @Now), NULL),
             (@InvestorGoldPal, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', N'direction=received|from_investor_user_id=8|from_investor_name=Imseeh Investor 1|wallet_asset_id=2', DATEADD(DAY, -2, DATEADD(MINUTE, 1, @Now)), NULL),
             (@InvestorImseeh, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', N'execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=9|recipient_investor_name=GoldPal Investor 1', DATEADD(DAY, -1, @Now), NULL),

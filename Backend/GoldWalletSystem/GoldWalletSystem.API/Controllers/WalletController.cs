@@ -17,6 +17,7 @@ namespace GoldWalletSystem.API.Controllers;
 [Route("api/wallet")]
 public class WalletController(
     IWalletService walletService,
+    IWalletActionValidationService walletActionValidationService,
     ICurrentUserService currentUser,
     AppDbContext dbContext,
     IWebHostEnvironment environment,
@@ -119,6 +120,10 @@ public class WalletController(
 
         if (request.Quantity <= 0)
             return BadRequest(ApiResponse<object>.Fail("Quantity must be greater than zero.", 400));
+
+        var validationError = walletActionValidationService.ValidateExecuteActionRequest(actionType, request.Notes);
+        if (!string.IsNullOrWhiteSpace(validationError))
+            return BadRequest(ApiResponse<object>.Fail(validationError, 400));
 
         var wallet = await dbContext.Wallets
             .Include(x => x.Assets)

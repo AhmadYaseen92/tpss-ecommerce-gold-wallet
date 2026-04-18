@@ -127,7 +127,7 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
     unit: item.unit,
     purity: item.purity,
     amount: item.amount,
-    status: ["pending", "approved", "rejected"].includes(item.status.toLowerCase())
+    status: ["pending", "approved", "rejected", "pending_delivered", "delivered"].includes(item.status.toLowerCase())
       ? (item.status.toLowerCase() as InvestorRequest["status"])
       : "pending",
     currency: item.currency,

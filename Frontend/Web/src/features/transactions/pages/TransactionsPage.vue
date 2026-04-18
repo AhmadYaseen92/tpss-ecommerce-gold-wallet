@@ -20,6 +20,14 @@ const emit = defineEmits<{
 const formatAmount = (amount: number, currency: string) => formatCurrency(amount, currency);
 const formatWeight = (weight: number, unit: string) => `${weight.toFixed(3)} ${unit}`;
 const formatQty = (quantity: number) => quantity.toLocaleString();
+const formatStatus = (status: string) => {
+  const normalized = status.trim().toLowerCase();
+  if (normalized === "pending_delivered") return "Pending - Delivered";
+  if (normalized === "delivered") return "Delivered";
+  if (normalized === "approved") return "Approved";
+  if (normalized === "rejected") return "Rejected";
+  return "Pending";
+};
 </script>
 
 <template>
@@ -69,7 +77,7 @@ const formatQty = (quantity: number) => quantity.toLocaleString();
           >
             <option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
           </select>
-          <span v-else :class="statusClass(trx.status)">{{ trx.status }}</span>
+          <span v-else :class="statusClass(trx.status)">{{ formatStatus(trx.status) }}</span>
         </td>
         <td>{{ formatDateTime(trx.createdAt) }}</td>
         <td>{{ trx.updatedAt ? formatDateTime(trx.updatedAt) : "—" }}</td>
