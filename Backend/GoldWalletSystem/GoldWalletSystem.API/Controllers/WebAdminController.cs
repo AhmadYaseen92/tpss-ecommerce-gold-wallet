@@ -284,14 +284,14 @@ public class WebAdminController(
         await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{item.Status}", cancellationToken);
         if (nextStatus == "approved" && item.TransactionType is not null)
         {
-            var action = item.TransactionType.Trim().ToLowerInvariant();
-            if (action is "transfer" or "gift")
+            var recipientAction = item.TransactionType.Trim().ToLowerInvariant();
+            if (recipientAction is "transfer" or "gift")
             {
                 var recipientInvestorId = TryExtractRecipientInvestorUserId(item.Notes);
                 if (recipientInvestorId.HasValue)
                 {
                     await realtimeNotifier.BroadcastRefreshHintAsync(
-                        $"wallet-action:{action}:{recipientInvestorId.Value}",
+                        $"wallet-action:{recipientAction}:{recipientInvestorId.Value}",
                         cancellationToken);
                 }
             }
