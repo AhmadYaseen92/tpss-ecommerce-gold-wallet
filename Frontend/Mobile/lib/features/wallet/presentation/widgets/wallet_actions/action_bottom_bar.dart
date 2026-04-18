@@ -5,7 +5,7 @@ class ActionBottomBar extends StatelessWidget {
   final String summaryLabel;
   final String summaryValue;
   final String buttonText;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   const ActionBottomBar({
     super.key,
@@ -25,7 +25,13 @@ class ActionBottomBar extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: palette.surface,
-          boxShadow: const [BoxShadow(blurRadius: 10, color: Colors.black12, offset: Offset(0, -2))],
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 10,
+              color: Colors.black12,
+              offset: Offset(0, -2),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -36,7 +42,10 @@ class ActionBottomBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(summaryLabel, style: TextStyle(color: palette.textSecondary)),
+                  Text(
+                    summaryLabel,
+                    style: TextStyle(color: palette.textSecondary),
+                  ),
                   Text(
                     summaryValue,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -49,7 +58,10 @@ class ActionBottomBar extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: ElevatedButton(onPressed: onPressed, child: Text(buttonText)),
+              child: ElevatedButton(
+                onPressed: onPressed,
+                child: Text(buttonText),
+              ),
             ),
           ],
         ),
