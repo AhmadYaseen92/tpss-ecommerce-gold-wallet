@@ -95,6 +95,7 @@ class WalletRepositoryImpl implements IWalletRepository {
       imageUrl: _imageByAssetType(asset.assetType),
       sellerName: asset.sellerName.isEmpty ? 'Unknown Seller' : asset.sellerName,
       isDelivered: asset.isDelivered,
+      status: asset.status,
     );
   }
 

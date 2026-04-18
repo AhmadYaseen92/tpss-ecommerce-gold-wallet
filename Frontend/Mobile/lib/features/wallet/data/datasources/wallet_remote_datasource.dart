@@ -60,6 +60,7 @@ class WalletAssetRemoteModel {
     required this.averageBuyPrice,
     required this.currentMarketPrice,
     required this.isDelivered,
+    required this.status,
   });
 
   final int id;
@@ -74,6 +75,7 @@ class WalletAssetRemoteModel {
   final double averageBuyPrice;
   final double currentMarketPrice;
   final bool isDelivered;
+  final String status;
 
   factory WalletAssetRemoteModel.fromJson(Map<String, dynamic> json) {
     return WalletAssetRemoteModel(
@@ -89,6 +91,7 @@ class WalletAssetRemoteModel {
       averageBuyPrice: (json['averageBuyPrice'] as num?)?.toDouble() ?? 0,
       currentMarketPrice: (json['currentMarketPrice'] as num?)?.toDouble() ?? 0,
       isDelivered: (json['isDelivered'] as bool?) ?? false,
+      status: (json['status'] ?? 'Bought').toString(),
     );
   }
 }

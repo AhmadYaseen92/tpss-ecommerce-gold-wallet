@@ -30,9 +30,19 @@ public class WalletController(
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var data = await walletService.GetByUserIdAsync(request.UserId, cancellationToken);
 
-        var deliveredAssetIds = await ResolveDeliveredAssetIdsAsync(request.UserId, cancellationToken);
+        var statusByAssetId = await ResolveAssetStatusesAsync(request.UserId, data.Assets, cancellationToken);
         var assets = data.Assets
-            .Select(asset => asset with { IsDelivered = deliveredAssetIds.Contains(asset.Id) })
+            .Select(asset =>
+            {
+                var status = statusByAssetId.TryGetValue(asset.Id, out var resolvedStatus)
+                    ? resolvedStatus
+                    : "Bought";
+                return asset with
+                {
+                    Status = status,
+                    IsDelivered = status == "Delivered"
+                };
+            })
             .ToList();
         return Ok(ApiResponse<WalletDto>.Ok(data with { Assets = assets }));
     }
@@ -520,22 +530,73 @@ public class WalletController(
         public int LockSeconds { get; set; } = 30;
     }
 
-    private async Task<HashSet<int>> ResolveDeliveredAssetIdsAsync(int userId, CancellationToken cancellationToken)
+    private async Task<Dictionary<int, string>> ResolveAssetStatusesAsync(
+        int userId,
+        IReadOnlyList<WalletAssetDto> assets,
+        CancellationToken cancellationToken)
     {
-        var pickupHistories = await dbContext.TransactionHistories
+        var histories = await dbContext.TransactionHistories
             .AsNoTracking()
-            .Where(x => x.UserId == userId && x.TransactionType == "pickup" && x.Status == "approved")
-            .Select(x => x.Notes)
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new
+            {
+                x.TransactionType,
+                x.Status,
+                x.Notes,
+                x.SellerId,
+                x.Category
+            })
             .ToListAsync(cancellationToken);
 
-        var results = new HashSet<int>();
-        foreach (var notes in pickupHistories)
+        var results = assets.ToDictionary(x => x.Id, _ => "Bought");
+
+        foreach (var history in histories)
         {
-            var walletAssetId = TryExtractWalletAssetId(notes);
-            if (walletAssetId.HasValue) results.Add(walletAssetId.Value);
+            var walletAssetId = TryExtractWalletAssetId(history.Notes);
+            if (walletAssetId.HasValue && results.ContainsKey(walletAssetId.Value))
+            {
+                results[walletAssetId.Value] = MapStatus(history.TransactionType, history.Status, isReceived: false);
+                continue;
+            }
+
+            var isReceived = (history.Notes ?? string.Empty).Contains("direction=received", StringComparison.OrdinalIgnoreCase);
+            if (!isReceived || history.SellerId is null) continue;
+
+            var status = MapStatus(history.TransactionType, history.Status, isReceived: true);
+            if (status == "Bought") continue;
+
+            var candidateAsset = assets.FirstOrDefault(x =>
+                x.SellerId == history.SellerId &&
+                x.Category.Equals(history.Category, StringComparison.OrdinalIgnoreCase) &&
+                results[x.Id] == "Bought");
+
+            if (candidateAsset is not null)
+            {
+                results[candidateAsset.Id] = status;
+            }
         }
 
         return results;
+    }
+
+    private static string MapStatus(string? transactionType, string? status, bool isReceived)
+    {
+        var type = (transactionType ?? string.Empty).Trim().ToLowerInvariant();
+        var state = (status ?? string.Empty).Trim().ToLowerInvariant();
+
+        return (type, state, isReceived) switch
+        {
+            ("sell", "pending", _) => "Pending - Sell",
+            ("pickup", "pending", _) => "Pending - Pickup",
+            ("pickup", "approved", _) => "Delivered",
+            ("delivered_completed", _, _) => "Delivered",
+            ("gift", _, true) => "Received - Gift",
+            ("transfer", _, true) => "Received - Transfer",
+            ("gift", _, false) => "Gifted",
+            ("transfer", _, false) => "Transferred",
+            _ => "Bought"
+        };
     }
 
     private static int? TryExtractWalletAssetId(string? notes)

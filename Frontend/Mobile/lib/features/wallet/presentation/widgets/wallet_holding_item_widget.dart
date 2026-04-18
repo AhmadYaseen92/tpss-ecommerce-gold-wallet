@@ -25,6 +25,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.appPalette;
     final isDelivered = item.isDelivered;
+    final status = item.status;
     final pnlAmount = item.marketValueAmount - item.estimatedPurchaseValue;
     final pnlLabel = pnlAmount >= 0 ? 'Profit' : 'Loss';
     final signedPnlAmount = pnlAmount >= 0 ? '+' : '-';
@@ -64,18 +65,18 @@ class WalletHoldingItemWidget extends StatelessWidget {
                       children: [
                         Text(item.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: palette.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 4),
-                        if (isDelivered) ...[
+                        if (status.isNotEmpty) ...[
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.green.withAlpha(20),
+                              color: _statusColor(status).withAlpha(20),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.green.withAlpha(80)),
+                              border: Border.all(color: _statusColor(status).withAlpha(80)),
                             ),
                             child: Text(
-                              'Delivered',
+                              status,
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Colors.green.shade700,
+                                    color: _statusColor(status),
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
@@ -160,6 +161,14 @@ class WalletHoldingItemWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _statusColor(String status) {
+    final normalized = status.toLowerCase();
+    if (normalized.contains('pending')) return Colors.orange.shade700;
+    if (normalized.contains('delivered')) return Colors.green.shade700;
+    if (normalized.contains('gift') || normalized.contains('transfer')) return Colors.blue.shade700;
+    return Colors.grey.shade700;
   }
 
   Widget _miniTag(BuildContext context, String text) {
