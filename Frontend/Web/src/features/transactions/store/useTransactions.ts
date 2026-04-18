@@ -27,7 +27,7 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
   const selectedTransactionId = ref<string | null>(null);
   const transactionStatusDraft = ref<"pending" | "approved" | "rejected">("pending");
   const searchTerm = ref("");
-  const statusFilter = ref<"all" | "pending" | "approved" | "rejected">("all");
+  const statusFilter = ref<"all" | "pending" | "approved" | "rejected" | "pending_delivered" | "delivered">("all");
   const typeFilter = ref<"all" | "withdrawal" | "pickup" | "sell" | "transfer" | "buy" | "gift">("all");
 
   const transactionsView = computed(() =>

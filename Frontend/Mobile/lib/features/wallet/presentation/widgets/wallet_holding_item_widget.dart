@@ -24,6 +24,10 @@ class WalletHoldingItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
+    final isPending = item.status.toLowerCase().startsWith('pending');
+    final isDelivered = item.status.toLowerCase() == 'delivered';
+    final isActionBlocked = isPending || isDelivered;
+    final status = item.status;
     final pnlAmount = item.marketValueAmount - item.estimatedPurchaseValue;
     final pnlLabel = pnlAmount >= 0 ? 'Profit' : 'Loss';
     final signedPnlAmount = pnlAmount >= 0 ? '+' : '-';
@@ -63,6 +67,24 @@ class WalletHoldingItemWidget extends StatelessWidget {
                       children: [
                         Text(item.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: palette.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 4),
+                        if (isPending || isDelivered) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _statusColor(status).withAlpha(20),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: _statusColor(status).withAlpha(80)),
+                            ),
+                            child: Text(
+                              status,
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: _statusColor(status),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                        ],
                         Text(item.subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.textSecondary), maxLines: 2, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 4),
                         if (AppReleaseConfig.showSellerUi) ...[
@@ -123,17 +145,17 @@ class WalletHoldingItemWidget extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _actionButton(context, label: 'Sell', icon: Icons.sell_outlined, onTap: onSell)),
+                  Expanded(child: _actionButton(context, label: 'Sell', icon: Icons.sell_outlined, onTap: onSell, isDisabled: isActionBlocked)),
                   const SizedBox(width: 16),
-                  Expanded(child: _actionButton(context, label: 'Gift', icon: Icons.wallet_giftcard, onTap: onGiftTransfer)),
+                  Expanded(child: _actionButton(context, label: 'Gift', icon: Icons.wallet_giftcard, onTap: onGiftTransfer, isDisabled: isActionBlocked)),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _actionButton(context, icon: Icons.local_shipping_outlined, label: 'Pickup', onTap: onPickup)),
+                  Expanded(child: _actionButton(context, icon: Icons.local_shipping_outlined, label: 'Pickup', onTap: onPickup, isDisabled: isActionBlocked)),
                   const SizedBox(width: 16),
-                  Expanded(child: _actionButton(context, icon: Icons.file_present, label: 'Certificate', onTap: onGenerateTaxInvoice)),
+                  Expanded(child: _actionButton(context, icon: Icons.file_present, label: 'Certificate', onTap: onGenerateTaxInvoice, isDisabled: isActionBlocked)),
                 ],
               ),
             ],
@@ -141,6 +163,14 @@ class WalletHoldingItemWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _statusColor(String status) {
+    final normalized = status.toLowerCase();
+    if (normalized.contains('pending')) return Colors.orange.shade700;
+    if (normalized.contains('delivered')) return Colors.green.shade700;
+    if (normalized.contains('gift') || normalized.contains('transfer')) return Colors.blue.shade700;
+    return Colors.grey.shade700;
   }
 
   Widget _miniTag(BuildContext context, String text) {
@@ -156,14 +186,14 @@ class WalletHoldingItemWidget extends StatelessWidget {
     );
   }
 
-  Widget _actionButton(BuildContext context, {required IconData icon, required VoidCallback onTap, String label = '', Color? iconColor}) {
+  Widget _actionButton(BuildContext context, {required IconData icon, required VoidCallback onTap, String label = '', Color? iconColor, bool isDisabled = false}) {
     final palette = context.appPalette;
-    final actionColor = iconColor ?? palette.primary;
+    final actionColor = isDisabled ? palette.textSecondary : (iconColor ?? palette.primary);
 
     return SizedBox(
       height: 38,
       child: OutlinedButton(
-        onPressed: onTap,
+        onPressed: isDisabled ? null : onTap,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: actionColor),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

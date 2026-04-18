@@ -8,6 +8,7 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace GoldWalletSystem.API.Controllers;
 
@@ -16,8 +17,10 @@ namespace GoldWalletSystem.API.Controllers;
 [Route("api/wallet")]
 public class WalletController(
     IWalletService walletService,
+    IWalletActionValidationService walletActionValidationService,
     ICurrentUserService currentUser,
     AppDbContext dbContext,
+    IWebHostEnvironment environment,
     API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     private const string SellExecutionConfigKey = "wallet.sell.execution";
@@ -27,7 +30,26 @@ public class WalletController(
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var data = await walletService.GetByUserIdAsync(request.UserId, cancellationToken);
-        return Ok(ApiResponse<WalletDto>.Ok(data));
+
+        var (statusByAssetId, detailsByAssetId) = await ResolveAssetStatusesAsync(request.UserId, data.Assets, cancellationToken);
+        var assets = data.Assets
+            .Select(asset =>
+            {
+                var status = statusByAssetId.TryGetValue(asset.Id, out var resolvedStatus)
+                    ? resolvedStatus
+                    : "Bought";
+                var statusDetails = detailsByAssetId.TryGetValue(asset.Id, out var resolvedDetails)
+                    ? resolvedDetails
+                    : null;
+                return asset with
+                {
+                    Status = status,
+                    IsDelivered = status == "Delivered",
+                    StatusDetails = statusDetails
+                };
+            })
+            .ToList();
+        return Ok(ApiResponse<WalletDto>.Ok(data with { Assets = assets }));
     }
 
     [HttpGet("actions/sell-configuration")]
@@ -99,6 +121,10 @@ public class WalletController(
         if (request.Quantity <= 0)
             return BadRequest(ApiResponse<object>.Fail("Quantity must be greater than zero.", 400));
 
+        var validationError = walletActionValidationService.ValidateExecuteActionRequest(actionType, request.Notes);
+        if (!string.IsNullOrWhiteSpace(validationError))
+            return BadRequest(ApiResponse<object>.Fail(validationError, 400));
+
         var wallet = await dbContext.Wallets
             .Include(x => x.Assets)
             .FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
@@ -138,7 +164,7 @@ public class WalletController(
         var oldWeight = asset.Weight;
         var oldCash = wallet.CashBalance;
 
-        var shouldRequireSellerApproval = actionType == "sell";
+        var shouldRequireSellerApproval = actionType is "sell" or "pickup";
         var status = shouldRequireSellerApproval ? "pending" : "approved";
 
         string? recipientInvestorName = null;
@@ -157,7 +183,7 @@ public class WalletController(
                 return BadRequest(ApiResponse<object>.Fail("Recipient investor account does not exist.", 400));
         }
 
-        if (!shouldRequireSellerApproval && actionType is "sell" or "transfer" or "gift" or "pickup")
+        if (!shouldRequireSellerApproval && actionType is "sell" or "transfer" or "gift")
         {
             asset.Quantity = Math.Max(0, asset.Quantity - request.Quantity);
             asset.Weight = Math.Max(0, asset.Weight - requestedWeight);
@@ -239,12 +265,21 @@ public class WalletController(
         };
         dbContext.TransactionHistories.Add(history);
 
-        if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell" or "pickup")
+        string? invoiceUrl = null;
+        if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell")
         {
             var sellerUserId = await dbContext.Users
                 .Where(x => x.Role == "Seller" && x.SellerId == asset.SellerId)
                 .Select(x => (int?)x.Id)
                 .FirstOrDefaultAsync(cancellationToken) ?? 0;
+
+            invoiceUrl = await SaveInvoiceDocumentAsync(
+                investorUserId: request.UserId,
+                actionType: actionType,
+                asset,
+                quantity: request.Quantity,
+                amount: grossAmount,
+                cancellationToken);
 
             dbContext.Invoices.Add(new Invoice
             {
@@ -256,7 +291,7 @@ public class WalletController(
                 SubTotal = grossAmount,
                 TaxAmount = 0,
                 TotalAmount = grossAmount,
-                InvoiceQrCode = string.Empty,
+                InvoiceQrCode = invoiceUrl ?? string.Empty,
                 IssuedOnUtc = DateTime.UtcNow,
                 Status = status,
                 CreatedAtUtc = DateTime.UtcNow
@@ -305,7 +340,10 @@ public class WalletController(
             LockedPriceUntilUtc = lockUntilUtc,
             CashBalance = wallet.CashBalance,
             TotalPortfolioValue = portfolioValue,
-            Message = shouldRequireSellerApproval ? "Sell request submitted and pending seller approval." : "Wallet action processed successfully."
+            Message = shouldRequireSellerApproval
+                ? $"{actionType} request submitted and pending seller approval."
+                : "Wallet action processed successfully.",
+            InvoiceUrl = invoiceUrl
         }));
     }
 
@@ -492,11 +530,225 @@ public class WalletController(
         public decimal CashBalance { get; set; }
         public decimal TotalPortfolioValue { get; set; }
         public string Message { get; set; } = string.Empty;
+        public string? InvoiceUrl { get; set; }
     }
 
     public sealed class SellExecutionConfigurationResponse
     {
         public string Mode { get; set; } = "locked_30_seconds";
         public int LockSeconds { get; set; } = 30;
+    }
+
+    private async Task<(Dictionary<int, string> StatusByAssetId, Dictionary<int, string?> DetailsByAssetId)> ResolveAssetStatusesAsync(
+        int userId,
+        IReadOnlyList<WalletAssetDto> assets,
+        CancellationToken cancellationToken)
+    {
+        var histories = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new
+            {
+                x.TransactionType,
+                x.Status,
+                x.Notes,
+                x.SellerId,
+                x.Category
+            })
+            .ToListAsync(cancellationToken);
+
+        var results = assets.ToDictionary(x => x.Id, _ => "Bought");
+        var details = assets.ToDictionary(x => x.Id, _ => (string?)null);
+        var resolvedAssetIds = new HashSet<int>();
+
+        foreach (var history in histories)
+        {
+            var walletAssetId = TryExtractWalletAssetId(history.Notes);
+            if (walletAssetId.HasValue && results.ContainsKey(walletAssetId.Value))
+            {
+                if (!resolvedAssetIds.Contains(walletAssetId.Value))
+                {
+                    results[walletAssetId.Value] = MapStatus(history.TransactionType, history.Status, isReceived: false);
+                    details[walletAssetId.Value] = null;
+                    resolvedAssetIds.Add(walletAssetId.Value);
+                }
+                continue;
+            }
+
+            var isReceived = (history.Notes ?? string.Empty).Contains("direction=received", StringComparison.OrdinalIgnoreCase);
+            if (!isReceived || history.SellerId is null) continue;
+
+            var status = MapStatus(history.TransactionType, history.Status, isReceived: true);
+            if (status == "Bought") continue;
+
+            var candidateAsset = assets.FirstOrDefault(x =>
+                x.SellerId == history.SellerId &&
+                x.Category.Equals(history.Category, StringComparison.OrdinalIgnoreCase) &&
+                results[x.Id] == "Bought");
+
+            if (candidateAsset is not null)
+            {
+                results[candidateAsset.Id] = status;
+                details[candidateAsset.Id] = BuildReceivedStatusDetails(history.TransactionType, history.Notes);
+                resolvedAssetIds.Add(candidateAsset.Id);
+            }
+        }
+
+        return (results, details);
+    }
+
+    private static string MapStatus(string? transactionType, string? status, bool isReceived)
+    {
+        var type = (transactionType ?? string.Empty).Trim().ToLowerInvariant();
+        var state = (status ?? string.Empty).Trim().ToLowerInvariant();
+
+        return (type, state, isReceived) switch
+        {
+            ("sell", "pending", _) => "Pending - Sell",
+            ("pickup", "pending", _) => "Pending - Pickup",
+            ("pickup", "approved", _) => "Pending - Delivered",
+            ("pickup", "pending_delivered", _) => "Pending - Delivered",
+            ("delivered_completed", _, _) => "Delivered",
+            _ => "Bought"
+        };
+    }
+
+    private static int? TryExtractWalletAssetId(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+        const string marker = "wallet_asset_id=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+        var tail = notes[valueStart..].Trim();
+        var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
+        var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail;
+        return int.TryParse(rawValue, out var id) ? id : null;
+    }
+
+    private static string? BuildReceivedStatusDetails(string? transactionType, string? notes)
+    {
+        var type = (transactionType ?? string.Empty).Trim().ToLowerInvariant();
+        if (type is not ("gift" or "transfer")) return null;
+
+        var sourceInvestorName = TryExtractMeta(notes, "from_investor_name")
+            ?? TryExtractMeta(notes, "from_investor_user_id");
+        if (string.IsNullOrWhiteSpace(sourceInvestorName)) return null;
+
+        return type == "gift"
+            ? $"Received as Gift from {sourceInvestorName}"
+            : $"Received as Transfer from {sourceInvestorName}";
+    }
+
+    private static string? TryExtractMeta(string? notes, string key)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+
+        var marker = $"{key}=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+
+        var tail = notes[valueStart..].Trim();
+        var stopAt = tail.IndexOfAny(['|', ',', ';']);
+        var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail.Trim();
+        return string.IsNullOrWhiteSpace(rawValue) ? null : rawValue;
+    }
+
+    private async Task<string?> SaveInvoiceDocumentAsync(
+        int investorUserId,
+        string actionType,
+        WalletAsset asset,
+        int quantity,
+        decimal amount,
+        CancellationToken cancellationToken)
+    {
+        var root = environment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(root))
+        {
+            root = Path.Combine(environment.ContentRootPath, "wwwroot");
+        }
+
+        var folder = Path.Combine(root, "Certificats", investorUserId.ToString());
+        Directory.CreateDirectory(folder);
+
+        var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
+        var filePath = Path.Combine(folder, fileName);
+        var lines = new[]
+        {
+            "Gold Wallet Invoice",
+            $"Date (UTC): {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}",
+            $"Action: {actionType}",
+            $"Investor User Id: {investorUserId}",
+            $"Asset Id: {asset.Id}",
+            $"Asset Type: {asset.AssetType}",
+            $"Category: {asset.Category}",
+            $"Quantity: {quantity}",
+            $"Weight: {asset.Weight} {asset.Unit}",
+            $"Purity: {asset.Purity}",
+            $"Amount: {amount}"
+        };
+        var pdfBytes = BuildSimplePdf(lines);
+        await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
+        return $"/Certificats/{investorUserId}/{fileName}";
+    }
+
+    private static byte[] BuildSimplePdf(IEnumerable<string> lines)
+    {
+        static string EscapePdf(string value) => value
+            .Replace("\\", "\\\\")
+            .Replace("(", "\\(")
+            .Replace(")", "\\)");
+
+        var contentBuilder = new StringBuilder();
+        contentBuilder.AppendLine("BT");
+        contentBuilder.AppendLine("/F1 12 Tf");
+        contentBuilder.AppendLine("50 780 Td");
+        var first = true;
+        foreach (var line in lines)
+        {
+            if (!first)
+            {
+                contentBuilder.AppendLine("0 -16 Td");
+            }
+            contentBuilder.AppendLine($"({EscapePdf(line)}) Tj");
+            first = false;
+        }
+        contentBuilder.AppendLine("ET");
+
+        var streamContent = contentBuilder.ToString();
+        var objects = new List<string>
+        {
+            "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+            "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+            "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+            $"4 0 obj\n<< /Length {Encoding.ASCII.GetByteCount(streamContent)} >>\nstream\n{streamContent}endstream\nendobj\n",
+            "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
+        };
+
+        var pdf = new StringBuilder();
+        pdf.Append("%PDF-1.4\n");
+        var offsets = new List<int> { 0 };
+        foreach (var obj in objects)
+        {
+            offsets.Add(Encoding.ASCII.GetByteCount(pdf.ToString()));
+            pdf.Append(obj);
+        }
+
+        var xrefStart = Encoding.ASCII.GetByteCount(pdf.ToString());
+        pdf.Append($"xref\n0 {objects.Count + 1}\n");
+        pdf.Append("0000000000 65535 f \n");
+        foreach (var offset in offsets.Skip(1))
+        {
+            pdf.Append($"{offset:D10} 00000 n \n");
+        }
+        pdf.Append($"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xrefStart}\n%%EOF");
+
+        return Encoding.ASCII.GetBytes(pdf.ToString());
     }
 }

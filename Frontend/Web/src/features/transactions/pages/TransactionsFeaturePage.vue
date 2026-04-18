@@ -55,6 +55,8 @@ const goList = () => {
       <select v-model="statusFilter">
         <option value="all">All statuses</option>
         <option value="pending">Pending</option>
+        <option value="pending_delivered">Pending - Delivered</option>
+        <option value="delivered">Delivered</option>
         <option value="approved">Approved</option>
         <option value="rejected">Rejected</option>
       </select>

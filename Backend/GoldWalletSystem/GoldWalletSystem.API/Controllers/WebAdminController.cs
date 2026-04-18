@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.API.Models;
 using GoldWalletSystem.API.Services;
@@ -14,7 +15,11 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/web-admin")]
-public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardService dashboardService, IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
+public class WebAdminController(
+    AppDbContext dbContext,
+    IWebAdminDashboardService dashboardService,
+    IMarketplaceRealtimeNotifier realtimeNotifier,
+    IWebHostEnvironment environment) : ControllerBase
 {
     private const string FeesConfigKey = "webadmin.fees";
     private const string WalletSellConfigKey = "wallet.sell.execution";
@@ -182,7 +187,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                     Unit = history.Unit,
                     Purity = history.Purity,
                     Amount = history.Amount,
-                    Status = history.Status,
+                    Status = MapRequestStatusForView(history.TransactionType, history.Status),
                     Currency = history.Currency,
                     Notes = history.Notes,
                     CreatedAt = history.CreatedAtUtc,
@@ -204,20 +209,30 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         if (item is null) return NotFound(ApiResponse<object>.Fail("Request not found", 404));
         if (!CanAccessSellerData(item.SellerId)) return Forbid();
 
-        if (!string.Equals(item.Status, "pending", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(ApiResponse<object>.Fail("Only pending requests can be changed.", 400));
-
         var nextStatus = request.Status.Trim().ToLowerInvariant();
-        if (nextStatus != "approved" && nextStatus != "rejected")
+        if (nextStatus != "approved" && nextStatus != "rejected" && nextStatus != "delivered")
             return BadRequest(ApiResponse<object>.Fail("Invalid status", 400));
 
+        var action = item.TransactionType.Trim().ToLowerInvariant();
+        var canTransitionFromPending = string.Equals(item.Status, "pending", StringComparison.OrdinalIgnoreCase)
+                                       && nextStatus is "approved" or "rejected";
+        var canTransitionPickupToDelivered =
+            action == "pickup"
+            && string.Equals(item.Status, "pending_delivered", StringComparison.OrdinalIgnoreCase)
+            && nextStatus == "delivered";
+
+        if (!canTransitionFromPending && !canTransitionPickupToDelivered)
+            return BadRequest(ApiResponse<object>.Fail("Invalid status transition for this request.", 400));
+
         var previousStatus = item.Status;
-        item.Status = nextStatus;
+        item.Status = action == "pickup" && nextStatus == "approved"
+            ? "pending_delivered"
+            : nextStatus;
         item.UpdatedAtUtc = DateTime.UtcNow;
 
-        if (previousStatus == "pending")
+        if (canTransitionFromPending)
         {
-            await ApplyRequestStockSideEffectsAsync(item, nextStatus, cancellationToken);
+            await ApplyRequestStockSideEffectsAsync(item, item.Status, cancellationToken);
 
             if (nextStatus == "approved")
             {
@@ -226,42 +241,63 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             }
         }
 
+        if (canTransitionPickupToDelivered)
+        {
+            dbContext.TransactionHistories.Add(new Domain.Entities.TransactionHistory
+            {
+                UserId = item.UserId,
+                SellerId = item.SellerId,
+                TransactionType = "delivered_completed",
+                Status = "approved",
+                Category = item.Category,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                Weight = item.Weight,
+                Unit = item.Unit,
+                Purity = item.Purity,
+                Amount = item.Amount,
+                Currency = item.Currency,
+                Notes = item.Notes,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
         dbContext.AuditLogs.Add(new Domain.Entities.AuditLog
         {
             UserId = item.UserId,
             Action = "RequestStatusUpdated",
             EntityName = "TransactionHistory",
             EntityId = item.Id,
-            Details = $"Request {item.Id}: {previousStatus} -> {nextStatus}, type={item.TransactionType}, amount={item.Amount} {item.Currency}",
+            Details = $"Request {item.Id}: {previousStatus} -> {item.Status}, type={item.TransactionType}, amount={item.Amount} {item.Currency}",
             CreatedAtUtc = DateTime.UtcNow
         });
         dbContext.AppNotifications.Add(new Domain.Entities.AppNotification
         {
             UserId = item.UserId,
             Title = "Request Status Updated",
-            Body = $"Your {item.TransactionType} request was {nextStatus}.",
+            Body = $"Your {item.TransactionType} request was {item.Status}.",
             IsRead = false,
             CreatedAtUtc = DateTime.UtcNow
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{nextStatus}", cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{item.Status}", cancellationToken);
         if (nextStatus == "approved" && item.TransactionType is not null)
         {
-            var action = item.TransactionType.Trim().ToLowerInvariant();
-            if (action is "transfer" or "gift")
+            var recipientAction = item.TransactionType.Trim().ToLowerInvariant();
+            if (recipientAction is "transfer" or "gift")
             {
                 var recipientInvestorId = TryExtractRecipientInvestorUserId(item.Notes);
                 if (recipientInvestorId.HasValue)
                 {
                     await realtimeNotifier.BroadcastRefreshHintAsync(
-                        $"wallet-action:{action}:{recipientInvestorId.Value}",
+                        $"wallet-action:{recipientAction}:{recipientInvestorId.Value}",
                         cancellationToken);
                 }
             }
         }
 
-        return Ok(ApiResponse<string>.Ok("updated"));
+        return Ok(ApiResponse<object>.Ok(new { status = item.Status }, "updated"));
     }
 
     [HttpGet("requests/{id}")]
@@ -291,7 +327,7 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                     Unit = history.Unit,
                     Purity = history.Purity,
                     Amount = history.Amount,
-                    Status = history.Status,
+                    Status = MapRequestStatusForView(history.TransactionType, history.Status),
                     Currency = history.Currency,
                     Notes = history.Notes,
                     CreatedAt = history.CreatedAtUtc,
@@ -669,6 +705,19 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
         return !sellerScope.HasValue || (resourceSellerId.HasValue && resourceSellerId.Value == sellerScope.Value);
     }
 
+    private static string MapRequestStatusForView(string? transactionType, string? status)
+    {
+        var type = (transactionType ?? string.Empty).Trim().ToLowerInvariant();
+        var normalizedStatus = (status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (type == "pickup" && normalizedStatus == "approved")
+        {
+            return "pending_delivered";
+        }
+
+        return normalizedStatus;
+    }
+
     private async Task ApplyApprovedRequestSideEffectsAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
     {
         var wallet = await dbContext.Wallets
@@ -726,12 +775,15 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 }
                 weightToRemove = Math.Min(weightToRemove, asset.Weight);
 
-                asset.Quantity = Math.Max(asset.Quantity - qtyToRemove, 0);
-                asset.Weight = Math.Max(asset.Weight - weightToRemove, 0);
-                asset.UpdatedAtUtc = DateTime.UtcNow;
-                if (asset.Quantity == 0 && asset.Weight <= 0)
+                if (action != "pickup")
                 {
-                    dbContext.WalletAssets.Remove(asset);
+                    asset.Quantity = Math.Max(asset.Quantity - qtyToRemove, 0);
+                    asset.Weight = Math.Max(asset.Weight - weightToRemove, 0);
+                    asset.UpdatedAtUtc = DateTime.UtcNow;
+                    if (asset.Quantity == 0 && asset.Weight <= 0)
+                    {
+                        dbContext.WalletAssets.Remove(asset);
+                    }
                 }
             }
 
@@ -782,11 +834,12 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 }
             }
 
-            if (action is "sell" or "pickup")
+            if (action is "sell")
             {
                 wallet.CashBalance += request.Amount;
                 wallet.UpdatedAtUtc = DateTime.UtcNow;
             }
+
         }
     }
 
@@ -982,10 +1035,93 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             SubTotal = request.Amount,
             TaxAmount = 0,
             TotalAmount = request.Amount,
-            InvoiceQrCode = string.Empty,
+            InvoiceQrCode = await SaveInvoiceDocumentAsync(request, cancellationToken) ?? string.Empty,
             IssuedOnUtc = DateTime.UtcNow,
             Status = "approved",
             CreatedAtUtc = DateTime.UtcNow
         });
+    }
+
+    private async Task<string?> SaveInvoiceDocumentAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
+    {
+        var root = environment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(root))
+        {
+            root = Path.Combine(environment.ContentRootPath, "wwwroot");
+        }
+
+        var folder = Path.Combine(root, "Certificats", request.UserId.ToString());
+        Directory.CreateDirectory(folder);
+
+        var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
+        var filePath = Path.Combine(folder, fileName);
+        var lines = new[]
+        {
+            "Gold Wallet Invoice",
+            $"Date (UTC): {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}",
+            $"Action: {request.TransactionType}",
+            $"Investor User Id: {request.UserId}",
+            $"Quantity: {request.Quantity}",
+            $"Weight: {request.Weight} {request.Unit}",
+            $"Purity: {request.Purity}",
+            $"Amount: {request.Amount}"
+        };
+        var pdfBytes = BuildSimplePdf(lines);
+        await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
+        return $"/Certificats/{request.UserId}/{fileName}";
+    }
+
+    private static byte[] BuildSimplePdf(IEnumerable<string> lines)
+    {
+        static string EscapePdf(string value) => value
+            .Replace("\\", "\\\\")
+            .Replace("(", "\\(")
+            .Replace(")", "\\)");
+
+        var contentBuilder = new StringBuilder();
+        contentBuilder.AppendLine("BT");
+        contentBuilder.AppendLine("/F1 12 Tf");
+        contentBuilder.AppendLine("50 780 Td");
+        var first = true;
+        foreach (var line in lines)
+        {
+            if (!first)
+            {
+                contentBuilder.AppendLine("0 -16 Td");
+            }
+            contentBuilder.AppendLine($"({EscapePdf(line)}) Tj");
+            first = false;
+        }
+        contentBuilder.AppendLine("ET");
+
+        var streamContent = contentBuilder.ToString();
+        var objects = new List<string>
+        {
+            "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+            "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+            "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+            $"4 0 obj\n<< /Length {Encoding.ASCII.GetByteCount(streamContent)} >>\nstream\n{streamContent}endstream\nendobj\n",
+            "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
+        };
+
+        var pdf = new StringBuilder();
+        pdf.Append("%PDF-1.4\n");
+        var offsets = new List<int> { 0 };
+        foreach (var obj in objects)
+        {
+            offsets.Add(Encoding.ASCII.GetByteCount(pdf.ToString()));
+            pdf.Append(obj);
+        }
+
+        var xrefStart = Encoding.ASCII.GetByteCount(pdf.ToString());
+        pdf.Append($"xref\n0 {objects.Count + 1}\n");
+        pdf.Append("0000000000 65535 f \n");
+        foreach (var offset in offsets.Skip(1))
+        {
+            pdf.Append($"{offset:D10} 00000 n \n");
+        }
+        pdf.Append($"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xrefStart}\n%%EOF");
+
+        return Encoding.ASCII.GetBytes(pdf.ToString());
     }
 }

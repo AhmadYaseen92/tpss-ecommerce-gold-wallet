@@ -18,4 +18,7 @@ public sealed record WalletAssetDto(
     decimal Purity,
     int Quantity,
     decimal AverageBuyPrice,
-    decimal CurrentMarketPrice);
+    decimal CurrentMarketPrice,
+    bool IsDelivered,
+    string Status,
+    string? StatusDetails);

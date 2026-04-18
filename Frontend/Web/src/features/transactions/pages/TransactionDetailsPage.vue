@@ -4,6 +4,15 @@ import { statusClass } from "../../../shared/services/statusStyles";
 import { formatCurrency, formatDateTime } from "../../../shared/services/formatters";
 
 defineProps<{ item: TransactionRowView | null }>();
+
+const formatStatus = (status: string) => {
+  const normalized = status.trim().toLowerCase();
+  if (normalized === "pending_delivered") return "Pending - Delivered";
+  if (normalized === "delivered") return "Delivered";
+  if (normalized === "approved") return "Approved";
+  if (normalized === "rejected") return "Rejected";
+  return "Pending";
+};
 </script>
 
 <template>
@@ -30,7 +39,7 @@ defineProps<{ item: TransactionRowView | null }>();
     <p><strong>Amount:</strong> {{ formatCurrency(item.amount, item.currency) }}</p>
     <p><strong>Currency:</strong> {{ item.currency }}</p>
     <p><strong>Notes:</strong> {{ item.notes || "—" }}</p>
-    <p><strong>Status:</strong> <span :class="statusClass(item.status)">{{ item.status }}</span></p>
+    <p><strong>Status:</strong> <span :class="statusClass(item.status)">{{ formatStatus(item.status) }}</span></p>
     <p><strong>Created At:</strong> {{ formatDateTime(item.createdAt) }}</p>
     <p><strong>Updated At:</strong> {{ item.updatedAt ? formatDateTime(item.updatedAt) : "—" }}</p>
   </section>
