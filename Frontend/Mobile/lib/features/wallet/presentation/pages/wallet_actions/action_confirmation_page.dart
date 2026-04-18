@@ -35,6 +35,11 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
   SellExecutionMode _sellExecutionMode = SellExecutionMode.locked30Seconds;
 
   bool get _isSellFlow => widget.summary.actionType == WalletActionType.sell;
+  bool get _shouldAutoReturnAfterSubmit =>
+      widget.summary.actionType == WalletActionType.sell ||
+      widget.summary.actionType == WalletActionType.transfer ||
+      widget.summary.actionType == WalletActionType.gift ||
+      widget.summary.actionType == WalletActionType.pickup;
   bool get _isExpired => _secondsLeft == 0 && !_isCompleted;
 
   @override
@@ -234,6 +239,24 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
       );
 
       _timer?.cancel();
+      if (_shouldAutoReturnAfterSubmit) {
+        if (!mounted) return;
+        await AppModalAlert.show(
+          context,
+          title: _resultPendingApproval ? 'Request Submitted' : 'Action Completed',
+          message: _resultPendingApproval
+              ? '${widget.summary.title} submitted and pending seller approval.'
+              : '${widget.summary.title} completed successfully.',
+          variant: AppModalAlertVariant.success,
+        );
+        if (!mounted) return;
+        Navigator.popUntil(
+          context,
+          (route) => route.settings.name == AppRoutes.walletItemsRoute || route.isFirst,
+        );
+        return;
+      }
+
       setState(() {
         _isCompleted = true;
         _backendReference = result.referenceId;
