@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
@@ -33,11 +34,11 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
         buttonText: widget.summary.actionType == WalletActionType.sell ? "Confirm Sell" : "Confirm",
         onPressed: _isSubmitting
             ? null
-            : () async {
+            : () {
                 if (widget.summary.actionType == WalletActionType.sell ||
                     widget.summary.actionType == WalletActionType.transfer ||
                     widget.summary.actionType == WalletActionType.gift) {
-                  await _submitDirectAction(widget.summary.actionType);
+                  unawaited(_submitDirectAction(widget.summary.actionType));
                   return;
                 }
                 if (!context.mounted) return;
