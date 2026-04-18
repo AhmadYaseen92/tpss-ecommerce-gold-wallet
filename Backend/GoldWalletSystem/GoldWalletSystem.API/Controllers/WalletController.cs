@@ -561,8 +561,11 @@ public class WalletController(
             var walletAssetId = TryExtractWalletAssetId(history.Notes);
             if (walletAssetId.HasValue && results.ContainsKey(walletAssetId.Value))
             {
-                results[walletAssetId.Value] = MapStatus(history.TransactionType, history.Status, isReceived: false);
-                details[walletAssetId.Value] = null;
+                if (results[walletAssetId.Value] == "Bought")
+                {
+                    results[walletAssetId.Value] = MapStatus(history.TransactionType, history.Status, isReceived: false);
+                    details[walletAssetId.Value] = null;
+                }
                 continue;
             }
 
