@@ -1029,20 +1029,75 @@ public class WebAdminController(
         var folder = Path.Combine(root, "Certificats", request.UserId.ToString());
         Directory.CreateDirectory(folder);
 
-        var fileName = $"invoice-{Guid.NewGuid():N}.txt";
+        var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
-        var content = new StringBuilder()
-            .AppendLine("Gold Wallet Invoice")
-            .AppendLine($"Date (UTC): {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}")
-            .AppendLine($"Action: {request.TransactionType}")
-            .AppendLine($"Investor User Id: {request.UserId}")
-            .AppendLine($"Quantity: {request.Quantity}")
-            .AppendLine($"Weight: {request.Weight} {request.Unit}")
-            .AppendLine($"Purity: {request.Purity}")
-            .AppendLine($"Amount: {request.Amount}")
-            .ToString();
-
-        await System.IO.File.WriteAllTextAsync(filePath, content, cancellationToken);
+        var lines = new[]
+        {
+            "Gold Wallet Invoice",
+            $"Date (UTC): {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}",
+            $"Action: {request.TransactionType}",
+            $"Investor User Id: {request.UserId}",
+            $"Quantity: {request.Quantity}",
+            $"Weight: {request.Weight} {request.Unit}",
+            $"Purity: {request.Purity}",
+            $"Amount: {request.Amount}"
+        };
+        var pdfBytes = BuildSimplePdf(lines);
+        await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
         return $"/Certificats/{request.UserId}/{fileName}";
+    }
+
+    private static byte[] BuildSimplePdf(IEnumerable<string> lines)
+    {
+        static string EscapePdf(string value) => value
+            .Replace("\\", "\\\\")
+            .Replace("(", "\\(")
+            .Replace(")", "\\)");
+
+        var contentBuilder = new StringBuilder();
+        contentBuilder.AppendLine("BT");
+        contentBuilder.AppendLine("/F1 12 Tf");
+        contentBuilder.AppendLine("50 780 Td");
+        var first = true;
+        foreach (var line in lines)
+        {
+            if (!first)
+            {
+                contentBuilder.AppendLine("0 -16 Td");
+            }
+            contentBuilder.AppendLine($"({EscapePdf(line)}) Tj");
+            first = false;
+        }
+        contentBuilder.AppendLine("ET");
+
+        var streamContent = contentBuilder.ToString();
+        var objects = new List<string>
+        {
+            "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+            "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+            "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+            $"4 0 obj\n<< /Length {Encoding.ASCII.GetByteCount(streamContent)} >>\nstream\n{streamContent}endstream\nendobj\n",
+            "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
+        };
+
+        var pdf = new StringBuilder();
+        pdf.Append("%PDF-1.4\n");
+        var offsets = new List<int> { 0 };
+        foreach (var obj in objects)
+        {
+            offsets.Add(Encoding.ASCII.GetByteCount(pdf.ToString()));
+            pdf.Append(obj);
+        }
+
+        var xrefStart = Encoding.ASCII.GetByteCount(pdf.ToString());
+        pdf.Append($"xref\n0 {objects.Count + 1}\n");
+        pdf.Append("0000000000 65535 f \n");
+        foreach (var offset in offsets.Skip(1))
+        {
+            pdf.Append($"{offset:D10} 00000 n \n");
+        }
+        pdf.Append($"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xrefStart}\n%%EOF");
+
+        return Encoding.ASCII.GetBytes(pdf.ToString());
     }
 }
