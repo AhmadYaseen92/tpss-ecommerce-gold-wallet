@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
@@ -111,7 +112,12 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
               AppModalAlert.show(
                 context,
                 title: 'Pickup Confirmed',
-                message: 'Pickup scheduled for $dateText at $timeText.',
+                message: 'Pickup request submitted for $dateText at $timeText. Waiting seller approval.',
+                variant: AppModalAlertVariant.success,
+              );
+              Navigator.popUntil(
+                context,
+                (route) => route.settings.name == AppRoutes.walletItemsRoute || route.isFirst,
               );
             },
             child: const Text('Confirm Pickup'),

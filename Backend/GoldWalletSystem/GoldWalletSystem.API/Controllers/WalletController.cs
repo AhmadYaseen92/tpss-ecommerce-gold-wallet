@@ -8,6 +8,7 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace GoldWalletSystem.API.Controllers;
 
@@ -18,6 +19,7 @@ public class WalletController(
     IWalletService walletService,
     ICurrentUserService currentUser,
     AppDbContext dbContext,
+    IWebHostEnvironment environment,
     API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     private const string SellExecutionConfigKey = "wallet.sell.execution";
@@ -27,7 +29,12 @@ public class WalletController(
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var data = await walletService.GetByUserIdAsync(request.UserId, cancellationToken);
-        return Ok(ApiResponse<WalletDto>.Ok(data));
+
+        var deliveredAssetIds = await ResolveDeliveredAssetIdsAsync(request.UserId, cancellationToken);
+        var assets = data.Assets
+            .Select(asset => asset with { IsDelivered = deliveredAssetIds.Contains(asset.Id) })
+            .ToList();
+        return Ok(ApiResponse<WalletDto>.Ok(data with { Assets = assets }));
     }
 
     [HttpGet("actions/sell-configuration")]
@@ -138,7 +145,7 @@ public class WalletController(
         var oldWeight = asset.Weight;
         var oldCash = wallet.CashBalance;
 
-        var shouldRequireSellerApproval = actionType == "sell";
+        var shouldRequireSellerApproval = actionType is "sell" or "pickup";
         var status = shouldRequireSellerApproval ? "pending" : "approved";
 
         string? recipientInvestorName = null;
@@ -157,7 +164,7 @@ public class WalletController(
                 return BadRequest(ApiResponse<object>.Fail("Recipient investor account does not exist.", 400));
         }
 
-        if (!shouldRequireSellerApproval && actionType is "sell" or "transfer" or "gift" or "pickup")
+        if (!shouldRequireSellerApproval && actionType is "sell" or "transfer" or "gift")
         {
             asset.Quantity = Math.Max(0, asset.Quantity - request.Quantity);
             asset.Weight = Math.Max(0, asset.Weight - requestedWeight);
@@ -239,12 +246,21 @@ public class WalletController(
         };
         dbContext.TransactionHistories.Add(history);
 
-        if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell" or "pickup")
+        string? invoiceUrl = null;
+        if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell")
         {
             var sellerUserId = await dbContext.Users
                 .Where(x => x.Role == "Seller" && x.SellerId == asset.SellerId)
                 .Select(x => (int?)x.Id)
                 .FirstOrDefaultAsync(cancellationToken) ?? 0;
+
+            invoiceUrl = await SaveInvoiceDocumentAsync(
+                investorUserId: request.UserId,
+                actionType: actionType,
+                asset,
+                quantity: request.Quantity,
+                amount: grossAmount,
+                cancellationToken);
 
             dbContext.Invoices.Add(new Invoice
             {
@@ -256,7 +272,7 @@ public class WalletController(
                 SubTotal = grossAmount,
                 TaxAmount = 0,
                 TotalAmount = grossAmount,
-                InvoiceQrCode = string.Empty,
+                InvoiceQrCode = invoiceUrl ?? string.Empty,
                 IssuedOnUtc = DateTime.UtcNow,
                 Status = status,
                 CreatedAtUtc = DateTime.UtcNow
@@ -305,7 +321,10 @@ public class WalletController(
             LockedPriceUntilUtc = lockUntilUtc,
             CashBalance = wallet.CashBalance,
             TotalPortfolioValue = portfolioValue,
-            Message = shouldRequireSellerApproval ? "Sell request submitted and pending seller approval." : "Wallet action processed successfully."
+            Message = shouldRequireSellerApproval
+                ? $"{actionType} request submitted and pending seller approval."
+                : "Wallet action processed successfully.",
+            InvoiceUrl = invoiceUrl
         }));
     }
 
@@ -492,11 +511,82 @@ public class WalletController(
         public decimal CashBalance { get; set; }
         public decimal TotalPortfolioValue { get; set; }
         public string Message { get; set; } = string.Empty;
+        public string? InvoiceUrl { get; set; }
     }
 
     public sealed class SellExecutionConfigurationResponse
     {
         public string Mode { get; set; } = "locked_30_seconds";
         public int LockSeconds { get; set; } = 30;
+    }
+
+    private async Task<HashSet<int>> ResolveDeliveredAssetIdsAsync(int userId, CancellationToken cancellationToken)
+    {
+        var pickupHistories = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.TransactionType == "pickup" && x.Status == "approved")
+            .Select(x => x.Notes)
+            .ToListAsync(cancellationToken);
+
+        var results = new HashSet<int>();
+        foreach (var notes in pickupHistories)
+        {
+            var walletAssetId = TryExtractWalletAssetId(notes);
+            if (walletAssetId.HasValue) results.Add(walletAssetId.Value);
+        }
+
+        return results;
+    }
+
+    private static int? TryExtractWalletAssetId(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+        const string marker = "wallet_asset_id=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+        var tail = notes[valueStart..].Trim();
+        var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
+        var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail;
+        return int.TryParse(rawValue, out var id) ? id : null;
+    }
+
+    private async Task<string?> SaveInvoiceDocumentAsync(
+        int investorUserId,
+        string actionType,
+        WalletAsset asset,
+        int quantity,
+        decimal amount,
+        CancellationToken cancellationToken)
+    {
+        var root = environment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(root))
+        {
+            root = Path.Combine(environment.ContentRootPath, "wwwroot");
+        }
+
+        var folder = Path.Combine(root, "Certificats", investorUserId.ToString());
+        Directory.CreateDirectory(folder);
+
+        var fileName = $"invoice-{Guid.NewGuid():N}.txt";
+        var filePath = Path.Combine(folder, fileName);
+        var content = new StringBuilder()
+            .AppendLine("Gold Wallet Invoice")
+            .AppendLine($"Date (UTC): {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}")
+            .AppendLine($"Action: {actionType}")
+            .AppendLine($"Investor User Id: {investorUserId}")
+            .AppendLine($"Asset Id: {asset.Id}")
+            .AppendLine($"Asset Type: {asset.AssetType}")
+            .AppendLine($"Category: {asset.Category}")
+            .AppendLine($"Quantity: {quantity}")
+            .AppendLine($"Weight: {asset.Weight} {asset.Unit}")
+            .AppendLine($"Purity: {asset.Purity}")
+            .AppendLine($"Amount: {amount}")
+            .ToString();
+
+        await System.IO.File.WriteAllTextAsync(filePath, content, cancellationToken);
+        return $"/Certificats/{investorUserId}/{fileName}";
     }
 }

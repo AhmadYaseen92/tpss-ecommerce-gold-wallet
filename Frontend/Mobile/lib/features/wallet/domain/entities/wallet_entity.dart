@@ -88,6 +88,7 @@ class WalletTransactionEntity {
     this.sellerName = 'Imseeh',
     this.isSpotMrOrder = false,
     this.certificateUrl,
+    this.isDelivered = false,
   });
 
   final int id;
@@ -104,6 +105,7 @@ class WalletTransactionEntity {
   final bool isSpotMrOrder;
   final String imageUrl;
   final String? certificateUrl;
+  final bool isDelivered;
 
   double get weightInKg => weightInGrams / 1000;
   double get weightInOz => weightInGrams / 31.1035;
@@ -142,6 +144,7 @@ class WalletTransactionEntity {
     bool? isSpotMrOrder,
     String? imageUrl,
     String? certificateUrl,
+    bool? isDelivered,
   }) {
     return WalletTransactionEntity(
       id: id ?? this.id,
@@ -158,6 +161,7 @@ class WalletTransactionEntity {
       isSpotMrOrder: isSpotMrOrder ?? this.isSpotMrOrder,
       imageUrl: imageUrl ?? this.imageUrl,
       certificateUrl: certificateUrl ?? this.certificateUrl,
+      isDelivered: isDelivered ?? this.isDelivered,
     );
   }
 

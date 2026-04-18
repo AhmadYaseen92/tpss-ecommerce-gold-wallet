@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.API.Models;
 using GoldWalletSystem.API.Services;
@@ -14,7 +15,11 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/web-admin")]
-public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardService dashboardService, IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
+public class WebAdminController(
+    AppDbContext dbContext,
+    IWebAdminDashboardService dashboardService,
+    IMarketplaceRealtimeNotifier realtimeNotifier,
+    IWebHostEnvironment environment) : ControllerBase
 {
     private const string FeesConfigKey = "webadmin.fees";
     private const string WalletSellConfigKey = "wallet.sell.execution";
@@ -726,12 +731,15 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 }
                 weightToRemove = Math.Min(weightToRemove, asset.Weight);
 
-                asset.Quantity = Math.Max(asset.Quantity - qtyToRemove, 0);
-                asset.Weight = Math.Max(asset.Weight - weightToRemove, 0);
-                asset.UpdatedAtUtc = DateTime.UtcNow;
-                if (asset.Quantity == 0 && asset.Weight <= 0)
+                if (action != "pickup")
                 {
-                    dbContext.WalletAssets.Remove(asset);
+                    asset.Quantity = Math.Max(asset.Quantity - qtyToRemove, 0);
+                    asset.Weight = Math.Max(asset.Weight - weightToRemove, 0);
+                    asset.UpdatedAtUtc = DateTime.UtcNow;
+                    if (asset.Quantity == 0 && asset.Weight <= 0)
+                    {
+                        dbContext.WalletAssets.Remove(asset);
+                    }
                 }
             }
 
@@ -782,10 +790,31 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
                 }
             }
 
-            if (action is "sell" or "pickup")
+            if (action is "sell")
             {
                 wallet.CashBalance += request.Amount;
                 wallet.UpdatedAtUtc = DateTime.UtcNow;
+            }
+
+            if (action == "pickup")
+            {
+                dbContext.TransactionHistories.Add(new Domain.Entities.TransactionHistory
+                {
+                    UserId = request.UserId,
+                    SellerId = request.SellerId,
+                    TransactionType = "delivered_completed",
+                    Status = "approved",
+                    Category = request.Category,
+                    Quantity = request.Quantity,
+                    UnitPrice = request.UnitPrice,
+                    Weight = request.Weight,
+                    Unit = request.Unit,
+                    Purity = request.Purity,
+                    Amount = request.Amount,
+                    Currency = request.Currency,
+                    Notes = request.Notes,
+                    CreatedAtUtc = DateTime.UtcNow
+                });
             }
         }
     }
@@ -982,10 +1011,38 @@ public class WebAdminController(AppDbContext dbContext, IWebAdminDashboardServic
             SubTotal = request.Amount,
             TaxAmount = 0,
             TotalAmount = request.Amount,
-            InvoiceQrCode = string.Empty,
+            InvoiceQrCode = await SaveInvoiceDocumentAsync(request, cancellationToken) ?? string.Empty,
             IssuedOnUtc = DateTime.UtcNow,
             Status = "approved",
             CreatedAtUtc = DateTime.UtcNow
         });
+    }
+
+    private async Task<string?> SaveInvoiceDocumentAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
+    {
+        var root = environment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(root))
+        {
+            root = Path.Combine(environment.ContentRootPath, "wwwroot");
+        }
+
+        var folder = Path.Combine(root, "Certificats", request.UserId.ToString());
+        Directory.CreateDirectory(folder);
+
+        var fileName = $"invoice-{Guid.NewGuid():N}.txt";
+        var filePath = Path.Combine(folder, fileName);
+        var content = new StringBuilder()
+            .AppendLine("Gold Wallet Invoice")
+            .AppendLine($"Date (UTC): {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}")
+            .AppendLine($"Action: {request.TransactionType}")
+            .AppendLine($"Investor User Id: {request.UserId}")
+            .AppendLine($"Quantity: {request.Quantity}")
+            .AppendLine($"Weight: {request.Weight} {request.Unit}")
+            .AppendLine($"Purity: {request.Purity}")
+            .AppendLine($"Amount: {request.Amount}")
+            .ToString();
+
+        await System.IO.File.WriteAllTextAsync(filePath, content, cancellationToken);
+        return $"/Certificats/{request.UserId}/{fileName}";
     }
 }
