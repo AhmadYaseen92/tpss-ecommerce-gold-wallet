@@ -245,9 +245,12 @@ BEGIN TRY
             [UnitPrice],[Weight],[Unit],[Purity],[Amount],[Currency],[Notes],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES
-            (@InvestorMain, @SellerImseeh, N'buy', N'pending', N'Gold', 2, 600, 10.000, N'gram', 24, 1200, N'USD', N'Seed request from web-admin', DATEADD(DAY, -1, @Now), NULL),
-            (@InvestorImseeh, @SellerImseeh, N'sell', N'approved', N'Gold', 1, 740, 5.000, N'gram', 24, 740, N'USD', N'Seed approved sell request', DATEADD(DAY, -2, @Now), NULL),
-            (@InvestorGoldPal, @SellerGoldPal, N'transfer', N'rejected', N'Coins', 1, 350, 1.000, N'ounce', 24, 350, N'USD', N'Seed rejected transfer request', DATEADD(DAY, -3, @Now), NULL);
+            (@InvestorMain, @SellerImseeh, N'sell', N'pending', N'Gold', 1, 740, 5.000, N'gram', 24, 740, N'USD', N'execution_mode=locked_30_seconds|wallet_asset_id=1', DATEADD(HOUR, -6, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'pickup', N'pending', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, N'USD', N'pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', N'execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=9|recipient_investor_name=GoldPal Investor 1', DATEADD(DAY, -2, @Now), NULL),
+            (@InvestorGoldPal, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', N'direction=received|from_investor_user_id=8|from_investor_name=Imseeh Investor 1|wallet_asset_id=2', DATEADD(DAY, -2, DATEADD(MINUTE, 1, @Now)), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', N'execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=9|recipient_investor_name=GoldPal Investor 1', DATEADD(DAY, -1, @Now), NULL),
+            (@InvestorGoldPal, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', N'direction=received|from_investor_user_id=8|from_investor_name=Imseeh Investor 1|wallet_asset_id=2', DATEADD(DAY, -1, DATEADD(MINUTE, 1, @Now)), NULL);
     END
     ELSE
     BEGIN
@@ -281,18 +284,26 @@ BEGIN TRY
         (@InvestorImseeh, @SellerUserImseeh, N'INV-SEED-0002', N'Trade', N'WebAdmin', 1430, 0, 1430, N'', DATEADD(DAY, -2, @Now), N'paid', @Now, NULL);
 
     -- 5) Core products (starter catalog) with REQUIRED weight fields.
+    -- Covers all categories except SpotMr:
+    --   Gold (1), Silver (2), Diamond (3), Jewelry (4), Coins (5)
     ;WITH SeedProducts AS (
-        SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock, CAST(5.000 AS decimal(18,3)) AS WeightValue, 1 AS WeightUnit UNION ALL
-        SELECT @SellerImseeh, N'IMSEEH-PRD-002', N'Imseeh 1oz Gold Coin', N'Fine gold investment coin', CAST(2675.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
-        SELECT @SellerImseeh, N'IMSEEH-PRD-003', N'Imseeh Silver 1oz Coin', N'Investment silver coin', CAST(36.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
+        SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock, CAST(5.000 AS decimal(18,3)) AS WeightValue, 1 AS WeightUnit, 1 AS Category, 1 AS MaterialType, 3 AS FormType, N'/images/products/gold-bar.png' AS ImageUrl UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-002', N'Imseeh Silver 1oz Bar', N'Investment silver bar', CAST(36.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3, 2, 2, 3, N'/images/products/silver.png' UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-003', N'Imseeh Diamond Ring', N'Certified diamond ring 18K', CAST(920.00 AS decimal(18,2)), 45, CAST(8.000 AS decimal(18,3)), 1, 3, 3, 1, N'/images/products/diamond.png' UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-004', N'Imseeh Gold Necklace', N'22K jewelry necklace', CAST(1450.00 AS decimal(18,2)), 35, CAST(24.000 AS decimal(18,3)), 1, 4, 1, 1, N'/images/products/jewelry.png' UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-005', N'Imseeh 1oz Gold Coin', N'Fine gold investment coin', CAST(2675.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3, 5, 1, 2, N'/images/products/gold-coin.png' UNION ALL
 
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-001', N'GoldPal 5g Gold Bar', N'24K minted bar - 5 grams', CAST(432.00 AS decimal(18,2)), 100, CAST(5.000 AS decimal(18,3)), 1 UNION ALL
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-002', N'GoldPal 1oz Gold Coin', N'Fine gold investment coin', CAST(2678.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-003', N'GoldPal Silver 1oz Coin', N'Investment silver coin', CAST(37.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-001', N'GoldPal 5g Gold Bar', N'24K minted bar - 5 grams', CAST(432.00 AS decimal(18,2)), 100, CAST(5.000 AS decimal(18,3)), 1, 1, 1, 3, N'/images/products/gold-bar.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-002', N'GoldPal Silver 1oz Bar', N'Investment silver bar', CAST(37.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3, 2, 2, 3, N'/images/products/silver.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-003', N'GoldPal Diamond Stud', N'Certified diamond stud earring', CAST(880.00 AS decimal(18,2)), 50, CAST(4.000 AS decimal(18,3)), 1, 3, 3, 1, N'/images/products/diamond.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-004', N'GoldPal Gold Bracelet', N'21K jewelry bracelet', CAST(1390.00 AS decimal(18,2)), 40, CAST(20.000 AS decimal(18,3)), 1, 4, 1, 1, N'/images/products/jewelry.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-005', N'GoldPal 1oz Gold Coin', N'Fine gold investment coin', CAST(2678.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3, 5, 1, 2, N'/images/products/gold-coin.png' UNION ALL
 
-        SELECT @SellerBullion, N'BULLION-PRD-001', N'Bullion 5g Gold Bar', N'24K minted bar - 5 grams', CAST(433.00 AS decimal(18,2)), 100, CAST(5.000 AS decimal(18,3)), 1 UNION ALL
-        SELECT @SellerBullion, N'BULLION-PRD-002', N'Bullion 1oz Gold Coin', N'Fine gold investment coin', CAST(2680.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
-        SELECT @SellerBullion, N'BULLION-PRD-003', N'Bullion Silver 1oz Coin', N'Investment silver coin', CAST(38.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3
+        SELECT @SellerBullion, N'BULLION-PRD-001', N'Bullion 5g Gold Bar', N'24K minted bar - 5 grams', CAST(433.00 AS decimal(18,2)), 100, CAST(5.000 AS decimal(18,3)), 1, 1, 1, 3, N'/images/products/gold-bar.png' UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-002', N'Bullion Silver 1oz Bar', N'Investment silver bar', CAST(38.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3, 2, 2, 3, N'/images/products/silver.png' UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-003', N'Bullion Diamond Pendant', N'Certified diamond pendant', CAST(960.00 AS decimal(18,2)), 42, CAST(6.000 AS decimal(18,3)), 1, 3, 3, 1, N'/images/products/diamond.png' UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-004', N'Bullion Gold Ring', N'22K jewelry ring', CAST(1210.00 AS decimal(18,2)), 38, CAST(10.000 AS decimal(18,3)), 1, 4, 1, 1, N'/images/products/jewelry.png' UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-005', N'Bullion 1oz Gold Coin', N'Fine gold investment coin', CAST(2680.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3, 5, 1, 2, N'/images/products/gold-coin.png'
     )
     MERGE [Products] AS T
     USING SeedProducts AS S
@@ -305,12 +316,12 @@ BEGIN TRY
             T.[Price] = S.[Price],
             T.[AvailableStock] = S.[AvailableStock],
             T.[WeightValue] = S.[WeightValue],
-            T.[WeightUnit] = 1,
-            T.[MaterialType] = CASE WHEN S.[Name] LIKE N'%Silver%' THEN 2 WHEN S.[Name] LIKE N'%Diamond%' THEN 3 ELSE 1 END,
-            T.[FormType] = CASE WHEN S.[Name] LIKE N'%Coin%' THEN 2 WHEN S.[Name] LIKE N'%Bar%' THEN 3 ELSE 1 END,
+            T.[WeightUnit] = S.[WeightUnit],
+            T.[MaterialType] = S.[MaterialType],
+            T.[FormType] = S.[FormType],
             T.[PricingMode] = 1,
             T.[PurityKarat] = CASE WHEN S.[Name] LIKE N'%22K%' THEN 2 ELSE 1 END,
-            T.[PurityFactor] = CASE WHEN S.[Name] LIKE N'%Silver%' THEN 0.999 ELSE 1.0 END,
+            T.[PurityFactor] = CASE WHEN S.[Category] = 2 THEN 0.999 ELSE 1.0 END,
             T.[BaseMarketPrice] = S.[Price],
             T.[ManualSellPrice] = S.[Price],
             T.[DeliveryFee] = 5,
@@ -319,17 +330,8 @@ BEGIN TRY
             T.[OfferPercent] = 0,
             T.[OfferNewPrice] = 0,
             T.[OfferType] = 0,
-            T.[Category] = CASE
-                WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
-                WHEN S.[Name] LIKE N'%Coin%' THEN 5
-                WHEN S.[Name] LIKE N'%Silver%' THEN 2
-                ELSE 1
-            END,
-            T.[ImageUrl] = CASE
-                WHEN S.[Name] LIKE N'%Silver%' THEN N'/images/products/silver.png'
-                WHEN S.[Name] LIKE N'%Coin%' THEN N'/images/products/gold-coin.png'
-                ELSE N'/images/products/gold-bar.png'
-            END,
+            T.[Category] = S.[Category],
+            T.[ImageUrl] = S.[ImageUrl],
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
@@ -369,12 +371,12 @@ BEGIN TRY
             S.[Price],
             S.[AvailableStock],
             S.[WeightValue],
-            1,
-            CASE WHEN S.[Name] LIKE N'%Silver%' THEN 2 WHEN S.[Name] LIKE N'%Diamond%' THEN 3 ELSE 1 END,
-            CASE WHEN S.[Name] LIKE N'%Coin%' THEN 2 WHEN S.[Name] LIKE N'%Bar%' THEN 3 ELSE 1 END,
+            S.[WeightUnit],
+            S.[MaterialType],
+            S.[FormType],
             1,
             CASE WHEN S.[Name] LIKE N'%22K%' THEN 2 ELSE 1 END,
-            CASE WHEN S.[Name] LIKE N'%Silver%' THEN 0.999 ELSE 1.0 END,
+            CASE WHEN S.[Category] = 2 THEN 0.999 ELSE 1.0 END,
             S.[Price],
             S.[Price],
             5,
@@ -383,17 +385,8 @@ BEGIN TRY
             0,
             0,
             0,
-            CASE
-                WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
-                WHEN S.[Name] LIKE N'%Coin%' THEN 5
-                WHEN S.[Name] LIKE N'%Silver%' THEN 2
-                ELSE 1
-            END,
-            CASE
-                WHEN S.[Name] LIKE N'%Silver%' THEN N'/images/products/silver.png'
-                WHEN S.[Name] LIKE N'%Coin%' THEN N'/images/products/gold-coin.png'
-                ELSE N'/images/products/gold-bar.png'
-            END,
+            S.[Category],
+            S.[ImageUrl],
             1,
             @Now,
             NULL
@@ -406,8 +399,8 @@ BEGIN TRY
     DECLARE @CartInvestorGoldPal int = (SELECT TOP 1 [Id] FROM [Carts] WHERE [UserId] = @InvestorGoldPal);
 
     DECLARE @ProductImseehGoldBar int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'IMSEEH-PRD-001');
-    DECLARE @ProductImseehGoldCoin int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'IMSEEH-PRD-002');
-    DECLARE @ProductGoldPalSilver int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'GOLDPAL-PRD-003');
+    DECLARE @ProductImseehGoldCoin int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'IMSEEH-PRD-005');
+    DECLARE @ProductGoldPalSilver int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'GOLDPAL-PRD-002');
 
     IF COL_LENGTH('WalletAssets', 'Category') IS NOT NULL AND COL_LENGTH('WalletAssets', 'SellerId') IS NOT NULL
     BEGIN
