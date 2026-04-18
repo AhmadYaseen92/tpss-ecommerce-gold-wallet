@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 
@@ -70,7 +71,16 @@ class GenerateTaxInvoicePage extends StatelessWidget {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () {
-          AppModalAlert.show(context, title: label, message: message);
+          AppModalAlert.show(
+            context,
+            title: label,
+            message: message,
+            variant: AppModalAlertVariant.success,
+          );
+          Navigator.popUntil(
+            context,
+            (route) => route.settings.name == AppRoutes.walletItemsRoute || route.isFirst,
+          );
         },
         icon: Icon(icon),
         label: Text(label),

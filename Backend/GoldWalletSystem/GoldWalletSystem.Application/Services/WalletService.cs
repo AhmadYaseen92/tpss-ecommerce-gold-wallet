@@ -29,7 +29,10 @@ public class WalletService(IWalletRepository walletRepository) : IWalletService
                     x.Purity,
                     x.Quantity,
                     x.AverageBuyPrice,
-                    x.CurrentMarketPrice))
+                    x.CurrentMarketPrice,
+                    false,
+                    "Bought",
+                    null))
                 .ToList());
     }
 }

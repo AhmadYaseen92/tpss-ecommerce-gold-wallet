@@ -1,6 +1,6 @@
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 
-enum WalletActionType { sell, transfer, gift, convertToCash, convertToCrypto }
+enum WalletActionType { sell, transfer, gift, pickup, convertToCash, convertToCrypto }
 
 enum ConvertTargetType { cash, crypto }
 
@@ -66,6 +66,7 @@ class WalletActionExecutionResult {
   final double cashBalance;
   final double totalPortfolioValue;
   final DateTime? lockedPriceUntilUtc;
+  final String? invoiceUrl;
 
   const WalletActionExecutionResult({
     required this.referenceId,
@@ -73,6 +74,7 @@ class WalletActionExecutionResult {
     required this.cashBalance,
     required this.totalPortfolioValue,
     this.lockedPriceUntilUtc,
+    this.invoiceUrl,
   });
 }
 
