@@ -1,6 +1,6 @@
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 
-enum WalletActionType { sell, transfer, gift, convertToCash, convertToCrypto }
+enum WalletActionType { sell, transfer, gift, pickup, convertToCash, convertToCrypto }
 
 enum ConvertTargetType { cash, crypto }
 

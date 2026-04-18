@@ -25,6 +25,8 @@ class WalletHoldingItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.appPalette;
     final isDelivered = item.isDelivered;
+    final isPending = item.status.toLowerCase().startsWith('pending');
+    final isActionBlocked = isDelivered || isPending;
     final status = item.status;
     final pnlAmount = item.marketValueAmount - item.estimatedPurchaseValue;
     final pnlLabel = pnlAmount >= 0 ? 'Profit' : 'Loss';
@@ -143,17 +145,17 @@ class WalletHoldingItemWidget extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _actionButton(context, label: 'Sell', icon: Icons.sell_outlined, onTap: onSell, isDisabled: isDelivered)),
+                  Expanded(child: _actionButton(context, label: 'Sell', icon: Icons.sell_outlined, onTap: onSell, isDisabled: isActionBlocked)),
                   const SizedBox(width: 16),
-                  Expanded(child: _actionButton(context, label: 'Gift', icon: Icons.wallet_giftcard, onTap: onGiftTransfer, isDisabled: isDelivered)),
+                  Expanded(child: _actionButton(context, label: 'Gift', icon: Icons.wallet_giftcard, onTap: onGiftTransfer, isDisabled: isActionBlocked)),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _actionButton(context, icon: Icons.local_shipping_outlined, label: 'Pickup', onTap: onPickup, isDisabled: isDelivered)),
+                  Expanded(child: _actionButton(context, icon: Icons.local_shipping_outlined, label: 'Pickup', onTap: onPickup, isDisabled: isActionBlocked)),
                   const SizedBox(width: 16),
-                  Expanded(child: _actionButton(context, icon: Icons.file_present, label: 'Certificate', onTap: onGenerateTaxInvoice, isDisabled: isDelivered)),
+                  Expanded(child: _actionButton(context, icon: Icons.file_present, label: 'Certificate', onTap: onGenerateTaxInvoice, isDisabled: isActionBlocked)),
                 ],
               ),
             ],

@@ -80,6 +80,7 @@ class WalletActionRemoteDataSource {
     WalletActionType.sell => 'sell',
     WalletActionType.transfer => 'transfer',
     WalletActionType.gift => 'gift',
+    WalletActionType.pickup => 'pickup',
     WalletActionType.convertToCash => 'certificate',
     WalletActionType.convertToCrypto => 'invoice',
   };
