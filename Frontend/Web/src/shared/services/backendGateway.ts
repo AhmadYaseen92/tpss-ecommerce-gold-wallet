@@ -127,7 +127,7 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
     unit: item.unit,
     purity: item.purity,
     amount: item.amount,
-    status: ["pending", "approved", "rejected", "pending_delivered", "delivered"].includes(item.status.toLowerCase())
+    status: ["pending", "approved", "rejected", "pending_delivered", "delivered", "cancelled", "canceled"].includes(item.status.toLowerCase())
       ? (item.status.toLowerCase() as InvestorRequest["status"])
       : "pending",
     currency: item.currency,
@@ -347,7 +347,7 @@ export async function fetchWebAdminDashboard(accessToken: string, period: "today
 export async function updateWebRequestStatus(
   accessToken: string,
   requestId: string,
-  status: "pending" | "approved" | "rejected"
+  status: "pending" | "approved" | "rejected" | "delivered" | "cancelled"
 ): Promise<void> {
   await putJson<string, { status: string }>(`/api/web-admin/requests/${requestId}/status`, { status }, accessToken);
 }

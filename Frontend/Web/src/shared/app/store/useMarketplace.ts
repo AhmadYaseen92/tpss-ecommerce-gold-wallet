@@ -239,7 +239,7 @@ export function useMarketplace() {
     state.value.investors = setInvestorStatus(state.value.investors, investorId, status);
   };
 
-  const updateRequestStatus = async (requestId: string, status: "pending" | "approved" | "rejected") => {
+  const updateRequestStatus = async (requestId: string, status: "pending" | "approved" | "rejected" | "delivered" | "cancelled") => {
     state.value.requests = setRequestStatus(state.value.requests, requestId, status);
     if (session.value?.accessToken) {
       await updateWebRequestStatus(session.value.accessToken, requestId, status);

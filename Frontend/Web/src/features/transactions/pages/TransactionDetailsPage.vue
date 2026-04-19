@@ -9,6 +9,7 @@ const formatStatus = (status: string) => {
   const normalized = status.trim().toLowerCase();
   if (normalized === "pending_delivered") return "Pending - Delivered";
   if (normalized === "delivered") return "Delivered";
+  if (normalized === "cancelled" || normalized === "canceled") return "Canceled";
   if (normalized === "approved") return "Approved";
   if (normalized === "rejected") return "Rejected";
   return "Pending";
@@ -22,6 +23,7 @@ const formatStatus = (status: string) => {
     <p><strong>Investor ID:</strong> {{ item.investorId }}</p>
     <p><strong>Investor:</strong> {{ item.investorName }}</p>
     <p><strong>Type:</strong> {{ item.transactionType }}</p>
+    <p v-if="item.pickupSchedule"><strong>Pickup Date & Time:</strong> {{ item.pickupSchedule }}</p>
     <p v-if="item.productImageUrl" class="detail-image-row">
       <strong>Item Image:</strong>
       <img :src="item.productImageUrl" :alt="item.productName" class="detail-image" />
