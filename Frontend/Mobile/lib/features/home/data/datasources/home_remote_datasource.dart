@@ -46,7 +46,6 @@ class HomeRemoteDataSource {
       final mapped = items
           .whereType<Map<String, dynamic>>()
           .map((item) {
-            final offerType = (item['offerType'] ?? 'None').toString();
             final offerPercent = (item['offerPercent'] as num?)?.toDouble() ?? 0;
             final offerNewPrice = (item['offerNewPrice'] as num?)?.toDouble() ?? 0;
             return HomeCarsouleItemModel(
@@ -54,35 +53,28 @@ class HomeRemoteDataSource {
               imgUrl: (item['imageUrl'] ?? '').toString(),
               title: (item['name'] ?? 'Product').toString(),
               sellerName: (item['sellerName'] ?? 'Seller').toString(),
-              offerLabel: _offerLabel(offerType: offerType, offerPercent: offerPercent, offerNewPrice: offerNewPrice),
+              offerLabel: _offerLabel(offerPercent: offerPercent, offerNewPrice: offerNewPrice),
             );
           })
           .where((item) => item.imgUrl.trim().isNotEmpty)
           .toList();
 
-      final withOffers = mapped.where((item) => (item.offerLabel ?? '').isNotEmpty).toList();
-      if (withOffers.isNotEmpty) {
-        return withOffers;
-      }
-      return mapped;
+      return mapped.where((item) => (item.offerLabel ?? '').isNotEmpty).toList();
     } catch (_) {
       return const [];
     }
   }
 
   String? _offerLabel({
-    required String offerType,
     required double offerPercent,
     required double offerNewPrice,
   }) {
-    final normalized = offerType.trim().toLowerCase();
-    if (normalized.isEmpty || normalized == 'none') return null;
-    if (normalized.contains('percent') && offerPercent > 0) {
+    if (offerPercent > 0) {
       return '${offerPercent.toStringAsFixed(0)}% OFF';
     }
     if (offerNewPrice > 0) {
       return 'Offer \$${offerNewPrice.toStringAsFixed(2)}';
     }
-    return 'Special Offer';
+    return null;
   }
 }

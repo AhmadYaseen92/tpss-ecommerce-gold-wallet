@@ -16,9 +16,25 @@ class HomeCarouselWidget extends StatelessWidget {
     return FutureBuilder<List<HomeCarsouleItemModel>>(
       future: _remoteDataSource.getCarouselProductsWithOffers(),
       builder: (context, snapshot) {
-        final items = snapshot.hasData && snapshot.data!.isNotEmpty
-            ? snapshot.data!
-            : dummyCarsouleItems;
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 220,
+            child: Center(child: CircularProgressIndicator.adaptive()),
+          );
+        }
+        final items = snapshot.data ?? const <HomeCarsouleItemModel>[];
+        if (items.isEmpty) {
+          return Container(
+            height: 140,
+            width: double.infinity,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.black.withAlpha(10),
+            ),
+            child: const Text('No offer products available right now.'),
+          );
+        }
 
         return FlutterCarousel.builder(
           itemCount: items.length,
