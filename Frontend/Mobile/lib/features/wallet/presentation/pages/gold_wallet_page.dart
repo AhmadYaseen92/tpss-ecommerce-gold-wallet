@@ -8,7 +8,6 @@ import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_s
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/cubit/wallet_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/presentation/widgets/PortfolioCardWidget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_card_widget.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_tab_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_transactions_widget.dart';
 
 class GoldWalletPage extends StatelessWidget {
@@ -75,15 +74,6 @@ class GoldWalletPage extends StatelessWidget {
                         availableCash: '\$2,000.00',
                       ),
                       const SizedBox(height: 20.0),
-
-                      WalletTabBar(
-                        selectedCategoryId: state.selectedCategoryId,
-                        onCategoryTap: (categoryId) =>
-                            context.read<WalletCubit>().selectCategory(
-                              categoryId,
-                            ),
-                      ),
-                      const SizedBox(height: 16.0),
 
                       WalletCardWidget(
                         walletName: wallet.walletName,

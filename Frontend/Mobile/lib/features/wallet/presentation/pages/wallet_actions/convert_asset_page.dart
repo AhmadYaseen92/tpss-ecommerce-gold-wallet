@@ -82,16 +82,14 @@ class ConvertAssetPage extends StatelessWidget {
                           if (!cubit.isCrypto)
                             DropdownButtonFormField<String>(
                               value: cubit.cashDestination,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'Wallet Cash',
-                                  child: Text('Wallet Cash'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Bank Account',
-                                  child: Text('Bank Account'),
-                                ),
-                              ],
+                              items: cubit.cashDestinations
+                                  .map(
+                                    (destination) => DropdownMenuItem(
+                                      value: destination,
+                                      child: Text(destination),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: cubit.updateCashDestination,
                               decoration: const InputDecoration(
                                 labelText: 'Cash Destination',

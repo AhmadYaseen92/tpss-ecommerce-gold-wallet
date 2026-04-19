@@ -85,7 +85,7 @@ class WalletTransactionsWidget extends StatelessWidget {
   Widget _buildTransactionRow(BuildContext context, WalletTransactionEntity tx) {
     final palette = context.appPalette;
     final isPositive = tx.change.startsWith('+');
-    final pnlAmount = tx.marketValueAmount - tx.estimatedPurchaseValue;
+    final pnlAmount = tx.profitOrLossValue;
     final pnlLabel = pnlAmount >= 0 ? 'Profit' : 'Loss';
     final signedPnlAmount = pnlAmount >= 0 ? '+' : '-';
     return Row(
@@ -127,6 +127,24 @@ class WalletTransactionsWidget extends StatelessWidget {
                 const SizedBox(height: 2.0),
               ],
               Text(tx.subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.textSecondary)),
+              const SizedBox(height: 2.0),
+              Text(
+                'Investment: \$${tx.investmentValue.toStringAsFixed(2)}',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: palette.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if ((tx.statusDetails ?? '').trim().isNotEmpty) ...[
+                const SizedBox(height: 2.0),
+                Text(
+                  tx.statusDetails!,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: palette.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
