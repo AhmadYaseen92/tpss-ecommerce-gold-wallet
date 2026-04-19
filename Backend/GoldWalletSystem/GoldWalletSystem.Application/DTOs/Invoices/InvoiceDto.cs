@@ -43,6 +43,7 @@ public class CreateInvoiceRequestDto
     public string InvoiceCategory { get; set; } = "Buy";
     public string SourceChannel { get; set; } = "Mobile";
     public string? ExternalReference { get; set; }
+    public decimal SubTotal { get; set; }
     public decimal FeesAmount { get; set; }
     public decimal DiscountAmount { get; set; }
     public decimal TaxAmount { get; set; }
