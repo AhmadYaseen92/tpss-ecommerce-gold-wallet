@@ -15,6 +15,7 @@ withDefaults(
 const emit = defineEmits<{
   (e: "view", id: string): void;
   (e: "quickStatus", id: string, status: "pending" | "approved" | "rejected"): void;
+  (e: "cancelRequest", id: string): void;
 }>();
 
 const formatAmount = (amount: number, currency: string) => formatCurrency(amount, currency);
@@ -81,7 +82,10 @@ const formatStatus = (status: string) => {
         </td>
         <td>{{ formatDateTime(trx.createdAt) }}</td>
         <td>{{ trx.updatedAt ? formatDateTime(trx.updatedAt) : "—" }}</td>
-        <td><button @click="emit('view', trx.id)">View Details</button></td>
+        <td>
+          <button @click="emit('view', trx.id)">View Details</button>
+          <button v-if="trx.status === 'pending'" class="cancel-btn" @click="emit('cancelRequest', trx.id)">Cancel Request</button>
+        </td>
       </tr>
     </tbody>
   </table>
@@ -100,5 +104,10 @@ const formatStatus = (status: string) => {
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid #ddd;
+}
+
+.cancel-btn {
+  margin-left: 8px;
+  color: #b42318;
 }
 </style>

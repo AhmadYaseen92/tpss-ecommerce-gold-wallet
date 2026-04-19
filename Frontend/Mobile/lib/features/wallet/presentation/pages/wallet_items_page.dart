@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
@@ -79,6 +80,20 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
       arguments: arguments,
     );
 
+    await _reloadTransactions();
+  }
+
+  Future<void> _cancelPendingRequest(WalletTransactionEntity item) async {
+    final userId = AuthSessionStore.userId;
+    if (userId == null) return;
+
+    await InjectionContainer.dio().post(
+      '/wallet/actions/cancel-request',
+      data: {
+        'userId': userId,
+        'walletAssetId': item.id,
+      },
+    );
     await _reloadTransactions();
   }
 
@@ -181,6 +196,7 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
                       item,
                     );
                   },
+                  onCancelRequest: () => _cancelPendingRequest(item),
                 );
               },
             ),

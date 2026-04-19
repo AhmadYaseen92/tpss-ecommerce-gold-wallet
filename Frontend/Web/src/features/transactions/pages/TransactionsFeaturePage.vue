@@ -42,6 +42,14 @@ const goDetails = (id: string) => {
 const goList = () => {
   window.location.hash = "#/transactions";
 };
+
+const cancelRequest = async (id: string) => {
+  const current = transactionsView.value.find((x) => x.id === id);
+  if (!current || current.status !== "pending") return;
+  const confirmed = window.confirm(`Cancel pending request ${id}?`);
+  if (!confirmed) return;
+  await props.marketplace.updateRequestStatus(id, "rejected");
+};
 </script>
 
 <template>
@@ -70,7 +78,7 @@ const goList = () => {
         <option value="withdrawal">Withdrawal</option>
       </select>
     </div>
-    <TransactionsPage :items="transactionsView" :status-class="statusClass" @view="goDetails" @quick-status="quickStatus" />
+    <TransactionsPage :items="transactionsView" :status-class="statusClass" @view="goDetails" @quick-status="quickStatus" @cancel-request="cancelRequest" />
   </SectionCard>
 </template>
 

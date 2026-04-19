@@ -1,6 +1,5 @@
 class ProductCategoryFilter {
   static const List<({String label, int? categoryId})> options = [
-    (label: 'All', categoryId: null),
     (label: 'Gold', categoryId: 1),
     (label: 'Silver', categoryId: 2),
     (label: 'Diamond', categoryId: 3),
