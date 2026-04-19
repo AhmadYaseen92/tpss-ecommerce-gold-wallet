@@ -203,6 +203,110 @@ BEGIN TRY
     WHERE U.[Email] IN (SELECT [Email] FROM @Users)
       AND NOT EXISTS (SELECT 1 FROM [Carts] C WHERE C.[UserId] = U.[Id]);
 
+    -- 3.b) Seed profile-linked bank accounts and payment methods used by checkout/wallet actions.
+    DELETE A
+    FROM [ApplePayPaymentMethodDetails] A
+    INNER JOIN [PaymentMethods] PM ON PM.[Id] = A.[PaymentMethodId]
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = PM.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DELETE C
+    FROM [CardPaymentMethodDetails] C
+    INNER JOIN [PaymentMethods] PM ON PM.[Id] = C.[PaymentMethodId]
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = PM.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DELETE WPM
+    FROM [WalletPaymentMethodDetails] WPM
+    INNER JOIN [PaymentMethods] PM ON PM.[Id] = WPM.[PaymentMethodId]
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = PM.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DELETE CL
+    FROM [CliqPaymentMethodDetails] CL
+    INNER JOIN [PaymentMethods] PM ON PM.[Id] = CL.[PaymentMethodId]
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = PM.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DELETE PM
+    FROM [PaymentMethods] PM
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = PM.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DELETE LBA
+    FROM [LinkedBankAccounts] LBA
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = LBA.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DECLARE @ProfileInvestorMain int = (
+        SELECT TOP 1 UP.[Id]
+        FROM [UserProfiles] UP
+        INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+        WHERE U.[Email] = N'investor@goldwallet.com'
+    );
+    DECLARE @ProfileInvestorImseeh int = (
+        SELECT TOP 1 UP.[Id]
+        FROM [UserProfiles] UP
+        INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+        WHERE U.[Email] = N'imseeh.investor1@example.com'
+    );
+
+    INSERT INTO [LinkedBankAccounts] (
+        [UserProfileId],[BankName],[IbanMasked],[IsVerified],[IsDefault],[AccountHolderName],[AccountNumber],[SwiftCode],
+        [BranchName],[BranchAddress],[Country],[City],[Currency],[CreatedAtUtc],[UpdatedAtUtc]
+    )
+    VALUES
+        (@ProfileInvestorMain, N'Jordan Islamic Bank', N'JO** **** **** 6789', 1, 1, N'Gold Wallet Investor', N'1234567890', N'JIBAJOAXXX', N'Amman Main', N'Abdali Branch', N'Jordan', N'Amman', N'JOD', @Now, NULL),
+        (@ProfileInvestorMain, N'Arab Bank', N'JO** **** **** 1140', 1, 0, N'Gold Wallet Investor', N'9876543210', N'ARABJOAXXX', N'Shmeisani', N'Shmeisani Branch', N'Jordan', N'Amman', N'JOD', @Now, NULL),
+        (@ProfileInvestorImseeh, N'Cairo Amman Bank', N'JO** **** **** 4412', 1, 1, N'Imseeh Investor 1', N'5566778899', N'CAABJOAXXX', N'Zarqa Main', N'Zarqa Downtown', N'Jordan', N'Zarqa', N'JOD', @Now, NULL);
+
+    INSERT INTO [PaymentMethods] ([UserProfileId],[Type],[MaskedNumber],[IsDefault],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES
+        (@ProfileInvestorMain, N'Visa / MasterCard', N'**** **** **** 9281', 1, @Now, NULL),
+        (@ProfileInvestorMain, N'Apple Pay', N'APPLE-PAY-PRIMARY', 0, @Now, NULL),
+        (@ProfileInvestorMain, N'ZainCash', N'ZAINCASH-7788', 0, @Now, NULL),
+        (@ProfileInvestorImseeh, N'Visa / MasterCard', N'**** **** **** 5521', 1, @Now, NULL);
+
+    DECLARE @PmInvestorMainCard int = (
+        SELECT TOP 1 [Id] FROM [PaymentMethods]
+        WHERE [UserProfileId] = @ProfileInvestorMain AND [Type] = N'Visa / MasterCard'
+        ORDER BY [Id] DESC
+    );
+    DECLARE @PmInvestorMainApple int = (
+        SELECT TOP 1 [Id] FROM [PaymentMethods]
+        WHERE [UserProfileId] = @ProfileInvestorMain AND [Type] = N'Apple Pay'
+        ORDER BY [Id] DESC
+    );
+    DECLARE @PmInvestorMainWallet int = (
+        SELECT TOP 1 [Id] FROM [PaymentMethods]
+        WHERE [UserProfileId] = @ProfileInvestorMain AND [Type] = N'ZainCash'
+        ORDER BY [Id] DESC
+    );
+    DECLARE @PmInvestorImseehCard int = (
+        SELECT TOP 1 [Id] FROM [PaymentMethods]
+        WHERE [UserProfileId] = @ProfileInvestorImseeh AND [Type] = N'Visa / MasterCard'
+        ORDER BY [Id] DESC
+    );
+
+    INSERT INTO [CardPaymentMethodDetails] ([PaymentMethodId],[CardNumber],[CardHolderName],[Expiry],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES
+        (@PmInvestorMainCard, N'4111111111119281', N'Gold Wallet Investor', N'12/29', @Now, NULL),
+        (@PmInvestorImseehCard, N'5555555555555521', N'Imseeh Investor 1', N'10/28', @Now, NULL);
+
+    INSERT INTO [ApplePayPaymentMethodDetails] ([PaymentMethodId],[ApplePayToken],[AccountHolderName],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES
+        (@PmInvestorMainApple, N'APPLE_TOKEN_INVESTOR_MAIN', N'Gold Wallet Investor', @Now, NULL);
+
+    INSERT INTO [WalletPaymentMethodDetails] ([PaymentMethodId],[Provider],[WalletNumber],[AccountHolderName],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES
+        (@PmInvestorMainWallet, N'ZainCash', N'0780007788', N'Gold Wallet Investor', @Now, NULL);
+
     -- 4) Keep startup state clean for seeded users.
     DELETE CI
     FROM [CartItems] CI
@@ -245,9 +349,12 @@ BEGIN TRY
             [UnitPrice],[Weight],[Unit],[Purity],[Amount],[Currency],[Notes],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES
-            (@InvestorMain, @SellerImseeh, N'buy', N'pending', N'Gold', 2, 600, 10.000, N'gram', 24, 1200, N'USD', N'Seed request from web-admin', DATEADD(DAY, -1, @Now), NULL),
-            (@InvestorImseeh, @SellerImseeh, N'sell', N'approved', N'Gold', 1, 740, 5.000, N'gram', 24, 740, N'USD', N'Seed approved sell request', DATEADD(DAY, -2, @Now), NULL),
-            (@InvestorGoldPal, @SellerGoldPal, N'transfer', N'rejected', N'Coins', 1, 350, 1.000, N'ounce', 24, 350, N'USD', N'Seed rejected transfer request', DATEADD(DAY, -3, @Now), NULL);
+            (@InvestorMain, @SellerImseeh, N'sell', N'pending', N'Gold', 1, 740, 5.000, N'gram', 24, 740, N'USD', N'execution_mode=locked_30_seconds|wallet_asset_id=1', DATEADD(HOUR, -6, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'pickup', N'pending_delivered', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, N'USD', N'pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', N'execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=9|recipient_investor_name=GoldPal Investor 1', DATEADD(DAY, -2, @Now), NULL),
+            (@InvestorGoldPal, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', N'direction=received|from_investor_user_id=8|from_investor_name=Imseeh Investor 1|wallet_asset_id=2', DATEADD(DAY, -2, DATEADD(MINUTE, 1, @Now)), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', N'execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=9|recipient_investor_name=GoldPal Investor 1', DATEADD(DAY, -1, @Now), NULL),
+            (@InvestorGoldPal, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', N'direction=received|from_investor_user_id=8|from_investor_name=Imseeh Investor 1|wallet_asset_id=2', DATEADD(DAY, -1, DATEADD(MINUTE, 1, @Now)), NULL);
     END
     ELSE
     BEGIN
@@ -274,25 +381,36 @@ BEGIN TRY
 
     INSERT INTO [Invoices] (
         [InvestorUserId],[SellerUserId],[InvoiceNumber],[InvoiceCategory],[SourceChannel],
-        [SubTotal],[TaxAmount],[TotalAmount],[InvoiceQrCode],[IssuedOnUtc],[Status],[CreatedAtUtc],[UpdatedAtUtc]
+        [ExternalReference],[SubTotal],[FeesAmount],[DiscountAmount],[TaxAmount],[TotalAmount],[Currency],
+        [PaymentMethod],[PaymentStatus],[PaymentTransactionId],[WalletItemId],[ProductId],[ProductName],[Quantity],[UnitPrice],[Weight],[Purity],
+        [FromPartyType],[ToPartyType],[FromPartyUserId],[ToPartyUserId],[OwnershipEffectiveOnUtc],[RelatedTransactionId],[InvoiceQrCode],[PdfUrl],
+        [IssuedOnUtc],[PaidOnUtc],[Status],[CreatedAtUtc],[UpdatedAtUtc]
     )
     VALUES
-        (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0001', N'Trade', N'WebAdmin', 980, 0, 980, N'', DATEADD(DAY, -1, @Now), N'sent', @Now, NULL),
-        (@InvestorImseeh, @SellerUserImseeh, N'INV-SEED-0002', N'Trade', N'WebAdmin', 1430, 0, 1430, N'', DATEADD(DAY, -2, @Now), N'paid', @Now, NULL);
+        (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0001', N'Buy', N'WebAdmin', N'SEED-ORDER-0001', 980, 0, 0, 0, 980, N'USD', N'Card', N'Pending', NULL, NULL, NULL, N'Imseeh 5g Gold Bar', 2, 490, 10.000, 24.00, N'Seller', N'Investor', @SellerUserImseeh, @InvestorMain, DATEADD(DAY, -1, @Now), NULL, N'', NULL, DATEADD(DAY, -1, @Now), NULL, N'Issued', @Now, NULL),
+        (@InvestorImseeh, @SellerUserImseeh, N'INV-SEED-0002', N'Sell', N'WebAdmin', N'SEED-ORDER-0002', 1430, 5, 0, 0, 1435, N'USD', N'WalletCredit', N'Paid', N'SEED-TXN-0002', NULL, NULL, N'Imseeh Gold Coin', 1, 1430, 31.104, 24.00, N'Investor', N'Seller', @InvestorImseeh, @SellerUserImseeh, DATEADD(DAY, -2, @Now), NULL, N'', N'/Certificats/seed/invoice-seed-0002.pdf', DATEADD(DAY, -2, @Now), DATEADD(DAY, -2, @Now), N'Completed', @Now, NULL);
 
     -- 5) Core products (starter catalog) with REQUIRED weight fields.
+    -- Covers all categories except SpotMr:
+    --   Gold (1), Silver (2), Diamond (3), Jewelry (4), Coins (5)
     ;WITH SeedProducts AS (
-        SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock, CAST(5.000 AS decimal(18,3)) AS WeightValue, 1 AS WeightUnit UNION ALL
-        SELECT @SellerImseeh, N'IMSEEH-PRD-002', N'Imseeh 1oz Gold Coin', N'Fine gold investment coin', CAST(2675.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
-        SELECT @SellerImseeh, N'IMSEEH-PRD-003', N'Imseeh Silver 1oz Coin', N'Investment silver coin', CAST(36.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
+        SELECT @SellerImseeh AS SellerId, N'IMSEEH-PRD-001' AS Sku, N'Imseeh 5g Gold Bar' AS Name, N'24K minted bar - 5 grams' AS [Description], CAST(430.00 AS decimal(18,2)) AS Price, 100 AS AvailableStock, CAST(5.000 AS decimal(18,3)) AS WeightValue, 1 AS WeightUnit, 1 AS Category, 1 AS MaterialType, 3 AS FormType, N'/images/products/gold-bar.png' AS ImageUrl UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-002', N'Imseeh Silver 1oz Bar', N'Investment silver bar', CAST(36.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3, 2, 2, 3, N'/images/products/silver.png' UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-003', N'Imseeh Diamond Ring', N'Certified diamond ring 18K', CAST(920.00 AS decimal(18,2)), 45, CAST(8.000 AS decimal(18,3)), 1, 3, 3, 1, N'/images/products/diamond.png' UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-004', N'Imseeh Gold Necklace', N'22K jewelry necklace', CAST(1450.00 AS decimal(18,2)), 35, CAST(24.000 AS decimal(18,3)), 1, 4, 1, 1, N'/images/products/jewelry.png' UNION ALL
+        SELECT @SellerImseeh, N'IMSEEH-PRD-005', N'Imseeh 1oz Gold Coin', N'Fine gold investment coin', CAST(2675.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3, 5, 1, 2, N'/images/products/gold-coin.png' UNION ALL
 
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-001', N'GoldPal 5g Gold Bar', N'24K minted bar - 5 grams', CAST(432.00 AS decimal(18,2)), 100, CAST(5.000 AS decimal(18,3)), 1 UNION ALL
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-002', N'GoldPal 1oz Gold Coin', N'Fine gold investment coin', CAST(2678.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
-        SELECT @SellerGoldPal, N'GOLDPAL-PRD-003', N'GoldPal Silver 1oz Coin', N'Investment silver coin', CAST(37.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-001', N'GoldPal 5g Gold Bar', N'24K minted bar - 5 grams', CAST(432.00 AS decimal(18,2)), 100, CAST(5.000 AS decimal(18,3)), 1, 1, 1, 3, N'/images/products/gold-bar.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-002', N'GoldPal Silver 1oz Bar', N'Investment silver bar', CAST(37.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3, 2, 2, 3, N'/images/products/silver.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-003', N'GoldPal Diamond Stud', N'Certified diamond stud earring', CAST(880.00 AS decimal(18,2)), 50, CAST(4.000 AS decimal(18,3)), 1, 3, 3, 1, N'/images/products/diamond.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-004', N'GoldPal Gold Bracelet', N'21K jewelry bracelet', CAST(1390.00 AS decimal(18,2)), 40, CAST(20.000 AS decimal(18,3)), 1, 4, 1, 1, N'/images/products/jewelry.png' UNION ALL
+        SELECT @SellerGoldPal, N'GOLDPAL-PRD-005', N'GoldPal 1oz Gold Coin', N'Fine gold investment coin', CAST(2678.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3, 5, 1, 2, N'/images/products/gold-coin.png' UNION ALL
 
-        SELECT @SellerBullion, N'BULLION-PRD-001', N'Bullion 5g Gold Bar', N'24K minted bar - 5 grams', CAST(433.00 AS decimal(18,2)), 100, CAST(5.000 AS decimal(18,3)), 1 UNION ALL
-        SELECT @SellerBullion, N'BULLION-PRD-002', N'Bullion 1oz Gold Coin', N'Fine gold investment coin', CAST(2680.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3 UNION ALL
-        SELECT @SellerBullion, N'BULLION-PRD-003', N'Bullion Silver 1oz Coin', N'Investment silver coin', CAST(38.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3
+        SELECT @SellerBullion, N'BULLION-PRD-001', N'Bullion 5g Gold Bar', N'24K minted bar - 5 grams', CAST(433.00 AS decimal(18,2)), 100, CAST(5.000 AS decimal(18,3)), 1, 1, 1, 3, N'/images/products/gold-bar.png' UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-002', N'Bullion Silver 1oz Bar', N'Investment silver bar', CAST(38.00 AS decimal(18,2)), 300, CAST(1.000 AS decimal(18,3)), 3, 2, 2, 3, N'/images/products/silver.png' UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-003', N'Bullion Diamond Pendant', N'Certified diamond pendant', CAST(960.00 AS decimal(18,2)), 42, CAST(6.000 AS decimal(18,3)), 1, 3, 3, 1, N'/images/products/diamond.png' UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-004', N'Bullion Gold Ring', N'22K jewelry ring', CAST(1210.00 AS decimal(18,2)), 38, CAST(10.000 AS decimal(18,3)), 1, 4, 1, 1, N'/images/products/jewelry.png' UNION ALL
+        SELECT @SellerBullion, N'BULLION-PRD-005', N'Bullion 1oz Gold Coin', N'Fine gold investment coin', CAST(2680.00 AS decimal(18,2)), 60, CAST(1.000 AS decimal(18,3)), 3, 5, 1, 2, N'/images/products/gold-coin.png'
     )
     MERGE [Products] AS T
     USING SeedProducts AS S
@@ -305,31 +423,33 @@ BEGIN TRY
             T.[Price] = S.[Price],
             T.[AvailableStock] = S.[AvailableStock],
             T.[WeightValue] = S.[WeightValue],
-            T.[WeightUnit] = 1,
-            T.[MaterialType] = CASE WHEN S.[Name] LIKE N'%Silver%' THEN 2 WHEN S.[Name] LIKE N'%Diamond%' THEN 3 ELSE 1 END,
-            T.[FormType] = CASE WHEN S.[Name] LIKE N'%Coin%' THEN 2 WHEN S.[Name] LIKE N'%Bar%' THEN 3 ELSE 1 END,
+            T.[WeightUnit] = S.[WeightUnit],
+            T.[MaterialType] = S.[MaterialType],
+            T.[FormType] = S.[FormType],
             T.[PricingMode] = 1,
             T.[PurityKarat] = CASE WHEN S.[Name] LIKE N'%22K%' THEN 2 ELSE 1 END,
-            T.[PurityFactor] = CASE WHEN S.[Name] LIKE N'%Silver%' THEN 0.999 ELSE 1.0 END,
+            T.[PurityFactor] = CASE WHEN S.[Category] = 2 THEN 0.999 ELSE 1.0 END,
             T.[BaseMarketPrice] = S.[Price],
             T.[ManualSellPrice] = S.[Price],
             T.[DeliveryFee] = 5,
             T.[StorageFee] = 2,
             T.[ServiceCharge] = 1,
-            T.[OfferPercent] = 0,
-            T.[OfferNewPrice] = 0,
-            T.[OfferType] = 0,
-            T.[Category] = CASE
-                WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
-                WHEN S.[Name] LIKE N'%Coin%' THEN 5
-                WHEN S.[Name] LIKE N'%Silver%' THEN 2
-                ELSE 1
+            T.[OfferPercent] = CASE
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005') THEN 12
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 7
+                ELSE 0
             END,
-            T.[ImageUrl] = CASE
-                WHEN S.[Name] LIKE N'%Silver%' THEN N'/images/products/silver.png'
-                WHEN S.[Name] LIKE N'%Coin%' THEN N'/images/products/gold-coin.png'
-                ELSE N'/images/products/gold-bar.png'
+            T.[OfferNewPrice] = CASE
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005') THEN ROUND(S.[Price] * 0.88, 2)
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN ROUND(S.[Price] * 0.93, 2)
+                ELSE 0
             END,
+            T.[OfferType] = CASE
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005', N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 1
+                ELSE 0
+            END,
+            T.[Category] = S.[Category],
+            T.[ImageUrl] = S.[ImageUrl],
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
@@ -369,31 +489,33 @@ BEGIN TRY
             S.[Price],
             S.[AvailableStock],
             S.[WeightValue],
-            1,
-            CASE WHEN S.[Name] LIKE N'%Silver%' THEN 2 WHEN S.[Name] LIKE N'%Diamond%' THEN 3 ELSE 1 END,
-            CASE WHEN S.[Name] LIKE N'%Coin%' THEN 2 WHEN S.[Name] LIKE N'%Bar%' THEN 3 ELSE 1 END,
+            S.[WeightUnit],
+            S.[MaterialType],
+            S.[FormType],
             1,
             CASE WHEN S.[Name] LIKE N'%22K%' THEN 2 ELSE 1 END,
-            CASE WHEN S.[Name] LIKE N'%Silver%' THEN 0.999 ELSE 1.0 END,
+            CASE WHEN S.[Category] = 2 THEN 0.999 ELSE 1.0 END,
             S.[Price],
             S.[Price],
             5,
             2,
             1,
-            0,
-            0,
-            0,
             CASE
-                WHEN S.[Name] LIKE N'%Silver%' AND S.[Name] LIKE N'%Coin%' THEN 6
-                WHEN S.[Name] LIKE N'%Coin%' THEN 5
-                WHEN S.[Name] LIKE N'%Silver%' THEN 2
-                ELSE 1
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005') THEN 12
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 7
+                ELSE 0
             END,
             CASE
-                WHEN S.[Name] LIKE N'%Silver%' THEN N'/images/products/silver.png'
-                WHEN S.[Name] LIKE N'%Coin%' THEN N'/images/products/gold-coin.png'
-                ELSE N'/images/products/gold-bar.png'
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005') THEN ROUND(S.[Price] * 0.88, 2)
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN ROUND(S.[Price] * 0.93, 2)
+                ELSE 0
             END,
+            CASE
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005', N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 1
+                ELSE 0
+            END,
+            S.[Category],
+            S.[ImageUrl],
             1,
             @Now,
             NULL
@@ -406,8 +528,8 @@ BEGIN TRY
     DECLARE @CartInvestorGoldPal int = (SELECT TOP 1 [Id] FROM [Carts] WHERE [UserId] = @InvestorGoldPal);
 
     DECLARE @ProductImseehGoldBar int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'IMSEEH-PRD-001');
-    DECLARE @ProductImseehGoldCoin int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'IMSEEH-PRD-002');
-    DECLARE @ProductGoldPalSilver int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'GOLDPAL-PRD-003');
+    DECLARE @ProductImseehGoldCoin int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'IMSEEH-PRD-005');
+    DECLARE @ProductGoldPalSilver int = (SELECT TOP 1 [Id] FROM [Products] WHERE [Sku] = N'GOLDPAL-PRD-002');
 
     IF COL_LENGTH('WalletAssets', 'Category') IS NOT NULL AND COL_LENGTH('WalletAssets', 'SellerId') IS NOT NULL
     BEGIN
@@ -428,6 +550,80 @@ BEGIN TRY
             (@WalletInvestorMain, 1, 5.000, N'gram', 24.00, 1, 430.00, 435.00, N'Imseeh', DATEADD(DAY, -2, @Now), NULL),
             (@WalletInvestorMain, 1, 31.104, N'gram', 24.00, 2, 2675.00, 2685.00, N'Imseeh', DATEADD(DAY, -1, @Now), NULL),
             (@WalletInvestorImseeh, 2, 31.104, N'gram', 99.99, 3, 37.00, 38.00, N'Gold Palace', DATEADD(DAY, -1, @Now), NULL);
+    END
+
+    DECLARE @WalletAssetMainGoldBar int = (
+        SELECT TOP 1 [Id] FROM [WalletAssets]
+        WHERE [WalletId] = @WalletInvestorMain AND [SellerName] = N'Imseeh'
+        ORDER BY [CreatedAtUtc] ASC, [Id] ASC
+    );
+
+    DECLARE @WalletAssetMainGoldCoin int = (
+        SELECT TOP 1 [Id] FROM [WalletAssets]
+        WHERE [WalletId] = @WalletInvestorMain AND [SellerName] = N'Imseeh'
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    DECLARE @WalletAssetImseehSilver int = (
+        SELECT TOP 1 [Id] FROM [WalletAssets]
+        WHERE [WalletId] = @WalletInvestorImseeh
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    DECLARE @TxSellMain int = (
+        SELECT TOP 1 [Id] FROM [TransactionHistories]
+        WHERE [UserId] = @InvestorMain AND [TransactionType] = N'sell'
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    DECLARE @TxSellImseeh int = (
+        SELECT TOP 1 [Id] FROM [TransactionHistories]
+        WHERE [UserId] = @InvestorImseeh AND [TransactionType] = N'sell'
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    -- Backfill seeded invoices with wallet/product/transaction links so certificate + wallet actions can resolve records reliably.
+    UPDATE [Invoices]
+    SET
+        [WalletItemId] = COALESCE([WalletItemId], @WalletAssetMainGoldBar),
+        [ProductId] = COALESCE([ProductId], @ProductImseehGoldBar),
+        [PaymentTransactionId] = COALESCE(NULLIF([PaymentTransactionId], N''), N'SEED-TXN-INV-0001'),
+        [RelatedTransactionId] = COALESCE([RelatedTransactionId], @TxSellMain),
+        [InvoiceQrCode] = CASE WHEN [InvoiceQrCode] IS NULL OR LTRIM(RTRIM([InvoiceQrCode])) = N'' THEN N'/Certificats/seed/invoice-seed-0001.pdf' ELSE [InvoiceQrCode] END,
+        [PdfUrl] = COALESCE(NULLIF([PdfUrl], N''), N'/Certificats/seed/invoice-seed-0001.pdf'),
+        [UpdatedAtUtc] = @Now
+    WHERE [InvoiceNumber] = N'INV-SEED-0001';
+
+    UPDATE [Invoices]
+    SET
+        [WalletItemId] = COALESCE([WalletItemId], @WalletAssetImseehSilver),
+        [ProductId] = COALESCE([ProductId], @ProductGoldPalSilver),
+        [PaymentTransactionId] = COALESCE(NULLIF([PaymentTransactionId], N''), N'SEED-TXN-INV-0002'),
+        [RelatedTransactionId] = COALESCE([RelatedTransactionId], @TxSellImseeh),
+        [InvoiceQrCode] = CASE WHEN [InvoiceQrCode] IS NULL OR LTRIM(RTRIM([InvoiceQrCode])) = N'' THEN N'/Certificats/seed/invoice-seed-0002.pdf' ELSE [InvoiceQrCode] END,
+        [PdfUrl] = COALESCE(NULLIF([PdfUrl], N''), N'/Certificats/seed/invoice-seed-0002.pdf'),
+        [UpdatedAtUtc] = @Now
+    WHERE [InvoiceNumber] = N'INV-SEED-0002';
+
+    IF NOT EXISTS (SELECT 1 FROM [Invoices] WHERE [InvoiceNumber] = N'INV-SEED-0003')
+    BEGIN
+        INSERT INTO [Invoices] (
+            [InvestorUserId],[SellerUserId],[InvoiceNumber],[InvoiceCategory],[SourceChannel],[ExternalReference],
+            [SubTotal],[FeesAmount],[DiscountAmount],[TaxAmount],[TotalAmount],[Currency],[PaymentMethod],[PaymentStatus],
+            [PaymentTransactionId],[WalletItemId],[ProductId],[ProductName],[Quantity],[UnitPrice],[Weight],[Purity],
+            [FromPartyType],[ToPartyType],[FromPartyUserId],[ToPartyUserId],[OwnershipEffectiveOnUtc],[RelatedTransactionId],
+            [InvoiceQrCode],[PdfUrl],[IssuedOnUtc],[PaidOnUtc],[Status],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        VALUES
+            (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0003', N'Transfer', N'MobileWallet', N'SEED-WALLET-TRANSFER-0003',
+             730, 0, 0, 0, 730, N'USD', N'WalletCredit', N'Pending', NULL, @WalletAssetMainGoldBar, @ProductImseehGoldBar,
+             N'Imseeh 5g Gold Bar', 1, 730, 5.000, 24.00, N'Investor', N'Investor', @InvestorMain, @InvestorGoldPal,
+             DATEADD(HOUR, -6, @Now), NULL, N'', N'/Certificats/seed/invoice-seed-0003.pdf', DATEADD(HOUR, -6, @Now), NULL, N'Issued', @Now, NULL),
+
+            (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0004', N'Pickup', N'MobileWallet', N'SEED-WALLET-PICKUP-0004',
+             2675, 0, 0, 0, 2675, N'USD', N'N/A', N'Pending', NULL, @WalletAssetMainGoldCoin, @ProductImseehGoldCoin,
+             N'Imseeh Gold Coin', 1, 2675, 31.104, 24.00, N'Investor', N'Seller', @InvestorMain, @SellerUserImseeh,
+             DATEADD(HOUR, -3, @Now), NULL, N'', N'/Certificats/seed/invoice-seed-0004.pdf', DATEADD(HOUR, -3, @Now), NULL, N'Issued', @Now, NULL);
     END
 
     IF COL_LENGTH('CartItems', 'Category') IS NOT NULL AND COL_LENGTH('CartItems', 'SellerId') IS NOT NULL

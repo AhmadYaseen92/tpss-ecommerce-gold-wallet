@@ -57,6 +57,8 @@ class WalletActionRemoteDataSource {
       cashBalance: (data['cashBalance'] as num?)?.toDouble() ?? 0,
       totalPortfolioValue: (data['totalPortfolioValue'] as num?)?.toDouble() ?? 0,
       lockedPriceUntilUtc: DateTime.tryParse((data['lockedPriceUntilUtc'] ?? '').toString()),
+      invoiceUrl: (data['invoiceUrl'] ?? '').toString().isEmpty ? null : (data['invoiceUrl'] ?? '').toString(),
+      invoiceId: (data['invoiceId'] as num?)?.toInt(),
     );
   }
 
@@ -79,6 +81,7 @@ class WalletActionRemoteDataSource {
     WalletActionType.sell => 'sell',
     WalletActionType.transfer => 'transfer',
     WalletActionType.gift => 'gift',
+    WalletActionType.pickup => 'pickup',
     WalletActionType.convertToCash => 'certificate',
     WalletActionType.convertToCrypto => 'invoice',
   };

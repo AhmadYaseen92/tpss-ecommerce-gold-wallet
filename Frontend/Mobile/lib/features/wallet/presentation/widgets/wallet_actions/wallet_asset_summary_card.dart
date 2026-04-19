@@ -47,6 +47,8 @@ class WalletAssetSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           ReadonlyInfoRow(label: 'Purity', value: asset.purity),
+          if (asset.status.toLowerCase().startsWith('pending') || asset.status.toLowerCase() == 'delivered')
+            ReadonlyInfoRow(label: 'Status', value: asset.status),
           ReadonlyInfoRow(label: 'Quantity', value: '${asset.quantity}'),
           ReadonlyInfoRow(label: 'Weight', value: '${asset.weightInGrams.toStringAsFixed(2)} g'),
           ReadonlyInfoRow(label: 'Market Value', value: asset.marketValue),

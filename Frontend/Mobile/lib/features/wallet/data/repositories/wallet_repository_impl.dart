@@ -80,10 +80,11 @@ class WalletRepositoryImpl implements IWalletRepository {
     final totalBuy = asset.averageBuyPrice * asset.quantity;
     final changePercent = totalBuy == 0 ? 0 : ((totalValue - totalBuy) / totalBuy) * 100;
     final signed = changePercent >= 0 ? '+' : '';
+    final profitOrLossValue = totalValue - totalBuy;
 
     return wallet_entity.WalletTransactionEntity(
       id: asset.id,
-      name: asset.assetType,
+      name: asset.productName.trim().isNotEmpty ? asset.productName : _toDisplayName(asset.assetType),
       category: category,
       assetType: _toAssetType(asset.assetType),
       subtitle: '${asset.purity.toStringAsFixed(1)} purity',
@@ -92,9 +93,27 @@ class WalletRepositoryImpl implements IWalletRepository {
       quantity: asset.quantity,
       marketValue: '\$${totalValue.toStringAsFixed(2)}',
       change: '$signed${changePercent.toStringAsFixed(2)}%',
+      investmentValue: totalBuy,
+      profitOrLossValue: profitOrLossValue,
       imageUrl: _imageByAssetType(asset.assetType),
       sellerName: asset.sellerName.isEmpty ? 'Unknown Seller' : asset.sellerName,
+      certificateUrl: asset.certificateUrl,
+      isDelivered: asset.isDelivered,
+      status: asset.status,
+      statusDetails: asset.statusDetails,
+      sourceInvestorName: asset.sourceInvestorName,
     );
+  }
+
+  String _toDisplayName(String assetType) {
+    final normalized = assetType.trim();
+    if (normalized.isEmpty) return 'Wallet Item';
+    final withSpaces = normalized.replaceAll(RegExp(r'[_-]+'), ' ');
+    return withSpaces
+        .split(' ')
+        .where((token) => token.trim().isNotEmpty)
+        .map((token) => token[0].toUpperCase() + token.substring(1).toLowerCase())
+        .join(' ');
   }
 
   double _toGrams(double weight, String unit) {

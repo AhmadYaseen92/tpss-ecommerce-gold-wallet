@@ -26,7 +26,15 @@ class ConvertAssetPage extends StatelessWidget {
           final cubit = context.read<ConvertAssetActionCubit>();
 
           return Scaffold(
-            appBar: AppBar(title: const Text('Convert Asset')),
+            appBar: AppBar(
+              centerTitle: true,
+              title: const Text(
+                'Convert Asset',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
             bottomNavigationBar: ActionBottomBar(
               summaryLabel: cubit.isCrypto ? 'Estimated Crypto' : 'Estimated Cash',
               summaryValue: cubit.isCrypto
@@ -82,16 +90,14 @@ class ConvertAssetPage extends StatelessWidget {
                           if (!cubit.isCrypto)
                             DropdownButtonFormField<String>(
                               value: cubit.cashDestination,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'Wallet Cash',
-                                  child: Text('Wallet Cash'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Bank Account',
-                                  child: Text('Bank Account'),
-                                ),
-                              ],
+                              items: cubit.cashDestinations
+                                  .map(
+                                    (destination) => DropdownMenuItem(
+                                      value: destination,
+                                      child: Text(destination),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: cubit.updateCashDestination,
                               decoration: const InputDecoration(
                                 labelText: 'Cash Destination',

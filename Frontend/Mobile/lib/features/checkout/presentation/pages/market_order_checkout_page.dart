@@ -68,11 +68,14 @@ class _MarketOrderCheckoutPageState extends State<MarketOrderCheckoutPage> {
 
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           'Market Order Checkout',
-          style: TextStyle(color: palette.textPrimary),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: context.appPalette.primary,
+          ),
         ),
-        centerTitle: true,
         actions: [
           TextButton(
             onPressed: () =>

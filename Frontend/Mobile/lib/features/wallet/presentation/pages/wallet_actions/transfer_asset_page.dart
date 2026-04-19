@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart' show AppPaletteX;
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
@@ -31,7 +32,14 @@ class TransferAssetPage extends StatelessWidget {
 
           return Scaffold(
             appBar: AppBar(
-              title: Text(cubit.isGift ? 'Gift Asset' : 'Transfer Asset'),
+              centerTitle: true,
+              title: Text(
+                cubit.isGift ? 'Gift Asset' : 'Transfer Asset',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: context.appPalette.primary,
+                ),
+              ),
             ),
             bottomNavigationBar: ActionBottomBar(
               summaryLabel: 'Estimated Value',

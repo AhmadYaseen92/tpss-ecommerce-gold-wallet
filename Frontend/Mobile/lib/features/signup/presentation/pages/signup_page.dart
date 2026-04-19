@@ -54,7 +54,6 @@ class SignupPage extends StatelessWidget {
           return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),

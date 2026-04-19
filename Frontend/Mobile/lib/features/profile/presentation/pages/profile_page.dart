@@ -28,15 +28,13 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        title:Text(
-            'My Profile',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: palette.primary,
-            ),
+        title: Text(
+          'My Profile',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: palette.primary,
           ),
-
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,

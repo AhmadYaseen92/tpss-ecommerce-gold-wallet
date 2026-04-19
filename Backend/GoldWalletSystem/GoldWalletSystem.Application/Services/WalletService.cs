@@ -21,6 +21,7 @@ public class WalletService(IWalletRepository walletRepository) : IWalletService
                 .Select(x => new WalletAssetDto(
                     x.Id,
                     x.AssetType.ToString(),
+                    string.Empty,
                     x.Category.ToString(),
                     x.SellerId,
                     x.SellerName,
@@ -29,7 +30,13 @@ public class WalletService(IWalletRepository walletRepository) : IWalletService
                     x.Purity,
                     x.Quantity,
                     x.AverageBuyPrice,
-                    x.CurrentMarketPrice))
+                    x.CurrentMarketPrice,
+                    null,
+                    null,
+                    null,
+                    false,
+                    "Bought",
+                    null))
                 .ToList());
     }
 }

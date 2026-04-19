@@ -53,7 +53,7 @@ export interface InvestorRequest {
   unit: string;
   purity: number;
   amount: number;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "pending_delivered" | "delivered";
   currency: string;
   notes?: string;
   updatedAt?: string;
@@ -77,7 +77,9 @@ export interface Invoice {
   investorName: string;
   totalAmount: number;
   issuedAt: string;
-  status: "draft" | "sent" | "paid";
+  status: "Draft" | "Issued" | "Completed" | "Cancelled";
+  paymentStatus: "Pending" | "Paid" | "Failed" | "Cancelled";
+  pdfUrl?: string;
 }
 
 

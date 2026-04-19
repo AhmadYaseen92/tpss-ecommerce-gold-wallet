@@ -40,6 +40,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<ISellerAuthService, SellerAuthService>();
         services.AddScoped<IMobileAppConfigurationService, MobileAppConfigurationService>();
         services.AddScoped<IWalletService, WalletService>();
+        services.AddScoped<IWalletActionValidationService, WalletActionValidationService>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

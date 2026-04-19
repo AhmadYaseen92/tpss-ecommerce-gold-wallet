@@ -70,6 +70,20 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
                 })
             .ToListAsync(cancellationToken);
 
+        var invoiceIds = rows
+            .Where(r => r.history.InvoiceId.HasValue)
+            .Select(r => r.history.InvoiceId!.Value)
+            .Distinct()
+            .ToList();
+
+        var invoiceLookup = invoiceIds.Count == 0
+            ? new Dictionary<int, string?>()
+            : await dbContext.Invoices
+                .AsNoTracking()
+                .Where(x => invoiceIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.PdfUrl })
+                .ToDictionaryAsync(x => x.Id, x => x.PdfUrl, cancellationToken);
+
         var sellerIds = rows
             .Where(x => x.history.SellerId.HasValue)
             .Select(x => x.history.SellerId!.Value)
@@ -111,6 +125,9 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
                     row.history.Purity,
                     row.history.Amount,
                     row.history.Currency,
+                    row.history.WalletItemId,
+                    row.history.InvoiceId,
+                    row.history.InvoiceId.HasValue && invoiceLookup.TryGetValue(row.history.InvoiceId.Value, out var pdfUrl) ? pdfUrl : null,
                     row.history.Notes,
                     row.history.CreatedAtUtc,
                     productImageUrl);

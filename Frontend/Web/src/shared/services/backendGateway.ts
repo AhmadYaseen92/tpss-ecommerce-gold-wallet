@@ -127,7 +127,7 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
     unit: item.unit,
     purity: item.purity,
     amount: item.amount,
-    status: ["pending", "approved", "rejected"].includes(item.status.toLowerCase())
+    status: ["pending", "approved", "rejected", "pending_delivered", "delivered"].includes(item.status.toLowerCase())
       ? (item.status.toLowerCase() as InvestorRequest["status"])
       : "pending",
     currency: item.currency,
@@ -325,7 +325,9 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
       investorName: `Investor ${index + 1}`,
       totalAmount: product.unitPrice,
       issuedAt: new Date().toISOString().split("T")[0],
-      status: index % 2 === 0 ? "sent" : "paid"
+      status: index % 2 === 0 ? "Issued" : "Completed",
+      paymentStatus: index % 2 === 0 ? "Pending" : "Paid",
+      pdfUrl: undefined
     })),
     fees: {
       deliveryFee: 12,

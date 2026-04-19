@@ -50,6 +50,7 @@ class WalletAssetRemoteModel {
   WalletAssetRemoteModel({
     required this.id,
     required this.assetType,
+    required this.productName,
     required this.category,
     required this.sellerId,
     required this.weight,
@@ -59,10 +60,17 @@ class WalletAssetRemoteModel {
     required this.sellerName,
     required this.averageBuyPrice,
     required this.currentMarketPrice,
+    required this.isDelivered,
+    required this.invoiceId,
+    required this.certificateUrl,
+    required this.sourceInvestorName,
+    required this.status,
+    required this.statusDetails,
   });
 
   final int id;
   final String assetType;
+  final String productName;
   final String category;
   final int? sellerId;
   final double weight;
@@ -72,11 +80,18 @@ class WalletAssetRemoteModel {
   final String sellerName;
   final double averageBuyPrice;
   final double currentMarketPrice;
+  final bool isDelivered;
+  final int? invoiceId;
+  final String? certificateUrl;
+  final String? sourceInvestorName;
+  final String status;
+  final String? statusDetails;
 
   factory WalletAssetRemoteModel.fromJson(Map<String, dynamic> json) {
     return WalletAssetRemoteModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       assetType: (json['assetType'] ?? '').toString(),
+      productName: (json['productName'] ?? '').toString(),
       category: (json['category'] ?? '').toString(),
       sellerId: (json['sellerId'] as num?)?.toInt(),
       weight: (json['weight'] as num?)?.toDouble() ?? 0,
@@ -86,6 +101,18 @@ class WalletAssetRemoteModel {
       sellerName: (json['sellerName'] ?? '').toString(),
       averageBuyPrice: (json['averageBuyPrice'] as num?)?.toDouble() ?? 0,
       currentMarketPrice: (json['currentMarketPrice'] as num?)?.toDouble() ?? 0,
+      isDelivered: (json['isDelivered'] as bool?) ?? false,
+      invoiceId: (json['invoiceId'] as num?)?.toInt(),
+      certificateUrl: (json['certificateUrl'] ?? '').toString().isEmpty
+          ? null
+          : (json['certificateUrl'] ?? '').toString(),
+      sourceInvestorName: (json['sourceInvestorName'] ?? '').toString().trim().isEmpty
+          ? null
+          : (json['sourceInvestorName'] ?? '').toString(),
+      status: (json['status'] ?? 'Bought').toString(),
+      statusDetails: (json['statusDetails'] as String?)?.trim().isEmpty ?? true
+          ? null
+          : (json['statusDetails'] as String?),
     );
   }
 }

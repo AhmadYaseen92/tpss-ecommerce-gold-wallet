@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/sell/presentation/cubit/sell_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/sell/presentation/widgets/sell_widget.dart';
@@ -28,13 +29,12 @@ class SellGoldPage extends StatelessWidget {
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Sell Assets',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primaryColor,
+                    color: context.appPalette.primary,
                   ),
                 ),
               ),
@@ -48,13 +48,12 @@ class SellGoldPage extends StatelessWidget {
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Sell Assets',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primaryColor,
+                    color: context.appPalette.primary,
                   ),
                 ),
               ),
@@ -64,13 +63,12 @@ class SellGoldPage extends StatelessWidget {
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Sell Assets',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primaryColor,
+                    color: context.appPalette.primary,
                   ),
                 ),
               ),

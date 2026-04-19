@@ -60,7 +60,7 @@ Required entities/fields:
 Required entities/fields:
 - `TransactionHistories`: `UserId`, `TransactionType`, `Amount`, `Currency`, `Reference`, `CreatedAtUtc`
 - `Invoices`: `InvestorUserId`, `SellerUserId`, `InvoiceNumber`, `SubTotal`, `TaxAmount`, `TotalAmount`, `Status`
-- `InvoiceItems`: `InvoiceId`, `ProductId`, `Quantity`, `UnitPrice`, `LineTotal`
+- `Invoices` (single-record certificate): one row per wallet item/action with `WalletItemId`, `ProductId`, `ProductName`, `Quantity`, `UnitPrice`, `Weight`, `Purity`, `PdfUrl`
 
 ## 6) Notifications
 
