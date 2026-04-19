@@ -250,6 +250,7 @@ public class WalletController(
         {
             UserId = request.UserId,
             SellerId = asset.SellerId,
+            WalletItemId = asset.Id,
             TransactionType = actionType,
             Status = status,
             Category = asset.Category.ToString(),
@@ -266,6 +267,7 @@ public class WalletController(
         dbContext.TransactionHistories.Add(history);
 
         string? invoiceUrl = null;
+        Invoice? createdInvoice = null;
         if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell")
         {
             var sellerUserId = await dbContext.Users
@@ -281,19 +283,60 @@ public class WalletController(
                 amount: grossAmount,
                 cancellationToken);
 
-            dbContext.Invoices.Add(new Invoice
+            createdInvoice = new Invoice
             {
                 InvestorUserId = request.UserId,
                 SellerUserId = sellerUserId,
                 InvoiceNumber = $"INV-WAL-{DateTime.UtcNow:yyyyMMddHHmmssfff}",
-                InvoiceCategory = actionType,
+                InvoiceCategory = actionType is "sell" ? "Sell" : "Pickup",
                 SourceChannel = "MobileWallet",
+                ExternalReference = $"WALLET-TX-{history.Id}",
                 SubTotal = grossAmount,
+                FeesAmount = 0,
+                DiscountAmount = 0,
                 TaxAmount = 0,
                 TotalAmount = grossAmount,
+                Currency = wallet.CurrencyCode,
+                PaymentMethod = actionType is "sell" ? "WalletCredit" : "N/A",
+                PaymentStatus = actionType is "sell" ? "Paid" : "Pending",
+                PaymentTransactionId = null,
+                WalletItemId = asset.Id,
                 InvoiceQrCode = invoiceUrl ?? string.Empty,
+                PdfUrl = invoiceUrl,
                 IssuedOnUtc = DateTime.UtcNow,
-                Status = status,
+                PaidOnUtc = actionType is "sell" ? DateTime.UtcNow : null,
+                Status = actionType is "sell" ? "Completed" : "Issued",
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            dbContext.Invoices.Add(createdInvoice);
+
+            dbContext.AppNotifications.Add(new AppNotification
+            {
+                UserId = request.UserId,
+                Title = "Invoice created",
+                Body = $"Invoice {createdInvoice.InvoiceNumber} is now available.",
+                IsRead = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+
+            if (actionType is "sell")
+            {
+                dbContext.AppNotifications.Add(new AppNotification
+                {
+                    UserId = request.UserId,
+                    Title = "Invoice paid",
+                    Body = $"Invoice {createdInvoice.InvoiceNumber} has been paid.",
+                    IsRead = false,
+                    CreatedAtUtc = DateTime.UtcNow
+                });
+            }
+
+            dbContext.AppNotifications.Add(new AppNotification
+            {
+                UserId = request.UserId,
+                Title = "Invoice PDF available",
+                Body = $"Invoice {createdInvoice.InvoiceNumber} PDF is ready to view or download.",
+                IsRead = false,
                 CreatedAtUtc = DateTime.UtcNow
             });
         }
@@ -320,6 +363,13 @@ public class WalletController(
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (createdInvoice is not null)
+        {
+            history.InvoiceId = createdInvoice.Id;
+            history.UpdatedAtUtc = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
         await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-action:{actionType}:{request.UserId}", cancellationToken);
         if (!shouldRequireSellerApproval && actionType is "transfer" or "gift" && request.RecipientInvestorUserId.HasValue)
         {
@@ -343,7 +393,8 @@ public class WalletController(
             Message = shouldRequireSellerApproval
                 ? $"{actionType} request submitted and pending seller approval."
                 : "Wallet action processed successfully.",
-            InvoiceUrl = invoiceUrl
+            InvoiceUrl = invoiceUrl,
+            InvoiceId = createdInvoice?.Id
         }));
     }
 
@@ -531,6 +582,7 @@ public class WalletController(
         public decimal TotalPortfolioValue { get; set; }
         public string Message { get; set; } = string.Empty;
         public string? InvoiceUrl { get; set; }
+        public int? InvoiceId { get; set; }
     }
 
     public sealed class SellExecutionConfigurationResponse

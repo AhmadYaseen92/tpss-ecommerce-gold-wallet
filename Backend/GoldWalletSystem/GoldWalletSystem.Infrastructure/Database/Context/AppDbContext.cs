@@ -315,9 +315,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(x => x.Category);
             entity.HasIndex(x => x.UserId);
             entity.HasIndex(x => x.SellerId);
+            entity.HasIndex(x => x.WalletItemId);
+            entity.HasIndex(x => x.InvoiceId);
             entity.HasIndex(x => x.CreatedAtUtc);
             entity.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<Seller>().WithMany().HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.WalletItem).WithMany().HasForeignKey(x => x.WalletItemId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(x => x.Invoice).WithMany().HasForeignKey(x => x.InvoiceId).OnDelete(DeleteBehavior.SetNull);
         });
     }
 
@@ -399,17 +403,30 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.InvoiceNumber).IsRequired().HasMaxLength(100);
             entity.Property(x => x.InvoiceCategory).HasMaxLength(50);
             entity.Property(x => x.SourceChannel).HasMaxLength(50);
+            entity.Property(x => x.ExternalReference).HasMaxLength(120);
             entity.Property(x => x.InvoiceQrCode).HasMaxLength(300);
+            entity.Property(x => x.PdfUrl).HasMaxLength(500);
+            entity.Property(x => x.Currency).IsRequired().HasMaxLength(10);
+            entity.Property(x => x.PaymentMethod).HasMaxLength(50);
+            entity.Property(x => x.PaymentStatus).HasMaxLength(50);
+            entity.Property(x => x.PaymentTransactionId).HasMaxLength(120);
             entity.Property(x => x.Status).IsRequired().HasMaxLength(50);
             entity.Property(x => x.SubTotal).HasPrecision(18, 2);
+            entity.Property(x => x.FeesAmount).HasPrecision(18, 2);
+            entity.Property(x => x.DiscountAmount).HasPrecision(18, 2);
             entity.Property(x => x.TaxAmount).HasPrecision(18, 2);
             entity.Property(x => x.TotalAmount).HasPrecision(18, 2);
             entity.HasIndex(x => x.InvoiceNumber).IsUnique();
             entity.HasIndex(x => x.InvestorUserId);
             entity.HasIndex(x => x.SellerUserId);
+            entity.HasIndex(x => x.WalletItemId);
+            entity.HasIndex(x => x.ProductId);
+            entity.HasIndex(x => x.PaymentStatus);
             entity.HasIndex(x => x.IssuedOnUtc);
             entity.HasOne<User>().WithMany().HasForeignKey(x => x.InvestorUserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<User>().WithMany().HasForeignKey(x => x.SellerUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.WalletItem).WithMany().HasForeignKey(x => x.WalletItemId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.SetNull);
             entity.HasMany(x => x.Items).WithOne(x => x.Invoice).HasForeignKey(x => x.InvoiceId).OnDelete(DeleteBehavior.Cascade);
         });
     }
@@ -420,13 +437,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.ToTable("InvoiceItems");
             entity.HasKey(x => x.Id);
-            entity.Property(x => x.ItemName).IsRequired().HasMaxLength(200);
-            entity.Property(x => x.ItemQrCode).HasMaxLength(300);
+            entity.Property(x => x.ProductName).IsRequired().HasMaxLength(200);
             entity.Property(x => x.UnitPrice).HasPrecision(18, 2);
-            entity.Property(x => x.LineTotal).HasPrecision(18, 2);
+            entity.Property(x => x.Weight).HasPrecision(18, 3);
+            entity.Property(x => x.Purity).HasPrecision(5, 2);
+            entity.Property(x => x.TotalPrice).HasPrecision(18, 2);
             entity.HasIndex(x => new { x.InvoiceId, x.ProductId });
+            entity.HasIndex(x => x.WalletItemId);
             entity.HasOne(x => x.Invoice).WithMany(x => x.Items).HasForeignKey(x => x.InvoiceId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne<Product>().WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.WalletItem).WithMany().HasForeignKey(x => x.WalletItemId).OnDelete(DeleteBehavior.SetNull);
         });
     }
 

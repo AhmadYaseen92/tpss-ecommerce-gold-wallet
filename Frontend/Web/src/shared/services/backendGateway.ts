@@ -325,7 +325,9 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
       investorName: `Investor ${index + 1}`,
       totalAmount: product.unitPrice,
       issuedAt: new Date().toISOString().split("T")[0],
-      status: index % 2 === 0 ? "sent" : "paid"
+      status: index % 2 === 0 ? "Issued" : "Completed",
+      paymentStatus: index % 2 === 0 ? "Pending" : "Paid",
+      pdfUrl: undefined
     })),
     fees: {
       deliveryFee: 12,

@@ -77,7 +77,9 @@ export interface Invoice {
   investorName: string;
   totalAmount: number;
   issuedAt: string;
-  status: "draft" | "sent" | "paid";
+  status: "Draft" | "Issued" | "Completed" | "Cancelled";
+  paymentStatus: "Pending" | "Paid" | "Failed" | "Cancelled";
+  pdfUrl?: string;
 }
 
 

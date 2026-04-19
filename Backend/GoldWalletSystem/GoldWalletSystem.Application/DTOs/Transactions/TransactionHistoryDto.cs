@@ -16,6 +16,9 @@ public sealed record TransactionHistoryDto(
     decimal Purity,
     decimal Amount,
     string Currency,
+    int? WalletItemId,
+    int? InvoiceId,
+    string? InvoicePdfUrl,
     string Notes,
     DateTime CreatedAtUtc,
     string ProductImageUrl);

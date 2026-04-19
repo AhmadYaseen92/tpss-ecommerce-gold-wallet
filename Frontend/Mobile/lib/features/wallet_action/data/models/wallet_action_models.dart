@@ -67,6 +67,7 @@ class WalletActionExecutionResult {
   final double totalPortfolioValue;
   final DateTime? lockedPriceUntilUtc;
   final String? invoiceUrl;
+  final int? invoiceId;
 
   const WalletActionExecutionResult({
     required this.referenceId,
@@ -75,6 +76,7 @@ class WalletActionExecutionResult {
     required this.totalPortfolioValue,
     this.lockedPriceUntilUtc,
     this.invoiceUrl,
+    this.invoiceId,
   });
 }
 

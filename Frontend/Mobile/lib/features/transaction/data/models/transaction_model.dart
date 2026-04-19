@@ -16,6 +16,9 @@ class TransactionModel {
   final String notes;
   final double amount;
   final String currency;
+  final int? walletItemId;
+  final int? invoiceId;
+  final String? invoicePdfUrl;
   final DateTime createdAtUtc;
   final DateTime? updatedAtUtc;
 
@@ -37,6 +40,9 @@ class TransactionModel {
     required this.notes,
     required this.amount,
     required this.currency,
+    required this.walletItemId,
+    required this.invoiceId,
+    required this.invoicePdfUrl,
     required this.createdAtUtc,
     required this.updatedAtUtc,
   });
@@ -60,6 +66,9 @@ class TransactionModel {
       notes: (json['notes'] ?? '') as String,
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
       currency: (json['currency'] ?? 'USD') as String,
+      walletItemId: (json['walletItemId'] as num?)?.toInt(),
+      invoiceId: (json['invoiceId'] as num?)?.toInt(),
+      invoicePdfUrl: (json['invoicePdfUrl'] ?? '').toString().isEmpty ? null : (json['invoicePdfUrl'] ?? '').toString(),
       createdAtUtc:
           DateTime.tryParse((json['createdAtUtc'] ?? '').toString()) ?? DateTime.now().toUtc(),
       updatedAtUtc: DateTime.tryParse(

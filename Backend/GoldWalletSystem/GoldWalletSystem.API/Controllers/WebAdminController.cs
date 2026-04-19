@@ -371,7 +371,9 @@ public class WebAdminController(
                 InvestorName = dbContext.Users.Where(u => u.Id == x.InvestorUserId).Select(u => u.FullName).FirstOrDefault() ?? $"User {x.InvestorUserId}",
                 TotalAmount = x.TotalAmount,
                 IssuedAt = x.IssuedOnUtc,
-                Status = x.Status
+                Status = x.Status,
+                PdfUrl = x.PdfUrl,
+                PaymentStatus = x.PaymentStatus
             })
             .ToListAsync(cancellationToken);
 
@@ -398,12 +400,19 @@ public class WebAdminController(
             InvestorUserId = investorUserId,
             SellerUserId = sellerUserId,
             InvoiceNumber = string.IsNullOrWhiteSpace(request.Id) ? $"INV-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}" : request.Id,
-            InvoiceCategory = "Trade",
+            InvoiceCategory = "Buy",
             SourceChannel = "WebAdmin",
+            ExternalReference = request.Id,
             SubTotal = request.TotalAmount,
+            FeesAmount = 0,
+            DiscountAmount = 0,
             TaxAmount = 0,
             TotalAmount = request.TotalAmount,
+            Currency = "USD",
+            PaymentMethod = "Manual",
+            PaymentStatus = request.PaymentStatus,
             InvoiceQrCode = string.Empty,
+            PdfUrl = request.PdfUrl,
             IssuedOnUtc = request.IssuedAt == default ? DateTime.UtcNow : request.IssuedAt,
             Status = request.Status,
             CreatedAtUtc = DateTime.UtcNow
@@ -433,6 +442,8 @@ public class WebAdminController(
         invoice.TotalAmount = request.TotalAmount;
         invoice.SubTotal = request.TotalAmount;
         invoice.Status = request.Status;
+        invoice.PaymentStatus = request.PaymentStatus;
+        invoice.PdfUrl = request.PdfUrl;
         invoice.UpdatedAtUtc = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -1025,21 +1036,58 @@ public class WebAdminController(
             .Select(x => (int?)x.Id)
             .FirstOrDefaultAsync(cancellationToken) ?? 0;
 
+        var pdfUrl = await SaveInvoiceDocumentAsync(request, cancellationToken);
+
         dbContext.Invoices.Add(new Domain.Entities.Invoice
         {
             InvestorUserId = request.UserId,
             SellerUserId = sellerUserId,
             InvoiceNumber = $"INV-REQ-{request.Id}-{DateTime.UtcNow:yyyyMMddHHmmss}",
-            InvoiceCategory = request.Category,
+            InvoiceCategory = NormalizeInvoiceCategory(request.TransactionType),
             SourceChannel = "RequestApproval",
+            ExternalReference = $"REQ-{request.Id}",
             SubTotal = request.Amount,
+            FeesAmount = 0,
+            DiscountAmount = 0,
             TaxAmount = 0,
             TotalAmount = request.Amount,
-            InvoiceQrCode = await SaveInvoiceDocumentAsync(request, cancellationToken) ?? string.Empty,
+            Currency = request.Currency,
+            PaymentMethod = "Manual",
+            PaymentStatus = "Pending",
+            InvoiceQrCode = pdfUrl ?? string.Empty,
+            PdfUrl = pdfUrl,
+            WalletItemId = ExtractWalletAssetId(request.Notes),
             IssuedOnUtc = DateTime.UtcNow,
-            Status = "approved",
+            Status = "Issued",
             CreatedAtUtc = DateTime.UtcNow
         });
+    }
+
+    private static string NormalizeInvoiceCategory(string? type)
+    {
+        var value = type?.Trim().ToLowerInvariant();
+        return value switch
+        {
+            "sell" => "Sell",
+            "transfer" => "Transfer",
+            "gift" => "Gift",
+            "pickup" => "Pickup",
+            _ => "Buy"
+        };
+    }
+
+    private static int? ExtractWalletAssetId(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+        const string marker = "wallet_asset_id=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+        var tail = notes[valueStart..];
+        var stop = tail.IndexOfAny(['|', ',', ';', ' ']);
+        var raw = stop > 0 ? tail[..stop] : tail;
+        return int.TryParse(raw, out var id) ? id : null;
     }
 
     private async Task<string?> SaveInvoiceDocumentAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
