@@ -426,6 +426,39 @@ BEGIN TRY
             (@WalletInvestorImseeh, 2, 31.104, N'gram', 99.99, 3, 37.00, 38.00, N'Gold Palace', DATEADD(DAY, -1, @Now), NULL);
     END
 
+    DECLARE @WalletAssetMainGoldBar int = (
+        SELECT TOP 1 [Id] FROM [WalletAssets]
+        WHERE [WalletId] = @WalletInvestorMain AND [SellerName] = N'Imseeh'
+        ORDER BY [CreatedAtUtc] ASC, [Id] ASC
+    );
+
+    DECLARE @WalletAssetMainGoldCoin int = (
+        SELECT TOP 1 [Id] FROM [WalletAssets]
+        WHERE [WalletId] = @WalletInvestorMain AND [SellerName] = N'Imseeh'
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    IF NOT EXISTS (SELECT 1 FROM [Invoices] WHERE [InvoiceNumber] = N'INV-SEED-0003')
+    BEGIN
+        INSERT INTO [Invoices] (
+            [InvestorUserId],[SellerUserId],[InvoiceNumber],[InvoiceCategory],[SourceChannel],[ExternalReference],
+            [SubTotal],[FeesAmount],[DiscountAmount],[TaxAmount],[TotalAmount],[Currency],[PaymentMethod],[PaymentStatus],
+            [PaymentTransactionId],[WalletItemId],[ProductId],[ProductName],[Quantity],[UnitPrice],[Weight],[Purity],
+            [FromPartyType],[ToPartyType],[FromPartyUserId],[ToPartyUserId],[OwnershipEffectiveOnUtc],[RelatedTransactionId],
+            [InvoiceQrCode],[PdfUrl],[IssuedOnUtc],[PaidOnUtc],[Status],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        VALUES
+            (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0003', N'Transfer', N'MobileWallet', N'SEED-WALLET-TRANSFER-0003',
+             730, 0, 0, 0, 730, N'USD', N'WalletCredit', N'Pending', NULL, @WalletAssetMainGoldBar, @ProductImseehGoldBar,
+             N'Imseeh 5g Gold Bar', 1, 730, 5.000, 24.00, N'Investor', N'Investor', @InvestorMain, @InvestorGoldPal,
+             DATEADD(HOUR, -6, @Now), NULL, N'', N'/Certificats/seed/invoice-seed-0003.pdf', DATEADD(HOUR, -6, @Now), NULL, N'Issued', @Now, NULL),
+
+            (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0004', N'Pickup', N'MobileWallet', N'SEED-WALLET-PICKUP-0004',
+             2675, 0, 0, 0, 2675, N'USD', N'N/A', N'Pending', NULL, @WalletAssetMainGoldCoin, @ProductImseehGoldCoin,
+             N'Imseeh Gold Coin', 1, 2675, 31.104, 24.00, N'Investor', N'Seller', @InvestorMain, @SellerUserImseeh,
+             DATEADD(HOUR, -3, @Now), NULL, N'', N'/Certificats/seed/invoice-seed-0004.pdf', DATEADD(HOUR, -3, @Now), NULL, N'Issued', @Now, NULL);
+    END
+
     IF COL_LENGTH('CartItems', 'Category') IS NOT NULL AND COL_LENGTH('CartItems', 'SellerId') IS NOT NULL
     BEGIN
         INSERT INTO [CartItems] (
