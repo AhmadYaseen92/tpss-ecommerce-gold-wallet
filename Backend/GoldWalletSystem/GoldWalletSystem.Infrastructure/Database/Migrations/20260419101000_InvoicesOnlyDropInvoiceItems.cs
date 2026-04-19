@@ -139,16 +139,14 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 table: "Invoices",
                 column: "FromPartyUserId",
                 principalTable: "Users",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Invoices_Users_ToPartyUserId",
                 table: "Invoices",
                 column: "ToPartyUserId",
                 principalTable: "Users",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                principalColumn: "Id");
 
             migrationBuilder.DropTable(
                 name: "InvoiceItems");

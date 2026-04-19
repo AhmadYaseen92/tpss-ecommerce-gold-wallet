@@ -433,8 +433,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(x => x.WalletItem).WithMany().HasForeignKey(x => x.WalletItemId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne<TransactionHistory>().WithMany().HasForeignKey(x => x.RelatedTransactionId).OnDelete(DeleteBehavior.SetNull);
-            entity.HasOne<User>().WithMany().HasForeignKey(x => x.FromPartyUserId).OnDelete(DeleteBehavior.SetNull);
-            entity.HasOne<User>().WithMany().HasForeignKey(x => x.ToPartyUserId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne<User>().WithMany().HasForeignKey(x => x.FromPartyUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<User>().WithMany().HasForeignKey(x => x.ToPartyUserId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 
