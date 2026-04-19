@@ -19,14 +19,22 @@ public sealed record InvoiceDto(
     string? PaymentTransactionId,
     int? WalletItemId,
     int? ProductId,
+    string ProductName,
+    int Quantity,
+    decimal UnitPrice,
+    decimal Weight,
+    decimal Purity,
+    string? FromPartyType,
+    string? ToPartyType,
+    int? FromPartyUserId,
+    int? ToPartyUserId,
+    DateTime? OwnershipEffectiveOnUtc,
+    int? RelatedTransactionId,
     string Status,
     string InvoiceQrCode,
     string? PdfUrl,
     DateTime IssuedOnUtc,
-    DateTime? PaidOnUtc,
-    IReadOnlyList<InvoiceItemDto> Items);
-
-public sealed record InvoiceItemDto(int Id, int? WalletItemId, int ProductId, string ProductName, int Quantity, decimal UnitPrice, decimal Weight, decimal Purity, decimal TotalPrice);
+    DateTime? PaidOnUtc);
 
 public class CreateInvoiceRequestDto
 {
@@ -44,18 +52,17 @@ public class CreateInvoiceRequestDto
     public string? PaymentTransactionId { get; set; }
     public int? WalletItemId { get; set; }
     public int? ProductId { get; set; }
-    public string? PdfUrl { get; set; }
-    public DateTime? PaidOnUtc { get; set; }
-    public List<CreateInvoiceItemRequestDto> Items { get; set; } = [];
-}
-
-public class CreateInvoiceItemRequestDto
-{
-    public int? WalletItemId { get; set; }
-    public int ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
-    public int Quantity { get; set; }
+    public int Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
     public decimal Weight { get; set; }
     public decimal Purity { get; set; }
+    public string? FromPartyType { get; set; }
+    public string? ToPartyType { get; set; }
+    public int? FromPartyUserId { get; set; }
+    public int? ToPartyUserId { get; set; }
+    public DateTime? OwnershipEffectiveOnUtc { get; set; }
+    public int? RelatedTransactionId { get; set; }
+    public string? PdfUrl { get; set; }
+    public DateTime? PaidOnUtc { get; set; }
 }

@@ -290,7 +290,7 @@ public class WalletController(
 
         string? invoiceUrl = null;
         Invoice? createdInvoice = null;
-        if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell")
+        if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell" or "transfer" or "gift" or "pickup")
         {
             var sellerUserId = await dbContext.Users
                 .Where(x => x.Role == "Seller" && x.SellerId == asset.SellerId)
@@ -310,7 +310,7 @@ public class WalletController(
                 InvestorUserId = request.UserId,
                 SellerUserId = sellerUserId,
                 InvoiceNumber = $"INV-WAL-{DateTime.UtcNow:yyyyMMddHHmmssfff}",
-                InvoiceCategory = actionType is "sell" ? "Sell" : "Pickup",
+                InvoiceCategory = NormalizeInvoiceCategory(actionType),
                 SourceChannel = "MobileWallet",
                 ExternalReference = $"WALLET-TX-{history.Id}",
                 SubTotal = grossAmount,
@@ -323,6 +323,16 @@ public class WalletController(
                 PaymentStatus = actionType is "sell" ? "Paid" : "Pending",
                 PaymentTransactionId = null,
                 WalletItemId = asset.Id,
+                ProductName = asset.Category.ToString(),
+                Quantity = request.Quantity,
+                UnitPrice = unitPrice,
+                Weight = requestedWeight,
+                Purity = asset.Purity,
+                FromPartyType = "Investor",
+                ToPartyType = actionType is "transfer" or "gift" ? "Investor" : "Seller",
+                FromPartyUserId = request.UserId,
+                ToPartyUserId = actionType is "transfer" or "gift" ? request.RecipientInvestorUserId : sellerUserId,
+                OwnershipEffectiveOnUtc = DateTime.UtcNow,
                 InvoiceQrCode = invoiceUrl ?? string.Empty,
                 PdfUrl = invoiceUrl,
                 IssuedOnUtc = DateTime.UtcNow,
@@ -390,6 +400,8 @@ public class WalletController(
         {
             history.InvoiceId = createdInvoice.Id;
             history.UpdatedAtUtc = DateTime.UtcNow;
+            createdInvoice.RelatedTransactionId = history.Id;
+            createdInvoice.UpdatedAtUtc = DateTime.UtcNow;
             await dbContext.SaveChangesAsync(cancellationToken);
         }
         await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-action:{actionType}:{request.UserId}", cancellationToken);
@@ -685,6 +697,19 @@ public class WalletController(
             ("pickup", "pending_delivered", _) => "Pending - Delivered",
             ("delivered_completed", _, _) => "Delivered",
             _ => "Bought"
+        };
+    }
+
+    private static string NormalizeInvoiceCategory(string actionType)
+    {
+        var normalized = actionType.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "sell" => "Sell",
+            "gift" => "Gift",
+            "transfer" => "Transfer",
+            "pickup" or "certificate" or "invoice" => "Pickup",
+            _ => "Buy"
         };
     }
 

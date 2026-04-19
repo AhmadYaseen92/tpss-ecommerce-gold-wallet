@@ -19,6 +19,17 @@ public class Invoice : BaseEntity
     public string? PaymentTransactionId { get; set; }
     public int? WalletItemId { get; set; }
     public int? ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public int Quantity { get; set; } = 1;
+    public decimal UnitPrice { get; set; }
+    public decimal Weight { get; set; }
+    public decimal Purity { get; set; }
+    public string? FromPartyType { get; set; }
+    public string? ToPartyType { get; set; }
+    public int? FromPartyUserId { get; set; }
+    public int? ToPartyUserId { get; set; }
+    public DateTime? OwnershipEffectiveOnUtc { get; set; }
+    public int? RelatedTransactionId { get; set; }
     public string InvoiceQrCode { get; set; } = string.Empty;
     public string? PdfUrl { get; set; }
     public DateTime IssuedOnUtc { get; set; } = DateTime.UtcNow;
@@ -27,6 +38,4 @@ public class Invoice : BaseEntity
 
     public WalletAsset? WalletItem { get; set; }
     public Product? Product { get; set; }
-
-    public ICollection<InvoiceItem> Items { get; set; } = new List<InvoiceItem>();
 }

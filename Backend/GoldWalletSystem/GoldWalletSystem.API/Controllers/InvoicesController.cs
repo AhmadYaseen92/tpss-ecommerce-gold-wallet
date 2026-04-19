@@ -34,8 +34,8 @@ public class InvoicesController(IInvoiceService invoiceService, ICurrentUserServ
         if (!AllowedPaymentStatuses.Contains(Normalize(request.PaymentStatus)))
             return BadRequest(ApiResponse<object>.Fail("PaymentStatus must be one of Pending, Paid, Failed, Cancelled", 400));
 
-        if (request.Items.Count == 0)
-            return BadRequest(ApiResponse<object>.Fail("Invoice must include at least one item", 400));
+        if (request.Quantity <= 0)
+            return BadRequest(ApiResponse<object>.Fail("Invoice quantity must be greater than zero", 400));
 
         var data = await invoiceService.CreateAsync(request, cancellationToken);
         return Ok(ApiResponse<InvoiceDto>.Ok(data, "Invoice generated"));

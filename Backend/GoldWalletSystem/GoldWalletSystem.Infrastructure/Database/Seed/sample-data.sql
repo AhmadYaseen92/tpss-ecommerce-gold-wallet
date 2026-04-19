@@ -278,12 +278,13 @@ BEGIN TRY
     INSERT INTO [Invoices] (
         [InvestorUserId],[SellerUserId],[InvoiceNumber],[InvoiceCategory],[SourceChannel],
         [ExternalReference],[SubTotal],[FeesAmount],[DiscountAmount],[TaxAmount],[TotalAmount],[Currency],
-        [PaymentMethod],[PaymentStatus],[PaymentTransactionId],[WalletItemId],[ProductId],[InvoiceQrCode],[PdfUrl],
+        [PaymentMethod],[PaymentStatus],[PaymentTransactionId],[WalletItemId],[ProductId],[ProductName],[Quantity],[UnitPrice],[Weight],[Purity],
+        [FromPartyType],[ToPartyType],[FromPartyUserId],[ToPartyUserId],[OwnershipEffectiveOnUtc],[RelatedTransactionId],[InvoiceQrCode],[PdfUrl],
         [IssuedOnUtc],[PaidOnUtc],[Status],[CreatedAtUtc],[UpdatedAtUtc]
     )
     VALUES
-        (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0001', N'Buy', N'WebAdmin', N'SEED-ORDER-0001', 980, 0, 0, 0, 980, N'USD', N'Card', N'Pending', NULL, NULL, NULL, N'', NULL, DATEADD(DAY, -1, @Now), NULL, N'Issued', @Now, NULL),
-        (@InvestorImseeh, @SellerUserImseeh, N'INV-SEED-0002', N'Sell', N'WebAdmin', N'SEED-ORDER-0002', 1430, 5, 0, 0, 1435, N'USD', N'WalletCredit', N'Paid', N'SEED-TXN-0002', NULL, NULL, N'', N'/Certificats/seed/invoice-seed-0002.pdf', DATEADD(DAY, -2, @Now), DATEADD(DAY, -2, @Now), N'Completed', @Now, NULL);
+        (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0001', N'Buy', N'WebAdmin', N'SEED-ORDER-0001', 980, 0, 0, 0, 980, N'USD', N'Card', N'Pending', NULL, NULL, NULL, N'Imseeh 5g Gold Bar', 2, 490, 10.000, 24.00, N'Seller', N'Investor', @SellerUserImseeh, @InvestorMain, DATEADD(DAY, -1, @Now), NULL, N'', NULL, DATEADD(DAY, -1, @Now), NULL, N'Issued', @Now, NULL),
+        (@InvestorImseeh, @SellerUserImseeh, N'INV-SEED-0002', N'Sell', N'WebAdmin', N'SEED-ORDER-0002', 1430, 5, 0, 0, 1435, N'USD', N'WalletCredit', N'Paid', N'SEED-TXN-0002', NULL, NULL, N'Imseeh Gold Coin', 1, 1430, 31.104, 24.00, N'Investor', N'Seller', @InvestorImseeh, @SellerUserImseeh, DATEADD(DAY, -2, @Now), NULL, N'', N'/Certificats/seed/invoice-seed-0002.pdf', DATEADD(DAY, -2, @Now), DATEADD(DAY, -2, @Now), N'Completed', @Now, NULL);
 
     -- 5) Core products (starter catalog) with REQUIRED weight fields.
     -- Covers all categories except SpotMr:
@@ -454,54 +455,6 @@ BEGIN TRY
             (@CartInvestorMain, @ProductImseehGoldBar, 2, 430.00, 860.00, @Now, NULL),
             (@CartInvestorMain, @ProductImseehGoldCoin, 1, 2675.00, 2675.00, @Now, NULL),
             (@CartInvestorGoldPal, @ProductGoldPalSilver, 4, 37.00, 148.00, @Now, NULL);
-    END
-
-    DECLARE @InvoiceSeed1 int = (SELECT TOP 1 [Id] FROM [Invoices] WHERE [InvoiceNumber] = N'INV-SEED-0001');
-    DECLARE @InvoiceSeed2 int = (SELECT TOP 1 [Id] FROM [Invoices] WHERE [InvoiceNumber] = N'INV-SEED-0002');
-    DECLARE @WalletAssetMain int = (SELECT TOP 1 [Id] FROM [WalletAssets] WHERE [WalletId] = @WalletInvestorMain ORDER BY [Id]);
-    DECLARE @WalletAssetImseeh int = (SELECT TOP 1 [Id] FROM [WalletAssets] WHERE [WalletId] = @WalletInvestorImseeh ORDER BY [Id]);
-
-    IF COL_LENGTH('InvoiceItems', 'ProductName') IS NOT NULL
-       AND @InvoiceSeed1 IS NOT NULL
-       AND @InvoiceSeed2 IS NOT NULL
-    BEGIN
-        EXEC sp_executesql
-            N'
-            INSERT INTO [InvoiceItems] (
-                [InvoiceId],[WalletItemId],[ProductId],[ProductName],[Quantity],[UnitPrice],[Weight],[Purity],[TotalPrice],[CreatedAtUtc],[UpdatedAtUtc]
-            )
-            VALUES
-                (@InvoiceSeed1, @WalletAssetMain, @ProductImseehGoldBar, N''Imseeh 5g Gold Bar'', 2, 430.00, 10.000, 24.00, 860.00, @Now, NULL),
-                (@InvoiceSeed2, @WalletAssetImseeh, @ProductGoldPalSilver, N''GoldPal Silver 1oz Bar'', 3, 37.00, 31.104, 99.99, 111.00, @Now, NULL);
-            ',
-            N'@InvoiceSeed1 int, @InvoiceSeed2 int, @WalletAssetMain int, @WalletAssetImseeh int, @ProductImseehGoldBar int, @ProductGoldPalSilver int, @Now datetime2',
-            @InvoiceSeed1 = @InvoiceSeed1,
-            @InvoiceSeed2 = @InvoiceSeed2,
-            @WalletAssetMain = @WalletAssetMain,
-            @WalletAssetImseeh = @WalletAssetImseeh,
-            @ProductImseehGoldBar = @ProductImseehGoldBar,
-            @ProductGoldPalSilver = @ProductGoldPalSilver,
-            @Now = @Now;
-    END
-    ELSE IF COL_LENGTH('InvoiceItems', 'ItemName') IS NOT NULL
-       AND @InvoiceSeed1 IS NOT NULL
-       AND @InvoiceSeed2 IS NOT NULL
-    BEGIN
-        EXEC sp_executesql
-            N'
-            INSERT INTO [InvoiceItems] (
-                [InvoiceId],[ProductId],[ItemName],[Quantity],[UnitPrice],[LineTotal],[ItemQrCode],[CreatedAtUtc],[UpdatedAtUtc]
-            )
-            VALUES
-                (@InvoiceSeed1, @ProductImseehGoldBar, N''Imseeh 5g Gold Bar'', 2, 430.00, 860.00, N'''', @Now, NULL),
-                (@InvoiceSeed2, @ProductGoldPalSilver, N''GoldPal Silver 1oz Bar'', 3, 37.00, 111.00, N'''', @Now, NULL);
-            ',
-            N'@InvoiceSeed1 int, @InvoiceSeed2 int, @ProductImseehGoldBar int, @ProductGoldPalSilver int, @Now datetime2',
-            @InvoiceSeed1 = @InvoiceSeed1,
-            @InvoiceSeed2 = @InvoiceSeed2,
-            @ProductImseehGoldBar = @ProductImseehGoldBar,
-            @ProductGoldPalSilver = @ProductGoldPalSilver,
-            @Now = @Now;
     END
 
     -- 6) Home carousel config.

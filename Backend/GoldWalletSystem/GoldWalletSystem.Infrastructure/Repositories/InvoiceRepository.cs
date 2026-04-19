@@ -16,7 +16,6 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceReadRepository
     public async Task<PagedResult<InvoiceDto>> GetByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Invoices.AsNoTracking()
-            .Include(x => x.Items)
             .Where(x => x.InvestorUserId == userId || x.SellerUserId == userId)
             .OrderByDescending(x => x.CreatedAtUtc);
 
@@ -29,7 +28,9 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceReadRepository
     public async Task<InvoiceDto> CreateAsync(CreateInvoiceRequestDto request, CancellationToken cancellationToken = default)
     {
         var sellerUserId = request.SellerUserId ?? request.InvestorUserId;
-        var subTotal = request.Items.Sum(x => x.Quantity * x.UnitPrice);
+        var quantity = Math.Max(1, request.Quantity);
+        var resolvedUnitPrice = request.UnitPrice > 0 ? request.UnitPrice : request.SubTotal;
+        var subTotal = request.SubTotal > 0 ? request.SubTotal : quantity * resolvedUnitPrice;
         var total = subTotal + request.FeesAmount + request.TaxAmount - request.DiscountAmount;
         var invoiceCategory = NormalizeAllowedValue(request.InvoiceCategory, AllowedInvoiceCategories, "Buy");
         var paymentStatus = NormalizeAllowedValue(request.PaymentStatus, AllowedPaymentStatuses, "Pending");
@@ -56,71 +57,25 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceReadRepository
             PaymentTransactionId = request.PaymentTransactionId,
             WalletItemId = request.WalletItemId,
             ProductId = request.ProductId,
+            ProductName = request.ProductName,
+            Quantity = quantity,
+            UnitPrice = resolvedUnitPrice,
+            Weight = request.Weight,
+            Purity = request.Purity,
+            FromPartyType = request.FromPartyType,
+            ToPartyType = request.ToPartyType,
+            FromPartyUserId = request.FromPartyUserId,
+            ToPartyUserId = request.ToPartyUserId,
+            OwnershipEffectiveOnUtc = request.OwnershipEffectiveOnUtc,
+            RelatedTransactionId = request.RelatedTransactionId,
             PdfUrl = request.PdfUrl,
             IssuedOnUtc = DateTime.UtcNow,
             PaidOnUtc = paymentStatus == "Paid" ? request.PaidOnUtc ?? DateTime.UtcNow : null,
             Status = status,
-            Items = request.Items.Select(x => new InvoiceItem
-            {
-                WalletItemId = x.WalletItemId,
-                ProductId = x.ProductId,
-                ProductName = x.ProductName,
-                Quantity = x.Quantity,
-                UnitPrice = x.UnitPrice,
-                Weight = x.Weight,
-                Purity = x.Purity,
-                TotalPrice = x.Quantity * x.UnitPrice,
-            }).ToList()
         };
 
         dbContext.Invoices.Add(invoice);
-        dbContext.AppNotifications.Add(new AppNotification
-        {
-            UserId = request.InvestorUserId,
-            Title = "Invoice created",
-            Body = $"Invoice {invoice.InvoiceNumber} has been issued.",
-            IsRead = false,
-            CreatedAtUtc = DateTime.UtcNow
-        });
-
-        if (request.InvestorUserId != sellerUserId)
-        {
-            dbContext.AppNotifications.Add(new AppNotification
-            {
-                UserId = sellerUserId,
-                Title = "Invoice created",
-                Body = $"Invoice {invoice.InvoiceNumber} has been issued.",
-                IsRead = false,
-                CreatedAtUtc = DateTime.UtcNow
-            });
-        }
-
-        if (paymentStatus == "Paid")
-        {
-            dbContext.AppNotifications.Add(new AppNotification
-            {
-                UserId = request.InvestorUserId,
-                Title = "Invoice paid",
-                Body = $"Invoice {invoice.InvoiceNumber} has been marked as paid.",
-                IsRead = false,
-                CreatedAtUtc = DateTime.UtcNow
-            });
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.PdfUrl))
-        {
-            dbContext.AppNotifications.Add(new AppNotification
-            {
-                UserId = request.InvestorUserId,
-                Title = "Invoice PDF available",
-                Body = $"Invoice {invoice.InvoiceNumber} PDF is ready.",
-                IsRead = false,
-                CreatedAtUtc = DateTime.UtcNow
-            });
-        }
-
         await dbContext.SaveChangesAsync(cancellationToken);
-
         return Map(invoice);
     }
 
@@ -144,12 +99,22 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceReadRepository
             x.PaymentTransactionId,
             x.WalletItemId,
             x.ProductId,
+            x.ProductName,
+            x.Quantity,
+            x.UnitPrice,
+            x.Weight,
+            x.Purity,
+            x.FromPartyType,
+            x.ToPartyType,
+            x.FromPartyUserId,
+            x.ToPartyUserId,
+            x.OwnershipEffectiveOnUtc,
+            x.RelatedTransactionId,
             x.Status,
             x.InvoiceQrCode,
             x.PdfUrl,
             x.IssuedOnUtc,
-            x.PaidOnUtc,
-            x.Items.Select(i => new InvoiceItemDto(i.Id, i.WalletItemId, i.ProductId, i.ProductName, i.Quantity, i.UnitPrice, i.Weight, i.Purity, i.TotalPrice)).ToList());
+            x.PaidOnUtc);
 
     private static string NormalizeAllowedValue(string? candidate, IReadOnlySet<string> allowedValues, string fallback)
     {

@@ -22,7 +22,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<TransactionHistory> TransactionHistories => Set<TransactionHistory>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
-    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
     public DbSet<AppNotification> AppNotifications => Set<AppNotification>();
     public DbSet<Wallet> Wallets => Set<Wallet>();
     public DbSet<WalletAsset> WalletAssets => Set<WalletAsset>();
@@ -53,7 +52,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureOrder(modelBuilder);
         ConfigurePaymentTransaction(modelBuilder);
         ConfigureInvoice(modelBuilder);
-        ConfigureInvoiceItem(modelBuilder);
         ConfigureAppNotification(modelBuilder);
         ConfigureMobileAppConfiguration(modelBuilder);
     }
@@ -410,6 +408,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.PaymentMethod).HasMaxLength(50);
             entity.Property(x => x.PaymentStatus).HasMaxLength(50);
             entity.Property(x => x.PaymentTransactionId).HasMaxLength(120);
+            entity.Property(x => x.ProductName).HasMaxLength(200);
+            entity.Property(x => x.UnitPrice).HasPrecision(18, 2);
+            entity.Property(x => x.Weight).HasPrecision(18, 3);
+            entity.Property(x => x.Purity).HasPrecision(5, 2);
+            entity.Property(x => x.FromPartyType).HasMaxLength(30);
+            entity.Property(x => x.ToPartyType).HasMaxLength(30);
             entity.Property(x => x.Status).IsRequired().HasMaxLength(50);
             entity.Property(x => x.SubTotal).HasPrecision(18, 2);
             entity.Property(x => x.FeesAmount).HasPrecision(18, 2);
@@ -421,32 +425,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(x => x.SellerUserId);
             entity.HasIndex(x => x.WalletItemId);
             entity.HasIndex(x => x.ProductId);
+            entity.HasIndex(x => x.RelatedTransactionId);
             entity.HasIndex(x => x.PaymentStatus);
             entity.HasIndex(x => x.IssuedOnUtc);
             entity.HasOne<User>().WithMany().HasForeignKey(x => x.InvestorUserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<User>().WithMany().HasForeignKey(x => x.SellerUserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(x => x.WalletItem).WithMany().HasForeignKey(x => x.WalletItemId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.SetNull);
-            entity.HasMany(x => x.Items).WithOne(x => x.Invoice).HasForeignKey(x => x.InvoiceId).OnDelete(DeleteBehavior.Cascade);
-        });
-    }
-
-    private static void ConfigureInvoiceItem(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<InvoiceItem>(entity =>
-        {
-            entity.ToTable("InvoiceItems");
-            entity.HasKey(x => x.Id);
-            entity.Property(x => x.ProductName).IsRequired().HasMaxLength(200);
-            entity.Property(x => x.UnitPrice).HasPrecision(18, 2);
-            entity.Property(x => x.Weight).HasPrecision(18, 3);
-            entity.Property(x => x.Purity).HasPrecision(5, 2);
-            entity.Property(x => x.TotalPrice).HasPrecision(18, 2);
-            entity.HasIndex(x => new { x.InvoiceId, x.ProductId });
-            entity.HasIndex(x => x.WalletItemId);
-            entity.HasOne(x => x.Invoice).WithMany(x => x.Items).HasForeignKey(x => x.InvoiceId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(x => x.WalletItem).WithMany().HasForeignKey(x => x.WalletItemId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne<TransactionHistory>().WithMany().HasForeignKey(x => x.RelatedTransactionId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne<User>().WithMany().HasForeignKey(x => x.FromPartyUserId).OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne<User>().WithMany().HasForeignKey(x => x.ToPartyUserId).OnDelete(DeleteBehavior.SetNull);
         });
     }
 
