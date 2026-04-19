@@ -19,6 +19,8 @@ public sealed record WalletAssetDto(
     int Quantity,
     decimal AverageBuyPrice,
     decimal CurrentMarketPrice,
+    int? InvoiceId,
+    string? CertificateUrl,
     bool IsDelivered,
     string Status,
     string? StatusDetails);

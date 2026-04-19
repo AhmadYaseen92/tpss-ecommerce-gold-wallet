@@ -31,6 +31,23 @@ public class WalletController(
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var data = await walletService.GetByUserIdAsync(request.UserId, cancellationToken);
 
+        var assetIds = data.Assets.Select(x => x.Id).ToList();
+        var invoiceByWalletAsset = new Dictionary<int, (int InvoiceId, string? PdfUrl)>();
+        if (assetIds.Count > 0)
+        {
+            var linkedInvoices = await dbContext.Invoices
+                .AsNoTracking()
+                .Where(x => x.InvestorUserId == request.UserId && x.WalletItemId.HasValue && assetIds.Contains(x.WalletItemId.Value))
+                .OrderByDescending(x => x.IssuedOnUtc)
+                .Select(x => new { x.WalletItemId, x.Id, x.PdfUrl })
+                .ToListAsync(cancellationToken);
+
+            invoiceByWalletAsset = linkedInvoices
+                .Where(x => x.WalletItemId.HasValue)
+                .GroupBy(x => x.WalletItemId!.Value)
+                .ToDictionary(g => g.Key, g => (g.First().Id, g.First().PdfUrl));
+        }
+
         var (statusByAssetId, detailsByAssetId) = await ResolveAssetStatusesAsync(request.UserId, data.Assets, cancellationToken);
         var assets = data.Assets
             .Select(asset =>
@@ -41,11 +58,16 @@ public class WalletController(
                 var statusDetails = detailsByAssetId.TryGetValue(asset.Id, out var resolvedDetails)
                     ? resolvedDetails
                     : null;
+                var invoiceMeta = invoiceByWalletAsset.TryGetValue(asset.Id, out var resolvedInvoice)
+                    ? resolvedInvoice
+                    : (InvoiceId: 0, PdfUrl: (string?)null);
                 return asset with
                 {
                     Status = status,
                     IsDelivered = status == "Delivered",
-                    StatusDetails = statusDetails
+                    StatusDetails = statusDetails,
+                    InvoiceId = invoiceMeta.InvoiceId == 0 ? null : invoiceMeta.InvoiceId,
+                    CertificateUrl = ToAbsoluteFileUrl(invoiceMeta.PdfUrl)
                 };
             })
             .ToList();
@@ -802,5 +824,15 @@ public class WalletController(
         pdf.Append($"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xrefStart}\n%%EOF");
 
         return Encoding.ASCII.GetBytes(pdf.ToString());
+    }
+
+    private string? ToAbsoluteFileUrl(string? fileUrl)
+    {
+        if (string.IsNullOrWhiteSpace(fileUrl)) return null;
+        if (Uri.TryCreate(fileUrl, UriKind.Absolute, out _)) return fileUrl;
+
+        var request = HttpContext.Request;
+        var normalized = fileUrl.StartsWith('/') ? fileUrl : $"/{fileUrl}";
+        return $"{request.Scheme}://{request.Host}{normalized}";
     }
 }
