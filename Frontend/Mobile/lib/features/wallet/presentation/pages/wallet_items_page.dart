@@ -28,6 +28,8 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
   late List<WalletTransactionEntity> _transactions;
   bool _isRefreshing = false;
   StreamSubscription<void>? _realtimeSubscription;
+  WalletCategory? get _targetCategory =>
+      _transactions.isNotEmpty ? _transactions.first.category : widget.initialCategory;
 
   @override
   void initState() {
@@ -219,4 +221,3 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
     );
   }
 }
-  WalletCategory? get _targetCategory => _transactions.isNotEmpty ? _transactions.first.category : widget.initialCategory;
