@@ -93,7 +93,29 @@ public class WalletController(
             .FirstOrDefaultAsync(cancellationToken);
 
         if (invoice is null)
+        {
+            invoice = await dbContext.Invoices
+                .Where(x => x.InvestorUserId == currentUserId.Value && x.RelatedTransactionId.HasValue)
+                .Join(
+                    dbContext.TransactionHistories.AsNoTracking(),
+                    inv => inv.RelatedTransactionId!.Value,
+                    history => history.Id,
+                    (inv, history) => new { Invoice = inv, history.WalletItemId })
+                .Where(x => x.WalletItemId == walletItemId)
+                .OrderByDescending(x => x.Invoice.IssuedOnUtc)
+                .Select(x => x.Invoice)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (invoice is null)
             return NotFound(ApiResponse<object>.Fail("No invoice/certificate record exists for this wallet item.", 404));
+
+        if (!invoice.WalletItemId.HasValue && invoice.RelatedTransactionId.HasValue)
+        {
+            invoice.WalletItemId = walletItemId;
+            invoice.UpdatedAtUtc = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         var pdfUrl = invoice.PdfUrl;
         var fileExists = !string.IsNullOrWhiteSpace(pdfUrl) && InvoiceFileExists(pdfUrl);
