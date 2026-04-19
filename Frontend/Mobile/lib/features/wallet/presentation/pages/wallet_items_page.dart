@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
@@ -9,6 +8,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/walle
     show WalletCategory, WalletTransactionEntity;
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_holding_item_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 
 class WalletItemsPage extends StatefulWidget {
   final List<WalletTransactionEntity> transactions;
@@ -28,6 +28,7 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
   late List<WalletTransactionEntity> _transactions;
   bool _isRefreshing = false;
   StreamSubscription<void>? _realtimeSubscription;
+  final IWalletActionRepository _walletActionRepository = InjectionContainer.walletActionRepository();
   WalletCategory? get _targetCategory =>
       _transactions.isNotEmpty ? _transactions.first.category : widget.initialCategory;
 
@@ -96,16 +97,7 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
   }
 
   Future<void> _cancelPendingRequest(WalletTransactionEntity item) async {
-    final userId = AuthSessionStore.userId;
-    if (userId == null) return;
-
-    await InjectionContainer.dio().post(
-      '/wallet/actions/cancel-request',
-      data: {
-        'userId': userId,
-        'walletAssetId': item.id,
-      },
-    );
+    await _walletActionRepository.cancelWalletRequest(walletAssetId: item.id);
     await _reloadTransactions();
   }
 

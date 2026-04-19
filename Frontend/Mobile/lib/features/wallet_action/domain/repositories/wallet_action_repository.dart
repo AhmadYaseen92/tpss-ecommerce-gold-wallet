@@ -10,6 +10,7 @@ abstract class IWalletActionRepository {
   Future<SellExecutionMode> getSellExecutionMode();
 
   Future<WalletActionExecutionResult> executeWalletAction(WalletActionExecutionRequest request);
+  Future<void> cancelWalletRequest({required int walletAssetId});
 
   Future<List<InvestorRecipient>> searchInvestors(String query);
 

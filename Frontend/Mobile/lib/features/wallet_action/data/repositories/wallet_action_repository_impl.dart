@@ -33,6 +33,11 @@ class WalletActionRepositoryImpl implements IWalletActionRepository {
   }
 
   @override
+  Future<void> cancelWalletRequest({required int walletAssetId}) {
+    return _remoteDataSource.cancelWalletRequest(walletAssetId: walletAssetId);
+  }
+
+  @override
   Future<List<InvestorRecipient>> searchInvestors(String query) {
     return _remoteDataSource.searchInvestors(query);
   }

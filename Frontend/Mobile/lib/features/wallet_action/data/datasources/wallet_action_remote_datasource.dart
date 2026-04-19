@@ -62,6 +62,21 @@ class WalletActionRemoteDataSource {
     );
   }
 
+  Future<void> cancelWalletRequest({required int walletAssetId}) async {
+    final userId = AuthSessionStore.userId;
+    if (userId == null) {
+      throw Exception('No logged-in user. Please login first.');
+    }
+
+    await _dio.post(
+      '/wallet/actions/cancel-request',
+      data: {
+        'userId': userId,
+        'walletAssetId': walletAssetId,
+      },
+    );
+  }
+
   Future<List<InvestorRecipient>> searchInvestors(String query) async {
     final response = await _dio.get('/wallet/investors', queryParameters: {'query': query});
     final payload = (response.data as Map<String, dynamic>)['data'] as List<dynamic>? ?? [];

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_filter_chip.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
@@ -19,11 +18,13 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.d
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/presentation/widgets/transaction_filter_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/presentation/widgets/transaction_item_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 
 class TransactionPage extends StatelessWidget {
   const TransactionPage({super.key});
 
   static final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
+  static final IWalletActionRepository _walletActionRepository = InjectionContainer.walletActionRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -613,16 +614,10 @@ class TransactionPage extends StatelessWidget {
   }
 
   Future<void> _cancelTransactionRequest(BuildContext context, TransactionModel transaction) async {
-    final userId = AuthSessionStore.userId;
-    if (userId == null || transaction.walletItemId == null) return;
+    final walletAssetId = transaction.walletItemId ?? transaction.walletAssetIdFromNotes;
+    if (walletAssetId == null) return;
 
-    await InjectionContainer.dio().post(
-      '/wallet/actions/cancel-request',
-      data: {
-        'userId': userId,
-        'walletAssetId': transaction.walletItemId,
-      },
-    );
+    await _walletActionRepository.cancelWalletRequest(walletAssetId: walletAssetId);
 
     if (context.mounted) {
       context.read<TransactionCubit>().loadTransactions(

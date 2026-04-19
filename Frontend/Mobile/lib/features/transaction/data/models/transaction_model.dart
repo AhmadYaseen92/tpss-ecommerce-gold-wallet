@@ -98,6 +98,10 @@ class TransactionModel {
   String? get fromInvestorUserId => _readNoteValue('from_investor_user_id');
 
   String? get toInvestorUserId => _readNoteValue('recipient_investor_user_id');
+  int? get walletAssetIdFromNotes {
+    final raw = _readNoteValue('wallet_asset_id');
+    return int.tryParse(raw ?? '');
+  }
 
   String get transferFromLabel {
     if (!isTransferOrGift) return '-';

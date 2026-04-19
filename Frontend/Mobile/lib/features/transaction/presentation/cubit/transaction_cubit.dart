@@ -9,6 +9,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.
 import 'package:tpss_ecommerce_gold_wallet/core/network/dio_factory.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 
 part 'transaction_state.dart';
 
@@ -21,6 +22,7 @@ class TransactionCubit extends Cubit<TransactionState> {
   String activeSeller = AppReleaseConfig.defaultSeller;
 
   final Dio _dio = DioFactory.create();
+  final IWalletActionRepository _walletActionRepository = InjectionContainer.walletActionRepository();
   List<TransactionModel> _allTransactions = [];
   StreamSubscription<String>? _realtimeSubscription;
   bool _isLoading = false;
@@ -155,6 +157,16 @@ class TransactionCubit extends Cubit<TransactionState> {
   void filterBySearch(String value) {
     searchQuery = value;
     applyFilters(selectedPeriod, selectedType, selectedStatus);
+  }
+
+  Future<void> cancelPendingRequest(TransactionModel transaction) async {
+    final walletAssetId = transaction.walletItemId ?? transaction.walletAssetIdFromNotes;
+    if (walletAssetId == null) {
+      throw Exception('Unable to resolve wallet asset for this transaction.');
+    }
+
+    await _walletActionRepository.cancelWalletRequest(walletAssetId: walletAssetId);
+    await loadTransactions(seller: activeSeller, silent: true);
   }
 
   @override
