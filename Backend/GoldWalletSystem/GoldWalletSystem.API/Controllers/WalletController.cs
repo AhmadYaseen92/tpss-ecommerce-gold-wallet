@@ -31,6 +31,23 @@ public class WalletController(
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var data = await walletService.GetByUserIdAsync(request.UserId, cancellationToken);
 
+        var assetIds = data.Assets.Select(x => x.Id).ToList();
+        var invoiceByWalletAsset = new Dictionary<int, (int InvoiceId, string? PdfUrl)>();
+        if (assetIds.Count > 0)
+        {
+            var linkedInvoices = await dbContext.Invoices
+                .AsNoTracking()
+                .Where(x => x.InvestorUserId == request.UserId && x.WalletItemId.HasValue && assetIds.Contains(x.WalletItemId.Value))
+                .OrderByDescending(x => x.IssuedOnUtc)
+                .Select(x => new { x.WalletItemId, x.Id, x.PdfUrl })
+                .ToListAsync(cancellationToken);
+
+            invoiceByWalletAsset = linkedInvoices
+                .Where(x => x.WalletItemId.HasValue)
+                .GroupBy(x => x.WalletItemId!.Value)
+                .ToDictionary(g => g.Key, g => (g.First().Id, g.First().PdfUrl));
+        }
+
         var (statusByAssetId, detailsByAssetId) = await ResolveAssetStatusesAsync(request.UserId, data.Assets, cancellationToken);
         var assets = data.Assets
             .Select(asset =>
@@ -41,11 +58,16 @@ public class WalletController(
                 var statusDetails = detailsByAssetId.TryGetValue(asset.Id, out var resolvedDetails)
                     ? resolvedDetails
                     : null;
+                var invoiceMeta = invoiceByWalletAsset.TryGetValue(asset.Id, out var resolvedInvoice)
+                    ? resolvedInvoice
+                    : (InvoiceId: 0, PdfUrl: (string?)null);
                 return asset with
                 {
                     Status = status,
                     IsDelivered = status == "Delivered",
-                    StatusDetails = statusDetails
+                    StatusDetails = statusDetails,
+                    InvoiceId = invoiceMeta.InvoiceId == 0 ? null : invoiceMeta.InvoiceId,
+                    CertificateUrl = ToAbsoluteFileUrl(invoiceMeta.PdfUrl)
                 };
             })
             .ToList();
@@ -57,6 +79,86 @@ public class WalletController(
     {
         var data = await ReadSellExecutionConfigurationAsync(cancellationToken);
         return Ok(ApiResponse<SellExecutionConfigurationResponse>.Ok(data));
+    }
+
+    [HttpGet("wallet-items/{walletItemId:int}/certificate")]
+    public async Task<IActionResult> EnsureWalletItemCertificate(int walletItemId, CancellationToken cancellationToken = default)
+    {
+        var currentUserId = currentUser.UserId;
+        if (!currentUserId.HasValue) return Unauthorized(ApiResponse<object>.Fail("Unauthorized", 401));
+
+        var invoice = await dbContext.Invoices
+            .Where(x => x.WalletItemId == walletItemId && x.InvestorUserId == currentUserId.Value)
+            .OrderByDescending(x => x.IssuedOnUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (invoice is null)
+        {
+            invoice = await dbContext.Invoices
+                .Where(x => x.InvestorUserId == currentUserId.Value && x.RelatedTransactionId.HasValue)
+                .Join(
+                    dbContext.TransactionHistories.AsNoTracking(),
+                    inv => inv.RelatedTransactionId!.Value,
+                    history => history.Id,
+                    (inv, history) => new { Invoice = inv, history.WalletItemId })
+                .Where(x => x.WalletItemId == walletItemId)
+                .OrderByDescending(x => x.Invoice.IssuedOnUtc)
+                .Select(x => x.Invoice)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (invoice is null)
+            return NotFound(ApiResponse<object>.Fail("No invoice/certificate record exists for this wallet item.", 404));
+
+        if (!invoice.WalletItemId.HasValue && invoice.RelatedTransactionId.HasValue)
+        {
+            invoice.WalletItemId = walletItemId;
+            invoice.UpdatedAtUtc = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var pdfUrl = invoice.PdfUrl;
+        var fileExists = !string.IsNullOrWhiteSpace(pdfUrl) && InvoiceFileExists(pdfUrl);
+        if (!fileExists)
+        {
+            var walletAsset = await dbContext.WalletAssets
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == walletItemId, cancellationToken);
+
+            var fallbackAsset = walletAsset ?? new WalletAsset
+            {
+                Id = walletItemId,
+                SellerId = null,
+                Category = ParseProductCategory(invoice.InvoiceCategory),
+                Weight = invoice.Weight > 0 ? invoice.Weight : 0.001m,
+                Unit = "gram",
+                Purity = invoice.Purity,
+                Quantity = invoice.Quantity > 0 ? invoice.Quantity : 1,
+                AverageBuyPrice = invoice.UnitPrice,
+                CurrentMarketPrice = invoice.UnitPrice,
+                SellerName = string.IsNullOrWhiteSpace(invoice.FromPartyType) ? "Wallet" : invoice.FromPartyType
+            };
+
+            pdfUrl = await SaveInvoiceDocumentAsync(
+                investorUserId: invoice.InvestorUserId,
+                actionType: invoice.InvoiceCategory,
+                asset: fallbackAsset,
+                quantity: Math.Max(1, invoice.Quantity),
+                amount: invoice.TotalAmount > 0 ? invoice.TotalAmount : invoice.SubTotal,
+                cancellationToken);
+
+            invoice.PdfUrl = pdfUrl;
+            invoice.InvoiceQrCode = pdfUrl ?? invoice.InvoiceQrCode;
+            invoice.UpdatedAtUtc = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return Ok(ApiResponse<EnsureWalletItemCertificateResponse>.Ok(new EnsureWalletItemCertificateResponse
+        {
+            InvoiceId = invoice.Id,
+            InvoiceNumber = invoice.InvoiceNumber,
+            PdfUrl = ToAbsoluteFileUrl(invoice.PdfUrl)
+        }));
     }
 
     [HttpGet("investors")]
@@ -250,6 +352,7 @@ public class WalletController(
         {
             UserId = request.UserId,
             SellerId = asset.SellerId,
+            WalletItemId = asset.Id,
             TransactionType = actionType,
             Status = status,
             Category = asset.Category.ToString(),
@@ -266,7 +369,8 @@ public class WalletController(
         dbContext.TransactionHistories.Add(history);
 
         string? invoiceUrl = null;
-        if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell")
+        Invoice? createdInvoice = null;
+        if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell" or "transfer" or "gift" or "pickup")
         {
             var sellerUserId = await dbContext.Users
                 .Where(x => x.Role == "Seller" && x.SellerId == asset.SellerId)
@@ -281,19 +385,70 @@ public class WalletController(
                 amount: grossAmount,
                 cancellationToken);
 
-            dbContext.Invoices.Add(new Invoice
+            createdInvoice = new Invoice
             {
                 InvestorUserId = request.UserId,
                 SellerUserId = sellerUserId,
                 InvoiceNumber = $"INV-WAL-{DateTime.UtcNow:yyyyMMddHHmmssfff}",
-                InvoiceCategory = actionType,
+                InvoiceCategory = NormalizeInvoiceCategory(actionType),
                 SourceChannel = "MobileWallet",
+                ExternalReference = $"WALLET-TX-{history.Id}",
                 SubTotal = grossAmount,
+                FeesAmount = 0,
+                DiscountAmount = 0,
                 TaxAmount = 0,
                 TotalAmount = grossAmount,
+                Currency = wallet.CurrencyCode,
+                PaymentMethod = actionType is "sell" ? "WalletCredit" : "N/A",
+                PaymentStatus = actionType is "sell" ? "Paid" : "Pending",
+                PaymentTransactionId = null,
+                WalletItemId = asset.Id,
+                ProductName = asset.Category.ToString(),
+                Quantity = request.Quantity,
+                UnitPrice = unitPrice,
+                Weight = requestedWeight,
+                Purity = asset.Purity,
+                FromPartyType = "Investor",
+                ToPartyType = actionType is "transfer" or "gift" ? "Investor" : "Seller",
+                FromPartyUserId = request.UserId,
+                ToPartyUserId = actionType is "transfer" or "gift" ? request.RecipientInvestorUserId : sellerUserId,
+                OwnershipEffectiveOnUtc = DateTime.UtcNow,
                 InvoiceQrCode = invoiceUrl ?? string.Empty,
+                PdfUrl = invoiceUrl,
                 IssuedOnUtc = DateTime.UtcNow,
-                Status = status,
+                PaidOnUtc = actionType is "sell" ? DateTime.UtcNow : null,
+                Status = actionType is "sell" ? "Completed" : "Issued",
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            dbContext.Invoices.Add(createdInvoice);
+
+            dbContext.AppNotifications.Add(new AppNotification
+            {
+                UserId = request.UserId,
+                Title = "Invoice created",
+                Body = $"Invoice {createdInvoice.InvoiceNumber} is now available.",
+                IsRead = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+
+            if (actionType is "sell")
+            {
+                dbContext.AppNotifications.Add(new AppNotification
+                {
+                    UserId = request.UserId,
+                    Title = "Invoice paid",
+                    Body = $"Invoice {createdInvoice.InvoiceNumber} has been paid.",
+                    IsRead = false,
+                    CreatedAtUtc = DateTime.UtcNow
+                });
+            }
+
+            dbContext.AppNotifications.Add(new AppNotification
+            {
+                UserId = request.UserId,
+                Title = "Invoice PDF available",
+                Body = $"Invoice {createdInvoice.InvoiceNumber} PDF is ready to view or download.",
+                IsRead = false,
                 CreatedAtUtc = DateTime.UtcNow
             });
         }
@@ -320,6 +475,15 @@ public class WalletController(
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (createdInvoice is not null)
+        {
+            history.InvoiceId = createdInvoice.Id;
+            history.UpdatedAtUtc = DateTime.UtcNow;
+            createdInvoice.RelatedTransactionId = history.Id;
+            createdInvoice.UpdatedAtUtc = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
         await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-action:{actionType}:{request.UserId}", cancellationToken);
         if (!shouldRequireSellerApproval && actionType is "transfer" or "gift" && request.RecipientInvestorUserId.HasValue)
         {
@@ -343,7 +507,8 @@ public class WalletController(
             Message = shouldRequireSellerApproval
                 ? $"{actionType} request submitted and pending seller approval."
                 : "Wallet action processed successfully.",
-            InvoiceUrl = invoiceUrl
+            InvoiceUrl = invoiceUrl,
+            InvoiceId = createdInvoice?.Id
         }));
     }
 
@@ -531,12 +696,20 @@ public class WalletController(
         public decimal TotalPortfolioValue { get; set; }
         public string Message { get; set; } = string.Empty;
         public string? InvoiceUrl { get; set; }
+        public int? InvoiceId { get; set; }
     }
 
     public sealed class SellExecutionConfigurationResponse
     {
         public string Mode { get; set; } = "locked_30_seconds";
         public int LockSeconds { get; set; } = 30;
+    }
+
+    public sealed class EnsureWalletItemCertificateResponse
+    {
+        public int InvoiceId { get; set; }
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public string? PdfUrl { get; set; }
     }
 
     private async Task<(Dictionary<int, string> StatusByAssetId, Dictionary<int, string?> DetailsByAssetId)> ResolveAssetStatusesAsync(
@@ -609,8 +782,40 @@ public class WalletController(
             ("pickup", "pending", _) => "Pending - Pickup",
             ("pickup", "approved", _) => "Pending - Delivered",
             ("pickup", "pending_delivered", _) => "Pending - Delivered",
+            ("transfer", "pending", _) => "Pending - Transfer",
+            ("gift", "pending", _) => "Pending - Gift",
+            ("transfer", "approved", false) => "Transfer",
+            ("gift", "approved", false) => "Gift",
+            ("transfer", "approved", true) => "Transfer",
+            ("gift", "approved", true) => "Gift",
             ("delivered_completed", _, _) => "Delivered",
             _ => "Bought"
+        };
+    }
+
+    private static string NormalizeInvoiceCategory(string actionType)
+    {
+        var normalized = actionType.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "sell" => "Sell",
+            "gift" => "Gift",
+            "transfer" => "Transfer",
+            "pickup" or "certificate" or "invoice" => "Pickup",
+            _ => "Buy"
+        };
+    }
+
+    private static ProductCategory ParseProductCategory(string? categoryOrAction)
+    {
+        var normalized = (categoryOrAction ?? string.Empty).Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "silver" => ProductCategory.Silver,
+            "diamond" => ProductCategory.Diamond,
+            "jewelry" => ProductCategory.Jewelry,
+            "coin" or "coins" => ProductCategory.Coins,
+            _ => ProductCategory.Gold
         };
     }
 
@@ -750,5 +955,29 @@ public class WalletController(
         pdf.Append($"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xrefStart}\n%%EOF");
 
         return Encoding.ASCII.GetBytes(pdf.ToString());
+    }
+
+    private string? ToAbsoluteFileUrl(string? fileUrl)
+    {
+        if (string.IsNullOrWhiteSpace(fileUrl)) return null;
+        if (Uri.TryCreate(fileUrl, UriKind.Absolute, out _)) return fileUrl;
+
+        var request = HttpContext.Request;
+        var normalized = fileUrl.StartsWith('/') ? fileUrl : $"/{fileUrl}";
+        return $"{request.Scheme}://{request.Host}{normalized}";
+    }
+
+    private bool InvoiceFileExists(string? fileUrl)
+    {
+        if (string.IsNullOrWhiteSpace(fileUrl)) return false;
+        var root = environment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(root))
+        {
+            root = Path.Combine(environment.ContentRootPath, "wwwroot");
+        }
+
+        var relative = fileUrl.Trim().TrimStart('/');
+        var physicalPath = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
+        return System.IO.File.Exists(physicalPath);
     }
 }

@@ -277,11 +277,14 @@ BEGIN TRY
 
     INSERT INTO [Invoices] (
         [InvestorUserId],[SellerUserId],[InvoiceNumber],[InvoiceCategory],[SourceChannel],
-        [SubTotal],[TaxAmount],[TotalAmount],[InvoiceQrCode],[IssuedOnUtc],[Status],[CreatedAtUtc],[UpdatedAtUtc]
+        [ExternalReference],[SubTotal],[FeesAmount],[DiscountAmount],[TaxAmount],[TotalAmount],[Currency],
+        [PaymentMethod],[PaymentStatus],[PaymentTransactionId],[WalletItemId],[ProductId],[ProductName],[Quantity],[UnitPrice],[Weight],[Purity],
+        [FromPartyType],[ToPartyType],[FromPartyUserId],[ToPartyUserId],[OwnershipEffectiveOnUtc],[RelatedTransactionId],[InvoiceQrCode],[PdfUrl],
+        [IssuedOnUtc],[PaidOnUtc],[Status],[CreatedAtUtc],[UpdatedAtUtc]
     )
     VALUES
-        (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0001', N'Trade', N'WebAdmin', 980, 0, 980, N'', DATEADD(DAY, -1, @Now), N'sent', @Now, NULL),
-        (@InvestorImseeh, @SellerUserImseeh, N'INV-SEED-0002', N'Trade', N'WebAdmin', 1430, 0, 1430, N'', DATEADD(DAY, -2, @Now), N'paid', @Now, NULL);
+        (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0001', N'Buy', N'WebAdmin', N'SEED-ORDER-0001', 980, 0, 0, 0, 980, N'USD', N'Card', N'Pending', NULL, NULL, NULL, N'Imseeh 5g Gold Bar', 2, 490, 10.000, 24.00, N'Seller', N'Investor', @SellerUserImseeh, @InvestorMain, DATEADD(DAY, -1, @Now), NULL, N'', NULL, DATEADD(DAY, -1, @Now), NULL, N'Issued', @Now, NULL),
+        (@InvestorImseeh, @SellerUserImseeh, N'INV-SEED-0002', N'Sell', N'WebAdmin', N'SEED-ORDER-0002', 1430, 5, 0, 0, 1435, N'USD', N'WalletCredit', N'Paid', N'SEED-TXN-0002', NULL, NULL, N'Imseeh Gold Coin', 1, 1430, 31.104, 24.00, N'Investor', N'Seller', @InvestorImseeh, @SellerUserImseeh, DATEADD(DAY, -2, @Now), NULL, N'', N'/Certificats/seed/invoice-seed-0002.pdf', DATEADD(DAY, -2, @Now), DATEADD(DAY, -2, @Now), N'Completed', @Now, NULL);
 
     -- 5) Core products (starter catalog) with REQUIRED weight fields.
     -- Covers all categories except SpotMr:
@@ -421,6 +424,80 @@ BEGIN TRY
             (@WalletInvestorMain, 1, 5.000, N'gram', 24.00, 1, 430.00, 435.00, N'Imseeh', DATEADD(DAY, -2, @Now), NULL),
             (@WalletInvestorMain, 1, 31.104, N'gram', 24.00, 2, 2675.00, 2685.00, N'Imseeh', DATEADD(DAY, -1, @Now), NULL),
             (@WalletInvestorImseeh, 2, 31.104, N'gram', 99.99, 3, 37.00, 38.00, N'Gold Palace', DATEADD(DAY, -1, @Now), NULL);
+    END
+
+    DECLARE @WalletAssetMainGoldBar int = (
+        SELECT TOP 1 [Id] FROM [WalletAssets]
+        WHERE [WalletId] = @WalletInvestorMain AND [SellerName] = N'Imseeh'
+        ORDER BY [CreatedAtUtc] ASC, [Id] ASC
+    );
+
+    DECLARE @WalletAssetMainGoldCoin int = (
+        SELECT TOP 1 [Id] FROM [WalletAssets]
+        WHERE [WalletId] = @WalletInvestorMain AND [SellerName] = N'Imseeh'
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    DECLARE @WalletAssetImseehSilver int = (
+        SELECT TOP 1 [Id] FROM [WalletAssets]
+        WHERE [WalletId] = @WalletInvestorImseeh
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    DECLARE @TxSellMain int = (
+        SELECT TOP 1 [Id] FROM [TransactionHistories]
+        WHERE [UserId] = @InvestorMain AND [TransactionType] = N'sell'
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    DECLARE @TxSellImseeh int = (
+        SELECT TOP 1 [Id] FROM [TransactionHistories]
+        WHERE [UserId] = @InvestorImseeh AND [TransactionType] = N'sell'
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    -- Backfill seeded invoices with wallet/product/transaction links so certificate + wallet actions can resolve records reliably.
+    UPDATE [Invoices]
+    SET
+        [WalletItemId] = COALESCE([WalletItemId], @WalletAssetMainGoldBar),
+        [ProductId] = COALESCE([ProductId], @ProductImseehGoldBar),
+        [PaymentTransactionId] = COALESCE(NULLIF([PaymentTransactionId], N''), N'SEED-TXN-INV-0001'),
+        [RelatedTransactionId] = COALESCE([RelatedTransactionId], @TxSellMain),
+        [InvoiceQrCode] = CASE WHEN [InvoiceQrCode] IS NULL OR LTRIM(RTRIM([InvoiceQrCode])) = N'' THEN N'/Certificats/seed/invoice-seed-0001.pdf' ELSE [InvoiceQrCode] END,
+        [PdfUrl] = COALESCE(NULLIF([PdfUrl], N''), N'/Certificats/seed/invoice-seed-0001.pdf'),
+        [UpdatedAtUtc] = @Now
+    WHERE [InvoiceNumber] = N'INV-SEED-0001';
+
+    UPDATE [Invoices]
+    SET
+        [WalletItemId] = COALESCE([WalletItemId], @WalletAssetImseehSilver),
+        [ProductId] = COALESCE([ProductId], @ProductGoldPalSilver),
+        [PaymentTransactionId] = COALESCE(NULLIF([PaymentTransactionId], N''), N'SEED-TXN-INV-0002'),
+        [RelatedTransactionId] = COALESCE([RelatedTransactionId], @TxSellImseeh),
+        [InvoiceQrCode] = CASE WHEN [InvoiceQrCode] IS NULL OR LTRIM(RTRIM([InvoiceQrCode])) = N'' THEN N'/Certificats/seed/invoice-seed-0002.pdf' ELSE [InvoiceQrCode] END,
+        [PdfUrl] = COALESCE(NULLIF([PdfUrl], N''), N'/Certificats/seed/invoice-seed-0002.pdf'),
+        [UpdatedAtUtc] = @Now
+    WHERE [InvoiceNumber] = N'INV-SEED-0002';
+
+    IF NOT EXISTS (SELECT 1 FROM [Invoices] WHERE [InvoiceNumber] = N'INV-SEED-0003')
+    BEGIN
+        INSERT INTO [Invoices] (
+            [InvestorUserId],[SellerUserId],[InvoiceNumber],[InvoiceCategory],[SourceChannel],[ExternalReference],
+            [SubTotal],[FeesAmount],[DiscountAmount],[TaxAmount],[TotalAmount],[Currency],[PaymentMethod],[PaymentStatus],
+            [PaymentTransactionId],[WalletItemId],[ProductId],[ProductName],[Quantity],[UnitPrice],[Weight],[Purity],
+            [FromPartyType],[ToPartyType],[FromPartyUserId],[ToPartyUserId],[OwnershipEffectiveOnUtc],[RelatedTransactionId],
+            [InvoiceQrCode],[PdfUrl],[IssuedOnUtc],[PaidOnUtc],[Status],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        VALUES
+            (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0003', N'Transfer', N'MobileWallet', N'SEED-WALLET-TRANSFER-0003',
+             730, 0, 0, 0, 730, N'USD', N'WalletCredit', N'Pending', NULL, @WalletAssetMainGoldBar, @ProductImseehGoldBar,
+             N'Imseeh 5g Gold Bar', 1, 730, 5.000, 24.00, N'Investor', N'Investor', @InvestorMain, @InvestorGoldPal,
+             DATEADD(HOUR, -6, @Now), NULL, N'', N'/Certificats/seed/invoice-seed-0003.pdf', DATEADD(HOUR, -6, @Now), NULL, N'Issued', @Now, NULL),
+
+            (@InvestorMain, @SellerUserImseeh, N'INV-SEED-0004', N'Pickup', N'MobileWallet', N'SEED-WALLET-PICKUP-0004',
+             2675, 0, 0, 0, 2675, N'USD', N'N/A', N'Pending', NULL, @WalletAssetMainGoldCoin, @ProductImseehGoldCoin,
+             N'Imseeh Gold Coin', 1, 2675, 31.104, 24.00, N'Investor', N'Seller', @InvestorMain, @SellerUserImseeh,
+             DATEADD(HOUR, -3, @Now), NULL, N'', N'/Certificats/seed/invoice-seed-0004.pdf', DATEADD(HOUR, -3, @Now), NULL, N'Issued', @Now, NULL);
     END
 
     IF COL_LENGTH('CartItems', 'Category') IS NOT NULL AND COL_LENGTH('CartItems', 'SellerId') IS NOT NULL

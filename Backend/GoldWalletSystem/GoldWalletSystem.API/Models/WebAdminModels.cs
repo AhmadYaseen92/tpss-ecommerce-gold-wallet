@@ -67,7 +67,9 @@ public class WebInvoiceDto
     public string InvestorName { get; set; } = string.Empty;
     public decimal TotalAmount { get; set; }
     public DateTime IssuedAt { get; set; }
-    public string Status { get; set; } = "draft";
+    public string Status { get; set; } = "Draft";
+    public string PaymentStatus { get; set; } = "Pending";
+    public string? PdfUrl { get; set; }
 }
 
 public class WebFeesDto

@@ -58,6 +58,7 @@ class WalletActionRemoteDataSource {
       totalPortfolioValue: (data['totalPortfolioValue'] as num?)?.toDouble() ?? 0,
       lockedPriceUntilUtc: DateTime.tryParse((data['lockedPriceUntilUtc'] ?? '').toString()),
       invoiceUrl: (data['invoiceUrl'] ?? '').toString().isEmpty ? null : (data['invoiceUrl'] ?? '').toString(),
+      invoiceId: (data['invoiceId'] as num?)?.toInt(),
     );
   }
 

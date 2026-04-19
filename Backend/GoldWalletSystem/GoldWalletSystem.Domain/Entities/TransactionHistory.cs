@@ -15,4 +15,9 @@ public class TransactionHistory : BaseEntity
     public string Notes { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public string Currency { get; set; } = "USD";
+    public int? WalletItemId { get; set; }
+    public int? InvoiceId { get; set; }
+
+    public WalletAsset? WalletItem { get; set; }
+    public Invoice? Invoice { get; set; }
 }

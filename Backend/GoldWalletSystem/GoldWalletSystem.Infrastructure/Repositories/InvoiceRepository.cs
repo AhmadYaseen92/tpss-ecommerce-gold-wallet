@@ -9,10 +9,13 @@ namespace GoldWalletSystem.Infrastructure.Repositories;
 
 public class InvoiceRepository(AppDbContext dbContext) : IInvoiceReadRepository
 {
+    private static readonly HashSet<string> AllowedInvoiceCategories = ["Buy", "Sell", "Transfer", "Gift", "Pickup"];
+    private static readonly HashSet<string> AllowedInvoiceStatuses = ["Draft", "Issued", "Completed", "Cancelled"];
+    private static readonly HashSet<string> AllowedPaymentStatuses = ["Pending", "Paid", "Failed", "Cancelled"];
+
     public async Task<PagedResult<InvoiceDto>> GetByUserIdAsync(int userId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Invoices.AsNoTracking()
-            .Include(x => x.Items)
             .Where(x => x.InvestorUserId == userId || x.SellerUserId == userId)
             .OrderByDescending(x => x.CreatedAtUtc);
 
@@ -24,37 +27,55 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceReadRepository
 
     public async Task<InvoiceDto> CreateAsync(CreateInvoiceRequestDto request, CancellationToken cancellationToken = default)
     {
-        var sellerUserId = request.SellerUserId ?? request.InvestorUserId; // investor can become seller when selling own items.
-        var subTotal = request.Items.Sum(x => x.Quantity * x.UnitPrice);
-        var total = subTotal + request.TaxAmount;
+        var sellerUserId = request.SellerUserId ?? request.InvestorUserId;
+        var quantity = Math.Max(1, request.Quantity);
+        var resolvedUnitPrice = request.UnitPrice > 0 ? request.UnitPrice : request.SubTotal;
+        var subTotal = request.SubTotal > 0 ? request.SubTotal : quantity * resolvedUnitPrice;
+        var total = subTotal + request.FeesAmount + request.TaxAmount - request.DiscountAmount;
+        var invoiceCategory = NormalizeAllowedValue(request.InvoiceCategory, AllowedInvoiceCategories, "Buy");
+        var paymentStatus = NormalizeAllowedValue(request.PaymentStatus, AllowedPaymentStatuses, "Pending");
+        var status = paymentStatus == "Paid" ? "Completed" : "Issued";
+        status = NormalizeAllowedValue(status, AllowedInvoiceStatuses, "Draft");
 
         var invoice = new Invoice
         {
             InvestorUserId = request.InvestorUserId,
             SellerUserId = sellerUserId,
-            InvoiceCategory = request.InvoiceCategory,
+            InvoiceCategory = invoiceCategory,
             SourceChannel = request.SourceChannel,
+            ExternalReference = request.ExternalReference,
             InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMddHHmmssfff}",
             InvoiceQrCode = $"QR-INV-{Guid.NewGuid():N}",
             SubTotal = subTotal,
+            FeesAmount = request.FeesAmount,
+            DiscountAmount = request.DiscountAmount,
             TaxAmount = request.TaxAmount,
             TotalAmount = total,
+            Currency = string.IsNullOrWhiteSpace(request.Currency) ? "USD" : request.Currency.Trim().ToUpperInvariant(),
+            PaymentMethod = string.IsNullOrWhiteSpace(request.PaymentMethod) ? "Unknown" : request.PaymentMethod.Trim(),
+            PaymentStatus = paymentStatus,
+            PaymentTransactionId = request.PaymentTransactionId,
+            WalletItemId = request.WalletItemId,
+            ProductId = request.ProductId,
+            ProductName = request.ProductName,
+            Quantity = quantity,
+            UnitPrice = resolvedUnitPrice,
+            Weight = request.Weight,
+            Purity = request.Purity,
+            FromPartyType = request.FromPartyType,
+            ToPartyType = request.ToPartyType,
+            FromPartyUserId = request.FromPartyUserId,
+            ToPartyUserId = request.ToPartyUserId,
+            OwnershipEffectiveOnUtc = request.OwnershipEffectiveOnUtc,
+            RelatedTransactionId = request.RelatedTransactionId,
+            PdfUrl = request.PdfUrl,
             IssuedOnUtc = DateTime.UtcNow,
-            Status = "Generated",
-            Items = request.Items.Select(x => new InvoiceItem
-            {
-                ProductId = x.ProductId,
-                ItemName = x.ItemName,
-                Quantity = x.Quantity,
-                UnitPrice = x.UnitPrice,
-                LineTotal = x.Quantity * x.UnitPrice,
-                ItemQrCode = $"QR-ITEM-{Guid.NewGuid():N}",
-            }).ToList()
+            PaidOnUtc = paymentStatus == "Paid" ? request.PaidOnUtc ?? DateTime.UtcNow : null,
+            Status = status,
         };
 
         dbContext.Invoices.Add(invoice);
         await dbContext.SaveChangesAsync(cancellationToken);
-
         return Map(invoice);
     }
 
@@ -66,11 +87,40 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceReadRepository
             x.InvoiceNumber,
             x.InvoiceCategory,
             x.SourceChannel,
+            x.ExternalReference,
             x.SubTotal,
+            x.FeesAmount,
+            x.DiscountAmount,
             x.TaxAmount,
             x.TotalAmount,
+            x.Currency,
+            x.PaymentMethod,
+            x.PaymentStatus,
+            x.PaymentTransactionId,
+            x.WalletItemId,
+            x.ProductId,
+            x.ProductName,
+            x.Quantity,
+            x.UnitPrice,
+            x.Weight,
+            x.Purity,
+            x.FromPartyType,
+            x.ToPartyType,
+            x.FromPartyUserId,
+            x.ToPartyUserId,
+            x.OwnershipEffectiveOnUtc,
+            x.RelatedTransactionId,
             x.Status,
             x.InvoiceQrCode,
+            x.PdfUrl,
             x.IssuedOnUtc,
-            x.Items.Select(i => new InvoiceItemDto(i.Id, i.ProductId, i.ItemName, i.Quantity, i.UnitPrice, i.LineTotal, i.ItemQrCode)).ToList());
+            x.PaidOnUtc);
+
+    private static string NormalizeAllowedValue(string? candidate, IReadOnlySet<string> allowedValues, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(candidate)) return fallback;
+        var value = candidate.Trim();
+        var exact = allowedValues.FirstOrDefault(x => string.Equals(x, value, StringComparison.OrdinalIgnoreCase));
+        return exact ?? fallback;
+    }
 }
