@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 
 class PortfolioCardWidget extends StatelessWidget {
@@ -80,30 +81,32 @@ class PortfolioCardWidget extends StatelessWidget {
               ],
             ),
           ],
-          const SizedBox(height: 8.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Gold Investment: ', style: TextStyle(color: palette.textSecondary)),
-              Text(
-                change,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: change.startsWith('+') ? AppColors.green : AppColors.red,
+          if (AppReleaseConfig.isIndividualSellerRelease) ...[
+            const SizedBox(height: 8.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Gold Investment: ', style: TextStyle(color: palette.textSecondary)),
+                Text(
+                  change,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: change.startsWith('+') ? AppColors.green : AppColors.red,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Silver Investment: ', style: TextStyle(color: palette.textSecondary)),
-              Text(
-                change,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.red),
-              ),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: 8.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Silver Investment: ', style: TextStyle(color: palette.textSecondary)),
+                Text(
+                  change,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.red),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

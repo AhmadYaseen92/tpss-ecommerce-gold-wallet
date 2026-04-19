@@ -19,7 +19,7 @@ class WalletCubit extends Cubit<WalletState> {
   final WatchWalletsUseCase _watchWalletsUseCase;
 
   final List<WalletEntity> _wallets = <WalletEntity>[];
-  int? _selectedCategoryId;
+  int? _selectedCategoryId = 1;
   StreamSubscription<List<WalletEntity>>? _walletSubscription;
 
   Future<void> loadWallets() async {
@@ -36,7 +36,7 @@ class WalletCubit extends Cubit<WalletState> {
   }
 
   void selectCategory(int? categoryId) {
-    _selectedCategoryId = null;
+    _selectedCategoryId = categoryId;
     _emitWallets();
   }
 
@@ -51,7 +51,11 @@ class WalletCubit extends Cubit<WalletState> {
   }
 
   void _emitWallets() {
-    final filtered = List<WalletEntity>.from(_wallets);
+    final filtered = _selectedCategoryId == null
+        ? List<WalletEntity>.from(_wallets)
+        : _wallets
+            .where((wallet) => _categoryIdFor(wallet) == _selectedCategoryId)
+            .toList();
     final totalPortfolioValue = _wallets.fold<double>(0, (sum, item) {
       final parsed = double.tryParse(item.totalMarketValue.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
       return sum + parsed;
@@ -64,6 +68,17 @@ class WalletCubit extends Cubit<WalletState> {
         totalPortfolioValue: totalPortfolioValue,
       ),
     );
+  }
+
+  int _categoryIdFor(WalletEntity wallet) {
+    return switch (wallet.category) {
+      WalletCategory.gold => 1,
+      WalletCategory.silver => 2,
+      WalletCategory.diamond => 3,
+      WalletCategory.jewelry => 4,
+      WalletCategory.coins => 5,
+      WalletCategory.spotMr => 6,
+    };
   }
 
   @override
