@@ -330,9 +330,20 @@ BEGIN TRY
             T.[DeliveryFee] = 5,
             T.[StorageFee] = 2,
             T.[ServiceCharge] = 1,
-            T.[OfferPercent] = 0,
-            T.[OfferNewPrice] = 0,
-            T.[OfferType] = 0,
+            T.[OfferPercent] = CASE
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005') THEN 12
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 7
+                ELSE 0
+            END,
+            T.[OfferNewPrice] = CASE
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005') THEN ROUND(S.[Price] * 0.88, 2)
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN ROUND(S.[Price] * 0.93, 2)
+                ELSE 0
+            END,
+            T.[OfferType] = CASE
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005', N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 1
+                ELSE 0
+            END,
             T.[Category] = S.[Category],
             T.[ImageUrl] = S.[ImageUrl],
             T.[IsActive] = 1,
@@ -385,9 +396,20 @@ BEGIN TRY
             5,
             2,
             1,
-            0,
-            0,
-            0,
+            CASE
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005') THEN 12
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 7
+                ELSE 0
+            END,
+            CASE
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005') THEN ROUND(S.[Price] * 0.88, 2)
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN ROUND(S.[Price] * 0.93, 2)
+                ELSE 0
+            END,
+            CASE
+                WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'BULLION-PRD-005', N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 1
+                ELSE 0
+            END,
             S.[Category],
             S.[ImageUrl],
             1,

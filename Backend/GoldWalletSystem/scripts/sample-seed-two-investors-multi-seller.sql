@@ -121,9 +121,20 @@ WHEN MATCHED THEN
         T.[DeliveryFee] = 5,
         T.[StorageFee] = 2,
         T.[ServiceCharge] = 1,
-        T.[OfferPercent] = 0,
-        T.[OfferNewPrice] = 0,
-        T.[OfferType] = 0,
+        T.[OfferPercent] = CASE
+            WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G') THEN 10
+            WHEN S.[Sku] IN (N'SA-JWL-RNG', N'SB-SPT-MR') THEN 6
+            ELSE 0
+        END,
+        T.[OfferNewPrice] = CASE
+            WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G') THEN ROUND(S.[Price] * 0.90, 2)
+            WHEN S.[Sku] IN (N'SA-JWL-RNG', N'SB-SPT-MR') THEN ROUND(S.[Price] * 0.94, 2)
+            ELSE 0
+        END,
+        T.[OfferType] = CASE
+            WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G', N'SA-JWL-RNG', N'SB-SPT-MR') THEN 1
+            ELSE 0
+        END,
         T.[Category] = S.[Category],
         T.[ImageUrl] = S.[ImageUrl],
         T.[IsActive] = 1,
@@ -137,7 +148,21 @@ WHEN NOT MATCHED THEN
     VALUES (
         S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[Price],S.[AvailableStock],S.[WeightValue],1,S.[MaterialType],S.[FormType],
         1,S.[PurityKarat],S.[PurityFactor],S.[Price],S.[Price],5,2,1,
-        0,0,0,S.[Category],S.[ImageUrl],1,@Now,NULL
+        CASE
+            WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G') THEN 10
+            WHEN S.[Sku] IN (N'SA-JWL-RNG', N'SB-SPT-MR') THEN 6
+            ELSE 0
+        END,
+        CASE
+            WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G') THEN ROUND(S.[Price] * 0.90, 2)
+            WHEN S.[Sku] IN (N'SA-JWL-RNG', N'SB-SPT-MR') THEN ROUND(S.[Price] * 0.94, 2)
+            ELSE 0
+        END,
+        CASE
+            WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G', N'SA-JWL-RNG', N'SB-SPT-MR') THEN 1
+            ELSE 0
+        END,
+        S.[Category],S.[ImageUrl],1,@Now,NULL
     );
 
 SELECT TOP 2 [Id], [FullName], [Email], [Role], [SellerId], [IsActive]
