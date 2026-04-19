@@ -248,13 +248,26 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
   Future<void> _downloadInvoice(BuildContext context) async {
     setState(() => _downloading = true);
     try {
-      final existingUrl = widget.asset.certificateUrl;
-      final ensuredUrl = await _ensureCertificateUrlFromBackend(fallbackUrl: existingUrl);
-      if (ensuredUrl == null || ensuredUrl.trim().isEmpty) {
-        throw Exception('No linked invoice/certificate record exists for this wallet item.');
-      }
+      final fallbackUrl = _resolveDownloadUrl(widget.asset.certificateUrl);
 
-      final bytes = await _downloadInvoiceBytes(ensuredUrl);
+      Uint8List bytes;
+      if (fallbackUrl != null) {
+        try {
+          bytes = await _downloadInvoiceBytes(fallbackUrl);
+        } on DioException {
+          final ensuredUrl = await _ensureCertificateUrlFromBackend(fallbackUrl: fallbackUrl);
+          if (ensuredUrl == null || ensuredUrl.trim().isEmpty) {
+            throw Exception('No linked invoice/certificate record exists for this wallet item.');
+          }
+          bytes = await _downloadInvoiceBytes(ensuredUrl);
+        }
+      } else {
+        final ensuredUrl = await _ensureCertificateUrlFromBackend();
+        if (ensuredUrl == null || ensuredUrl.trim().isEmpty) {
+          throw Exception('No linked invoice/certificate record exists for this wallet item.');
+        }
+        bytes = await _downloadInvoiceBytes(ensuredUrl);
+      }
 
       final fileName = 'certificate-invoice-${widget.asset.id}-${DateTime.now().millisecondsSinceEpoch}.pdf';
       if (kIsWeb) {
@@ -322,25 +335,12 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
       throw Exception('Unable to resolve certificate PDF URL.');
     }
 
-    try {
-      final response = await Dio().get<List<int>>(resolvedUrl, options: Options(responseType: ResponseType.bytes));
-      final data = response.data;
-      if (data == null || data.isEmpty) {
-        throw Exception('Certificate invoice PDF is empty.');
-      }
-      return Uint8List.fromList(data);
-    } on DioException {
-      final refreshedUrl = await _ensureCertificateUrlFromBackend();
-      if (refreshedUrl == null || refreshedUrl.isEmpty) {
-        throw Exception('Unable to generate certificate PDF from invoice data.');
-      }
-      final retried = await Dio().get<List<int>>(refreshedUrl, options: Options(responseType: ResponseType.bytes));
-      final data = retried.data;
-      if (data == null || data.isEmpty) {
-        throw Exception('Certificate invoice PDF is empty.');
-      }
-      return Uint8List.fromList(data);
+    final response = await Dio().get<List<int>>(resolvedUrl, options: Options(responseType: ResponseType.bytes));
+    final data = response.data;
+    if (data == null || data.isEmpty) {
+      throw Exception('Certificate invoice PDF is empty.');
     }
+    return Uint8List.fromList(data);
   }
 
   String _resolveActionType() {
