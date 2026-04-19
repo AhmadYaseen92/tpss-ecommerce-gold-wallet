@@ -31,6 +31,11 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
     final issueDate = DateTime.now();
     final actionType = _resolveActionType();
     final (leftLabel, rightLabel) = _partyLabels(actionType);
+    final subTotal = _safeAmount(widget.asset.marketValue);
+    const fees = 0.0;
+    const vat = 0.0;
+    const discount = 0.0;
+    final grandTotal = subTotal + fees + vat - discount;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Certificate Invoice'), centerTitle: true),
@@ -39,10 +44,17 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
         child: Column(
           children: [
             ActionSectionCard(
-              title: 'Invoice Preview',
+              title: '',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Center(
+                    child: Text(
+                      'CERTIFICATE INVOICE',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -59,13 +71,15 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                               ),
                       ),
                       const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text('TPSS\nAmman, Jordan', style: TextStyle(fontWeight: FontWeight.w700)),
+                      Expanded(
+                        child: Text(
+                          widget.asset.name.trim().isEmpty ? 'Unnamed Product' : widget.asset.name,
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                        ),
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text('CERTIFICATE INVOICE', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
                           Text('Type: $actionType', style: const TextStyle(fontSize: 12)),
                           Text('Ref: $_reference', style: const TextStyle(fontSize: 12)),
                         ],
@@ -128,46 +142,42 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _metaRow('Wallet Item Id', '${widget.asset.id}'),
-                              _metaRow('Product Name', widget.asset.name),
-                              _metaRow('Category / Material', widget.asset.category.name.toUpperCase()),
-                              _metaRow('Weight', '${widget.asset.weightInGrams.toStringAsFixed(3)} g'),
-                              _metaRow('Purity / Karat', widget.asset.purity),
-                              _metaRow('Quantity', '${widget.asset.quantity}'),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 170,
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _metaRow('SubTotal', widget.asset.marketValue),
-                              _metaRow('Fees', '\$0.00'),
-                              _metaRow('VAT / Tax', '\$0.00'),
-                              _metaRow('Discount', '\$0.00'),
-                              const Divider(height: 12),
-                              _metaRow('Grand Total', widget.asset.marketValue, bold: true),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Item Details', style: TextStyle(fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 8),
+                        _metaRow('Wallet Item Id', '${widget.asset.id}'),
+                        _metaRow('Product Name', widget.asset.name),
+                        _metaRow('Category / Material', widget.asset.category.name.toUpperCase()),
+                        _metaRow('Weight', '${widget.asset.weightInGrams.toStringAsFixed(3)} g'),
+                        _metaRow('Purity / Karat', widget.asset.purity),
+                        _metaRow('Quantity', '${widget.asset.quantity}'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Amount Summary', style: TextStyle(fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 8),
+                        _metaRow('Sub Total', _currency(subTotal)),
+                        _metaRow('Fees', _currency(fees)),
+                        _metaRow('VAT / Tax', _currency(vat)),
+                        _metaRow('Discount', _currency(discount)),
+                        const Divider(height: 12),
+                        _metaRow('Grand Total', _currency(grandTotal), bold: true),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Container(
@@ -238,23 +248,13 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
   Future<void> _downloadInvoice(BuildContext context) async {
     setState(() => _downloading = true);
     try {
-      var certificateUrl = widget.asset.certificateUrl;
-      if (certificateUrl == null || certificateUrl.trim().isEmpty) {
-        certificateUrl = await _ensureCertificateUrlFromBackend();
-      }
-
-      if (certificateUrl == null || certificateUrl.trim().isEmpty) {
+      final existingUrl = widget.asset.certificateUrl;
+      final ensuredUrl = await _ensureCertificateUrlFromBackend(fallbackUrl: existingUrl);
+      if (ensuredUrl == null || ensuredUrl.trim().isEmpty) {
         throw Exception('No linked invoice/certificate record exists for this wallet item.');
       }
 
-      Uint8List bytes;
-      try {
-        bytes = await _downloadInvoiceBytes(certificateUrl);
-      } catch (_) {
-        final refreshed = await _ensureCertificateUrlFromBackend();
-        if (refreshed == null || refreshed.trim().isEmpty) rethrow;
-        bytes = await _downloadInvoiceBytes(refreshed);
-      }
+      final bytes = await _downloadInvoiceBytes(ensuredUrl);
 
       final fileName = 'certificate-invoice-${widget.asset.id}-${DateTime.now().millisecondsSinceEpoch}.pdf';
       if (kIsWeb) {
@@ -283,7 +283,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
       AppModalAlert.show(
         context,
         title: 'Download Failed',
-        message: '$e',
+        message: e is Exception ? e.toString().replaceFirst('Exception: ', '') : '$e',
         variant: AppModalAlertVariant.warning,
       );
     } finally {
@@ -291,22 +291,56 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
     }
   }
 
-  Future<String?> _ensureCertificateUrlFromBackend() async {
-    final response = await InjectionContainer.dio().get('/wallet/wallet-items/${widget.asset.id}/certificate');
-    final payload = response.data as Map<String, dynamic>?;
-    final data = payload?['data'];
-    if (data is! Map<String, dynamic>) return null;
-    final url = (data['pdfUrl'] ?? '').toString().trim();
-    return url.isEmpty ? null : url;
+  Future<String?> _ensureCertificateUrlFromBackend({String? fallbackUrl}) async {
+    try {
+      final response = await InjectionContainer.dio().get('/wallet/wallet-items/${widget.asset.id}/certificate');
+      final payload = response.data as Map<String, dynamic>?;
+      final data = payload?['data'];
+      if (data is! Map<String, dynamic>) return _resolveDownloadUrl(fallbackUrl);
+      final url = (data['pdfUrl'] ?? '').toString().trim();
+      if (url.isNotEmpty) return _resolveDownloadUrl(url);
+      return _resolveDownloadUrl(fallbackUrl);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        if ((fallbackUrl ?? '').trim().isEmpty) {
+          throw Exception('No linked invoice/certificate record exists for this wallet item.');
+        }
+        return _resolveDownloadUrl(fallbackUrl);
+      }
+      throw Exception('Unable to generate certificate PDF from invoice data.');
+    } catch (_) {
+      if ((fallbackUrl ?? '').trim().isNotEmpty) {
+        return _resolveDownloadUrl(fallbackUrl);
+      }
+      throw Exception('Unable to generate certificate PDF from invoice data.');
+    }
   }
 
   Future<Uint8List> _downloadInvoiceBytes(String url) async {
-    final response = await Dio().get<List<int>>(url, options: Options(responseType: ResponseType.bytes));
-    final data = response.data;
-    if (data == null || data.isEmpty) {
-      throw Exception('Certificate invoice PDF is empty.');
+    final resolvedUrl = _resolveDownloadUrl(url);
+    if (resolvedUrl == null || resolvedUrl.isEmpty) {
+      throw Exception('Unable to resolve certificate PDF URL.');
     }
-    return Uint8List.fromList(data);
+
+    try {
+      final response = await Dio().get<List<int>>(resolvedUrl, options: Options(responseType: ResponseType.bytes));
+      final data = response.data;
+      if (data == null || data.isEmpty) {
+        throw Exception('Certificate invoice PDF is empty.');
+      }
+      return Uint8List.fromList(data);
+    } on DioException {
+      final refreshedUrl = await _ensureCertificateUrlFromBackend();
+      if (refreshedUrl == null || refreshedUrl.isEmpty) {
+        throw Exception('Unable to generate certificate PDF from invoice data.');
+      }
+      final retried = await Dio().get<List<int>>(refreshedUrl, options: Options(responseType: ResponseType.bytes));
+      final data = retried.data;
+      if (data == null || data.isEmpty) {
+        throw Exception('Certificate invoice PDF is empty.');
+      }
+      return Uint8List.fromList(data);
+    }
   }
 
   String _resolveActionType() {
@@ -330,4 +364,25 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
 
   String _fmt(DateTime value) =>
       '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+
+  double _safeAmount(String? rawValue) {
+    final normalized = (rawValue ?? '').replaceAll(RegExp(r'[^0-9.\-]'), '');
+    return double.tryParse(normalized) ?? 0;
+  }
+
+  String _currency(double? value) {
+    final amount = value ?? 0;
+    return '\$${amount.toStringAsFixed(2)}';
+  }
+
+  String? _resolveDownloadUrl(String? source) {
+    final trimmed = (source ?? '').trim();
+    if (trimmed.isEmpty) return null;
+    final parsed = Uri.tryParse(trimmed);
+    if (parsed != null && parsed.hasScheme) return trimmed;
+
+    final baseUrl = InjectionContainer.dio().options.baseUrl;
+    if (baseUrl.trim().isEmpty) return trimmed;
+    return Uri.parse(baseUrl).resolve(trimmed).toString();
+  }
 }
