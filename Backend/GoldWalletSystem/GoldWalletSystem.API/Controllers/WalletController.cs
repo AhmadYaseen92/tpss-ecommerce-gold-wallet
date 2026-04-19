@@ -782,6 +782,12 @@ public class WalletController(
             ("pickup", "pending", _) => "Pending - Pickup",
             ("pickup", "approved", _) => "Pending - Delivered",
             ("pickup", "pending_delivered", _) => "Pending - Delivered",
+            ("transfer", "pending", _) => "Pending - Transfer",
+            ("gift", "pending", _) => "Pending - Gift",
+            ("transfer", "approved", false) => "Transfer",
+            ("gift", "approved", false) => "Gift",
+            ("transfer", "approved", true) => "Transfer",
+            ("gift", "approved", true) => "Gift",
             ("delivered_completed", _, _) => "Delivered",
             _ => "Bought"
         };
