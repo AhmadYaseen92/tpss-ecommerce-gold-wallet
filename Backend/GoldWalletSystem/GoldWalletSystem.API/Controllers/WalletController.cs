@@ -559,13 +559,17 @@ public class WalletController(
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
 
-        var history = await dbContext.TransactionHistories
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .FirstOrDefaultAsync(x =>
+        var pendingCandidates = await dbContext.TransactionHistories
+            .Where(x =>
                 x.UserId == request.UserId &&
-                string.Equals(x.Status, "pending", StringComparison.OrdinalIgnoreCase) &&
-                (x.WalletItemId == request.WalletAssetId || TryExtractWalletAssetId(x.Notes) == request.WalletAssetId),
-                cancellationToken);
+                x.Status.ToLower() == "pending" &&
+                (x.WalletItemId == request.WalletAssetId || EF.Functions.Like(x.Notes, "%wallet_asset_id=%")))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        var history = pendingCandidates.FirstOrDefault(x =>
+            x.WalletItemId == request.WalletAssetId ||
+            TryExtractWalletAssetId(x.Notes) == request.WalletAssetId);
 
         if (history is null)
             return NotFound(ApiResponse<object>.Fail("No pending request found for this wallet item.", 404));

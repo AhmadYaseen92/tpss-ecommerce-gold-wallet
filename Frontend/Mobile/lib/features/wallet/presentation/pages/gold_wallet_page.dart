@@ -69,6 +69,14 @@ class GoldWalletPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 12),
+                      PortfolioCardWidget(
+                        title: 'Total Portfolio Value',
+                        value: '\$${totalPortfolioValue.toStringAsFixed(2)}',
+                        change: '${wallet.change} live',
+                        availableCash: '\$2,000.00',
+                      ),
+                      const SizedBox(height: 12),
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
@@ -84,13 +92,6 @@ class GoldWalletPage extends StatelessWidget {
                             );
                           }).toList(),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      PortfolioCardWidget(
-                        title: 'Total Portfolio Value',
-                        value: '\$${totalPortfolioValue.toStringAsFixed(2)}',
-                        change: '${wallet.change} live',
-                        availableCash: '\$2,000.00',
                       ),
                       const SizedBox(height: 20.0),
 
