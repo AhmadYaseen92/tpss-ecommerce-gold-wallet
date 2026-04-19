@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
@@ -134,6 +135,7 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
           unitPrice: unitPricePerGram,
           weight: requestedWeight,
           amount: requestedAmount,
+          recipientInvestorUserId: widget.summary.recipientInvestorUserId,
           notes: widget.summary.note,
         ),
       );
@@ -160,10 +162,17 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
       );
     } catch (e) {
       if (!mounted) return;
+      String errorMessage = '';
+      if (e is DioException) {
+        final responseData = e.response?.data;
+        if (responseData is Map<String, dynamic>) {
+          errorMessage = ((responseData['message'] ?? responseData['errors'] ?? '').toString()).trim();
+        }
+      }
       await AppModalAlert.show(
         context,
         title: actionType == WalletActionType.sell ? 'Sell Failed' : 'Action Failed',
-        message: 'Failed: $e',
+        message: errorMessage.isNotEmpty ? errorMessage : 'Failed: $e',
         variant: AppModalAlertVariant.failed,
       );
     } finally {
