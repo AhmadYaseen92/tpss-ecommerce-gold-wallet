@@ -210,18 +210,21 @@ public class WebAdminController(
         if (!CanAccessSellerData(item.SellerId)) return Forbid();
 
         var nextStatus = request.Status.Trim().ToLowerInvariant();
-        if (nextStatus != "approved" && nextStatus != "rejected" && nextStatus != "delivered")
+        if (nextStatus == "canceled")
+            nextStatus = "cancelled";
+
+        if (nextStatus != "approved" && nextStatus != "rejected" && nextStatus != "delivered" && nextStatus != "cancelled")
             return BadRequest(ApiResponse<object>.Fail("Invalid status", 400));
 
         var action = item.TransactionType.Trim().ToLowerInvariant();
         var canTransitionFromPending = string.Equals(item.Status, "pending", StringComparison.OrdinalIgnoreCase)
-                                       && nextStatus is "approved" or "rejected";
-        var canTransitionPickupToDelivered =
+                                       && nextStatus is "approved" or "rejected" or "cancelled";
+        var canTransitionPickupToFinal =
             action == "pickup"
             && string.Equals(item.Status, "pending_delivered", StringComparison.OrdinalIgnoreCase)
-            && nextStatus == "delivered";
+            && nextStatus is "delivered" or "cancelled";
 
-        if (!canTransitionFromPending && !canTransitionPickupToDelivered)
+        if (!canTransitionFromPending && !canTransitionPickupToFinal)
             return BadRequest(ApiResponse<object>.Fail("Invalid status transition for this request.", 400));
 
         var previousStatus = item.Status;
@@ -241,7 +244,7 @@ public class WebAdminController(
             }
         }
 
-        if (canTransitionPickupToDelivered)
+        if (canTransitionPickupToFinal && nextStatus == "delivered")
         {
             dbContext.TransactionHistories.Add(new Domain.Entities.TransactionHistory
             {
@@ -734,6 +737,11 @@ public class WebAdminController(
         if (type == "pickup" && normalizedStatus == "approved")
         {
             return "pending_delivered";
+        }
+
+        if (normalizedStatus is "cancelled" or "canceled")
+        {
+            return "cancelled";
         }
 
         return normalizedStatus;

@@ -106,38 +106,52 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ConvertPage());
 
       case AppRoutes.walletItemsRoute:
-        final transactions = settings.arguments as List<WalletTransactionEntity>;
+        final args = settings.arguments;
+        final transactions = args is Map<String, dynamic>
+            ? ((args['transactions'] as List<dynamic>? ?? const <dynamic>[])
+                .whereType<WalletTransactionEntity>()
+                .toList())
+            : ((args as List<dynamic>? ?? const <dynamic>[])
+                .whereType<WalletTransactionEntity>()
+                .toList());
+        final category = args is Map<String, dynamic> ? args['category'] as WalletCategory? : null;
         return MaterialPageRoute(
-          builder: (_) => WalletItemsPage(transactions: transactions),
+          settings: settings,
+          builder: (_) => WalletItemsPage(transactions: transactions, initialCategory: category),
         );
 
       case AppRoutes.walletAssetSellRoute:
         final transaction = settings.arguments as WalletActionSummary;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => SellAssetPage(asset: transaction),
         );
 
       case AppRoutes.walletAssetTransferRoute:
         final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => TransferAssetPage(asset: transaction),
         );
 
       case AppRoutes.walletAssetConvertRoute:
         final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => ConvertAssetPage(asset: transaction),
         );
 
       case AppRoutes.walletTaxInvoiceRoute:
         final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => GenerateTaxInvoicePage(asset: transaction),
         );
 
       case AppRoutes.walletPickupRoute:
         final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => PickupRequestPage(asset: transaction),
         );
 

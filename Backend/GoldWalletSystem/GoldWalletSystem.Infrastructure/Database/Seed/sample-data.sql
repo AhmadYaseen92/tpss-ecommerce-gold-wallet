@@ -349,12 +349,12 @@ BEGIN TRY
             [UnitPrice],[Weight],[Unit],[Purity],[Amount],[Currency],[Notes],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES
-            (@InvestorMain, @SellerImseeh, N'sell', N'pending', N'Gold', 1, 740, 5.000, N'gram', 24, 740, N'USD', N'execution_mode=locked_30_seconds|wallet_asset_id=1', DATEADD(HOUR, -6, @Now), NULL),
-            (@InvestorMain, @SellerImseeh, N'pickup', N'pending_delivered', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, N'USD', N'pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
-            (@InvestorImseeh, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', N'execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=9|recipient_investor_name=GoldPal Investor 1', DATEADD(DAY, -2, @Now), NULL),
-            (@InvestorGoldPal, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', N'direction=received|from_investor_user_id=8|from_investor_name=Imseeh Investor 1|wallet_asset_id=2', DATEADD(DAY, -2, DATEADD(MINUTE, 1, @Now)), NULL),
-            (@InvestorImseeh, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', N'execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=9|recipient_investor_name=GoldPal Investor 1', DATEADD(DAY, -1, @Now), NULL),
-            (@InvestorGoldPal, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', N'direction=received|from_investor_user_id=8|from_investor_name=Imseeh Investor 1|wallet_asset_id=2', DATEADD(DAY, -1, DATEADD(MINUTE, 1, @Now)), NULL);
+            (@InvestorMain, @SellerImseeh, N'sell', N'pending', N'Gold', 1, 740, 5.000, N'gram', 24, 740, N'USD', N'SKU=IMSEEH-PRD-001|execution_mode=locked_30_seconds|wallet_asset_id=1', DATEADD(HOUR, -6, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'pickup', N'pending_delivered', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, N'USD', N'SKU=IMSEEH-PRD-005|pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=9|recipient_investor_name=GoldPal Investor 1', DATEADD(DAY, -2, @Now), NULL),
+            (@InvestorGoldPal, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=8|from_investor_name=Imseeh Investor 1|wallet_asset_id=2', DATEADD(DAY, -2, DATEADD(MINUTE, 1, @Now)), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=9|recipient_investor_name=GoldPal Investor 1', DATEADD(DAY, -1, @Now), NULL),
+            (@InvestorGoldPal, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=8|from_investor_name=Imseeh Investor 1|wallet_asset_id=2', DATEADD(DAY, -1, DATEADD(MINUTE, 1, @Now)), NULL);
     END
     ELSE
     BEGIN
@@ -684,6 +684,24 @@ BEGIN TRY
             N'{"isIndividualSellerRelease":false,"individualSellerName":"Imseeh","allSellersLabel":"All Sellers","showWeightInGrams":true}',
             CAST(1 AS bit),
             N'Mobile release configuration synced with backend defaults'
+        ),
+        (
+            N'SellerMarketPrices_1',
+            N'{"gold":430.00,"silver":36.00,"diamond":920.00}',
+            CAST(1 AS bit),
+            N'Seller #1 market prices used by wallet/product pricing'
+        ),
+        (
+            N'SellerMarketPrices_2',
+            N'{"gold":432.00,"silver":37.00,"diamond":880.00}',
+            CAST(1 AS bit),
+            N'Seller #2 market prices used by wallet/product pricing'
+        ),
+        (
+            N'SellerMarketPrices_3',
+            N'{"gold":433.00,"silver":38.00,"diamond":960.00}',
+            CAST(1 AS bit),
+            N'Seller #3 market prices used by wallet/product pricing'
         )
     ) AS S([ConfigKey],[JsonValue],[IsEnabled],[Description])
     ON T.[ConfigKey] = S.[ConfigKey]

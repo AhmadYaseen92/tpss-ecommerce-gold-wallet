@@ -49,7 +49,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          'Generate Tax Invoice',
+          'Tax Invoice',
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: context.appPalette.primary,
@@ -68,7 +68,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                 children: [
                   const Center(
                     child: Text(
-                      'CERTIFICATE INVOICE',
+                      'TAX INVOICE',
                       style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22),
                     ),
                   ),
@@ -118,7 +118,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
 
                   const Divider(height: 20),
 
-                  _metaRow('Certificate / Invoice #', _reference,
+                  _metaRow('Tax Invoice #', _reference,
                       selectable: true),
                   _metaRow('Action Type', actionType),
                   _metaRow('Issue Date', _fmt(issueDate)),
@@ -155,6 +155,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                   _buildBox(
                     title: 'Item Details',
                     children: [
+                      _metaRow('Product SKU', widget.asset.productSku?.trim().isNotEmpty == true ? widget.asset.productSku! : 'N/A'),
                       _metaRow('Wallet Item Id', '${widget.asset.id}'),
                       _metaRow('Product Name', widget.asset.name),
                       _metaRow('Category / Material',

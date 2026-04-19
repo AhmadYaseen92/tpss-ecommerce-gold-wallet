@@ -17,11 +17,14 @@ import 'package:tpss_ecommerce_gold_wallet/features/transaction/presentation/cub
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/presentation/widgets/transaction_filter_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/presentation/widgets/transaction_item_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 
 class TransactionPage extends StatelessWidget {
   const TransactionPage({super.key});
 
   static final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
+  static final IWalletActionRepository _walletActionRepository = InjectionContainer.walletActionRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -581,6 +584,22 @@ class TransactionPage extends StatelessWidget {
                           ),
 
                           const SizedBox(height: 24),
+                          if (transaction.status.toLowerCase() == 'pending') ...[
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  await _cancelTransactionRequest(context, transaction);
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                  }
+                                },
+                                icon: const Icon(Icons.cancel_outlined, color: Colors.red),
+                                label: const Text('Cancel Request', style: TextStyle(color: Colors.red)),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                         ],
                       ),
                     ),
@@ -592,6 +611,19 @@ class TransactionPage extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _cancelTransactionRequest(BuildContext context, TransactionModel transaction) async {
+    final walletAssetId = transaction.walletItemId ?? transaction.walletAssetIdFromNotes;
+    if (walletAssetId == null) return;
+
+    await _walletActionRepository.cancelWalletRequest(walletAssetId: walletAssetId);
+
+    if (context.mounted) {
+      context.read<TransactionCubit>().loadTransactions(
+            seller: context.read<TransactionCubit>().activeSeller,
+          );
+    }
   }
 
   /// SECTION TITLE

@@ -25,9 +25,9 @@ function formatInvestor(id: string | null): string {
 
 export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
   const selectedTransactionId = ref<string | null>(null);
-  const transactionStatusDraft = ref<"pending" | "approved" | "rejected">("pending");
+  const transactionStatusDraft = ref<"pending" | "approved" | "rejected" | "pending_delivered" | "delivered" | "cancelled">("pending");
   const searchTerm = ref("");
-  const statusFilter = ref<"all" | "pending" | "approved" | "rejected" | "pending_delivered" | "delivered">("all");
+  const statusFilter = ref<"all" | "pending" | "approved" | "rejected" | "pending_delivered" | "delivered" | "cancelled">("all");
   const typeFilter = ref<"all" | "withdrawal" | "pickup" | "sell" | "transfer" | "buy" | "gift">("all");
 
   const transactionsView = computed(() =>
@@ -54,9 +54,10 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
           if (direction === "received") {
             return request.investorName;
           }
-          return readNoteValue(request.notes, "recipient_investor_name")
+            return readNoteValue(request.notes, "recipient_investor_name")
             || formatInvestor(readNoteValue(request.notes, "recipient_investor_user_id"));
-        })()
+        })(),
+        pickupSchedule: readNoteValue(request.notes, "pickup_schedule") || undefined
       }))
       .filter((request) => {
         if (statusFilter.value !== "all" && request.status !== statusFilter.value) return false;
@@ -82,7 +83,7 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
 
   const viewTransaction = (id: string) => {
     selectedTransactionId.value = id;
-    transactionStatusDraft.value = (transactionsView.value.find((x) => x.id === id)?.status ?? "pending") as "pending" | "approved" | "rejected";
+    transactionStatusDraft.value = (transactionsView.value.find((x) => x.id === id)?.status ?? "pending") as "pending" | "approved" | "rejected" | "pending_delivered" | "delivered" | "cancelled";
   };
 
   const saveTransactionStatus = async () => {
@@ -94,6 +95,10 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
     }
     const confirmed = window.confirm(`Are you sure you want to change request status to "${transactionStatusDraft.value}"?`);
     if (!confirmed) return;
+    if (transactionStatusDraft.value === "pending_delivered") {
+      window.alert("Please choose a final status.");
+      return;
+    }
     await marketplace.updateRequestStatus(selectedTransactionId.value, transactionStatusDraft.value);
   };
 

@@ -22,6 +22,7 @@ public class WalletService(IWalletRepository walletRepository) : IWalletService
                     x.Id,
                     x.AssetType.ToString(),
                     string.Empty,
+                    null,
                     x.Category.ToString(),
                     x.SellerId,
                     x.SellerName,

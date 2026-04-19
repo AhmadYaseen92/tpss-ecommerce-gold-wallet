@@ -51,6 +51,7 @@ class WalletAssetRemoteModel {
     required this.id,
     required this.assetType,
     required this.productName,
+    required this.productSku,
     required this.category,
     required this.sellerId,
     required this.weight,
@@ -71,6 +72,7 @@ class WalletAssetRemoteModel {
   final int id;
   final String assetType;
   final String productName;
+  final String? productSku;
   final String category;
   final int? sellerId;
   final double weight;
@@ -92,6 +94,9 @@ class WalletAssetRemoteModel {
       id: (json['id'] as num?)?.toInt() ?? 0,
       assetType: (json['assetType'] ?? '').toString(),
       productName: (json['productName'] ?? '').toString(),
+      productSku: (json['productSku'] ?? '').toString().trim().isEmpty
+          ? null
+          : (json['productSku'] ?? '').toString(),
       category: (json['category'] ?? '').toString(),
       sellerId: (json['sellerId'] as num?)?.toInt(),
       weight: (json['weight'] as num?)?.toDouble() ?? 0,

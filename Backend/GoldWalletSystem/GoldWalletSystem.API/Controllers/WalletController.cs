@@ -69,6 +69,8 @@ public class WalletController(
                 .ToDictionaryAsync(x => x.Id, x => x.FullName, cancellationToken);
         }
 
+        var walletAssetProductMeta = await ResolveWalletAssetProductMetaAsync(request.UserId, assetIds, cancellationToken);
+
         var (statusByAssetId, detailsByAssetId) = await ResolveAssetStatusesAsync(request.UserId, data.Assets, cancellationToken);
         var assets = data.Assets
             .Select(asset =>
@@ -103,7 +105,10 @@ public class WalletController(
                     StatusDetails = resolvedDetailsWithFallback,
                     InvoiceId = invoiceMeta.InvoiceId == 0 ? null : invoiceMeta.InvoiceId,
                     CertificateUrl = ToAbsoluteFileUrl(invoiceMeta.PdfUrl),
-                    ProductName = string.IsNullOrWhiteSpace(invoiceMeta.ProductName) ? asset.ProductName : invoiceMeta.ProductName,
+                    ProductName = string.IsNullOrWhiteSpace(invoiceMeta.ProductName)
+                        ? walletAssetProductMeta.TryGetValue(asset.Id, out var productMeta) ? productMeta.ProductName : asset.ProductName
+                        : invoiceMeta.ProductName,
+                    ProductSku = walletAssetProductMeta.TryGetValue(asset.Id, out var meta) ? meta.ProductSku : asset.ProductSku,
                     SourceInvestorName = sourceInvestorName
                 };
             })
@@ -549,6 +554,42 @@ public class WalletController(
         }));
     }
 
+    [HttpPost("actions/cancel-request")]
+    public async Task<IActionResult> CancelPendingRequest([FromBody] CancelWalletRequest request, CancellationToken cancellationToken = default)
+    {
+        if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+
+        var pendingCandidates = await dbContext.TransactionHistories
+            .Where(x =>
+                x.UserId == request.UserId &&
+                x.Status.ToLower() == "pending" &&
+                (x.WalletItemId == request.WalletAssetId || EF.Functions.Like(x.Notes, "%wallet_asset_id=%")))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+
+        var history = pendingCandidates.FirstOrDefault(x =>
+            x.WalletItemId == request.WalletAssetId ||
+            TryExtractWalletAssetId(x.Notes) == request.WalletAssetId);
+
+        if (history is null)
+            return NotFound(ApiResponse<object>.Fail("No pending request found for this wallet item.", 404));
+
+        history.Status = "cancelled";
+        history.UpdatedAtUtc = DateTime.UtcNow;
+        history.Notes = string.IsNullOrWhiteSpace(history.Notes)
+            ? $"wallet_asset_id={request.WalletAssetId}|cancelled_by_user={request.UserId}"
+            : $"{history.Notes} | cancelled_by_user={request.UserId}";
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-request-cancelled:{request.UserId}:{request.WalletAssetId}", cancellationToken);
+
+        return Ok(ApiResponse<CancelWalletRequestResponse>.Ok(new CancelWalletRequestResponse
+        {
+            WalletAssetId = request.WalletAssetId,
+            Status = "cancelled"
+        }));
+    }
+
     [HttpPost("actions/request")]
     public async Task<IActionResult> CreateWalletActionRequest([FromBody] WalletActionRequest request, CancellationToken cancellationToken = default)
     {
@@ -673,6 +714,56 @@ public class WalletController(
         existing.UpdatedAtUtc = DateTime.UtcNow;
     }
 
+    private async Task<Dictionary<int, (string ProductName, string ProductSku)>> ResolveWalletAssetProductMetaAsync(
+        int userId,
+        IReadOnlyList<int> assetIds,
+        CancellationToken cancellationToken)
+    {
+        if (assetIds.Count == 0) return new Dictionary<int, (string ProductName, string ProductSku)>();
+
+        var histories = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && (x.WalletItemId.HasValue || EF.Functions.Like(x.Notes, "%wallet_asset_id=%")))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new { x.WalletItemId, x.Notes, x.SellerId, x.Category })
+            .ToListAsync(cancellationToken);
+
+        var sellerIds = histories
+            .Where(x => x.SellerId.HasValue)
+            .Select(x => x.SellerId!.Value)
+            .Distinct()
+            .ToList();
+
+        var products = sellerIds.Count == 0
+            ? []
+            : await dbContext.Products
+                .AsNoTracking()
+                .Where(x => sellerIds.Contains(x.SellerId))
+                .Select(x => new { x.SellerId, x.Sku, x.Name })
+                .ToListAsync(cancellationToken);
+
+        var productLookup = products.ToDictionary(x => (x.SellerId, x.Sku), x => x.Name);
+        var result = new Dictionary<int, (string ProductName, string ProductSku)>();
+
+        foreach (var history in histories)
+        {
+            var walletAssetId = history.WalletItemId ?? TryExtractWalletAssetId(history.Notes);
+            if (!walletAssetId.HasValue || !assetIds.Contains(walletAssetId.Value) || result.ContainsKey(walletAssetId.Value))
+                continue;
+
+            var sku = TryExtractSku(history.Notes);
+            if (!string.IsNullOrWhiteSpace(sku) && history.SellerId.HasValue && productLookup.TryGetValue((history.SellerId.Value, sku), out var productName))
+            {
+                result[walletAssetId.Value] = (productName, sku);
+                continue;
+            }
+
+            result[walletAssetId.Value] = (history.Category, sku ?? string.Empty);
+        }
+
+        return result;
+    }
+
     private async Task<SellExecutionConfigurationResponse> ReadSellExecutionConfigurationAsync(CancellationToken cancellationToken)
     {
         var config = await dbContext.MobileAppConfigurations
@@ -717,6 +808,12 @@ public class WalletController(
         public DateTime? QuoteLockedUntilUtc { get; set; }
     }
 
+    public sealed class CancelWalletRequest
+    {
+        public int UserId { get; set; }
+        public int WalletAssetId { get; set; }
+    }
+
     public sealed class InvestorRecipientDto
     {
         public int InvestorUserId { get; set; }
@@ -734,6 +831,12 @@ public class WalletController(
         public string Message { get; set; } = string.Empty;
         public string? InvoiceUrl { get; set; }
         public int? InvoiceId { get; set; }
+    }
+
+    public sealed class CancelWalletRequestResponse
+    {
+        public int WalletAssetId { get; set; }
+        public string Status { get; set; } = "cancelled";
     }
 
     public sealed class SellExecutionConfigurationResponse
@@ -883,6 +986,22 @@ public class WalletController(
         return type == "gift"
             ? $"Received as Gift from {sourceInvestorName}"
             : $"Received as Transfer from {sourceInvestorName}";
+    }
+
+    private static string? TryExtractSku(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes)) return null;
+
+        const string marker = "SKU=";
+        var markerIndex = notes.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0) return null;
+
+        var valueStart = markerIndex + marker.Length;
+        if (valueStart >= notes.Length) return null;
+        var tail = notes[valueStart..].Trim();
+        var stopAt = tail.IndexOfAny(['|', ',', ';', ' ']);
+        var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail;
+        return string.IsNullOrWhiteSpace(rawValue) ? null : rawValue;
     }
 
     private static string? TryExtractMeta(string? notes, string key)

@@ -76,6 +76,7 @@ class WalletTransactionEntity {
   const WalletTransactionEntity({
     required this.id,
     required this.name,
+    this.productSku,
     required this.category,
     required this.assetType,
     required this.subtitle,
@@ -98,6 +99,7 @@ class WalletTransactionEntity {
 
   final int id;
   final String name;
+  final String? productSku;
   final WalletCategory category;
   final AssetType assetType;
   final String subtitle;
@@ -142,6 +144,7 @@ class WalletTransactionEntity {
   WalletTransactionEntity copyWith({
     int? id,
     String? name,
+    String? productSku,
     WalletCategory? category,
     AssetType? assetType,
     String? subtitle,
@@ -164,6 +167,7 @@ class WalletTransactionEntity {
     return WalletTransactionEntity(
       id: id ?? this.id,
       name: name ?? this.name,
+      productSku: productSku ?? this.productSku,
       category: category ?? this.category,
       assetType: assetType ?? this.assetType,
       subtitle: subtitle ?? this.subtitle,

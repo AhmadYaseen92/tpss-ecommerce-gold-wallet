@@ -53,7 +53,7 @@ export interface InvestorRequest {
   unit: string;
   purity: number;
   amount: number;
-  status: "pending" | "approved" | "rejected" | "pending_delivered" | "delivered";
+  status: "pending" | "approved" | "rejected" | "pending_delivered" | "delivered" | "cancelled";
   currency: string;
   notes?: string;
   updatedAt?: string;

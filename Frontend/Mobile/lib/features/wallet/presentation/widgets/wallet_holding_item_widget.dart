@@ -11,6 +11,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
   final VoidCallback onGiftTransfer;
   final VoidCallback onGenerateTaxInvoice;
   final VoidCallback onPickup;
+  final VoidCallback onCancelRequest;
 
   const WalletHoldingItemWidget({
     super.key,
@@ -19,6 +20,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
     required this.onGiftTransfer,
     required this.onGenerateTaxInvoice,
     required this.onPickup,
+    required this.onCancelRequest,
   });
 
   @override
@@ -27,6 +29,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
     final isPending = item.status.toLowerCase().startsWith('pending');
     final isDelivered = item.status.toLowerCase() == 'delivered';
     final isActionBlocked = isPending || isDelivered;
+    final showMarketWidgets = AppReleaseConfig.isIndividualSellerRelease;
     final status = item.status;
     final pnlAmount = item.profitOrLossValue;
     final pnlLabel = pnlAmount >= 0 ? 'Profit' : 'Loss';
@@ -101,14 +104,16 @@ class WalletHoldingItemWidget extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'Investment: \$${item.investmentValue.toStringAsFixed(2)}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: palette.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        const SizedBox(height: 2),
+                        if (showMarketWidgets) ...[
+                          Text(
+                            'Investment: \$${item.investmentValue.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: palette.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                        ],
                         Row(
                           children: [
                             Text(item.marketValue, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: palette.textPrimary)),
@@ -130,21 +135,23 @@ class WalletHoldingItemWidget extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Live Price: \$${item.marketPricePerGram.toStringAsFixed(2)}/g',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: palette.textSecondary,
-                              ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$pnlLabel: $signedPnlAmount\$${pnlAmount.abs().toStringAsFixed(2)} (${item.change})',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: item.change.startsWith('+') ? AppColors.green : AppColors.red,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
+                        if (showMarketWidgets) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Live Price: \$${item.marketPricePerGram.toStringAsFixed(2)}/g',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: palette.textSecondary,
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$pnlLabel: $signedPnlAmount\$${pnlAmount.abs().toStringAsFixed(2)} (${item.change})',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: item.change.startsWith('+') ? AppColors.green : AppColors.red,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ],
                         if ((item.statusDetails ?? '').trim().isNotEmpty) ...[
                           const SizedBox(height: 2),
                           Text(
@@ -161,21 +168,38 @@ class WalletHoldingItemWidget extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: _actionButton(context, label: 'Sell', icon: Icons.sell_outlined, onTap: onSell, isDisabled: isActionBlocked)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _actionButton(context, label: 'Gift', icon: Icons.wallet_giftcard, onTap: onGiftTransfer, isDisabled: isActionBlocked)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: _actionButton(context, icon: Icons.local_shipping_outlined, label: 'Pickup', onTap: onPickup, isDisabled: isActionBlocked)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _actionButton(context, icon: Icons.file_present, label: 'Certificate', onTap: onGenerateTaxInvoice, isDisabled: isActionBlocked)),
-                ],
-              ),
+              if (isPending)
+                Row(
+                  children: [
+                    Expanded(
+                      child: _actionButton(
+                        context,
+                        icon: Icons.cancel_outlined,
+                        label: 'Cancel Request',
+                        onTap: onCancelRequest,
+                        isDisabled: false,
+                        iconColor: Colors.red.shade700,
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
+                Row(
+                  children: [
+                    Expanded(child: _actionButton(context, label: 'Sell', icon: Icons.sell_outlined, onTap: onSell, isDisabled: isActionBlocked)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _actionButton(context, label: 'Gift', icon: Icons.wallet_giftcard, onTap: onGiftTransfer, isDisabled: isActionBlocked)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: _actionButton(context, icon: Icons.local_shipping_outlined, label: 'Pickup', onTap: onPickup, isDisabled: isActionBlocked)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _actionButton(context, icon: Icons.file_present, label: 'Tax Invoice', onTap: onGenerateTaxInvoice, isDisabled: isActionBlocked)),
+                  ],
+                ),
+              ],
             ],
           ),
         ),

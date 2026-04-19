@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_filter_chip.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_state.dart';
@@ -74,9 +76,27 @@ class GoldWalletPage extends StatelessWidget {
                         change: '${wallet.change} live',
                         availableCash: '\$2,000.00',
                       ),
+                      const SizedBox(height: 12),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: ProductCategoryFilter.options.map((category) {
+                            final isSelected = state.selectedCategoryId == category.categoryId;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: AppFilterChip(
+                                label: category.label,
+                                selected: isSelected,
+                                onTap: () => context.read<WalletCubit>().selectCategory(category.categoryId),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
                       const SizedBox(height: 20.0),
 
                       WalletCardWidget(
+                        category: wallet.category,
                         walletName: wallet.walletName,
                         isVerified: wallet.isVerified,
                         totalWeightInGrams: wallet.totalWeightInGrams,

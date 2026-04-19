@@ -17,6 +17,7 @@ export interface TransactionRowView {
   notes?: string;
   transferFrom?: string;
   transferTo?: string;
+  pickupSchedule?: string;
   createdAt: string;
   updatedAt?: string;
 }

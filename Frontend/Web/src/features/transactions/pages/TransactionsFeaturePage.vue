@@ -23,10 +23,12 @@ const detailsId = computed(() => {
 });
 const detailsItem = computed(() => transactionsView.value.find((item) => item.id === detailsId.value) ?? null);
 
-const quickStatus = async (id: string, status: "pending" | "approved" | "rejected") => {
+const quickStatus = async (id: string, status: "pending" | "approved" | "rejected" | "delivered" | "cancelled") => {
   const current = transactionsView.value.find((x) => x.id === id);
-  if (current && current.status !== "pending") {
-    window.alert("Only pending requests can be updated.");
+  const canUpdatePending = current?.status === "pending";
+  const canUpdatePendingDelivered = current?.status === "pending_delivered" && current.transactionType?.toLowerCase() === "pickup";
+  if (!canUpdatePending && !canUpdatePendingDelivered) {
+    window.alert("This request cannot be updated from its current status.");
     return;
   }
   const confirmed = window.confirm(`Confirm changing request ${id} to ${status}?`);
@@ -41,6 +43,15 @@ const goDetails = (id: string) => {
 
 const goList = () => {
   window.location.hash = "#/transactions";
+};
+
+const cancelRequest = async (id: string) => {
+  const current = transactionsView.value.find((x) => x.id === id);
+  const canCancel = current?.status === "pending" || (current?.status === "pending_delivered" && current.transactionType?.toLowerCase() === "pickup");
+  if (!canCancel) return;
+  const confirmed = window.confirm(`Cancel pending request ${id}?`);
+  if (!confirmed) return;
+  await props.marketplace.updateRequestStatus(id, "cancelled");
 };
 </script>
 
@@ -57,6 +68,7 @@ const goList = () => {
         <option value="pending">Pending</option>
         <option value="pending_delivered">Pending - Delivered</option>
         <option value="delivered">Delivered</option>
+        <option value="cancelled">Canceled</option>
         <option value="approved">Approved</option>
         <option value="rejected">Rejected</option>
       </select>
@@ -70,7 +82,7 @@ const goList = () => {
         <option value="withdrawal">Withdrawal</option>
       </select>
     </div>
-    <TransactionsPage :items="transactionsView" :status-class="statusClass" @view="goDetails" @quick-status="quickStatus" />
+    <TransactionsPage :items="transactionsView" :status-class="statusClass" @view="goDetails" @quick-status="quickStatus" @cancel-request="cancelRequest" />
   </SectionCard>
 </template>
 

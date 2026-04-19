@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 
 class WalletCardWidget extends StatelessWidget {
   final String walletName;
@@ -14,6 +15,7 @@ class WalletCardWidget extends StatelessWidget {
   final String change;
   final IconData icon;
   final List transactions;
+  final WalletCategory category;
   final String? note;
 
   const WalletCardWidget({
@@ -28,6 +30,7 @@ class WalletCardWidget extends StatelessWidget {
     required this.change,
     required this.icon,
     required this.transactions,
+    required this.category,
     this.note,
   });
 
@@ -90,7 +93,10 @@ class WalletCardWidget extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context, rootNavigator: true).pushNamed(
                     AppRoutes.walletItemsRoute,
-                    arguments: transactions,
+                    arguments: {
+                      'transactions': transactions,
+                      'category': category,
+                    },
                   );
                 },
                 child: Text('View Details', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: palette.primary, fontWeight: FontWeight.w600)),

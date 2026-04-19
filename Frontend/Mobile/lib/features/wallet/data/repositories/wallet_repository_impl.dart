@@ -85,6 +85,7 @@ class WalletRepositoryImpl implements IWalletRepository {
     return wallet_entity.WalletTransactionEntity(
       id: asset.id,
       name: asset.productName.trim().isNotEmpty ? asset.productName : _toDisplayName(asset.assetType),
+      productSku: asset.productSku,
       category: category,
       assetType: _toAssetType(asset.assetType),
       subtitle: '${asset.purity.toStringAsFixed(1)} purity',

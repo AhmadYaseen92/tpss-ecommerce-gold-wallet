@@ -11,6 +11,7 @@ public sealed record WalletAssetDto(
     int Id,
     string AssetType,
     string ProductName,
+    string? ProductSku,
     string Category,
     int? SellerId,
     string SellerName,

@@ -14,7 +14,8 @@ withDefaults(
 
 const emit = defineEmits<{
   (e: "view", id: string): void;
-  (e: "quickStatus", id: string, status: "pending" | "approved" | "rejected"): void;
+  (e: "quickStatus", id: string, status: "pending" | "approved" | "rejected" | "delivered" | "cancelled"): void;
+  (e: "cancelRequest", id: string): void;
 }>();
 
 const formatAmount = (amount: number, currency: string) => formatCurrency(amount, currency);
@@ -24,9 +25,30 @@ const formatStatus = (status: string) => {
   const normalized = status.trim().toLowerCase();
   if (normalized === "pending_delivered") return "Pending - Delivered";
   if (normalized === "delivered") return "Delivered";
+  if (normalized === "cancelled" || normalized === "canceled") return "Canceled";
   if (normalized === "approved") return "Approved";
   if (normalized === "rejected") return "Rejected";
   return "Pending";
+};
+
+const canEditStatus = (trx: TransactionRowView) =>
+  trx.status === "pending" || (trx.status === "pending_delivered" && trx.transactionType?.toLowerCase() === "pickup");
+
+const statusOptions = (trx: TransactionRowView) => {
+  if (trx.status === "pending_delivered") {
+    return [
+      { value: "pending_delivered", label: "Pending - Delivered" },
+      { value: "delivered", label: "Delivered" },
+      { value: "cancelled", label: "Canceled" }
+    ] as const;
+  }
+
+  return [
+    { value: "pending", label: "Pending" },
+    { value: "approved", label: "Approved" },
+    { value: "rejected", label: "Rejected" },
+    { value: "cancelled", label: "Canceled" }
+  ] as const;
 };
 </script>
 
@@ -64,24 +86,30 @@ const formatStatus = (status: string) => {
           </div>
         </td>
         <td>{{ trx.category }}</td>
-        <td>{{ trx.transactionType }}</td>
+        <td>
+          <div>{{ trx.transactionType }}</div>
+          <small v-if="trx.pickupSchedule">Pickup: {{ trx.pickupSchedule }}</small>
+        </td>
         <td>{{ formatQty(trx.quantity) }}</td>
         <td>{{ formatWeight(trx.weight, trx.unit) }}</td>
         <td>{{ formatAmount(trx.amount, trx.currency) }}</td>
         <td>
           <select
-            v-if="trx.status === 'pending'"
+            v-if="canEditStatus(trx)"
             :class="statusClass(trx.status)"
             :value="trx.status"
-            @change="emit('quickStatus', trx.id, ($event.target as HTMLSelectElement).value as 'pending' | 'approved' | 'rejected')"
+            @change="emit('quickStatus', trx.id, ($event.target as HTMLSelectElement).value as 'pending' | 'approved' | 'rejected' | 'delivered' | 'cancelled')"
           >
-            <option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+            <option v-for="option in statusOptions(trx)" :key="option.value" :value="option.value">{{ option.label }}</option>
           </select>
           <span v-else :class="statusClass(trx.status)">{{ formatStatus(trx.status) }}</span>
         </td>
         <td>{{ formatDateTime(trx.createdAt) }}</td>
         <td>{{ trx.updatedAt ? formatDateTime(trx.updatedAt) : "—" }}</td>
-        <td><button @click="emit('view', trx.id)">View Details</button></td>
+        <td>
+          <button @click="emit('view', trx.id)">View Details</button>
+          <button v-if="canEditStatus(trx)" class="cancel-btn" @click="emit('cancelRequest', trx.id)">Cancel Request</button>
+        </td>
       </tr>
     </tbody>
   </table>
@@ -100,5 +128,10 @@ const formatStatus = (status: string) => {
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid #ddd;
+}
+
+.cancel-btn {
+  margin-left: 8px;
+  color: #b42318;
 }
 </style>
