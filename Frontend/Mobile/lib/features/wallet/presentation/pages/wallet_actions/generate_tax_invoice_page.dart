@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 
@@ -21,8 +21,7 @@ class GenerateTaxInvoicePage extends StatefulWidget {
 }
 
 class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
-  bool _loadingView = false;
-  bool _loadingDownload = false;
+  bool _downloading = false;
 
   String get _reference =>
       'INV-${widget.asset.name.replaceAll(' ', '').toUpperCase()}-${DateTime.now().millisecondsSinceEpoch}';
@@ -30,14 +29,11 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
   @override
   Widget build(BuildContext context) {
     final issueDate = DateTime.now();
-    final dueDate = issueDate.add(const Duration(days: 3));
+    final actionType = _resolveActionType();
+    final (leftLabel, rightLabel) = _partyLabels(actionType);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Certificate Invoice'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Certificate Invoice'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -51,50 +47,54 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: 52,
-                        height: 52,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryColor,
-                          border: Border.all(color: Colors.black26),
-                        ),
-                        child: const Text('TPS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
+                        child: widget.asset.imageUrl.trim().isEmpty
+                            ? const Icon(Icons.image_not_supported_outlined)
+                            : Image.network(
+                                widget.asset.imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_outlined),
+                              ),
                       ),
                       const SizedBox(width: 10),
                       const Expanded(
-                        child: Text(
-                          'TPSS\nAmman',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
+                        child: Text('TPSS\nAmman, Jordan', style: TextStyle(fontWeight: FontWeight.w700)),
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text('TAX INVOICE', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                          Text('Type: ${widget.asset.status}', style: const TextStyle(fontSize: 12)),
+                          const Text('CERTIFICATE INVOICE', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                          Text('Type: $actionType', style: const TextStyle(fontSize: 12)),
                           Text('Ref: $_reference', style: const TextStyle(fontSize: 12)),
                         ],
                       )
                     ],
                   ),
                   const Divider(height: 20),
+                  _metaRow('Certificate / Invoice #', _reference, selectable: true),
+                  _metaRow('Action Type', actionType),
+                  _metaRow('Issue Date', _fmt(issueDate)),
+                  _metaRow('Status', widget.asset.status),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      Expanded(child: _meta('Invoice #', _reference)),
-                      Expanded(child: _meta('Action Type', widget.asset.status)),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(child: _meta('Issue Date', _fmt(issueDate))),
-                      Expanded(child: _meta('Due Date', _fmt(dueDate))),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(child: _partyCard('Seller', widget.asset.sellerName, 'Wallet Metals Provider')),
+                      Expanded(
+                        child: _partyCard(
+                          label: leftLabel,
+                          name: widget.asset.sellerName.isEmpty ? 'N/A' : widget.asset.sellerName,
+                          role: 'Linked wallet party',
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      Expanded(child: _partyCard('Investor', 'Current Wallet User', 'Wallet Holder')),
+                      Expanded(
+                        child: _partyCard(
+                          label: rightLabel,
+                          name: 'Wallet User',
+                          role: 'Linked wallet owner',
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -102,17 +102,17 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                     border: TableBorder.all(color: Colors.black26),
                     columnWidths: const {
                       0: FixedColumnWidth(30),
-                      1: FlexColumnWidth(2.5),
-                      2: FlexColumnWidth(1.4),
-                      3: FlexColumnWidth(1.2),
-                      4: FlexColumnWidth(1.6),
+                      1: FlexColumnWidth(2.4),
+                      2: FlexColumnWidth(1.2),
+                      3: FlexColumnWidth(1),
+                      4: FlexColumnWidth(1.4),
                     },
                     children: [
                       const TableRow(
                         decoration: BoxDecoration(color: Color(0xFFEFEFEF)),
                         children: [
                           Padding(padding: EdgeInsets.all(6), child: Text('#', style: TextStyle(fontWeight: FontWeight.w700))),
-                          Padding(padding: EdgeInsets.all(6), child: Text('Description', style: TextStyle(fontWeight: FontWeight.w700))),
+                          Padding(padding: EdgeInsets.all(6), child: Text('Item Description', style: TextStyle(fontWeight: FontWeight.w700))),
                           Padding(padding: EdgeInsets.all(6), child: Text('Unit Price', style: TextStyle(fontWeight: FontWeight.w700))),
                           Padding(padding: EdgeInsets.all(6), child: Text('Qty', style: TextStyle(fontWeight: FontWeight.w700))),
                           Padding(padding: EdgeInsets.all(6), child: Text('Total', style: TextStyle(fontWeight: FontWeight.w700))),
@@ -129,33 +129,55 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                   ),
                   const SizedBox(height: 10),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
-                          child: Text(
-                            'Wallet Item Id: ${widget.asset.id}\nWeight: ${widget.asset.weightInGrams.toStringAsFixed(3)} g\nPurity: ${widget.asset.purity}\nStatus: ${widget.asset.status}',
-                            style: const TextStyle(fontSize: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _metaRow('Wallet Item Id', '${widget.asset.id}'),
+                              _metaRow('Product Name', widget.asset.name),
+                              _metaRow('Category / Material', widget.asset.category.name.toUpperCase()),
+                              _metaRow('Weight', '${widget.asset.weightInGrams.toStringAsFixed(3)} g'),
+                              _metaRow('Purity / Karat', widget.asset.purity),
+                              _metaRow('Quantity', '${widget.asset.quantity}'),
+                            ],
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        width: 150,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _meta('Taxable', widget.asset.marketValue),
-                            _meta('VAT', '\$0.00'),
-                            const Divider(height: 12),
-                            _meta('Grand Total', widget.asset.marketValue, bold: true),
-                          ],
+                      SizedBox(
+                        width: 170,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _metaRow('SubTotal', widget.asset.marketValue),
+                              _metaRow('Fees', '\$0.00'),
+                              _metaRow('VAT / Tax', '\$0.00'),
+                              _metaRow('Discount', '\$0.00'),
+                              const Divider(height: 12),
+                              _metaRow('Grand Total', widget.asset.marketValue, bold: true),
+                            ],
+                          ),
                         ),
-                      )
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
+                    child: const Text(
+                      'This document serves as ownership and transaction proof for the linked wallet item.\nElectronically generated document.',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -163,24 +185,15 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
             const SizedBox(height: 12),
             ActionSectionCard(
               title: 'Actions',
-              child: Column(
-                children: [
-                  _actionBtn(
-                    context,
-                    icon: Icons.remove_red_eye_outlined,
-                    label: 'View Invoice',
-                    loading: _loadingView,
-                    onTap: () => _openInvoice(context, openAfterDownload: true),
-                  ),
-                  const SizedBox(height: 10),
-                  _actionBtn(
-                    context,
-                    icon: Icons.download_outlined,
-                    label: 'Download PDF',
-                    loading: _loadingDownload,
-                    onTap: () => _openInvoice(context, openAfterDownload: false),
-                  ),
-                ],
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _downloading ? null : () => _downloadInvoice(context),
+                  icon: _downloading
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.download_outlined),
+                  label: const Text('Download PDF'),
+                ),
               ),
             ),
           ],
@@ -189,76 +202,61 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
     );
   }
 
-  Widget _actionBtn(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    bool loading = false,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: loading ? null : onTap,
-        icon: loading
-            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-            : Icon(icon),
-        label: Text(label),
-      ),
-    );
-  }
-
-  Widget _partyCard(String title, String name, String details) {
+  Widget _partyCard({required String label, required String name, required String role}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(border: Border.all(color: Colors.black26)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-          const SizedBox(height: 6),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+          const SizedBox(height: 4),
           Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-          Text(details, style: const TextStyle(fontSize: 12)),
+          Text(role, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _meta(String label, String value, {bool bold = false}) {
+  Widget _metaRow(String label, String value, {bool bold = false, bool selectable = false}) {
+    final valueWidget = selectable
+        ? SelectableText(value, style: TextStyle(fontWeight: bold ? FontWeight.w800 : FontWeight.w600))
+        : Text(value, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: bold ? FontWeight.w800 : FontWeight.w600));
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$label: ', style: TextStyle(fontWeight: bold ? FontWeight.w700 : FontWeight.w500)),
-          Expanded(child: Text(value, style: TextStyle(fontWeight: bold ? FontWeight.w800 : FontWeight.w600))),
+          SizedBox(width: 132, child: Text('$label: ', style: TextStyle(fontWeight: bold ? FontWeight.w700 : FontWeight.w500))),
+          Expanded(child: valueWidget),
         ],
       ),
     );
   }
 
-  Future<void> _openInvoice(BuildContext context, {required bool openAfterDownload}) async {
-    final invoiceUrl = widget.asset.certificateUrl;
-    if (invoiceUrl == null || invoiceUrl.trim().isEmpty) {
-      AppModalAlert.show(
-        context,
-        title: 'Invoice Not Available',
-        message: 'No invoice PDF is linked to this wallet item yet.',
-        variant: AppModalAlertVariant.warning,
-      );
-      return;
-    }
-
-    if (openAfterDownload) {
-      setState(() => _loadingView = true);
-    } else {
-      setState(() => _loadingDownload = true);
-    }
-
+  Future<void> _downloadInvoice(BuildContext context) async {
+    setState(() => _downloading = true);
     try {
-      final bytes = await _downloadInvoiceBytes(invoiceUrl);
-      final fileName = 'wallet-invoice-${widget.asset.id}-${DateTime.now().millisecondsSinceEpoch}.pdf';
+      var certificateUrl = widget.asset.certificateUrl;
+      if (certificateUrl == null || certificateUrl.trim().isEmpty) {
+        certificateUrl = await _ensureCertificateUrlFromBackend();
+      }
 
+      if (certificateUrl == null || certificateUrl.trim().isEmpty) {
+        throw Exception('No linked invoice/certificate record exists for this wallet item.');
+      }
+
+      Uint8List bytes;
+      try {
+        bytes = await _downloadInvoiceBytes(certificateUrl);
+      } catch (_) {
+        final refreshed = await _ensureCertificateUrlFromBackend();
+        if (refreshed == null || refreshed.trim().isEmpty) rethrow;
+        bytes = await _downloadInvoiceBytes(refreshed);
+      }
+
+      final fileName = 'certificate-invoice-${widget.asset.id}-${DateTime.now().millisecondsSinceEpoch}.pdf';
       if (kIsWeb) {
         await FileSaver.instance.saveFile(
           name: fileName,
@@ -269,50 +267,65 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
       } else {
         final directory = await getTemporaryDirectory();
         final filePath = '${directory.path}/$fileName';
-        final file = File(filePath);
-        await file.writeAsBytes(bytes, flush: true);
-        if (openAfterDownload) {
-          await OpenFilex.open(filePath);
-        }
+        await File(filePath).writeAsBytes(bytes, flush: true);
+        await OpenFilex.open(filePath);
       }
 
       if (!mounted) return;
       AppModalAlert.show(
         context,
-        title: openAfterDownload ? 'Invoice Opened' : 'Download Complete',
-        message: openAfterDownload
-            ? 'Invoice PDF was opened successfully.'
-            : 'Invoice PDF downloaded successfully.',
+        title: 'Download Complete',
+        message: 'Certificate invoice PDF downloaded successfully.',
         variant: AppModalAlertVariant.success,
       );
     } catch (e) {
       if (!mounted) return;
       AppModalAlert.show(
         context,
-        title: 'Invoice Error',
-        message: 'Unable to load invoice PDF: $e',
+        title: 'Download Failed',
+        message: '$e',
         variant: AppModalAlertVariant.warning,
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          _loadingView = false;
-          _loadingDownload = false;
-        });
-      }
+      if (mounted) setState(() => _downloading = false);
     }
   }
 
+  Future<String?> _ensureCertificateUrlFromBackend() async {
+    final response = await InjectionContainer.dio().get('/wallet/wallet-items/${widget.asset.id}/certificate');
+    final payload = response.data as Map<String, dynamic>?;
+    final data = payload?['data'];
+    if (data is! Map<String, dynamic>) return null;
+    final url = (data['pdfUrl'] ?? '').toString().trim();
+    return url.isEmpty ? null : url;
+  }
+
   Future<Uint8List> _downloadInvoiceBytes(String url) async {
-    final response = await Dio().get<List<int>>(
-      url,
-      options: Options(responseType: ResponseType.bytes),
-    );
+    final response = await Dio().get<List<int>>(url, options: Options(responseType: ResponseType.bytes));
     final data = response.data;
     if (data == null || data.isEmpty) {
-      throw Exception('Invoice file response is empty.');
+      throw Exception('Certificate invoice PDF is empty.');
     }
     return Uint8List.fromList(data);
+  }
+
+  String _resolveActionType() {
+    final status = widget.asset.status.toLowerCase();
+    if (status.contains('sell')) return 'Sold';
+    if (status.contains('gift')) return 'Gift';
+    if (status.contains('transfer')) return 'Transfer';
+    if (status.contains('pickup') || status.contains('delivered')) return 'Pickup';
+    return 'Bought';
+  }
+
+  (String, String) _partyLabels(String actionType) {
+    return switch (actionType) {
+      'Sold' => ('Investor Seller', 'Receiving Seller'),
+      'Gift' => ('Sender', 'Recipient'),
+      'Transfer' => ('From Investor', 'To Investor'),
+      'Pickup' => ('Owner', 'Pickup Provider'),
+      _ => ('Seller', 'Investor'),
+    };
   }
 
   String _fmt(DateTime value) =>

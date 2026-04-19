@@ -81,6 +81,64 @@ public class WalletController(
         return Ok(ApiResponse<SellExecutionConfigurationResponse>.Ok(data));
     }
 
+    [HttpGet("wallet-items/{walletItemId:int}/certificate")]
+    public async Task<IActionResult> EnsureWalletItemCertificate(int walletItemId, CancellationToken cancellationToken = default)
+    {
+        var currentUserId = currentUser.UserId;
+        if (!currentUserId.HasValue) return Unauthorized(ApiResponse<object>.Fail("Unauthorized", 401));
+
+        var invoice = await dbContext.Invoices
+            .Where(x => x.WalletItemId == walletItemId && x.InvestorUserId == currentUserId.Value)
+            .OrderByDescending(x => x.IssuedOnUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (invoice is null)
+            return NotFound(ApiResponse<object>.Fail("No invoice/certificate record exists for this wallet item.", 404));
+
+        var pdfUrl = invoice.PdfUrl;
+        var fileExists = !string.IsNullOrWhiteSpace(pdfUrl) && InvoiceFileExists(pdfUrl);
+        if (!fileExists)
+        {
+            var walletAsset = await dbContext.WalletAssets
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == walletItemId, cancellationToken);
+
+            var fallbackAsset = walletAsset ?? new WalletAsset
+            {
+                Id = walletItemId,
+                SellerId = null,
+                Category = ParseProductCategory(invoice.InvoiceCategory),
+                Weight = invoice.Weight > 0 ? invoice.Weight : 0.001m,
+                Unit = "gram",
+                Purity = invoice.Purity,
+                Quantity = invoice.Quantity > 0 ? invoice.Quantity : 1,
+                AverageBuyPrice = invoice.UnitPrice,
+                CurrentMarketPrice = invoice.UnitPrice,
+                SellerName = string.IsNullOrWhiteSpace(invoice.FromPartyType) ? "Wallet" : invoice.FromPartyType
+            };
+
+            pdfUrl = await SaveInvoiceDocumentAsync(
+                investorUserId: invoice.InvestorUserId,
+                actionType: invoice.InvoiceCategory,
+                asset: fallbackAsset,
+                quantity: Math.Max(1, invoice.Quantity),
+                amount: invoice.TotalAmount > 0 ? invoice.TotalAmount : invoice.SubTotal,
+                cancellationToken);
+
+            invoice.PdfUrl = pdfUrl;
+            invoice.InvoiceQrCode = pdfUrl ?? invoice.InvoiceQrCode;
+            invoice.UpdatedAtUtc = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return Ok(ApiResponse<EnsureWalletItemCertificateResponse>.Ok(new EnsureWalletItemCertificateResponse
+        {
+            InvoiceId = invoice.Id,
+            InvoiceNumber = invoice.InvoiceNumber,
+            PdfUrl = ToAbsoluteFileUrl(invoice.PdfUrl)
+        }));
+    }
+
     [HttpGet("investors")]
     public async Task<IActionResult> GetInvestors([FromQuery] string? query = null, CancellationToken cancellationToken = default)
     {
@@ -625,6 +683,13 @@ public class WalletController(
         public int LockSeconds { get; set; } = 30;
     }
 
+    public sealed class EnsureWalletItemCertificateResponse
+    {
+        public int InvoiceId { get; set; }
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public string? PdfUrl { get; set; }
+    }
+
     private async Task<(Dictionary<int, string> StatusByAssetId, Dictionary<int, string?> DetailsByAssetId)> ResolveAssetStatusesAsync(
         int userId,
         IReadOnlyList<WalletAssetDto> assets,
@@ -710,6 +775,19 @@ public class WalletController(
             "transfer" => "Transfer",
             "pickup" or "certificate" or "invoice" => "Pickup",
             _ => "Buy"
+        };
+    }
+
+    private static ProductCategory ParseProductCategory(string? categoryOrAction)
+    {
+        var normalized = (categoryOrAction ?? string.Empty).Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "silver" => ProductCategory.Silver,
+            "diamond" => ProductCategory.Diamond,
+            "jewelry" => ProductCategory.Jewelry,
+            "coin" or "coins" => ProductCategory.Coins,
+            _ => ProductCategory.Gold
         };
     }
 
@@ -859,5 +937,19 @@ public class WalletController(
         var request = HttpContext.Request;
         var normalized = fileUrl.StartsWith('/') ? fileUrl : $"/{fileUrl}";
         return $"{request.Scheme}://{request.Host}{normalized}";
+    }
+
+    private bool InvoiceFileExists(string? fileUrl)
+    {
+        if (string.IsNullOrWhiteSpace(fileUrl)) return false;
+        var root = environment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(root))
+        {
+            root = Path.Combine(environment.ContentRootPath, "wwwroot");
+        }
+
+        var relative = fileUrl.Trim().TrimStart('/');
+        var physicalPath = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
+        return System.IO.File.Exists(physicalPath);
     }
 }
