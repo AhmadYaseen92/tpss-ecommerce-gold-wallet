@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/predefined_accounts_data.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/profile_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/entities/sell_asset_entities.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
@@ -13,18 +15,22 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
   SellAssetActionCubit({
     required this.initialAsset,
     required IWalletActionRepository repository,
+    ProfileRemoteDataSource? profileRemoteDataSource,
     PrepareSellAssetUseCase? prepareSellAssetUseCase,
   }) : _repository = repository,
+       _profileRemoteDataSource = profileRemoteDataSource ?? ProfileRemoteDataSource(InjectionContainer.dio()),
        _prepareSellAssetUseCase = prepareSellAssetUseCase ?? const PrepareSellAssetUseCase(),
        quantityController = TextEditingController(text: '1'),
        noteController = TextEditingController(),
        super(SellAssetActionInitial()) {
     quantityController.addListener(_emitUpdated);
     _emitUpdated();
+    _loadProfilePayoutOptions();
   }
 
   final WalletActionSummary initialAsset;
   final IWalletActionRepository _repository;
+  final ProfileRemoteDataSource _profileRemoteDataSource;
   final PrepareSellAssetUseCase _prepareSellAssetUseCase;
   final TextEditingController quantityController;
   final TextEditingController noteController;
@@ -33,8 +39,11 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
   int selectedBankAccountIndex = 0;
   int selectedPaymentMethodIndex = 0;
 
-  List<PredefinedAccount> get predefinedBankAccounts => PredefinedAccountsData.bankAccounts;
-  List<PredefinedAccount> get predefinedPaymentMethods => PredefinedAccountsData.paymentMethods;
+  List<PredefinedAccount> _profileBankAccounts = List<PredefinedAccount>.from(PredefinedAccountsData.bankAccounts);
+  List<PredefinedAccount> _profilePaymentMethods = List<PredefinedAccount>.from(PredefinedAccountsData.paymentMethods);
+
+  List<PredefinedAccount> get predefinedBankAccounts => _profileBankAccounts;
+  List<PredefinedAccount> get predefinedPaymentMethods => _profilePaymentMethods;
 
   int get maxQuantity => initialAsset.asset.quantity;
 
@@ -75,6 +84,12 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
   void updatePayoutMethod(String? value) {
     if (value == null) return;
     payoutMethod = value;
+    if (isBankPayout && selectedBankAccountIndex >= predefinedBankAccounts.length) {
+      selectedBankAccountIndex = 0;
+    }
+    if (isPaymentMethodPayout && selectedPaymentMethodIndex >= predefinedPaymentMethods.length) {
+      selectedPaymentMethodIndex = 0;
+    }
     _emitUpdated();
   }
 
@@ -113,6 +128,57 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
     }
   }
 
+  Future<void> _loadProfilePayoutOptions() async {
+    try {
+      final profile = await _profileRemoteDataSource.getProfile();
+      final linkedBanks = profile.linkedBankAccounts
+          .map(
+            (bank) => PredefinedAccount(
+              id: 'bank_${bank.id}',
+              name: bank.bankName.trim().isEmpty ? 'Linked Bank ${bank.id}' : bank.bankName.trim(),
+              subtitle: bank.ibanMasked.trim().isNotEmpty
+                  ? bank.ibanMasked.trim()
+                  : bank.accountNumber.trim(),
+            ),
+          )
+          .toList();
+      final paymentMethods = profile.paymentMethods
+          .map(
+            (payment) => PredefinedAccount(
+              id: 'payment_${payment.id}',
+              name: payment.type.trim().isEmpty ? 'Payment ${payment.id}' : payment.type.trim(),
+              subtitle: payment.maskedNumber.trim().isNotEmpty
+                  ? payment.maskedNumber.trim()
+                  : payment.holderName.trim(),
+            ),
+          )
+          .toList();
+
+      _profileBankAccounts = linkedBanks.isEmpty
+          ? [const PredefinedAccount(id: 'bank_none', name: 'No linked bank account', subtitle: 'Add one in Profile')]
+          : linkedBanks;
+      _profilePaymentMethods = paymentMethods.isEmpty
+          ? [const PredefinedAccount(id: 'payment_none', name: 'No payment method', subtitle: 'Add one in Profile')]
+          : paymentMethods;
+
+      selectedBankAccountIndex = _defaultIndex(_profileBankAccounts, profile.linkedBankAccounts.indexWhere((x) => x.isDefault));
+      selectedPaymentMethodIndex = _defaultIndex(_profilePaymentMethods, profile.paymentMethods.indexWhere((x) => x.isDefault));
+
+      if (_isPlaceholderSelection(_profileBankAccounts[selectedBankAccountIndex]) &&
+          !_isPlaceholderSelection(_profilePaymentMethods[selectedPaymentMethodIndex])) {
+        payoutMethod = 'Payment Method';
+      } else if (!_isPlaceholderSelection(_profileBankAccounts[selectedBankAccountIndex])) {
+        payoutMethod = 'Bank Account';
+      }
+    } catch (_) {
+      // Keep fallback predefined values if profile call fails.
+    } finally {
+      if (!isClosed) {
+        _emitUpdated();
+      }
+    }
+  }
+
   WalletActionSummary buildSummary() {
     final result = calculatedResult;
     if (result == null) {
@@ -138,6 +204,15 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
       isPending: true,
     );
   }
+
+  int _defaultIndex(List<PredefinedAccount> accounts, int remoteDefaultIndex) {
+    if (accounts.isEmpty) return 0;
+    if (remoteDefaultIndex >= 0 && remoteDefaultIndex < accounts.length) return remoteDefaultIndex;
+    return 0;
+  }
+
+  bool _isPlaceholderSelection(PredefinedAccount account) =>
+      account.id.endsWith('_none');
 
   double _parseCurrency(String raw) {
     final clean = raw.replaceAll(RegExp(r'[^0-9.]'), '');

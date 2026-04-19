@@ -28,7 +28,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
     final isDelivered = item.status.toLowerCase() == 'delivered';
     final isActionBlocked = isPending || isDelivered;
     final status = item.status;
-    final pnlAmount = item.marketValueAmount - item.estimatedPurchaseValue;
+    final pnlAmount = item.profitOrLossValue;
     final pnlLabel = pnlAmount >= 0 ? 'Profit' : 'Loss';
     final signedPnlAmount = pnlAmount >= 0 ? '+' : '-';
 
@@ -67,7 +67,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
                       children: [
                         Text(item.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: palette.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 4),
-                        if (isPending || isDelivered) ...[
+                        if (isPending || isDelivered || _isGiftOrTransfer(item)) ...[
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
@@ -101,6 +101,14 @@ class WalletHoldingItemWidget extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
+                        Text(
+                          'Investment: \$${item.investmentValue.toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: palette.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const SizedBox(height: 2),
                         Row(
                           children: [
                             Text(item.marketValue, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: palette.textPrimary)),
@@ -137,6 +145,16 @@ class WalletHoldingItemWidget extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                               ),
                         ),
+                        if ((item.statusDetails ?? '').trim().isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            item.statusDetails!,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: palette.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -171,6 +189,11 @@ class WalletHoldingItemWidget extends StatelessWidget {
     if (normalized.contains('delivered')) return Colors.green.shade700;
     if (normalized.contains('gift') || normalized.contains('transfer')) return Colors.blue.shade700;
     return Colors.grey.shade700;
+  }
+
+  bool _isGiftOrTransfer(WalletTransactionEntity tx) {
+    final value = tx.status.toLowerCase();
+    return value.contains('gift') || value.contains('transfer');
   }
 
   Widget _miniTag(BuildContext context, String text) {

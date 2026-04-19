@@ -7,10 +7,18 @@ final class CheckoutInitial extends CheckoutState {}
 final class CheckoutDataChanged extends CheckoutState {
   final CheckoutPaymentType selectedPaymentType;
   final bool otpConfirmed;
+  final List<PredefinedAccount> linkedBankAccounts;
+  final List<PredefinedAccount> predefinedPaymentMethods;
+  final int selectedBankIndex;
+  final int selectedPaymentIndex;
 
   CheckoutDataChanged({
     required this.selectedPaymentType,
     required this.otpConfirmed,
+    required this.linkedBankAccounts,
+    required this.predefinedPaymentMethods,
+    required this.selectedBankIndex,
+    required this.selectedPaymentIndex,
   });
 }
 

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/helpers/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/data/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/presentation/cubit/checkout_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
@@ -21,8 +20,6 @@ class CheckoutPaymentPage extends StatefulWidget {
 }
 
 class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
-  int selectedBankIndex = 0;
-  int selectedPaymentIndex = 0;
   final TextEditingController _discountCodeController = TextEditingController();
   String? _discountError;
   double _discountAmount = 0.0;
@@ -97,12 +94,12 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                       title: 'Select Linked Bank Account',
                       child: PredefinedAccountSelector(
                         label: 'Bank Account',
-                        accounts: PredefinedAccountsData.bankAccounts,
-                        selectedIndex: selectedBankIndex,
+                        accounts: cubit.linkedBankAccounts,
+                        selectedIndex: cubit.selectedBankIndex,
                         icon: Icons.account_balance_outlined,
                         onChanged: (index) {
                           if (index == null) return;
-                          setState(() => selectedBankIndex = index);
+                          cubit.selectBankIndex(index);
                         },
                       ),
                     ),
@@ -111,12 +108,12 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                       title: 'Select Predefined Payment Method',
                       child: PredefinedAccountSelector(
                         label: 'Payment Method',
-                        accounts: PredefinedAccountsData.paymentMethods,
-                        selectedIndex: selectedPaymentIndex,
+                        accounts: cubit.predefinedPaymentMethods,
+                        selectedIndex: cubit.selectedPaymentIndex,
                         icon: Icons.credit_card_outlined,
                         onChanged: (index) {
                           if (index == null) return;
-                          setState(() => selectedPaymentIndex = index);
+                          cubit.selectPaymentIndex(index);
                         },
                       ),
                     ),
@@ -152,8 +149,10 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                     child: Column(
                       children: [
                         _row(context, 'Payment', _label(cubit.selectedPaymentType)),
-                        if (cubit.selectedPaymentType == CheckoutPaymentType.bank) _row(context, 'Account', PredefinedAccountsData.bankAccounts[selectedBankIndex].name),
-                        if (cubit.selectedPaymentType == CheckoutPaymentType.card) _row(context, 'Method', PredefinedAccountsData.paymentMethods[selectedPaymentIndex].name),
+                        if (cubit.selectedPaymentType == CheckoutPaymentType.bank)
+                          _row(context, 'Account', cubit.linkedBankAccounts[cubit.selectedBankIndex].name),
+                        if (cubit.selectedPaymentType == CheckoutPaymentType.card)
+                          _row(context, 'Method', cubit.predefinedPaymentMethods[cubit.selectedPaymentIndex].name),
                         _row(context, 'Amount', '\$${amount.toStringAsFixed(2)}'),
                         _row(context, 'Fee', '\$0.00'),
                         _row(context, 'Discount', '-\$${_discountAmount.toStringAsFixed(2)}'),

@@ -84,6 +84,8 @@ class WalletTransactionEntity {
     required this.quantity,
     required this.marketValue,
     required this.change,
+    required this.investmentValue,
+    required this.profitOrLossValue,
     required this.imageUrl,
     this.sellerName = 'Imseeh',
     this.isSpotMrOrder = false,
@@ -91,6 +93,7 @@ class WalletTransactionEntity {
     this.isDelivered = false,
     this.status = 'Bought',
     this.statusDetails,
+    this.sourceInvestorName,
   });
 
   final int id;
@@ -103,6 +106,8 @@ class WalletTransactionEntity {
   final int quantity;
   final String marketValue;
   final String change;
+  final double investmentValue;
+  final double profitOrLossValue;
   final String sellerName;
   final bool isSpotMrOrder;
   final String imageUrl;
@@ -110,6 +115,7 @@ class WalletTransactionEntity {
   final bool isDelivered;
   final String status;
   final String? statusDetails;
+  final String? sourceInvestorName;
 
   double get weightInKg => weightInGrams / 1000;
   double get weightInOz => weightInGrams / 31.1035;
@@ -144,6 +150,8 @@ class WalletTransactionEntity {
     int? quantity,
     String? marketValue,
     String? change,
+    double? investmentValue,
+    double? profitOrLossValue,
     String? sellerName,
     bool? isSpotMrOrder,
     String? imageUrl,
@@ -151,6 +159,7 @@ class WalletTransactionEntity {
     bool? isDelivered,
     String? status,
     String? statusDetails,
+    String? sourceInvestorName,
   }) {
     return WalletTransactionEntity(
       id: id ?? this.id,
@@ -163,6 +172,8 @@ class WalletTransactionEntity {
       quantity: quantity ?? this.quantity,
       marketValue: marketValue ?? this.marketValue,
       change: change ?? this.change,
+      investmentValue: investmentValue ?? this.investmentValue,
+      profitOrLossValue: profitOrLossValue ?? this.profitOrLossValue,
       sellerName: sellerName ?? this.sellerName,
       isSpotMrOrder: isSpotMrOrder ?? this.isSpotMrOrder,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -170,6 +181,7 @@ class WalletTransactionEntity {
       isDelivered: isDelivered ?? this.isDelivered,
       status: status ?? this.status,
       statusDetails: statusDetails ?? this.statusDetails,
+      sourceInvestorName: sourceInvestorName ?? this.sourceInvestorName,
     );
   }
 

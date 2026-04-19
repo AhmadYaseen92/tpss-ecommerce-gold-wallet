@@ -10,6 +10,7 @@ public sealed record WalletDto(
 public sealed record WalletAssetDto(
     int Id,
     string AssetType,
+    string ProductName,
     string Category,
     int? SellerId,
     string SellerName,
@@ -21,6 +22,7 @@ public sealed record WalletAssetDto(
     decimal CurrentMarketPrice,
     int? InvoiceId,
     string? CertificateUrl,
+    string? SourceInvestorName,
     bool IsDelivered,
     string Status,
     string? StatusDetails);

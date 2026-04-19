@@ -50,6 +50,7 @@ class WalletAssetRemoteModel {
   WalletAssetRemoteModel({
     required this.id,
     required this.assetType,
+    required this.productName,
     required this.category,
     required this.sellerId,
     required this.weight,
@@ -62,12 +63,14 @@ class WalletAssetRemoteModel {
     required this.isDelivered,
     required this.invoiceId,
     required this.certificateUrl,
+    required this.sourceInvestorName,
     required this.status,
     required this.statusDetails,
   });
 
   final int id;
   final String assetType;
+  final String productName;
   final String category;
   final int? sellerId;
   final double weight;
@@ -80,6 +83,7 @@ class WalletAssetRemoteModel {
   final bool isDelivered;
   final int? invoiceId;
   final String? certificateUrl;
+  final String? sourceInvestorName;
   final String status;
   final String? statusDetails;
 
@@ -87,6 +91,7 @@ class WalletAssetRemoteModel {
     return WalletAssetRemoteModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       assetType: (json['assetType'] ?? '').toString(),
+      productName: (json['productName'] ?? '').toString(),
       category: (json['category'] ?? '').toString(),
       sellerId: (json['sellerId'] as num?)?.toInt(),
       weight: (json['weight'] as num?)?.toDouble() ?? 0,
@@ -101,6 +106,9 @@ class WalletAssetRemoteModel {
       certificateUrl: (json['certificateUrl'] ?? '').toString().isEmpty
           ? null
           : (json['certificateUrl'] ?? '').toString(),
+      sourceInvestorName: (json['sourceInvestorName'] ?? '').toString().trim().isEmpty
+          ? null
+          : (json['sourceInvestorName'] ?? '').toString(),
       status: (json['status'] ?? 'Bought').toString(),
       statusDetails: (json['statusDetails'] as String?)?.trim().isEmpty ?? true
           ? null

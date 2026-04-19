@@ -32,20 +32,41 @@ public class WalletController(
         var data = await walletService.GetByUserIdAsync(request.UserId, cancellationToken);
 
         var assetIds = data.Assets.Select(x => x.Id).ToList();
-        var invoiceByWalletAsset = new Dictionary<int, (int InvoiceId, string? PdfUrl)>();
+        var invoiceByWalletAsset = new Dictionary<int, (int InvoiceId, string? PdfUrl, string? ProductName, int? FromPartyUserId, string? FromPartyType)>();
         if (assetIds.Count > 0)
         {
             var linkedInvoices = await dbContext.Invoices
                 .AsNoTracking()
                 .Where(x => x.InvestorUserId == request.UserId && x.WalletItemId.HasValue && assetIds.Contains(x.WalletItemId.Value))
                 .OrderByDescending(x => x.IssuedOnUtc)
-                .Select(x => new { x.WalletItemId, x.Id, x.PdfUrl })
+                .Select(x => new { x.WalletItemId, x.Id, x.PdfUrl, x.ProductName, x.FromPartyUserId, x.FromPartyType })
                 .ToListAsync(cancellationToken);
 
             invoiceByWalletAsset = linkedInvoices
                 .Where(x => x.WalletItemId.HasValue)
                 .GroupBy(x => x.WalletItemId!.Value)
-                .ToDictionary(g => g.Key, g => (g.First().Id, g.First().PdfUrl));
+                .ToDictionary(
+                    g => g.Key,
+                    g => (
+                        g.First().Id,
+                        g.First().PdfUrl,
+                        g.First().ProductName,
+                        g.First().FromPartyUserId,
+                        g.First().FromPartyType));
+        }
+
+        var sourceInvestorNames = new Dictionary<int, string>();
+        var sourceInvestorIds = invoiceByWalletAsset.Values
+            .Where(x => string.Equals(x.FromPartyType, "Investor", StringComparison.OrdinalIgnoreCase) && x.FromPartyUserId.HasValue)
+            .Select(x => x.FromPartyUserId!.Value)
+            .Distinct()
+            .ToList();
+        if (sourceInvestorIds.Count > 0)
+        {
+            sourceInvestorNames = await dbContext.Users
+                .AsNoTracking()
+                .Where(x => sourceInvestorIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, x => x.FullName, cancellationToken);
         }
 
         var (statusByAssetId, detailsByAssetId) = await ResolveAssetStatusesAsync(request.UserId, data.Assets, cancellationToken);
@@ -60,14 +81,30 @@ public class WalletController(
                     : null;
                 var invoiceMeta = invoiceByWalletAsset.TryGetValue(asset.Id, out var resolvedInvoice)
                     ? resolvedInvoice
-                    : (InvoiceId: 0, PdfUrl: (string?)null);
+                    : (InvoiceId: 0, PdfUrl: (string?)null, ProductName: (string?)null, FromPartyUserId: (int?)null, FromPartyType: (string?)null);
+                var sourceInvestorName = invoiceMeta.FromPartyUserId.HasValue &&
+                                         sourceInvestorNames.TryGetValue(invoiceMeta.FromPartyUserId.Value, out var investorName)
+                    ? investorName
+                    : null;
+                var resolvedDetailsWithFallback = statusDetails;
+                if (string.IsNullOrWhiteSpace(resolvedDetailsWithFallback) &&
+                    !string.IsNullOrWhiteSpace(sourceInvestorName) &&
+                    (status.Contains("Gift", StringComparison.OrdinalIgnoreCase) ||
+                     status.Contains("Transfer", StringComparison.OrdinalIgnoreCase)))
+                {
+                    resolvedDetailsWithFallback = status.Contains("Gift", StringComparison.OrdinalIgnoreCase)
+                        ? $"Received as Gift from {sourceInvestorName}"
+                        : $"Received as Transfer from {sourceInvestorName}";
+                }
                 return asset with
                 {
                     Status = status,
                     IsDelivered = status == "Delivered",
-                    StatusDetails = statusDetails,
+                    StatusDetails = resolvedDetailsWithFallback,
                     InvoiceId = invoiceMeta.InvoiceId == 0 ? null : invoiceMeta.InvoiceId,
-                    CertificateUrl = ToAbsoluteFileUrl(invoiceMeta.PdfUrl)
+                    CertificateUrl = ToAbsoluteFileUrl(invoiceMeta.PdfUrl),
+                    ProductName = string.IsNullOrWhiteSpace(invoiceMeta.ProductName) ? asset.ProductName : invoiceMeta.ProductName,
+                    SourceInvestorName = sourceInvestorName
                 };
             })
             .ToList();

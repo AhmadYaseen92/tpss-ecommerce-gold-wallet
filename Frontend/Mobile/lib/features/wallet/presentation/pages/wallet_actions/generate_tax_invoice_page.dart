@@ -97,7 +97,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                       Expanded(
                         child: _partyCard(
                           label: leftLabel,
-                          name: widget.asset.sellerName.isEmpty ? 'N/A' : widget.asset.sellerName,
+                          name: _leftPartyName(actionType),
                           role: 'Linked wallet party',
                         ),
                       ),
@@ -384,5 +384,14 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
     final baseUrl = InjectionContainer.dio().options.baseUrl;
     if (baseUrl.trim().isEmpty) return trimmed;
     return Uri.parse(baseUrl).resolve(trimmed).toString();
+  }
+
+  String _leftPartyName(String actionType) {
+    if (actionType == 'Gift' || actionType == 'Transfer') {
+      final fromInvestor = (widget.asset.sourceInvestorName ?? '').trim();
+      if (fromInvestor.isNotEmpty) return fromInvestor;
+    }
+    final seller = widget.asset.sellerName.trim();
+    return seller.isEmpty ? 'N/A' : seller;
   }
 }

@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/profile_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 
 part 'convert_asset_action_state.dart';
 
 class ConvertAssetActionCubit extends Cubit<ConvertAssetActionState> {
-  ConvertAssetActionCubit({required this.asset})
+  ConvertAssetActionCubit({
+    required this.asset,
+    ProfileRemoteDataSource? profileRemoteDataSource,
+  })
     : quantityController = TextEditingController(text: '1'),
       walletAddressController = TextEditingController(),
+      _profileRemoteDataSource = profileRemoteDataSource ?? ProfileRemoteDataSource(InjectionContainer.dio()),
       super(ConvertAssetActionInitial()) {
     quantityController.addListener(_emitUpdated);
+    _loadProfileCashDestinations();
   }
 
   final WalletTransactionEntity asset;
+  final ProfileRemoteDataSource _profileRemoteDataSource;
 
   final TextEditingController quantityController;
   final TextEditingController walletAddressController;
@@ -22,6 +30,7 @@ class ConvertAssetActionCubit extends Cubit<ConvertAssetActionState> {
   ConvertTargetType targetType = ConvertTargetType.cash;
   String cashDestination = 'Wallet Cash';
   String cryptoType = 'USDT';
+  List<String> cashDestinations = <String>['Wallet Cash', 'Bank Account'];
 
   int get maxQuantity => asset.quantity;
   double get unitPrice => _parseCurrency(asset.marketValue) / maxQuantity;
@@ -102,6 +111,28 @@ class ConvertAssetActionCubit extends Cubit<ConvertAssetActionState> {
   double _parseCurrency(String raw) {
     final clean = raw.replaceAll(RegExp(r'[^0-9.]'), '');
     return double.tryParse(clean) ?? 0;
+  }
+
+  Future<void> _loadProfileCashDestinations() async {
+    try {
+      final profile = await _profileRemoteDataSource.getProfile();
+      final serverDestinations = <String>[
+        'Wallet Cash',
+        ...profile.linkedBankAccounts.map((x) => 'Bank - ${x.bankName}').toList(),
+        ...profile.paymentMethods.map((x) => 'Payment - ${x.type}').toList(),
+      ].toSet().toList();
+
+      cashDestinations = serverDestinations;
+      if (!cashDestinations.contains(cashDestination)) {
+        cashDestination = cashDestinations.first;
+      }
+    } catch (_) {
+      // Keep default destinations if profile call fails.
+    } finally {
+      if (!isClosed) {
+        _emitUpdated();
+      }
+    }
   }
 
   void _emitUpdated() => emit(ConvertAssetActionUpdated());
