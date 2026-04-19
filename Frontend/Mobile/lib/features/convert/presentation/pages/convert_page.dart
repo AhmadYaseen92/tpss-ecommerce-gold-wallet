@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/convert/presentation/cubit/convert_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/convert/presentation/widgets/convert_widget.dart';
 
@@ -21,14 +22,13 @@ class ConvertPage extends StatelessWidget {
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Convert',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryColor,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: context.appPalette.primary,
+                  ),
                 ),
               ),
               body: const Center(
@@ -41,14 +41,13 @@ class ConvertPage extends StatelessWidget {
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Convert',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryColor,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: context.appPalette.primary,
+                  ),
                 ),
               ),
               body: ConvertWidget(
@@ -59,14 +58,13 @@ class ConvertPage extends StatelessWidget {
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 centerTitle: true,
                 title: Text(
                   'Convert',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryColor,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    color: context.appPalette.primary,
+                  ),
                 ),
               ),
               body: Center(child: Text(state.message)),

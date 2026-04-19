@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/presentation/cubit/sell_asset_action_cubit.dart';
@@ -30,7 +31,16 @@ class SellAssetPage extends StatelessWidget {
           final cubit = context.read<SellAssetActionCubit>();
 
           return Scaffold(
-            appBar: AppBar(title: const Text('Sell Asset')),
+            appBar: AppBar(
+              centerTitle: true,
+              title: Text(
+                'Sell Asset',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: context.appPalette.primary,
+                ),
+              ),
+            ),
             bottomNavigationBar: ActionBottomBar(
               summaryLabel: 'Estimated Receive',
               summaryValue: cubit.calculatedResult == null

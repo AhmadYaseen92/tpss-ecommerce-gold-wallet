@@ -69,7 +69,6 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
       child: Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           title: Text(
             _tabTitles[_currentTabIndex],
             style: Theme.of(context).textTheme.titleLarge?.copyWith(

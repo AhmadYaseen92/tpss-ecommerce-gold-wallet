@@ -55,8 +55,14 @@ class ForgotPasswordPage extends StatelessWidget {
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               scrolledUnderElevation: 0,
+              centerTitle: true,
+              title: const Text(
+                'Reset Password',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () {

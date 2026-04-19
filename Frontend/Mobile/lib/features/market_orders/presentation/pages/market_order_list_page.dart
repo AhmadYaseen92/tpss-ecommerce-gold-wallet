@@ -14,7 +14,15 @@ class MarketOrderListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Market Orders'), centerTitle: true),
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text(
+          'My Market Orders',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       body: const MarketOrderListView(showStatusFilter: true),
     );
   }

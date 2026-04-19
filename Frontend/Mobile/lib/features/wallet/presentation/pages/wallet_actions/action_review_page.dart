@@ -28,7 +28,15 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Review Transaction")),
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text(
+          'Review Transaction',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       bottomNavigationBar: ActionBottomBar(
         summaryLabel: "Total",
         summaryValue: widget.summary.totalValue,

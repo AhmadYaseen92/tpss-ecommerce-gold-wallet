@@ -26,7 +26,15 @@ class ConvertAssetPage extends StatelessWidget {
           final cubit = context.read<ConvertAssetActionCubit>();
 
           return Scaffold(
-            appBar: AppBar(title: const Text('Convert Asset')),
+            appBar: AppBar(
+              centerTitle: true,
+              title: const Text(
+                'Convert Asset',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
             bottomNavigationBar: ActionBottomBar(
               summaryLabel: cubit.isCrypto ? 'Estimated Crypto' : 'Estimated Cash',
               summaryValue: cubit.isCrypto

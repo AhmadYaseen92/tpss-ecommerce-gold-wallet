@@ -34,8 +34,13 @@ class ProductDetailPage extends StatelessWidget {
 
           PreferredSizeWidget appBar() => AppBar(
                 centerTitle: true,
-                title: Text('Product Detail', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600, color: palette.primary)),
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                title: Text(
+                  'Product Detail',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: palette.primary,
+                  ),
+                ),
                 actions: state is ProductDetailLoaded || state is ProductQuantityChanged
                     ? [
                         IconButton(

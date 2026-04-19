@@ -58,7 +58,15 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
     final statusText = _isCompleted ? (_resultPendingApproval ? 'Submitted' : 'Completed') : 'Submitted';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Confirmation')),
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text(
+          'Confirmation',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: Row(

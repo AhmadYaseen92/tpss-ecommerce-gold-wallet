@@ -80,12 +80,11 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
               centerTitle: true,
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               title: Text(
                 'Payment Methods',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: palette.primary,
-                  fontWeight: FontWeight.w700,
                 ),
               ),
               actions: [

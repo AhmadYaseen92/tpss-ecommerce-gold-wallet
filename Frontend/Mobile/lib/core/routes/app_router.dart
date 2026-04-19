@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/pages/product_view.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
@@ -61,7 +62,8 @@ class AppRouter {
         );
 
       case AppRoutes.productRoute:
-        return MaterialPageRoute(builder: (_) => const ProductPage());
+        return MaterialPageRoute(builder: (_) =>  ProductView());
+
 
       case AppRoutes.sellRoute:
         return MaterialPageRoute(builder: (_) => const SellGoldPage());

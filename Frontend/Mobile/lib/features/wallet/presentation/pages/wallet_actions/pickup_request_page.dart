@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
@@ -54,8 +55,14 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Pickup Request'),
         centerTitle: true,
+        title:  Text(
+          'Pickup Request',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: context.appPalette.primary,
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

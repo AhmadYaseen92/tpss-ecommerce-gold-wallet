@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/cubit/transfer_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
@@ -110,14 +111,13 @@ class TransferGiftPage extends StatelessWidget {
           final cubit = BlocProvider.of<TransferCubit>(context);
 
           final appBar = AppBar(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             centerTitle: true,
             title: Text(
               'Transfer / Gift',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryColor,
-                  ),
+                fontWeight: FontWeight.w600,
+                color: context.appPalette.primary,
+              ),
             ),
           );
 

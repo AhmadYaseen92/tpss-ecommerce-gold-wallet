@@ -40,12 +40,11 @@ class LanguageSettingsPage extends StatelessWidget {
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
               centerTitle: true,
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               title: Text(
                 'Language',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: palette.primary,
-                  fontWeight: FontWeight.w700,
                 ),
               ),
               actions: [
