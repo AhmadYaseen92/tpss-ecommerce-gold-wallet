@@ -438,6 +438,47 @@ BEGIN TRY
         ORDER BY [CreatedAtUtc] DESC, [Id] DESC
     );
 
+    DECLARE @WalletAssetImseehSilver int = (
+        SELECT TOP 1 [Id] FROM [WalletAssets]
+        WHERE [WalletId] = @WalletInvestorImseeh
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    DECLARE @TxSellMain int = (
+        SELECT TOP 1 [Id] FROM [TransactionHistories]
+        WHERE [UserId] = @InvestorMain AND [TransactionType] = N'sell'
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    DECLARE @TxSellImseeh int = (
+        SELECT TOP 1 [Id] FROM [TransactionHistories]
+        WHERE [UserId] = @InvestorImseeh AND [TransactionType] = N'sell'
+        ORDER BY [CreatedAtUtc] DESC, [Id] DESC
+    );
+
+    -- Backfill seeded invoices with wallet/product/transaction links so certificate + wallet actions can resolve records reliably.
+    UPDATE [Invoices]
+    SET
+        [WalletItemId] = COALESCE([WalletItemId], @WalletAssetMainGoldBar),
+        [ProductId] = COALESCE([ProductId], @ProductImseehGoldBar),
+        [PaymentTransactionId] = COALESCE(NULLIF([PaymentTransactionId], N''), N'SEED-TXN-INV-0001'),
+        [RelatedTransactionId] = COALESCE([RelatedTransactionId], @TxSellMain),
+        [InvoiceQrCode] = CASE WHEN [InvoiceQrCode] IS NULL OR LTRIM(RTRIM([InvoiceQrCode])) = N'' THEN N'/Certificats/seed/invoice-seed-0001.pdf' ELSE [InvoiceQrCode] END,
+        [PdfUrl] = COALESCE(NULLIF([PdfUrl], N''), N'/Certificats/seed/invoice-seed-0001.pdf'),
+        [UpdatedAtUtc] = @Now
+    WHERE [InvoiceNumber] = N'INV-SEED-0001';
+
+    UPDATE [Invoices]
+    SET
+        [WalletItemId] = COALESCE([WalletItemId], @WalletAssetImseehSilver),
+        [ProductId] = COALESCE([ProductId], @ProductGoldPalSilver),
+        [PaymentTransactionId] = COALESCE(NULLIF([PaymentTransactionId], N''), N'SEED-TXN-INV-0002'),
+        [RelatedTransactionId] = COALESCE([RelatedTransactionId], @TxSellImseeh),
+        [InvoiceQrCode] = CASE WHEN [InvoiceQrCode] IS NULL OR LTRIM(RTRIM([InvoiceQrCode])) = N'' THEN N'/Certificats/seed/invoice-seed-0002.pdf' ELSE [InvoiceQrCode] END,
+        [PdfUrl] = COALESCE(NULLIF([PdfUrl], N''), N'/Certificats/seed/invoice-seed-0002.pdf'),
+        [UpdatedAtUtc] = @Now
+    WHERE [InvoiceNumber] = N'INV-SEED-0002';
+
     IF NOT EXISTS (SELECT 1 FROM [Invoices] WHERE [InvoiceNumber] = N'INV-SEED-0003')
     BEGIN
         INSERT INTO [Invoices] (
