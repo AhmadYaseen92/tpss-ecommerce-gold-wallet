@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
@@ -24,6 +25,7 @@ class WalletItemsPage extends StatefulWidget {
 class _WalletItemsPageState extends State<WalletItemsPage> {
   late List<WalletTransactionEntity> _transactions;
   bool _isRefreshing = false;
+  StreamSubscription<void>? _realtimeSubscription;
 
   @override
   void initState() {
@@ -31,6 +33,16 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
     _transactions = List<WalletTransactionEntity>.from(
       widget.transactions,
     );
+    _startRealtimeRefresh();
+  }
+
+  Future<void> _startRealtimeRefresh() async {
+    await InjectionContainer.realtimeRefreshService().ensureStarted();
+    _realtimeSubscription =
+        InjectionContainer.realtimeRefreshService().refreshes.listen((_) {
+      if (!mounted) return;
+      _reloadTransactions();
+    });
   }
 
   Future<void> _reloadTransactions() async {
@@ -95,6 +107,12 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
       },
     );
     await _reloadTransactions();
+  }
+
+  @override
+  void dispose() {
+    _realtimeSubscription?.cancel();
+    super.dispose();
   }
 
   @override

@@ -108,36 +108,42 @@ class AppRouter {
       case AppRoutes.walletItemsRoute:
         final transactions = settings.arguments as List<WalletTransactionEntity>;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => WalletItemsPage(transactions: transactions),
         );
 
       case AppRoutes.walletAssetSellRoute:
         final transaction = settings.arguments as WalletActionSummary;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => SellAssetPage(asset: transaction),
         );
 
       case AppRoutes.walletAssetTransferRoute:
         final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => TransferAssetPage(asset: transaction),
         );
 
       case AppRoutes.walletAssetConvertRoute:
         final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => ConvertAssetPage(asset: transaction),
         );
 
       case AppRoutes.walletTaxInvoiceRoute:
         final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => GenerateTaxInvoicePage(asset: transaction),
         );
 
       case AppRoutes.walletPickupRoute:
         final transaction = settings.arguments as WalletTransactionEntity;
         return MaterialPageRoute(
+          settings: settings,
           builder: (_) => PickupRequestPage(asset: transaction),
         );
 
