@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/network/dio_factory.dart';
@@ -142,7 +143,37 @@ class _SummaryTransactionWidgetState extends State<SummaryTransactionWidget> {
           if (_loading)
             const Center(child: CircularProgressIndicator.adaptive())
           else if (_transactions.isEmpty)
-            Text('No transactions yet.', style: TextStyle(color: palette.textSecondary))
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.receipt_long_outlined,
+                      size: 48,
+                      color: palette.textSecondary,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No transactions yet',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: palette.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your recent transactions will appear here',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: palette.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
           else
             ..._buildRows(context),
         ],

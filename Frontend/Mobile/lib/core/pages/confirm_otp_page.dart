@@ -38,8 +38,13 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Confirm OTP'),
         centerTitle: true,
+        title: const Text(
+          'Confirm OTP',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),

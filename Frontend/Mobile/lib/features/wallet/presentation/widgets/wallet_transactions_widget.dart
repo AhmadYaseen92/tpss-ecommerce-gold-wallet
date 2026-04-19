@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
@@ -20,6 +21,15 @@ class WalletTransactionsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
+
+    if (transactions.isEmpty) {
+      return EmptyStateWidget(
+        icon: Icons.history,
+        title: 'No Transactions Yet',
+        message: 'Your transaction history will appear here when you add items to your wallet.',
+
+      );
+    }
 
     return Container(
       width: double.infinity,

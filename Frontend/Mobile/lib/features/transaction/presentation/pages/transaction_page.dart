@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_filter_chip.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/services/transaction_excel_export_service.dart';
@@ -66,7 +67,9 @@ class TransactionPage extends StatelessWidget {
                         border: OutlineInputBorder(),
                         isDense: true,
                       ),
-                      onChanged: context.read<TransactionCubit>().filterBySearch,
+                      onChanged: context
+                          .read<TransactionCubit>()
+                          .filterBySearch,
                     ),
                   ),
                   Padding(
@@ -83,9 +86,8 @@ class TransactionPage extends StatelessWidget {
                             child: AppFilterChip(
                               label: category.label,
                               selected: isSelected,
-                              onTap: () => cubit.filterByCategory(
-                                category.categoryId,
-                              ),
+                              onTap: () =>
+                                  cubit.filterByCategory(category.categoryId),
                             ),
                           );
                         }).toList(),
@@ -119,7 +121,10 @@ class TransactionPage extends StatelessWidget {
                                     cubit: context.read<TransactionCubit>(),
                                   );
                                 },
-                          icon: const Icon(Icons.table_chart_outlined, size: 18),
+                          icon: const Icon(
+                            Icons.table_chart_outlined,
+                            size: 18,
+                          ),
                           label: const Text('Export to Excel'),
                         ),
                       ],
@@ -127,16 +132,20 @@ class TransactionPage extends StatelessWidget {
                   ),
                   Expanded(
                     child: state.transactions.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'No transactions found.',
-                              style: TextStyle(color: AppColors.grey),
-                            ),
+                        ? EmptyStateWidget(
+                            icon: Icons.receipt_long_outlined,
+                            title: 'No Transactions',
+                            message:
+                                'Your transaction history will appear here when you make a purchase or add items.',
                           )
                         : RefreshIndicator(
-                            onRefresh: () => context.read<TransactionCubit>().loadTransactions(
-                              seller: context.read<TransactionCubit>().activeSeller,
-                            ),
+                            onRefresh: () => context
+                                .read<TransactionCubit>()
+                                .loadTransactions(
+                                  seller: context
+                                      .read<TransactionCubit>()
+                                      .activeSeller,
+                                ),
                             child: ListView.builder(
                               itemCount: state.transactions.length,
                               itemBuilder: (context, index) {
@@ -207,9 +216,23 @@ class TransactionPage extends StatelessWidget {
                                   DataCell(Text(transaction.transactionType)),
                                   DataCell(Text(transaction.status)),
                                   DataCell(Text('${transaction.quantity}')),
-                                  DataCell(Text('${transaction.amount.toStringAsFixed(2)} ${transaction.currency}')),
-                                  DataCell(Text('${transaction.weight.toStringAsFixed(3)} ${transaction.unit}')),
-                                  DataCell(Text(_dateFormat.format(transaction.displayDate.toLocal()))),
+                                  DataCell(
+                                    Text(
+                                      '${transaction.amount.toStringAsFixed(2)} ${transaction.currency}',
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      '${transaction.weight.toStringAsFixed(3)} ${transaction.unit}',
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      _dateFormat.format(
+                                        transaction.displayDate.toLocal(),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             )
@@ -236,10 +259,7 @@ class TransactionPage extends StatelessWidget {
                   selectedSeller: cubit.activeSeller,
                 );
 
-                await _downloadExport(
-                  context,
-                  bytes: bytes,
-                );
+                await _downloadExport(context, bytes: bytes);
 
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop();
@@ -298,92 +318,386 @@ class TransactionPage extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) {
-        final updatedText = _dateFormat.format(transaction.displayDate.toLocal());
-        final createdText = _dateFormat.format(transaction.createdAtUtc.toLocal());
+        final updatedText = _dateFormat.format(
+          transaction.displayDate.toLocal(),
+        );
+        final createdText = _dateFormat.format(
+          transaction.createdAtUtc.toLocal(),
+        );
 
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Transaction Details',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${transaction.amount.toStringAsFixed(2)} ${transaction.currency}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (transaction.productImageUrl.trim().isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              transaction.productImageUrl,
-                              width: 64,
-                              height: 64,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_outlined),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _detailChip('Type', transaction.transactionType),
-                            if (transaction.isGiftReceived)
-                              _detailChip('Gift', 'Received'),
-                            _detailChip('Status', transaction.status),
-                            _detailChip('Category', transaction.category),
-                            _detailChip('Qty', '${transaction.quantity}'),
-                            _detailChip('Weight', '${transaction.weight.toStringAsFixed(3)} ${transaction.unit}'),
-                          ],
-                        ),
-                      ],
+        return DraggableScrollableSheet(
+          initialChildSize: 0.78,
+          minChildSize: 0.55,
+          maxChildSize: 0.95,
+          builder: (_, controller) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+
+                  /// Handle bar
+                  Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        _detailRow('Id', '${transaction.id}'),
-                        _detailRow('UserId', '${transaction.userId}'),
-                        _detailRow('SellerId', '${transaction.sellerId ?? '-'}'),
-                        if (transaction.isTransferOrGift) ...[
-                          _detailRow('Transfer From', transaction.transferFromLabel),
-                          _detailRow('Transfer To', transaction.transferToLabel),
+
+                  const SizedBox(height: 18),
+
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: controller,
+                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          /// Header
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Transaction Details',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.grey.shade900,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () => Navigator.pop(context),
+                                icon: const Icon(Icons.close_rounded),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          /// Hero Card
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(22),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xffD4AF37), Color(0xffB8860B)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(.08),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  transaction.transactionType.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 1.1,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  '${transaction.amount.toStringAsFixed(2)} ${transaction.currency}',
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+
+                                Row(
+                                  children: [
+                                    if (transaction.productImageUrl
+                                        .trim()
+                                        .isNotEmpty)
+                                      Container(
+                                        width: 58,
+                                        height: 58,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                          color: Colors.white,
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: Image.network(
+                                          transaction.productImageUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Icon(
+                                                Icons.image_not_supported,
+                                              ),
+                                        ),
+                                      ),
+
+                                    const SizedBox(width: 12),
+
+                                    Expanded(
+                                      child: Text(
+                                        transaction.category,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          /// Chips
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              _modernChip(
+                                Icons.sync_alt,
+                                transaction.transactionType,
+                              ),
+
+                              _modernChip(
+                                Icons.verified_outlined,
+                                transaction.status,
+                                backgroundColor: _statusColor(
+                                  transaction.status,
+                                ).withOpacity(.12),
+                                textColor: _statusColor(transaction.status),
+                                iconColor: _statusColor(transaction.status),
+                              ),
+
+                              _modernChip(
+                                Icons.inventory_2_outlined,
+                                'Qty ${transaction.quantity}',
+                              ),
+
+                              _modernChip(
+                                Icons.scale_outlined,
+                                '${transaction.weight.toStringAsFixed(3)} ${transaction.unit}',
+                              ),
+
+                              if (transaction.isGiftReceived)
+                                _modernChip(Icons.card_giftcard, 'Gift'),
+                            ],
+                          ),
+
+                          const SizedBox(height: 22),
+
+                          _sectionTitle('Information'),
+
+                          _modernDetailTile(
+                            Icons.tag,
+                            'Transaction ID',
+                            '${transaction.id}',
+                          ),
+                          _modernDetailTile(
+                            Icons.person_outline,
+                            'User ID',
+                            '${transaction.userId}',
+                          ),
+                          _modernDetailTile(
+                            Icons.storefront_outlined,
+                            'Seller ID',
+                            '${transaction.sellerId ?? '-'}',
+                          ),
+                          _modernDetailTile(
+                            Icons.attach_money,
+                            'Unit Price',
+                            transaction.unitPrice.toStringAsFixed(2),
+                          ),
+                          _modernDetailTile(
+                            Icons.workspace_premium_outlined,
+                            'Purity',
+                            transaction.purity.toStringAsFixed(2),
+                          ),
+
+                          if (transaction.isTransferOrGift) ...[
+                            _modernDetailTile(
+                              Icons.call_received,
+                              'Transfer From',
+                              transaction.transferFromLabel,
+                            ),
+                            _modernDetailTile(
+                              Icons.call_made,
+                              'Transfer To',
+                              transaction.transferToLabel,
+                            ),
+                          ],
+
+                          const SizedBox(height: 20),
+
+                          _sectionTitle('Timeline'),
+
+                          _modernDetailTile(
+                            Icons.calendar_today_outlined,
+                            'Created',
+                            createdText,
+                          ),
+                          _modernDetailTile(
+                            Icons.update_outlined,
+                            'Updated',
+                            updatedText,
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          _sectionTitle('Notes'),
+
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              transaction.notes.isEmpty
+                                  ? 'No notes available'
+                                  : transaction.notes,
+                              style: const TextStyle(fontSize: 14, height: 1.4),
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
                         ],
-                        _detailRow('Unit Price', transaction.unitPrice.toStringAsFixed(2)),
-                        _detailRow('Purity', transaction.purity.toStringAsFixed(2)),
-                        _detailRow('Created', createdText),
-                        _detailRow('Updated', updatedText),
-                        _detailRow('Notes', transaction.notes.isEmpty ? '-' : transaction.notes),
-                      ],
+                      ),
                     ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// SECTION TITLE
+  Widget _sectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+          color: Colors.grey.shade900,
+        ),
+      ),
+    );
+  }
+
+  /// MODERN DETAIL TILE
+  Widget _modernDetailTile(IconData icon, String title, String value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(.04),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
           ),
-        );
-      },
+        ],
+      ),
+    );
+  }
+
+  Color _statusColor(String status) {
+    final value = status.toLowerCase().trim();
+
+    if (value == 'approved' || value == 'completed' || value == 'success') {
+      return Colors.green;
+    } else if (value == 'pending' || value == 'in_progress' || value == 'processing') {
+      return Colors.orange;
+    } else if (value == 'declined' || value == 'rejected' || value == 'failed') {
+      return Colors.red;
+    }
+
+    return Colors.grey;
+  }
+
+  /// CHIP
+  Widget _modernChip(
+    IconData icon,
+    String label, {
+    Color? backgroundColor,
+    Color? textColor,
+    Color? iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: backgroundColor ?? Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: iconColor ?? Colors.black87),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: textColor ?? Colors.black87,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

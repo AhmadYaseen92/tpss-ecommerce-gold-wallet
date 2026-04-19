@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
@@ -105,6 +106,13 @@ class GoldWalletPage extends StatelessWidget {
                           transactions: wallet.transactions,
                           accentColor: context.appPalette.primary,
                           onViewAllHistory: onViewAllHistory,
+                        )
+                      else
+                        EmptyStateWidget(
+                          icon: Icons.account_balance_wallet_outlined,
+                          title: 'No Wallet Details',
+                          message: 'You haven\'t added any items to your wallet yet. Start by adding your first gold item.',
+
                         ),
                     ],
                   ),
@@ -113,7 +121,15 @@ class GoldWalletPage extends StatelessWidget {
             }
             if (state is WalletError) {
               return Scaffold(
-                appBar: AppBar(title: const Text("Wallet")),
+                appBar: AppBar(
+                  centerTitle: true,
+                  title: const Text(
+                    'Wallet',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
                 body: Center(child: Text(state.message)),
               );
             }

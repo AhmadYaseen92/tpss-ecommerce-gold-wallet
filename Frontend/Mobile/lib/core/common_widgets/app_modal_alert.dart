@@ -47,17 +47,12 @@ class AppModalAlert {
             textAlign: TextAlign.center,
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
-          content: Text(
-            message,
-            textAlign: TextAlign.center,
-          ),
+          content: Text(message, textAlign: TextAlign.center),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              style: FilledButton.styleFrom(
-                backgroundColor: colors.button,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: colors.button),
               child: Text(buttonText),
             ),
           ],

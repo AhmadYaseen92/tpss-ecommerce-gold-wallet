@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/account_summary/data/models/account_summary_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/account_summary/presentation/cubit/account_summary_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/account_summary/presentation/pages/account_summary_confirmation_page.dart';
@@ -13,6 +15,7 @@ class AccountSummaryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
     const summary = AccountSummaryModel(
       holdMarketValue: '\$12,450.00',
       goldValue: '\$8,700.00',
@@ -41,7 +44,16 @@ class AccountSummaryPage extends StatelessWidget {
           final cubit = context.read<AccountSummaryCubit>();
 
           return Scaffold(
-            appBar: AppBar(title: const Text('My Account Summary'), centerTitle: true),
+            appBar: AppBar(
+              centerTitle: true,
+              title: Text(
+                'My Account Summary',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: palette.primary,
+                ),
+              ),
+            ),
             body: ListView(
               padding: const EdgeInsets.all(16),
               children: [

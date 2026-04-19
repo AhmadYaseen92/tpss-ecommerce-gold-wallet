@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 
@@ -16,8 +16,14 @@ class GenerateTaxInvoicePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Generate Tax Invoice'),
         centerTitle: true,
+        title:  Text(
+          'Generate Tax Invoice',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: context.appPalette.primary,
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

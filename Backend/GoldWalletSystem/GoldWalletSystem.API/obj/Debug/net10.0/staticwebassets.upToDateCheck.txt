@@ -1,3 +1,5 @@
 wwwroot\images\banners\.gitkeep
 wwwroot\images\products\.gitkeep
+wwwroot\images\products\product-12ee0367370e4351853076f672b035f6.png
+wwwroot\images\products\product-26e4fb1ca8304b45bccb54a5f4f293ba.png
 wwwroot\images\profiles\.gitkeep

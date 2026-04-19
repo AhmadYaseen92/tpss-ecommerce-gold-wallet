@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_filter_chip.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/cubit/cart_cubit.dart';
@@ -59,12 +61,12 @@ class _CartPageState extends State<CartPage> {
                         : state.selectedSellerFilter;
                   }
                   if (cartProducts.isEmpty) {
-                    return Center(
-                      child: Text(
-                        AppReleaseConfig.showSellerUi
-                            ? 'Your cart is empty for selected seller'
-                            : 'Your cart is empty',
-                      ),
+                    return EmptyStateWidget(
+                      icon: Icons.shopping_cart_outlined,
+                      title: 'Your Cart is Empty',
+                      message: AppReleaseConfig.showSellerUi
+                          ? 'No items from this seller yet. Start shopping to fill your cart!'
+                          : 'Looks like you haven\'t added anything to your cart. Explore our collection and find something you love!',
                     );
                   }
                   return Column(

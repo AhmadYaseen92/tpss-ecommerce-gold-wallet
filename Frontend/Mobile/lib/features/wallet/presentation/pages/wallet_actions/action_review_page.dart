@@ -14,7 +14,15 @@ class ActionReviewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Review Transaction")),
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text(
+          'Review Transaction',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       bottomNavigationBar: ActionBottomBar(
         summaryLabel: "Total",
         summaryValue: summary.totalValue,

@@ -67,9 +67,14 @@ class NotificationPage extends StatelessWidget {
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               centerTitle: true,
-              title: Text('Notifications', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600, color: palette.primary)),
+              title: Text(
+                'Notifications',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: palette.primary,
+                ),
+              ),
               actions: [
                 if (state is NotificationLoaded)
                   TextButton(
