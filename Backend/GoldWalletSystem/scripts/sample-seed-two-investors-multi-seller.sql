@@ -40,6 +40,58 @@ WHEN NOT MATCHED THEN
 DECLARE @Investor1Id int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'investor1@goldwallet.com');
 DECLARE @Investor2Id int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'investor2@goldwallet.com');
 
+-- Ensure user profiles exist.
+INSERT INTO [UserProfiles] ([UserId],[DateOfBirth],[Nationality],[PreferredLanguage],[PreferredTheme],[DocumentType],[IdNumber],[ProfilePhotoUrl],[CreatedAtUtc],[UpdatedAtUtc])
+SELECT U.[Id], NULL, N'Jordanian', N'en', N'light', N'National ID', N'', N'/images/profiles/default-user.png', @Now, NULL
+FROM [Users] U
+WHERE U.[Id] IN (@Investor1Id, @Investor2Id)
+  AND NOT EXISTS (SELECT 1 FROM [UserProfiles] P WHERE P.[UserId] = U.[Id]);
+
+DECLARE @ProfileInvestor1 int = (SELECT TOP 1 [Id] FROM [UserProfiles] WHERE [UserId] = @Investor1Id);
+DECLARE @ProfileInvestor2 int = (SELECT TOP 1 [Id] FROM [UserProfiles] WHERE [UserId] = @Investor2Id);
+
+-- Reset profile payment/bank records for deterministic seed output.
+DELETE A FROM [ApplePayPaymentMethodDetails] A INNER JOIN [PaymentMethods] PM ON PM.[Id] = A.[PaymentMethodId] WHERE PM.[UserProfileId] IN (@ProfileInvestor1, @ProfileInvestor2);
+DELETE C FROM [CardPaymentMethodDetails] C INNER JOIN [PaymentMethods] PM ON PM.[Id] = C.[PaymentMethodId] WHERE PM.[UserProfileId] IN (@ProfileInvestor1, @ProfileInvestor2);
+DELETE W FROM [WalletPaymentMethodDetails] W INNER JOIN [PaymentMethods] PM ON PM.[Id] = W.[PaymentMethodId] WHERE PM.[UserProfileId] IN (@ProfileInvestor1, @ProfileInvestor2);
+DELETE CL FROM [CliqPaymentMethodDetails] CL INNER JOIN [PaymentMethods] PM ON PM.[Id] = CL.[PaymentMethodId] WHERE PM.[UserProfileId] IN (@ProfileInvestor1, @ProfileInvestor2);
+DELETE FROM [PaymentMethods] WHERE [UserProfileId] IN (@ProfileInvestor1, @ProfileInvestor2);
+DELETE FROM [LinkedBankAccounts] WHERE [UserProfileId] IN (@ProfileInvestor1, @ProfileInvestor2);
+
+INSERT INTO [LinkedBankAccounts] (
+    [UserProfileId],[BankName],[IbanMasked],[IsVerified],[IsDefault],[AccountHolderName],[AccountNumber],[SwiftCode],
+    [BranchName],[BranchAddress],[Country],[City],[Currency],[CreatedAtUtc],[UpdatedAtUtc]
+)
+VALUES
+    (@ProfileInvestor1, N'Jordan Islamic Bank', N'JO** **** **** 6789', 1, 1, N'Investor One', N'123456789', N'JIBAJOAXXX', N'Amman Main', N'Abdali', N'Jordan', N'Amman', N'JOD', @Now, NULL),
+    (@ProfileInvestor1, N'Arab Bank', N'JO** **** **** 1140', 1, 0, N'Investor One', N'987654321', N'ARABJOAXXX', N'Shmeisani', N'Amman', N'Jordan', N'Amman', N'JOD', @Now, NULL),
+    (@ProfileInvestor2, N'Cairo Amman Bank', N'JO** **** **** 4412', 1, 1, N'Investor Two', N'556677889', N'CAABJOAXXX', N'Irbid Main', N'Irbid', N'Jordan', N'Irbid', N'JOD', @Now, NULL);
+
+INSERT INTO [PaymentMethods] ([UserProfileId],[Type],[MaskedNumber],[IsDefault],[CreatedAtUtc],[UpdatedAtUtc])
+VALUES
+    (@ProfileInvestor1, N'Visa / MasterCard', N'**** **** **** 9281', 1, @Now, NULL),
+    (@ProfileInvestor1, N'Apple Pay', N'APPLE-PAY-PRIMARY', 0, @Now, NULL),
+    (@ProfileInvestor1, N'ZainCash', N'ZAINCASH-7788', 0, @Now, NULL),
+    (@ProfileInvestor2, N'Visa / MasterCard', N'**** **** **** 5521', 1, @Now, NULL);
+
+DECLARE @PmInvestor1Card int = (SELECT TOP 1 [Id] FROM [PaymentMethods] WHERE [UserProfileId] = @ProfileInvestor1 AND [Type] = N'Visa / MasterCard' ORDER BY [Id] DESC);
+DECLARE @PmInvestor1Apple int = (SELECT TOP 1 [Id] FROM [PaymentMethods] WHERE [UserProfileId] = @ProfileInvestor1 AND [Type] = N'Apple Pay' ORDER BY [Id] DESC);
+DECLARE @PmInvestor1Wallet int = (SELECT TOP 1 [Id] FROM [PaymentMethods] WHERE [UserProfileId] = @ProfileInvestor1 AND [Type] = N'ZainCash' ORDER BY [Id] DESC);
+DECLARE @PmInvestor2Card int = (SELECT TOP 1 [Id] FROM [PaymentMethods] WHERE [UserProfileId] = @ProfileInvestor2 AND [Type] = N'Visa / MasterCard' ORDER BY [Id] DESC);
+
+INSERT INTO [CardPaymentMethodDetails] ([PaymentMethodId],[CardNumber],[CardHolderName],[Expiry],[CreatedAtUtc],[UpdatedAtUtc])
+VALUES
+    (@PmInvestor1Card, N'4111111111119281', N'Investor One', N'12/29', @Now, NULL),
+    (@PmInvestor2Card, N'5555555555555521', N'Investor Two', N'10/28', @Now, NULL);
+
+INSERT INTO [ApplePayPaymentMethodDetails] ([PaymentMethodId],[ApplePayToken],[AccountHolderName],[CreatedAtUtc],[UpdatedAtUtc])
+VALUES
+    (@PmInvestor1Apple, N'APPLE_TOKEN_INVESTOR_ONE', N'Investor One', @Now, NULL);
+
+INSERT INTO [WalletPaymentMethodDetails] ([PaymentMethodId],[Provider],[WalletNumber],[AccountHolderName],[CreatedAtUtc],[UpdatedAtUtc])
+VALUES
+    (@PmInvestor1Wallet, N'ZainCash', N'0780007788', N'Investor One', @Now, NULL);
+
 -- Ensure investor wallets exist.
 MERGE [Wallets] AS T
 USING (

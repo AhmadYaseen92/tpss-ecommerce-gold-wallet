@@ -203,6 +203,110 @@ BEGIN TRY
     WHERE U.[Email] IN (SELECT [Email] FROM @Users)
       AND NOT EXISTS (SELECT 1 FROM [Carts] C WHERE C.[UserId] = U.[Id]);
 
+    -- 3.b) Seed profile-linked bank accounts and payment methods used by checkout/wallet actions.
+    DELETE A
+    FROM [ApplePayPaymentMethodDetails] A
+    INNER JOIN [PaymentMethods] PM ON PM.[Id] = A.[PaymentMethodId]
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = PM.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DELETE C
+    FROM [CardPaymentMethodDetails] C
+    INNER JOIN [PaymentMethods] PM ON PM.[Id] = C.[PaymentMethodId]
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = PM.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DELETE WPM
+    FROM [WalletPaymentMethodDetails] WPM
+    INNER JOIN [PaymentMethods] PM ON PM.[Id] = WPM.[PaymentMethodId]
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = PM.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DELETE CL
+    FROM [CliqPaymentMethodDetails] CL
+    INNER JOIN [PaymentMethods] PM ON PM.[Id] = CL.[PaymentMethodId]
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = PM.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DELETE PM
+    FROM [PaymentMethods] PM
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = PM.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DELETE LBA
+    FROM [LinkedBankAccounts] LBA
+    INNER JOIN [UserProfiles] UP ON UP.[Id] = LBA.[UserProfileId]
+    INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+    WHERE U.[Email] IN (N'investor@goldwallet.com', N'imseeh.investor1@example.com');
+
+    DECLARE @ProfileInvestorMain int = (
+        SELECT TOP 1 UP.[Id]
+        FROM [UserProfiles] UP
+        INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+        WHERE U.[Email] = N'investor@goldwallet.com'
+    );
+    DECLARE @ProfileInvestorImseeh int = (
+        SELECT TOP 1 UP.[Id]
+        FROM [UserProfiles] UP
+        INNER JOIN [Users] U ON U.[Id] = UP.[UserId]
+        WHERE U.[Email] = N'imseeh.investor1@example.com'
+    );
+
+    INSERT INTO [LinkedBankAccounts] (
+        [UserProfileId],[BankName],[IbanMasked],[IsVerified],[IsDefault],[AccountHolderName],[AccountNumber],[SwiftCode],
+        [BranchName],[BranchAddress],[Country],[City],[Currency],[CreatedAtUtc],[UpdatedAtUtc]
+    )
+    VALUES
+        (@ProfileInvestorMain, N'Jordan Islamic Bank', N'JO** **** **** 6789', 1, 1, N'Gold Wallet Investor', N'1234567890', N'JIBAJOAXXX', N'Amman Main', N'Abdali Branch', N'Jordan', N'Amman', N'JOD', @Now, NULL),
+        (@ProfileInvestorMain, N'Arab Bank', N'JO** **** **** 1140', 1, 0, N'Gold Wallet Investor', N'9876543210', N'ARABJOAXXX', N'Shmeisani', N'Shmeisani Branch', N'Jordan', N'Amman', N'JOD', @Now, NULL),
+        (@ProfileInvestorImseeh, N'Cairo Amman Bank', N'JO** **** **** 4412', 1, 1, N'Imseeh Investor 1', N'5566778899', N'CAABJOAXXX', N'Zarqa Main', N'Zarqa Downtown', N'Jordan', N'Zarqa', N'JOD', @Now, NULL);
+
+    INSERT INTO [PaymentMethods] ([UserProfileId],[Type],[MaskedNumber],[IsDefault],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES
+        (@ProfileInvestorMain, N'Visa / MasterCard', N'**** **** **** 9281', 1, @Now, NULL),
+        (@ProfileInvestorMain, N'Apple Pay', N'APPLE-PAY-PRIMARY', 0, @Now, NULL),
+        (@ProfileInvestorMain, N'ZainCash', N'ZAINCASH-7788', 0, @Now, NULL),
+        (@ProfileInvestorImseeh, N'Visa / MasterCard', N'**** **** **** 5521', 1, @Now, NULL);
+
+    DECLARE @PmInvestorMainCard int = (
+        SELECT TOP 1 [Id] FROM [PaymentMethods]
+        WHERE [UserProfileId] = @ProfileInvestorMain AND [Type] = N'Visa / MasterCard'
+        ORDER BY [Id] DESC
+    );
+    DECLARE @PmInvestorMainApple int = (
+        SELECT TOP 1 [Id] FROM [PaymentMethods]
+        WHERE [UserProfileId] = @ProfileInvestorMain AND [Type] = N'Apple Pay'
+        ORDER BY [Id] DESC
+    );
+    DECLARE @PmInvestorMainWallet int = (
+        SELECT TOP 1 [Id] FROM [PaymentMethods]
+        WHERE [UserProfileId] = @ProfileInvestorMain AND [Type] = N'ZainCash'
+        ORDER BY [Id] DESC
+    );
+    DECLARE @PmInvestorImseehCard int = (
+        SELECT TOP 1 [Id] FROM [PaymentMethods]
+        WHERE [UserProfileId] = @ProfileInvestorImseeh AND [Type] = N'Visa / MasterCard'
+        ORDER BY [Id] DESC
+    );
+
+    INSERT INTO [CardPaymentMethodDetails] ([PaymentMethodId],[CardNumber],[CardHolderName],[Expiry],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES
+        (@PmInvestorMainCard, N'4111111111119281', N'Gold Wallet Investor', N'12/29', @Now, NULL),
+        (@PmInvestorImseehCard, N'5555555555555521', N'Imseeh Investor 1', N'10/28', @Now, NULL);
+
+    INSERT INTO [ApplePayPaymentMethodDetails] ([PaymentMethodId],[ApplePayToken],[AccountHolderName],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES
+        (@PmInvestorMainApple, N'APPLE_TOKEN_INVESTOR_MAIN', N'Gold Wallet Investor', @Now, NULL);
+
+    INSERT INTO [WalletPaymentMethodDetails] ([PaymentMethodId],[Provider],[WalletNumber],[AccountHolderName],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES
+        (@PmInvestorMainWallet, N'ZainCash', N'0780007788', N'Gold Wallet Investor', @Now, NULL);
+
     -- 4) Keep startup state clean for seeded users.
     DELETE CI
     FROM [CartItems] CI
