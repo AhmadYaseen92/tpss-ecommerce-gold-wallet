@@ -11,7 +11,7 @@ import {
   type UserSession,
   type WalletAssetItem
 } from "../types/models";
-import { deleteJson, getJson, postForm, postJson, putForm, putJson } from "./httpClient";
+import { HttpError, deleteJson, getJson, postForm, postJson, putForm, putJson } from "./httpClient";
 import type {
   DashboardDto,
   LoginResponseDto,
@@ -44,6 +44,8 @@ const fallbackWeightUnits: EnumItemDto[] = [
   { value: 2, name: "Kilogram" },
   { value: 3, name: "Ounce" }
 ];
+
+let allowWebAdminInvestorsEndpoint = true;
 
 const mapSession = (dto: LoginResponseDto): UserSession => ({
   accessToken: dto.accessToken,
@@ -153,6 +155,7 @@ const mapNotifications = (items: WebNotificationDto[]): NotificationItem[] =>
 
 export async function loginWithBackend(credentials: AuthCredentials): Promise<UserSession> {
   const data = await postJson<LoginResponseDto, AuthCredentials>("/api/auth/login", credentials);
+  allowWebAdminInvestorsEndpoint = true;
   return mapSession(data);
 }
 
@@ -283,8 +286,14 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     .catch(() => [] as WebNotificationDto[]);
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
-  const webInvestors = session.role === "admin"
-    ? await getJson<WebInvestorDto[]>("/api/web-admin/investors", session.accessToken)
+  const webInvestors = session.role === "admin" && allowWebAdminInvestorsEndpoint
+    ? await getJson<WebInvestorDto[]>("/api/web-admin/investors", session.accessToken).catch((error) => {
+        if (error instanceof HttpError && error.statusCode === 403) {
+          allowWebAdminInvestorsEndpoint = false;
+          return [] as WebInvestorDto[];
+        }
+        throw error;
+      })
     : [];
 
   const wallet = session.role === "seller" || !session.userId
