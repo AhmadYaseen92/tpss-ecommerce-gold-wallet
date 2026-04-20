@@ -25,6 +25,29 @@ BEGIN TRY
     IF OBJECT_ID(N'[Sellers]') IS NULL
         THROW 50000, 'Tables were not found. Run migrations first.', 1;
 
+    DECLARE @SellerUsers TABLE (
+        FullName nvarchar(150),
+        Email nvarchar(200),
+        PasswordHash nvarchar(500),
+        Role nvarchar(50),
+        PhoneNumber nvarchar(30)
+    );
+
+    INSERT INTO @SellerUsers (FullName, Email, PasswordHash, Role, PhoneNumber)
+    VALUES
+        (N'Imseeh Seller', N'contact@imseeh.com', N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+962700000001'),
+        (N'Gold Palace Seller', N'contact@goldpalace.com', N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+15550000002'),
+        (N'Bullion House Seller', N'contact@bullionhouse.com', N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+15550000003');
+
+    MERGE [Users] AS T
+    USING @SellerUsers AS S
+    ON T.[Email] = S.[Email]
+    WHEN MATCHED THEN
+        UPDATE SET T.[FullName] = S.[FullName], T.[PasswordHash] = S.[PasswordHash], T.[Role] = S.[Role], T.[PhoneNumber] = S.[PhoneNumber], T.[IsActive] = 1, T.[UpdatedAtUtc] = @Now
+    WHEN NOT MATCHED THEN
+        INSERT ([FullName],[Email],[PasswordHash],[Role],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
+
     ------------------------------------------------------------
     -- Sellers
     ------------------------------------------------------------
@@ -42,11 +65,12 @@ BEGIN TRY
             T.[ContactEmail] = S.[ContactEmail],
             T.[ContactPhone] = S.[ContactPhone],
             T.[Address] = S.[Address],
+            T.[UserId] = COALESCE((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[ContactEmail]), T.[UserId]),
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([Name],[Code],[ContactEmail],[ContactPhone],[Address],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],S.[Address],1,@Now,NULL);
+        INSERT ([Name],[Code],[ContactEmail],[ContactPhone],[Address],[UserId],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],S.[Address],(SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[ContactEmail]),1,@Now,NULL);
 
     DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'IMSEEH');
     DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'GOLDPAL');

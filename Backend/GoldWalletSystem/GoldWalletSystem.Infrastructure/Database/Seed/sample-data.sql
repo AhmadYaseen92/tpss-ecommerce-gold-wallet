@@ -15,6 +15,36 @@ BEGIN TRY
     IF OBJECT_ID(N'[Sellers]') IS NULL OR OBJECT_ID(N'[Users]') IS NULL OR OBJECT_ID(N'[Products]') IS NULL
         THROW 50000, 'Required tables are missing. Run migrations first.', 1;
 
+    -- Ensure seller user accounts exist before seeding Sellers (Sellers.UserId is required).
+    DECLARE @SellerUsers TABLE (
+        FullName nvarchar(150),
+        Email nvarchar(200),
+        PasswordHash nvarchar(500),
+        Role nvarchar(50),
+        PhoneNumber nvarchar(30)
+    );
+
+    INSERT INTO @SellerUsers (FullName, Email, PasswordHash, Role, PhoneNumber)
+    VALUES
+        (N'Imseeh Seller',   N'imseeh.seller@example.com',   N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+962700000001'),
+        (N'GoldPal Seller',  N'goldpal.seller@example.com',  N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+15550000002'),
+        (N'Bullion Seller',  N'bullion.seller@example.com',  N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+15550000003');
+
+    MERGE [Users] AS T
+    USING @SellerUsers AS S
+    ON T.[Email] = S.[Email]
+    WHEN MATCHED THEN
+        UPDATE SET
+            T.[FullName] = S.[FullName],
+            T.[PasswordHash] = S.[PasswordHash],
+            T.[Role] = S.[Role],
+            T.[PhoneNumber] = S.[PhoneNumber],
+            T.[IsActive] = 1,
+            T.[UpdatedAtUtc] = @Now
+    WHEN NOT MATCHED THEN
+        INSERT ([FullName],[Email],[PasswordHash],[Role],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
+
     -- 1) Sellers.
     MERGE [Sellers] AS T
     USING (
@@ -116,6 +146,7 @@ BEGIN TRY
             T.[NationalIdFrontPath] = S.[NationalIdFrontPath],
             T.[NationalIdBackPath] = S.[NationalIdBackPath],
             T.[TradeLicensePath] = S.[TradeLicensePath],
+            T.[UserId] = COALESCE((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[Email]), T.[UserId]),
             T.[KycStatus] = 1,
             T.[ReviewedAtUtc] = @Now,
             T.[ReviewNotes] = N'Seeded as approved seller',
@@ -128,7 +159,7 @@ BEGIN TRY
             [CompanyName],[TradeLicenseNumber],[VatNumber],[NationalIdNumber],
             [BankName],[IBAN],[AccountHolderName],
             [NationalIdFrontPath],[NationalIdBackPath],[TradeLicensePath],
-            [KycStatus],[ReviewedAtUtc],[ReviewNotes],[CreatedAtUtc],[UpdatedAtUtc]
+            [KycStatus],[ReviewedAtUtc],[ReviewNotes],[UserId],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES (
             S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],1,
@@ -136,7 +167,9 @@ BEGIN TRY
             S.[CompanyName],S.[TradeLicenseNumber],S.[VatNumber],S.[NationalIdNumber],
             S.[BankName],S.[IBAN],S.[AccountHolderName],
             S.[NationalIdFrontPath],S.[NationalIdBackPath],S.[TradeLicensePath],
-            1,@Now,N'Seeded as approved seller',@Now,NULL
+            1,@Now,N'Seeded as approved seller',
+            (SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[Email]),
+            @Now,NULL
         );
 
     DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'IMSEEH');
@@ -183,12 +216,6 @@ BEGIN TRY
     WHEN NOT MATCHED THEN
         INSERT ([FullName],[Email],[PasswordHash],[Role],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
         VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
-
-    UPDATE S
-    SET S.[UserId] = U.[Id]
-    FROM [Sellers] S
-    INNER JOIN [Users] U ON U.[Email] = S.[ContactEmail]
-    WHERE S.[UserId] IS NULL OR S.[UserId] <> U.[Id];
 
     -- 3) Profiles, wallets, and carts.
     INSERT INTO [UserProfiles] ([UserId],[DateOfBirth],[Nationality],[PreferredLanguage],[PreferredTheme],[DocumentType],[IdNumber],[ProfilePhotoUrl],[CreatedAtUtc],[UpdatedAtUtc])
