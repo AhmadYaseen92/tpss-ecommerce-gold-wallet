@@ -36,6 +36,10 @@ public class Seller : BaseEntity
     public DateTime? ReviewedAtUtc { get; set; }
     public string? ReviewNotes { get; set; }
 
+    public decimal? GoldPrice { get; set; }
+    public decimal? SilverPrice { get; set; }
+    public decimal? DiamondPrice { get; set; }
+
     public ICollection<User> Users { get; set; } = new List<User>();
     public ICollection<Product> Products { get; set; } = new List<Product>();
 }

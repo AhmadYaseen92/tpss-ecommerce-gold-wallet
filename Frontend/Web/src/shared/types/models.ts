@@ -29,6 +29,9 @@ export interface Seller {
   kycStatus: KycStatus;
   submittedAt: string;
   reviewNotes?: string;
+  goldPrice?: number | null;
+  silverPrice?: number | null;
+  diamondPrice?: number | null;
 }
 
 export interface Investor {

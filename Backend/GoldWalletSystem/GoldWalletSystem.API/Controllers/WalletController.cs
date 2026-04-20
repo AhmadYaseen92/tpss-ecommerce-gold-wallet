@@ -1,4 +1,3 @@
-using System.Text.Json;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Wallet;
 using GoldWalletSystem.Application.Constants;
@@ -25,8 +24,6 @@ public class WalletController(
     IWebHostEnvironment environment,
     API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
-    private const string SellExecutionConfigKey = "wallet.sell.execution";
-
     [HttpPost("by-user")]
     public async Task<IActionResult> GetByUser([FromBody] UserRequestDto request, CancellationToken cancellationToken = default)
     {
@@ -774,17 +771,17 @@ public class WalletController(
 
     private async Task<SellExecutionConfigurationResponse> ReadSellExecutionConfigurationAsync(CancellationToken cancellationToken)
     {
-        var config = await dbContext.MobileAppConfigurations
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ConfigKey == SellExecutionConfigKey && x.IsEnabled, cancellationToken);
+        var modeConfig = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == MobileAppConfigurationKeys.WalletSellMode, cancellationToken);
+        var lockConfig = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == MobileAppConfigurationKeys.WalletSellLockSeconds, cancellationToken);
 
-        if (config is null || string.IsNullOrWhiteSpace(config.JsonValue))
+        var mode = string.IsNullOrWhiteSpace(modeConfig?.ValueString) ? "locked_30_seconds" : modeConfig.ValueString;
+        var lockSeconds = lockConfig?.ValueInt ?? 30;
+
+        return new SellExecutionConfigurationResponse
         {
-            return new SellExecutionConfigurationResponse { Mode = "locked_30_seconds", LockSeconds = 30 };
-        }
-
-        return JsonSerializer.Deserialize<SellExecutionConfigurationResponse>(config.JsonValue)
-               ?? new SellExecutionConfigurationResponse { Mode = "locked_30_seconds", LockSeconds = 30 };
+            Mode = mode,
+            LockSeconds = Math.Clamp(lockSeconds, 5, 300)
+        };
     }
 
     public sealed class WalletActionRequest

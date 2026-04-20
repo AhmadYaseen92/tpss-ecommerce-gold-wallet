@@ -38,6 +38,9 @@ export interface WebSellerDto {
   businessName: string;
   kycStatus: string;
   submittedAt: string;
+  goldPrice?: number | null;
+  silverPrice?: number | null;
+  diamondPrice?: number | null;
 }
 
 export interface DashboardDto {

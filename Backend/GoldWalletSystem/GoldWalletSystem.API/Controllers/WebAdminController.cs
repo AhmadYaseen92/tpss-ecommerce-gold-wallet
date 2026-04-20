@@ -1,4 +1,5 @@
 using System.Text.Json;
+using GoldWalletSystem.Application.Constants;
 using System.Text;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.API.Models;
@@ -21,8 +22,6 @@ public class WebAdminController(
     IMarketplaceRealtimeNotifier realtimeNotifier,
     IWebHostEnvironment environment) : ControllerBase
 {
-    private const string FeesConfigKey = "webadmin.fees";
-    private const string WalletSellConfigKey = "wallet.sell.execution";
 
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
@@ -78,7 +77,10 @@ public class WebAdminController(
                 Email = x.Email,
                 BusinessName = x.CompanyName,
                 KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
-                SubmittedAt = x.CreatedAtUtc
+                SubmittedAt = x.CreatedAtUtc,
+                GoldPrice = x.GoldPrice,
+                SilverPrice = x.SilverPrice,
+                DiamondPrice = x.DiamondPrice
             })
             .ToListAsync(cancellationToken);
 
@@ -492,27 +494,9 @@ public class WebAdminController(
     [HttpPut("fees")]
     public async Task<IActionResult> UpdateFees([FromBody] WebFeesDto request, CancellationToken cancellationToken)
     {
-        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == FeesConfigKey, cancellationToken);
-        if (config is null)
-        {
-            config = new Domain.Entities.MobileAppConfiguration
-            {
-                ConfigKey = FeesConfigKey,
-                JsonValue = JsonSerializer.Serialize(request),
-                IsEnabled = true,
-                Description = "Web admin fees configuration",
-                CreatedAtUtc = DateTime.UtcNow
-            };
-            dbContext.MobileAppConfigurations.Add(config);
-        }
-        else
-        {
-            config.JsonValue = JsonSerializer.Serialize(request);
-            config.IsEnabled = true;
-            config.UpdatedAtUtc = DateTime.UtcNow;
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await UpsertDecimalConfigurationAsync(MobileAppConfigurationKeys.FeesDelivery, "Fees Delivery", request.DeliveryFee, "Web admin delivery fee", cancellationToken);
+        await UpsertDecimalConfigurationAsync(MobileAppConfigurationKeys.FeesStorage, "Fees Storage", request.StorageFee, "Web admin storage fee", cancellationToken);
+        await UpsertDecimalConfigurationAsync(MobileAppConfigurationKeys.FeesServiceChargePercent, "Fees Service Charge", request.ServiceChargePercent, "Web admin service charge percent", cancellationToken);
         return Ok(ApiResponse<WebFeesDto>.Ok(request));
     }
 
@@ -520,16 +504,9 @@ public class WebAdminController(
     [HttpGet("wallet/sell-configuration")]
     public async Task<IActionResult> GetWalletSellConfiguration(CancellationToken cancellationToken)
     {
-        var config = await dbContext.MobileAppConfigurations
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ConfigKey == WalletSellConfigKey && x.IsEnabled, cancellationToken);
-
-        var payload = config?.JsonValue;
-        if (string.IsNullOrWhiteSpace(payload))
-        {
-            payload = JsonSerializer.Serialize(new { mode = "locked_30_seconds", lockSeconds = 30 });
-        }
-
+        var mode = await ReadConfigStringAsync(MobileAppConfigurationKeys.WalletSellMode, "locked_30_seconds", cancellationToken);
+        var lockSeconds = await ReadConfigIntAsync(MobileAppConfigurationKeys.WalletSellLockSeconds, 30, cancellationToken);
+        var payload = JsonSerializer.Serialize(new { mode, lockSeconds });
         return Ok(ApiResponse<string>.Ok(payload));
     }
 
@@ -550,31 +527,10 @@ public class WebAdminController(
             ? Math.Clamp(lockElement.GetInt32(), 5, 300)
             : 30;
 
+        await UpsertStringConfigurationAsync(MobileAppConfigurationKeys.WalletSellMode, "Wallet Sell Mode", mode, "Wallet sell execution behavior", cancellationToken);
+        await UpsertIntConfigurationAsync(MobileAppConfigurationKeys.WalletSellLockSeconds, "Wallet Sell Lock Seconds", lockSeconds, "Wallet sell lock duration seconds", cancellationToken);
+
         var payload = JsonSerializer.Serialize(new { mode, lockSeconds });
-
-        var config = await dbContext.MobileAppConfigurations
-            .FirstOrDefaultAsync(x => x.ConfigKey == WalletSellConfigKey, cancellationToken);
-
-        if (config is null)
-        {
-            config = new Domain.Entities.MobileAppConfiguration
-            {
-                ConfigKey = WalletSellConfigKey,
-                JsonValue = payload,
-                IsEnabled = true,
-                Description = "Wallet sell execution behavior",
-                CreatedAtUtc = DateTime.UtcNow
-            };
-            dbContext.MobileAppConfigurations.Add(config);
-        }
-        else
-        {
-            config.JsonValue = payload;
-            config.IsEnabled = true;
-            config.UpdatedAtUtc = DateTime.UtcNow;
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ApiResponse<string>.Ok(payload));
     }
 
@@ -700,14 +656,123 @@ public class WebAdminController(
 
     private async Task<WebFeesDto> ReadFeesAsync(CancellationToken cancellationToken)
     {
-        var config = await dbContext.MobileAppConfigurations
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ConfigKey == FeesConfigKey && x.IsEnabled, cancellationToken);
+        return new WebFeesDto
+        {
+            DeliveryFee = await ReadConfigDecimalAsync(MobileAppConfigurationKeys.FeesDelivery, 12m, cancellationToken),
+            StorageFee = await ReadConfigDecimalAsync(MobileAppConfigurationKeys.FeesStorage, 4m, cancellationToken),
+            ServiceChargePercent = await ReadConfigDecimalAsync(MobileAppConfigurationKeys.FeesServiceChargePercent, 2.5m, cancellationToken)
+        };
+    }
 
-        if (config is null || string.IsNullOrWhiteSpace(config.JsonValue))
-            return new WebFeesDto { DeliveryFee = 12, StorageFee = 4, ServiceChargePercent = 2.5m };
+    private async Task<string> ReadConfigStringAsync(string key, string fallback, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        return string.IsNullOrWhiteSpace(config?.ValueString) ? fallback : config.ValueString;
+    }
 
-        return JsonSerializer.Deserialize<WebFeesDto>(config.JsonValue) ?? new WebFeesDto { DeliveryFee = 12, StorageFee = 4, ServiceChargePercent = 2.5m };
+    private async Task<int> ReadConfigIntAsync(string key, int fallback, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        return config?.ValueInt ?? fallback;
+    }
+
+    private async Task<decimal> ReadConfigDecimalAsync(string key, decimal fallback, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        return config?.ValueDecimal ?? fallback;
+    }
+
+    private async Task UpsertStringConfigurationAsync(string key, string name, string value, string description, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = key,
+                Name = name,
+                ValueType = ConfigurationValueType.String,
+                ValueString = value,
+                Description = description,
+                SellerAccess = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            config.Name = name;
+            config.ValueType = ConfigurationValueType.String;
+            config.ValueString = value;
+            config.ValueBool = null;
+            config.ValueInt = null;
+            config.ValueDecimal = null;
+            config.Description = description;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task UpsertIntConfigurationAsync(string key, string name, int value, string description, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = key,
+                Name = name,
+                ValueType = ConfigurationValueType.Int,
+                ValueInt = value,
+                Description = description,
+                SellerAccess = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            config.Name = name;
+            config.ValueType = ConfigurationValueType.Int;
+            config.ValueString = null;
+            config.ValueBool = null;
+            config.ValueInt = value;
+            config.ValueDecimal = null;
+            config.Description = description;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task UpsertDecimalConfigurationAsync(string key, string name, decimal value, string description, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = key,
+                Name = name,
+                ValueType = ConfigurationValueType.Decimal,
+                ValueDecimal = value,
+                Description = description,
+                SellerAccess = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            config.Name = name;
+            config.ValueType = ConfigurationValueType.Decimal;
+            config.ValueString = null;
+            config.ValueBool = null;
+            config.ValueInt = null;
+            config.ValueDecimal = value;
+            config.Description = description;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private static int? TryParsePrefixedId(string value, string prefix)

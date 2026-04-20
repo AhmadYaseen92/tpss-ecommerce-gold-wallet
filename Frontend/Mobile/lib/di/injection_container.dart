@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
@@ -60,14 +58,6 @@ import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/datasourc
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/repositories/wallet_action_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 
-Map<String, dynamic> __importJson(String raw) {
-  try {
-    return Map<String, dynamic>.from(jsonDecode(raw) as Map);
-  } catch (_) {
-    return <String, dynamic>{};
-  }
-}
-
 class InjectionContainer {
   const InjectionContainer._();
 
@@ -108,16 +98,32 @@ class InjectionContainer {
       final items = payload?['data'];
       if (items is! List) return;
 
+      final typedValues = <String, dynamic>{};
+
       for (final item in items) {
         if (item is! Map<String, dynamic>) continue;
         final key = (item['configKey'] ?? '').toString();
-        if (key != AppReleaseConfig.configKey) continue;
+        if (key.isEmpty) continue;
 
-        final raw = (item['jsonValue'] ?? '{}').toString();
-        final parsed = raw.isEmpty ? <String, dynamic>{} : __importJson(raw);
-        AppReleaseConfig.applyFromJson(parsed);
-        break;
+        final valueType = ((item['valueType'] ?? 0) as num?)?.toInt() ?? 0;
+        switch (valueType) {
+          case 2:
+            typedValues[key] = item['valueBool'] as bool?;
+            break;
+          case 3:
+            typedValues[key] = (item['valueInt'] as num?)?.toInt();
+            break;
+          case 4:
+            typedValues[key] = (item['valueDecimal'] as num?)?.toDouble();
+            break;
+          case 1:
+          default:
+            typedValues[key] = item['valueString']?.toString();
+            break;
+        }
       }
+
+      AppReleaseConfig.applyFromTypedConfig(typedValues);
     } catch (_) {
       // Keep defaults when server config is not available.
     }

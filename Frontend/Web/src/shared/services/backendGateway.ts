@@ -60,7 +60,10 @@ const mapSeller = (dto: WebSellerDto): Seller => ({
   email: dto.email,
   businessName: dto.businessName,
   kycStatus: (dto.kycStatus?.toLowerCase() as "pending" | "approved" | "rejected") ?? "pending",
-  submittedAt: dto.submittedAt
+  submittedAt: dto.submittedAt,
+  goldPrice: dto.goldPrice ?? null,
+  silverPrice: dto.silverPrice ?? null,
+  diamondPrice: dto.diamondPrice ?? null
 });
 
 const mapProduct = (dto: ProductDto): Product => ({

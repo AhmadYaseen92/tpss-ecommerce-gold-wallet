@@ -21,6 +21,9 @@ public class WebSellerDto
     public string BusinessName { get; set; } = string.Empty;
     public string KycStatus { get; set; } = "pending";
     public DateTime SubmittedAt { get; set; }
+    public decimal? GoldPrice { get; set; }
+    public decimal? SilverPrice { get; set; }
+    public decimal? DiamondPrice { get; set; }
 }
 
 public class UpdateSellerKycRequest

@@ -3,7 +3,6 @@ using GoldWalletSystem.Application.DTOs.Products;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Application.Services;
 using GoldWalletSystem.Domain.Constants;
-using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
@@ -339,35 +338,22 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     {
         if (!IsSellerOrAdmin()) return Forbid();
         var sellerId = ResolveSellerScope();
-        var key = GetMarketPriceConfigKey(sellerId);
-        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
-        var payload = JsonSerializer.Serialize(request);
+        if (!sellerId.HasValue)
+            return BadRequest(ApiResponse<object>.Fail("Seller scope is required for market prices.", 400));
 
-        if (config is null)
-        {
-            dbContext.MobileAppConfigurations.Add(new MobileAppConfiguration
-            {
-                ConfigKey = key,
-                JsonValue = payload,
-                Description = sellerId.HasValue ? $"Seller #{sellerId.Value} material market prices" : "Global material market prices",
-                IsEnabled = true,
-                CreatedAtUtc = DateTime.UtcNow
-            });
-        }
-        else
-        {
-            config.JsonValue = payload;
-            config.IsEnabled = true;
-            config.UpdatedAtUtc = DateTime.UtcNow;
-        }
+        var seller = await dbContext.Sellers.FirstOrDefaultAsync(x => x.Id == sellerId.Value, cancellationToken);
+        if (seller is null)
+            return NotFound(ApiResponse<object>.Fail("Seller not found.", 404));
+
+        seller.GoldPrice = request.GoldPerOunce;
+        seller.SilverPrice = request.SilverPerOunce;
+        seller.DiamondPrice = request.DiamondPerCarat;
+        seller.UpdatedAtUtc = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await RecalculateAutoPricedProductsAsync(sellerId, cancellationToken);
         return Ok(ApiResponse<MarketPriceConfigDto>.Ok(request));
     }
-
-    private const string GlobalMarketPriceConfigKey = "GlobalMarketPrices";
-    private const string SellerMarketPriceConfigKeyPrefix = "SellerMarketPrices_";
 
     private async Task<decimal> ResolveMarketPriceByMaterialAsync(ProductMaterialType materialType, int sellerId, CancellationToken cancellationToken)
     {
@@ -383,26 +369,20 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
     private async Task<MarketPriceConfigDto> GetMarketPriceConfigAsync(int? sellerId, CancellationToken cancellationToken)
     {
-        if (sellerId.HasValue)
-        {
-            var sellerConfig = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == GetMarketPriceConfigKey(sellerId), cancellationToken);
-            if (sellerConfig is not null && !string.IsNullOrWhiteSpace(sellerConfig.JsonValue))
-            {
-                return JsonSerializer.Deserialize<MarketPriceConfigDto>(sellerConfig.JsonValue) ?? new MarketPriceConfigDto();
-            }
-        }
-
-        var globalConfig = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == GlobalMarketPriceConfigKey, cancellationToken);
-        if (globalConfig is null || string.IsNullOrWhiteSpace(globalConfig.JsonValue))
-        {
+        if (!sellerId.HasValue)
             return new MarketPriceConfigDto();
-        }
 
-        return JsonSerializer.Deserialize<MarketPriceConfigDto>(globalConfig.JsonValue) ?? new MarketPriceConfigDto();
+        var seller = await dbContext.Sellers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == sellerId.Value, cancellationToken);
+        if (seller is null)
+            return new MarketPriceConfigDto();
+
+        return new MarketPriceConfigDto
+        {
+            GoldPerOunce = seller.GoldPrice ?? 0m,
+            SilverPerOunce = seller.SilverPrice ?? 0m,
+            DiamondPerCarat = seller.DiamondPrice ?? 0m
+        };
     }
-
-    private static string GetMarketPriceConfigKey(int? sellerId)
-        => sellerId.HasValue ? $"{SellerMarketPriceConfigKeyPrefix}{sellerId.Value}" : GlobalMarketPriceConfigKey;
 
     private async Task RecalculateAutoPricedProductsAsync(int? scopeSellerId, CancellationToken cancellationToken)
     {

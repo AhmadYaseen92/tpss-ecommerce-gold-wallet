@@ -85,6 +85,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.TradeLicensePath).IsRequired().HasMaxLength(500);
             entity.Property(x => x.KycStatus).HasConversion<int>();
             entity.Property(x => x.ReviewNotes).HasMaxLength(1000);
+            entity.Property(x => x.GoldPrice).HasPrecision(18, 2);
+            entity.Property(x => x.SilverPrice).HasPrecision(18, 2);
+            entity.Property(x => x.DiamondPrice).HasPrecision(18, 2);
             entity.HasIndex(x => x.Code).IsUnique();
             entity.HasIndex(x => x.Email).IsUnique();
             entity.HasIndex(x => x.Name);
@@ -460,7 +463,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.ToTable("MobileAppConfigurations");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.ConfigKey).IsRequired().HasMaxLength(150);
-            entity.Property(x => x.JsonValue).IsRequired().HasColumnType("nvarchar(max)");
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.ValueType).HasConversion<int>();
+            entity.Property(x => x.ValueString).HasColumnType("nvarchar(max)");
+            entity.Property(x => x.ValueDecimal).HasPrecision(18, 2);
+            entity.Property(x => x.SellerAccess).HasDefaultValue(false);
             entity.Property(x => x.Description).HasMaxLength(500);
             entity.HasIndex(x => x.ConfigKey).IsUnique();
         });
