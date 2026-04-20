@@ -17,10 +17,11 @@ export interface PagedResult<T> {
 export interface LoginResponseDto {
   accessToken: string;
   expiresAtUtc: string;
+  userId: number;
+  fullName: string;
   role: string;
-  userId: number | null;
   sellerId: number | null;
-  displayName?: string | null;
+  sellerName?: string | null;
 }
 
 export interface RegisterResponseDto {

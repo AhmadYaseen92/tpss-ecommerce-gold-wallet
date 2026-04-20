@@ -39,8 +39,8 @@ public class WebAdminController(
         var invoicesQuery = dbContext.Invoices.AsQueryable();
         if (sellerScope.HasValue)
         {
-            invoicesQuery = invoicesQuery.Where(x => dbContext.Users
-                .Any(u => u.Id == x.SellerUserId && u.SellerId == sellerScope.Value));
+            invoicesQuery = invoicesQuery.Where(x => dbContext.Sellers
+                .Any(s => s.UserId == x.SellerUserId && s.Id == sellerScope.Value));
         }
         var invoicesCount = await invoicesQuery.CountAsync(cancellationToken);
         var unreadNotificationsCount = await dbContext.AppNotifications.CountAsync(x => !x.IsRead, cancellationToken);
@@ -107,7 +107,7 @@ public class WebAdminController(
         seller.IsActive = status == KycStatus.Approved;
 
         var sellerUsers = await dbContext.Users
-            .Where(x => x.SellerId == seller.Id && x.Role == SystemRoles.Seller)
+            .Where(x => x.Id == seller.UserId && x.Role == SystemRoles.Seller)
             .ToListAsync(cancellationToken);
 
         foreach (var sellerUser in sellerUsers)
@@ -363,8 +363,8 @@ public class WebAdminController(
 
         if (sellerScope.HasValue)
         {
-            invoicesQuery = invoicesQuery.Where(x => dbContext.Users
-                .Any(u => u.Id == x.SellerUserId && u.SellerId == sellerScope.Value));
+            invoicesQuery = invoicesQuery.Where(x => dbContext.Sellers
+                .Any(s => s.UserId == x.SellerUserId && s.Id == sellerScope.Value));
         }
 
         var invoices = await invoicesQuery
@@ -372,7 +372,7 @@ public class WebAdminController(
             .Select(x => new WebInvoiceDto
             {
                 Id = $"inv-{x.Id}",
-                SellerId = $"s-{x.SellerUserId}",
+                SellerId = $"s-{(dbContext.Sellers.Where(s => s.UserId == x.SellerUserId).Select(s => (int?)s.Id).FirstOrDefault() ?? 0)}",
                 InvestorName = dbContext.Users.Where(u => u.Id == x.InvestorUserId).Select(u => u.FullName).FirstOrDefault() ?? $"User {x.InvestorUserId}",
                 TotalAmount = x.TotalAmount,
                 IssuedAt = x.IssuedOnUtc,
@@ -392,11 +392,13 @@ public class WebAdminController(
                              await dbContext.Users.Where(x => x.FullName == request.InvestorName).Select(x => (int?)x.Id).FirstOrDefaultAsync(cancellationToken) ??
                              await dbContext.Users.Where(x => x.Role == SystemRoles.Investor).Select(x => x.Id).FirstOrDefaultAsync(cancellationToken);
 
-        var sellerUserId = TryParsePrefixedId(request.SellerId, "s-") ??
-                           await dbContext.Users.Where(x => x.Role == SystemRoles.Seller).Select(x => (int?)x.Id).FirstOrDefaultAsync(cancellationToken) ?? 0;
-        var sellerUserSellerId = await dbContext.Users
-            .Where(x => x.Id == sellerUserId)
-            .Select(x => x.SellerId)
+        var requestSellerId = TryParsePrefixedId(request.SellerId, "s-");
+        var sellerUserId = requestSellerId.HasValue
+            ? await dbContext.Sellers.Where(x => x.Id == requestSellerId.Value).Select(x => (int?)x.UserId).FirstOrDefaultAsync(cancellationToken) ?? 0
+            : await dbContext.Sellers.Select(x => (int?)x.UserId).FirstOrDefaultAsync(cancellationToken) ?? 0;
+        var sellerUserSellerId = await dbContext.Sellers
+            .Where(x => x.UserId == sellerUserId)
+            .Select(x => (int?)x.Id)
             .FirstOrDefaultAsync(cancellationToken);
         if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
@@ -448,9 +450,9 @@ public class WebAdminController(
 
         var invoice = await dbContext.Invoices.FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null) return NotFound(ApiResponse<object>.Fail("Invoice not found", 404));
-        var sellerUserSellerId = await dbContext.Users
-            .Where(x => x.Id == invoice.SellerUserId)
-            .Select(x => x.SellerId)
+        var sellerUserSellerId = await dbContext.Sellers
+            .Where(x => x.UserId == invoice.SellerUserId)
+            .Select(x => (int?)x.Id)
             .FirstOrDefaultAsync(cancellationToken);
         if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
@@ -473,9 +475,9 @@ public class WebAdminController(
 
         var invoice = await dbContext.Invoices.FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null) return NotFound(ApiResponse<object>.Fail("Invoice not found", 404));
-        var sellerUserSellerId = await dbContext.Users
-            .Where(x => x.Id == invoice.SellerUserId)
-            .Select(x => x.SellerId)
+        var sellerUserSellerId = await dbContext.Sellers
+            .Where(x => x.UserId == invoice.SellerUserId)
+            .Select(x => (int?)x.Id)
             .FirstOrDefaultAsync(cancellationToken);
         if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
@@ -1114,9 +1116,9 @@ public class WebAdminController(
 
     private async Task CreateInvoiceForApprovedRequestAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
     {
-        var sellerUserId = await dbContext.Users
-            .Where(x => x.Role == SystemRoles.Seller && x.SellerId == request.SellerId)
-            .Select(x => (int?)x.Id)
+        var sellerUserId = await dbContext.Sellers
+            .Where(x => x.Id == request.SellerId)
+            .Select(x => (int?)x.UserId)
             .FirstOrDefaultAsync(cancellationToken) ?? 0;
 
         var pdfUrl = await SaveInvoiceDocumentAsync(request, cancellationToken);

@@ -43,11 +43,6 @@ public class AuthService(
         var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
         var fullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  ", " ").Trim();
 
-        var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
-        var sellerId = isSeller && request.SellerId.HasValue && request.SellerId.Value > 0
-            ? request.SellerId
-            : await ResolveSellerIdAsync(request, role, fullName, cancellationToken);
-
         var user = new User
         {
             FullName = fullName,
@@ -55,7 +50,6 @@ public class AuthService(
             PasswordHash = passwordHasher.Hash(request.Password),
             PhoneNumber = request.PhoneNumber?.Trim(),
             Role = role,
-            SellerId = sellerId,
             IsActive = false,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
@@ -75,6 +69,7 @@ public class AuthService(
         };
 
         var created = await userAuthRepository.AddAsync(user, profile, cancellationToken);
+        var sellerId = await EnsureSellerProfileAsync(created, request, role, fullName, cancellationToken);
         var otp = await otpService.RequestAsync(new RequestOtpRequestDto
         {
             UserId = created.Id,
@@ -159,7 +154,8 @@ public class AuthService(
     private async Task<LoginResponseDto> BuildLoginResponseAsync(User user, CancellationToken cancellationToken)
     {
         var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
-        var sellerId = await userAuthRepository.GetSellerIdForUserAsync(user.Id, cancellationToken);
+        var sellerProfile = await userAuthRepository.GetSellerByUserIdAsync(user.Id, cancellationToken);
+        var sellerId = sellerProfile?.Id;
 
         var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, sellerId);
         return new LoginResponseDto
@@ -168,8 +164,9 @@ public class AuthService(
             ExpiresAtUtc = token.ExpiresAtUtc,
             Role = role,
             UserId = user.Id,
+            FullName = user.FullName,
             SellerId = sellerId,
-            DisplayName = user.FullName
+            SellerName = sellerProfile?.Name
         };
     }
 
@@ -188,20 +185,18 @@ public class AuthService(
     private async Task ValidateSellerAccountAsync(User user, CancellationToken cancellationToken)
     {
         var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
-        var sellerId = await userAuthRepository.GetSellerIdForUserAsync(user.Id, cancellationToken);
-
         if (!string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase))
             return;
 
-        if (!sellerId.HasValue)
+        var seller = await userAuthRepository.GetSellerByUserIdAsync(user.Id, cancellationToken);
+        if (seller is null)
             throw new UnauthorizedAccessException("Seller account is not linked.");
 
-        var seller = await userAuthRepository.GetSellerByIdAsync(sellerId.Value, cancellationToken);
-        if (seller is null || seller.KycStatus != KycStatus.Approved || !seller.IsActive)
+        if (seller.KycStatus != KycStatus.Approved || !seller.IsActive)
             throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
     }
 
-    private async Task<int?> ResolveSellerIdAsync(RegisterRequestDto request, string role, string fullName, CancellationToken cancellationToken)
+    private async Task<int?> EnsureSellerProfileAsync(User createdUser, RegisterRequestDto request, string role, string fullName, CancellationToken cancellationToken)
     {
         var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
         if (!isSeller)
@@ -211,10 +206,9 @@ public class AuthService(
 
         var seller = new Seller
         {
+            UserId = createdUser.Id,
             Name = fullName,
             Code = BuildSellerCode(request),
-            Email = request.Email.Trim(),
-            PasswordHash = passwordHasher.Hash(request.Password),
             ContactEmail = request.Email.Trim(),
             ContactPhone = request.PhoneNumber?.Trim(),
             IsActive = false,
@@ -237,7 +231,7 @@ public class AuthService(
             CreatedAtUtc = DateTime.UtcNow
         };
 
-        var createdSeller = await userAuthRepository.AddSellerAsync(seller, cancellationToken);
+        var createdSeller = await userAuthRepository.AddSellerProfileAsync(seller, cancellationToken);
         return createdSeller.Id;
     }
 

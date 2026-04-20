@@ -9,7 +9,7 @@ namespace GoldWalletSystem.API.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController(IAuthService authService, ISellerAuthService sellerAuthService) : ControllerBase
+public class AuthController(IAuthService authService) : ControllerBase
 {
     [HttpGet("ping")]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
@@ -60,17 +60,6 @@ public class AuthController(IAuthService authService, ISellerAuthService sellerA
     {
         await authService.ConfirmPasswordResetAsync(request, cancellationToken);
         return Ok(ApiResponse<object>.Ok(new { request.Email }, "Password reset successful"));
-    }
-
-
-
-    [HttpPost("seller-login")]
-    [ProducesResponseType(typeof(ApiResponse<LoginResponseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> SellerLogin([FromBody] LoginRequestDto request, CancellationToken cancellationToken = default)
-    {
-        var result = await sellerAuthService.SellerLoginAsync(request, cancellationToken);
-        return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Seller login successful"));
     }
 
     [Authorize]

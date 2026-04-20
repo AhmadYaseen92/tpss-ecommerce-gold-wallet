@@ -46,11 +46,11 @@ const fallbackWeightUnits: EnumItemDto[] = [
 
 const mapSession = (dto: LoginResponseDto): UserSession => ({
   accessToken: dto.accessToken,
-  userId: dto.userId ?? null,
+  userId: dto.userId,
   sellerId: dto.sellerId ?? null,
   role: toRole(dto.role),
   expiresAtUtc: dto.expiresAtUtc,
-  displayName: dto.displayName ?? null
+  displayName: dto.fullName ?? dto.sellerName ?? null
 });
 
 const mapSeller = (dto: WebSellerDto): Seller => ({
@@ -165,7 +165,7 @@ const mapNotifications = (logs: AuditLogDto[]): NotificationItem[] =>
   }));
 
 export async function loginWithBackend(credentials: AuthCredentials): Promise<UserSession> {
-  const data = await postJson<LoginResponseDto, AuthCredentials>("/api/auth/seller-login", credentials);
+  const data = await postJson<LoginResponseDto, AuthCredentials>("/api/auth/login", credentials);
   return mapSession(data);
 }
 
@@ -185,7 +185,6 @@ export async function registerSellerWithBackend(registration: SellerRegistration
     preferredLanguage: "en",
     preferredTheme: "light",
     role: "Seller",
-    sellerId: 0,
     sellerCode: "",
     country: registration.country,
     city: registration.city,

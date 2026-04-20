@@ -62,10 +62,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.ToTable("Sellers");
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.UserId).IsRequired();
             entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
             entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
-            entity.Property(x => x.Email).IsRequired().HasMaxLength(200);
-            entity.Property(x => x.PasswordHash).IsRequired().HasMaxLength(500);
             entity.Property(x => x.ContactEmail).HasMaxLength(200);
             entity.Property(x => x.ContactPhone).HasMaxLength(50);
             entity.Property(x => x.Country).IsRequired().HasMaxLength(80);
@@ -89,9 +88,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.SilverPrice).HasPrecision(18, 2);
             entity.Property(x => x.DiamondPrice).HasPrecision(18, 2);
             entity.HasIndex(x => x.Code).IsUnique();
-            entity.HasIndex(x => x.Email).IsUnique();
+            entity.HasIndex(x => x.UserId).IsUnique();
             entity.HasIndex(x => x.Name);
             entity.HasIndex(x => x.KycStatus);
+            entity.HasOne(x => x.User).WithOne(x => x.SellerProfile).HasForeignKey<Seller>(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
     }
 
@@ -108,8 +108,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Role).IsRequired().HasMaxLength(50);
             entity.HasIndex(x => x.Email).IsUnique();
             entity.HasIndex(x => x.Role);
-            entity.HasIndex(x => x.SellerId);
-            entity.HasOne(x => x.Seller).WithMany(x => x.Users).HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict).IsRequired(false);
         });
     }
 

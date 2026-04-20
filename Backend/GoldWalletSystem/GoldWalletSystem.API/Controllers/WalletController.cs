@@ -420,7 +420,8 @@ public class WalletController(
         if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell" or "transfer" or "gift" or "pickup")
         {
             var sellerUserId = await dbContext.Users
-                .Where(x => x.Role == "Seller" && x.SellerId == asset.SellerId)
+                .Where(x => x.Role == "Seller")
+                .Where(x => dbContext.Sellers.Any(s => s.UserId == x.Id && s.Id == asset.SellerId))
                 .Select(x => (int?)x.Id)
                 .FirstOrDefaultAsync(cancellationToken) ?? 0;
 

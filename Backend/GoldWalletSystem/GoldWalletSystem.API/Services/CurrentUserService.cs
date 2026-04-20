@@ -10,14 +10,6 @@ public class CurrentUserService(IHttpContextAccessor accessor) : ICurrentUserSer
         get
         {
             var principal = accessor.HttpContext?.User;
-            var role = principal?.FindFirstValue("role");
-            var sellerIdClaim = principal?.FindFirstValue("seller_id");
-            if (string.Equals(role, GoldWalletSystem.Domain.Constants.SystemRoles.Seller, StringComparison.OrdinalIgnoreCase)
-                && int.TryParse(sellerIdClaim, out _))
-            {
-                return null;
-            }
-
             var value = principal?.FindFirstValue("sub")
                 ?? principal?.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? principal?.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub);

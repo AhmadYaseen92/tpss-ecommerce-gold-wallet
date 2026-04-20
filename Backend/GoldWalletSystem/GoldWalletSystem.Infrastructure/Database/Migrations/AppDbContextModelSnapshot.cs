@@ -856,11 +856,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
                     b.Property<string>("IBAN")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -891,11 +886,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("PostalCode")
                         .IsRequired()
@@ -932,12 +922,15 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.HasIndex("Email")
+                    b.HasIndex("UserId")
                         .IsUnique();
 
                     b.HasIndex("KycStatus");
@@ -1069,9 +1062,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int?>("SellerId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -1081,8 +1071,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .IsUnique();
 
                     b.HasIndex("Role");
-
-                    b.HasIndex("SellerId");
 
                     b.ToTable("Users", (string)null);
                 });
@@ -1473,12 +1461,12 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.User", b =>
                 {
-                    b.HasOne("GoldWalletSystem.Domain.Entities.Seller", "Seller")
-                        .WithMany("Users")
-                        .HasForeignKey("SellerId")
+                    b.HasOne("GoldWalletSystem.Domain.Entities.Seller", "SellerProfile")
+                        .WithOne("User")
+                        .HasForeignKey("GoldWalletSystem.Domain.Entities.Seller", "UserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Seller");
+                    b.Navigation("SellerProfile");
                 });
 
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.UserProfile", b =>
