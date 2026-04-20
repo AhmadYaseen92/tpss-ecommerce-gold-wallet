@@ -16,6 +16,7 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
         services.AddMemoryCache();
+        services.AddHttpClient("OtpDeliveryWhatsapp");
 
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
