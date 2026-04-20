@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
@@ -26,6 +26,12 @@ const setKyc = async (sellerId: string, status: "approved" | "rejected") => {
   if (status === "approved") await props.marketplace.approveKyc(sellerId);
   if (status === "rejected") await props.marketplace.rejectKyc(sellerId);
 };
+
+onMounted(() => {
+  if (props.marketplace.role.value === "admin") {
+    void props.marketplace.refreshMarketplaceState();
+  }
+});
 </script>
 
 <template>

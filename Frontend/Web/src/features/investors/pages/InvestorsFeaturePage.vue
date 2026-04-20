@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { useInvestors } from "../store/useInvestors";
 import InvestorsPage from "./InvestorsPage.vue";
@@ -28,6 +28,12 @@ const pagedRows = computed(() => {
 const viewInvestor = (id: string) => {
   selectedInvestorId.value = id;
 };
+
+onMounted(() => {
+  if (props.marketplace.role.value === "admin") {
+    void props.marketplace.refreshMarketplaceState();
+  }
+});
 </script>
 
 <template>

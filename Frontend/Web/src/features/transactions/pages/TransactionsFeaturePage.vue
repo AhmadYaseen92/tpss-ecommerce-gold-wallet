@@ -17,6 +17,11 @@ const syncPath = () => {
   currentPath.value = window.location.hash.replace(/^#/, "");
 };
 onMounted(() => window.addEventListener("hashchange", syncPath));
+onMounted(() => {
+  if (props.marketplace.role.value === "admin") {
+    void props.marketplace.refreshMarketplaceState();
+  }
+});
 onUnmounted(() => {
   window.removeEventListener("hashchange", syncPath);
 });
@@ -69,7 +74,7 @@ const cancelRequest = async (id: string) => {
     <TransactionDetailsPage :item="detailsItem" />
   </SectionCard>
   <SectionCard v-else title="Transactions">
-    <div class="filters">
+    <div class="filters" :style="{ gridTemplateColumns: marketplace.role.value === 'admin' ? '1fr 180px 180px 220px' : '1fr 180px 180px' }">
       <input v-model="searchTerm" placeholder="Search by ID, investor, product, category..." />
       <select v-model="statusFilter">
         <option value="all">All statuses</option>
@@ -89,7 +94,7 @@ const cancelRequest = async (id: string) => {
         <option value="pickup">Pickup</option>
         <option value="withdrawal">Withdrawal</option>
       </select>
-      <select v-model="sellerFilter">
+      <select v-if="marketplace.role.value === 'admin'" v-model="sellerFilter">
         <option value="all">All sellers</option>
         <option v-for="seller in sellers" :key="seller.id" :value="seller.id">{{ seller.name }}</option>
       </select>
@@ -107,7 +112,7 @@ const cancelRequest = async (id: string) => {
 <style scoped>
 .filters {
   display: grid;
-  grid-template-columns: 1fr 180px 180px 220px;
+  grid-template-columns: 1fr 180px 180px;
   gap: 10px;
   margin-bottom: 12px;
 }
