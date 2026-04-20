@@ -29,7 +29,7 @@ public class CheckoutController(
         var data = await otpService.RequestAsync(new RequestOtpRequestDto
         {
             UserId = request.UserId,
-            ActionType = OtpActionTypes.Checkout,
+            ActionType = OtpActionTypes.Buy,
             ActionReferenceId = actionReference,
             ForceEmailFallback = request.ForceEmailFallback
         }, cancellationToken);
@@ -268,12 +268,7 @@ public class CheckoutController(
 
         if (!string.IsNullOrWhiteSpace(request.OtpVerificationToken))
         {
-            await otpService.ConsumeVerificationGrantAsync(
-                request.UserId,
-                OtpActionTypes.Checkout,
-                actionReference,
-                request.OtpVerificationToken,
-                cancellationToken);
+            await ConsumeCheckoutOrBuyGrantAsync(request.UserId, actionReference, request.OtpVerificationToken, cancellationToken);
             return;
         }
 
@@ -287,10 +282,14 @@ public class CheckoutController(
             OtpCode = request.OtpCode
         }, cancellationToken);
 
+        var verifiedAction = verified.ActionType.Trim().ToLowerInvariant();
+        if (verifiedAction is not (OtpActionTypes.Checkout or OtpActionTypes.Buy))
+            throw new InvalidOperationException("OTP action is invalid for checkout.");
+
         await otpService.ConsumeVerificationGrantAsync(
             request.UserId,
-            OtpActionTypes.Checkout,
-            actionReference,
+            verified.ActionType,
+            string.IsNullOrWhiteSpace(verified.ActionReferenceId) ? actionReference : verified.ActionReferenceId,
             verified.VerificationToken,
             cancellationToken);
     }
@@ -307,5 +306,34 @@ public class CheckoutController(
         }
 
         return $"checkout:{userId}:cart:all";
+    }
+
+    private async Task ConsumeCheckoutOrBuyGrantAsync(int userId, string actionReference, string verificationToken, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await otpService.ConsumeVerificationGrantAsync(
+                userId,
+                OtpActionTypes.Checkout,
+                actionReference,
+                verificationToken,
+                cancellationToken);
+            return;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Try Buy action for mobile flows that label checkout OTP as "buy".
+        }
+        catch (InvalidOperationException)
+        {
+            // Try Buy action for mobile flows that label checkout OTP as "buy".
+        }
+
+        await otpService.ConsumeVerificationGrantAsync(
+            userId,
+            OtpActionTypes.Buy,
+            actionReference,
+            verificationToken,
+            cancellationToken);
     }
 }
