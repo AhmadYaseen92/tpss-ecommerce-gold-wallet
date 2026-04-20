@@ -140,14 +140,23 @@ public class OtpDeliveryService(
         {
             EnableSsl = options.Email.UseSsl,
             DeliveryMethod = SmtpDeliveryMethod.Network,
+            Timeout = Math.Max(options.Email.SendTimeoutMs, 1000),
             UseDefaultCredentials = false,
             Credentials = string.IsNullOrWhiteSpace(options.Email.Username)
                 ? CredentialCache.DefaultNetworkCredentials
                 : new NetworkCredential(options.Email.Username, options.Email.Password)
         };
 
-        cancellationToken.ThrowIfCancellationRequested();
-        await smtp.SendMailAsync(message, cancellationToken);
+        using var sendTimeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(Math.Max(options.Email.SendTimeoutMs, 1000)));
+        try
+        {
+            // Avoid coupling SMTP send lifecycle to HTTP request-abort cancellation.
+            await smtp.SendMailAsync(message, sendTimeoutCts.Token);
+        }
+        catch (OperationCanceledException) when (sendTimeoutCts.IsCancellationRequested)
+        {
+            throw new InvalidOperationException($"Email delivery timed out after {Math.Max(options.Email.SendTimeoutMs, 1000)} ms.");
+        }
 
         logger.LogInformation(
             "OTP delivered via Email sender {FromName} <{FromAddress}> to user {UserId} ({Email}).",
@@ -180,6 +189,9 @@ public class OtpDeliveryService(
                 SmtpHost = configuration["OtpDelivery:Email:SmtpHost"] ?? string.Empty,
                 SmtpPort = int.TryParse(configuration["OtpDelivery:Email:SmtpPort"], out var smtpPort) ? smtpPort : 587,
                 UseSsl = !bool.TryParse(configuration["OtpDelivery:Email:UseSsl"], out var useSsl) || useSsl,
+                SendTimeoutMs = int.TryParse(configuration["OtpDelivery:Email:SendTimeoutMs"], out var sendTimeoutMs)
+                    ? Math.Max(sendTimeoutMs, 1000)
+                    : 30000,
                 Username = configuration["OtpDelivery:Email:Username"] ?? string.Empty,
                 Password = configuration["OtpDelivery:Email:Password"] ?? string.Empty
             }
