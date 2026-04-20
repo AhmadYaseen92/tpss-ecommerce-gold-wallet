@@ -1,5 +1,6 @@
 using GoldWalletSystem.Application.DTOs.Auth;
 using GoldWalletSystem.Application.DTOs.Common;
+using GoldWalletSystem.Application.DTOs.Otp;
 using GoldWalletSystem.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,22 +36,28 @@ public class AuthController(IAuthService authService, ISellerAuthService sellerA
         return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Login successful"));
     }
 
-    [HttpPost("login/send-otp")]
-    [ProducesResponseType(typeof(ApiResponse<SendLoginOtpResponseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> SendLoginOtp([FromBody] SendLoginOtpRequestDto request, CancellationToken cancellationToken = default)
+    [HttpPost("register/verify-otp")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> VerifyRegistrationOtp([FromBody] VerifyRegistrationOtpRequestDto request, CancellationToken cancellationToken = default)
     {
-        var result = await authService.SendLoginOtpAsync(request, cancellationToken);
-        return Ok(ApiResponse<SendLoginOtpResponseDto>.Ok(result, "OTP sent successfully"));
+        await authService.VerifyRegistrationOtpAsync(request, cancellationToken);
+        return Ok(ApiResponse<object>.Ok(new { request.UserId }, "Registration verified successfully"));
     }
 
-    [HttpPost("login/verify-otp")]
-    [ProducesResponseType(typeof(ApiResponse<LoginResponseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> VerifyLoginOtp([FromBody] VerifyLoginOtpRequestDto request, CancellationToken cancellationToken = default)
+    [HttpPost("password/reset/request-otp")]
+    [ProducesResponseType(typeof(ApiResponse<OtpDispatchResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RequestPasswordResetOtp([FromBody] RequestPasswordResetOtpRequestDto request, CancellationToken cancellationToken = default)
     {
-        var result = await authService.VerifyLoginOtpAsync(request, cancellationToken);
-        return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Login successful"));
+        var data = await authService.RequestPasswordResetOtpAsync(request, cancellationToken);
+        return Ok(ApiResponse<OtpDispatchResponseDto>.Ok(data, "Password reset OTP sent"));
+    }
+
+    [HttpPost("password/reset/confirm")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ConfirmPasswordReset([FromBody] ConfirmPasswordResetRequestDto request, CancellationToken cancellationToken = default)
+    {
+        await authService.ConfirmPasswordResetAsync(request, cancellationToken);
+        return Ok(ApiResponse<object>.Ok(new { request.Email }, "Password reset successful"));
     }
 
 

@@ -17,6 +17,10 @@ public class MobileAppConfigurationService(IMobileAppConfigurationRepository rep
         {
             ValidateOtpChannelsConfiguration(request.JsonValue);
         }
+        else if (string.Equals(request.ConfigKey, MobileAppConfigurationKeys.OtpSecuritySettings, StringComparison.OrdinalIgnoreCase))
+        {
+            ValidateOtpSecuritySettings(request.JsonValue);
+        }
 
         return repository.UpsertAsync(request, cancellationToken);
     }
@@ -51,6 +55,20 @@ public class MobileAppConfigurationService(IMobileAppConfigurationRepository rep
         catch (JsonException)
         {
             throw new InvalidOperationException("OTP channels must be valid JSON.");
+        }
+    }
+
+    private static void ValidateOtpSecuritySettings(string jsonValue)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(jsonValue);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                throw new InvalidOperationException("OTP security settings must be a JSON object.");
+        }
+        catch (JsonException)
+        {
+            throw new InvalidOperationException("OTP security settings must be valid JSON.");
         }
     }
 }

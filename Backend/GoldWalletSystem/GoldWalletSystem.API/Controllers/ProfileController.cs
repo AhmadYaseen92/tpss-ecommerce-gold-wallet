@@ -1,5 +1,6 @@
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Profile;
+using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,7 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/profile")]
-public class ProfileController(IProfileService profileService, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
+public class ProfileController(IProfileService profileService, IOtpService otpService, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
 {
     [HttpPost("by-user")]
     public async Task<IActionResult> GetByUser([FromBody] UserRequestDto request, CancellationToken cancellationToken = default)
@@ -27,6 +28,17 @@ public class ProfileController(IProfileService profileService, ICurrentUserServi
     public async Task<IActionResult> UpdatePersonal([FromBody] UpdateProfilePersonalInfoRequestDto request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+        var current = await profileService.GetByUserIdAsync(request.UserId, cancellationToken)
+            ?? throw new InvalidOperationException("Profile not found.");
+        var otpAction = !string.Equals(current.Email, request.Email, StringComparison.OrdinalIgnoreCase)
+            ? OtpActionTypes.ChangeEmail
+            : OtpActionTypes.ChangeMobileNumber;
+        await otpService.ConsumeVerificationGrantAsync(
+            request.UserId,
+            otpAction,
+            request.OtpActionReferenceId,
+            request.OtpVerificationToken,
+            cancellationToken);
         var data = await profileService.UpdatePersonalInfoAsync(request, cancellationToken);
         return Ok(ApiResponse<ProfileDto>.Ok(data, "Profile personal information updated"));
     }
@@ -43,6 +55,12 @@ public class ProfileController(IProfileService profileService, ICurrentUserServi
     public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordRequestDto request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+        await otpService.ConsumeVerificationGrantAsync(
+            request.UserId,
+            OtpActionTypes.ChangePassword,
+            request.OtpActionReferenceId,
+            request.OtpVerificationToken,
+            cancellationToken);
         await profileService.ChangePasswordAsync(request, cancellationToken);
         return Ok(ApiResponse<object>.Ok(new { request.UserId }, "Password updated"));
     }
@@ -51,6 +69,12 @@ public class ProfileController(IProfileService profileService, ICurrentUserServi
     public async Task<IActionResult> UpsertPaymentMethod([FromBody] UpsertPaymentMethodRequestDto request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+        await otpService.ConsumeVerificationGrantAsync(
+            request.UserId,
+            request.PaymentMethodId.HasValue ? OtpActionTypes.EditPaymentMethod : OtpActionTypes.AddPaymentMethod,
+            request.OtpActionReferenceId,
+            request.OtpVerificationToken,
+            cancellationToken);
         var data = await profileService.UpsertPaymentMethodAsync(request, cancellationToken);
         return Ok(ApiResponse<ProfileDto>.Ok(data, "Payment method saved"));
     }
@@ -59,7 +83,41 @@ public class ProfileController(IProfileService profileService, ICurrentUserServi
     public async Task<IActionResult> UpsertLinkedBank([FromBody] UpsertLinkedBankAccountRequestDto request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+        await otpService.ConsumeVerificationGrantAsync(
+            request.UserId,
+            request.LinkedBankAccountId.HasValue ? OtpActionTypes.EditBankAccount : OtpActionTypes.AddBankAccount,
+            request.OtpActionReferenceId,
+            request.OtpVerificationToken,
+            cancellationToken);
         var data = await profileService.UpsertLinkedBankAccountAsync(request, cancellationToken);
         return Ok(ApiResponse<ProfileDto>.Ok(data, "Linked bank account saved"));
+    }
+
+    [HttpDelete("payment-methods")]
+    public async Task<IActionResult> RemovePaymentMethod([FromBody] RemovePaymentMethodRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+        await otpService.ConsumeVerificationGrantAsync(
+            request.UserId,
+            OtpActionTypes.RemovePaymentMethod,
+            request.OtpActionReferenceId,
+            request.OtpVerificationToken,
+            cancellationToken);
+        var data = await profileService.RemovePaymentMethodAsync(request, cancellationToken);
+        return Ok(ApiResponse<ProfileDto>.Ok(data, "Payment method removed"));
+    }
+
+    [HttpDelete("linked-bank-accounts")]
+    public async Task<IActionResult> RemoveLinkedBank([FromBody] RemoveLinkedBankAccountRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+        await otpService.ConsumeVerificationGrantAsync(
+            request.UserId,
+            OtpActionTypes.RemoveBankAccount,
+            request.OtpActionReferenceId,
+            request.OtpVerificationToken,
+            cancellationToken);
+        var data = await profileService.RemoveLinkedBankAccountAsync(request, cancellationToken);
+        return Ok(ApiResponse<ProfileDto>.Ok(data, "Linked bank account removed"));
     }
 }

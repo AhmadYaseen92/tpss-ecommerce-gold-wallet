@@ -31,6 +31,8 @@ public class UpdateProfilePersonalInfoRequestDto
     [RegularExpression(@"^[A-Za-z0-9-]{4,30}$")]
     public string IdNumber { get; set; } = string.Empty;
     public string ProfilePhotoUrl { get; set; } = string.Empty;
+    public string OtpVerificationToken { get; set; } = string.Empty;
+    public string OtpActionReferenceId { get; set; } = string.Empty;
 }
 
 public class UpdateProfileSettingsRequestDto
@@ -45,6 +47,8 @@ public class UpdatePasswordRequestDto
     public int UserId { get; set; }
     public string CurrentPassword { get; set; } = string.Empty;
     public string NewPassword { get; set; } = string.Empty;
+    public string OtpVerificationToken { get; set; } = string.Empty;
+    public string OtpActionReferenceId { get; set; } = string.Empty;
 }
 
 public class UpsertPaymentMethodRequestDto
@@ -79,6 +83,8 @@ public class UpsertPaymentMethodRequestDto
     [MaxLength(120)]
     public string CliqBankName { get; set; } = string.Empty;
     public bool IsDefault { get; set; }
+    public string OtpVerificationToken { get; set; } = string.Empty;
+    public string OtpActionReferenceId { get; set; } = string.Empty;
 }
 
 public class UpsertLinkedBankAccountRequestDto
@@ -119,4 +125,22 @@ public class UpsertLinkedBankAccountRequestDto
     [Required]
     [MaxLength(10)]
     public string Currency { get; set; } = string.Empty;
+    public string OtpVerificationToken { get; set; } = string.Empty;
+    public string OtpActionReferenceId { get; set; } = string.Empty;
+}
+
+public class RemovePaymentMethodRequestDto
+{
+    public int UserId { get; set; }
+    public int PaymentMethodId { get; set; }
+    public string OtpVerificationToken { get; set; } = string.Empty;
+    public string OtpActionReferenceId { get; set; } = string.Empty;
+}
+
+public class RemoveLinkedBankAccountRequestDto
+{
+    public int UserId { get; set; }
+    public int LinkedBankAccountId { get; set; }
+    public string OtpVerificationToken { get; set; } = string.Empty;
+    public string OtpActionReferenceId { get; set; } = string.Empty;
 }

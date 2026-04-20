@@ -1,13 +1,11 @@
-using GoldWalletSystem.Application.DTOs.Auth;
 using GoldWalletSystem.Application.Constants;
+using GoldWalletSystem.Application.DTOs.Auth;
+using GoldWalletSystem.Application.DTOs.Otp;
 using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
-using GoldWalletSystem.Application.Models.Auth;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
-using System.Security.Cryptography;
-using System.Text.Json;
 
 namespace GoldWalletSystem.Application.Services;
 
@@ -15,12 +13,8 @@ public class AuthService(
     IUserAuthRepository userAuthRepository,
     IPasswordHasher passwordHasher,
     ITokenService tokenService,
-    ILoginOtpChallengeStore loginOtpChallengeStore,
-    IMobileAppConfigurationRepository mobileAppConfigurationRepository,
-    IOtpDeliveryService otpDeliveryService) : IAuthService
+    IOtpService otpService) : IAuthService
 {
-    private static readonly TimeSpan LoginOtpTtl = TimeSpan.FromMinutes(5);
-
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
@@ -30,54 +24,136 @@ public class AuthService(
         return await BuildLoginResponseAsync(user, cancellationToken);
     }
 
-    public async Task<SendLoginOtpResponseDto> SendLoginOtpAsync(SendLoginOtpRequestDto request, CancellationToken cancellationToken = default)
+    public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            throw new UnauthorizedAccessException("Invalid credentials.");
-
-        var user = await ValidateCredentialsAsync(request.Email, request.Password, cancellationToken);
-        var channels = await ResolveOtpDeliveryChannelsAsync(cancellationToken);
-
-        var otpCode = GenerateOtpCode();
-        var challenge = new LoginOtpChallengeModel
+        if (string.IsNullOrWhiteSpace(request.FirstName) ||
+            string.IsNullOrWhiteSpace(request.LastName) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.Password))
         {
-            UserId = user.Id,
-            OtpHash = passwordHasher.Hash(otpCode),
-            ExpiresAtUtc = DateTime.UtcNow.Add(LoginOtpTtl),
-            DeliveryChannels = channels.Select(x => x.ToString()).ToArray()
+            throw new InvalidOperationException("First name, last name, email and password are required.");
+        }
+
+        var existing = await userAuthRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken);
+        if (existing is not null)
+        {
+            throw new InvalidOperationException("Email is already registered.");
+        }
+
+        var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
+        var fullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  ", " ").Trim();
+
+        var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
+        var sellerId = isSeller && request.SellerId.HasValue && request.SellerId.Value > 0
+            ? request.SellerId
+            : await ResolveSellerIdAsync(request, role, fullName, cancellationToken);
+
+        var user = new User
+        {
+            FullName = fullName,
+            Email = request.Email.Trim(),
+            PasswordHash = passwordHasher.Hash(request.Password),
+            PhoneNumber = request.PhoneNumber?.Trim(),
+            Role = role,
+            SellerId = sellerId,
+            IsActive = false,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
         };
 
-        await loginOtpChallengeStore.UpsertAsync(challenge, cancellationToken);
-        await otpDeliveryService.SendLoginOtpAsync(user, otpCode, channels, cancellationToken);
-
-        return new SendLoginOtpResponseDto
+        var profile = new UserProfile
         {
-            ExpiresAtUtc = challenge.ExpiresAtUtc,
-            DeliveryChannels = channels.Select(x => x.ToString()).ToArray()
+            DateOfBirth = request.DateOfBirth,
+            Nationality = request.Nationality,
+            DocumentType = request.DocumentType,
+            IdNumber = request.IdNumber,
+            ProfilePhotoUrl = request.ProfilePhotoUrl,
+            PreferredLanguage = string.IsNullOrWhiteSpace(request.PreferredLanguage) ? "en" : request.PreferredLanguage,
+            PreferredTheme = string.IsNullOrWhiteSpace(request.PreferredTheme) ? "light" : request.PreferredTheme,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+        };
+
+        var created = await userAuthRepository.AddAsync(user, profile, cancellationToken);
+        var otp = await otpService.RequestAsync(new RequestOtpRequestDto
+        {
+            UserId = created.Id,
+            ActionType = OtpActionTypes.Registration,
+            ActionReferenceId = created.Id.ToString(),
+            ForceEmailFallback = false
+        }, cancellationToken);
+
+        return new RegisterResponseDto
+        {
+            UserId = created.Id,
+            Email = created.Email,
+            FullName = created.FullName,
+            Role = created.Role,
+            SellerId = sellerId,
+            RequiresOtpVerification = true,
+            OtpRequestId = otp.OtpRequestId
         };
     }
 
-    public async Task<LoginResponseDto> VerifyLoginOtpAsync(VerifyLoginOtpRequestDto request, CancellationToken cancellationToken = default)
+    public async Task VerifyRegistrationOtpAsync(VerifyRegistrationOtpRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.OtpCode))
-            throw new UnauthorizedAccessException("Invalid credentials.");
+        var verified = await otpService.VerifyAsync(new VerifyOtpRequestDto
+        {
+            UserId = request.UserId,
+            OtpRequestId = request.OtpRequestId,
+            OtpCode = request.OtpCode
+        }, cancellationToken);
+
+        await otpService.ConsumeVerificationGrantAsync(
+            request.UserId,
+            OtpActionTypes.Registration,
+            request.UserId.ToString(),
+            verified.VerificationToken,
+            cancellationToken);
+
+        await userAuthRepository.ActivateUserAsync(request.UserId, cancellationToken);
+    }
+
+    public async Task<OtpDispatchResponseDto> RequestPasswordResetOtpAsync(RequestPasswordResetOtpRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email))
+            throw new InvalidOperationException("Email is required.");
 
         var user = await userAuthRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken)
-            ?? throw new UnauthorizedAccessException("Invalid credentials.");
+            ?? throw new InvalidOperationException("User not found.");
 
-        if (!user.IsActive)
-            throw new UnauthorizedAccessException("Invalid credentials.");
+        return await otpService.RequestAsync(new RequestOtpRequestDto
+        {
+            UserId = user.Id,
+            ActionType = OtpActionTypes.ResetPassword,
+            ActionReferenceId = user.Id.ToString(),
+            ForceEmailFallback = false
+        }, cancellationToken);
+    }
 
-        await ValidateSellerAccountAsync(user, cancellationToken);
+    public async Task ConfirmPasswordResetAsync(ConfirmPasswordResetRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.NewPassword))
+            throw new InvalidOperationException("Email and new password are required.");
 
-        var challenge = await loginOtpChallengeStore.GetActiveAsync(user.Id, DateTime.UtcNow, cancellationToken)
-            ?? throw new UnauthorizedAccessException("OTP is invalid or expired.");
+        var user = await userAuthRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken)
+            ?? throw new InvalidOperationException("User not found.");
 
-        if (!passwordHasher.Verify(request.OtpCode.Trim(), challenge.OtpHash))
-            throw new UnauthorizedAccessException("OTP is invalid or expired.");
+        var verified = await otpService.VerifyAsync(new VerifyOtpRequestDto
+        {
+            UserId = user.Id,
+            OtpRequestId = request.OtpRequestId,
+            OtpCode = request.OtpCode
+        }, cancellationToken);
 
-        await loginOtpChallengeStore.RemoveAsync(user.Id, cancellationToken);
-        return await BuildLoginResponseAsync(user, cancellationToken);
+        await otpService.ConsumeVerificationGrantAsync(
+            user.Id,
+            OtpActionTypes.ResetPassword,
+            user.Id.ToString(),
+            verified.VerificationToken,
+            cancellationToken);
+
+        await userAuthRepository.UpdatePasswordAsync(user.Id, passwordHasher.Hash(request.NewPassword), cancellationToken);
     }
 
     private async Task<LoginResponseDto> BuildLoginResponseAsync(User user, CancellationToken cancellationToken)
@@ -123,120 +199,6 @@ public class AuthService(
         var seller = await userAuthRepository.GetSellerByIdAsync(sellerId.Value, cancellationToken);
         if (seller is null || seller.KycStatus != KycStatus.Approved || !seller.IsActive)
             throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
-    }
-
-    private async Task<IReadOnlyCollection<OtpDeliveryChannel>> ResolveOtpDeliveryChannelsAsync(CancellationToken cancellationToken)
-    {
-        var configurations = await mobileAppConfigurationRepository.GetAllAsync(cancellationToken);
-        var otpConfig = configurations.FirstOrDefault(x =>
-            string.Equals(x.ConfigKey, MobileAppConfigurationKeys.LoginOtpDeliveryChannels, StringComparison.OrdinalIgnoreCase)
-            && x.IsEnabled);
-
-        if (otpConfig is null || string.IsNullOrWhiteSpace(otpConfig.JsonValue))
-            return [OtpDeliveryChannel.WhatsApp];
-
-        try
-        {
-            var channels = ParseChannels(otpConfig.JsonValue);
-            return channels.Count == 0 ? [OtpDeliveryChannel.WhatsApp] : channels;
-        }
-        catch (JsonException)
-        {
-            return [OtpDeliveryChannel.WhatsApp];
-        }
-    }
-
-    private static IReadOnlyCollection<OtpDeliveryChannel> ParseChannels(string jsonValue)
-    {
-        using var document = JsonDocument.Parse(jsonValue);
-        var root = document.RootElement;
-
-        var rawChannels = root.ValueKind switch
-        {
-            JsonValueKind.Array => root.EnumerateArray().Select(x => x.GetString()),
-            JsonValueKind.Object when root.TryGetProperty("channels", out var channelsNode) && channelsNode.ValueKind == JsonValueKind.Array
-                => channelsNode.EnumerateArray().Select(x => x.GetString()),
-            _ => Array.Empty<string?>()
-        };
-
-        return rawChannels
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Select(ParseChannel)
-            .Distinct()
-            .ToArray();
-    }
-
-    private static OtpDeliveryChannel ParseChannel(string? channel)
-        => channel?.Trim().ToLowerInvariant() switch
-        {
-            "whatsapp" => OtpDeliveryChannel.WhatsApp,
-            "email" => OtpDeliveryChannel.Email,
-            _ => throw new JsonException("Unsupported OTP delivery channel.")
-        };
-
-    private static string GenerateOtpCode()
-        => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
-
-    public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(request.FirstName) ||
-            string.IsNullOrWhiteSpace(request.LastName) ||
-            string.IsNullOrWhiteSpace(request.Email) ||
-            string.IsNullOrWhiteSpace(request.Password))
-        {
-            throw new InvalidOperationException("First name, last name, email and password are required.");
-        }
-
-        var existing = await userAuthRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken);
-        if (existing is not null)
-        {
-            throw new InvalidOperationException("Email is already registered.");
-        }
-
-        var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
-        var fullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  ", " ").Trim();
-
-        var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
-        var sellerId = isSeller && request.SellerId.HasValue && request.SellerId.Value > 0
-            ? request.SellerId
-            : await ResolveSellerIdAsync(request, role, fullName, cancellationToken);
-
-        var user = new User
-        {
-            FullName = fullName,
-            Email = request.Email.Trim(),
-            PasswordHash = passwordHasher.Hash(request.Password),
-            PhoneNumber = request.PhoneNumber?.Trim(),
-            Role = role,
-            SellerId = sellerId,
-            IsActive = !isSeller,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow,
-        };
-
-        var profile = new UserProfile
-        {
-            DateOfBirth = request.DateOfBirth,
-            Nationality = request.Nationality,
-            DocumentType = request.DocumentType,
-            IdNumber = request.IdNumber,
-            ProfilePhotoUrl = request.ProfilePhotoUrl,
-            PreferredLanguage = string.IsNullOrWhiteSpace(request.PreferredLanguage) ? "en" : request.PreferredLanguage,
-            PreferredTheme = string.IsNullOrWhiteSpace(request.PreferredTheme) ? "light" : request.PreferredTheme,
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow,
-        };
-
-        var created = await userAuthRepository.AddAsync(user, profile, cancellationToken);
-
-        return new RegisterResponseDto
-        {
-            UserId = created.Id,
-            Email = created.Email,
-            FullName = created.FullName,
-            Role = created.Role,
-            SellerId = sellerId,
-        };
     }
 
     private async Task<int?> ResolveSellerIdAsync(RegisterRequestDto request, string role, string fullName, CancellationToken cancellationToken)

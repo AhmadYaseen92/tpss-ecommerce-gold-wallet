@@ -44,7 +44,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IWalletService, WalletService>();
         services.AddScoped<IWalletActionValidationService, WalletActionValidationService>();
         services.AddScoped<IOtpDeliveryService, OtpDeliveryService>();
-        services.AddSingleton<ILoginOtpChallengeStore, LoginOtpChallengeMemoryStore>();
+        services.AddSingleton<IOtpSessionStore, OtpSessionMemoryStore>();
+        services.AddScoped<IOtpService, OtpService>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

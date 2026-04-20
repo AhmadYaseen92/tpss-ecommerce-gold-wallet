@@ -147,6 +147,30 @@ public partial class ProfileRepository(AppDbContext dbContext, IPasswordHasher p
         return (await GetByUserIdAsync(request.UserId, cancellationToken))!;
     }
 
+    public async Task<ProfileDto> RemovePaymentMethodAsync(RemovePaymentMethodRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var profile = await GetOrCreateProfileAsync(request.UserId, cancellationToken);
+        var paymentMethod = await dbContext.PaymentMethods
+            .FirstOrDefaultAsync(x => x.Id == request.PaymentMethodId && x.UserProfileId == profile.Id, cancellationToken)
+            ?? throw new InvalidOperationException("Payment method not found.");
+
+        dbContext.PaymentMethods.Remove(paymentMethod);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return (await GetByUserIdAsync(request.UserId, cancellationToken))!;
+    }
+
+    public async Task<ProfileDto> RemoveLinkedBankAccountAsync(RemoveLinkedBankAccountRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var profile = await GetOrCreateProfileAsync(request.UserId, cancellationToken);
+        var bankAccount = await dbContext.LinkedBankAccounts
+            .FirstOrDefaultAsync(x => x.Id == request.LinkedBankAccountId && x.UserProfileId == profile.Id, cancellationToken)
+            ?? throw new InvalidOperationException("Linked bank account not found.");
+
+        dbContext.LinkedBankAccounts.Remove(bankAccount);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return (await GetByUserIdAsync(request.UserId, cancellationToken))!;
+    }
+
     private async Task<UserProfile> GetOrCreateProfileAsync(int userId, CancellationToken cancellationToken)
     {
         var userExists = await dbContext.Users.AnyAsync(x => x.Id == userId, cancellationToken);

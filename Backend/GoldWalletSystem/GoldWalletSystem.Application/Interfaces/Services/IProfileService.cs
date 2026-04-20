@@ -10,4 +10,6 @@ public interface IProfileService
     Task ChangePasswordAsync(UpdatePasswordRequestDto request, CancellationToken cancellationToken = default);
     Task<ProfileDto> UpsertPaymentMethodAsync(UpsertPaymentMethodRequestDto request, CancellationToken cancellationToken = default);
     Task<ProfileDto> UpsertLinkedBankAccountAsync(UpsertLinkedBankAccountRequestDto request, CancellationToken cancellationToken = default);
+    Task<ProfileDto> RemovePaymentMethodAsync(RemovePaymentMethodRequestDto request, CancellationToken cancellationToken = default);
+    Task<ProfileDto> RemoveLinkedBankAccountAsync(RemoveLinkedBankAccountRequestDto request, CancellationToken cancellationToken = default);
 }

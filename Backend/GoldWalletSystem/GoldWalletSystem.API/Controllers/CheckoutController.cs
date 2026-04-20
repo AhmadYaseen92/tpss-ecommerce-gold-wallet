@@ -1,4 +1,5 @@
 using GoldWalletSystem.Application.DTOs.Common;
+using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
@@ -15,12 +16,19 @@ namespace GoldWalletSystem.API.Controllers;
 public class CheckoutController(
     AppDbContext dbContext,
     ICurrentUserService currentUser,
+    IOtpService otpService,
     API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     [HttpPost("confirm")]
     public async Task<IActionResult> Confirm([FromBody] CheckoutConfirmRequest request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+        await otpService.ConsumeVerificationGrantAsync(
+            request.UserId,
+            OtpActionTypes.Checkout,
+            request.OtpActionReferenceId,
+            request.OtpVerificationToken,
+            cancellationToken);
         var isDirectCheckout = request.ProductId.HasValue && request.Quantity.HasValue && request.Quantity.Value > 0;
         var fromCart = !isDirectCheckout;
 
@@ -180,5 +188,7 @@ public class CheckoutController(
         public List<int>? ProductIds { get; set; }
         public int? ProductId { get; set; }
         public int? Quantity { get; set; }
+        public string OtpVerificationToken { get; set; } = string.Empty;
+        public string OtpActionReferenceId { get; set; } = string.Empty;
     }
 }

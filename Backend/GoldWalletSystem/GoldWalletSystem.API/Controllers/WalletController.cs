@@ -1,6 +1,7 @@
 using System.Text.Json;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Wallet;
+using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
@@ -18,6 +19,7 @@ namespace GoldWalletSystem.API.Controllers;
 public class WalletController(
     IWalletService walletService,
     IWalletActionValidationService walletActionValidationService,
+    IOtpService otpService,
     ICurrentUserService currentUser,
     AppDbContext dbContext,
     IWebHostEnvironment environment,
@@ -257,6 +259,12 @@ public class WalletController(
     public async Task<IActionResult> ExecuteWalletAction([FromBody] ExecuteWalletActionRequest request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+        await otpService.ConsumeVerificationGrantAsync(
+            request.UserId,
+            MapWalletOtpAction(request.ActionType),
+            request.OtpActionReferenceId,
+            request.OtpVerificationToken,
+            cancellationToken);
 
         var actionType = request.ActionType.Trim().ToLowerInvariant();
         if (actionType is not ("sell" or "transfer" or "gift" or "pickup" or "certificate" or "invoice"))
@@ -806,6 +814,8 @@ public class WalletController(
         public int? RecipientInvestorUserId { get; set; }
         public string? Notes { get; set; }
         public DateTime? QuoteLockedUntilUtc { get; set; }
+        public string OtpVerificationToken { get; set; } = string.Empty;
+        public string OtpActionReferenceId { get; set; } = string.Empty;
     }
 
     public sealed class CancelWalletRequest
@@ -932,6 +942,17 @@ public class WalletController(
             _ => "Bought"
         };
     }
+
+    private static string MapWalletOtpAction(string actionType)
+        => (actionType ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "buy" => OtpActionTypes.Buy,
+            "sell" => OtpActionTypes.Sell,
+            "transfer" => OtpActionTypes.Transfer,
+            "gift" => OtpActionTypes.Gift,
+            "pickup" => OtpActionTypes.Pickup,
+            _ => throw new InvalidOperationException("Unsupported wallet action type.")
+        };
 
     private static string NormalizeInvoiceCategory(string actionType)
     {
