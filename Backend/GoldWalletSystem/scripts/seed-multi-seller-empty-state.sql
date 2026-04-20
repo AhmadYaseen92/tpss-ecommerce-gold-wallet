@@ -281,12 +281,14 @@ BEGIN TRY
     ------------------------------------------------------------
     IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'home.carousel.images')
     BEGIN
-        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [JsonValue], [IsEnabled], [Description], [CreatedAtUtc], [UpdatedAtUtc])
+        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [Name], [ValueType], [ValueString], [SellerAccess], [Description], [CreatedAtUtc], [UpdatedAtUtc])
         VALUES
         (
             N'home.carousel.images',
-            N'["/images/banners/banner-1.png","/images/banners/banner-2.png","/images/banners/banner-3.png"]',
+            N'Home Carousel Images',
             1,
+            N'["/images/banners/banner-1.png","/images/banners/banner-2.png","/images/banners/banner-3.png"]',
+            0,
             N'Home carousel images stored on local server',
             @Now,
             NULL
