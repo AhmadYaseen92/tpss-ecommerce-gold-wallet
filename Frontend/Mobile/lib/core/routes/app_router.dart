@@ -169,10 +169,23 @@ class AppRouter {
 
       case AppRoutes.confirmOtpRoute:
         final args = settings.arguments as Map<String, dynamic>?;
+        final rawProductIds = args?['productIds'];
+        final productIds = rawProductIds is List
+            ? rawProductIds
+                  .map((e) => e is num ? e.toInt() : int.tryParse('$e'))
+                  .whereType<int>()
+                  .toList()
+            : null;
         return MaterialPageRoute(
           builder: (_) => ConfirmOtpPage(
             title: args?['title'] as String?,
             subtitle: args?['subtitle'] as String?,
+            userId: args?['userId'] is num ? (args?['userId'] as num).toInt() : int.tryParse('${args?['userId']}'),
+            productId: args?['productId'] is num ? (args?['productId'] as num).toInt() : int.tryParse('${args?['productId']}'),
+            quantity: args?['quantity'] is num ? (args?['quantity'] as num).toInt() : int.tryParse('${args?['quantity']}'),
+            productIds: productIds,
+            forceEmailFallback: args?['forceEmailFallback'] == true,
+            useCheckoutOtpFlow: args?['otpFlow'] == 'checkout',
           ),
         );
 
