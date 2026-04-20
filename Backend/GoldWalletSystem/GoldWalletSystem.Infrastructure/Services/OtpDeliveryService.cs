@@ -172,14 +172,14 @@ public class OtpDeliveryService(
             catch (Exception retryEx)
             {
                 throw new InvalidOperationException(
-                    $"SMTP send failed (primary host={options.Email.SmtpHost}, port={options.Email.SmtpPort}, ssl={options.Email.UseSsl}; retry host=smtp.gmail.com, port=465, ssl=true). {retryEx.Message}",
+                    $"SMTP send failed (primary host={options.Email.SmtpHost}, port={options.Email.SmtpPort}, ssl={options.Email.UseSsl}; retry host=smtp.gmail.com, port=465, ssl=true). {BuildErrorMessage(retryEx)}",
                     retryEx);
             }
         }
         catch (SmtpException ex)
         {
             throw new InvalidOperationException(
-                $"SMTP send failed (host={options.Email.SmtpHost}, port={options.Email.SmtpPort}, ssl={options.Email.UseSsl}). {ex.Message}",
+                $"SMTP send failed (host={options.Email.SmtpHost}, port={options.Email.SmtpPort}, ssl={options.Email.UseSsl}). {BuildErrorMessage(ex)}",
                 ex);
         }
         catch (OperationCanceledException ex)
@@ -223,6 +223,20 @@ public class OtpDeliveryService(
         => ex is TimeoutException
            || ex.Message.Contains("timed out", StringComparison.OrdinalIgnoreCase);
 
+    private static string BuildErrorMessage(Exception ex)
+    {
+        var messages = new List<string>();
+        var current = ex;
+        while (current is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(current.Message))
+                messages.Add(current.Message);
+            current = current.InnerException;
+        }
+
+        return string.Join(" | ", messages.Distinct());
+    }
+
     private static string NormalizeWhatsAppTarget(string phone)
         => new string(phone.Where(char.IsDigit).ToArray());
 
@@ -248,7 +262,7 @@ public class OtpDeliveryService(
                 UseSsl = !bool.TryParse(configuration["OtpDelivery:Email:UseSsl"], out var useSsl) || useSsl,
                 SendTimeoutMs = int.TryParse(configuration["OtpDelivery:Email:SendTimeoutMs"], out var sendTimeoutMs)
                     ? Math.Max(sendTimeoutMs, 1000)
-                    : 30000,
+                    : 60000,
                 Username = configuration["OtpDelivery:Email:Username"] ?? string.Empty,
                 Password = configuration["OtpDelivery:Email:Password"] ?? string.Empty
             }

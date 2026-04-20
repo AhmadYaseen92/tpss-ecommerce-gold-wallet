@@ -23,8 +23,8 @@ public class OtpService(
     {
         public bool EnableWhatsapp { get; init; } = true;
         public bool EnableEmail { get; init; } = true;
-        public int ExpirySeconds { get; init; } = 300;
-        public int ResendCooldownSeconds { get; init; } = 30;
+        public int ExpirySeconds { get; init; } = 600;
+        public int ResendCooldownSeconds { get; init; } = 60;
         public int MaxResendCount { get; init; } = 3;
         public int MaxVerificationAttempts { get; init; } = 5;
         public IReadOnlyCollection<string> RequiredActions { get; init; } = [];
@@ -191,8 +191,8 @@ public class OtpService(
             {
                 EnableWhatsapp = ReadBool(root, "enableWhatsapp", true),
                 EnableEmail = ReadBool(root, "enableEmail", true),
-                ExpirySeconds = Math.Clamp(ReadInt(root, "expirySeconds", 300), 60, 1800),
-                ResendCooldownSeconds = Math.Clamp(ReadInt(root, "resendCooldownSeconds", 30), 10, 300),
+                ExpirySeconds = Math.Clamp(ReadInt(root, "expirySeconds", 600), 60, 1800),
+                ResendCooldownSeconds = Math.Clamp(ReadInt(root, "resendCooldownSeconds", 60), 10, 300),
                 MaxResendCount = Math.Clamp(ReadInt(root, "maxResendCount", 3), 0, 10),
                 MaxVerificationAttempts = Math.Clamp(ReadInt(root, "maxVerificationAttempts", 5), 1, 10),
                 RequiredActions = ReadStringArray(root, "requiredActions"),

@@ -22,8 +22,10 @@ class CheckoutOtpCubit extends Cubit<CheckoutOtpState> {
 
   String? otpRequestId;
   DateTime? _nextResendAtUtc;
+  CheckoutOtpRequestContextEntity? _lastContext;
 
   Future<void> initialize(CheckoutOtpRequestContextEntity context) async {
+    _lastContext = context;
     emit(CheckoutOtpLoading());
     try {
       final session = await _requestCheckoutOtpUseCase(context);
@@ -57,10 +59,26 @@ class CheckoutOtpCubit extends Cubit<CheckoutOtpState> {
     required int userId,
     required bool forceEmailFallback,
   }) async {
-    final currentOtpRequestId = otpRequestId;
+    var currentOtpRequestId = otpRequestId;
     if (currentOtpRequestId == null || currentOtpRequestId.trim().isEmpty) {
-      emit(CheckoutOtpFailure('Unable to resend OTP right now. Please retry.'));
-      return false;
+      final context = _lastContext;
+      if (context == null) {
+        emit(CheckoutOtpFailure('Unable to resend OTP right now. Please retry.'));
+        return false;
+      }
+
+      await initialize(
+        context.copyWith(
+          userId: userId,
+          forceEmailFallback: forceEmailFallback,
+        ),
+      );
+
+      currentOtpRequestId = otpRequestId;
+      if (currentOtpRequestId == null || currentOtpRequestId.trim().isEmpty) {
+        emit(CheckoutOtpFailure('Unable to create OTP session. Please retry.'));
+        return false;
+      }
     }
 
     emit(CheckoutOtpLoading());

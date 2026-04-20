@@ -12,6 +12,22 @@ class CheckoutOtpRequestContextEntity {
   final int? quantity;
   final List<int> productIds;
   final bool forceEmailFallback;
+
+  CheckoutOtpRequestContextEntity copyWith({
+    int? userId,
+    int? productId,
+    int? quantity,
+    List<int>? productIds,
+    bool? forceEmailFallback,
+  }) {
+    return CheckoutOtpRequestContextEntity(
+      userId: userId ?? this.userId,
+      productId: productId ?? this.productId,
+      quantity: quantity ?? this.quantity,
+      productIds: productIds ?? this.productIds,
+      forceEmailFallback: forceEmailFallback ?? this.forceEmailFallback,
+    );
+  }
 }
 
 class CheckoutOtpSessionEntity {

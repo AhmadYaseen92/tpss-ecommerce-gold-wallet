@@ -46,7 +46,7 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
     super.initState();
     if (widget.useCheckoutOtpFlow) {
       _checkoutOtpCubit = context.read<CheckoutOtpCubit>();
-      _startTimer(30, updateState: false);
+      _startTimer(60, updateState: false);
       final userId = widget.userId;
       if (userId != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -65,7 +65,7 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
         });
       }
     } else {
-      _startTimer(30, updateState: false);
+      _startTimer(60, updateState: false);
     }
   }
 
@@ -136,7 +136,7 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
 
                 secondsRemaining > 0
                     ? Text(
-                        'Resend available in 00:${secondsRemaining.toString().padLeft(2, '0')}',
+                        'Resend available in ${_formatTimer(secondsRemaining)}',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: palette.textSecondary,
@@ -220,7 +220,7 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
         if (!resent) return;
         setState(() => otp = '');
         FocusScope.of(context).unfocus();
-        _startTimer(30);
+        _startTimer(60);
         _showSnack('OTP resent successfully');
       } finally {
         if (mounted) setState(() => _isSubmitting = false);
@@ -233,7 +233,7 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
     });
 
     FocusScope.of(context).unfocus();
-    _startTimer(30);
+    _startTimer(60);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -285,5 +285,11 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
         content: Text(message),
       ),
     );
+  }
+
+  String _formatTimer(int totalSeconds) {
+    final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 }
