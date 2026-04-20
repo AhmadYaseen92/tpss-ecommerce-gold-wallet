@@ -33,7 +33,7 @@ public class MobileAppConfigurationService(IMobileAppConfigurationRepository rep
             var channelsNode = document.RootElement.ValueKind switch
             {
                 JsonValueKind.Array => document.RootElement,
-                JsonValueKind.Object when document.RootElement.TryGetProperty("channels", out var channels) => channels,
+                JsonValueKind.Object when document.RootElement.TryGetProperty("channels", out var channelsElement) => channelsElement,
                 _ => throw new InvalidOperationException("OTP channels must be a JSON array or an object with a 'channels' array.")
             };
 
