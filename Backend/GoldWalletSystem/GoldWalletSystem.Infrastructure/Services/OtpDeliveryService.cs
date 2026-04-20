@@ -118,6 +118,7 @@ public class OtpDeliveryService(
 
     private async Task SendViaEmailAsync(User user, string otpCode, CancellationToken cancellationToken)
     {
+        _ = cancellationToken;
         if (!options.Email.Enabled)
             throw new InvalidOperationException("Email delivery is disabled.");
         if (string.IsNullOrWhiteSpace(options.Email.FromAddress) || string.IsNullOrWhiteSpace(options.Email.SmtpHost))
@@ -147,15 +148,22 @@ public class OtpDeliveryService(
                 : new NetworkCredential(options.Email.Username, options.Email.Password)
         };
 
-        using var sendTimeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(Math.Max(options.Email.SendTimeoutMs, 1000)));
         try
         {
             // Avoid coupling SMTP send lifecycle to HTTP request-abort cancellation.
-            await smtp.SendMailAsync(message, sendTimeoutCts.Token);
+            await smtp.SendMailAsync(message);
         }
-        catch (OperationCanceledException) when (sendTimeoutCts.IsCancellationRequested)
+        catch (SmtpException ex)
         {
-            throw new InvalidOperationException($"Email delivery timed out after {Math.Max(options.Email.SendTimeoutMs, 1000)} ms.");
+            throw new InvalidOperationException(
+                $"SMTP send failed (host={options.Email.SmtpHost}, port={options.Email.SmtpPort}, ssl={options.Email.UseSsl}). {ex.Message}",
+                ex);
+        }
+        catch (OperationCanceledException ex)
+        {
+            throw new InvalidOperationException(
+                $"SMTP send canceled (host={options.Email.SmtpHost}, port={options.Email.SmtpPort}, ssl={options.Email.UseSsl}).",
+                ex);
         }
 
         logger.LogInformation(

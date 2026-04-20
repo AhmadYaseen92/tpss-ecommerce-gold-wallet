@@ -48,17 +48,20 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
       _checkoutOtpCubit = context.read<CheckoutOtpCubit>();
       final userId = widget.userId;
       if (userId != null) {
-        unawaited(
-          _checkoutOtpCubit!.initialize(
-            CheckoutOtpRequestContextEntity(
-              userId: userId,
-              productId: widget.productId,
-              quantity: widget.quantity,
-              productIds: widget.productIds ?? const [],
-              forceEmailFallback: widget.forceEmailFallback,
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          unawaited(
+            _checkoutOtpCubit!.initialize(
+              CheckoutOtpRequestContextEntity(
+                userId: userId,
+                productId: widget.productId,
+                quantity: widget.quantity,
+                productIds: widget.productIds ?? const [],
+                forceEmailFallback: widget.forceEmailFallback,
+              ),
             ),
-          ),
-        );
+          );
+        });
       }
     } else {
       _startTimer(30, updateState: false);
