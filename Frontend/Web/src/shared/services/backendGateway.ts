@@ -23,6 +23,7 @@ import type {
   RegisterResponseDto,
   EnumItemDto,
   WebDashboardDto,
+  WebInvestorDto,
   WebRequestDto,
   WebSellerDto,
   WalletDto
@@ -84,15 +85,18 @@ const mapReports = (dashboard: DashboardDto, requestsCount: number): ReportMetri
   { title: "Transactions", value: `${requestsCount}`, trend: "Latest events" }
 ];
 
-const mapInvestors = (dashboard: DashboardDto): Investor[] => [
-  {
-    id: `i-${dashboard.userId}`,
-    fullName: dashboard.fullName,
+const mapInvestors = (items: WebInvestorDto[]): Investor[] =>
+  items.map((item) => ({
+    id: item.id,
+    fullName: item.fullName,
+    email: item.email,
+    phoneNumber: item.phoneNumber,
+    totalTransactions: item.totalTransactions,
+    createdAt: item.createdAt,
     riskLevel: "medium",
-    walletBalance: dashboard.walletBalance,
-    status: "active"
-  }
-];
+    walletBalance: item.walletBalance,
+    status: item.status === "blocked" ? "blocked" : "active"
+  }));
 
 const mapRequests = (logs: AuditLogDto[]): InvestorRequest[] =>
   logs.slice(0, 5).map((log, index) => ({
@@ -271,6 +275,14 @@ export async function updateSellerKycStatusByAdmin(
   );
 }
 
+export async function updateInvestorStatusByAdmin(
+  accessToken: string,
+  investorId: string,
+  status: "active" | "blocked"
+): Promise<void> {
+  await putJson<string, { status: string }>(`/api/web-admin/investors/${investorId}/status`, { status }, accessToken);
+}
+
 export async function fetchMarketplaceState(session: UserSession): Promise<MarketplaceState> {
   const productsResult = await postJson<PagedResult<ProductDto>, { pageNumber: number; pageSize: number; category: null }>(
     "/api/products/search",
@@ -295,6 +307,9 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     : { items: [] as AuditLogDto[], totalCount: 0, pageNumber: 1, pageSize: 20, totalPages: 0 };
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
+  const webInvestors = session.role === "admin"
+    ? await getJson<WebInvestorDto[]>("/api/web-admin/investors", session.accessToken)
+    : [];
 
   const wallet = session.role === "seller" || !session.userId
     ? null
@@ -331,7 +346,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
 
   return {
     sellers,
-    investors: dashboard ? mapInvestors(dashboard) : [],
+    investors: mapInvestors(webInvestors),
     requests,
     products,
     walletAssets: wallet ? mapWalletAssets(wallet) : [],
@@ -435,7 +450,8 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
     price: item.price,
     availableStock: item.availableStock,
     isActive: true,
-    sellerId: item.sellerId
+    sellerId: item.sellerId,
+    sellerName: item.sellerName
   }));
 }
 

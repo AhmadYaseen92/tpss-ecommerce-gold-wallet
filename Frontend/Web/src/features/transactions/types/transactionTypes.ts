@@ -1,5 +1,6 @@
 export interface TransactionRowView {
   id: string;
+  sellerId?: string;
   investorId: string;
   investorName: string;
   sellerName?: string;

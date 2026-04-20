@@ -24,6 +24,9 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             .AsNoTracking()
             .Where(x => x.Role == SystemRoles.Investor)
             .ToListAsync(cancellationToken);
+        var sellers = await dbContext.Sellers
+            .AsNoTracking()
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
 
         var requestsQuery = dbContext.TransactionHistories.AsNoTracking().AsQueryable();
         if (sellerId.HasValue)
@@ -65,6 +68,7 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             .Select((request, idx) => new WebRecentTransactionDto
             {
                 Id = $"r-{request.Id}",
+                SellerName = request.SellerId.HasValue && sellers.TryGetValue(request.SellerId.Value, out var sellerName) ? sellerName : "N/A",
                 InvestorName = investors.FirstOrDefault(i => i.Id == request.UserId)?.FullName ?? $"User {request.UserId}",
                 ProductName = products.Count > 0 ? products[idx % products.Count].Name : "N/A",
                 Type = request.TransactionType,

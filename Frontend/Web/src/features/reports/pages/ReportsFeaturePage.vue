@@ -10,6 +10,15 @@ const { reportFilters, reportTypeCards, generatedReports, generateReports, downl
 
 <template>
   <SectionCard title="Reports Generator">
-    <ReportsPage :report-filters="reportFilters" :report-type-cards="reportTypeCards" :rows="generatedReports" @generate="generateReports" @excel="downloadReport" @pdf="downloadPdf" />
+    <ReportsPage
+      :role="marketplace.role.value"
+      :sellers="marketplace.state.value.sellers"
+      :report-filters="reportFilters"
+      :report-type-cards="reportTypeCards"
+      :rows="generatedReports"
+      @generate="generateReports"
+      @excel="downloadReport"
+      @pdf="downloadPdf"
+    />
   </SectionCard>
 </template>

@@ -4,29 +4,25 @@ import type { NavigationKey } from "./shared/types/models";
 import AppShell from "./shared/layouts/AppShell.vue";
 import AuthPage from "./features/auth/pages/AuthPage.vue";
 import DashboardFeaturePage from "./features/dashboard/pages/DashboardFeaturePage.vue";
-import AdminWorkspacePage from "./features/dashboard/pages/AdminWorkspacePage.vue";
 import ProductFeaturePage from "./features/products/pages/ProductFeaturePage.vue";
 import InvestorsFeaturePage from "./features/investors/pages/InvestorsFeaturePage.vue";
 import SellersFeaturePage from "./features/dashboard/pages/SellersFeaturePage.vue";
 import SettingsFeaturePage from "./features/dashboard/pages/SettingsFeaturePage.vue";
 import TransactionsFeaturePage from "./features/transactions/pages/TransactionsFeaturePage.vue";
 import ReportsFeaturePage from "./features/reports/pages/ReportsFeaturePage.vue";
-import FeesFeaturePage from "./features/fees/pages/FeesFeaturePage.vue";
 import { useMarketplace } from "./shared/app/store/useMarketplace";
 
 const marketplace = useMarketplace();
 const isDark = ref(false);
 const THEME_KEY = "goldwallet.web.theme";
 
-const ROUTE_BY_MENU: Record<Exclude<NavigationKey, "logout" | "invoices" | "inventory" | "notifications">, string> = {
+const ROUTE_BY_MENU: Partial<Record<NavigationKey, string>> = {
   overview: "/overview",
-  admin: "/admin",
   products: "/products",
   investors: "/investors",
   sellers: "/sellers",
   settings: "/settings",
   requests: "/transactions",
-  fees: "/fees",
   reports: "/reports"
 };
 
@@ -67,18 +63,16 @@ const menuItems = computed<Array<{ key: NavigationKey; label: string }>>(() => {
   ];
 
   return marketplace.role.value === "admin"
-    ? [{ key: "admin" as NavigationKey, label: "Admin" }, ...common.slice(0, 2), { key: "investors" as NavigationKey, label: "Investors" }, { key: "sellers" as NavigationKey, label: "Sellers" }, { key: "settings" as NavigationKey, label: "System Settings" }, ...common.slice(2), { key: "fees" as NavigationKey, label: "Fees" }]
+    ? [common[0], common[1], { key: "investors" as NavigationKey, label: "Investors" }, { key: "sellers" as NavigationKey, label: "Sellers" }, { key: "settings" as NavigationKey, label: "System Settings" }, common[2], common[3], common[4]]
     : common;
 });
 
 const activeMenu = computed<NavigationKey>(() => {
-  if (currentPath.value.startsWith("/admin")) return "admin";
   if (currentPath.value.startsWith("/products")) return "products";
   if (currentPath.value.startsWith("/investors")) return "investors";
   if (currentPath.value.startsWith("/sellers")) return "sellers";
   if (currentPath.value.startsWith("/settings")) return "settings";
   if (currentPath.value.startsWith("/transactions")) return "requests";
-  if (currentPath.value.startsWith("/fees")) return "fees";
   if (currentPath.value.startsWith("/reports")) return "reports";
   return "overview";
 });
@@ -88,13 +82,11 @@ watch(activeMenu, (menu) => {
 }, { immediate: true });
 
 const activeComponent = computed(() => {
-  if (currentPath.value.startsWith("/admin")) return marketplace.role.value === "admin" ? AdminWorkspacePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/products")) return ProductFeaturePage;
   if (currentPath.value.startsWith("/investors")) return marketplace.role.value === "admin" ? InvestorsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/sellers")) return marketplace.role.value === "admin" ? SellersFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/settings")) return marketplace.role.value === "admin" ? SettingsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/transactions")) return TransactionsFeaturePage;
-  if (currentPath.value.startsWith("/fees")) return FeesFeaturePage;
   if (currentPath.value.startsWith("/reports")) return ReportsFeaturePage;
   return DashboardFeaturePage;
 });

@@ -132,8 +132,12 @@ public class WebAdminController(
             {
                 Id = $"i-{x.Id}",
                 FullName = x.FullName,
+                Email = x.Email,
+                PhoneNumber = x.PhoneNumber ?? string.Empty,
                 RiskLevel = "medium",
                 WalletBalance = dbContext.Wallets.Where(w => w.UserId == x.Id).Select(w => w.CashBalance).FirstOrDefault(),
+                TotalTransactions = dbContext.TransactionHistories.Count(th => th.UserId == x.Id),
+                CreatedAt = x.CreatedAtUtc,
                 Status = x.IsActive ? "active" : "blocked"
             })
             .ToListAsync(cancellationToken);

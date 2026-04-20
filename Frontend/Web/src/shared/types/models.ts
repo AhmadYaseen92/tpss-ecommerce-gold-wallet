@@ -40,6 +40,10 @@ export interface Seller {
 export interface Investor {
   id: string;
   fullName: string;
+  email?: string;
+  phoneNumber?: string;
+  totalTransactions?: number;
+  createdAt?: string;
   riskLevel: "low" | "medium" | "high";
   walletBalance: number;
   status: "active" | "review" | "blocked";

@@ -4,6 +4,7 @@ import ProductForm from "../components/ProductForm.vue";
 import ProductDetails from "../components/ProductDetails.vue";
 import type { ProductManagementDto, EnumItemDto, MarketPriceConfigDto } from "../../../shared/types/apiTypes";
 import type { ProductFormPayload } from "../../../shared/services/backendGateway";
+import type { Seller } from "../../../shared/types/models";
 
 const emit = defineEmits<{
   add: [];
@@ -17,6 +18,7 @@ const emit = defineEmits<{
   "update:search-term": [value: string];
   "update:active-filter": [value: "all" | "active" | "inactive"];
   "update:category-filter": [value: string];
+  "update:seller-filter": [value: string];
   "save-market-prices": [];
   "update-market-price": [field: "goldPerOunce" | "silverPerOunce" | "diamondPerCarat", value: number];
 }>();
@@ -37,6 +39,8 @@ const props = defineProps<{
   searchTerm: string;
   activeFilter: "all" | "active" | "inactive";
   categoryFilter: string;
+  sellerFilter: string;
+  sellers: Seller[];
   marketPrices: MarketPriceConfigDto;
 }>();
 const totalPages = computed(() => Math.max(1, Math.ceil(props.managedProducts.length / pageSize)));
@@ -78,13 +82,19 @@ const pagedProducts = computed(() => {
           <option value="all">All categories</option>
           <option v-for="category in categories" :key="category.value" :value="category.name">{{ category.name }}</option>
         </select>
+        <select v-if="role === 'admin'" :value="sellerFilter" @change="emit('update:seller-filter', ($event.target as HTMLSelectElement).value)">
+          <option value="all">All Sellers</option>
+          <option v-for="seller in sellers" :key="seller.id" :value="String(seller.sellerId)">{{ seller.name }} ({{ seller.sellerId }})</option>
+        </select>
       </div>
 
       <table>
-        <thead><tr><th>ID</th><th>Image</th><th>Name</th><th>SKU</th><th>Description</th><th>Category</th><th>Weight</th><th>Price</th><th>Stock</th><th>Active</th><th>Actions</th></tr></thead>
+        <thead><tr><th>ID</th><th v-if="role === 'admin'">Seller ID</th><th v-if="role === 'admin'">Seller Name</th><th>Image</th><th>Name</th><th>SKU</th><th>Description</th><th>Category</th><th>Weight</th><th>Price</th><th>Stock</th><th>Active</th><th>Actions</th></tr></thead>
         <tbody>
           <tr v-for="product in pagedProducts" :key="product.id" class="clickable-row" @click="emit('details', product)">
             <td>{{ product.id }}</td>
+            <td v-if="role === 'admin'">{{ product.sellerId }}</td>
+            <td v-if="role === 'admin'">{{ product.sellerName || '-' }}</td>
             <td><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-thumb" /><span v-else class="product-thumb-placeholder">No image</span></td>
             <td>{{ product.name }}</td>
             <td>{{ product.sku }}</td>
