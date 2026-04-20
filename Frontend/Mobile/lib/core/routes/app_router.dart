@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/pages/product_view.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
@@ -24,6 +25,11 @@ import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/pages/
 import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/pages/forgot_password_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/splash/presentation/pages/splash_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/pages/confirm_otp_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/checkout/data/datasources/checkout_otp_remote_datasource.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/checkout/data/repositories/checkout_otp_repository_impl.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/checkout/domain/usecases/checkout_otp_usecases.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/checkout/presentation/cubit/checkout_otp_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/pages/wallet_actions/sell_asset_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/pages/wallet_actions/transfer_asset_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/pages/wallet_actions/convert_asset_page.dart';
@@ -176,17 +182,33 @@ class AppRouter {
                   .whereType<int>()
                   .toList()
             : null;
+        final isCheckoutOtpFlow = args?['otpFlow'] == 'checkout';
         return MaterialPageRoute(
-          builder: (_) => ConfirmOtpPage(
-            title: args?['title'] as String?,
-            subtitle: args?['subtitle'] as String?,
-            userId: args?['userId'] is num ? (args?['userId'] as num).toInt() : int.tryParse('${args?['userId']}'),
-            productId: args?['productId'] is num ? (args?['productId'] as num).toInt() : int.tryParse('${args?['productId']}'),
-            quantity: args?['quantity'] is num ? (args?['quantity'] as num).toInt() : int.tryParse('${args?['quantity']}'),
-            productIds: productIds,
-            forceEmailFallback: args?['forceEmailFallback'] == true,
-            useCheckoutOtpFlow: args?['otpFlow'] == 'checkout',
-          ),
+          builder: (_) {
+            final page = ConfirmOtpPage(
+              title: args?['title'] as String?,
+              subtitle: args?['subtitle'] as String?,
+              userId: args?['userId'] is num ? (args?['userId'] as num).toInt() : int.tryParse('${args?['userId']}'),
+              productId: args?['productId'] is num ? (args?['productId'] as num).toInt() : int.tryParse('${args?['productId']}'),
+              quantity: args?['quantity'] is num ? (args?['quantity'] as num).toInt() : int.tryParse('${args?['quantity']}'),
+              productIds: productIds,
+              forceEmailFallback: args?['forceEmailFallback'] == true,
+              useCheckoutOtpFlow: isCheckoutOtpFlow,
+            );
+
+            if (!isCheckoutOtpFlow) return page;
+
+            final remoteDataSource = CheckoutOtpRemoteDataSource(InjectionContainer.dio());
+            final repository = CheckoutOtpRepositoryImpl(remoteDataSource);
+            return BlocProvider(
+              create: (_) => CheckoutOtpCubit(
+                requestCheckoutOtpUseCase: RequestCheckoutOtpUseCase(repository),
+                resendCheckoutOtpUseCase: ResendCheckoutOtpUseCase(repository),
+                verifyCheckoutOtpUseCase: VerifyCheckoutOtpUseCase(repository),
+              ),
+              child: page,
+            );
+          },
         );
 
       default:
