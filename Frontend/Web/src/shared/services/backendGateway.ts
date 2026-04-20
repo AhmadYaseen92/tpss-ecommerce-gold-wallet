@@ -217,6 +217,18 @@ export async function registerSellerWithBackend(registration: SellerRegistration
   };
 }
 
+export interface AdminWorkspaceDto {
+  sellersCount: number;
+  investorsCount: number;
+  productsCount: number;
+  requestsCount: number;
+  systemSettingsCount: number;
+}
+
+export async function fetchAdminWorkspace(accessToken: string): Promise<AdminWorkspaceDto> {
+  return getJson<AdminWorkspaceDto>("/api/admin/workspace", accessToken);
+}
+
 export interface WalletSellConfigurationDto {
   mode: "locked_30_seconds" | "live_price";
   lockSeconds: number;

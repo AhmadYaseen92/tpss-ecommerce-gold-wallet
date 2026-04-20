@@ -133,3 +133,21 @@ public class WebDashboardPointDto
     public string Label { get; set; } = string.Empty;
     public int Value { get; set; }
 }
+
+public class AdminWorkspaceDto
+{
+    public int SellersCount { get; set; }
+    public int InvestorsCount { get; set; }
+    public int ProductsCount { get; set; }
+    public int RequestsCount { get; set; }
+    public int SystemSettingsCount { get; set; }
+}
+
+public class SellerWorkspaceDto
+{
+    public int SellerId { get; set; }
+    public int ProductsCount { get; set; }
+    public int InvestorsCount { get; set; }
+    public int RequestsCount { get; set; }
+    public int ActiveOffersCount { get; set; }
+}

@@ -3,6 +3,7 @@ export type KycStatus = "pending" | "approved" | "rejected";
 
 export type NavigationKey =
   | "overview"
+  | "admin"
   | "investors"
   | "requests"
   | "products"

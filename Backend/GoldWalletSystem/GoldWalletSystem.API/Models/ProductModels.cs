@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using GoldWalletSystem.Domain.Enums;
 
 namespace GoldWalletSystem.API.Models;
