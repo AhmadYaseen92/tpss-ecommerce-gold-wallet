@@ -58,7 +58,7 @@ public class OtpService(
         };
 
         await otpSessionStore.UpsertSessionAsync(session, cancellationToken);
-        await otpDeliveryService.SendOtpAsync(user, otpCode, [channel], cancellationToken);
+        await otpDeliveryService.SendOtpAsync(user, otpCode, [channel], CancellationToken.None);
         await LogAsync(user.Id, "OtpRequested", $"action={actionType};ref={actionReferenceId};channel={channel};requestId={session.OtpRequestId}", cancellationToken);
 
         return ToDispatchResponse(session, settings);
@@ -93,7 +93,7 @@ public class OtpService(
         session.Status = "Pending";
         await otpSessionStore.UpsertSessionAsync(session, cancellationToken);
 
-        await otpDeliveryService.SendOtpAsync(user, code, [channel], cancellationToken);
+        await otpDeliveryService.SendOtpAsync(user, code, [channel], CancellationToken.None);
         await LogAsync(user.Id, "OtpResent", $"action={session.ActionType};ref={session.ActionReferenceId};channel={channel};requestId={session.OtpRequestId};resend={session.ResendCount}", cancellationToken);
         return ToDispatchResponse(session, settings);
     }

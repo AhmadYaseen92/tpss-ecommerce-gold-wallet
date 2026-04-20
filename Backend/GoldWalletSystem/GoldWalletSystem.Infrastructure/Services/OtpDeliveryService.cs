@@ -65,7 +65,7 @@ public class OtpDeliveryService(
             });
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(CancellationToken.None);
 
         if (deliveredChannels.Count == 0)
         {
