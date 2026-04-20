@@ -5,6 +5,7 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.Mail;
@@ -14,10 +15,9 @@ namespace GoldWalletSystem.Infrastructure.Services;
 public class OtpDeliveryService(
     ILogger<OtpDeliveryService> logger,
     AppDbContext dbContext,
-    IConfiguration configuration,
-    IHttpClientFactory httpClientFactory) : IOtpDeliveryService
+    IConfiguration configuration) : IOtpDeliveryService
 {
-    private readonly OtpDeliveryOptions options = configuration.GetSection("OtpDelivery").Get<OtpDeliveryOptions>() ?? new OtpDeliveryOptions();
+    private readonly OtpDeliveryOptions options = BuildOptions(configuration);
 
     public async Task SendOtpAsync(User user, string otpCode, IReadOnlyCollection<OtpDeliveryChannel> channels, CancellationToken cancellationToken = default)
     {
@@ -100,7 +100,7 @@ public class OtpDeliveryService(
         };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", options.WhatsApp.AccessToken);
 
-        var client = httpClientFactory.CreateClient("OtpDeliveryWhatsapp");
+        using var client = new HttpClient();
         using var response = await client.SendAsync(request, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
@@ -159,4 +159,30 @@ public class OtpDeliveryService(
 
     private static string NormalizeWhatsAppTarget(string phone)
         => new string(phone.Where(char.IsDigit).ToArray());
+
+    private static OtpDeliveryOptions BuildOptions(IConfiguration configuration)
+    {
+        return new OtpDeliveryOptions
+        {
+            WhatsApp = new WhatsAppDeliveryOptions
+            {
+                Enabled = bool.TryParse(configuration["OtpDelivery:WhatsApp:Enabled"], out var enabledWhatsApp) && enabledWhatsApp,
+                SenderNumber = configuration["OtpDelivery:WhatsApp:SenderNumber"] ?? string.Empty,
+                AccessToken = configuration["OtpDelivery:WhatsApp:AccessToken"] ?? string.Empty,
+                PhoneNumberId = configuration["OtpDelivery:WhatsApp:PhoneNumberId"] ?? string.Empty,
+                ApiVersion = configuration["OtpDelivery:WhatsApp:ApiVersion"] ?? "v22.0"
+            },
+            Email = new EmailDeliveryOptions
+            {
+                Enabled = bool.TryParse(configuration["OtpDelivery:Email:Enabled"], out var enabledEmail) && enabledEmail,
+                FromAddress = configuration["OtpDelivery:Email:FromAddress"] ?? string.Empty,
+                FromName = configuration["OtpDelivery:Email:FromName"] ?? "GoldWallet OTP",
+                SmtpHost = configuration["OtpDelivery:Email:SmtpHost"] ?? string.Empty,
+                SmtpPort = int.TryParse(configuration["OtpDelivery:Email:SmtpPort"], out var smtpPort) ? smtpPort : 587,
+                UseSsl = !bool.TryParse(configuration["OtpDelivery:Email:UseSsl"], out var useSsl) || useSsl,
+                Username = configuration["OtpDelivery:Email:Username"] ?? string.Empty,
+                Password = configuration["OtpDelivery:Email:Password"] ?? string.Empty
+            }
+        };
+    }
 }
