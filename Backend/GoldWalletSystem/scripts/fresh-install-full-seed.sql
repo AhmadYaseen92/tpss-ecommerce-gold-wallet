@@ -61,16 +61,15 @@ BEGIN TRY
         Email nvarchar(200),
         PasswordHash nvarchar(500),
         Role nvarchar(50),
-        SellerId int NULL,
         PhoneNumber nvarchar(30)
     );
 
-    INSERT INTO @Users (FullName, Email, PasswordHash, Role, SellerId, PhoneNumber)
+    INSERT INTO @Users (FullName, Email, PasswordHash, Role, PhoneNumber)
     VALUES
-        (N'Imseeh Investor',        N'imseeh.investor@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,  N'+962790000001'),
-        (N'Gold Palace Investor',   N'goldpal.investor@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL, N'+15551020002'),
-        (N'Bullion House Investor', N'bullion.investor@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL, N'+15551030002'),
-        (N'Gold Wallet Investor',   N'investor@goldwallet.com',          N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,  N'+962790000999');
+        (N'Imseeh Investor',        N'imseeh.investor@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+962790000001'),
+        (N'Gold Palace Investor',   N'goldpal.investor@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+15551020002'),
+        (N'Bullion House Investor', N'bullion.investor@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+15551030002'),
+        (N'Gold Wallet Investor',   N'investor@goldwallet.com',          N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+962790000999');
 
     MERGE [Users] AS T
     USING @Users AS S
@@ -80,13 +79,12 @@ BEGIN TRY
             T.[FullName] = S.[FullName],
             T.[PasswordHash] = S.[PasswordHash],
             T.[Role] = S.[Role],
-            T.[SellerId] = S.[SellerId],
             T.[PhoneNumber] = S.[PhoneNumber],
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([FullName],[Email],[PasswordHash],[Role],[SellerId],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[SellerId],S.[PhoneNumber],1,@Now,NULL);
+        INSERT ([FullName],[Email],[PasswordHash],[Role],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
 
     ------------------------------------------------------------
     -- UserProfiles / Wallets / Carts

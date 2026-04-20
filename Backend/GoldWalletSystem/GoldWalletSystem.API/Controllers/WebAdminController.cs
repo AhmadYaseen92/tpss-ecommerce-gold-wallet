@@ -1,4 +1,5 @@
 using System.Text.Json;
+using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Application.Constants;
 using System.Text;
 using GoldWalletSystem.Application.DTOs.Common;
@@ -74,7 +75,7 @@ public class WebAdminController(
             {
                 Id = $"s-{x.Id}",
                 Name = x.Name,
-                Email = x.Email,
+                Email = x.ContactEmail ?? dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
                 BusinessName = x.CompanyName,
                 KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
                 SubmittedAt = x.CreatedAtUtc,

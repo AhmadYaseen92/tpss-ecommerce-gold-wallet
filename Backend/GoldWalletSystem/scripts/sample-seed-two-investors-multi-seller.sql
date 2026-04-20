@@ -12,14 +12,13 @@ DECLARE @InvestorSeed TABLE
     Email nvarchar(255),
     PasswordHash nvarchar(500),
     Role nvarchar(50),
-    SellerId int NULL,
     PhoneNumber nvarchar(50)
 );
 
-INSERT INTO @InvestorSeed (FullName, Email, PasswordHash, Role, SellerId, PhoneNumber)
+INSERT INTO @InvestorSeed (FullName, Email, PasswordHash, Role, PhoneNumber)
 VALUES
-    (N'Investor One', N'investor1@goldwallet.com', @SharedInvestorPasswordHash, N'Investor', NULL, N'+962790001001'),
-    (N'Investor Two', N'investor2@goldwallet.com', @SharedInvestorPasswordHash, N'Investor', NULL, N'+962790001002');
+    (N'Investor One', N'investor1@goldwallet.com', @SharedInvestorPasswordHash, N'Investor', N'+962790001001'),
+    (N'Investor Two', N'investor2@goldwallet.com', @SharedInvestorPasswordHash, N'Investor', N'+962790001002');
 
 MERGE [Users] AS T
 USING @InvestorSeed AS S
@@ -29,13 +28,12 @@ WHEN MATCHED THEN
         T.[FullName] = S.[FullName],
         T.[PasswordHash] = S.[PasswordHash],
         T.[Role] = S.[Role],
-        T.[SellerId] = S.[SellerId],
         T.[PhoneNumber] = S.[PhoneNumber],
         T.[IsActive] = 1,
         T.[UpdatedAtUtc] = @Now
 WHEN NOT MATCHED THEN
-    INSERT ([FullName],[Email],[PasswordHash],[Role],[SellerId],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-    VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[SellerId],S.[PhoneNumber],1,@Now,NULL);
+    INSERT ([FullName],[Email],[PasswordHash],[Role],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+    VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
 
 DECLARE @Investor1Id int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'investor1@goldwallet.com');
 DECLARE @Investor2Id int = (SELECT TOP 1 [Id] FROM [Users] WHERE [Email] = N'investor2@goldwallet.com');
@@ -225,7 +223,7 @@ WHEN NOT MATCHED THEN
         S.[Category],S.[ImageUrl],1,@Now,NULL
     );
 
-SELECT TOP 2 [Id], [FullName], [Email], [Role], [SellerId], [IsActive]
+SELECT TOP 2 [Id], [FullName], [Email], [Role], [IsActive]
 FROM [Users]
 WHERE [Email] IN (N'investor1@goldwallet.com', N'investor2@goldwallet.com')
 ORDER BY [Email];
