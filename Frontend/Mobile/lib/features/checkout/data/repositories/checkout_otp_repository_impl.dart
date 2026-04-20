@@ -12,7 +12,10 @@ class CheckoutOtpRepositoryImpl implements ICheckoutOtpRepository {
     CheckoutOtpRequestContextEntity context,
   ) async {
     final model = await _remoteDataSource.requestOtp(context);
-    return CheckoutOtpSessionEntity(otpRequestId: model.otpRequestId);
+    return CheckoutOtpSessionEntity(
+      otpRequestId: model.otpRequestId,
+      nextResendAtUtc: model.nextResendAtUtc,
+    );
   }
 
   @override
@@ -26,7 +29,10 @@ class CheckoutOtpRepositoryImpl implements ICheckoutOtpRepository {
       otpRequestId: otpRequestId,
       forceEmailFallback: forceEmailFallback,
     );
-    return CheckoutOtpSessionEntity(otpRequestId: model.otpRequestId);
+    return CheckoutOtpSessionEntity(
+      otpRequestId: model.otpRequestId,
+      nextResendAtUtc: model.nextResendAtUtc,
+    );
   }
 
   @override

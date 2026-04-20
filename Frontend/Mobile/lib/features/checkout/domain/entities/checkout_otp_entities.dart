@@ -17,9 +17,11 @@ class CheckoutOtpRequestContextEntity {
 class CheckoutOtpSessionEntity {
   const CheckoutOtpSessionEntity({
     required this.otpRequestId,
+    this.nextResendAtUtc,
   });
 
   final String otpRequestId;
+  final DateTime? nextResendAtUtc;
 }
 
 class CheckoutOtpVerificationEntity {

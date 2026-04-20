@@ -1,13 +1,16 @@
 class CheckoutOtpDispatchModel {
   const CheckoutOtpDispatchModel({
     required this.otpRequestId,
+    required this.nextResendAtUtc,
   });
 
   final String otpRequestId;
+  final DateTime? nextResendAtUtc;
 
   factory CheckoutOtpDispatchModel.fromJson(Map<String, dynamic> json) {
     return CheckoutOtpDispatchModel(
       otpRequestId: (json['otpRequestId'] ?? '').toString(),
+      nextResendAtUtc: DateTime.tryParse((json['nextResendAtUtc'] ?? '').toString()),
     );
   }
 }

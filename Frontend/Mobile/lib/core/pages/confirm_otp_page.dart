@@ -61,7 +61,7 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
         );
       }
     } else {
-      _startTimer();
+      _startTimer(30, updateState: false);
     }
   }
 
@@ -169,18 +169,23 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
           return;
         }
         if (state is CheckoutOtpReady && widget.useCheckoutOtpFlow) {
-          if (secondsRemaining == 0 || timer == null || !(timer?.isActive ?? false)) {
-            _startTimer();
-          }
+          _startTimer(state.cooldownSeconds);
         }
       },
       child: scaffold,
     );
   }
 
-  void _startTimer() {
-    secondsRemaining = 30;
+  void _startTimer(int initialSeconds, {bool updateState = true}) {
+    final normalized = initialSeconds.clamp(0, 600).toInt();
+    if (updateState) {
+      setState(() => secondsRemaining = normalized);
+    } else {
+      secondsRemaining = normalized;
+    }
     timer?.cancel();
+
+    if (secondsRemaining <= 0) return;
 
     timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) return;
@@ -211,7 +216,6 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
         if (!resent) return;
         setState(() => otp = '');
         FocusScope.of(context).unfocus();
-        _startTimer();
         _showSnack('OTP resent successfully');
       } finally {
         if (mounted) setState(() => _isSubmitting = false);
@@ -224,7 +228,7 @@ class _ConfirmOtpPageState extends State<ConfirmOtpPage> {
     });
 
     FocusScope.of(context).unfocus();
-    _startTimer();
+    _startTimer(30);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

@@ -21,6 +21,7 @@ class CheckoutOtpCubit extends Cubit<CheckoutOtpState> {
   final VerifyCheckoutOtpUseCase _verifyCheckoutOtpUseCase;
 
   String? otpRequestId;
+  DateTime? _nextResendAtUtc;
 
   Future<void> initialize(CheckoutOtpRequestContextEntity context) async {
     emit(CheckoutOtpLoading());
@@ -31,7 +32,13 @@ class CheckoutOtpCubit extends Cubit<CheckoutOtpState> {
         return;
       }
       otpRequestId = session.otpRequestId;
-      emit(CheckoutOtpReady(session.otpRequestId));
+      _nextResendAtUtc = session.nextResendAtUtc;
+      emit(
+        CheckoutOtpReady(
+          otpRequestId: session.otpRequestId,
+          cooldownSeconds: _cooldownSeconds(_nextResendAtUtc),
+        ),
+      );
     } on DioException catch (e) {
       emit(
         CheckoutOtpFailure(
@@ -67,7 +74,13 @@ class CheckoutOtpCubit extends Cubit<CheckoutOtpState> {
       if (session.otpRequestId.trim().isNotEmpty) {
         otpRequestId = session.otpRequestId;
       }
-      emit(CheckoutOtpReady(otpRequestId ?? currentOtpRequestId));
+      _nextResendAtUtc = session.nextResendAtUtc ?? _nextResendAtUtc;
+      emit(
+        CheckoutOtpReady(
+          otpRequestId: otpRequestId ?? currentOtpRequestId,
+          cooldownSeconds: _cooldownSeconds(_nextResendAtUtc),
+        ),
+      );
       return true;
     } on DioException catch (e) {
       emit(
@@ -108,7 +121,12 @@ class CheckoutOtpCubit extends Cubit<CheckoutOtpState> {
         return null;
       }
 
-      emit(CheckoutOtpReady(currentOtpRequestId));
+      emit(
+        CheckoutOtpReady(
+          otpRequestId: currentOtpRequestId,
+          cooldownSeconds: _cooldownSeconds(_nextResendAtUtc),
+        ),
+      );
       return verification;
     } on DioException catch (e) {
       emit(
@@ -124,5 +142,12 @@ class CheckoutOtpCubit extends Cubit<CheckoutOtpState> {
       emit(CheckoutOtpFailure('Invalid OTP. Please try again.'));
       return null;
     }
+  }
+
+  int _cooldownSeconds(DateTime? nextResendAtUtc) {
+    if (nextResendAtUtc == null) return 30;
+    final seconds = nextResendAtUtc.toUtc().difference(DateTime.now().toUtc()).inSeconds;
+    if (seconds <= 0) return 0;
+    return seconds;
   }
 }
