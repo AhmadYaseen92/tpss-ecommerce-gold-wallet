@@ -13,7 +13,6 @@ import {
 } from "../types/models";
 import { deleteJson, getJson, postForm, postJson, putForm, putJson } from "./httpClient";
 import type {
-  AuditLogDto,
   DashboardDto,
   LoginResponseDto,
   PagedResult,
@@ -24,6 +23,7 @@ import type {
   EnumItemDto,
   WebDashboardDto,
   WebInvestorDto,
+  WebNotificationDto,
   WebRequestDto,
   WebSellerDto,
   WalletDto
@@ -98,25 +98,6 @@ const mapInvestors = (items: WebInvestorDto[]): Investor[] =>
     status: item.status === "blocked" ? "blocked" : "active"
   }));
 
-const mapRequests = (logs: AuditLogDto[]): InvestorRequest[] =>
-  logs.slice(0, 5).map((log, index) => ({
-    id: `r-${log.id}`,
-    investorId: `i-${log.userId ?? index + 1}`,
-    investorName: `Investor ${index + 1}`,
-    type: "withdrawal",
-    productName: "Gold",
-    category: "Gold",
-    quantity: 1,
-    unitPrice: 150 + index * 35,
-    weight: 1,
-    unit: "gram",
-    purity: 24,
-    amount: 150 + index * 35,
-    status: "pending",
-    currency: "USD",
-    createdAt: log.createdAtUtc
-  }));
-
 const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
   items.map((item) => ({
     id: item.id,
@@ -160,14 +141,14 @@ const mapWalletAssets = (wallet: WalletDto): WalletAssetItem[] =>
     currentMarketPrice: item.currentMarketPrice
   }));
 
-const mapNotifications = (logs: AuditLogDto[]): NotificationItem[] =>
-  logs.slice(0, 6).map((log) => ({
-    id: `n-${log.id}`,
-    title: log.action,
-    message: log.details || `${log.entityName} updated`,
-    severity: "info",
-    isRead: false,
-    createdAt: log.createdAtUtc
+const mapNotifications = (items: WebNotificationDto[]): NotificationItem[] =>
+  items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    message: item.message,
+    severity: item.severity ?? "info",
+    isRead: item.isRead,
+    createdAt: item.createdAt
   }));
 
 export async function loginWithBackend(credentials: AuthCredentials): Promise<UserSession> {
@@ -298,13 +279,8 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
         session.accessToken
       );
 
-  const logsResult = session.role === "admin"
-    ? await postJson<PagedResult<AuditLogDto>, { pageNumber: number; pageSize: number }>(
-        "/api/logs/search",
-        { pageNumber: 1, pageSize: 20 },
-        session.accessToken
-      )
-    : { items: [] as AuditLogDto[], totalCount: 0, pageNumber: 1, pageSize: 20, totalPages: 0 };
+  const notificationsResult = await getJson<WebNotificationDto[]>("/api/web-admin/notifications", session.accessToken)
+    .catch(() => [] as WebNotificationDto[]);
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
   const webInvestors = session.role === "admin"
@@ -365,7 +341,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
       storageFee: 4,
       serviceChargePercent: 2.5
     },
-    notifications: mapNotifications(logsResult.items),
+    notifications: mapNotifications(notificationsResult),
     reports: dashboard ? mapReports(dashboard, requests.length) : [],
     currentUserName: session.displayName ?? dashboard?.fullName
   };

@@ -94,6 +94,15 @@ export interface AuditLogDto {
   createdAtUtc: string;
 }
 
+export interface WebNotificationDto {
+  id: string;
+  title: string;
+  message: string;
+  severity: "info" | "warning" | "critical";
+  isRead: boolean;
+  createdAt: string;
+}
+
 export interface WebRequestDto {
   id: string;
   sellerId?: string;
