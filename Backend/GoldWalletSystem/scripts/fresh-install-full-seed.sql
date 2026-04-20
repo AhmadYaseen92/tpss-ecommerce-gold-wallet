@@ -10,7 +10,7 @@ It seeds all core data used by mobile flows:
 - Carts
 - Products (with Category, WeightValue, WeightUnit)
 - WalletAssets (portfolio)
-- MobileAppConfigurations (home carousel)
+- SystemConfigration (typed system config)
 - AuditLogs seed marker
 */
 
@@ -166,21 +166,6 @@ BEGIN TRY
     ------------------------------------------------------------
     -- Mobile app config
     ------------------------------------------------------------
-    IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'home.carousel.images')
-    BEGIN
-        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [Name], [ValueType], [ValueString], [SellerAccess], [Description], [CreatedAtUtc], [UpdatedAtUtc])
-        VALUES
-        (
-            N'home.carousel.images',
-            N'Home Carousel Images',
-            1,
-            N'["/images/banners/banner-1.png","/images/banners/banner-2.png","/images/banners/banner-3.png"]',
-            0,
-            N'Home carousel images stored on local server',
-            @Now,
-            NULL
-        );
-    END
 
     ------------------------------------------------------------
     -- Seed marker in audit

@@ -76,6 +76,7 @@ export interface ProductDto {
   offerType: string;
   price: number;
   finalPrice: number;
+  isHasOffer: boolean;
   availableStock: number;
   sellerId: number;
   sellerName: string;
@@ -134,6 +135,7 @@ export interface ProductManagementDto {
   storageFee: number;
   serviceCharge: number;
   offerType: string;
+  isHasOffer: boolean;
   offerPercent: number;
   offerNewPrice: number;
   price: number;

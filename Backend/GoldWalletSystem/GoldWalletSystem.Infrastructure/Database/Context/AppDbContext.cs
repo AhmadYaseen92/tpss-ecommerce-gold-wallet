@@ -243,6 +243,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.OfferPercent).HasPrecision(8, 3);
             entity.Property(x => x.OfferNewPrice).HasPrecision(18, 2);
             entity.Property(x => x.OfferType).HasConversion<int>();
+            entity.Property(x => x.IsHasOffer).HasDefaultValue(false);
             entity.Property(x => x.Price).HasPrecision(18, 2);
             entity.HasIndex(x => x.Sku).IsUnique();
             entity.HasIndex(x => x.Name);
@@ -460,7 +461,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         modelBuilder.Entity<MobileAppConfiguration>(entity =>
         {
-            entity.ToTable("MobileAppConfigurations");
+            entity.ToTable("SystemConfigration");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.ConfigKey).IsRequired().HasMaxLength(150);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(150);

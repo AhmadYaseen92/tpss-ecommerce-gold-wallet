@@ -662,43 +662,41 @@ BEGIN TRY
     END
 
     -- 6) Flat mobile/web configuration rows (typed values).
-    MERGE [MobileAppConfigurations] AS T
+    MERGE [SystemConfigration] AS T
     USING (
         VALUES
-        (N'home.carousel.images', N'Home Carousel Images', 1, N'["/images/banners/banner-1.png","/images/banners/banner-2.png","/images/banners/banner-3.png"]', NULL, NULL, NULL, CAST(0 AS bit), N'Home carousel images stored on local server'),
-        (N'Fees_Delivery', N'Fees Delivery', 4, NULL, NULL, NULL, 12.00, CAST(0 AS bit), N'Web admin delivery fee'),
-        (N'Fees_Storage', N'Fees Storage', 4, NULL, NULL, NULL, 4.00, CAST(0 AS bit), N'Web admin storage fee'),
-        (N'Fees_ServiceChargePercent', N'Fees Service Charge Percent', 4, NULL, NULL, NULL, 2.50, CAST(0 AS bit), N'Web admin service charge percent'),
-        (N'WalletSell_Mode', N'Wallet Sell Mode', 1, N'locked_30_seconds', NULL, NULL, NULL, CAST(0 AS bit), N'Wallet sell execution behavior for mobile and web'),
-        (N'WalletSell_LockSeconds', N'Wallet Sell Lock Seconds', 3, NULL, NULL, 30, NULL, CAST(0 AS bit), N'Wallet sell lock duration in seconds'),
-        (N'MobileRelease_IsIndividualSeller', N'Mobile Release Is Individual Seller', 2, NULL, CAST(0 AS bit), NULL, NULL, CAST(0 AS bit), N'Mobile release: show single seller mode'),
-        (N'MobileRelease_IndividualSellerName', N'Mobile Release Individual Seller Name', 1, N'Imseeh', NULL, NULL, NULL, CAST(0 AS bit), N'Mobile release seller name when single seller mode is enabled'),
-        (N'MobileRelease_AllSellersLabel', N'Mobile Release All Sellers Label', 1, N'All Sellers', NULL, NULL, NULL, CAST(0 AS bit), N'Mobile release label for all sellers option'),
-        (N'MobileRelease_ShowWeightInGrams', N'Mobile Release Show Weight In Grams', 2, NULL, CAST(1 AS bit), NULL, NULL, CAST(0 AS bit), N'Mobile release flag to show weight in grams'),
-        (N'Otp_EnableWhatsapp', N'OTP Enable WhatsApp', 2, NULL, CAST(1 AS bit), NULL, NULL, CAST(0 AS bit), N'Enable WhatsApp OTP delivery channel'),
-        (N'Otp_EnableEmail', N'OTP Enable Email', 2, NULL, CAST(1 AS bit), NULL, NULL, CAST(0 AS bit), N'Enable Email OTP delivery channel'),
-        (N'Otp_ExpirySeconds', N'OTP Expiry Seconds', 3, NULL, NULL, 300, NULL, CAST(0 AS bit), N'OTP code expiry duration in seconds'),
-        (N'Otp_ResendCooldownSeconds', N'OTP Resend Cooldown Seconds', 3, NULL, NULL, 30, NULL, CAST(0 AS bit), N'OTP resend cooldown in seconds'),
-        (N'Otp_MaxResendCount', N'OTP Max Resend Count', 3, NULL, NULL, 3, NULL, CAST(0 AS bit), N'Maximum number of OTP resend attempts'),
-        (N'Otp_MaxVerificationAttempts', N'OTP Max Verification Attempts', 3, NULL, NULL, 5, NULL, CAST(0 AS bit), N'Maximum OTP verification attempts before lock'),
-        (N'Otp_ChannelPriority', N'OTP Channel Priority', 1, N'whatsapp,email', NULL, NULL, NULL, CAST(0 AS bit), N'Preferred OTP channels in order'),
-        (N'Otp_RequiredActions', N'OTP Required Actions', 1, N'registration,reset_password,checkout,buy,sell,transfer,gift,pickup,add_bank_account,edit_bank_account,remove_bank_account,add_payment_method,edit_payment_method,remove_payment_method,change_email,change_password,change_mobile_number', NULL, NULL, NULL, CAST(0 AS bit), N'Actions that require OTP verification')
-    ) AS S([ConfigKey],[Name],[ValueType],[ValueString],[ValueBool],[ValueInt],[ValueDecimal],[SellerAccess],[Description])
+        (N'Fees_Delivery', N'Fees Delivery', N'Web admin delivery fee', 4, NULL, NULL, 12.00, NULL, CAST(0 AS bit)),
+        (N'Fees_Storage', N'Fees Storage', N'Web admin storage fee', 4, NULL, NULL, 4.00, NULL, CAST(0 AS bit)),
+        (N'Fees_ServiceChargePercent', N'Fees Service Charge Percent', N'Web admin service charge percent', 4, NULL, NULL, 2.50, NULL, CAST(0 AS bit)),
+        (N'WalletSell_Mode', N'Wallet Sell Mode', N'Wallet sell execution behavior for mobile and web', 1, NULL, NULL, NULL, N'locked_30_seconds', CAST(0 AS bit)),
+        (N'WalletSell_LockSeconds', N'Wallet Sell Lock Seconds', N'Wallet sell lock duration in seconds', 3, NULL, 30, NULL, NULL, CAST(0 AS bit)),
+        (N'MobileRelease_IsIndividualSeller', N'Mobile Release Is Individual Seller', N'Mobile release: show single seller mode', 2, CAST(0 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+        (N'MobileRelease_IndividualSellerName', N'Mobile Release Individual Seller Name', N'Mobile release seller name when single seller mode is enabled', 1, NULL, NULL, NULL, N'Imseeh', CAST(0 AS bit)),
+        (N'MobileRelease_ShowWeightInGrams', N'Mobile Release Show Weight In Grams', N'Mobile release flag to show weight in grams', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_EnableWhatsapp', N'OTP Enable WhatsApp', N'Enable WhatsApp OTP delivery channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_EnableEmail', N'OTP Enable Email', N'Enable Email OTP delivery channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_ExpirySeconds', N'OTP Expiry Seconds', N'OTP code expiry duration in seconds', 3, NULL, 300, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_ResendCooldownSeconds', N'OTP Resend Cooldown Seconds', N'OTP resend cooldown in seconds', 3, NULL, 30, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_MaxResendCount', N'OTP Max Resend Count', N'Maximum number of OTP resend attempts', 3, NULL, 3, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_MaxVerificationAttempts', N'OTP Max Verification Attempts', N'Maximum OTP verification attempts before lock', 3, NULL, 5, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_ChannelPriority', N'OTP Channel Priority', N'Preferred OTP channels in order', 1, NULL, NULL, NULL, N'whatsapp,email', CAST(0 AS bit)),
+        (N'Otp_RequiredActions', N'OTP Required Actions', N'Actions that require OTP verification', 1, NULL, NULL, NULL, N'registration,reset_password,checkout,buy,sell,transfer,gift,pickup,add_bank_account,edit_bank_account,remove_bank_account,add_payment_method,edit_payment_method,remove_payment_method,change_email,change_password,change_mobile_number', CAST(0 AS bit))
+    ) AS S([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess])
     ON T.[ConfigKey] = S.[ConfigKey]
     WHEN MATCHED THEN
         UPDATE SET
             T.[Name] = S.[Name],
+            T.[Description] = S.[Description],
             T.[ValueType] = S.[ValueType],
-            T.[ValueString] = S.[ValueString],
             T.[ValueBool] = S.[ValueBool],
             T.[ValueInt] = S.[ValueInt],
             T.[ValueDecimal] = S.[ValueDecimal],
+            T.[ValueString] = S.[ValueString],
             T.[SellerAccess] = S.[SellerAccess],
-            T.[Description] = S.[Description],
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([ConfigKey],[Name],[ValueType],[ValueString],[ValueBool],[ValueInt],[ValueDecimal],[SellerAccess],[Description],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[ConfigKey],S.[Name],S.[ValueType],S.[ValueString],S.[ValueBool],S.[ValueInt],S.[ValueDecimal],S.[SellerAccess],S.[Description],@Now,NULL);
+        INSERT ([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[ConfigKey],S.[Name],S.[Description],S.[ValueType],S.[ValueBool],S.[ValueInt],S.[ValueDecimal],S.[ValueString],S.[SellerAccess],@Now,NULL);
 
     -- 7) Seed audit marker.
     INSERT INTO [AuditLogs] ([UserId],[Action],[EntityName],[EntityId],[Details],[CreatedAtUtc],[UpdatedAtUtc])

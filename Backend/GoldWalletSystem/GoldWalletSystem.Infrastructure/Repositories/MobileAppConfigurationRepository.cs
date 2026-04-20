@@ -15,13 +15,13 @@ public class MobileAppConfigurationRepository(AppDbContext dbContext) : IMobileA
                 Id = x.Id,
                 ConfigKey = x.ConfigKey,
                 Name = x.Name,
+                Description = x.Description,
                 ValueType = x.ValueType,
-                ValueString = x.ValueString,
                 ValueBool = x.ValueBool,
                 ValueInt = x.ValueInt,
                 ValueDecimal = x.ValueDecimal,
+                ValueString = x.ValueString,
                 SellerAccess = x.SellerAccess,
-                Description = x.Description,
             })
             .ToListAsync(cancellationToken);
 
@@ -33,13 +33,13 @@ public class MobileAppConfigurationRepository(AppDbContext dbContext) : IMobileA
                 Id = x.Id,
                 ConfigKey = x.ConfigKey,
                 Name = x.Name,
+                Description = x.Description,
                 ValueType = x.ValueType,
-                ValueString = x.ValueString,
                 ValueBool = x.ValueBool,
                 ValueInt = x.ValueInt,
                 ValueDecimal = x.ValueDecimal,
+                ValueString = x.ValueString,
                 SellerAccess = x.SellerAccess,
-                Description = x.Description,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -52,26 +52,26 @@ public class MobileAppConfigurationRepository(AppDbContext dbContext) : IMobileA
             {
                 ConfigKey = request.ConfigKey,
                 Name = request.Name,
+                Description = request.Description,
                 ValueType = request.ValueType,
-                ValueString = request.ValueString,
                 ValueBool = request.ValueBool,
                 ValueInt = request.ValueInt,
                 ValueDecimal = request.ValueDecimal,
+                ValueString = request.ValueString,
                 SellerAccess = request.SellerAccess,
-                Description = request.Description,
             };
             dbContext.MobileAppConfigurations.Add(entity);
         }
         else
         {
             entity.Name = request.Name;
+            entity.Description = request.Description;
             entity.ValueType = request.ValueType;
-            entity.ValueString = request.ValueString;
             entity.ValueBool = request.ValueBool;
             entity.ValueInt = request.ValueInt;
             entity.ValueDecimal = request.ValueDecimal;
+            entity.ValueString = request.ValueString;
             entity.SellerAccess = request.SellerAccess;
-            entity.Description = request.Description;
             entity.UpdatedAtUtc = DateTime.UtcNow;
         }
 
@@ -84,12 +84,12 @@ public class MobileAppConfigurationRepository(AppDbContext dbContext) : IMobileA
         Id = entity.Id,
         ConfigKey = entity.ConfigKey,
         Name = entity.Name,
+        Description = entity.Description,
         ValueType = entity.ValueType,
-        ValueString = entity.ValueString,
         ValueBool = entity.ValueBool,
         ValueInt = entity.ValueInt,
         ValueDecimal = entity.ValueDecimal,
+        ValueString = entity.ValueString,
         SellerAccess = entity.SellerAccess,
-        Description = entity.Description,
     };
 }

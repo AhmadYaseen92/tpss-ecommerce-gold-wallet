@@ -3,7 +3,7 @@ class AppReleaseConfig {
   static String individualSellerName = 'Imseeh';
 
   static const String defaultAllSellersLabel = 'All Sellers';
-  static String allSellersLabel = defaultAllSellersLabel;
+  static const String allSellersLabel = defaultAllSellersLabel;
 
   static bool showWeightInGrams = true;
 
@@ -24,8 +24,6 @@ class AppReleaseConfig {
         (values['MobileRelease_IsIndividualSeller'] as bool?) ?? isIndividualSellerRelease;
     individualSellerName =
         (values['MobileRelease_IndividualSellerName'] as String?) ?? individualSellerName;
-    allSellersLabel =
-        (values['MobileRelease_AllSellersLabel'] as String?) ?? allSellersLabel;
     showWeightInGrams =
         (values['MobileRelease_ShowWeightInGrams'] as bool?) ?? showWeightInGrams;
   }

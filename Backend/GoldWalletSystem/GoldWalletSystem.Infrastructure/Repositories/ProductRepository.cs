@@ -51,6 +51,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.OfferType,
                 x.Price,
                 x.Price,
+                x.IsHasOffer,
                 x.AvailableStock,
                 x.SellerId,
                 x.Seller.Name))

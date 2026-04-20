@@ -71,6 +71,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 OfferPercent = x.OfferPercent,
                 OfferNewPrice = x.OfferNewPrice,
                 OfferType = x.OfferType,
+                IsHasOffer = x.IsHasOffer,
                 Price = x.Price,
                 AvailableStock = x.AvailableStock,
                 IsActive = x.IsActive,
@@ -119,6 +120,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             OfferPercent = x.OfferPercent,
             OfferNewPrice = x.OfferNewPrice,
             OfferType = x.OfferType,
+            IsHasOffer = x.IsHasOffer,
             Price = x.Price,
             AvailableStock = x.AvailableStock,
             IsActive = x.IsActive,
@@ -163,6 +165,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             OfferPercent = request.OfferPercent,
             OfferNewPrice = request.OfferNewPrice,
             OfferType = request.OfferType,
+            IsHasOffer = request.OfferType != ProductOfferType.None,
             Price = await ResolveFinalPriceAsync(request, sellerId, cancellationToken),
             AvailableStock = request.AvailableStock,
             IsActive = request.IsActive,
@@ -223,6 +226,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.OfferPercent = request.OfferPercent;
         product.OfferNewPrice = request.OfferNewPrice;
         product.OfferType = request.OfferType;
+        product.IsHasOffer = request.OfferType != ProductOfferType.None;
         product.Price = await ResolveFinalPriceAsync(request, nextSellerId, cancellationToken);
         product.AvailableStock = request.AvailableStock;
         product.IsActive = request.IsActive;

@@ -187,6 +187,10 @@ WHEN MATCHED THEN
             WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G', N'SA-JWL-RNG', N'SB-SPT-MR') THEN 1
             ELSE 0
         END,
+        T.[IsHasOffer] = CASE
+            WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G', N'SA-JWL-RNG', N'SB-SPT-MR') THEN 1
+            ELSE 0
+        END,
         T.[Category] = S.[Category],
         T.[ImageUrl] = S.[ImageUrl],
         T.[IsActive] = 1,
@@ -195,7 +199,7 @@ WHEN NOT MATCHED THEN
     INSERT (
         [SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[WeightValue],[WeightUnit],[MaterialType],[FormType],
         [PricingMode],[PurityKarat],[PurityFactor],[BaseMarketPrice],[ManualSellPrice],[DeliveryFee],[StorageFee],[ServiceCharge],
-        [OfferPercent],[OfferNewPrice],[OfferType],[Category],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc]
+        [OfferPercent],[OfferNewPrice],[OfferType],[IsHasOffer],[Category],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc]
     )
     VALUES (
         S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[Price],S.[AvailableStock],S.[WeightValue],1,S.[MaterialType],S.[FormType],
@@ -208,6 +212,10 @@ WHEN NOT MATCHED THEN
         CASE
             WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G') THEN ROUND(S.[Price] * 0.90, 2)
             WHEN S.[Sku] IN (N'SA-JWL-RNG', N'SB-SPT-MR') THEN ROUND(S.[Price] * 0.94, 2)
+            ELSE 0
+        END,
+        CASE
+            WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G', N'SA-JWL-RNG', N'SB-SPT-MR') THEN 1
             ELSE 0
         END,
         CASE

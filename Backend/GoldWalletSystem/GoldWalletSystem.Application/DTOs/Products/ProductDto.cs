@@ -26,6 +26,7 @@ public sealed record ProductDto(
     ProductOfferType OfferType,
     decimal Price,
     decimal FinalPrice,
+    bool IsHasOffer,
     int AvailableStock,
     int SellerId,
     string SellerName);

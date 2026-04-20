@@ -24,6 +24,7 @@ public class Product : BaseEntity
     public decimal OfferPercent { get; set; }
     public decimal OfferNewPrice { get; set; }
     public ProductOfferType OfferType { get; set; } = ProductOfferType.None;
+    public bool IsHasOffer { get; set; }
     public decimal Price { get; set; }
     public int AvailableStock { get; set; }
     public bool IsActive { get; set; } = true;

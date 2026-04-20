@@ -20,6 +20,5 @@ public static class MobileAppConfigurationKeys
 
     public const string MobileReleaseIsIndividualSeller = "MobileRelease_IsIndividualSeller";
     public const string MobileReleaseIndividualSellerName = "MobileRelease_IndividualSellerName";
-    public const string MobileReleaseAllSellersLabel = "MobileRelease_AllSellersLabel";
     public const string MobileReleaseShowWeightInGrams = "MobileRelease_ShowWeightInGrams";
 }
