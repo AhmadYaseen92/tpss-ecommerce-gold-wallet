@@ -137,21 +137,44 @@ public class OtpDeliveryService(
         };
         message.To.Add(new MailAddress(user.Email));
 
-        using var smtp = new SmtpClient(options.Email.SmtpHost, options.Email.SmtpPort)
-        {
-            EnableSsl = options.Email.UseSsl,
-            DeliveryMethod = SmtpDeliveryMethod.Network,
-            Timeout = Math.Max(options.Email.SendTimeoutMs, 1000),
-            UseDefaultCredentials = false,
-            Credentials = string.IsNullOrWhiteSpace(options.Email.Username)
-                ? CredentialCache.DefaultNetworkCredentials
-                : new NetworkCredential(options.Email.Username, options.Email.Password)
-        };
-
         try
         {
             // Avoid coupling SMTP send lifecycle to HTTP request-abort cancellation.
-            await smtp.SendMailAsync(message);
+            await SendEmailWithSmtpAsync(
+                message,
+                options.Email.SmtpHost,
+                options.Email.SmtpPort,
+                options.Email.UseSsl,
+                options.Email.Username,
+                options.Email.Password,
+                options.Email.SendTimeoutMs);
+        }
+        catch (Exception ex) when (IsTimeoutLike(ex) &&
+                                   string.Equals(options.Email.SmtpHost, "smtp.gmail.com", StringComparison.OrdinalIgnoreCase) &&
+                                   options.Email.SmtpPort == 587)
+        {
+            logger.LogWarning(
+                ex,
+                "Primary Gmail SMTP send timed out for user {UserId}. Retrying via port 465 SSL.",
+                user.Id);
+
+            try
+            {
+                await SendEmailWithSmtpAsync(
+                    message,
+                    "smtp.gmail.com",
+                    465,
+                    true,
+                    options.Email.Username,
+                    options.Email.Password,
+                    options.Email.SendTimeoutMs);
+            }
+            catch (Exception retryEx)
+            {
+                throw new InvalidOperationException(
+                    $"SMTP send failed (primary host={options.Email.SmtpHost}, port={options.Email.SmtpPort}, ssl={options.Email.UseSsl}; retry host=smtp.gmail.com, port=465, ssl=true). {retryEx.Message}",
+                    retryEx);
+            }
         }
         catch (SmtpException ex)
         {
@@ -173,6 +196,32 @@ public class OtpDeliveryService(
             user.Id,
             user.Email);
     }
+
+    private static async Task SendEmailWithSmtpAsync(
+        MailMessage message,
+        string host,
+        int port,
+        bool useSsl,
+        string username,
+        string password,
+        int timeoutMs)
+    {
+        using var smtp = new SmtpClient(host, port)
+        {
+            EnableSsl = useSsl,
+            DeliveryMethod = SmtpDeliveryMethod.Network,
+            Timeout = Math.Max(timeoutMs, 1000),
+            UseDefaultCredentials = false,
+            Credentials = string.IsNullOrWhiteSpace(username)
+                ? CredentialCache.DefaultNetworkCredentials
+                : new NetworkCredential(username, password)
+        };
+        await smtp.SendMailAsync(message);
+    }
+
+    private static bool IsTimeoutLike(Exception ex)
+        => ex is TimeoutException
+           || ex.Message.Contains("timed out", StringComparison.OrdinalIgnoreCase);
 
     private static string NormalizeWhatsAppTarget(string phone)
         => new string(phone.Where(char.IsDigit).ToArray());
