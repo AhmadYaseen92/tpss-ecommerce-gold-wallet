@@ -45,6 +45,7 @@ public class AuthController(IAuthService authService, ISellerAuthService sellerA
     }
 
     [HttpPost("password/reset/request-otp")]
+    [HttpPost("forgot-password/request-otp")]
     [ProducesResponseType(typeof(ApiResponse<OtpDispatchResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> RequestPasswordResetOtp([FromBody] RequestPasswordResetOtpRequestDto request, CancellationToken cancellationToken = default)
     {
@@ -53,6 +54,7 @@ public class AuthController(IAuthService authService, ISellerAuthService sellerA
     }
 
     [HttpPost("password/reset/confirm")]
+    [HttpPost("forgot-password/confirm")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ConfirmPasswordReset([FromBody] ConfirmPasswordResetRequestDto request, CancellationToken cancellationToken = default)
     {
