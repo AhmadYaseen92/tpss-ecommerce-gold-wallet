@@ -17,10 +17,11 @@ export interface PagedResult<T> {
 export interface LoginResponseDto {
   accessToken: string;
   expiresAtUtc: string;
+  userId: number;
+  fullName: string;
   role: string;
-  userId: number | null;
   sellerId: number | null;
-  displayName?: string | null;
+  sellerName?: string | null;
 }
 
 export interface RegisterResponseDto {
@@ -38,6 +39,9 @@ export interface WebSellerDto {
   businessName: string;
   kycStatus: string;
   submittedAt: string;
+  goldPrice?: number | null;
+  silverPrice?: number | null;
+  diamondPrice?: number | null;
 }
 
 export interface DashboardDto {
@@ -73,6 +77,7 @@ export interface ProductDto {
   offerType: string;
   price: number;
   finalPrice: number;
+  isHasOffer: boolean;
   availableStock: number;
   sellerId: number;
   sellerName: string;
@@ -131,6 +136,7 @@ export interface ProductManagementDto {
   storageFee: number;
   serviceCharge: number;
   offerType: string;
+  isHasOffer: boolean;
   offerPercent: number;
   offerNewPrice: number;
   price: number;

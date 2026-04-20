@@ -1,4 +1,4 @@
-namespace GoldWalletSystem.API.Models;
+namespace GoldWalletSystem.Application.DTOs.Admin;
 
 public class UpdateStatusRequest
 {
@@ -21,6 +21,9 @@ public class WebSellerDto
     public string BusinessName { get; set; } = string.Empty;
     public string KycStatus { get; set; } = "pending";
     public DateTime SubmittedAt { get; set; }
+    public decimal? GoldPrice { get; set; }
+    public decimal? SilverPrice { get; set; }
+    public decimal? DiamondPrice { get; set; }
 }
 
 public class UpdateSellerKycRequest
@@ -129,4 +132,22 @@ public class WebDashboardPointDto
 {
     public string Label { get; set; } = string.Empty;
     public int Value { get; set; }
+}
+
+public class AdminWorkspaceDto
+{
+    public int SellersCount { get; set; }
+    public int InvestorsCount { get; set; }
+    public int ProductsCount { get; set; }
+    public int RequestsCount { get; set; }
+    public int SystemSettingsCount { get; set; }
+}
+
+public class SellerWorkspaceDto
+{
+    public int SellerId { get; set; }
+    public int ProductsCount { get; set; }
+    public int InvestorsCount { get; set; }
+    public int RequestsCount { get; set; }
+    public int ActiveOffersCount { get; set; }
 }

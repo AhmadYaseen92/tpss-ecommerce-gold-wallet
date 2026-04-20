@@ -4,6 +4,7 @@ import type { NavigationKey } from "./shared/types/models";
 import AppShell from "./shared/layouts/AppShell.vue";
 import AuthPage from "./features/auth/pages/AuthPage.vue";
 import DashboardFeaturePage from "./features/dashboard/pages/DashboardFeaturePage.vue";
+import AdminWorkspacePage from "./features/dashboard/pages/AdminWorkspacePage.vue";
 import ProductFeaturePage from "./features/products/pages/ProductFeaturePage.vue";
 import InvestorsFeaturePage from "./features/investors/pages/InvestorsFeaturePage.vue";
 import TransactionsFeaturePage from "./features/transactions/pages/TransactionsFeaturePage.vue";
@@ -16,6 +17,7 @@ const isDark = ref(false);
 
 const ROUTE_BY_MENU: Record<Exclude<NavigationKey, "logout" | "invoices" | "inventory" | "notifications">, string> = {
   overview: "/overview",
+  admin: "/admin",
   products: "/products",
   investors: "/investors",
   requests: "/transactions",
@@ -56,11 +58,12 @@ const menuItems = computed<Array<{ key: NavigationKey; label: string }>>(() => {
   ];
 
   return marketplace.role.value === "admin"
-    ? [...common.slice(0, 2), { key: "investors" as NavigationKey, label: "Investors" }, ...common.slice(2), { key: "fees" as NavigationKey, label: "Fees" }]
+    ? [{ key: "admin" as NavigationKey, label: "Admin" }, ...common.slice(0, 2), { key: "investors" as NavigationKey, label: "Investors" }, ...common.slice(2), { key: "fees" as NavigationKey, label: "Fees" }]
     : common;
 });
 
 const activeMenu = computed<NavigationKey>(() => {
+  if (currentPath.value.startsWith("/admin")) return "admin";
   if (currentPath.value.startsWith("/products")) return "products";
   if (currentPath.value.startsWith("/investors")) return "investors";
   if (currentPath.value.startsWith("/transactions")) return "requests";
@@ -74,6 +77,7 @@ watch(activeMenu, (menu) => {
 }, { immediate: true });
 
 const activeComponent = computed(() => {
+  if (currentPath.value.startsWith("/admin")) return marketplace.role.value === "admin" ? AdminWorkspacePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/products")) return ProductFeaturePage;
   if (currentPath.value.startsWith("/investors")) return marketplace.role.value === "admin" ? InvestorsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/transactions")) return TransactionsFeaturePage;

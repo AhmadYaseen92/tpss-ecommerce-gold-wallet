@@ -1,4 +1,5 @@
 using GoldWalletSystem.Application.DTOs.Common;
+using GoldWalletSystem.API.Models;
 using GoldWalletSystem.Application.DTOs.Products;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Application.Services;
@@ -72,6 +73,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 OfferPercent = x.OfferPercent,
                 OfferNewPrice = x.OfferNewPrice,
                 OfferType = x.OfferType,
+                IsHasOffer = x.IsHasOffer,
                 Price = x.Price,
                 AvailableStock = x.AvailableStock,
                 IsActive = x.IsActive,
@@ -120,6 +122,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             OfferPercent = x.OfferPercent,
             OfferNewPrice = x.OfferNewPrice,
             OfferType = x.OfferType,
+            IsHasOffer = x.IsHasOffer,
             Price = x.Price,
             AvailableStock = x.AvailableStock,
             IsActive = x.IsActive,
@@ -164,6 +167,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             OfferPercent = request.OfferPercent,
             OfferNewPrice = request.OfferNewPrice,
             OfferType = request.OfferType,
+            IsHasOffer = request.OfferType != ProductOfferType.None,
             Price = await ResolveFinalPriceAsync(request, sellerId, cancellationToken),
             AvailableStock = request.AvailableStock,
             IsActive = request.IsActive,
@@ -224,6 +228,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.OfferPercent = request.OfferPercent;
         product.OfferNewPrice = request.OfferNewPrice;
         product.OfferType = request.OfferType;
+        product.IsHasOffer = request.OfferType != ProductOfferType.None;
         product.Price = await ResolveFinalPriceAsync(request, nextSellerId, cancellationToken);
         product.AvailableStock = request.AvailableStock;
         product.IsActive = request.IsActive;
@@ -339,35 +344,22 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     {
         if (!IsSellerOrAdmin()) return Forbid();
         var sellerId = ResolveSellerScope();
-        var key = GetMarketPriceConfigKey(sellerId);
-        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
-        var payload = JsonSerializer.Serialize(request);
+        if (!sellerId.HasValue)
+            return BadRequest(ApiResponse<object>.Fail("Seller scope is required for market prices.", 400));
 
-        if (config is null)
-        {
-            dbContext.MobileAppConfigurations.Add(new MobileAppConfiguration
-            {
-                ConfigKey = key,
-                JsonValue = payload,
-                Description = sellerId.HasValue ? $"Seller #{sellerId.Value} material market prices" : "Global material market prices",
-                IsEnabled = true,
-                CreatedAtUtc = DateTime.UtcNow
-            });
-        }
-        else
-        {
-            config.JsonValue = payload;
-            config.IsEnabled = true;
-            config.UpdatedAtUtc = DateTime.UtcNow;
-        }
+        var seller = await dbContext.Sellers.FirstOrDefaultAsync(x => x.Id == sellerId.Value, cancellationToken);
+        if (seller is null)
+            return NotFound(ApiResponse<object>.Fail("Seller not found.", 404));
+
+        seller.GoldPrice = request.GoldPerOunce;
+        seller.SilverPrice = request.SilverPerOunce;
+        seller.DiamondPrice = request.DiamondPerCarat;
+        seller.UpdatedAtUtc = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await RecalculateAutoPricedProductsAsync(sellerId, cancellationToken);
         return Ok(ApiResponse<MarketPriceConfigDto>.Ok(request));
     }
-
-    private const string GlobalMarketPriceConfigKey = "GlobalMarketPrices";
-    private const string SellerMarketPriceConfigKeyPrefix = "SellerMarketPrices_";
 
     private async Task<decimal> ResolveMarketPriceByMaterialAsync(ProductMaterialType materialType, int sellerId, CancellationToken cancellationToken)
     {
@@ -383,26 +375,20 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
     private async Task<MarketPriceConfigDto> GetMarketPriceConfigAsync(int? sellerId, CancellationToken cancellationToken)
     {
-        if (sellerId.HasValue)
-        {
-            var sellerConfig = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == GetMarketPriceConfigKey(sellerId), cancellationToken);
-            if (sellerConfig is not null && !string.IsNullOrWhiteSpace(sellerConfig.JsonValue))
-            {
-                return JsonSerializer.Deserialize<MarketPriceConfigDto>(sellerConfig.JsonValue) ?? new MarketPriceConfigDto();
-            }
-        }
-
-        var globalConfig = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == GlobalMarketPriceConfigKey, cancellationToken);
-        if (globalConfig is null || string.IsNullOrWhiteSpace(globalConfig.JsonValue))
-        {
+        if (!sellerId.HasValue)
             return new MarketPriceConfigDto();
-        }
 
-        return JsonSerializer.Deserialize<MarketPriceConfigDto>(globalConfig.JsonValue) ?? new MarketPriceConfigDto();
+        var seller = await dbContext.Sellers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == sellerId.Value, cancellationToken);
+        if (seller is null)
+            return new MarketPriceConfigDto();
+
+        return new MarketPriceConfigDto
+        {
+            GoldPerOunce = seller.GoldPrice ?? 0m,
+            SilverPerOunce = seller.SilverPrice ?? 0m,
+            DiamondPerCarat = seller.DiamondPrice ?? 0m
+        };
     }
-
-    private static string GetMarketPriceConfigKey(int? sellerId)
-        => sellerId.HasValue ? $"{SellerMarketPriceConfigKeyPrefix}{sellerId.Value}" : GlobalMarketPriceConfigKey;
 
     private async Task RecalculateAutoPricedProductsAsync(int? scopeSellerId, CancellationToken cancellationToken)
     {
@@ -531,71 +517,5 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
         var normalizedPath = path.StartsWith('/') ? path : $"/{path}";
         return $"{Request.Scheme}://{Request.Host}{normalizedPath}";
-    }
-
-    public sealed record EnumItemDto(int Value, string Name);
-
-    public sealed class ProductManagementDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Sku { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string ImageUrl { get; set; } = string.Empty;
-        public ProductCategory Category { get; set; }
-        public ProductMaterialType MaterialType { get; set; }
-        public ProductFormType FormType { get; set; }
-        public string DisplayCategoryLabel { get; set; } = string.Empty;
-        public ProductPricingMode PricingMode { get; set; }
-        public ProductPurityKarat PurityKarat { get; set; }
-        public decimal PurityFactor { get; set; }
-        public decimal WeightValue { get; set; }
-        public ProductWeightUnit WeightUnit { get; set; }
-        public decimal BaseMarketPrice { get; set; }
-        public decimal ManualSellPrice { get; set; }
-        public decimal DeliveryFee { get; set; }
-        public decimal StorageFee { get; set; }
-        public decimal ServiceCharge { get; set; }
-        public decimal OfferPercent { get; set; }
-        public decimal OfferNewPrice { get; set; }
-        public ProductOfferType OfferType { get; set; }
-        public decimal Price { get; set; }
-        public int AvailableStock { get; set; }
-        public bool IsActive { get; set; }
-        public int SellerId { get; set; }
-    }
-
-
-    public sealed class MarketPriceConfigDto
-    {
-        public decimal GoldPerOunce { get; set; }
-        public decimal SilverPerOunce { get; set; }
-        public decimal DiamondPerCarat { get; set; }
-    }
-
-    public sealed class ProductUpsertRequest
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Sku { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public IFormFile? Image { get; set; }
-        public string? ExistingImageUrl { get; set; }
-        public ProductMaterialType MaterialType { get; set; } = ProductMaterialType.Gold;
-        public ProductFormType FormType { get; set; } = ProductFormType.Jewelry;
-        public ProductPricingMode PricingMode { get; set; } = ProductPricingMode.Auto;
-        public ProductPurityKarat PurityKarat { get; set; } = ProductPurityKarat.None;
-        public decimal PurityFactor { get; set; }
-        public decimal WeightValue { get; set; }
-        public ProductWeightUnit WeightUnit { get; set; } = ProductWeightUnit.Gram;
-        public decimal ManualSellPrice { get; set; }
-        public decimal DeliveryFee { get; set; }
-        public decimal StorageFee { get; set; }
-        public decimal ServiceCharge { get; set; }
-        public decimal OfferPercent { get; set; }
-        public decimal OfferNewPrice { get; set; }
-        public ProductOfferType OfferType { get; set; } = ProductOfferType.None;
-        public int AvailableStock { get; set; }
-        public bool IsActive { get; set; } = true;
-        public int? SellerId { get; set; }
     }
 }

@@ -4,10 +4,9 @@ namespace GoldWalletSystem.Domain.Entities;
 
 public class Seller : BaseEntity
 {
+    public int UserId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string PasswordHash { get; set; } = string.Empty;
     public string? ContactEmail { get; set; }
     public string? ContactPhone { get; set; }
     public bool IsActive { get; set; }
@@ -36,6 +35,10 @@ public class Seller : BaseEntity
     public DateTime? ReviewedAtUtc { get; set; }
     public string? ReviewNotes { get; set; }
 
-    public ICollection<User> Users { get; set; } = new List<User>();
+    public decimal? GoldPrice { get; set; }
+    public decimal? SilverPrice { get; set; }
+    public decimal? DiamondPrice { get; set; }
+
+    public User User { get; set; } = null!;
     public ICollection<Product> Products { get; set; } = new List<Product>();
 }

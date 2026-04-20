@@ -7,7 +7,6 @@ using GoldWalletSystem.Application.Models.Otp;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
 using System.Security.Cryptography;
-using System.Text.Json;
 
 namespace GoldWalletSystem.Application.Services;
 
@@ -176,33 +175,40 @@ public class OtpService(
 
     private async Task<OtpSettings> GetSettingsAsync(CancellationToken cancellationToken)
     {
+        var defaults = DefaultSettings();
         var allConfigs = await mobileAppConfigurationRepository.GetAllAsync(cancellationToken);
-        var otpSettingsConfig = allConfigs.FirstOrDefault(x => string.Equals(x.ConfigKey, MobileAppConfigurationKeys.OtpSecuritySettings, StringComparison.OrdinalIgnoreCase) && x.IsEnabled);
-        if (otpSettingsConfig is null || string.IsNullOrWhiteSpace(otpSettingsConfig.JsonValue))
+        var lookup = allConfigs.ToDictionary(x => x.ConfigKey, StringComparer.OrdinalIgnoreCase);
+
+        bool ReadBool(string key, bool fallback)
+            => lookup.TryGetValue(key, out var config) && config.ValueBool.HasValue ? config.ValueBool.Value : fallback;
+
+        int ReadInt(string key, int fallback)
+            => lookup.TryGetValue(key, out var config) && config.ValueInt.HasValue ? config.ValueInt.Value : fallback;
+
+        IReadOnlyCollection<string> ReadList(string key, IReadOnlyCollection<string> fallback)
         {
-            return DefaultSettings();
+            if (!lookup.TryGetValue(key, out var config) || string.IsNullOrWhiteSpace(config.ValueString))
+                return fallback;
+
+            return config.ValueString
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => x.Trim().ToLowerInvariant())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .ToArray();
         }
 
-        try
+        return new OtpSettings
         {
-            using var doc = JsonDocument.Parse(otpSettingsConfig.JsonValue);
-            var root = doc.RootElement;
-            return new OtpSettings
-            {
-                EnableWhatsapp = ReadBool(root, "enableWhatsapp", true),
-                EnableEmail = ReadBool(root, "enableEmail", true),
-                ExpirySeconds = Math.Clamp(ReadInt(root, "expirySeconds", 600), 60, 1800),
-                ResendCooldownSeconds = Math.Clamp(ReadInt(root, "resendCooldownSeconds", 60), 10, 300),
-                MaxResendCount = Math.Clamp(ReadInt(root, "maxResendCount", 3), 0, 10),
-                MaxVerificationAttempts = Math.Clamp(ReadInt(root, "maxVerificationAttempts", 5), 1, 10),
-                RequiredActions = ReadStringArray(root, "requiredActions"),
-                ChannelPriority = ReadStringArray(root, "channelPriority", ["whatsapp", "email"])
-            };
-        }
-        catch (JsonException)
-        {
-            return DefaultSettings();
-        }
+            EnableWhatsapp = ReadBool(MobileAppConfigurationKeys.OtpEnableWhatsapp, defaults.EnableWhatsapp),
+            EnableEmail = ReadBool(MobileAppConfigurationKeys.OtpEnableEmail, defaults.EnableEmail),
+            ExpirySeconds = Math.Clamp(ReadInt(MobileAppConfigurationKeys.OtpExpirySeconds, defaults.ExpirySeconds), 60, 1800),
+            ResendCooldownSeconds = Math.Clamp(ReadInt(MobileAppConfigurationKeys.OtpResendCooldownSeconds, defaults.ResendCooldownSeconds), 10, 300),
+            MaxResendCount = Math.Clamp(ReadInt(MobileAppConfigurationKeys.OtpMaxResendCount, defaults.MaxResendCount), 0, 10),
+            MaxVerificationAttempts = Math.Clamp(ReadInt(MobileAppConfigurationKeys.OtpMaxVerificationAttempts, defaults.MaxVerificationAttempts), 1, 10),
+            RequiredActions = ReadList(MobileAppConfigurationKeys.OtpRequiredActions, defaults.RequiredActions),
+            ChannelPriority = ReadList(MobileAppConfigurationKeys.OtpChannelPriority, defaults.ChannelPriority)
+        };
     }
 
     private static OtpSettings DefaultSettings()
@@ -318,28 +324,5 @@ public class OtpService(
         return trimmed.Length <= 4
             ? new string('*', trimmed.Length)
             : $"{new string('*', trimmed.Length - 4)}{trimmed[^4..]}";
-    }
-
-    private static int ReadInt(JsonElement root, string name, int fallback)
-        => root.TryGetProperty(name, out var el) && el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var value)
-            ? value
-            : fallback;
-
-    private static bool ReadBool(JsonElement root, string name, bool fallback)
-        => root.TryGetProperty(name, out var el) && (el.ValueKind == JsonValueKind.True || el.ValueKind == JsonValueKind.False)
-            ? el.GetBoolean()
-            : fallback;
-
-    private static IReadOnlyCollection<string> ReadStringArray(JsonElement root, string name, IReadOnlyCollection<string>? fallback = null)
-    {
-        if (!root.TryGetProperty(name, out var el) || el.ValueKind != JsonValueKind.Array)
-            return fallback ?? [];
-
-        return el.EnumerateArray()
-            .Select(x => x.GetString()?.Trim().ToLowerInvariant())
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Cast<string>()
-            .Distinct()
-            .ToArray();
     }
 }

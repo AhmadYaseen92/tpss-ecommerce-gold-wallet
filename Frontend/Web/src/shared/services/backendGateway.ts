@@ -46,11 +46,11 @@ const fallbackWeightUnits: EnumItemDto[] = [
 
 const mapSession = (dto: LoginResponseDto): UserSession => ({
   accessToken: dto.accessToken,
-  userId: dto.userId ?? null,
+  userId: dto.userId,
   sellerId: dto.sellerId ?? null,
   role: toRole(dto.role),
   expiresAtUtc: dto.expiresAtUtc,
-  displayName: dto.displayName ?? null
+  displayName: dto.fullName ?? dto.sellerName ?? null
 });
 
 const mapSeller = (dto: WebSellerDto): Seller => ({
@@ -60,7 +60,10 @@ const mapSeller = (dto: WebSellerDto): Seller => ({
   email: dto.email,
   businessName: dto.businessName,
   kycStatus: (dto.kycStatus?.toLowerCase() as "pending" | "approved" | "rejected") ?? "pending",
-  submittedAt: dto.submittedAt
+  submittedAt: dto.submittedAt,
+  goldPrice: dto.goldPrice ?? null,
+  silverPrice: dto.silverPrice ?? null,
+  diamondPrice: dto.diamondPrice ?? null
 });
 
 const mapProduct = (dto: ProductDto): Product => ({
@@ -162,7 +165,7 @@ const mapNotifications = (logs: AuditLogDto[]): NotificationItem[] =>
   }));
 
 export async function loginWithBackend(credentials: AuthCredentials): Promise<UserSession> {
-  const data = await postJson<LoginResponseDto, AuthCredentials>("/api/auth/seller-login", credentials);
+  const data = await postJson<LoginResponseDto, AuthCredentials>("/api/auth/login", credentials);
   return mapSession(data);
 }
 
@@ -182,7 +185,6 @@ export async function registerSellerWithBackend(registration: SellerRegistration
     preferredLanguage: "en",
     preferredTheme: "light",
     role: "Seller",
-    sellerId: 0,
     sellerCode: "",
     country: registration.country,
     city: registration.city,
@@ -212,6 +214,18 @@ export async function registerSellerWithBackend(registration: SellerRegistration
     kycStatus: "pending",
     submittedAt: new Date().toISOString()
   };
+}
+
+export interface AdminWorkspaceDto {
+  sellersCount: number;
+  investorsCount: number;
+  productsCount: number;
+  requestsCount: number;
+  systemSettingsCount: number;
+}
+
+export async function fetchAdminWorkspace(accessToken: string): Promise<AdminWorkspaceDto> {
+  return getJson<AdminWorkspaceDto>("/api/admin/workspace", accessToken);
 }
 
 export interface WalletSellConfigurationDto {

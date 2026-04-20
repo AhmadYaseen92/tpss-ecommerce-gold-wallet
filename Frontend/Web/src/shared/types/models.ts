@@ -3,6 +3,7 @@ export type KycStatus = "pending" | "approved" | "rejected";
 
 export type NavigationKey =
   | "overview"
+  | "admin"
   | "investors"
   | "requests"
   | "products"
@@ -29,6 +30,9 @@ export interface Seller {
   kycStatus: KycStatus;
   submittedAt: string;
   reviewNotes?: string;
+  goldPrice?: number | null;
+  silverPrice?: number | null;
+  diamondPrice?: number | null;
 }
 
 export interface Investor {

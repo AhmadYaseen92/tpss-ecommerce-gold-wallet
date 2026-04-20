@@ -20,7 +20,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("WebApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5174")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -72,7 +76,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
-builder.Services.AddScoped<IWebAdminDashboardService, WebAdminDashboardService>();
 builder.Services.AddScoped<IMarketplaceRealtimeNotifier, MarketplaceRealtimeNotifier>();
 
 var app = builder.Build();

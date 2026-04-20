@@ -15,6 +15,36 @@ BEGIN TRY
     IF OBJECT_ID(N'[Sellers]') IS NULL OR OBJECT_ID(N'[Users]') IS NULL OR OBJECT_ID(N'[Products]') IS NULL
         THROW 50000, 'Required tables are missing. Run migrations first.', 1;
 
+    -- Ensure seller user accounts exist before seeding Sellers (Sellers.UserId is required).
+    DECLARE @SellerUsers TABLE (
+        FullName nvarchar(150),
+        Email nvarchar(200),
+        PasswordHash nvarchar(500),
+        Role nvarchar(50),
+        PhoneNumber nvarchar(30)
+    );
+
+    INSERT INTO @SellerUsers (FullName, Email, PasswordHash, Role, PhoneNumber)
+    VALUES
+        (N'Imseeh Seller',   N'imseeh.seller@example.com',   N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+962700000001'),
+        (N'GoldPal Seller',  N'goldpal.seller@example.com',  N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+15550000002'),
+        (N'Bullion Seller',  N'bullion.seller@example.com',  N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+15550000003');
+
+    MERGE [Users] AS T
+    USING @SellerUsers AS S
+    ON T.[Email] = S.[Email]
+    WHEN MATCHED THEN
+        UPDATE SET
+            T.[FullName] = S.[FullName],
+            T.[PasswordHash] = S.[PasswordHash],
+            T.[Role] = S.[Role],
+            T.[PhoneNumber] = S.[PhoneNumber],
+            T.[IsActive] = 1,
+            T.[UpdatedAtUtc] = @Now
+    WHEN NOT MATCHED THEN
+        INSERT ([FullName],[Email],[PasswordHash],[Role],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
+
     -- 1) Sellers.
     MERGE [Sellers] AS T
     USING (
@@ -99,8 +129,6 @@ BEGIN TRY
     WHEN MATCHED THEN
         UPDATE SET
             T.[Name] = S.[Name],
-            T.[Email] = S.[Email],
-            T.[PasswordHash] = S.[PasswordHash],
             T.[ContactEmail] = S.[ContactEmail],
             T.[ContactPhone] = S.[ContactPhone],
             T.[Country] = S.[Country],
@@ -118,6 +146,7 @@ BEGIN TRY
             T.[NationalIdFrontPath] = S.[NationalIdFrontPath],
             T.[NationalIdBackPath] = S.[NationalIdBackPath],
             T.[TradeLicensePath] = S.[TradeLicensePath],
+            T.[UserId] = COALESCE((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[Email]), T.[UserId]),
             T.[KycStatus] = 1,
             T.[ReviewedAtUtc] = @Now,
             T.[ReviewNotes] = N'Seeded as approved seller',
@@ -125,25 +154,31 @@ BEGIN TRY
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
         INSERT (
-            [Name],[Code],[Email],[PasswordHash],[ContactEmail],[ContactPhone],[IsActive],
+            [Name],[Code],[ContactEmail],[ContactPhone],[IsActive],
             [Country],[City],[Street],[BuildingNumber],[PostalCode],
             [CompanyName],[TradeLicenseNumber],[VatNumber],[NationalIdNumber],
             [BankName],[IBAN],[AccountHolderName],
             [NationalIdFrontPath],[NationalIdBackPath],[TradeLicensePath],
-            [KycStatus],[ReviewedAtUtc],[ReviewNotes],[CreatedAtUtc],[UpdatedAtUtc]
+            [KycStatus],[ReviewedAtUtc],[ReviewNotes],[UserId],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES (
-            S.[Name],S.[Code],S.[Email],S.[PasswordHash],S.[ContactEmail],S.[ContactPhone],1,
+            S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],1,
             S.[Country],S.[City],S.[Street],S.[BuildingNumber],S.[PostalCode],
             S.[CompanyName],S.[TradeLicenseNumber],S.[VatNumber],S.[NationalIdNumber],
             S.[BankName],S.[IBAN],S.[AccountHolderName],
             S.[NationalIdFrontPath],S.[NationalIdBackPath],S.[TradeLicensePath],
-            1,@Now,N'Seeded as approved seller',@Now,NULL
+            1,@Now,N'Seeded as approved seller',
+            (SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[Email]),
+            @Now,NULL
         );
 
     DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'IMSEEH');
     DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'GOLDPAL');
     DECLARE @SellerBullion int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'BULLION');
+
+    UPDATE [Sellers] SET [GoldPrice] = 430.00, [SilverPrice] = 36.00, [DiamondPrice] = 920.00, [UpdatedAtUtc] = @Now WHERE [Id] = @SellerImseeh;
+    UPDATE [Sellers] SET [GoldPrice] = 432.00, [SilverPrice] = 37.00, [DiamondPrice] = 880.00, [UpdatedAtUtc] = @Now WHERE [Id] = @SellerGoldPal;
+    UPDATE [Sellers] SET [GoldPrice] = 433.00, [SilverPrice] = 38.00, [DiamondPrice] = 960.00, [UpdatedAtUtc] = @Now WHERE [Id] = @SellerBullion;
 
     -- 2) Users (including investor@goldwallet.com).
     DECLARE @Users TABLE (
@@ -151,22 +186,21 @@ BEGIN TRY
         Email nvarchar(200),
         PasswordHash nvarchar(500),
         Role nvarchar(50),
-        SellerId int NULL,
         PhoneNumber nvarchar(30)
     );
 
-    INSERT INTO @Users (FullName, Email, PasswordHash, Role, SellerId, PhoneNumber)
+    INSERT INTO @Users (FullName, Email, PasswordHash, Role, PhoneNumber)
     VALUES
-        (N'Imseeh Seller',        N'imseeh.seller@example.com',      N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller',   @SellerImseeh,  N'+962700000001'),
-        (N'GoldPal Seller',       N'goldpal.seller@example.com',     N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller',   @SellerGoldPal, N'+15550000002'),
-        (N'Bullion Seller',       N'bullion.seller@example.com',     N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller',   @SellerBullion, N'+15550000003'),
-        (N'Imseeh Admin',         N'imseeh.admin@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,            N'+15551010001'),
-        (N'GoldPal Admin',        N'goldpal.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,            N'+15551020001'),
-        (N'Bullion Admin',        N'bullion.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,            N'+15551030001'),
-        (N'Gold Wallet Investor', N'investor@goldwallet.com',       N'NN53R1Ggd5QH71EKW6wALA==.UbTyu0VUnNi27SE8JQbIjY5d8gs3jgo+SiUsNtLtt8I=.100000', N'Investor', NULL,            N'+962790000999'),
-        (N'Imseeh Investor 1',    N'imseeh.investor1@example.com',  N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', NULL,            N'+15551010002'),
-        (N'GoldPal Investor 1',   N'goldpal.investor1@example.com', N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', NULL,            N'+15551020002'),
-        (N'Bullion Investor 1',   N'bullion.investor1@example.com', N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', NULL,            N'+15551030002');
+        (N'Imseeh Seller',        N'imseeh.seller@example.com',      N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller',   N'+962700000001'),
+        (N'GoldPal Seller',       N'goldpal.seller@example.com',     N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller',   N'+15550000002'),
+        (N'Bullion Seller',       N'bullion.seller@example.com',     N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller',   N'+15550000003'),
+        (N'Imseeh Admin',         N'imseeh.admin@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+15551010001'),
+        (N'GoldPal Admin',        N'goldpal.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+15551020001'),
+        (N'Bullion Admin',        N'bullion.admin@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+15551030001'),
+        (N'Gold Wallet Investor', N'investor@goldwallet.com',       N'NN53R1Ggd5QH71EKW6wALA==.UbTyu0VUnNi27SE8JQbIjY5d8gs3jgo+SiUsNtLtt8I=.100000', N'Investor', N'+962790000999'),
+        (N'Imseeh Investor 1',    N'imseeh.investor1@example.com',  N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', N'+15551010002'),
+        (N'GoldPal Investor 1',   N'goldpal.investor1@example.com', N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', N'+15551020002'),
+        (N'Bullion Investor 1',   N'bullion.investor1@example.com', N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', N'+15551030002');
 
     MERGE [Users] AS T
     USING @Users AS S
@@ -176,13 +210,12 @@ BEGIN TRY
             T.[FullName] = S.[FullName],
             T.[PasswordHash] = S.[PasswordHash],
             T.[Role] = S.[Role],
-            T.[SellerId] = S.[SellerId],
             T.[PhoneNumber] = S.[PhoneNumber],
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([FullName],[Email],[PasswordHash],[Role],[SellerId],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[SellerId],S.[PhoneNumber],1,@Now,NULL);
+        INSERT ([FullName],[Email],[PasswordHash],[Role],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
 
     -- 3) Profiles, wallets, and carts.
     INSERT INTO [UserProfiles] ([UserId],[DateOfBirth],[Nationality],[PreferredLanguage],[PreferredTheme],[DocumentType],[IdNumber],[ProfilePhotoUrl],[CreatedAtUtc],[UpdatedAtUtc])
@@ -657,69 +690,42 @@ BEGIN TRY
             (@CartInvestorGoldPal, @ProductGoldPalSilver, 4, 37.00, 148.00, @Now, NULL);
     END
 
-    -- 6) Home carousel config.
-    MERGE [MobileAppConfigurations] AS T
+    -- 6) Flat mobile/web configuration rows (typed values).
+    MERGE [SystemConfigration] AS T
     USING (
         VALUES
-        (
-            N'home.carousel.images',
-            N'["/images/banners/banner-1.png","/images/banners/banner-2.png","/images/banners/banner-3.png"]',
-            CAST(1 AS bit),
-            N'Home carousel images stored on local server'
-        ),
-        (
-            N'webadmin.fees',
-            N'{"deliveryFee":12,"storageFee":4,"serviceChargePercent":2.5}',
-            CAST(1 AS bit),
-            N'Web admin fee configuration'
-        ),
-        (
-            N'wallet.sell.execution',
-            N'{"mode":"locked_30_seconds","lockSeconds":30}',
-            CAST(1 AS bit),
-            N'Wallet sell execution behavior for mobile and web'
-        ),
-        (
-            N'mobile.release-config',
-            N'{"isIndividualSellerRelease":false,"individualSellerName":"Imseeh","allSellersLabel":"All Sellers","showWeightInGrams":true}',
-            CAST(1 AS bit),
-            N'Mobile release configuration synced with backend defaults'
-        ),
-        (
-            N'security.otp.settings',
-            N'{"enableWhatsapp":true,"enableEmail":true,"fallbackToEmail":true,"expirySeconds":300,"resendCooldownSeconds":30,"maxResendCount":3,"maxVerificationAttempts":5,"grantExpirySeconds":600,"channelPriority":["whatsapp","email"],"requiredActions":["registration","reset_password","checkout","buy","sell","transfer","gift","pickup","add_bank_account","edit_bank_account","remove_bank_account","add_payment_method","edit_payment_method","remove_payment_method","change_email","change_password","change_mobile_number"]}',
-            CAST(1 AS bit),
-            N'OTP security policy for protected wallet and account actions (WhatsApp primary, Email fallback)'
-        ),
-        (
-            N'SellerMarketPrices_1',
-            N'{"gold":430.00,"silver":36.00,"diamond":920.00}',
-            CAST(1 AS bit),
-            N'Seller #1 market prices used by wallet/product pricing'
-        ),
-        (
-            N'SellerMarketPrices_2',
-            N'{"gold":432.00,"silver":37.00,"diamond":880.00}',
-            CAST(1 AS bit),
-            N'Seller #2 market prices used by wallet/product pricing'
-        ),
-        (
-            N'SellerMarketPrices_3',
-            N'{"gold":433.00,"silver":38.00,"diamond":960.00}',
-            CAST(1 AS bit),
-            N'Seller #3 market prices used by wallet/product pricing'
-        )
-    ) AS S([ConfigKey],[JsonValue],[IsEnabled],[Description])
+        (N'Fees_Delivery', N'Fees Delivery', N'Web admin delivery fee', 4, NULL, NULL, 12.00, NULL, CAST(0 AS bit)),
+        (N'Fees_Storage', N'Fees Storage', N'Web admin storage fee', 4, NULL, NULL, 4.00, NULL, CAST(0 AS bit)),
+        (N'Fees_ServiceChargePercent', N'Fees Service Charge Percent', N'Web admin service charge percent', 4, NULL, NULL, 2.50, NULL, CAST(0 AS bit)),
+        (N'WalletSell_Mode', N'Wallet Sell Mode', N'Wallet sell execution behavior for mobile and web', 1, NULL, NULL, NULL, N'locked_30_seconds', CAST(0 AS bit)),
+        (N'WalletSell_LockSeconds', N'Wallet Sell Lock Seconds', N'Wallet sell lock duration in seconds', 3, NULL, 30, NULL, NULL, CAST(0 AS bit)),
+        (N'MobileRelease_IsIndividualSeller', N'Mobile Release Is Individual Seller', N'Mobile release: show single seller mode', 2, CAST(0 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+        (N'MobileRelease_IndividualSellerName', N'Mobile Release Individual Seller Name', N'Mobile release seller name when single seller mode is enabled', 1, NULL, NULL, NULL, N'Imseeh', CAST(0 AS bit)),
+        (N'MobileRelease_ShowWeightInGrams', N'Mobile Release Show Weight In Grams', N'Mobile release flag to show weight in grams', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_EnableWhatsapp', N'OTP Enable WhatsApp', N'Enable WhatsApp OTP delivery channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_EnableEmail', N'OTP Enable Email', N'Enable Email OTP delivery channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_ExpirySeconds', N'OTP Expiry Seconds', N'OTP code expiry duration in seconds', 3, NULL, 300, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_ResendCooldownSeconds', N'OTP Resend Cooldown Seconds', N'OTP resend cooldown in seconds', 3, NULL, 30, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_MaxResendCount', N'OTP Max Resend Count', N'Maximum number of OTP resend attempts', 3, NULL, 3, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_MaxVerificationAttempts', N'OTP Max Verification Attempts', N'Maximum OTP verification attempts before lock', 3, NULL, 5, NULL, NULL, CAST(0 AS bit)),
+        (N'Otp_ChannelPriority', N'OTP Channel Priority', N'Preferred OTP channels in order', 1, NULL, NULL, NULL, N'whatsapp,email', CAST(0 AS bit)),
+        (N'Otp_RequiredActions', N'OTP Required Actions', N'Actions that require OTP verification', 1, NULL, NULL, NULL, N'registration,reset_password,checkout,buy,sell,transfer,gift,pickup,add_bank_account,edit_bank_account,remove_bank_account,add_payment_method,edit_payment_method,remove_payment_method,change_email,change_password,change_mobile_number', CAST(0 AS bit))
+    ) AS S([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess])
     ON T.[ConfigKey] = S.[ConfigKey]
     WHEN MATCHED THEN
         UPDATE SET
-            T.[JsonValue] = S.[JsonValue],
-            T.[IsEnabled] = S.[IsEnabled],
+            T.[Name] = S.[Name],
             T.[Description] = S.[Description],
+            T.[ValueType] = S.[ValueType],
+            T.[ValueBool] = S.[ValueBool],
+            T.[ValueInt] = S.[ValueInt],
+            T.[ValueDecimal] = S.[ValueDecimal],
+            T.[ValueString] = S.[ValueString],
+            T.[SellerAccess] = S.[SellerAccess],
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([ConfigKey],[JsonValue],[IsEnabled],[Description],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[ConfigKey],S.[JsonValue],S.[IsEnabled],S.[Description],@Now,NULL);
+        INSERT ([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[ConfigKey],S.[Name],S.[Description],S.[ValueType],S.[ValueBool],S.[ValueInt],S.[ValueDecimal],S.[ValueString],S.[SellerAccess],@Now,NULL);
 
     -- 7) Seed audit marker.
     INSERT INTO [AuditLogs] ([UserId],[Action],[EntityName],[EntityId],[Details],[CreatedAtUtc],[UpdatedAtUtc])
