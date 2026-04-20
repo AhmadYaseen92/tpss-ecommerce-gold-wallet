@@ -43,6 +43,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IMobileAppConfigurationService, MobileAppConfigurationService>();
         services.AddScoped<IWalletService, WalletService>();
         services.AddScoped<IWalletActionValidationService, WalletActionValidationService>();
+        services.AddScoped<IAdminWorkspaceService, AdminWorkspaceService>();
+        services.AddScoped<ISellerWorkspaceService, SellerWorkspaceService>();
+        services.AddScoped<IWebAdminDashboardService, WebAdminDashboardService>();
         services.AddScoped<IOtpDeliveryService, OtpDeliveryService>();
         services.AddSingleton<IOtpSessionStore, OtpSessionMemoryStore>();
         services.AddScoped<IOtpService, OtpService>();

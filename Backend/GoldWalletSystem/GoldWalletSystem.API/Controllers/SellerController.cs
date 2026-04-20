@@ -1,5 +1,5 @@
-using GoldWalletSystem.API.Models;
-using GoldWalletSystem.API.Services;
+using GoldWalletSystem.Application.DTOs.Admin;
+using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;

@@ -1,19 +1,10 @@
-using GoldWalletSystem.API.Models;
+using GoldWalletSystem.Application.DTOs.Admin;
+using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
 
-namespace GoldWalletSystem.API.Services;
-
-public interface IAdminWorkspaceService
-{
-    Task<AdminWorkspaceDto> BuildAsync(CancellationToken cancellationToken = default);
-}
-
-public interface ISellerWorkspaceService
-{
-    Task<SellerWorkspaceDto> BuildAsync(int sellerId, CancellationToken cancellationToken = default);
-}
+namespace GoldWalletSystem.Infrastructure.Services;
 
 public class AdminWorkspaceService(AppDbContext dbContext) : IAdminWorkspaceService
 {

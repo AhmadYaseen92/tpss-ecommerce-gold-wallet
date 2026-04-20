@@ -1,4 +1,4 @@
-namespace GoldWalletSystem.API.Models;
+namespace GoldWalletSystem.Application.DTOs.Admin;
 
 public class UpdateStatusRequest
 {

@@ -8,8 +8,6 @@ public static class ApiServiceCollectionExtensions
     public static IServiceCollection AddApiLayer(this IServiceCollection services)
     {
         services.AddScoped<ICurrentUserService, CurrentUserService>();
-        services.AddScoped<IAdminWorkspaceService, AdminWorkspaceService>();
-        services.AddScoped<ISellerWorkspaceService, SellerWorkspaceService>();
         return services;
     }
 }
