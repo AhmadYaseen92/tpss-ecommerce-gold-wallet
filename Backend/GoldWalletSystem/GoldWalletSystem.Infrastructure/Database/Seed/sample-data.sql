@@ -686,16 +686,10 @@ BEGIN TRY
             N'Mobile release configuration synced with backend defaults'
         ),
         (
-            N'LoginOtpDeliveryChannels',
-            N'["whatsapp"]',
-            CAST(1 AS bit),
-            N'Login OTP delivery channels for mobile release (whatsapp, email, or both)'
-        ),
-        (
             N'security.otp.settings',
-            N'{"enableWhatsapp":true,"enableEmail":true,"expirySeconds":300,"resendCooldownSeconds":30,"maxResendCount":3,"maxVerificationAttempts":5,"channelPriority":["whatsapp","email"],"requiredActions":["registration","reset_password","checkout","buy","sell","transfer","gift","pickup","add_bank_account","edit_bank_account","remove_bank_account","add_payment_method","edit_payment_method","remove_payment_method","change_email","change_password","change_mobile_number"]}',
+            N'{"enableWhatsapp":true,"enableEmail":true,"fallbackToEmail":true,"expirySeconds":300,"resendCooldownSeconds":30,"maxResendCount":3,"maxVerificationAttempts":5,"grantExpirySeconds":600,"channelPriority":["whatsapp","email"],"requiredActions":["registration","reset_password","checkout","buy","sell","transfer","gift","pickup","add_bank_account","edit_bank_account","remove_bank_account","add_payment_method","edit_payment_method","remove_payment_method","change_email","change_password","change_mobile_number"]}',
             CAST(1 AS bit),
-            N'OTP security policy for protected wallet and account actions'
+            N'OTP security policy for protected wallet and account actions (WhatsApp primary, Email fallback)'
         ),
         (
             N'SellerMarketPrices_1',
