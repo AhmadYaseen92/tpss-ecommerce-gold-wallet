@@ -23,4 +23,10 @@ public class ProfileService(IProfileRepository profileRepository) : IProfileServ
 
     public Task<ProfileDto> UpsertLinkedBankAccountAsync(UpsertLinkedBankAccountRequestDto request, CancellationToken cancellationToken = default)
         => profileRepository.UpsertLinkedBankAccountAsync(request, cancellationToken);
+
+    public Task<ProfileDto> RemovePaymentMethodAsync(RemovePaymentMethodRequestDto request, CancellationToken cancellationToken = default)
+        => profileRepository.RemovePaymentMethodAsync(request, cancellationToken);
+
+    public Task<ProfileDto> RemoveLinkedBankAccountAsync(RemoveLinkedBankAccountRequestDto request, CancellationToken cancellationToken = default)
+        => profileRepository.RemoveLinkedBankAccountAsync(request, cancellationToken);
 }

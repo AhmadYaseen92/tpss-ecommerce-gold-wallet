@@ -44,4 +44,22 @@ public class UserAuthRepository(AppDbContext dbContext) : IUserAuthRepository
 
         return user;
     }
+
+    public async Task ActivateUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+            ?? throw new InvalidOperationException("User not found.");
+        user.IsActive = true;
+        user.UpdatedAtUtc = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdatePasswordAsync(int userId, string passwordHash, CancellationToken cancellationToken = default)
+    {
+        var user = await dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+            ?? throw new InvalidOperationException("User not found.");
+        user.PasswordHash = passwordHash;
+        user.UpdatedAtUtc = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
 }

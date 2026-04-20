@@ -81,7 +81,11 @@ class CheckoutCubit extends Cubit<CheckoutState> {
     );
   }
 
-  Future<void> confirmOtp({required Map<String, dynamic> checkoutArgs}) async {
+  Future<void> confirmOtp({
+    required Map<String, dynamic> checkoutArgs,
+    String? otpVerificationToken,
+    String? otpRequestId,
+  }) async {
     emit(CheckoutLoading());
     try {
       final userId = AuthSessionStore.userId;
@@ -126,6 +130,8 @@ class CheckoutCubit extends Cubit<CheckoutState> {
           if (fromCart) 'productIds': productIds,
           if (!fromCart) 'productId': productId,
           if (!fromCart) 'quantity': quantity,
+          if (otpVerificationToken != null && otpVerificationToken.trim().isNotEmpty) 'otpVerificationToken': otpVerificationToken.trim(),
+          if (otpRequestId != null && otpRequestId.trim().isNotEmpty) 'otpRequestId': otpRequestId.trim(),
         },
       );
 

@@ -1,6 +1,7 @@
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Logs;
 using GoldWalletSystem.Application.Interfaces.Repositories;
+using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,5 +17,11 @@ public class AuditLogRepository(AppDbContext dbContext) : IAuditLogRepository
             .Select(x => new AuditLogDto(x.Id, x.UserId, x.Action, x.EntityName, x.EntityId, x.Details, x.CreatedAtUtc))
             .ToListAsync(cancellationToken);
         return new PagedResult<AuditLogDto>(items, totalCount, pageNumber, pageSize);
+    }
+
+    public async Task AddAsync(AuditLog log, CancellationToken cancellationToken = default)
+    {
+        dbContext.AuditLogs.Add(log);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

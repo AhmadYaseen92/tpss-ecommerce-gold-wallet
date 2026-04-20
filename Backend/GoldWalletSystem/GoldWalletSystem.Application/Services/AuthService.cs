@@ -1,4 +1,6 @@
+using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.DTOs.Auth;
+using GoldWalletSystem.Application.DTOs.Otp;
 using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Constants;
@@ -7,44 +9,19 @@ using GoldWalletSystem.Domain.Enums;
 
 namespace GoldWalletSystem.Application.Services;
 
-public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher passwordHasher, ITokenService tokenService) : IAuthService
+public class AuthService(
+    IUserAuthRepository userAuthRepository,
+    IPasswordHasher passwordHasher,
+    ITokenService tokenService,
+    IOtpService otpService) : IAuthService
 {
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
-        var user = await userAuthRepository.GetByEmailAsync(request.Email, cancellationToken)
-            ?? throw new UnauthorizedAccessException("Invalid credentials.");
-
-        if (!user.IsActive || !passwordHasher.Verify(request.Password, user.PasswordHash))
-            throw new UnauthorizedAccessException("Invalid credentials.");
-
-        var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
-        var sellerId = await userAuthRepository.GetSellerIdForUserAsync(user.Id, cancellationToken);
-        if (string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase))
-        {
-            if (!sellerId.HasValue)
-                throw new UnauthorizedAccessException("Seller account is not linked.");
-
-            var seller = await userAuthRepository.GetSellerByIdAsync(sellerId.Value, cancellationToken);
-            if (seller is null || seller.KycStatus != KycStatus.Approved || !seller.IsActive)
-            {
-                throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
-            }
-        }
-
-        var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, sellerId);
-
-        return new LoginResponseDto
-        {
-            AccessToken = token.Token,
-            ExpiresAtUtc = token.ExpiresAtUtc,
-            Role = role,
-            UserId = user.Id,
-            SellerId = sellerId,
-            DisplayName = user.FullName
-        };
+        var user = await ValidateCredentialsAsync(request.Email, request.Password, cancellationToken);
+        return await BuildLoginResponseAsync(user, cancellationToken);
     }
 
     public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
@@ -79,7 +56,7 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             PhoneNumber = request.PhoneNumber?.Trim(),
             Role = role,
             SellerId = sellerId,
-            IsActive = !isSeller,
+            IsActive = false,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
         };
@@ -98,6 +75,13 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
         };
 
         var created = await userAuthRepository.AddAsync(user, profile, cancellationToken);
+        var otp = await otpService.RequestAsync(new RequestOtpRequestDto
+        {
+            UserId = created.Id,
+            ActionType = OtpActionTypes.Registration,
+            ActionReferenceId = created.Id.ToString(),
+            ForceEmailFallback = false
+        }, cancellationToken);
 
         return new RegisterResponseDto
         {
@@ -106,7 +90,115 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             FullName = created.FullName,
             Role = created.Role,
             SellerId = sellerId,
+            RequiresOtpVerification = true,
+            OtpRequestId = otp.OtpRequestId
         };
+    }
+
+    public async Task VerifyRegistrationOtpAsync(VerifyRegistrationOtpRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var verified = await otpService.VerifyAsync(new VerifyOtpRequestDto
+        {
+            UserId = request.UserId,
+            OtpRequestId = request.OtpRequestId,
+            OtpCode = request.OtpCode
+        }, cancellationToken);
+
+        await otpService.ConsumeVerificationGrantAsync(
+            request.UserId,
+            OtpActionTypes.Registration,
+            request.UserId.ToString(),
+            verified.VerificationToken,
+            cancellationToken);
+
+        await userAuthRepository.ActivateUserAsync(request.UserId, cancellationToken);
+    }
+
+    public async Task<OtpDispatchResponseDto> RequestPasswordResetOtpAsync(RequestPasswordResetOtpRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email))
+            throw new InvalidOperationException("Email is required.");
+
+        var user = await userAuthRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken)
+            ?? throw new InvalidOperationException("User not found.");
+
+        return await otpService.RequestAsync(new RequestOtpRequestDto
+        {
+            UserId = user.Id,
+            ActionType = OtpActionTypes.ResetPassword,
+            ActionReferenceId = user.Id.ToString(),
+            ForceEmailFallback = false
+        }, cancellationToken);
+    }
+
+    public async Task ConfirmPasswordResetAsync(ConfirmPasswordResetRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.NewPassword))
+            throw new InvalidOperationException("Email and new password are required.");
+
+        var user = await userAuthRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken)
+            ?? throw new InvalidOperationException("User not found.");
+
+        var verified = await otpService.VerifyAsync(new VerifyOtpRequestDto
+        {
+            UserId = user.Id,
+            OtpRequestId = request.OtpRequestId,
+            OtpCode = request.OtpCode
+        }, cancellationToken);
+
+        await otpService.ConsumeVerificationGrantAsync(
+            user.Id,
+            OtpActionTypes.ResetPassword,
+            user.Id.ToString(),
+            verified.VerificationToken,
+            cancellationToken);
+
+        await userAuthRepository.UpdatePasswordAsync(user.Id, passwordHasher.Hash(request.NewPassword), cancellationToken);
+    }
+
+    private async Task<LoginResponseDto> BuildLoginResponseAsync(User user, CancellationToken cancellationToken)
+    {
+        var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
+        var sellerId = await userAuthRepository.GetSellerIdForUserAsync(user.Id, cancellationToken);
+
+        var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, sellerId);
+        return new LoginResponseDto
+        {
+            AccessToken = token.Token,
+            ExpiresAtUtc = token.ExpiresAtUtc,
+            Role = role,
+            UserId = user.Id,
+            SellerId = sellerId,
+            DisplayName = user.FullName
+        };
+    }
+
+    private async Task<User> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken)
+    {
+        var user = await userAuthRepository.GetByEmailAsync(email.Trim(), cancellationToken)
+            ?? throw new UnauthorizedAccessException("Invalid credentials.");
+
+        if (!user.IsActive || !passwordHasher.Verify(password, user.PasswordHash))
+            throw new UnauthorizedAccessException("Invalid credentials.");
+
+        await ValidateSellerAccountAsync(user, cancellationToken);
+        return user;
+    }
+
+    private async Task ValidateSellerAccountAsync(User user, CancellationToken cancellationToken)
+    {
+        var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
+        var sellerId = await userAuthRepository.GetSellerIdForUserAsync(user.Id, cancellationToken);
+
+        if (!string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (!sellerId.HasValue)
+            throw new UnauthorizedAccessException("Seller account is not linked.");
+
+        var seller = await userAuthRepository.GetSellerByIdAsync(sellerId.Value, cancellationToken);
+        if (seller is null || seller.KycStatus != KycStatus.Approved || !seller.IsActive)
+            throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
     }
 
     private async Task<int?> ResolveSellerIdAsync(RegisterRequestDto request, string role, string fullName, CancellationToken cancellationToken)

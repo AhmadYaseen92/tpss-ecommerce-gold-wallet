@@ -14,7 +14,7 @@ class ApiConfig {
 
   static int timeoutSeconds = int.fromEnvironment(
     'API_TIMEOUT_SECONDS',
-    defaultValue: 20,
+    defaultValue: 60,
   );
 
   static void updateBaseUrl(String value) {

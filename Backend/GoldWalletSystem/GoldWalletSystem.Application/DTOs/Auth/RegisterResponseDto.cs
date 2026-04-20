@@ -7,4 +7,6 @@ public class RegisterResponseDto
     public required string FullName { get; init; }
     public required string Role { get; init; }
     public int? SellerId { get; init; }
+    public bool RequiresOtpVerification { get; init; } = true;
+    public string? OtpRequestId { get; init; }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/data/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/presentation/cubit/checkout_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
@@ -178,19 +179,40 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 child: SizedBox(
                   height: 52,
-                  child: FilledButton.icon(
+                          child: FilledButton.icon(
                     onPressed: state is CheckoutLoading
                         ? null
                         : () async {
-                            final otpVerified = await Navigator.pushNamed(
+                            final userId = AuthSessionStore.userId;
+                            if (userId == null) {
+                              await AppModalAlert.show(
+                                context,
+                                message: 'No logged-in user.',
+                                variant: AppModalAlertVariant.failed,
+                              );
+                              return;
+                            }
+
+                            final otpResult = await Navigator.pushNamed(
                               context,
                               AppRoutes.confirmOtpRoute,
-                              arguments: const {
+                              arguments: {
                                 'title': 'Confirm Buy OTP',
                                 'subtitle': 'Enter the OTP to confirm your checkout payment.',
+                                'otpFlow': 'checkout',
+                                'userId': userId,
+                                'productId': _checkoutArgs['productId'],
+                                'quantity': _checkoutArgs['quantity'],
+                                'productIds': _checkoutArgs['productIds'],
                               },
                             );
-                            if (otpVerified == true) {
+                            if (otpResult is Map && otpResult['verified'] == true) {
+                              await cubit.confirmOtp(
+                                checkoutArgs: _checkoutArgs,
+                                otpVerificationToken: '${otpResult['otpVerificationToken'] ?? ''}',
+                                otpRequestId: '${otpResult['otpRequestId'] ?? ''}',
+                              );
+                            } else if (otpResult == true) {
                               await cubit.confirmOtp(checkoutArgs: _checkoutArgs);
                             }
                           },
