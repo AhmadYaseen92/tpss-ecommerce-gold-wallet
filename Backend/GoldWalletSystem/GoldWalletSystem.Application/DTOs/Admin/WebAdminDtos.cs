@@ -44,6 +44,8 @@ public class WebInvestorDto
 public class WebRequestDto
 {
     public string Id { get; set; } = string.Empty;
+    public string SellerId { get; set; } = string.Empty;
+    public string SellerName { get; set; } = string.Empty;
     public string InvestorId { get; set; } = string.Empty;
     public string InvestorName { get; set; } = string.Empty;
     public string Type { get; set; } = "withdrawal";

@@ -1,3 +1,3 @@
 namespace GoldWalletSystem.Application.DTOs.Common;
 
-public sealed record PagedResult<T>(IReadOnlyList<T> Items, int TotalCount, int PageNumber, int PageSize);
+public sealed record PagedResult<T>(IReadOnlyList<T> Items, int TotalCount, int PageNumber, int PageSize, int TotalPages);

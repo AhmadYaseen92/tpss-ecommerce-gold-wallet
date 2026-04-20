@@ -1,25 +1,9 @@
 <script setup lang="ts">
+import { computed, ref } from "vue";
 import ProductForm from "../components/ProductForm.vue";
 import ProductDetails from "../components/ProductDetails.vue";
 import type { ProductManagementDto, EnumItemDto, MarketPriceConfigDto } from "../../../shared/types/apiTypes";
 import type { ProductFormPayload } from "../../../shared/services/backendGateway";
-
-defineProps<{
-  role: "admin" | "seller";
-  productError: string;
-  productPage: "list" | "add" | "edit" | "details";
-  productRouteId: number | null;
-  managedProducts: ProductManagementDto[];
-  selectedProduct: ProductManagementDto | null;
-  productForm: ProductFormPayload;
-  categories: EnumItemDto[];
-  weightUnits: EnumItemDto[];
-  validationErrors: Record<string, string>;
-  searchTerm: string;
-  activeFilter: "all" | "active" | "inactive";
-  categoryFilter: string;
-  marketPrices: MarketPriceConfigDto;
-}>();
 
 const emit = defineEmits<{
   add: [];
@@ -36,6 +20,30 @@ const emit = defineEmits<{
   "save-market-prices": [];
   "update-market-price": [field: "goldPerOunce" | "silverPerOunce" | "diamondPerCarat", value: number];
 }>();
+
+const pageNumber = ref(1);
+const pageSize = 20;
+const props = defineProps<{
+  role: "admin" | "seller";
+  productError: string;
+  productPage: "list" | "add" | "edit" | "details";
+  productRouteId: number | null;
+  managedProducts: ProductManagementDto[];
+  selectedProduct: ProductManagementDto | null;
+  productForm: ProductFormPayload;
+  categories: EnumItemDto[];
+  weightUnits: EnumItemDto[];
+  validationErrors: Record<string, string>;
+  searchTerm: string;
+  activeFilter: "all" | "active" | "inactive";
+  categoryFilter: string;
+  marketPrices: MarketPriceConfigDto;
+}>();
+const totalPages = computed(() => Math.max(1, Math.ceil(props.managedProducts.length / pageSize)));
+const pagedProducts = computed(() => {
+  const start = (pageNumber.value - 1) * pageSize;
+  return props.managedProducts.slice(start, start + pageSize);
+});
 </script>
 
 <template>
@@ -75,7 +83,7 @@ const emit = defineEmits<{
       <table>
         <thead><tr><th>ID</th><th>Image</th><th>Name</th><th>SKU</th><th>Description</th><th>Category</th><th>Weight</th><th>Price</th><th>Stock</th><th>Active</th><th>Actions</th></tr></thead>
         <tbody>
-          <tr v-for="product in managedProducts" :key="product.id" class="clickable-row" @click="emit('details', product)">
+          <tr v-for="product in pagedProducts" :key="product.id" class="clickable-row" @click="emit('details', product)">
             <td>{{ product.id }}</td>
             <td><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-thumb" /><span v-else class="product-thumb-placeholder">No image</span></td>
             <td>{{ product.name }}</td>
@@ -94,6 +102,12 @@ const emit = defineEmits<{
           </tr>
         </tbody>
       </table>
+      <div class="pager">
+        Results: {{ (pageNumber - 1) * pageSize + 1 }} - {{ Math.min(pageNumber * pageSize, managedProducts.length) }} of {{ managedProducts.length }}
+        <button :disabled="pageNumber <= 1" @click="pageNumber--">&lt;</button>
+        <span>{{ pageNumber }} / {{ totalPages }}</span>
+        <button :disabled="pageNumber >= totalPages" @click="pageNumber++">&gt;</button>
+      </div>
     </div>
 
     <div v-else-if="productPage === 'details'" class="product-details">
@@ -162,4 +176,5 @@ const emit = defineEmits<{
   gap: 8px;
   margin-top: 12px;
 }
+.pager { margin-top: 10px; display:flex; gap:8px; justify-content:flex-end; align-items:center; }
 </style>

@@ -116,6 +116,8 @@ const mapRequests = (logs: AuditLogDto[]): InvestorRequest[] =>
 const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
   items.map((item) => ({
     id: item.id,
+    sellerId: item.sellerId,
+    sellerName: item.sellerName,
     investorId: item.investorId,
     investorName: item.investorName,
     type: ["withdrawal", "pickup", "sell", "transfer", "buy", "gift"].includes(item.type.toLowerCase())
@@ -290,7 +292,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
         { pageNumber: 1, pageSize: 20 },
         session.accessToken
       )
-    : { items: [] as AuditLogDto[], totalCount: 0, pageNumber: 1, pageSize: 20 };
+    : { items: [] as AuditLogDto[], totalCount: 0, pageNumber: 1, pageSize: 20, totalPages: 0 };
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
 
@@ -427,6 +429,7 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
     storageFee: item.storageFee,
     serviceCharge: item.serviceCharge,
     offerType: item.offerType,
+    isHasOffer: item.isHasOffer,
     offerPercent: item.offerPercent,
     offerNewPrice: item.offerNewPrice,
     price: item.price,

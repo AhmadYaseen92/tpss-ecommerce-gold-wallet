@@ -121,6 +121,7 @@ public class WebAdminController(
         return Ok(ApiResponse<string>.Ok("updated"));
     }
 
+    [Authorize(Roles = SystemRoles.Admin)]
     [HttpGet("investors")]
     public async Task<IActionResult> GetInvestors(CancellationToken cancellationToken)
     {
@@ -140,6 +141,7 @@ public class WebAdminController(
         return Ok(ApiResponse<List<WebInvestorDto>>.Ok(investors));
     }
 
+    [Authorize(Roles = SystemRoles.Admin)]
     [HttpPut("investors/{id}/status")]
     public async Task<IActionResult> UpdateInvestorStatus(string id, [FromBody] UpdateStatusRequest request, CancellationToken cancellationToken)
     {
@@ -176,25 +178,33 @@ public class WebAdminController(
                 dbContext.Users.AsNoTracking(),
                 history => history.UserId,
                 user => user.Id,
-                (history, user) => new WebRequestDto
+                (history, user) => new { history, user })
+            .GroupJoin(
+                dbContext.Sellers.AsNoTracking(),
+                x => x.history.SellerId,
+                seller => (int?)seller.Id,
+                (x, sellers) => new { x.history, x.user, seller = sellers.FirstOrDefault() })
+            .Select(x => new WebRequestDto
                 {
-                    Id = $"r-{history.Id}",
-                    InvestorId = $"i-{history.UserId}",
-                    InvestorName = user.FullName,
-                    Type = history.TransactionType,
-                    ProductName = history.Category,
-                    Category = history.Category,
-                    Quantity = history.Quantity,
-                    UnitPrice = history.UnitPrice,
-                    Weight = history.Weight,
-                    Unit = history.Unit,
-                    Purity = history.Purity,
-                    Amount = history.Amount,
-                    Status = MapRequestStatusForView(history.TransactionType, history.Status),
-                    Currency = history.Currency,
-                    Notes = history.Notes,
-                    CreatedAt = history.CreatedAtUtc,
-                    UpdatedAt = history.UpdatedAtUtc
+                    Id = $"r-{x.history.Id}",
+                    SellerId = x.history.SellerId.HasValue ? $"s-{x.history.SellerId.Value}" : string.Empty,
+                    SellerName = x.seller != null ? x.seller.Name : string.Empty,
+                    InvestorId = $"i-{x.history.UserId}",
+                    InvestorName = x.user.FullName,
+                    Type = x.history.TransactionType,
+                    ProductName = x.history.Category,
+                    Category = x.history.Category,
+                    Quantity = x.history.Quantity,
+                    UnitPrice = x.history.UnitPrice,
+                    Weight = x.history.Weight,
+                    Unit = x.history.Unit,
+                    Purity = x.history.Purity,
+                    Amount = x.history.Amount,
+                    Status = MapRequestStatusForView(x.history.TransactionType, x.history.Status),
+                    Currency = x.history.Currency,
+                    Notes = x.history.Notes,
+                    CreatedAt = x.history.CreatedAtUtc,
+                    UpdatedAt = x.history.UpdatedAtUtc
                 })
             .ToListAsync(cancellationToken);
 

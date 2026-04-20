@@ -134,7 +134,8 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
             })
             .ToList();
 
-        return new PagedResult<TransactionHistoryDto>(items, totalCount, request.PageNumber, request.PageSize);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
+        return new PagedResult<TransactionHistoryDto>(items, totalCount, request.PageNumber, request.PageSize, totalPages);
     }
 
     private static (string ProductName, string ProductImageUrl) ResolveProductInfo(

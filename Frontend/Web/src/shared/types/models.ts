@@ -5,6 +5,8 @@ export type NavigationKey =
   | "overview"
   | "admin"
   | "investors"
+  | "sellers"
+  | "settings"
   | "requests"
   | "products"
   | "invoices"
@@ -45,6 +47,8 @@ export interface Investor {
 
 export interface InvestorRequest {
   id: string;
+  sellerId?: string;
+  sellerName?: string;
   investorId: string;
   investorName: string;
   type: "withdrawal" | "pickup" | "sell" | "transfer" | "buy" | "gift";

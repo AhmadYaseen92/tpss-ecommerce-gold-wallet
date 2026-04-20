@@ -7,6 +7,8 @@ import DashboardFeaturePage from "./features/dashboard/pages/DashboardFeaturePag
 import AdminWorkspacePage from "./features/dashboard/pages/AdminWorkspacePage.vue";
 import ProductFeaturePage from "./features/products/pages/ProductFeaturePage.vue";
 import InvestorsFeaturePage from "./features/investors/pages/InvestorsFeaturePage.vue";
+import SellersFeaturePage from "./features/dashboard/pages/SellersFeaturePage.vue";
+import SettingsFeaturePage from "./features/dashboard/pages/SettingsFeaturePage.vue";
 import TransactionsFeaturePage from "./features/transactions/pages/TransactionsFeaturePage.vue";
 import ReportsFeaturePage from "./features/reports/pages/ReportsFeaturePage.vue";
 import FeesFeaturePage from "./features/fees/pages/FeesFeaturePage.vue";
@@ -14,12 +16,15 @@ import { useMarketplace } from "./shared/app/store/useMarketplace";
 
 const marketplace = useMarketplace();
 const isDark = ref(false);
+const THEME_KEY = "goldwallet.web.theme";
 
 const ROUTE_BY_MENU: Record<Exclude<NavigationKey, "logout" | "invoices" | "inventory" | "notifications">, string> = {
   overview: "/overview",
   admin: "/admin",
   products: "/products",
   investors: "/investors",
+  sellers: "/sellers",
+  settings: "/settings",
   requests: "/transactions",
   fees: "/fees",
   reports: "/reports"
@@ -38,6 +43,7 @@ const syncHashPath = () => {
 
 onMounted(() => {
   void marketplace.restoreSession();
+  isDark.value = window.localStorage.getItem(THEME_KEY) === "dark";
   syncHashPath();
   window.addEventListener("hashchange", syncHashPath);
 });
@@ -46,7 +52,10 @@ onUnmounted(() => {
   window.removeEventListener("hashchange", syncHashPath);
 });
 
-watch(isDark, (value) => document.documentElement.classList.toggle("dark-mode", value));
+watch(isDark, (value) => {
+  document.documentElement.classList.toggle("dark-mode", value);
+  window.localStorage.setItem(THEME_KEY, value ? "dark" : "light");
+});
 
 const menuItems = computed<Array<{ key: NavigationKey; label: string }>>(() => {
   const common: Array<{ key: NavigationKey; label: string }> = [
@@ -58,7 +67,7 @@ const menuItems = computed<Array<{ key: NavigationKey; label: string }>>(() => {
   ];
 
   return marketplace.role.value === "admin"
-    ? [{ key: "admin" as NavigationKey, label: "Admin" }, ...common.slice(0, 2), { key: "investors" as NavigationKey, label: "Investors" }, ...common.slice(2), { key: "fees" as NavigationKey, label: "Fees" }]
+    ? [{ key: "admin" as NavigationKey, label: "Admin" }, ...common.slice(0, 2), { key: "investors" as NavigationKey, label: "Investors" }, { key: "sellers" as NavigationKey, label: "Sellers" }, { key: "settings" as NavigationKey, label: "System Settings" }, ...common.slice(2), { key: "fees" as NavigationKey, label: "Fees" }]
     : common;
 });
 
@@ -66,6 +75,8 @@ const activeMenu = computed<NavigationKey>(() => {
   if (currentPath.value.startsWith("/admin")) return "admin";
   if (currentPath.value.startsWith("/products")) return "products";
   if (currentPath.value.startsWith("/investors")) return "investors";
+  if (currentPath.value.startsWith("/sellers")) return "sellers";
+  if (currentPath.value.startsWith("/settings")) return "settings";
   if (currentPath.value.startsWith("/transactions")) return "requests";
   if (currentPath.value.startsWith("/fees")) return "fees";
   if (currentPath.value.startsWith("/reports")) return "reports";
@@ -80,6 +91,8 @@ const activeComponent = computed(() => {
   if (currentPath.value.startsWith("/admin")) return marketplace.role.value === "admin" ? AdminWorkspacePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/products")) return ProductFeaturePage;
   if (currentPath.value.startsWith("/investors")) return marketplace.role.value === "admin" ? InvestorsFeaturePage : DashboardFeaturePage;
+  if (currentPath.value.startsWith("/sellers")) return marketplace.role.value === "admin" ? SellersFeaturePage : DashboardFeaturePage;
+  if (currentPath.value.startsWith("/settings")) return marketplace.role.value === "admin" ? SettingsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/transactions")) return TransactionsFeaturePage;
   if (currentPath.value.startsWith("/fees")) return FeesFeaturePage;
   if (currentPath.value.startsWith("/reports")) return ReportsFeaturePage;

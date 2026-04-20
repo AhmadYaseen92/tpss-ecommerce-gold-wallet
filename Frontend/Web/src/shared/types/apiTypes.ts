@@ -12,6 +12,7 @@ export interface PagedResult<T> {
   totalCount: number;
   pageNumber: number;
   pageSize: number;
+  totalPages: number;
 }
 
 export interface LoginResponseDto {
@@ -95,6 +96,8 @@ export interface AuditLogDto {
 
 export interface WebRequestDto {
   id: string;
+  sellerId?: string;
+  sellerName?: string;
   investorId: string;
   investorName: string;
   type: string;

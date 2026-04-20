@@ -22,7 +22,8 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceReadRepository
         var totalCount = await query.CountAsync(cancellationToken);
         var entities = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
         var items = entities.Select(Map).ToList();
-        return new PagedResult<InvoiceDto>(items, totalCount, pageNumber, pageSize);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        return new PagedResult<InvoiceDto>(items, totalCount, pageNumber, pageSize, totalPages);
     }
 
     public async Task<InvoiceDto> CreateAsync(CreateInvoiceRequestDto request, CancellationToken cancellationToken = default)
