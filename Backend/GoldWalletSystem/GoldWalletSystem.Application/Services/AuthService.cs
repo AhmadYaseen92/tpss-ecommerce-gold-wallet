@@ -1,41 +1,91 @@
 using GoldWalletSystem.Application.DTOs.Auth;
+using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.Application.Models.Auth;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
+using System.Security.Cryptography;
+using System.Text.Json;
 
 namespace GoldWalletSystem.Application.Services;
 
-public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher passwordHasher, ITokenService tokenService) : IAuthService
+public class AuthService(
+    IUserAuthRepository userAuthRepository,
+    IPasswordHasher passwordHasher,
+    ITokenService tokenService,
+    ILoginOtpChallengeStore loginOtpChallengeStore,
+    IMobileAppConfigurationRepository mobileAppConfigurationRepository,
+    IOtpDeliveryService otpDeliveryService) : IAuthService
 {
+    private static readonly TimeSpan LoginOtpTtl = TimeSpan.FromMinutes(5);
+
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
-        var user = await userAuthRepository.GetByEmailAsync(request.Email, cancellationToken)
-            ?? throw new UnauthorizedAccessException("Invalid credentials.");
+        var user = await ValidateCredentialsAsync(request.Email, request.Password, cancellationToken);
+        return await BuildLoginResponseAsync(user, cancellationToken);
+    }
 
-        if (!user.IsActive || !passwordHasher.Verify(request.Password, user.PasswordHash))
+    public async Task<SendLoginOtpResponseDto> SendLoginOtpAsync(SendLoginOtpRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
+        var user = await ValidateCredentialsAsync(request.Email, request.Password, cancellationToken);
+        var channels = await ResolveOtpDeliveryChannelsAsync(cancellationToken);
+
+        var otpCode = GenerateOtpCode();
+        var challenge = new LoginOtpChallengeModel
+        {
+            UserId = user.Id,
+            OtpHash = passwordHasher.Hash(otpCode),
+            ExpiresAtUtc = DateTime.UtcNow.Add(LoginOtpTtl),
+            DeliveryChannels = channels.Select(x => x.ToString()).ToArray()
+        };
+
+        await loginOtpChallengeStore.UpsertAsync(challenge, cancellationToken);
+        await otpDeliveryService.SendLoginOtpAsync(user, otpCode, channels, cancellationToken);
+
+        return new SendLoginOtpResponseDto
+        {
+            ExpiresAtUtc = challenge.ExpiresAtUtc,
+            DeliveryChannels = channels.Select(x => x.ToString()).ToArray()
+        };
+    }
+
+    public async Task<LoginResponseDto> VerifyLoginOtpAsync(VerifyLoginOtpRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.OtpCode))
+            throw new UnauthorizedAccessException("Invalid credentials.");
+
+        var user = await userAuthRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken)
+            ?? throw new UnauthorizedAccessException("Invalid credentials.");
+
+        if (!user.IsActive)
+            throw new UnauthorizedAccessException("Invalid credentials.");
+
+        await ValidateSellerAccountAsync(user, cancellationToken);
+
+        var challenge = await loginOtpChallengeStore.GetActiveAsync(user.Id, DateTime.UtcNow, cancellationToken)
+            ?? throw new UnauthorizedAccessException("OTP is invalid or expired.");
+
+        if (!passwordHasher.Verify(request.OtpCode.Trim(), challenge.OtpHash))
+            throw new UnauthorizedAccessException("OTP is invalid or expired.");
+
+        await loginOtpChallengeStore.RemoveAsync(user.Id, cancellationToken);
+        return await BuildLoginResponseAsync(user, cancellationToken);
+    }
+
+    private async Task<LoginResponseDto> BuildLoginResponseAsync(User user, CancellationToken cancellationToken)
+    {
         var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
         var sellerId = await userAuthRepository.GetSellerIdForUserAsync(user.Id, cancellationToken);
-        if (string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase))
-        {
-            if (!sellerId.HasValue)
-                throw new UnauthorizedAccessException("Seller account is not linked.");
-
-            var seller = await userAuthRepository.GetSellerByIdAsync(sellerId.Value, cancellationToken);
-            if (seller is null || seller.KycStatus != KycStatus.Approved || !seller.IsActive)
-            {
-                throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
-            }
-        }
 
         var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, sellerId);
-
         return new LoginResponseDto
         {
             AccessToken = token.Token,
@@ -46,6 +96,86 @@ public class AuthService(IUserAuthRepository userAuthRepository, IPasswordHasher
             DisplayName = user.FullName
         };
     }
+
+    private async Task<User> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken)
+    {
+        var user = await userAuthRepository.GetByEmailAsync(email.Trim(), cancellationToken)
+            ?? throw new UnauthorizedAccessException("Invalid credentials.");
+
+        if (!user.IsActive || !passwordHasher.Verify(password, user.PasswordHash))
+            throw new UnauthorizedAccessException("Invalid credentials.");
+
+        await ValidateSellerAccountAsync(user, cancellationToken);
+        return user;
+    }
+
+    private async Task ValidateSellerAccountAsync(User user, CancellationToken cancellationToken)
+    {
+        var role = string.IsNullOrWhiteSpace(user.Role) ? SystemRoles.Investor : user.Role;
+        var sellerId = await userAuthRepository.GetSellerIdForUserAsync(user.Id, cancellationToken);
+
+        if (!string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (!sellerId.HasValue)
+            throw new UnauthorizedAccessException("Seller account is not linked.");
+
+        var seller = await userAuthRepository.GetSellerByIdAsync(sellerId.Value, cancellationToken);
+        if (seller is null || seller.KycStatus != KycStatus.Approved || !seller.IsActive)
+            throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
+    }
+
+    private async Task<IReadOnlyCollection<OtpDeliveryChannel>> ResolveOtpDeliveryChannelsAsync(CancellationToken cancellationToken)
+    {
+        var configurations = await mobileAppConfigurationRepository.GetAllAsync(cancellationToken);
+        var otpConfig = configurations.FirstOrDefault(x =>
+            string.Equals(x.ConfigKey, MobileAppConfigurationKeys.LoginOtpDeliveryChannels, StringComparison.OrdinalIgnoreCase)
+            && x.IsEnabled);
+
+        if (otpConfig is null || string.IsNullOrWhiteSpace(otpConfig.JsonValue))
+            return [OtpDeliveryChannel.WhatsApp];
+
+        try
+        {
+            var channels = ParseChannels(otpConfig.JsonValue);
+            return channels.Count == 0 ? [OtpDeliveryChannel.WhatsApp] : channels;
+        }
+        catch (JsonException)
+        {
+            return [OtpDeliveryChannel.WhatsApp];
+        }
+    }
+
+    private static IReadOnlyCollection<OtpDeliveryChannel> ParseChannels(string jsonValue)
+    {
+        using var document = JsonDocument.Parse(jsonValue);
+        var root = document.RootElement;
+
+        var rawChannels = root.ValueKind switch
+        {
+            JsonValueKind.Array => root.EnumerateArray().Select(x => x.GetString()),
+            JsonValueKind.Object when root.TryGetProperty("channels", out var channelsNode) && channelsNode.ValueKind == JsonValueKind.Array
+                => channelsNode.EnumerateArray().Select(x => x.GetString()),
+            _ => Array.Empty<string?>()
+        };
+
+        return rawChannels
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(ParseChannel)
+            .Distinct()
+            .ToArray();
+    }
+
+    private static OtpDeliveryChannel ParseChannel(string? channel)
+        => channel?.Trim().ToLowerInvariant() switch
+        {
+            "whatsapp" => OtpDeliveryChannel.WhatsApp,
+            "email" => OtpDeliveryChannel.Email,
+            _ => throw new JsonException("Unsupported OTP delivery channel.")
+        };
+
+    private static string GenerateOtpCode()
+        => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
 
     public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
     {

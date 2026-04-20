@@ -465,4 +465,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(x => x.ConfigKey).IsUnique();
         });
     }
+
 }

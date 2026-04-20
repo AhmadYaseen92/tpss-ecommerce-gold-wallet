@@ -3,6 +3,7 @@ using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Application.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.Repositories;
+using GoldWalletSystem.Infrastructure.Services;
 using GoldWalletSystem.Infrastructure.Services.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +15,7 @@ public static class InfrastructureServiceCollectionExtensions
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
     {
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddMemoryCache();
 
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
@@ -41,6 +43,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IMobileAppConfigurationService, MobileAppConfigurationService>();
         services.AddScoped<IWalletService, WalletService>();
         services.AddScoped<IWalletActionValidationService, WalletActionValidationService>();
+        services.AddScoped<IOtpDeliveryService, OtpDeliveryService>();
+        services.AddSingleton<ILoginOtpChallengeStore, LoginOtpChallengeMemoryStore>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

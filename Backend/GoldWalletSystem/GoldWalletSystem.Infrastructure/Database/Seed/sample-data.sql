@@ -686,6 +686,12 @@ BEGIN TRY
             N'Mobile release configuration synced with backend defaults'
         ),
         (
+            N'LoginOtpDeliveryChannels',
+            N'["whatsapp"]',
+            CAST(1 AS bit),
+            N'Login OTP delivery channels for mobile release (whatsapp, email, or both)'
+        ),
+        (
             N'SellerMarketPrices_1',
             N'{"gold":430.00,"silver":36.00,"diamond":920.00}',
             CAST(1 AS bit),
