@@ -26,7 +26,7 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             .ToListAsync(cancellationToken);
         var sellers = await dbContext.Sellers
             .AsNoTracking()
-            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+            .ToDictionaryAsync(x => x.Id, x => x.CompanyName, cancellationToken);
 
         var requestsQuery = dbContext.TransactionHistories.AsNoTracking().AsQueryable();
         if (sellerId.HasValue)

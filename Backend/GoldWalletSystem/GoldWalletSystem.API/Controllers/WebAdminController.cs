@@ -860,7 +860,7 @@ public class WebAdminController(
             {
                 WalletId = wallet.Id,
                 SellerId = request.SellerId,
-                SellerName = await dbContext.Sellers.Where(s => s.Id == request.SellerId).Select(s => s.Name).FirstOrDefaultAsync(cancellationToken) ?? string.Empty,
+                SellerName = await dbContext.Sellers.Where(s => s.Id == request.SellerId).Select(s => s.CompanyName).FirstOrDefaultAsync(cancellationToken) ?? string.Empty,
                 Category = Enum.TryParse<ProductCategory>(request.Category, true, out var cat) ? cat : ProductCategory.Gold,
                 AssetType = AssetType.GoldBar,
                 Quantity = Math.Max(1, request.Quantity),

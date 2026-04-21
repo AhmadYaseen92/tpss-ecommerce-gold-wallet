@@ -167,7 +167,7 @@ public class AuthService(
             UserId = user.Id,
             FullName = user.FullName,
             SellerId = sellerId,
-            SellerName = sellerProfile?.Name
+            SellerName = sellerProfile?.CompanyName
         };
     }
 
