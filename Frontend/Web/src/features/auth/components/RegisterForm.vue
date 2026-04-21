@@ -25,7 +25,7 @@ const steps = [
   "Login Credentials",
 ];
 
-const activeStep = ref(0);
+const activeStep = ref(1);
 
 function nextStep() {
   if (activeStep.value < steps.length - 1) {

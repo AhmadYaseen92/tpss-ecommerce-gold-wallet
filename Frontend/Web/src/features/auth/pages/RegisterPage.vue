@@ -75,8 +75,8 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <section class="register-page">
-    <div class="auth-card large">
+  <section class="login-page">
+    <div class="auth-card auth-card-register">
       <RegisterForm
         :model="model"
         :loading="loading"
