@@ -50,6 +50,90 @@ export interface WebSellerDto {
   diamondPrice?: number | null;
 }
 
+export interface WebSellerAddressDto {
+  country: string;
+  city: string;
+  street: string;
+  buildingNumber: string;
+  postalCode: string;
+}
+
+export interface WebSellerManagerDto {
+  fullName: string;
+  positionTitle: string;
+  nationality: string;
+  mobileNumber: string;
+  emailAddress: string;
+  idType: string;
+  idNumber: string;
+  idExpiryDate?: string;
+  isPrimary: boolean;
+}
+
+export interface WebSellerBranchDto {
+  branchName: string;
+  country: string;
+  city: string;
+  fullAddress: string;
+  buildingNumber: string;
+  postalCode: string;
+  phoneNumber: string;
+  email: string;
+  isMainBranch: boolean;
+}
+
+export interface WebSellerBankAccountDto {
+  bankName: string;
+  accountHolderName: string;
+  accountNumber: string;
+  iban: string;
+  swiftCode: string;
+  bankCountry: string;
+  bankCity: string;
+  branchName: string;
+  branchAddress: string;
+  currency: string;
+  isMainAccount: boolean;
+}
+
+export interface WebSellerDocumentDto {
+  documentType: string;
+  fileName: string;
+  filePath: string;
+  contentType: string;
+  isRequired: boolean;
+  uploadedAtUtc: string;
+  relatedEntityType?: string;
+}
+
+export interface WebSellerDetailsDto {
+  id: string;
+  companyName: string;
+  companyCode: string;
+  commercialRegistrationNumber: string;
+  vatNumber: string;
+  businessActivity: string;
+  establishedDate?: string;
+  companyPhone: string;
+  companyEmail: string;
+  website?: string;
+  description?: string;
+  loginEmail: string;
+  isActive: boolean;
+  kycStatus: string;
+  reviewNotes?: string;
+  submittedAt: string;
+  reviewedAt?: string;
+  goldPrice?: number | null;
+  silverPrice?: number | null;
+  diamondPrice?: number | null;
+  address?: WebSellerAddressDto;
+  managers: WebSellerManagerDto[];
+  branches: WebSellerBranchDto[];
+  bankAccounts: WebSellerBankAccountDto[];
+  documents: WebSellerDocumentDto[];
+}
+
 export interface DashboardDto {
   userId: number;
   fullName: string;

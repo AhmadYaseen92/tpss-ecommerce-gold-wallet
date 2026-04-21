@@ -93,6 +93,136 @@ public class WebAdminController(
         return Ok(ApiResponse<List<WebSellerDto>>.Ok(sellers));
     }
 
+    [HttpGet("sellers/{id}")]
+    public async Task<IActionResult> GetSellerDetails(string id, CancellationToken cancellationToken)
+    {
+        var sellerId = TryParsePrefixedId(id, "s-");
+        if (sellerId is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
+
+        var sellerIdClaim = User.FindFirst("seller_id")?.Value;
+        var currentSellerId = int.TryParse(sellerIdClaim, out var parsedSellerId) ? parsedSellerId : 0;
+        if (!User.IsInRole(SystemRoles.Admin) && currentSellerId != sellerId.Value)
+        {
+            return Forbid();
+        }
+
+        var seller = await dbContext.Sellers
+            .AsNoTracking()
+            .Include(x => x.Address)
+            .Include(x => x.Managers)
+            .Include(x => x.Branches)
+            .Include(x => x.BankAccounts)
+            .Include(x => x.Documents)
+            .FirstOrDefaultAsync(x => x.Id == sellerId.Value, cancellationToken);
+
+        if (seller is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
+
+        var loginEmail = await dbContext.Users
+            .Where(x => x.Id == seller.UserId)
+            .Select(x => x.Email)
+            .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
+
+        var details = new WebSellerDetailsDto
+        {
+            Id = $"s-{seller.Id}",
+            CompanyName = seller.CompanyName,
+            CompanyCode = seller.CompanyCode,
+            CommercialRegistrationNumber = seller.CommercialRegistrationNumber,
+            VatNumber = seller.VatNumber,
+            BusinessActivity = seller.BusinessActivity,
+            EstablishedDate = seller.EstablishedDate,
+            CompanyPhone = seller.CompanyPhone,
+            CompanyEmail = seller.CompanyEmail,
+            Website = seller.Website,
+            Description = seller.Description,
+            LoginEmail = loginEmail,
+            IsActive = seller.IsActive,
+            KycStatus = seller.KycStatus.ToString().ToLowerInvariant(),
+            ReviewNotes = seller.ReviewNotes,
+            SubmittedAt = seller.CreatedAtUtc,
+            ReviewedAt = seller.ReviewedAtUtc,
+            GoldPrice = seller.GoldPrice,
+            SilverPrice = seller.SilverPrice,
+            DiamondPrice = seller.DiamondPrice,
+            Address = seller.Address is null
+                ? null
+                : new WebSellerAddressDto
+                {
+                    Country = seller.Address.Country,
+                    City = seller.Address.City,
+                    Street = seller.Address.Street,
+                    BuildingNumber = seller.Address.BuildingNumber,
+                    PostalCode = seller.Address.PostalCode
+                },
+            Managers = seller.Managers
+                .OrderByDescending(x => x.IsPrimary)
+                .ThenBy(x => x.Id)
+                .Select(x => new WebSellerManagerDto
+                {
+                    FullName = x.FullName,
+                    PositionTitle = x.PositionTitle,
+                    Nationality = x.Nationality,
+                    MobileNumber = x.MobileNumber,
+                    EmailAddress = x.EmailAddress,
+                    IdType = x.IdType,
+                    IdNumber = x.IdNumber,
+                    IdExpiryDate = x.IdExpiryDate,
+                    IsPrimary = x.IsPrimary
+                })
+                .ToList(),
+            Branches = seller.Branches
+                .OrderByDescending(x => x.IsMainBranch)
+                .ThenBy(x => x.Id)
+                .Select(x => new WebSellerBranchDto
+                {
+                    BranchName = x.BranchName,
+                    Country = x.Country,
+                    City = x.City,
+                    FullAddress = x.FullAddress,
+                    BuildingNumber = x.BuildingNumber,
+                    PostalCode = x.PostalCode,
+                    PhoneNumber = x.PhoneNumber,
+                    Email = x.Email,
+                    IsMainBranch = x.IsMainBranch
+                })
+                .ToList(),
+            BankAccounts = seller.BankAccounts
+                .OrderByDescending(x => x.IsMainAccount)
+                .ThenBy(x => x.Id)
+                .Select(x => new WebSellerBankAccountDto
+                {
+                    BankName = x.BankName,
+                    AccountHolderName = x.AccountHolderName,
+                    AccountNumber = x.AccountNumber,
+                    Iban = x.IBAN,
+                    SwiftCode = x.SwiftCode,
+                    BankCountry = x.BankCountry,
+                    BankCity = x.BankCity,
+                    BranchName = x.BranchName,
+                    BranchAddress = x.BranchAddress,
+                    Currency = x.Currency,
+                    IsMainAccount = x.IsMainAccount
+                })
+                .ToList(),
+            Documents = seller.Documents
+                .OrderByDescending(x => x.UploadedAtUtc)
+                .ThenBy(x => x.Id)
+                .Select(x => new WebSellerDocumentDto
+                {
+                    DocumentType = x.DocumentType,
+                    FileName = x.FileName,
+                    FilePath = x.FilePath,
+                    ContentType = x.ContentType,
+                    IsRequired = x.IsRequired,
+                    UploadedAtUtc = x.UploadedAtUtc,
+                    RelatedEntityType = x.RelatedEntityType
+                })
+                .ToList()
+        };
+
+        return Ok(ApiResponse<WebSellerDetailsDto>.Ok(details));
+    }
+
     [Authorize(Roles = SystemRoles.Admin)]
     [HttpPut("sellers/{id}/kyc-status")]
     public async Task<IActionResult> UpdateSellerKycStatus(string id, [FromBody] UpdateSellerKycRequest request, CancellationToken cancellationToken)

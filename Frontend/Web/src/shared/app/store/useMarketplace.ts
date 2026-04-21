@@ -213,6 +213,13 @@ export function useMarketplace() {
     }
   };
 
+  const markKycUnderReview = async (sellerId: string) => {
+    state.value.sellers = updateSellerKycStatus(state.value.sellers, sellerId, "underreview");
+    if (session.value?.accessToken) {
+      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "underreview");
+    }
+  };
+
   const setMarketPrice = (productId: string, marketPrice: number) => {
     state.value.products = updateProductMarketPrice(state.value.products, productId, marketPrice);
   };
@@ -328,6 +335,7 @@ export function useMarketplace() {
     approveKyc,
     rejectKyc,
     blockKyc,
+    markKycUnderReview,
     setMarketPrice,
     addProduct,
     updateProduct,

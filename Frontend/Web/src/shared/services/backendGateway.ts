@@ -25,6 +25,7 @@ import type {
   WebInvestorDto,
   WebNotificationDto,
   WebRequestDto,
+  WebSellerDetailsDto,
   WebSellerDto,
   WalletDto
 } from "../types/apiTypes";
@@ -242,6 +243,10 @@ export async function updateWalletSellConfiguration(
 export async function fetchSellers(accessToken: string): Promise<Seller[]> {
   const sellers = await getJson<WebSellerDto[]>("/api/web-admin/sellers", accessToken);
   return sellers.map(mapSeller);
+}
+
+export async function fetchSellerDetailsByAdmin(accessToken: string, sellerId: string): Promise<WebSellerDetailsDto> {
+  return getJson<WebSellerDetailsDto>(`/api/web-admin/sellers/${sellerId}`, accessToken);
 }
 
 export async function updateSellerKycStatusByAdmin(
