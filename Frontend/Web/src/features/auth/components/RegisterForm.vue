@@ -27,6 +27,7 @@ const steps = [
 
 const activeStep = ref(0);
 const stepError = ref("");
+const stepRefs = ref<Array<HTMLElement | null>>([]);
 
 const setSingleFile = (listRef: any[], event: Event) => {
   const input = event.target as HTMLInputElement;
@@ -34,7 +35,6 @@ const setSingleFile = (listRef: any[], event: Event) => {
   listRef.splice(0, listRef.length);
   if (file) listRef.push({ name: file.name });
 };
-
 
 const validateStep = (step: number) => {
   if (step === 0) {
@@ -65,7 +65,26 @@ const validateStep = (step: number) => {
   return "";
 };
 
+const reportCurrentStepValidity = (step: number) => {
+  const container = stepRefs.value[step];
+  if (!container) return true;
+
+  const fields = container.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+    "input, textarea, select",
+  );
+
+  for (const field of fields) {
+    if (!field.checkValidity()) {
+      field.reportValidity();
+      return false;
+    }
+  }
+
+  return true;
+};
+
 function nextStep() {
+  if (!reportCurrentStepValidity(activeStep.value)) return;
   const error = validateStep(activeStep.value);
   stepError.value = error;
   if (error) return;
@@ -104,6 +123,21 @@ function removeBank(idx: number) {
 function setMainBank(idx: number) {
   props.model.banks.forEach((x, i) => (x.isMain = i === idx));
 }
+
+function goToStep(idx: number) {
+  if (idx <= activeStep.value) {
+    activeStep.value = idx;
+    return;
+  }
+
+  if (!reportCurrentStepValidity(activeStep.value)) return;
+
+  const error = validateStep(activeStep.value);
+  stepError.value = error;
+  if (error) return;
+
+  activeStep.value = idx;
+}
 </script>
 
 <template>
@@ -120,27 +154,27 @@ function setMainBank(idx: number) {
         type="button"
         class="step-btn"
         :class="{ active: idx === activeStep }"
-        @click="activeStep = idx"
+        @click="goToStep(idx)"
       >
         {{ idx + 1 }}. {{ step }}
       </button>
     </div>
 
-    <div v-if="activeStep === 0" class="form-grid">
+    <div v-if="activeStep === 0" :ref="(el) => (stepRefs[0] = el as HTMLElement)" class="form-grid">
       <h2>Company Information</h2>
-      <label>Company Name <input v-model="model.companyInfo.companyName" /></label>
-      <label>Company Code <input v-model="model.companyInfo.companyCode" /></label>
-      <label>Commercial Registration Number (CR) <input v-model="model.companyInfo.crNumber" /></label>
-      <label>Tax / VAT Number <input v-model="model.companyInfo.vatNumber" /></label>
+      <label>Company Name <input v-model="model.companyInfo.companyName" required /></label>
+      <label>Company Code <input v-model="model.companyInfo.companyCode" required /></label>
+      <label>Commercial Registration Number (CR) <input v-model="model.companyInfo.crNumber" required /></label>
+      <label>Tax / VAT Number <input v-model="model.companyInfo.vatNumber" required /></label>
       <label>Business Activity / Industry Type <input v-model="model.companyInfo.businessActivity" /></label>
       <label>Established Date <input v-model="model.companyInfo.establishedDate" type="date" /></label>
-      <label>Country <input v-model="model.companyInfo.country" /></label>
-      <label>City <input v-model="model.companyInfo.city" /></label>
-      <label>Street <input v-model="model.companyInfo.street" /></label>
+      <label>Country <input v-model="model.companyInfo.country" required /></label>
+      <label>City <input v-model="model.companyInfo.city" required /></label>
+      <label>Street <input v-model="model.companyInfo.street" required /></label>
       <label>Building Number <input v-model="model.companyInfo.buildingNumber" /></label>
       <label>Postal Code <input v-model="model.companyInfo.postalCode" /></label>
-      <label>Company Phone <input v-model="model.companyInfo.phone" /></label>
-      <label>Company Email <input v-model="model.companyInfo.email" type="email" /></label>
+      <label>Company Phone <input v-model="model.companyInfo.phone" required /></label>
+      <label>Company Email <input v-model="model.companyInfo.email" type="email" required /></label>
       <label>Website (optional) <input v-model="model.companyInfo.website" /></label>
       <label class="full">Description (optional) <textarea v-model="model.companyInfo.description" rows="3" /></label>
 
@@ -151,34 +185,34 @@ function setMainBank(idx: number) {
       <label>AML Documentation <input type="file" @change="setSingleFile(model.companyInfo.documents.amlDoc, $event)" /></label>
     </div>
 
-    <div v-if="activeStep === 1" class="form-grid">
+    <div v-if="activeStep === 1" :ref="(el) => (stepRefs[1] = el as HTMLElement)" class="form-grid">
       <h2>Company Owner / Manager</h2>
-      <label>Manager / Owner Name <input v-model="model.ownerInfo.name" /></label>
-      <label>Position / Job Title <input v-model="model.ownerInfo.position" /></label>
+      <label>Manager / Owner Name <input v-model="model.ownerInfo.name" required /></label>
+      <label>Position / Job Title <input v-model="model.ownerInfo.position" required /></label>
       <label>Nationality <input v-model="model.ownerInfo.nationality" /></label>
-      <label>Mobile Number <input v-model="model.ownerInfo.mobile" /></label>
-      <label>Email Address <input v-model="model.ownerInfo.email" type="email" /></label>
+      <label>Mobile Number <input v-model="model.ownerInfo.mobile" required /></label>
+      <label>Email Address <input v-model="model.ownerInfo.email" type="email" required /></label>
       <label>ID Type
-        <select v-model="model.ownerInfo.idType">
+        <select v-model="model.ownerInfo.idType" required>
           <option value="">Select</option>
           <option>National ID</option>
           <option>Passport</option>
         </select>
       </label>
-      <label>ID Number <input v-model="model.ownerInfo.idNumber" /></label>
+      <label>ID Number <input v-model="model.ownerInfo.idNumber" required /></label>
       <label>ID Expiry Date <input v-model="model.ownerInfo.idExpiry" type="date" /></label>
       <label>Owner / Manager ID Copy <input type="file" @change="setSingleFile(model.ownerInfo.idCopy, $event)" /></label>
       <label>Authorization Letter (if applicable) <input type="file" @change="setSingleFile(model.ownerInfo.authLetter, $event)" /></label>
     </div>
 
-    <div v-if="activeStep === 2" class="form-grid">
+    <div v-if="activeStep === 2" :ref="(el) => (stepRefs[2] = el as HTMLElement)" class="form-grid">
       <div class="title-row"><h2>Company Branches / Locations</h2><button type="button" @click="addBranch">Add Branch</button></div>
       <div v-for="(branch, idx) in model.branches" :key="idx" class="card full">
         <div class="title-row"><strong>Branch {{ idx + 1 }}</strong><button type="button" @click="removeBranch(idx)">Remove</button></div>
-        <label>Branch Name <input v-model="branch.branchName" /></label>
-        <label>Country <input v-model="branch.country" /></label>
-        <label>City <input v-model="branch.city" /></label>
-        <label>Full Address <input v-model="branch.address" /></label>
+        <label>Branch Name <input v-model="branch.branchName" required /></label>
+        <label>Country <input v-model="branch.country" required /></label>
+        <label>City <input v-model="branch.city" required /></label>
+        <label>Full Address <input v-model="branch.address" required /></label>
         <label>Building Number <input v-model="branch.buildingNumber" /></label>
         <label>Postal Code <input v-model="branch.postalCode" /></label>
         <label>Phone Number <input v-model="branch.phone" /></label>
@@ -187,14 +221,14 @@ function setMainBank(idx: number) {
       </div>
     </div>
 
-    <div v-if="activeStep === 3" class="form-grid">
+    <div v-if="activeStep === 3" :ref="(el) => (stepRefs[3] = el as HTMLElement)" class="form-grid">
       <div class="title-row"><h2>Bank Details</h2><button type="button" @click="addBank">Add Bank Account</button></div>
       <div v-for="(bank, idx) in model.banks" :key="idx" class="card full">
         <div class="title-row"><strong>Bank Account {{ idx + 1 }}</strong><button type="button" @click="removeBank(idx)">Remove</button></div>
-        <label>Bank Name <input v-model="bank.bankName" /></label>
-        <label>Account Holder Name <input v-model="bank.accountHolder" /></label>
-        <label>Account Number <input v-model="bank.accountNumber" /></label>
-        <label>IBAN <input v-model="bank.iban" /></label>
+        <label>Bank Name <input v-model="bank.bankName" required /></label>
+        <label>Account Holder Name <input v-model="bank.accountHolder" required /></label>
+        <label>Account Number <input v-model="bank.accountNumber" required /></label>
+        <label>IBAN <input v-model="bank.iban" required /></label>
         <label>SWIFT Code <input v-model="bank.swift" /></label>
         <label>Bank Country <input v-model="bank.country" /></label>
         <label>Bank City <input v-model="bank.city" /></label>
@@ -207,11 +241,11 @@ function setMainBank(idx: number) {
       </div>
     </div>
 
-    <div v-if="activeStep === 4" class="form-grid">
+    <div v-if="activeStep === 4" :ref="(el) => (stepRefs[4] = el as HTMLElement)" class="form-grid">
       <h2>Login Credentials</h2>
-      <label>Login Email <input v-model="model.credentials.loginEmail" type="email" /></label>
-      <label>Password <input v-model="model.credentials.password" type="password" /></label>
-      <label>Confirm Password <input v-model="model.credentials.confirmPassword" type="password" /></label>
+      <label>Login Email <input v-model="model.credentials.loginEmail" type="email" required /></label>
+      <label>Password <input v-model="model.credentials.password" type="password" required /></label>
+      <label>Confirm Password <input v-model="model.credentials.confirmPassword" type="password" required /></label>
     </div>
 
     <div v-if="activeStep === 5" class="form-grid">
