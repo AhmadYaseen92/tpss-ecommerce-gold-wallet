@@ -54,7 +54,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.IsHasOffer,
                 x.AvailableStock,
                 x.SellerId,
-                x.Seller.Name))
+                x.Seller.CompanyName))
             .ToListAsync(cancellationToken);
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
         return new PagedResult<ProductDto>(items, totalCount, pageNumber, pageSize, totalPages);
