@@ -45,136 +45,145 @@ BEGIN TRY
         INSERT ([FullName],[Email],[PasswordHash],[Role],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
         VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
 
-    -- 1) Sellers.
+    -- 1) Sellers + normalized registration tables.
+    DECLARE @SellerSeed TABLE (
+        CompanyCode nvarchar(50),
+        CompanyName nvarchar(150),
+        SellerEmail nvarchar(200),
+        CompanyEmail nvarchar(200),
+        CompanyPhone nvarchar(50),
+        Country nvarchar(80),
+        City nvarchar(80),
+        Street nvarchar(150),
+        BuildingNumber nvarchar(30),
+        PostalCode nvarchar(30),
+        CommercialRegistrationNumber nvarchar(100),
+        VatNumber nvarchar(100),
+        BusinessActivity nvarchar(150),
+        ManagerFullName nvarchar(150),
+        ManagerPosition nvarchar(100),
+        ManagerNationality nvarchar(80),
+        ManagerMobile nvarchar(50),
+        ManagerEmail nvarchar(200),
+        ManagerIdType nvarchar(50),
+        ManagerIdNumber nvarchar(100),
+        BankName nvarchar(150),
+        AccountHolderName nvarchar(150),
+        AccountNumber nvarchar(100),
+        IBAN nvarchar(100),
+        SwiftCode nvarchar(50),
+        BankCountry nvarchar(80),
+        BankCity nvarchar(80),
+        BankBranchName nvarchar(120),
+        BankBranchAddress nvarchar(250)
+    );
+
+    INSERT INTO @SellerSeed
+    VALUES
+        (N'IMSEEH', N'Imseeh Precious Metals LLC', N'imseeh.seller@example.com', N'contact@imseeh.com', N'+962700000001', N'Jordan', N'Amman', N'Wasfi Al Tal St', N'12A', N'11181', N'CR-IMSEEH-001', N'VAT-IMSEEH-001', N'Precious Metals Trading', N'Imseeh Seller', N'Owner', N'Jordanian', N'+962700000001', N'imseeh.seller@example.com', N'National ID', N'9876543210', N'Arab Bank', N'Imseeh Trading LLC', N'00131000302', N'JO94CBJO0010000000000131000302', N'ARABJOAX', N'Jordan', N'Amman', N'Main Branch', N'Shabsoogh Complex, Amman'),
+        (N'GOLDPAL', N'Gold Palace Inc.', N'goldpal.seller@example.com', N'contact@goldpalace.com', N'+15550000002', N'United States', N'Dallas', N'Elm Street', N'401', N'75201', N'CR-GOLDPAL-002', N'VAT-GOLDPAL-002', N'Bullion Retail', N'GoldPal Seller', N'Manager', N'American', N'+15550000002', N'goldpal.seller@example.com', N'Passport', N'1234509876', N'Bank of America', N'Gold Palace Inc.', N'3300958879', N'US64SVBKUS6S3300958879', N'BOFAUS3N', N'United States', N'Dallas', N'Downtown', N'901 Main St, Dallas'),
+        (N'BULLION', N'Bullion House LLC', N'bullion.seller@example.com', N'contact@bullionhouse.com', N'+15550000003', N'United States', N'Miami', N'Biscayne Blvd', N'908', N'33132', N'CR-BULLION-003', N'VAT-BULLION-003', N'Coins & Precious Metals', N'Bullion Seller', N'Owner', N'American', N'+15550000003', N'bullion.seller@example.com', N'National ID', N'5566778899', N'Wells Fargo', N'Bullion House LLC', N'000123412', N'US37WFBI00000000001234123412', N'WFBIUS6S', N'United States', N'Miami', N'Biscayne', N'200 Biscayne Blvd, Miami');
+
     MERGE [Sellers] AS T
-    USING (
-        VALUES
-            (
-                N'Imseeh',
-                N'IMSEEH',
-                N'imseeh.seller@example.com',
-                N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000',
-                N'contact@imseeh.com',
-                N'+962700000001',
-                N'Jordan',
-                N'Amman',
-                N'Wasfi Al Tal St',
-                N'12A',
-                N'11181',
-                N'Imseeh Precious Metals LLC',
-                N'TL-IMSEEH-001',
-                N'VAT-IMSEEH-001',
-                N'9876543210',
-                N'Arab Bank',
-                N'JO94CBJO0010000000000131000302',
-                N'Imseeh Trading LLC',
-                N'/kyc/imseeh/national-id-front.png',
-                N'/kyc/imseeh/national-id-back.png',
-                N'/kyc/imseeh/trade-license.pdf'
-            ),
-            (
-                N'Gold Palace',
-                N'GOLDPAL',
-                N'goldpal.seller@example.com',
-                N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000',
-                N'contact@goldpalace.com',
-                N'+15550000002',
-                N'United States',
-                N'Dallas',
-                N'Elm Street',
-                N'401',
-                N'75201',
-                N'Gold Palace Inc.',
-                N'TL-GOLDPAL-002',
-                N'VAT-GOLDPAL-002',
-                N'1234509876',
-                N'Bank of America',
-                N'US64SVBKUS6S3300958879',
-                N'Gold Palace Inc.',
-                N'/kyc/goldpal/national-id-front.png',
-                N'/kyc/goldpal/national-id-back.png',
-                N'/kyc/goldpal/trade-license.pdf'
-            ),
-            (
-                N'Bullion House',
-                N'BULLION',
-                N'bullion.seller@example.com',
-                N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000',
-                N'contact@bullionhouse.com',
-                N'+15550000003',
-                N'United States',
-                N'Miami',
-                N'Biscayne Blvd',
-                N'908',
-                N'33132',
-                N'Bullion House LLC',
-                N'TL-BULLION-003',
-                N'VAT-BULLION-003',
-                N'5566778899',
-                N'Wells Fargo',
-                N'US37WFBI00000000001234123412',
-                N'Bullion House LLC',
-                N'/kyc/bullion/national-id-front.png',
-                N'/kyc/bullion/national-id-back.png',
-                N'/kyc/bullion/trade-license.pdf'
-            )
-    ) AS S(
-        [Name],[Code],[Email],[PasswordHash],[ContactEmail],[ContactPhone],
-        [Country],[City],[Street],[BuildingNumber],[PostalCode],
-        [CompanyName],[TradeLicenseNumber],[VatNumber],[NationalIdNumber],
-        [BankName],[IBAN],[AccountHolderName],
-        [NationalIdFrontPath],[NationalIdBackPath],[TradeLicensePath]
-    )
-    ON T.[Code] = S.[Code]
+    USING @SellerSeed AS S
+    ON T.[CompanyCode] = S.[CompanyCode]
     WHEN MATCHED THEN
         UPDATE SET
-            T.[Name] = S.[Name],
-            T.[ContactEmail] = S.[ContactEmail],
-            T.[ContactPhone] = S.[ContactPhone],
-            T.[Country] = S.[Country],
-            T.[City] = S.[City],
-            T.[Street] = S.[Street],
-            T.[BuildingNumber] = S.[BuildingNumber],
-            T.[PostalCode] = S.[PostalCode],
             T.[CompanyName] = S.[CompanyName],
-            T.[TradeLicenseNumber] = S.[TradeLicenseNumber],
+            T.[CommercialRegistrationNumber] = S.[CommercialRegistrationNumber],
             T.[VatNumber] = S.[VatNumber],
-            T.[NationalIdNumber] = S.[NationalIdNumber],
-            T.[BankName] = S.[BankName],
-            T.[IBAN] = S.[IBAN],
-            T.[AccountHolderName] = S.[AccountHolderName],
-            T.[NationalIdFrontPath] = S.[NationalIdFrontPath],
-            T.[NationalIdBackPath] = S.[NationalIdBackPath],
-            T.[TradeLicensePath] = S.[TradeLicensePath],
-            T.[UserId] = COALESCE((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[Email]), T.[UserId]),
-            T.[KycStatus] = 1,
+            T.[BusinessActivity] = S.[BusinessActivity],
+            T.[CompanyPhone] = S.[CompanyPhone],
+            T.[CompanyEmail] = S.[CompanyEmail],
+            T.[UserId] = COALESCE((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[SellerEmail]), T.[UserId]),
+            T.[KycStatus] = 2,
             T.[ReviewedAtUtc] = @Now,
             T.[ReviewNotes] = N'Seeded as approved seller',
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
         INSERT (
-            [Name],[Code],[ContactEmail],[ContactPhone],[IsActive],
-            [Country],[City],[Street],[BuildingNumber],[PostalCode],
-            [CompanyName],[TradeLicenseNumber],[VatNumber],[NationalIdNumber],
-            [BankName],[IBAN],[AccountHolderName],
-            [NationalIdFrontPath],[NationalIdBackPath],[TradeLicensePath],
-            [KycStatus],[ReviewedAtUtc],[ReviewNotes],[UserId],[CreatedAtUtc],[UpdatedAtUtc]
+            [UserId],[CompanyName],[CompanyCode],[CommercialRegistrationNumber],[VatNumber],[BusinessActivity],[EstablishedDate],
+            [CompanyPhone],[CompanyEmail],[Website],[Description],[IsActive],[KycStatus],[ReviewedAtUtc],[ReviewNotes],
+            [GoldPrice],[SilverPrice],[DiamondPrice],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES (
-            S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],1,
-            S.[Country],S.[City],S.[Street],S.[BuildingNumber],S.[PostalCode],
-            S.[CompanyName],S.[TradeLicenseNumber],S.[VatNumber],S.[NationalIdNumber],
-            S.[BankName],S.[IBAN],S.[AccountHolderName],
-            S.[NationalIdFrontPath],S.[NationalIdBackPath],S.[TradeLicensePath],
-            1,@Now,N'Seeded as approved seller',
-            (SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[Email]),
-            @Now,NULL
+            (SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[SellerEmail]),
+            S.[CompanyName],S.[CompanyCode],S.[CommercialRegistrationNumber],S.[VatNumber],S.[BusinessActivity],NULL,
+            S.[CompanyPhone],S.[CompanyEmail],NULL,NULL,1,2,@Now,N'Seeded as approved seller',
+            NULL,NULL,NULL,@Now,NULL
         );
 
-    DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'IMSEEH');
-    DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'GOLDPAL');
-    DECLARE @SellerBullion int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'BULLION');
+    MERGE [SellerAddresses] AS T
+    USING (
+        SELECT S.Id AS SellerId, Seed.Country, Seed.City, Seed.Street, Seed.BuildingNumber, Seed.PostalCode
+        FROM [Sellers] S
+        JOIN @SellerSeed Seed ON Seed.CompanyCode = S.CompanyCode
+    ) AS X
+    ON T.SellerId = X.SellerId
+    WHEN MATCHED THEN UPDATE SET T.Country=X.Country,T.City=X.City,T.Street=X.Street,T.BuildingNumber=X.BuildingNumber,T.PostalCode=X.PostalCode,T.UpdatedAtUtc=@Now
+    WHEN NOT MATCHED THEN
+        INSERT (SellerId,Country,City,Street,BuildingNumber,PostalCode,CreatedAtUtc,UpdatedAtUtc)
+        VALUES (X.SellerId,X.Country,X.City,X.Street,X.BuildingNumber,X.PostalCode,@Now,NULL);
+
+    MERGE [SellerManagers] AS T
+    USING (
+        SELECT S.Id AS SellerId, Seed.ManagerFullName, Seed.ManagerPosition, Seed.ManagerNationality, Seed.ManagerMobile, Seed.ManagerEmail, Seed.ManagerIdType, Seed.ManagerIdNumber
+        FROM [Sellers] S
+        JOIN @SellerSeed Seed ON Seed.CompanyCode = S.CompanyCode
+    ) AS X
+    ON T.SellerId = X.SellerId AND T.IsPrimary = 1
+    WHEN MATCHED THEN UPDATE SET T.FullName=X.ManagerFullName,T.PositionTitle=X.ManagerPosition,T.Nationality=X.ManagerNationality,T.MobileNumber=X.ManagerMobile,T.EmailAddress=X.ManagerEmail,T.IdType=X.ManagerIdType,T.IdNumber=X.ManagerIdNumber,T.UpdatedAtUtc=@Now
+    WHEN NOT MATCHED THEN
+        INSERT (SellerId,FullName,PositionTitle,Nationality,MobileNumber,EmailAddress,IdType,IdNumber,IdExpiryDate,IsPrimary,CreatedAtUtc,UpdatedAtUtc)
+        VALUES (X.SellerId,X.ManagerFullName,X.ManagerPosition,X.ManagerNationality,X.ManagerMobile,X.ManagerEmail,X.ManagerIdType,X.ManagerIdNumber,NULL,1,@Now,NULL);
+
+    MERGE [SellerBranches] AS T
+    USING (
+        SELECT S.Id AS SellerId, S.CompanyName + N' Main Branch' AS BranchName, A.Country, A.City, A.Street + N', ' + A.BuildingNumber AS FullAddress, A.BuildingNumber, A.PostalCode, S.CompanyPhone AS PhoneNumber, S.CompanyEmail AS Email
+        FROM [Sellers] S
+        JOIN [SellerAddresses] A ON A.SellerId = S.Id
+    ) AS X
+    ON T.SellerId = X.SellerId AND T.IsMainBranch = 1
+    WHEN MATCHED THEN UPDATE SET T.BranchName=X.BranchName,T.Country=X.Country,T.City=X.City,T.FullAddress=X.FullAddress,T.BuildingNumber=X.BuildingNumber,T.PostalCode=X.PostalCode,T.PhoneNumber=X.PhoneNumber,T.Email=X.Email,T.UpdatedAtUtc=@Now
+    WHEN NOT MATCHED THEN
+        INSERT (SellerId,BranchName,Country,City,FullAddress,BuildingNumber,PostalCode,PhoneNumber,Email,IsMainBranch,CreatedAtUtc,UpdatedAtUtc)
+        VALUES (X.SellerId,X.BranchName,X.Country,X.City,X.FullAddress,X.BuildingNumber,X.PostalCode,X.PhoneNumber,X.Email,1,@Now,NULL);
+
+    MERGE [SellerBankAccounts] AS T
+    USING (
+        SELECT S.Id AS SellerId, Seed.BankName, Seed.AccountHolderName, Seed.AccountNumber, Seed.IBAN, Seed.SwiftCode, Seed.BankCountry, Seed.BankCity, Seed.BankBranchName, Seed.BankBranchAddress
+        FROM [Sellers] S
+        JOIN @SellerSeed Seed ON Seed.CompanyCode = S.CompanyCode
+    ) AS X
+    ON T.SellerId = X.SellerId AND T.IsMainAccount = 1
+    WHEN MATCHED THEN UPDATE SET T.BankName=X.BankName,T.AccountHolderName=X.AccountHolderName,T.AccountNumber=X.AccountNumber,T.IBAN=X.IBAN,T.SwiftCode=X.SwiftCode,T.BankCountry=X.BankCountry,T.BankCity=X.BankCity,T.BranchName=X.BankBranchName,T.BranchAddress=X.BankBranchAddress,T.Currency=N'USD',T.UpdatedAtUtc=@Now
+    WHEN NOT MATCHED THEN
+        INSERT (SellerId,BankName,AccountHolderName,AccountNumber,IBAN,SwiftCode,BankCountry,BankCity,BranchName,BranchAddress,Currency,IsMainAccount,CreatedAtUtc,UpdatedAtUtc)
+        VALUES (X.SellerId,X.BankName,X.AccountHolderName,X.AccountNumber,X.IBAN,X.SwiftCode,X.BankCountry,X.BankCity,X.BankBranchName,X.BankBranchAddress,N'USD',1,@Now,NULL);
+
+    MERGE [SellerDocuments] AS T
+    USING (
+        SELECT S.Id AS SellerId, D.DocumentType, D.FileName, D.FilePath, D.RelatedEntityType, D.IsRequired
+        FROM [Sellers] S
+        CROSS APPLY (VALUES
+            (N'CommercialRegistrationDocument', N'cr.pdf', N'/kyc/' + LOWER(S.CompanyCode) + N'/cr.pdf', N'Seller', 1),
+            (N'ArticlesOfAssociation', N'articles.pdf', N'/kyc/' + LOWER(S.CompanyCode) + N'/articles.pdf', N'Seller', 1),
+            (N'ProofOfAddress', N'proof-address.pdf', N'/kyc/' + LOWER(S.CompanyCode) + N'/proof-address.pdf', N'Seller', 1),
+            (N'VatCertificate', N'vat.pdf', N'/kyc/' + LOWER(S.CompanyCode) + N'/vat.pdf', N'Seller', 1),
+            (N'AmlDocumentation', N'aml.pdf', N'/kyc/' + LOWER(S.CompanyCode) + N'/aml.pdf', N'Seller', 1),
+            (N'ManagerIdCopy', N'manager-id.pdf', N'/kyc/' + LOWER(S.CompanyCode) + N'/manager-id.pdf', N'Manager', 1)
+        ) D(DocumentType, FileName, FilePath, RelatedEntityType, IsRequired)
+    ) AS X
+    ON T.SellerId = X.SellerId AND T.DocumentType = X.DocumentType
+    WHEN MATCHED THEN UPDATE SET T.FileName=X.FileName,T.FilePath=X.FilePath,T.ContentType=N'application/pdf',T.IsRequired=X.IsRequired,T.RelatedEntityType=X.RelatedEntityType,T.UploadedAtUtc=@Now,T.UpdatedAtUtc=@Now
+    WHEN NOT MATCHED THEN
+        INSERT (SellerId,DocumentType,FileName,FilePath,ContentType,IsRequired,UploadedAtUtc,RelatedEntityType,RelatedEntityId,CreatedAtUtc,UpdatedAtUtc)
+        VALUES (X.SellerId,X.DocumentType,X.FileName,X.FilePath,N'application/pdf',X.IsRequired,@Now,X.RelatedEntityType,NULL,@Now,NULL);
+
+    DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [CompanyCode] = N'IMSEEH');
+    DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [CompanyCode] = N'GOLDPAL');
+    DECLARE @SellerBullion int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [CompanyCode] = N'BULLION');
 
     UPDATE [Sellers] SET [GoldPrice] = 430.00, [SilverPrice] = 36.00, [DiamondPrice] = 920.00, [UpdatedAtUtc] = @Now WHERE [Id] = @SellerImseeh;
     UPDATE [Sellers] SET [GoldPrice] = 432.00, [SilverPrice] = 37.00, [DiamondPrice] = 880.00, [UpdatedAtUtc] = @Now WHERE [Id] = @SellerGoldPal;
