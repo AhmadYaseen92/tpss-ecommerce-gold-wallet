@@ -68,6 +68,7 @@ const toPurityKaratValue = (name: unknown) => {
   const productSearchTerm = ref("");
   const activeFilter = ref<"all" | "active" | "inactive">("all");
   const categoryFilter = ref("all");
+  const sellerFilter = ref("all");
   const marketPrices = reactive<MarketPriceConfigDto>({ goldPerOunce: 0, silverPerOunce: 0, diamondPerCarat: 0 });
   const marketPricesDirty = ref(false);
 
@@ -111,6 +112,7 @@ const toPurityKaratValue = (name: unknown) => {
       if (activeFilter.value === "active" && !product.isActive) return false;
       if (activeFilter.value === "inactive" && product.isActive) return false;
       if (categoryFilter.value !== "all" && product.category !== categoryFilter.value) return false;
+      if (sellerFilter.value !== "all" && String(product.sellerId) !== sellerFilter.value) return false;
       if (!productSearchTerm.value.trim()) return true;
 
       const term = productSearchTerm.value.trim().toLowerCase();
@@ -248,5 +250,5 @@ const toPurityKaratValue = (name: unknown) => {
     }
   });
 
-  return { managedProducts, filteredManagedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, productSearchTerm, activeFilter, categoryFilter, marketPrices, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, saveMarketPrices, updateMarketPriceField, deleteProductRecord, toggleProductActive };
+  return { managedProducts, filteredManagedProducts, categories, weightUnits, selectedProduct, productError, productPage, productRouteId, productForm, validationErrors, productSearchTerm, activeFilter, categoryFilter, sellerFilter, marketPrices, resetProductForm, loadProductManagementData, fillProductForm, syncRoute, navigate, openAddProduct, openEditProduct, openProductDetails, onProductImageChange, saveProduct, saveMarketPrices, updateMarketPriceField, deleteProductRecord, toggleProductActive };
 }

@@ -36,14 +36,20 @@ public class WebInvestorDto
 {
     public string Id { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
     public string RiskLevel { get; set; } = "medium";
     public decimal WalletBalance { get; set; }
+    public int TotalTransactions { get; set; }
+    public DateTime CreatedAt { get; set; }
     public string Status { get; set; } = "active";
 }
 
 public class WebRequestDto
 {
     public string Id { get; set; } = string.Empty;
+    public string SellerId { get; set; } = string.Empty;
+    public string SellerName { get; set; } = string.Empty;
     public string InvestorId { get; set; } = string.Empty;
     public string InvestorName { get; set; } = string.Empty;
     public string Type { get; set; } = "withdrawal";
@@ -120,6 +126,7 @@ public class WebDashboardSegmentDto
 public class WebRecentTransactionDto
 {
     public string Id { get; set; } = string.Empty;
+    public string SellerName { get; set; } = string.Empty;
     public string InvestorName { get; set; } = string.Empty;
     public string ProductName { get; set; } = "N/A";
     public string Type { get; set; } = string.Empty;

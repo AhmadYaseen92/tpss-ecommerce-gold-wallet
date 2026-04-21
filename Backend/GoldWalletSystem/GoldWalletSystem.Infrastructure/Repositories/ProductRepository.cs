@@ -56,7 +56,8 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.SellerId,
                 x.Seller.Name))
             .ToListAsync(cancellationToken);
-        return new PagedResult<ProductDto>(items, totalCount, pageNumber, pageSize);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        return new PagedResult<ProductDto>(items, totalCount, pageNumber, pageSize, totalPages);
     }
 
     public Task<Product?> GetByIdAsync(int productId, CancellationToken cancellationToken = default)

@@ -29,6 +29,7 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
   const searchTerm = ref("");
   const statusFilter = ref<"all" | "pending" | "approved" | "rejected" | "pending_delivered" | "delivered" | "cancelled">("all");
   const typeFilter = ref<"all" | "withdrawal" | "pickup" | "sell" | "transfer" | "buy" | "gift">("all");
+  const sellerFilter = ref("all");
 
   const transactionsView = computed(() =>
     marketplace.state.value.requests
@@ -62,6 +63,7 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
       .filter((request) => {
         if (statusFilter.value !== "all" && request.status !== statusFilter.value) return false;
         if (typeFilter.value !== "all" && request.transactionType !== typeFilter.value) return false;
+        if (sellerFilter.value !== "all" && request.sellerId !== sellerFilter.value) return false;
         if (!searchTerm.value.trim()) return true;
 
         const term = searchTerm.value.trim().toLowerCase();
@@ -111,6 +113,7 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
     saveTransactionStatus,
     searchTerm,
     statusFilter,
-    typeFilter
+    typeFilter,
+    sellerFilter
   };
 }

@@ -11,9 +11,8 @@ import {
   type UserSession,
   type WalletAssetItem
 } from "../types/models";
-import { deleteJson, getJson, postForm, postJson, putForm, putJson } from "./httpClient";
+import { HttpError, deleteJson, getJson, postForm, postJson, putForm, putJson } from "./httpClient";
 import type {
-  AuditLogDto,
   DashboardDto,
   LoginResponseDto,
   PagedResult,
@@ -23,12 +22,14 @@ import type {
   RegisterResponseDto,
   EnumItemDto,
   WebDashboardDto,
+  WebInvestorDto,
+  WebNotificationDto,
   WebRequestDto,
   WebSellerDto,
   WalletDto
 } from "../types/apiTypes";
 
-const toRole = (role: string): "admin" | "seller" => (role.toLowerCase() === "admin" ? "admin" : "seller");
+const toRole = (role: string): "Admin" | "Seller" => (role === "Admin" ? "Admin" : "Seller");
 
 const fallbackCategories: EnumItemDto[] = [
   { value: 1, name: "Gold" },
@@ -43,6 +44,8 @@ const fallbackWeightUnits: EnumItemDto[] = [
   { value: 2, name: "Kilogram" },
   { value: 3, name: "Ounce" }
 ];
+
+let allowWebAdminInvestorsEndpoint = true;
 
 const mapSession = (dto: LoginResponseDto): UserSession => ({
   accessToken: dto.accessToken,
@@ -84,38 +87,24 @@ const mapReports = (dashboard: DashboardDto, requestsCount: number): ReportMetri
   { title: "Transactions", value: `${requestsCount}`, trend: "Latest events" }
 ];
 
-const mapInvestors = (dashboard: DashboardDto): Investor[] => [
-  {
-    id: `i-${dashboard.userId}`,
-    fullName: dashboard.fullName,
+const mapInvestors = (items: WebInvestorDto[]): Investor[] =>
+  items.map((item) => ({
+    id: item.id,
+    fullName: item.fullName,
+    email: item.email,
+    phoneNumber: item.phoneNumber,
+    totalTransactions: item.totalTransactions,
+    createdAt: item.createdAt,
     riskLevel: "medium",
-    walletBalance: dashboard.walletBalance,
-    status: "active"
-  }
-];
-
-const mapRequests = (logs: AuditLogDto[]): InvestorRequest[] =>
-  logs.slice(0, 5).map((log, index) => ({
-    id: `r-${log.id}`,
-    investorId: `i-${log.userId ?? index + 1}`,
-    investorName: `Investor ${index + 1}`,
-    type: "withdrawal",
-    productName: "Gold",
-    category: "Gold",
-    quantity: 1,
-    unitPrice: 150 + index * 35,
-    weight: 1,
-    unit: "gram",
-    purity: 24,
-    amount: 150 + index * 35,
-    status: "pending",
-    currency: "USD",
-    createdAt: log.createdAtUtc
+    walletBalance: item.walletBalance,
+    status: item.status === "blocked" ? "blocked" : "active"
   }));
 
 const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
   items.map((item) => ({
     id: item.id,
+    sellerId: item.sellerId,
+    sellerName: item.sellerName,
     investorId: item.investorId,
     investorName: item.investorName,
     type: ["withdrawal", "pickup", "sell", "transfer", "buy", "gift"].includes(item.type.toLowerCase())
@@ -154,18 +143,19 @@ const mapWalletAssets = (wallet: WalletDto): WalletAssetItem[] =>
     currentMarketPrice: item.currentMarketPrice
   }));
 
-const mapNotifications = (logs: AuditLogDto[]): NotificationItem[] =>
-  logs.slice(0, 6).map((log) => ({
-    id: `n-${log.id}`,
-    title: log.action,
-    message: log.details || `${log.entityName} updated`,
-    severity: "info",
-    isRead: false,
-    createdAt: log.createdAtUtc
+const mapNotifications = (items: WebNotificationDto[]): NotificationItem[] =>
+  items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    message: item.message,
+    severity: item.severity ?? "info",
+    isRead: item.isRead,
+    createdAt: item.createdAt
   }));
 
 export async function loginWithBackend(credentials: AuthCredentials): Promise<UserSession> {
   const data = await postJson<LoginResponseDto, AuthCredentials>("/api/auth/login", credentials);
+  allowWebAdminInvestorsEndpoint = true;
   return mapSession(data);
 }
 
@@ -269,6 +259,14 @@ export async function updateSellerKycStatusByAdmin(
   );
 }
 
+export async function updateInvestorStatusByAdmin(
+  accessToken: string,
+  investorId: string,
+  status: "active" | "blocked"
+): Promise<void> {
+  await putJson<string, { status: string }>(`/api/web-admin/investors/${investorId}/status`, { status }, accessToken);
+}
+
 export async function fetchMarketplaceState(session: UserSession): Promise<MarketplaceState> {
   const productsResult = await postJson<PagedResult<ProductDto>, { pageNumber: number; pageSize: number; category: null }>(
     "/api/products/search",
@@ -276,7 +274,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     session.accessToken
   );
 
-  const dashboard = session.role === "seller" || !session.userId
+  const dashboard = session.role === "Seller" || !session.userId
     ? null
     : await postJson<DashboardDto, { userId: number }>(
         "/api/dashboard/by-user",
@@ -284,17 +282,21 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
         session.accessToken
       );
 
-  const logsResult = session.role === "admin"
-    ? await postJson<PagedResult<AuditLogDto>, { pageNumber: number; pageSize: number }>(
-        "/api/logs/search",
-        { pageNumber: 1, pageSize: 20 },
-        session.accessToken
-      )
-    : { items: [] as AuditLogDto[], totalCount: 0, pageNumber: 1, pageSize: 20 };
+  const notificationsResult = await getJson<WebNotificationDto[]>("/api/web-admin/notifications", session.accessToken)
+    .catch(() => [] as WebNotificationDto[]);
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
+  const webInvestors = session.role === "Admin" && allowWebAdminInvestorsEndpoint
+    ? await getJson<WebInvestorDto[]>("/api/web-admin/investors", session.accessToken).catch((error) => {
+        if (error instanceof HttpError && error.statusCode === 403) {
+          allowWebAdminInvestorsEndpoint = false;
+          return [] as WebInvestorDto[];
+        }
+        throw error;
+      })
+    : [];
 
-  const wallet = session.role === "seller" || !session.userId
+  const wallet = session.role === "Seller" || !session.userId
     ? null
     : await postJson<WalletDto, { userId: number }>(
         "/api/wallet/by-user",
@@ -329,7 +331,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
 
   return {
     sellers,
-    investors: dashboard ? mapInvestors(dashboard) : [],
+    investors: mapInvestors(webInvestors),
     requests,
     products,
     walletAssets: wallet ? mapWalletAssets(wallet) : [],
@@ -348,7 +350,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
       storageFee: 4,
       serviceChargePercent: 2.5
     },
-    notifications: mapNotifications(logsResult.items),
+    notifications: mapNotifications(notificationsResult),
     reports: dashboard ? mapReports(dashboard, requests.length) : [],
     currentUserName: session.displayName ?? dashboard?.fullName
   };
@@ -427,12 +429,14 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
     storageFee: item.storageFee,
     serviceCharge: item.serviceCharge,
     offerType: item.offerType,
+    isHasOffer: item.isHasOffer,
     offerPercent: item.offerPercent,
     offerNewPrice: item.offerNewPrice,
     price: item.price,
     availableStock: item.availableStock,
     isActive: true,
-    sellerId: item.sellerId
+    sellerId: item.sellerId,
+    sellerName: item.sellerName
   }));
 }
 

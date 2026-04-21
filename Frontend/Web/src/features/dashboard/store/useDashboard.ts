@@ -140,6 +140,7 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
       .reverse()
       .map((request, idx) => ({
         id: request.id,
+        sellerName: request.sellerName,
         createdAt: request.createdAt,
         status: request.status,
         type: request.type,

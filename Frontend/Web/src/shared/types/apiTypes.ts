@@ -12,6 +12,7 @@ export interface PagedResult<T> {
   totalCount: number;
   pageNumber: number;
   pageSize: number;
+  totalPages: number;
 }
 
 export interface LoginResponseDto {
@@ -93,8 +94,19 @@ export interface AuditLogDto {
   createdAtUtc: string;
 }
 
+export interface WebNotificationDto {
+  id: string;
+  title: string;
+  message: string;
+  severity: "info" | "warning" | "critical";
+  isRead: boolean;
+  createdAt: string;
+}
+
 export interface WebRequestDto {
   id: string;
+  sellerId?: string;
+  sellerName?: string;
   investorId: string;
   investorName: string;
   type: string;
@@ -112,6 +124,18 @@ export interface WebRequestDto {
   notes: string;
   updatedAt?: string;
   createdAt: string;
+}
+
+export interface WebInvestorDto {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  riskLevel: string;
+  walletBalance: number;
+  totalTransactions: number;
+  createdAt: string;
+  status: string;
 }
 
 
@@ -143,6 +167,7 @@ export interface ProductManagementDto {
   availableStock: number;
   isActive: boolean;
   sellerId: number;
+  sellerName?: string;
 }
 
 export interface EnumItemDto {
@@ -170,6 +195,7 @@ export interface WebDashboardPointDto {
 
 export interface WebRecentTransactionDto {
   id: string;
+  sellerName?: string;
   investorName: string;
   productName: string;
   type: string;

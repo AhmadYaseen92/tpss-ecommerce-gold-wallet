@@ -16,7 +16,8 @@ public class AuditLogRepository(AppDbContext dbContext) : IAuditLogRepository
         var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize)
             .Select(x => new AuditLogDto(x.Id, x.UserId, x.Action, x.EntityName, x.EntityId, x.Details, x.CreatedAtUtc))
             .ToListAsync(cancellationToken);
-        return new PagedResult<AuditLogDto>(items, totalCount, pageNumber, pageSize);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        return new PagedResult<AuditLogDto>(items, totalCount, pageNumber, pageSize, totalPages);
     }
 
     public async Task AddAsync(AuditLog log, CancellationToken cancellationToken = default)

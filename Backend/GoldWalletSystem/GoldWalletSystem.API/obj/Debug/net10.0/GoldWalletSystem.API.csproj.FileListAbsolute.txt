@@ -165,7 +165,6 @@ D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API
 D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\GoldWalletSystem.API.genruntimeconfig.cache
 D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\ref\GoldWalletSystem.API.dll
 D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\bin\Debug\net10.0\GoldWalletSystem.API.staticwebassets.runtime.json
-D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\bin\Debug\net10.0\appsettings.Development.json
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\bin\Debug\net10.0\appsettings.json
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\bin\Debug\net10.0\GoldWalletSystem.API.staticwebassets.runtime.json
@@ -334,3 +333,4 @@ C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\GoldWalletSystem.API.genruntimeconfig.cache
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\ref\GoldWalletSystem.API.dll
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
