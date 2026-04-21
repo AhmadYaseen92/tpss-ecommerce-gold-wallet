@@ -32,11 +32,9 @@ const openSellerDetails = (sellerId: string) => {
 type SellerAction = "approve" | "reject" | "block" | "underreview";
 
 const availableActions = (status: KycStatus): SellerAction[] => {
-  if (status === "pending") return ["underreview", "approve", "reject", "block"];
-  if (status === "underreview") return ["approve", "reject", "block"];
-  if (status === "approved") return ["underreview", "block"];
-  if (status === "rejected") return ["underreview", "approve", "block"];
-  return ["underreview", "approve"];
+  if (status === "pending" || status === "underreview") return ["approve", "reject"];
+  if (status === "approved") return ["block"];
+  return [];
 };
 
 const actionLabel: Record<SellerAction, string> = {
@@ -46,14 +44,18 @@ const actionLabel: Record<SellerAction, string> = {
   underreview: "Set Under Review",
 };
 
-const isDangerAction = (action: SellerAction) => action === "reject" || action === "block";
-
 const setKyc = async (sellerId: string, action: SellerAction) => {
   if (action === "approve") await props.marketplace.approveKyc(sellerId);
   if (action === "reject") await props.marketplace.rejectKyc(sellerId);
   if (action === "block") await props.marketplace.blockKyc(sellerId);
   if (action === "underreview") await props.marketplace.markKycUnderReview(sellerId);
+};
 
+const runActionFromDropdown = async (sellerId: string, event: Event) => {
+  const nextAction = (event.target as HTMLSelectElement).value as SellerAction | "";
+  if (!nextAction) return;
+  await setKyc(sellerId, nextAction);
+  (event.target as HTMLSelectElement).value = "";
 };
 
 onMounted(() => {
@@ -67,7 +69,7 @@ onMounted(() => {
   <SectionCard title="Seller Registration Requests">
     <div class="filters">
       <input v-model="search" placeholder="Search company, code, login email, phone" />
-      <select v-model="kycFilter"><option value="all">All KYC</option><option value="pending">Pending</option><option value="underreview">Under Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="blocked">Blocked</option></select>
+      <select v-model="kycFilter"><option value="all">All KYC</option><option value="underreview">Under Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="blocked">Blocked</option><option value="pending">Pending (legacy)</option></select>
     </div>
     <table>
       <thead><tr><th>Company Name</th><th>Company Code</th><th>Login Email</th><th>Contact Phone</th><th>KYC Status</th><th>Is Active</th><th>Created Date</th><th>Reviewed Date</th><th>Actions</th></tr></thead>
@@ -76,14 +78,12 @@ onMounted(() => {
           <td>{{ seller.businessName }}</td><td>{{ seller.companyCode || '-' }}</td><td>{{ seller.loginEmail || seller.email }}</td><td>{{ seller.contactPhone || '-' }}</td>
           <td>{{ seller.kycStatus }}</td><td>{{ seller.isActive ? 'Yes' : 'No' }}</td><td>{{ seller.submittedAt }}</td><td>{{ seller.reviewedAt || '-' }}</td>
           <td class="actions-cell">
-            <button
-              v-for="action in availableActions(seller.kycStatus)"
-              :key="`${seller.id}-${action}`"
-              :class="{ danger: isDangerAction(action) }"
-              @click.stop="setKyc(seller.id, action)"
-            >
-              {{ actionLabel[action] }}
-            </button>
+            <select @click.stop @change="runActionFromDropdown(seller.id, $event)">
+              <option value="">Select action</option>
+              <option v-for="action in availableActions(seller.kycStatus)" :key="`${seller.id}-${action}`" :value="action">
+                {{ actionLabel[action] }}
+              </option>
+            </select>
           </td>
         </tr>
       </tbody>
@@ -102,5 +102,4 @@ onMounted(() => {
 .pager { margin-top: 10px; display:flex; gap:8px; align-items:center; justify-content:flex-end; }
 tr { cursor: pointer; }
 .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
-.danger { background: #fee2e2; border-color: #fca5a5; }
 </style>

@@ -223,7 +223,7 @@ public class AuthService(
             Website = request.CompanyInfo.Website?.Trim(),
             Description = request.CompanyInfo.Description?.Trim(),
             IsActive = false,
-            KycStatus = KycStatus.Pending,
+            KycStatus = KycStatus.UnderReview,
             CreatedAtUtc = DateTime.UtcNow,
             Address = new SellerAddress
             {

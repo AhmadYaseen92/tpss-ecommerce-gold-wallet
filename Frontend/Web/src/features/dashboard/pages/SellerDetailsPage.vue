@@ -12,6 +12,7 @@ const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
 const loading = ref(false);
 const details = ref<WebSellerDetailsDto | null>(null);
 const viewerDoc = ref<WebSellerDocumentDto | null>(null);
+const activeTab = ref<"company" | "managers" | "branches" | "banks" | "files">("company");
 const viewerUrl = computed(() => {
   if (!viewerDoc.value || !details.value) return "";
   return `/api/web-admin/sellers/${details.value.id}/documents/${viewerDoc.value.id}/view`;
@@ -47,11 +48,9 @@ const actionLabel: Record<SellerAction, string> = {
   underreview: "Set Under Review",
 };
 const availableActions = (status: KycStatus): SellerAction[] => {
-  if (status === "pending") return ["underreview", "approve", "reject", "block"];
-  if (status === "underreview") return ["approve", "reject", "block"];
-  if (status === "approved") return ["underreview", "block"];
-  if (status === "rejected") return ["underreview", "approve", "block"];
-  return ["underreview", "approve"];
+  if (status === "pending" || status === "underreview") return ["approve", "reject"];
+  if (status === "approved") return ["block"];
+  return [];
 };
 const setKyc = async (action: SellerAction) => {
   if (!details.value) return;
@@ -60,6 +59,12 @@ const setKyc = async (action: SellerAction) => {
   if (action === "block") await props.marketplace.blockKyc(details.value.id);
   if (action === "underreview") await props.marketplace.markKycUnderReview(details.value.id);
   await loadDetails();
+};
+const runActionFromDropdown = async (event: Event) => {
+  const nextAction = (event.target as HTMLSelectElement).value as SellerAction | "";
+  if (!nextAction) return;
+  await setKyc(nextAction);
+  (event.target as HTMLSelectElement).value = "";
 };
 
 onMounted(() => {
@@ -73,7 +78,15 @@ onMounted(() => {
     <p v-if="loading">Loading...</p>
 
     <template v-else-if="details">
-      <section class="form-grid">
+      <div class="tabs">
+        <button type="button" :class="{ active: activeTab === 'company' }" @click="activeTab = 'company'">Company</button>
+        <button type="button" :class="{ active: activeTab === 'managers' }" @click="activeTab = 'managers'">Managers</button>
+        <button type="button" :class="{ active: activeTab === 'branches' }" @click="activeTab = 'branches'">Branches</button>
+        <button type="button" :class="{ active: activeTab === 'banks' }" @click="activeTab = 'banks'">Bank Accounts</button>
+        <button type="button" :class="{ active: activeTab === 'files' }" @click="activeTab = 'files'">Files</button>
+      </div>
+
+      <section v-if="activeTab === 'company'" class="form-grid">
         <h3>Company Information</h3>
         <label>Company Name <input :value="details.companyName" readonly /></label>
         <label>Company Code <input :value="details.companyCode" readonly /></label>
@@ -93,16 +106,7 @@ onMounted(() => {
         <label class="full">Description <textarea :value="details.description || '-'" rows="2" readonly /></label>
       </section>
 
-      <section class="form-grid">
-        <h3>Address</h3>
-        <label>Country <input :value="details.address?.country || '-'" readonly /></label>
-        <label>City <input :value="details.address?.city || '-'" readonly /></label>
-        <label>Street <input :value="details.address?.street || '-'" readonly /></label>
-        <label>Building Number <input :value="details.address?.buildingNumber || '-'" readonly /></label>
-        <label>Postal Code <input :value="details.address?.postalCode || '-'" readonly /></label>
-      </section>
-
-      <section class="form-grid">
+      <section v-if="activeTab === 'managers'" class="form-grid">
         <h3 class="full">Managers</h3>
         <article v-for="(item, idx) in details.managers" :key="`manager-${idx}`" class="card full">
           <label>Full Name <input :value="item.fullName" readonly /></label>
@@ -117,7 +121,7 @@ onMounted(() => {
         </article>
       </section>
 
-      <section class="form-grid">
+      <section v-if="activeTab === 'branches'" class="form-grid">
         <h3 class="full">Branches</h3>
         <article v-for="(item, idx) in details.branches" :key="`branch-${idx}`" class="card full">
           <label>Branch Name <input :value="item.branchName" readonly /></label>
@@ -132,7 +136,7 @@ onMounted(() => {
         </article>
       </section>
 
-      <section class="form-grid">
+      <section v-if="activeTab === 'banks'" class="form-grid">
         <h3 class="full">Bank Accounts</h3>
         <article v-for="(item, idx) in details.bankAccounts" :key="`bank-${idx}`" class="card full">
           <label>Bank Name <input :value="item.bankName" readonly /></label>
@@ -149,7 +153,7 @@ onMounted(() => {
         </article>
       </section>
 
-      <section class="form-grid">
+      <section v-if="activeTab === 'files'" class="form-grid">
         <h3 class="full">Uploaded Files</h3>
         <article v-for="(doc, idx) in details.documents" :key="`doc-${idx}`" class="card full doc-card">
           <p><strong>{{ doc.documentType }}</strong></p>
@@ -160,16 +164,22 @@ onMounted(() => {
         </article>
       </section>
 
+      <section v-if="activeTab === 'company'" class="form-grid">
+        <h3>Address</h3>
+        <label>Country <input :value="details.address?.country || '-'" readonly /></label>
+        <label>City <input :value="details.address?.city || '-'" readonly /></label>
+        <label>Street <input :value="details.address?.street || '-'" readonly /></label>
+        <label>Building Number <input :value="details.address?.buildingNumber || '-'" readonly /></label>
+        <label>Postal Code <input :value="details.address?.postalCode || '-'" readonly /></label>
+      </section>
+
       <div class="action-row">
-        <button
-          v-for="action in availableActions(details.kycStatus as KycStatus)"
-          :key="action"
-          type="button"
-          :class="{ danger: action === 'reject' || action === 'block' }"
-          @click="setKyc(action)"
-        >
-          {{ actionLabel[action] }}
-        </button>
+        <select @change="runActionFromDropdown($event)">
+          <option value="">Select status action</option>
+          <option v-for="action in availableActions(details.kycStatus as KycStatus)" :key="action" :value="action">
+            {{ actionLabel[action] }}
+          </option>
+        </select>
       </div>
     </template>
   </SectionCard>
@@ -187,6 +197,9 @@ onMounted(() => {
 
 <style scoped>
 .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-top: 14px; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.tabs button { border: 1px solid #d1d5db; background: #fff; border-radius: 999px; padding: 6px 12px; }
+.tabs button.active { background: #1f2937; color: #fff; border-color: #1f2937; }
 .full { grid-column: 1 / -1; }
 label { display: grid; gap: 6px; font-weight: 600; }
 input, textarea { padding: 8px; border: 1px solid #cfd6e4; border-radius: 8px; font: inherit; background: #f9fafb; }

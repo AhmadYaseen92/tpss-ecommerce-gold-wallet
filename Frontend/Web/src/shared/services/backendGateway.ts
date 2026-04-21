@@ -67,7 +67,7 @@ const mapSeller = (dto: WebSellerDto): Seller => ({
   loginEmail: dto.loginEmail,
   contactPhone: dto.contactPhone,
   isActive: dto.isActive,
-  kycStatus: (dto.kycStatus?.toLowerCase() as Seller["kycStatus"]) ?? "pending",
+  kycStatus: (dto.kycStatus?.toLowerCase() as Seller["kycStatus"]) ?? "underreview",
   submittedAt: dto.submittedAt,
   reviewedAt: dto.reviewedAt,
   goldPrice: dto.goldPrice ?? null,
@@ -200,7 +200,7 @@ export async function registerSellerWithBackend(registration: SellerRegistration
     loginEmail: registration.email,
     contactPhone: registration.companyInfo.companyPhone,
     isActive: false,
-    kycStatus: "pending",
+    kycStatus: "underreview",
     submittedAt: new Date().toISOString()
   };
 }
