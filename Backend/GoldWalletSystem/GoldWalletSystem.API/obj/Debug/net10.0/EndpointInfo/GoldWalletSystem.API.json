@@ -13,6 +13,18 @@
     }
   ],
   "paths": {
+    "/api/admin/workspace": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/auth/ping": {
       "get": {
         "tags": [
@@ -180,7 +192,7 @@
         }
       }
     },
-    "/api/auth/seller-login": {
+    "/api/auth/register/verify-otp": {
       "post": {
         "tags": [
           "Auth"
@@ -189,17 +201,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequestDto"
+                "$ref": "#/components/schemas/VerifyRegistrationOtpRequestDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequestDto"
+                "$ref": "#/components/schemas/VerifyRegistrationOtpRequestDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequestDto"
+                "$ref": "#/components/schemas/VerifyRegistrationOtpRequestDto"
               }
             }
           },
@@ -211,23 +223,199 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseOfLoginResponseDto"
+                  "$ref": "#/components/schemas/ApiResponseOfObject"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseOfLoginResponseDto"
+                  "$ref": "#/components/schemas/ApiResponseOfObject"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiResponseOfLoginResponseDto"
+                  "$ref": "#/components/schemas/ApiResponseOfObject"
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/auth/password/reset/request-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetOtpRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetOtpRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetOtpRequestDto"
+              }
+            }
           },
-          "401": {
-            "description": "Unauthorized",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfOtpDispatchResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfOtpDispatchResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfOtpDispatchResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/forgot-password/request-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetOtpRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetOtpRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPasswordResetOtpRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfOtpDispatchResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfOtpDispatchResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfOtpDispatchResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/password/reset/confirm": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPasswordResetRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPasswordResetRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPasswordResetRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfObject"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfObject"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/forgot-password/confirm": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPasswordResetRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPasswordResetRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmPasswordResetRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
             "content": {
               "text/plain": {
                 "schema": {
@@ -399,6 +587,102 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/checkout/otp/request": {
+      "post": {
+        "tags": [
+          "Checkout"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutOtpRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutOtpRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutOtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/checkout/otp/resend": {
+      "post": {
+        "tags": [
+          "Checkout"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendCheckoutOtpRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendCheckoutOtpRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendCheckoutOtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/checkout/otp/verify": {
+      "post": {
+        "tags": [
+          "Checkout"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyCheckoutOtpRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyCheckoutOtpRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyCheckoutOtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -662,6 +946,102 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/MarkNotificationReadRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/otp/request": {
+      "post": {
+        "tags": [
+          "Otp"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestOtpRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestOtpRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestOtpRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/otp/resend": {
+      "post": {
+        "tags": [
+          "Otp"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendOtpRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendOtpRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendOtpRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/otp/verify": {
+      "post": {
+        "tags": [
+          "Otp"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyOtpRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyOtpRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyOtpRequestDto"
               }
             }
           },
@@ -1336,6 +1716,36 @@
             "description": "OK"
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemovePaymentMethodRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemovePaymentMethodRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemovePaymentMethodRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/profile/linked-bank-accounts": {
@@ -1363,6 +1773,48 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveLinkedBankAccountRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveLinkedBankAccountRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveLinkedBankAccountRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/seller/workspace": {
+      "get": {
+        "tags": [
+          "Seller"
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1510,6 +1962,30 @@
         }
       }
     },
+    "/api/wallet/wallet-items/{walletItemId}/certificate": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "parameters": [
+          {
+            "name": "walletItemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/wallet/investors": {
       "get": {
         "tags": [
@@ -1572,6 +2048,38 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/ExecuteWalletActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/wallet/actions/cancel-request": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelWalletRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelWalletRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelWalletRequest"
               }
             }
           },
@@ -2161,6 +2669,47 @@
           }
         }
       },
+      "ApiResponseOfOtpDispatchResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "statusCode": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OtpDispatchResponseDto"
+              }
+            ]
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "ApiResponseOfRegisterResponseDto": {
         "type": "object",
         "properties": {
@@ -2239,6 +2788,27 @@
           }
         }
       },
+      "CancelWalletRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "walletAssetId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "CheckoutConfirmRequest": {
         "type": "object",
         "properties": {
@@ -2284,13 +2854,25 @@
               "string"
             ],
             "format": "int32"
+          },
+          "otpVerificationToken": {
+            "type": "string"
+          },
+          "otpActionReferenceId": {
+            "type": "string"
+          },
+          "otpRequestId": {
+            "type": "string"
+          },
+          "otpCode": {
+            "type": "string"
           }
         }
       },
-      "CreateInvoiceItemRequestDto": {
+      "CheckoutOtpRequest": {
         "type": "object",
         "properties": {
-          "productId": {
+          "userId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -2298,24 +2880,60 @@
             ],
             "format": "int32"
           },
-          "itemName": {
-            "type": "string"
+          "productIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           },
           "quantity": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
+              "null",
               "integer",
               "string"
             ],
             "format": "int32"
           },
-          "unitPrice": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
-            "format": "double"
+          "forceEmailFallback": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConfigurationValueType": {
+        "type": "integer"
+      },
+      "ConfirmPasswordResetRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "otpRequestId": {
+            "type": "string"
+          },
+          "otpCode": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
           }
         }
       },
@@ -2345,6 +2963,36 @@
           "sourceChannel": {
             "type": "string"
           },
+          "externalReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "subTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "feesAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "discountAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
           "taxAmount": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
@@ -2353,11 +3001,132 @@
             ],
             "format": "double"
           },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateInvoiceItemRequestDto"
-            }
+          "currency": {
+            "type": "string"
+          },
+          "paymentMethod": {
+            "type": "string"
+          },
+          "paymentStatus": {
+            "type": "string"
+          },
+          "paymentTransactionId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "walletItemId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "purity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "fromPartyType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "toPartyType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fromPartyUserId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "toPartyUserId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "ownershipEffectiveOnUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "relatedTransactionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pdfUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "paidOnUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -2436,6 +3205,12 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "otpVerificationToken": {
+            "type": "string"
+          },
+          "otpActionReferenceId": {
+            "type": "string"
           }
         }
       },
@@ -2459,6 +3234,8 @@
         "required": [
           "accessToken",
           "expiresAtUtc",
+          "userId",
+          "fullName",
           "role"
         ],
         "type": "object",
@@ -2470,17 +3247,19 @@
             "type": "string",
             "format": "date-time"
           },
-          "role": {
-            "type": "string"
-          },
           "userId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
-              "null",
               "integer",
               "string"
             ],
             "format": "int32"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
           },
           "sellerId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -2491,7 +3270,7 @@
             ],
             "format": "int32"
           },
-          "displayName": {
+          "sellerName": {
             "type": [
               "null",
               "string"
@@ -2540,6 +3319,52 @@
             "format": "int32"
           },
           "notificationId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "OtpDispatchResponseDto": {
+        "required": [
+          "otpRequestId",
+          "actionType",
+          "actionReferenceId",
+          "destinationChannel",
+          "maskedDestination",
+          "expiresAtUtc",
+          "nextResendAtUtc",
+          "remainingResends"
+        ],
+        "type": "object",
+        "properties": {
+          "otpRequestId": {
+            "type": "string"
+          },
+          "actionType": {
+            "type": "string"
+          },
+          "actionReferenceId": {
+            "type": "string"
+          },
+          "destinationChannel": {
+            "type": "string"
+          },
+          "maskedDestination": {
+            "type": "string"
+          },
+          "expiresAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nextResendAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "remainingResends": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -2674,15 +3499,6 @@
           "role": {
             "type": "string"
           },
-          "sellerId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "null",
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
           "sellerCode": {
             "type": "string"
           },
@@ -2766,6 +3582,137 @@
               "string"
             ],
             "format": "int32"
+          },
+          "requiresOtpVerification": {
+            "type": "boolean"
+          },
+          "otpRequestId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RemoveLinkedBankAccountRequestDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "linkedBankAccountId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "otpVerificationToken": {
+            "type": "string"
+          },
+          "otpActionReferenceId": {
+            "type": "string"
+          }
+        }
+      },
+      "RemovePaymentMethodRequestDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "paymentMethodId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "otpVerificationToken": {
+            "type": "string"
+          },
+          "otpActionReferenceId": {
+            "type": "string"
+          }
+        }
+      },
+      "RequestOtpRequestDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "actionType": {
+            "type": "string"
+          },
+          "actionReferenceId": {
+            "type": "string"
+          },
+          "forceEmailFallback": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RequestPasswordResetOtpRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "ResendCheckoutOtpRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "otpRequestId": {
+            "type": "string"
+          },
+          "forceEmailFallback": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ResendOtpRequestDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "otpRequestId": {
+            "type": "string"
+          },
+          "forceEmailFallback": {
+            "type": "boolean"
           }
         }
       },
@@ -2884,6 +3831,12 @@
           },
           "newPassword": {
             "type": "string"
+          },
+          "otpVerificationToken": {
+            "type": "string"
+          },
+          "otpActionReferenceId": {
+            "type": "string"
           }
         }
       },
@@ -2946,6 +3899,12 @@
             "type": "string"
           },
           "profilePhotoUrl": {
+            "type": "string"
+          },
+          "otpVerificationToken": {
+            "type": "string"
+          },
+          "otpActionReferenceId": {
             "type": "string"
           }
         }
@@ -3070,6 +4029,12 @@
           "currency": {
             "maxLength": 10,
             "type": "string"
+          },
+          "otpVerificationToken": {
+            "type": "string"
+          },
+          "otpActionReferenceId": {
+            "type": "string"
           }
         }
       },
@@ -3079,14 +4044,47 @@
           "configKey": {
             "type": "string"
           },
-          "jsonValue": {
+          "name": {
             "type": "string"
-          },
-          "isEnabled": {
-            "type": "boolean"
           },
           "description": {
             "type": "string"
+          },
+          "valueType": {
+            "$ref": "#/components/schemas/ConfigurationValueType"
+          },
+          "valueBool": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "valueInt": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "valueDecimal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "valueString": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sellerAccess": {
+            "type": "boolean"
           }
         }
       },
@@ -3163,6 +4161,12 @@
           },
           "isDefault": {
             "type": "boolean"
+          },
+          "otpVerificationToken": {
+            "type": "string"
+          },
+          "otpActionReferenceId": {
+            "type": "string"
           }
         }
       },
@@ -3205,6 +4209,63 @@
               "string"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "VerifyCheckoutOtpRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "otpRequestId": {
+            "type": "string"
+          },
+          "otpCode": {
+            "type": "string"
+          }
+        }
+      },
+      "VerifyOtpRequestDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "otpRequestId": {
+            "type": "string"
+          },
+          "otpCode": {
+            "type": "string"
+          }
+        }
+      },
+      "VerifyRegistrationOtpRequestDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "otpRequestId": {
+            "type": "string"
+          },
+          "otpCode": {
+            "type": "string"
           }
         }
       },
@@ -3340,12 +4401,24 @@
           },
           "status": {
             "type": "string"
+          },
+          "paymentStatus": {
+            "type": "string"
+          },
+          "pdfUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       }
     }
   },
   "tags": [
+    {
+      "name": "Admin"
+    },
     {
       "name": "Auth"
     },
@@ -3371,10 +4444,16 @@
       "name": "Notifications"
     },
     {
+      "name": "Otp"
+    },
+    {
       "name": "Products"
     },
     {
       "name": "Profile"
+    },
+    {
+      "name": "Seller"
     },
     {
       "name": "TransactionHistory"

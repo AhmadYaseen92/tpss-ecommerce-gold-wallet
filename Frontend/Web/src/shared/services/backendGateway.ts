@@ -29,7 +29,7 @@ import type {
   WalletDto
 } from "../types/apiTypes";
 
-const toRole = (role: string): "admin" | "seller" => (role.toLowerCase() === "admin" ? "admin" : "seller");
+const toRole = (role: string): "Admin" | "Seller" => (role === "Admin" ? "Admin" : "Seller");
 
 const fallbackCategories: EnumItemDto[] = [
   { value: 1, name: "Gold" },
@@ -274,7 +274,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     session.accessToken
   );
 
-  const dashboard = session.role === "seller" || !session.userId
+  const dashboard = session.role === "Seller" || !session.userId
     ? null
     : await postJson<DashboardDto, { userId: number }>(
         "/api/dashboard/by-user",
@@ -286,7 +286,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     .catch(() => [] as WebNotificationDto[]);
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
-  const webInvestors = session.role === "admin" && allowWebAdminInvestorsEndpoint
+  const webInvestors = session.role === "Admin" && allowWebAdminInvestorsEndpoint
     ? await getJson<WebInvestorDto[]>("/api/web-admin/investors", session.accessToken).catch((error) => {
         if (error instanceof HttpError && error.statusCode === 403) {
           allowWebAdminInvestorsEndpoint = false;
@@ -296,7 +296,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
       })
     : [];
 
-  const wallet = session.role === "seller" || !session.userId
+  const wallet = session.role === "Seller" || !session.userId
     ? null
     : await postJson<WalletDto, { userId: number }>(
         "/api/wallet/by-user",

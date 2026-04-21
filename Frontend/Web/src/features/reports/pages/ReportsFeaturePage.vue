@@ -9,7 +9,7 @@ const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
 const { reportFilters, reportTypeCards, generatedReports, generateReports, downloadReport, downloadPdf } = useReports(props.marketplace);
 
 onMounted(() => {
-  if (props.marketplace.role.value === "admin") {
+  if (props.marketplace.role.value === "Admin") {
     void props.marketplace.refreshMarketplaceState();
   }
 });

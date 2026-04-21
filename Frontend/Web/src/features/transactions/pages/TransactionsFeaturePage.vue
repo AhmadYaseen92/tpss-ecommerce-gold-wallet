@@ -18,7 +18,7 @@ const syncPath = () => {
 };
 onMounted(() => window.addEventListener("hashchange", syncPath));
 onMounted(() => {
-  if (props.marketplace.role.value === "admin") {
+  if (props.marketplace.role.value === "Admin") {
     void props.marketplace.refreshMarketplaceState();
   }
 });
@@ -74,7 +74,7 @@ const cancelRequest = async (id: string) => {
     <TransactionDetailsPage :item="detailsItem" />
   </SectionCard>
   <SectionCard v-else title="Transactions">
-    <div class="filters" :style="{ gridTemplateColumns: marketplace.role.value === 'admin' ? '1fr 180px 180px 220px' : '1fr 180px 180px' }">
+    <div class="filters" :style="{ gridTemplateColumns: marketplace.role.value === 'Admin' ? '1fr 180px 180px 220px' : '1fr 180px 180px' }">
       <input v-model="searchTerm" placeholder="Search by ID, investor, product, category..." />
       <select v-model="statusFilter">
         <option value="all">All statuses</option>
@@ -94,7 +94,7 @@ const cancelRequest = async (id: string) => {
         <option value="pickup">Pickup</option>
         <option value="withdrawal">Withdrawal</option>
       </select>
-      <select v-if="marketplace.role.value === 'admin'" v-model="sellerFilter">
+      <select v-if="marketplace.role.value === 'Admin'" v-model="sellerFilter">
         <option value="all">All sellers</option>
         <option v-for="seller in sellers" :key="seller.id" :value="seller.id">{{ seller.name }}</option>
       </select>

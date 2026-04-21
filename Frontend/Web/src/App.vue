@@ -62,7 +62,7 @@ const menuItems = computed<Array<{ key: NavigationKey; label: string }>>(() => {
     { key: "logout", label: "Logout" }
   ];
 
-  return marketplace.role.value === "admin"
+  return marketplace.role.value === "Admin"
     ? [common[0], common[1], { key: "investors" as NavigationKey, label: "Investors" }, { key: "sellers" as NavigationKey, label: "Sellers" }, { key: "settings" as NavigationKey, label: "System Settings" }, common[2], common[3], common[4]]
     : common;
 });
@@ -83,9 +83,9 @@ watch(activeMenu, (menu) => {
 
 const activeComponent = computed(() => {
   if (currentPath.value.startsWith("/products")) return ProductFeaturePage;
-  if (currentPath.value.startsWith("/investors")) return marketplace.role.value === "admin" ? InvestorsFeaturePage : DashboardFeaturePage;
-  if (currentPath.value.startsWith("/sellers")) return marketplace.role.value === "admin" ? SellersFeaturePage : DashboardFeaturePage;
-  if (currentPath.value.startsWith("/settings")) return marketplace.role.value === "admin" ? SettingsFeaturePage : DashboardFeaturePage;
+  if (currentPath.value.startsWith("/investors")) return marketplace.role.value === "Admin" ? InvestorsFeaturePage : DashboardFeaturePage;
+  if (currentPath.value.startsWith("/sellers")) return marketplace.role.value === "Admin" ? SellersFeaturePage : DashboardFeaturePage;
+  if (currentPath.value.startsWith("/settings")) return marketplace.role.value === "Admin" ? SettingsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/transactions")) return TransactionsFeaturePage;
   if (currentPath.value.startsWith("/reports")) return ReportsFeaturePage;
   return DashboardFeaturePage;
@@ -93,7 +93,7 @@ const activeComponent = computed(() => {
 
 const welcomeText = computed(() => {
   if (!marketplace.session.value) return "Welcome";
-  const fullName = marketplace.state.value.currentUserName ?? (marketplace.role.value === "admin" ? "Admin User" : "Seller User");
+  const fullName = marketplace.state.value.currentUserName ?? (marketplace.role.value === "Admin" ? "Admin User" : "Seller User");
   return `Welcome back, ${fullName}`;
 });
 

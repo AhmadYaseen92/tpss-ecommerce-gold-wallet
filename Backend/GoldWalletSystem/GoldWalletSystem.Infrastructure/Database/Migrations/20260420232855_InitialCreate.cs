@@ -12,104 +12,26 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "MobileAppConfigurations",
+                name: "SystemConfigration",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ConfigKey = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    JsonValue = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    ValueType = table.Column<int>(type: "int", nullable: false),
+                    ValueBool = table.Column<bool>(type: "bit", nullable: true),
+                    ValueInt = table.Column<int>(type: "int", nullable: true),
+                    ValueDecimal = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    ValueString = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SellerAccess = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_MobileAppConfigurations", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Sellers",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    ContactEmail = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    ContactPhone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    Country = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    City = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    Street = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    BuildingNumber = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    PostalCode = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    CompanyName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    TradeLicenseNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    VatNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    NationalIdNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    BankName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    IBAN = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    AccountHolderName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    NationalIdFrontPath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    NationalIdBackPath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    TradeLicensePath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    KycStatus = table.Column<int>(type: "int", nullable: false),
-                    ReviewedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ReviewNotes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Sellers", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Products",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Sku = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    ImageUrl = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    Category = table.Column<int>(type: "int", nullable: false),
-                    MaterialType = table.Column<int>(type: "int", nullable: false),
-                    FormType = table.Column<int>(type: "int", nullable: false),
-                    PricingMode = table.Column<int>(type: "int", nullable: false),
-                    PurityKarat = table.Column<int>(type: "int", nullable: false),
-                    PurityFactor = table.Column<decimal>(type: "decimal(10,6)", precision: 10, scale: 6, nullable: false),
-                    WeightValue = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
-                    WeightUnit = table.Column<int>(type: "int", nullable: false),
-                    BaseMarketPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    ManualSellPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    DeliveryFee = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    StorageFee = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    ServiceCharge = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    OfferPercent = table.Column<decimal>(type: "decimal(8,3)", precision: 8, scale: 3, nullable: false),
-                    OfferNewPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    OfferType = table.Column<int>(type: "int", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    AvailableStock = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    SellerId = table.Column<int>(type: "int", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Products", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Products_Sellers_SellerId",
-                        column: x => x.SellerId,
-                        principalTable: "Sellers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                    table.PrimaryKey("PK_SystemConfigration", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -122,7 +44,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     Email = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     Role = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    SellerId = table.Column<int>(type: "int", nullable: true),
                     PhoneNumber = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -131,12 +52,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Users_Sellers_SellerId",
-                        column: x => x.SellerId,
-                        principalTable: "Sellers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -240,6 +155,53 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Sellers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ContactEmail = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    ContactPhone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Country = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    City = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    Street = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    BuildingNumber = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    PostalCode = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    CompanyName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    TradeLicenseNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    VatNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    NationalIdNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    BankName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    IBAN = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    AccountHolderName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    NationalIdFrontPath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    NationalIdBackPath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    TradeLicensePath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    KycStatus = table.Column<int>(type: "int", nullable: false),
+                    ReviewedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReviewNotes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    GoldPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    SilverPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    DiamondPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Sellers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Sellers_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserProfiles",
                 columns: table => new
                 {
@@ -291,45 +253,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CartItems",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CartId = table.Column<int>(type: "int", nullable: false),
-                    ProductId = table.Column<int>(type: "int", nullable: false),
-                    SellerId = table.Column<int>(type: "int", nullable: true),
-                    Category = table.Column<int>(type: "int", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    UnitPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    LineTotal = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CartItems", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_CartItems_Carts_CartId",
-                        column: x => x.CartId,
-                        principalTable: "Carts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_CartItems_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_CartItems_Sellers_SellerId",
-                        column: x => x.SellerId,
-                        principalTable: "Sellers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "PaymentTransactions",
                 columns: table => new
                 {
@@ -352,6 +275,51 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         principalTable: "Orders",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Products",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Sku = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    Category = table.Column<int>(type: "int", nullable: false),
+                    MaterialType = table.Column<int>(type: "int", nullable: false),
+                    FormType = table.Column<int>(type: "int", nullable: false),
+                    PricingMode = table.Column<int>(type: "int", nullable: false),
+                    PurityKarat = table.Column<int>(type: "int", nullable: false),
+                    PurityFactor = table.Column<decimal>(type: "decimal(10,6)", precision: 10, scale: 6, nullable: false),
+                    WeightValue = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
+                    WeightUnit = table.Column<int>(type: "int", nullable: false),
+                    BaseMarketPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    ManualSellPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    DeliveryFee = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    StorageFee = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    ServiceCharge = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    OfferPercent = table.Column<decimal>(type: "decimal(8,3)", precision: 8, scale: 3, nullable: false),
+                    OfferNewPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    OfferType = table.Column<int>(type: "int", nullable: false),
+                    IsHasOffer = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    AvailableStock = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    SellerId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Products", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Products_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -446,6 +414,45 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         principalTable: "Wallets",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CartItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CartId = table.Column<int>(type: "int", nullable: false),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    SellerId = table.Column<int>(type: "int", nullable: true),
+                    Category = table.Column<int>(type: "int", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    LineTotal = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CartItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CartItems_Carts_CartId",
+                        column: x => x.CartId,
+                        principalTable: "Carts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CartItems_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_CartItems_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -805,12 +812,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 column: "UserProfileId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MobileAppConfigurations_ConfigKey",
-                table: "MobileAppConfigurations",
-                column: "ConfigKey",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Orders_OrderType",
                 table: "Orders",
                 column: "OrderType");
@@ -875,12 +876,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Sellers_Email",
-                table: "Sellers",
-                column: "Email",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Sellers_KycStatus",
                 table: "Sellers",
                 column: "KycStatus");
@@ -889,6 +884,18 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 name: "IX_Sellers_Name",
                 table: "Sellers",
                 column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Sellers_UserId",
+                table: "Sellers",
+                column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SystemConfigration_ConfigKey",
+                table: "SystemConfigration",
+                column: "ConfigKey",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionHistories_Category",
@@ -941,11 +948,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 name: "IX_Users_Role",
                 table: "Users",
                 column: "Role");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_SellerId",
-                table: "Users",
-                column: "SellerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WalletAssets_Category",
@@ -1003,6 +1005,10 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 table: "Invoices");
 
             migrationBuilder.DropForeignKey(
+                name: "FK_Sellers_Users_UserId",
+                table: "Sellers");
+
+            migrationBuilder.DropForeignKey(
                 name: "FK_TransactionHistories_Users_UserId",
                 table: "TransactionHistories");
 
@@ -1048,10 +1054,10 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 name: "LinkedBankAccounts");
 
             migrationBuilder.DropTable(
-                name: "MobileAppConfigurations");
+                name: "PaymentTransactions");
 
             migrationBuilder.DropTable(
-                name: "PaymentTransactions");
+                name: "SystemConfigration");
 
             migrationBuilder.DropTable(
                 name: "WalletPaymentMethodDetails");

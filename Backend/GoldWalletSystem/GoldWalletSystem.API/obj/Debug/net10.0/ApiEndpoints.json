@@ -1,5 +1,67 @@
 [
   {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AdminController",
+    "Method": "GetWorkspace",
+    "RelativePath": "api/admin/workspace",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
+    "Method": "ConfirmPasswordReset",
+    "RelativePath": "api/auth/forgot-password/confirm",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Auth.ConfirmPasswordResetRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.Object, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
+    "Method": "RequestPasswordResetOtp",
+    "RelativePath": "api/auth/forgot-password/request-otp",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Auth.RequestPasswordResetOtpRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[GoldWalletSystem.Application.DTOs.Otp.OtpDispatchResponseDto, GoldWalletSystem.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
     "Method": "Login",
     "RelativePath": "api/auth/login",
@@ -45,6 +107,58 @@
     "ReturnTypes": [
       {
         "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
+    "Method": "ConfirmPasswordReset",
+    "RelativePath": "api/auth/password/reset/confirm",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Auth.ConfirmPasswordResetRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.Object, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
+    "Method": "RequestPasswordResetOtp",
+    "RelativePath": "api/auth/password/reset/request-otp",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Auth.RequestPasswordResetOtpRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[GoldWalletSystem.Application.DTOs.Otp.OtpDispatchResponseDto, GoldWalletSystem.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -111,28 +225,19 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
-    "Method": "SellerLogin",
-    "RelativePath": "api/auth/seller-login",
+    "Method": "VerifyRegistrationOtp",
+    "RelativePath": "api/auth/register/verify-otp",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
         "Name": "request",
-        "Type": "GoldWalletSystem.Application.DTOs.Auth.LoginRequestDto",
+        "Type": "GoldWalletSystem.Application.DTOs.Auth.VerifyRegistrationOtpRequestDto",
         "IsRequired": true
       }
     ],
     "ReturnTypes": [
-      {
-        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[GoldWalletSystem.Application.DTOs.Auth.LoginResponseDto, GoldWalletSystem.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      },
       {
         "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.Object, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "MediaTypes": [
@@ -140,7 +245,7 @@
           "application/json",
           "text/json"
         ],
-        "StatusCode": 401
+        "StatusCode": 200
       }
     ]
   },
@@ -224,6 +329,54 @@
       {
         "Name": "request",
         "Type": "GoldWalletSystem.API.Controllers.CheckoutController\u002BCheckoutConfirmRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.CheckoutController",
+    "Method": "RequestCheckoutOtp",
+    "RelativePath": "api/checkout/otp/request",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.CheckoutController\u002BCheckoutOtpRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.CheckoutController",
+    "Method": "ResendCheckoutOtp",
+    "RelativePath": "api/checkout/otp/resend",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.CheckoutController\u002BResendCheckoutOtpRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.CheckoutController",
+    "Method": "VerifyCheckoutOtp",
+    "RelativePath": "api/checkout/otp/verify",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.CheckoutController\u002BVerifyCheckoutOtpRequest",
         "IsRequired": true
       }
     ],
@@ -346,6 +499,54 @@
       {
         "Name": "request",
         "Type": "GoldWalletSystem.Application.DTOs.Common.UserPagedRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.OtpController",
+    "Method": "Request",
+    "RelativePath": "api/otp/request",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Otp.RequestOtpRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.OtpController",
+    "Method": "Resend",
+    "RelativePath": "api/otp/resend",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Otp.ResendOtpRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.OtpController",
+    "Method": "Verify",
+    "RelativePath": "api/otp/verify",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Otp.VerifyOtpRequestDto",
         "IsRequired": true
       }
     ],
@@ -680,7 +881,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "GoldWalletSystem.API.Controllers.ProductsController\u002BMarketPriceConfigDto",
+        "Type": "GoldWalletSystem.Application.DTOs.Products.MarketPriceConfigDto",
         "IsRequired": true
       }
     ],
@@ -786,6 +987,22 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.ProfileController",
+    "Method": "RemoveLinkedBank",
+    "RelativePath": "api/profile/linked-bank-accounts",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Profile.RemoveLinkedBankAccountRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProfileController",
     "Method": "UpdatePassword",
     "RelativePath": "api/profile/password",
     "HttpMethod": "PUT",
@@ -811,6 +1028,22 @@
       {
         "Name": "request",
         "Type": "GoldWalletSystem.Application.DTOs.Profile.UpsertPaymentMethodRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.ProfileController",
+    "Method": "RemovePaymentMethod",
+    "RelativePath": "api/profile/payment-methods",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Profile.RemovePaymentMethodRequestDto",
         "IsRequired": true
       }
     ],
@@ -846,6 +1079,16 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.SellerController",
+    "Method": "GetWorkspace",
+    "RelativePath": "api/seller/workspace",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -891,6 +1134,22 @@
       {
         "Name": "request",
         "Type": "GoldWalletSystem.Application.DTOs.Common.UserPagedRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "CancelPendingRequest",
+    "RelativePath": "api/wallet/actions/cancel-request",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.WalletController\u002BCancelWalletRequest",
         "IsRequired": true
       }
     ],
@@ -987,6 +1246,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "EnsureWalletItemCertificate",
+    "RelativePath": "api/wallet/wallet-items/{walletItemId}/certificate",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "walletItemId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
     "Method": "GetDashboard",
     "RelativePath": "api/web-admin/dashboard",
@@ -1022,7 +1297,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "GoldWalletSystem.API.Models.WebFeesDto",
+        "Type": "GoldWalletSystem.Application.DTOs.Admin.WebFeesDto",
         "IsRequired": true
       }
     ],
@@ -1053,7 +1328,7 @@
       },
       {
         "Name": "request",
-        "Type": "GoldWalletSystem.API.Models.UpdateStatusRequest",
+        "Type": "GoldWalletSystem.Application.DTOs.Admin.UpdateStatusRequest",
         "IsRequired": true
       }
     ],
@@ -1079,7 +1354,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "GoldWalletSystem.API.Models.WebInvoiceDto",
+        "Type": "GoldWalletSystem.Application.DTOs.Admin.WebInvoiceDto",
         "IsRequired": true
       }
     ],
@@ -1100,7 +1375,7 @@
       },
       {
         "Name": "request",
-        "Type": "GoldWalletSystem.API.Models.WebInvoiceDto",
+        "Type": "GoldWalletSystem.Application.DTOs.Admin.WebInvoiceDto",
         "IsRequired": true
       }
     ],
@@ -1189,7 +1464,7 @@
       },
       {
         "Name": "request",
-        "Type": "GoldWalletSystem.API.Models.UpdateStatusRequest",
+        "Type": "GoldWalletSystem.Application.DTOs.Admin.UpdateStatusRequest",
         "IsRequired": true
       }
     ],
@@ -1220,7 +1495,7 @@
       },
       {
         "Name": "request",
-        "Type": "GoldWalletSystem.API.Models.UpdateSellerKycRequest",
+        "Type": "GoldWalletSystem.Application.DTOs.Admin.UpdateSellerKycRequest",
         "IsRequired": true
       }
     ],

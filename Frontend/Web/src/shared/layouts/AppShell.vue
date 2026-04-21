@@ -85,7 +85,7 @@ onBeforeUnmount(() => {
       <header class="top-bar modern compact">
         <div class="top-title">
           <h2>{{ welcomeText }}</h2>
-          <p>{{ role === "admin" ? "Administrator workspace" : "Seller workspace" }}</p>
+          <p>{{ role === "Admin" ? "Administrator workspace" : "Seller workspace" }}</p>
         </div>
 
         <div class="top-actions modern">

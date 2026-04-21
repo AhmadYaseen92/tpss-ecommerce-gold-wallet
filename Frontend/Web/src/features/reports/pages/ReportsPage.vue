@@ -2,7 +2,7 @@
 import type { Seller } from "../../../shared/types/models";
 withDefaults(
   defineProps<{
-    role: "admin" | "seller";
+    role: "Admin" | "Seller";
     sellers: Seller[];
     reportFilters: { reportType: string; sellerId: string; userId: string; userName: string; productName: string; dateRange: string; customFrom: string; customTo: string; stockOnly: boolean };
     reportTypeCards?: Array<{ key: string; label: string; description: string }>;
@@ -29,7 +29,7 @@ const emit = defineEmits<{ generate: []; excel: []; pdf: [] }>();
     <input v-model="reportFilters.userId" placeholder="User ID" />
     <input v-model="reportFilters.userName" placeholder="User Name" />
     <input v-model="reportFilters.productName" placeholder="Product Name" />
-    <select v-if="role === 'admin'" v-model="reportFilters.sellerId">
+    <select v-if="role === 'Admin'" v-model="reportFilters.sellerId">
       <option value="all">All Sellers</option>
       <option v-for="seller in sellers" :key="seller.id" :value="seller.id">{{ seller.name }} ({{ seller.sellerId }})</option>
     </select>

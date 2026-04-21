@@ -74,7 +74,7 @@ function readStoredSession(): UserSession | null {
 
 export function useMarketplace() {
   const persistedSession = readStoredSession();
-  const role = ref<UserRole>(persistedSession?.role ?? "admin");
+  const role = ref<UserRole>(persistedSession?.role ?? "Admin");
   const activeMenu = ref<NavigationKey>("overview");
   const session = ref<UserSession | null>(persistedSession);
   const state = ref<MarketplaceState>(structuredClone(mockMarketplaceState));
@@ -181,7 +181,7 @@ export function useMarketplace() {
       const seller = await registerSellerWithBackend(payload);
       state.value.sellers = upsertSeller(state.value.sellers, seller);
       activeMenu.value = "investors";
-      role.value = "admin";
+      role.value = "Admin";
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Registration failed";
     } finally {
@@ -257,7 +257,7 @@ export function useMarketplace() {
     signalRConnected.value = false;
     stopFallbackPolling();
     session.value = null;
-    role.value = "admin";
+    role.value = "Admin";
     activeMenu.value = "overview";
     if (typeof window !== "undefined") {
       persistSession(null);

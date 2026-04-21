@@ -26,7 +26,7 @@ const emit = defineEmits<{
 const pageNumber = ref(1);
 const pageSize = 20;
 const props = defineProps<{
-  role: "admin" | "seller";
+  role: "Admin" | "Seller";
   productError: string;
   productPage: "list" | "add" | "edit" | "details";
   productRouteId: number | null;
@@ -82,19 +82,19 @@ const pagedProducts = computed(() => {
           <option value="all">All categories</option>
           <option v-for="category in categories" :key="category.value" :value="category.name">{{ category.name }}</option>
         </select>
-        <select v-if="role === 'admin'" :value="sellerFilter" @change="emit('update:seller-filter', ($event.target as HTMLSelectElement).value)">
+        <select v-if="role === 'Admin'" :value="sellerFilter" @change="emit('update:seller-filter', ($event.target as HTMLSelectElement).value)">
           <option value="all">All Sellers</option>
           <option v-for="seller in sellers" :key="seller.id" :value="String(seller.sellerId)">{{ seller.name }} ({{ seller.sellerId }})</option>
         </select>
       </div>
 
       <table>
-        <thead><tr><th>ID</th><th v-if="role === 'admin'">Seller ID</th><th v-if="role === 'admin'">Seller Name</th><th>Image</th><th>Name</th><th>SKU</th><th>Description</th><th>Category</th><th>Weight</th><th>Price</th><th>Stock</th><th>Active</th><th>Actions</th></tr></thead>
+        <thead><tr><th>ID</th><th v-if="role === 'Admin'">Seller ID</th><th v-if="role === 'Admin'">Seller Name</th><th>Image</th><th>Name</th><th>SKU</th><th>Description</th><th>Category</th><th>Weight</th><th>Price</th><th>Stock</th><th>Active</th><th>Actions</th></tr></thead>
         <tbody>
           <tr v-for="product in pagedProducts" :key="product.id" class="clickable-row" @click="emit('details', product)">
             <td>{{ product.id }}</td>
-            <td v-if="role === 'admin'">{{ product.sellerId }}</td>
-            <td v-if="role === 'admin'">{{ product.sellerName || '-' }}</td>
+            <td v-if="role === 'Admin'">{{ product.sellerId }}</td>
+            <td v-if="role === 'Admin'">{{ product.sellerName || '-' }}</td>
             <td><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-thumb" /><span v-else class="product-thumb-placeholder">No image</span></td>
             <td>{{ product.name }}</td>
             <td>{{ product.sku }}</td>

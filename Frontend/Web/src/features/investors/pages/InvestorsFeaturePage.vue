@@ -30,7 +30,7 @@ const viewInvestor = (id: string) => {
 };
 
 onMounted(() => {
-  if (props.marketplace.role.value === "admin") {
+  if (props.marketplace.role.value === "Admin") {
     void props.marketplace.refreshMarketplaceState();
   }
 });

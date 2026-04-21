@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "seller";
+export type UserRole = "Admin" | "Seller";
 export type KycStatus = "pending" | "approved" | "rejected";
 
 export type NavigationKey =
