@@ -10,7 +10,7 @@ It seeds all core data used by mobile flows:
 - Carts
 - Products (with Category, WeightValue, WeightUnit)
 - WalletAssets (portfolio)
-- MobileAppConfigurations (home carousel)
+- SystemConfigration (typed system config)
 - AuditLogs seed marker
 */
 
@@ -24,6 +24,29 @@ BEGIN TRY
 
     IF OBJECT_ID(N'[Sellers]') IS NULL
         THROW 50000, 'Tables were not found. Run migrations first.', 1;
+
+    DECLARE @SellerUsers TABLE (
+        FullName nvarchar(150),
+        Email nvarchar(200),
+        PasswordHash nvarchar(500),
+        Role nvarchar(50),
+        PhoneNumber nvarchar(30)
+    );
+
+    INSERT INTO @SellerUsers (FullName, Email, PasswordHash, Role, PhoneNumber)
+    VALUES
+        (N'Imseeh Seller', N'contact@imseeh.com', N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+962700000001'),
+        (N'Gold Palace Seller', N'contact@goldpalace.com', N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+15550000002'),
+        (N'Bullion House Seller', N'contact@bullionhouse.com', N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+15550000003');
+
+    MERGE [Users] AS T
+    USING @SellerUsers AS S
+    ON T.[Email] = S.[Email]
+    WHEN MATCHED THEN
+        UPDATE SET T.[FullName] = S.[FullName], T.[PasswordHash] = S.[PasswordHash], T.[Role] = S.[Role], T.[PhoneNumber] = S.[PhoneNumber], T.[IsActive] = 1, T.[UpdatedAtUtc] = @Now
+    WHEN NOT MATCHED THEN
+        INSERT ([FullName],[Email],[PasswordHash],[Role],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
 
     ------------------------------------------------------------
     -- Sellers
@@ -42,11 +65,12 @@ BEGIN TRY
             T.[ContactEmail] = S.[ContactEmail],
             T.[ContactPhone] = S.[ContactPhone],
             T.[Address] = S.[Address],
+            T.[UserId] = COALESCE((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[ContactEmail]), T.[UserId]),
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([Name],[Code],[ContactEmail],[ContactPhone],[Address],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],S.[Address],1,@Now,NULL);
+        INSERT ([Name],[Code],[ContactEmail],[ContactPhone],[Address],[UserId],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],S.[Address],(SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[ContactEmail]),1,@Now,NULL);
 
     DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'IMSEEH');
     DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'GOLDPAL');
@@ -61,16 +85,15 @@ BEGIN TRY
         Email nvarchar(200),
         PasswordHash nvarchar(500),
         Role nvarchar(50),
-        SellerId int NULL,
         PhoneNumber nvarchar(30)
     );
 
-    INSERT INTO @Users (FullName, Email, PasswordHash, Role, SellerId, PhoneNumber)
+    INSERT INTO @Users (FullName, Email, PasswordHash, Role, PhoneNumber)
     VALUES
-        (N'Imseeh Investor',        N'imseeh.investor@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,  N'+962790000001'),
-        (N'Gold Palace Investor',   N'goldpal.investor@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL, N'+15551020002'),
-        (N'Bullion House Investor', N'bullion.investor@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL, N'+15551030002'),
-        (N'Gold Wallet Investor',   N'investor@goldwallet.com',          N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', NULL,  N'+962790000999');
+        (N'Imseeh Investor',        N'imseeh.investor@example.com',      N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+962790000001'),
+        (N'Gold Palace Investor',   N'goldpal.investor@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+15551020002'),
+        (N'Bullion House Investor', N'bullion.investor@example.com',     N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+15551030002'),
+        (N'Gold Wallet Investor',   N'investor@goldwallet.com',          N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Investor', N'+962790000999');
 
     MERGE [Users] AS T
     USING @Users AS S
@@ -80,13 +103,12 @@ BEGIN TRY
             T.[FullName] = S.[FullName],
             T.[PasswordHash] = S.[PasswordHash],
             T.[Role] = S.[Role],
-            T.[SellerId] = S.[SellerId],
             T.[PhoneNumber] = S.[PhoneNumber],
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([FullName],[Email],[PasswordHash],[Role],[SellerId],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[SellerId],S.[PhoneNumber],1,@Now,NULL);
+        INSERT ([FullName],[Email],[PasswordHash],[Role],[PhoneNumber],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
 
     ------------------------------------------------------------
     -- UserProfiles / Wallets / Carts
@@ -166,19 +188,6 @@ BEGIN TRY
     ------------------------------------------------------------
     -- Mobile app config
     ------------------------------------------------------------
-    IF NOT EXISTS (SELECT 1 FROM [MobileAppConfigurations] WHERE [ConfigKey] = N'home.carousel.images')
-    BEGIN
-        INSERT INTO [MobileAppConfigurations] ([ConfigKey], [JsonValue], [IsEnabled], [Description], [CreatedAtUtc], [UpdatedAtUtc])
-        VALUES
-        (
-            N'home.carousel.images',
-            N'["/images/banners/banner-1.png","/images/banners/banner-2.png","/images/banners/banner-3.png"]',
-            1,
-            N'Home carousel images stored on local server',
-            @Now,
-            NULL
-        );
-    END
 
     ------------------------------------------------------------
     -- Seed marker in audit

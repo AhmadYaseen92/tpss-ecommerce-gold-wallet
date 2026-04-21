@@ -89,7 +89,8 @@ public class TransactionHistoryController(ITransactionHistoryService transaction
             mapped,
             source.TotalCount,
             source.PageNumber,
-            source.PageSize);
+            source.PageSize,
+            source.TotalPages);
     }
 
     private string ToAbsoluteAssetUrl(string? imageUrl)

@@ -6,31 +6,8 @@ class HomeRemoteDataSource {
 
   final Dio _dio;
 
-  Future<List<String>> getCarouselImageUrls() async {
-    try {
-      final response = await _dio.get('/mobile-app-configurations/home-carousel-images');
-      final payload = response.data as Map<String, dynamic>?;
-      final data = payload?['data'];
-
-      if (data is List) {
-        return data.map((item) => item.toString()).where((url) => url.isNotEmpty).toList();
-      }
-
-      if (data is Map<String, dynamic>) {
-        final images = data['images'];
-        if (images is List) {
-          return images.map((item) => item.toString()).where((url) => url.isNotEmpty).toList();
-        }
-      }
-
-      return const [];
-    } catch (_) {
-      return const [];
-    }
-  }
-
   Future<List<HomeCarsouleItemModel>> getCarouselProductsWithOffers({
-    int pageSize = 12,
+    int pageSize = 20,
   }) async {
     try {
       final response = await _dio.post(
@@ -45,6 +22,7 @@ class HomeRemoteDataSource {
       final items = data?['items'] as List<dynamic>? ?? const [];
       final mapped = items
           .whereType<Map<String, dynamic>>()
+          .where((item) => (item['isHasOffer'] as bool?) ?? false)
           .map((item) {
             final offerPercent = (item['offerPercent'] as num?)?.toDouble() ?? 0;
             final offerNewPrice = (item['offerNewPrice'] as num?)?.toDouble() ?? 0;
@@ -59,7 +37,7 @@ class HomeRemoteDataSource {
           .where((item) => item.imgUrl.trim().isNotEmpty)
           .toList();
 
-      return mapped.where((item) => (item.offerLabel ?? '').isNotEmpty).toList();
+      return mapped;
     } catch (_) {
       return const [];
     }
@@ -75,6 +53,6 @@ class HomeRemoteDataSource {
     if (offerNewPrice > 0) {
       return 'Offer \$${offerNewPrice.toStringAsFixed(2)}';
     }
-    return null;
+    return 'Special Offer';
   }
 }

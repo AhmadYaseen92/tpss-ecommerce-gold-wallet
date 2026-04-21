@@ -8,12 +8,20 @@ import { statusClass } from "../../../shared/services/statusStyles";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
-const { transactionsView, viewTransaction, searchTerm, statusFilter, typeFilter } = useTransactions(props.marketplace);
+const { transactionsView, viewTransaction, searchTerm, statusFilter, typeFilter, sellerFilter } = useTransactions(props.marketplace);
+const sellers = computed(() => props.marketplace.state.value.sellers);
+const pageNumber = ref(1);
+const pageSize = 20;
 const currentPath = ref(window.location.hash.replace(/^#/, ""));
 const syncPath = () => {
   currentPath.value = window.location.hash.replace(/^#/, "");
 };
 onMounted(() => window.addEventListener("hashchange", syncPath));
+onMounted(() => {
+  if (props.marketplace.role.value === "Admin") {
+    void props.marketplace.refreshMarketplaceState();
+  }
+});
 onUnmounted(() => {
   window.removeEventListener("hashchange", syncPath);
 });
@@ -22,6 +30,11 @@ const detailsId = computed(() => {
   return match?.[1] ?? null;
 });
 const detailsItem = computed(() => transactionsView.value.find((item) => item.id === detailsId.value) ?? null);
+const totalPages = computed(() => Math.max(1, Math.ceil(transactionsView.value.length / pageSize)));
+const pagedItems = computed(() => {
+  const start = (pageNumber.value - 1) * pageSize;
+  return transactionsView.value.slice(start, start + pageSize);
+});
 
 const quickStatus = async (id: string, status: "pending" | "approved" | "rejected" | "delivered" | "cancelled") => {
   const current = transactionsView.value.find((x) => x.id === id);
@@ -61,7 +74,7 @@ const cancelRequest = async (id: string) => {
     <TransactionDetailsPage :item="detailsItem" />
   </SectionCard>
   <SectionCard v-else title="Transactions">
-    <div class="filters">
+    <div class="filters" :style="{ gridTemplateColumns: marketplace.role.value === 'Admin' ? '1fr 180px 180px 220px' : '1fr 180px 180px' }">
       <input v-model="searchTerm" placeholder="Search by ID, investor, product, category..." />
       <select v-model="statusFilter">
         <option value="all">All statuses</option>
@@ -81,8 +94,17 @@ const cancelRequest = async (id: string) => {
         <option value="pickup">Pickup</option>
         <option value="withdrawal">Withdrawal</option>
       </select>
+      <select v-if="marketplace.role.value === 'Admin'" v-model="sellerFilter">
+        <option value="all">All sellers</option>
+        <option v-for="seller in sellers" :key="seller.id" :value="seller.id">{{ seller.name }}</option>
+      </select>
     </div>
-    <TransactionsPage :items="transactionsView" :status-class="statusClass" @view="goDetails" @quick-status="quickStatus" @cancel-request="cancelRequest" />
+    <TransactionsPage :items="pagedItems" :status-class="statusClass" @view="goDetails" @quick-status="quickStatus" @cancel-request="cancelRequest" />
+    <div class="pager">Results: {{ (pageNumber - 1) * pageSize + 1 }} - {{ Math.min(pageNumber * pageSize, transactionsView.length) }} of {{ transactionsView.length }}
+      <button :disabled="pageNumber <= 1" @click="pageNumber--">&lt;</button>
+      <span>{{ pageNumber }} / {{ totalPages }}</span>
+      <button :disabled="pageNumber >= totalPages" @click="pageNumber++">&gt;</button>
+    </div>
   </SectionCard>
 </template>
 
@@ -101,4 +123,5 @@ const cancelRequest = async (id: string) => {
   border-radius: 8px;
   padding: 8px 10px;
 }
+.pager { margin-top: 10px; display:flex; gap:8px; justify-content:flex-end; align-items:center; }
 </style>

@@ -1,15 +1,11 @@
-using GoldWalletSystem.API.Models;
+using GoldWalletSystem.Application.DTOs.Admin;
+using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
 
-namespace GoldWalletSystem.API.Services;
-
-public interface IWebAdminDashboardService
-{
-    Task<WebDashboardDto> BuildAsync(string period, int? sellerId = null, CancellationToken cancellationToken = default);
-}
+namespace GoldWalletSystem.Infrastructure.Services;
 
 public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboardService
 {
@@ -28,6 +24,9 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             .AsNoTracking()
             .Where(x => x.Role == SystemRoles.Investor)
             .ToListAsync(cancellationToken);
+        var sellers = await dbContext.Sellers
+            .AsNoTracking()
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
 
         var requestsQuery = dbContext.TransactionHistories.AsNoTracking().AsQueryable();
         if (sellerId.HasValue)
@@ -37,10 +36,7 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
         requestsQuery = requestsQuery.Where(x => x.CreatedAtUtc >= monthStart);
         var requests = await requestsQuery.OrderByDescending(x => x.CreatedAtUtc).Take(100).ToListAsync(cancellationToken);
 
-        var cartItemsQuery = dbContext.CartItems
-            .AsNoTracking()
-            .AsQueryable();
-
+        var cartItemsQuery = dbContext.CartItems.AsNoTracking().AsQueryable();
         if (sellerId.HasValue)
         {
             cartItemsQuery = cartItemsQuery.Where(x => x.SellerId == sellerId.Value);
@@ -72,6 +68,7 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
             .Select((request, idx) => new WebRecentTransactionDto
             {
                 Id = $"r-{request.Id}",
+                SellerName = request.SellerId.HasValue && sellers.TryGetValue(request.SellerId.Value, out var sellerName) ? sellerName : "N/A",
                 InvestorName = investors.FirstOrDefault(i => i.Id == request.UserId)?.FullName ?? $"User {request.UserId}",
                 ProductName = products.Count > 0 ? products[idx % products.Count].Name : "N/A",
                 Type = request.TransactionType,
@@ -99,20 +96,12 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
         foreach (var group in walletAssetGroups)
         {
             var categoryName = group.Category.ToString();
-            if (!transactionCountByCategory.ContainsKey(categoryName))
-            {
-                continue;
-            }
-
+            if (!transactionCountByCategory.ContainsKey(categoryName)) continue;
             transactionCountByCategory[categoryName] = (int)group.Count;
         }
 
         var categoryTransactionSeries = allCategoryNames
-            .Select(categoryName => new WebDashboardPointDto
-            {
-                Label = categoryName,
-                Value = transactionCountByCategory.TryGetValue(categoryName, out var count) ? count : 0
-            })
+            .Select(categoryName => new WebDashboardPointDto { Label = categoryName, Value = transactionCountByCategory.TryGetValue(categoryName, out var count) ? count : 0 })
             .ToList();
 
         foreach (var group in cartItems.GroupBy(item => item.Category.ToString()))
@@ -121,11 +110,7 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
         }
 
         var categoryCartSeries = allCategoryNames
-            .Select(categoryName => new WebDashboardPointDto
-            {
-                Label = categoryName,
-                Value = cartCountByCategory.TryGetValue(categoryName, out var count) ? count : 0
-            })
+            .Select(categoryName => new WebDashboardPointDto { Label = categoryName, Value = cartCountByCategory.TryGetValue(categoryName, out var count) ? count : 0 })
             .ToList();
 
         return new WebDashboardDto
@@ -145,19 +130,10 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
                 new WebDashboardSegmentDto { Key = "approved", Label = "Approved", Value = statusCounts["approved"], Percent = (int)Math.Round((statusCounts["approved"] * 100m) / statusTotal) },
                 new WebDashboardSegmentDto { Key = "rejected", Label = "Rejected", Value = statusCounts["rejected"], Percent = (int)Math.Round((statusCounts["rejected"] * 100m) / statusTotal) }
             ],
-            CategorySegments = categoryCounts
-                .Select(x => new WebDashboardSegmentDto
-                {
-                    Key = x.Key,
-                    Label = x.Key,
-                    Value = x.Value,
-                    Percent = (int)Math.Round((x.Value * 100m) / categoryTotal)
-                })
-                .ToList(),
+            CategorySegments = categoryCounts.Select(x => new WebDashboardSegmentDto { Key = x.Key, Label = x.Key, Value = x.Value, Percent = (int)Math.Round((x.Value * 100m) / categoryTotal) }).ToList(),
             CategoryTransactionSeries = categoryTransactionSeries,
             CategoryCartSeries = categoryCartSeries,
             RecentTransactions = recent
         };
     }
-
 }

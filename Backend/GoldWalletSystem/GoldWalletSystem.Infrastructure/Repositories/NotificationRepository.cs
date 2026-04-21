@@ -16,7 +16,8 @@ public class NotificationRepository(AppDbContext dbContext) : INotificationRepos
             .Select(x => new NotificationDto(x.Id, x.UserId, x.Title, x.Body, x.IsRead, x.CreatedAtUtc))
             .ToListAsync(cancellationToken);
 
-        return new PagedResult<NotificationDto>(items, totalCount, pageNumber, pageSize);
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        return new PagedResult<NotificationDto>(items, totalCount, pageNumber, pageSize, totalPages);
     }
 
     public async Task MarkAsReadAsync(int userId, int notificationId, CancellationToken cancellationToken = default)

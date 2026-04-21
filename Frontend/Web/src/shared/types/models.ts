@@ -1,9 +1,12 @@
-export type UserRole = "admin" | "seller";
+export type UserRole = "Admin" | "Seller";
 export type KycStatus = "pending" | "approved" | "rejected";
 
 export type NavigationKey =
   | "overview"
+  | "admin"
   | "investors"
+  | "sellers"
+  | "settings"
   | "requests"
   | "products"
   | "invoices"
@@ -29,11 +32,18 @@ export interface Seller {
   kycStatus: KycStatus;
   submittedAt: string;
   reviewNotes?: string;
+  goldPrice?: number | null;
+  silverPrice?: number | null;
+  diamondPrice?: number | null;
 }
 
 export interface Investor {
   id: string;
   fullName: string;
+  email?: string;
+  phoneNumber?: string;
+  totalTransactions?: number;
+  createdAt?: string;
   riskLevel: "low" | "medium" | "high";
   walletBalance: number;
   status: "active" | "review" | "blocked";
@@ -41,6 +51,8 @@ export interface Investor {
 
 export interface InvestorRequest {
   id: string;
+  sellerId?: string;
+  sellerName?: string;
   investorId: string;
   investorName: string;
   type: "withdrawal" | "pickup" | "sell" | "transfer" | "buy" | "gift";

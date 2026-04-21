@@ -1,4 +1,4 @@
-namespace GoldWalletSystem.API.Models;
+namespace GoldWalletSystem.Application.DTOs.Admin;
 
 public class UpdateStatusRequest
 {
@@ -21,6 +21,9 @@ public class WebSellerDto
     public string BusinessName { get; set; } = string.Empty;
     public string KycStatus { get; set; } = "pending";
     public DateTime SubmittedAt { get; set; }
+    public decimal? GoldPrice { get; set; }
+    public decimal? SilverPrice { get; set; }
+    public decimal? DiamondPrice { get; set; }
 }
 
 public class UpdateSellerKycRequest
@@ -33,14 +36,20 @@ public class WebInvestorDto
 {
     public string Id { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
     public string RiskLevel { get; set; } = "medium";
     public decimal WalletBalance { get; set; }
+    public int TotalTransactions { get; set; }
+    public DateTime CreatedAt { get; set; }
     public string Status { get; set; } = "active";
 }
 
 public class WebRequestDto
 {
     public string Id { get; set; } = string.Empty;
+    public string SellerId { get; set; } = string.Empty;
+    public string SellerName { get; set; } = string.Empty;
     public string InvestorId { get; set; } = string.Empty;
     public string InvestorName { get; set; } = string.Empty;
     public string Type { get; set; } = "withdrawal";
@@ -117,6 +126,7 @@ public class WebDashboardSegmentDto
 public class WebRecentTransactionDto
 {
     public string Id { get; set; } = string.Empty;
+    public string SellerName { get; set; } = string.Empty;
     public string InvestorName { get; set; } = string.Empty;
     public string ProductName { get; set; } = "N/A";
     public string Type { get; set; } = string.Empty;
@@ -129,4 +139,22 @@ public class WebDashboardPointDto
 {
     public string Label { get; set; } = string.Empty;
     public int Value { get; set; }
+}
+
+public class AdminWorkspaceDto
+{
+    public int SellersCount { get; set; }
+    public int InvestorsCount { get; set; }
+    public int ProductsCount { get; set; }
+    public int RequestsCount { get; set; }
+    public int SystemSettingsCount { get; set; }
+}
+
+public class SellerWorkspaceDto
+{
+    public int SellerId { get; set; }
+    public int ProductsCount { get; set; }
+    public int InvestorsCount { get; set; }
+    public int RequestsCount { get; set; }
+    public int ActiveOffersCount { get; set; }
 }

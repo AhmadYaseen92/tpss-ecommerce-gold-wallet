@@ -308,6 +308,30 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ExternalReference")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<decimal>("FeesAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("FromPartyType")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int?>("FromPartyUserId")
+                        .HasColumnType("int");
+
                     b.Property<int>("InvestorUserId")
                         .HasColumnType("int");
 
@@ -328,6 +352,48 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
 
                     b.Property<DateTime>("IssuedOnUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("OwnershipEffectiveOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("PaidOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PaymentTransactionId")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("PdfUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Purity")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RelatedTransactionId")
+                        .HasColumnType("int");
 
                     b.Property<int>("SellerUserId")
                         .HasColumnType("int");
@@ -350,60 +416,16 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("ToPartyType")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int?>("ToPartyUserId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InvestorUserId");
-
-                    b.HasIndex("InvoiceNumber")
-                        .IsUnique();
-
-                    b.HasIndex("IssuedOnUtc");
-
-                    b.HasIndex("SellerUserId");
-
-                    b.ToTable("Invoices", (string)null);
-                });
-
-            modelBuilder.Entity("GoldWalletSystem.Domain.Entities.InvoiceItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("InvoiceId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ItemName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("ItemQrCode")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<decimal>("LineTotal")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
 
                     b.Property<decimal>("UnitPrice")
                         .HasPrecision(18, 2)
@@ -412,13 +434,37 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("WalletItemId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Weight")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("FromPartyUserId");
+
+                    b.HasIndex("InvestorUserId");
+
+                    b.HasIndex("InvoiceNumber")
+                        .IsUnique();
+
+                    b.HasIndex("IssuedOnUtc");
+
+                    b.HasIndex("PaymentStatus");
 
                     b.HasIndex("ProductId");
 
-                    b.HasIndex("InvoiceId", "ProductId");
+                    b.HasIndex("RelatedTransactionId");
 
-                    b.ToTable("InvoiceItems", (string)null);
+                    b.HasIndex("SellerUserId");
+
+                    b.HasIndex("ToPartyUserId");
+
+                    b.HasIndex("WalletItemId");
+
+                    b.ToTable("Invoices", (string)null);
                 });
 
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.LinkedBankAccount", b =>
@@ -522,22 +568,41 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("JsonValue")
+                    b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("SellerAccess")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool?>("ValueBool")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("ValueDecimal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("ValueInt")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ValueString")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ValueType")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ConfigKey")
                         .IsUnique();
 
-                    b.ToTable("MobileAppConfigurations", (string)null);
+                    b.ToTable("SystemConfigration", (string)null);
                 });
 
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.Order", b =>
@@ -727,6 +792,11 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsHasOffer")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<decimal>("ManualSellPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -856,10 +926,13 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<decimal?>("DiamondPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("GoldPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("IBAN")
                         .IsRequired()
@@ -892,11 +965,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<string>("PostalCode")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -908,6 +976,10 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
 
                     b.Property<DateTime?>("ReviewedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("SilverPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Street")
                         .IsRequired()
@@ -927,6 +999,9 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.Property<string>("VatNumber")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -937,12 +1012,12 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.HasIndex("Email")
-                        .IsUnique();
-
                     b.HasIndex("KycStatus");
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Sellers", (string)null);
                 });
@@ -971,6 +1046,9 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
+
+                    b.Property<int?>("InvoiceId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Notes")
                         .IsRequired()
@@ -1012,6 +1090,9 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("WalletItemId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Weight")
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
@@ -1022,11 +1103,15 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
 
                     b.HasIndex("CreatedAtUtc");
 
+                    b.HasIndex("InvoiceId");
+
                     b.HasIndex("SellerId");
 
                     b.HasIndex("Status");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("WalletItemId");
 
                     b.ToTable("TransactionHistories", (string)null);
                 });
@@ -1069,9 +1154,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int?>("SellerId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -1081,8 +1163,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .IsUnique();
 
                     b.HasIndex("Role");
-
-                    b.HasIndex("SellerId");
 
                     b.ToTable("Users", (string)null);
                 });
@@ -1374,32 +1454,44 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 {
                     b.HasOne("GoldWalletSystem.Domain.Entities.User", null)
                         .WithMany()
+                        .HasForeignKey("FromPartyUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("GoldWalletSystem.Domain.Entities.User", null)
+                        .WithMany()
                         .HasForeignKey("InvestorUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("GoldWalletSystem.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("GoldWalletSystem.Domain.Entities.TransactionHistory", null)
+                        .WithMany()
+                        .HasForeignKey("RelatedTransactionId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("GoldWalletSystem.Domain.Entities.User", null)
                         .WithMany()
                         .HasForeignKey("SellerUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-                });
 
-            modelBuilder.Entity("GoldWalletSystem.Domain.Entities.InvoiceItem", b =>
-                {
-                    b.HasOne("GoldWalletSystem.Domain.Entities.Invoice", "Invoice")
-                        .WithMany("Items")
-                        .HasForeignKey("InvoiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GoldWalletSystem.Domain.Entities.Product", null)
+                    b.HasOne("GoldWalletSystem.Domain.Entities.User", null)
                         .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("ToPartyUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Invoice");
+                    b.HasOne("GoldWalletSystem.Domain.Entities.WalletAsset", "WalletItem")
+                        .WithMany()
+                        .HasForeignKey("WalletItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Product");
+
+                    b.Navigation("WalletItem");
                 });
 
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.LinkedBankAccount", b =>
@@ -1457,8 +1549,24 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Navigation("Seller");
                 });
 
+            modelBuilder.Entity("GoldWalletSystem.Domain.Entities.Seller", b =>
+                {
+                    b.HasOne("GoldWalletSystem.Domain.Entities.User", "User")
+                        .WithOne("SellerProfile")
+                        .HasForeignKey("GoldWalletSystem.Domain.Entities.Seller", "UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.TransactionHistory", b =>
                 {
+                    b.HasOne("GoldWalletSystem.Domain.Entities.Invoice", "Invoice")
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("GoldWalletSystem.Domain.Entities.Seller", null)
                         .WithMany()
                         .HasForeignKey("SellerId")
@@ -1469,16 +1577,15 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-                });
 
-            modelBuilder.Entity("GoldWalletSystem.Domain.Entities.User", b =>
-                {
-                    b.HasOne("GoldWalletSystem.Domain.Entities.Seller", "Seller")
-                        .WithMany("Users")
-                        .HasForeignKey("SellerId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                    b.HasOne("GoldWalletSystem.Domain.Entities.WalletAsset", "WalletItem")
+                        .WithMany()
+                        .HasForeignKey("WalletItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("Seller");
+                    b.Navigation("Invoice");
+
+                    b.Navigation("WalletItem");
                 });
 
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.UserProfile", b =>
@@ -1535,11 +1642,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Navigation("Items");
                 });
 
-            modelBuilder.Entity("GoldWalletSystem.Domain.Entities.Invoice", b =>
-                {
-                    b.Navigation("Items");
-                });
-
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.PaymentMethod", b =>
                 {
                     b.Navigation("ApplePayDetails");
@@ -1554,13 +1656,13 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.Seller", b =>
                 {
                     b.Navigation("Products");
-
-                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.User", b =>
                 {
                     b.Navigation("Cart");
+
+                    b.Navigation("SellerProfile");
 
                     b.Navigation("Wallet");
                 });

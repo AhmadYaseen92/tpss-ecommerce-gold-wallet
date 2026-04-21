@@ -14,10 +14,34 @@ public class MobileAppConfigurationRepository(AppDbContext dbContext) : IMobileA
             {
                 Id = x.Id,
                 ConfigKey = x.ConfigKey,
-                JsonValue = x.JsonValue,
-                IsEnabled = x.IsEnabled,
+                Name = x.Name,
                 Description = x.Description,
-            }).ToListAsync(cancellationToken);
+                ValueType = x.ValueType,
+                ValueBool = x.ValueBool,
+                ValueInt = x.ValueInt,
+                ValueDecimal = x.ValueDecimal,
+                ValueString = x.ValueString,
+                SellerAccess = x.SellerAccess,
+            })
+            .ToListAsync(cancellationToken);
+
+    public async Task<MobileAppConfigurationDto?> GetByKeyAsync(string configKey, CancellationToken cancellationToken = default)
+        => await dbContext.MobileAppConfigurations.AsNoTracking()
+            .Where(x => x.ConfigKey == configKey)
+            .Select(x => new MobileAppConfigurationDto
+            {
+                Id = x.Id,
+                ConfigKey = x.ConfigKey,
+                Name = x.Name,
+                Description = x.Description,
+                ValueType = x.ValueType,
+                ValueBool = x.ValueBool,
+                ValueInt = x.ValueInt,
+                ValueDecimal = x.ValueDecimal,
+                ValueString = x.ValueString,
+                SellerAccess = x.SellerAccess,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<MobileAppConfigurationDto> UpsertAsync(UpsertMobileAppConfigurationRequestDto request, CancellationToken cancellationToken = default)
     {
@@ -27,29 +51,45 @@ public class MobileAppConfigurationRepository(AppDbContext dbContext) : IMobileA
             entity = new MobileAppConfiguration
             {
                 ConfigKey = request.ConfigKey,
-                JsonValue = request.JsonValue,
-                IsEnabled = request.IsEnabled,
+                Name = request.Name,
                 Description = request.Description,
+                ValueType = request.ValueType,
+                ValueBool = request.ValueBool,
+                ValueInt = request.ValueInt,
+                ValueDecimal = request.ValueDecimal,
+                ValueString = request.ValueString,
+                SellerAccess = request.SellerAccess,
             };
             dbContext.MobileAppConfigurations.Add(entity);
         }
         else
         {
-            entity.JsonValue = request.JsonValue;
-            entity.IsEnabled = request.IsEnabled;
+            entity.Name = request.Name;
             entity.Description = request.Description;
+            entity.ValueType = request.ValueType;
+            entity.ValueBool = request.ValueBool;
+            entity.ValueInt = request.ValueInt;
+            entity.ValueDecimal = request.ValueDecimal;
+            entity.ValueString = request.ValueString;
+            entity.SellerAccess = request.SellerAccess;
             entity.UpdatedAtUtc = DateTime.UtcNow;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-
-        return new MobileAppConfigurationDto
-        {
-            Id = entity.Id,
-            ConfigKey = entity.ConfigKey,
-            JsonValue = entity.JsonValue,
-            IsEnabled = entity.IsEnabled,
-            Description = entity.Description,
-        };
+        return ToDto(entity);
     }
+
+    private static MobileAppConfigurationDto ToDto(MobileAppConfiguration entity) => new()
+    {
+        Id = entity.Id,
+        ConfigKey = entity.ConfigKey,
+        Name = entity.Name,
+        Description = entity.Description,
+        ValueType = entity.ValueType,
+        ValueBool = entity.ValueBool,
+        ValueInt = entity.ValueInt,
+        ValueDecimal = entity.ValueDecimal,
+        ValueString = entity.ValueString,
+        SellerAccess = entity.SellerAccess,
+    };
 }

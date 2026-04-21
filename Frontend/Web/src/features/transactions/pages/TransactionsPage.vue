@@ -58,6 +58,8 @@ const statusOptions = (trx: TransactionRowView) => {
       <tr>
         <th>Transaction ID</th>
         <th>Investor</th>
+        <th>Seller ID</th>
+        <th>Seller</th>
         <th>Product</th>
         <th>Category</th>
         <th>Type</th>
@@ -74,6 +76,8 @@ const statusOptions = (trx: TransactionRowView) => {
       <tr v-for="trx in items" :key="trx.id">
         <td>{{ trx.id }}</td>
         <td>{{ trx.investorName }}</td>
+        <td>{{ trx.sellerId || '-' }}</td>
+        <td>{{ trx.sellerName || '-' }}</td>
         <td>
           <div class="product-cell">
             <img

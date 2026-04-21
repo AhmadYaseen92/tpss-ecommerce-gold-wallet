@@ -32,6 +32,8 @@ const weightUnits = computed(() => pm.weightUnits.value);
       :search-term="pm.productSearchTerm.value"
       :active-filter="pm.activeFilter.value"
       :category-filter="pm.categoryFilter.value"
+      :seller-filter="pm.sellerFilter.value"
+      :sellers="marketplace.state.value.sellers"
       :market-prices="pm.marketPrices"
       @add="pm.openAddProduct"
       @details="pm.openProductDetails"
@@ -46,6 +48,7 @@ const weightUnits = computed(() => pm.weightUnits.value);
       @update:search-term="pm.productSearchTerm.value = $event"
       @update:active-filter="pm.activeFilter.value = $event"
       @update:category-filter="pm.categoryFilter.value = $event"
+      @update:seller-filter="pm.sellerFilter.value = $event"
     />
   </SectionCard>
 </template>

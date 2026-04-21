@@ -1,8 +1,7 @@
 using GoldWalletSystem.Application.DTOs.Configuration;
-using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
-using System.Text.Json;
+using GoldWalletSystem.Domain.Enums;
 
 namespace GoldWalletSystem.Application.Services;
 
@@ -11,64 +10,58 @@ public class MobileAppConfigurationService(IMobileAppConfigurationRepository rep
     public Task<IReadOnlyList<MobileAppConfigurationDto>> GetAllAsync(CancellationToken cancellationToken = default)
         => repository.GetAllAsync(cancellationToken);
 
+    public Task<bool?> GetBoolAsync(string key, CancellationToken cancellationToken = default)
+        => GetByTypeAsync(key, ConfigurationValueType.Bool, x => x.ValueBool, cancellationToken);
+
+    public Task<int?> GetIntAsync(string key, CancellationToken cancellationToken = default)
+        => GetByTypeAsync(key, ConfigurationValueType.Int, x => x.ValueInt, cancellationToken);
+
+    public Task<string?> GetStringAsync(string key, CancellationToken cancellationToken = default)
+        => GetByTypeAsync(key, ConfigurationValueType.String, x => x.ValueString, cancellationToken);
+
+    public Task<decimal?> GetDecimalAsync(string key, CancellationToken cancellationToken = default)
+        => GetByTypeAsync(key, ConfigurationValueType.Decimal, x => x.ValueDecimal, cancellationToken);
+
     public Task<MobileAppConfigurationDto> UpsertAsync(UpsertMobileAppConfigurationRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (string.Equals(request.ConfigKey, MobileAppConfigurationKeys.LoginOtpDeliveryChannels, StringComparison.OrdinalIgnoreCase))
-        {
-            ValidateOtpChannelsConfiguration(request.JsonValue);
-        }
-        else if (string.Equals(request.ConfigKey, MobileAppConfigurationKeys.OtpSecuritySettings, StringComparison.OrdinalIgnoreCase))
-        {
-            ValidateOtpSecuritySettings(request.JsonValue);
-        }
+        if (string.IsNullOrWhiteSpace(request.Name))
+            throw new InvalidOperationException("Name is required.");
 
-        return repository.UpsertAsync(request, cancellationToken);
+        if (HasMoreThanOneValue(request))
+            throw new InvalidOperationException("Only one value column may be set.");
+
+        var normalized = new UpsertMobileAppConfigurationRequestDto
+        {
+            ConfigKey = request.ConfigKey,
+            Name = request.Name,
+            ValueType = request.ValueType,
+            SellerAccess = request.SellerAccess,
+            Description = request.Description,
+            ValueString = request.ValueType == ConfigurationValueType.String ? request.ValueString : null,
+            ValueBool = request.ValueType == ConfigurationValueType.Bool ? request.ValueBool : null,
+            ValueInt = request.ValueType == ConfigurationValueType.Int ? request.ValueInt : null,
+            ValueDecimal = request.ValueType == ConfigurationValueType.Decimal ? request.ValueDecimal : null
+        };
+
+        return repository.UpsertAsync(normalized, cancellationToken);
     }
 
-    private static void ValidateOtpChannelsConfiguration(string jsonValue)
+    private async Task<T?> GetByTypeAsync<T>(string key, ConfigurationValueType expectedType, Func<MobileAppConfigurationDto, T?> selector, CancellationToken cancellationToken)
     {
-        try
-        {
-            using var document = JsonDocument.Parse(jsonValue);
-            var channelsNode = document.RootElement.ValueKind switch
-            {
-                JsonValueKind.Array => document.RootElement,
-                JsonValueKind.Object when document.RootElement.TryGetProperty("channels", out var channelsElement) => channelsElement,
-                _ => throw new InvalidOperationException("OTP channels must be a JSON array or an object with a 'channels' array.")
-            };
+        var config = await repository.GetByKeyAsync(key, cancellationToken);
+        if (config is null || config.ValueType != expectedType)
+            return default;
 
-            if (channelsNode.ValueKind != JsonValueKind.Array)
-                throw new InvalidOperationException("OTP channels must be an array.");
-
-            var channels = channelsNode.EnumerateArray()
-                .Select(x => x.GetString()?.Trim().ToLowerInvariant())
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Distinct()
-                .ToArray();
-
-            if (channels.Length == 0)
-                throw new InvalidOperationException("At least one OTP channel must be selected.");
-
-            if (channels.Any(x => x is not ("whatsapp" or "email")))
-                throw new InvalidOperationException("OTP channels support only 'whatsapp' and 'email'.");
-        }
-        catch (JsonException)
-        {
-            throw new InvalidOperationException("OTP channels must be valid JSON.");
-        }
+        return selector(config);
     }
 
-    private static void ValidateOtpSecuritySettings(string jsonValue)
+    private static bool HasMoreThanOneValue(UpsertMobileAppConfigurationRequestDto request)
     {
-        try
-        {
-            using var document = JsonDocument.Parse(jsonValue);
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-                throw new InvalidOperationException("OTP security settings must be a JSON object.");
-        }
-        catch (JsonException)
-        {
-            throw new InvalidOperationException("OTP security settings must be valid JSON.");
-        }
+        var count = 0;
+        if (request.ValueString is not null) count++;
+        if (request.ValueBool.HasValue) count++;
+        if (request.ValueInt.HasValue) count++;
+        if (request.ValueDecimal.HasValue) count++;
+        return count > 1;
     }
 }

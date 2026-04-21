@@ -3,7 +3,7 @@ import { downloadBlob } from "../../../shared/services/fileDownload";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 
 export function useReports(marketplace: ReturnTypeUseMarketplace) {
-  const reportFilters = reactive({ reportType: "sales", userId: "", userName: "", productName: "", dateRange: "today", customFrom: "", customTo: "", stockOnly: false });
+  const reportFilters = reactive({ reportType: "sales", sellerId: "all", userId: "", userName: "", productName: "", dateRange: "today", customFrom: "", customTo: "", stockOnly: false });
   const generatedReports = ref<Array<Record<string, string | number>>>([]);
   const reportTypeCards = [
     { key: "sales", label: "Sales Report", description: "Sales totals by products and users" },
@@ -13,9 +13,24 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
   ];
 
   const generateReports = () => {
+    const sellerLookup = new Map(marketplace.state.value.sellers.map((seller) => [seller.id, seller]));
     generatedReports.value = marketplace.state.value.products
-      .filter((product) => (!reportFilters.productName || product.name.toLowerCase().includes(reportFilters.productName.toLowerCase())) && (!reportFilters.stockOnly || product.stock > 0))
-      .map((product) => ({ type: reportFilters.reportType, userId: reportFilters.userId || "N/A", userName: reportFilters.userName || (marketplace.state.value.currentUserName ?? "N/A"), productName: product.name, stock: product.stock, unitPrice: product.unitPrice, dateRange: reportFilters.dateRange }));
+      .filter((product) =>
+        (!reportFilters.productName || product.name.toLowerCase().includes(reportFilters.productName.toLowerCase())) &&
+        (!reportFilters.stockOnly || product.stock > 0) &&
+        (reportFilters.sellerId === "all" || product.sellerId === reportFilters.sellerId)
+      )
+      .map((product) => ({
+        type: reportFilters.reportType,
+        sellerId: product.sellerId,
+        sellerName: sellerLookup.get(product.sellerId)?.name ?? "N/A",
+        userId: reportFilters.userId || "N/A",
+        userName: reportFilters.userName || (marketplace.state.value.currentUserName ?? "N/A"),
+        productName: product.name,
+        stock: product.stock,
+        unitPrice: product.unitPrice,
+        dateRange: reportFilters.dateRange
+      }));
   };
 
   const downloadReport = () => {

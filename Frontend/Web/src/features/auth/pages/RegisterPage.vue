@@ -1,17 +1,50 @@
 <script setup lang="ts">
+import { reactive, computed } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
 import RegisterForm from "../components/RegisterForm.vue";
-import type { RegisterFormModel } from "../types/authTypes";
+import {
+  createEmptyRegisterForm,
+  type RegisterFormModel,
+} from "../types/authTypes";
+import { buildRegisterSellerPayload } from "../store/useAuthPage";
+import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 
-defineProps<{ model: RegisterFormModel; loading: boolean; title?: string }>();
-const emit = defineEmits<{ submit: []; toLogin: [] }>();
+const router = useRouter();
+const marketplace = useMarketplace();
+
+const model = reactive<RegisterFormModel>(createEmptyRegisterForm());
+const loading = computed(() => marketplace.loading.value);
+
+const onSubmit = async () => {
+  if (model.credentials.password !== model.credentials.confirmPassword) {
+    ElMessage.error("Password and confirm password do not match.");
+    return;
+  }
+
+  const payload = buildRegisterSellerPayload(model);
+  await marketplace.registerSeller(payload);
+
+  if (!marketplace.error.value) {
+    ElMessage.success("Registration submitted successfully.");
+    router.push("/Login");
+  }
+};
+
+const onToLogin = () => {
+  router.push("/Login");
+};
 </script>
 
 <template>
-  <section class="login-page">
+  <section class="register-page">
     <div class="auth-card large">
-      <h1>{{ title ?? 'Create Seller Account' }}</h1>
-      <p>Register seller account with KYC details and wait for admin approval.</p>
-      <RegisterForm :model="model" :loading="loading" @submit="emit('submit')" @to-login="emit('toLogin')" />
+      <RegisterForm
+        :model="model"
+        :loading="loading"
+        @submit="onSubmit"
+        @to-login="onToLogin"
+      />
     </div>
   </section>
 </template>

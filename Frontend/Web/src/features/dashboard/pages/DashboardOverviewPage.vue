@@ -10,7 +10,7 @@ defineProps<{
   categoryRing: Array<{ category: string; count: number; color: string; percent: number }>;
   categoryTransactionSeries: Array<{ label: string; value: number }>;
   categoryCartSeries: Array<{ label: string; value: number }>;
-  recentTransactions: Array<{ id: string; investorName: string; productName: string; amount: number; status: string; type: string; createdAt: string }>;
+  recentTransactions: Array<{ id: string; sellerName?: string; investorName: string; productName: string; amount: number; status: string; type: string; createdAt: string }>;
 }>();
 
 const ringBackground = (segments: Array<{ color: string; percent: number }>) => {
@@ -90,6 +90,7 @@ const barHeight = (value: number, maxValue: number) => {
         <thead>
           <tr>
             <th>ID</th>
+            <th>Seller</th>
             <th>Investor</th>
             <th>Product</th>
             <th>Type</th>
@@ -101,6 +102,7 @@ const barHeight = (value: number, maxValue: number) => {
         <tbody>
           <tr v-for="item in recentTransactions" :key="item.id">
             <td>{{ item.id }}</td>
+            <td>{{ item.sellerName || '-' }}</td>
             <td>{{ item.investorName }}</td>
             <td>{{ item.productName }}</td>
             <td>{{ item.type }}</td>

@@ -1,8 +1,10 @@
 using System.Text.Json;
+using GoldWalletSystem.API.Services;
+using GoldWalletSystem.Application.Constants;
 using System.Text;
 using GoldWalletSystem.Application.DTOs.Common;
-using GoldWalletSystem.API.Models;
-using GoldWalletSystem.API.Services;
+using GoldWalletSystem.Application.DTOs.Admin;
+using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
@@ -21,8 +23,6 @@ public class WebAdminController(
     IMarketplaceRealtimeNotifier realtimeNotifier,
     IWebHostEnvironment environment) : ControllerBase
 {
-    private const string FeesConfigKey = "webadmin.fees";
-    private const string WalletSellConfigKey = "wallet.sell.execution";
 
     [HttpGet("summary")]
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
@@ -40,8 +40,8 @@ public class WebAdminController(
         var invoicesQuery = dbContext.Invoices.AsQueryable();
         if (sellerScope.HasValue)
         {
-            invoicesQuery = invoicesQuery.Where(x => dbContext.Users
-                .Any(u => u.Id == x.SellerUserId && u.SellerId == sellerScope.Value));
+            invoicesQuery = invoicesQuery.Where(x => dbContext.Sellers
+                .Any(s => s.UserId == x.SellerUserId && s.Id == sellerScope.Value));
         }
         var invoicesCount = await invoicesQuery.CountAsync(cancellationToken);
         var unreadNotificationsCount = await dbContext.AppNotifications.CountAsync(x => !x.IsRead, cancellationToken);
@@ -75,10 +75,13 @@ public class WebAdminController(
             {
                 Id = $"s-{x.Id}",
                 Name = x.Name,
-                Email = x.Email,
+                Email = x.ContactEmail ?? dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
                 BusinessName = x.CompanyName,
                 KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
-                SubmittedAt = x.CreatedAtUtc
+                SubmittedAt = x.CreatedAtUtc,
+                GoldPrice = x.GoldPrice,
+                SilverPrice = x.SilverPrice,
+                DiamondPrice = x.DiamondPrice
             })
             .ToListAsync(cancellationToken);
 
@@ -105,7 +108,7 @@ public class WebAdminController(
         seller.IsActive = status == KycStatus.Approved;
 
         var sellerUsers = await dbContext.Users
-            .Where(x => x.SellerId == seller.Id && x.Role == SystemRoles.Seller)
+            .Where(x => x.Id == seller.UserId && x.Role == SystemRoles.Seller)
             .ToListAsync(cancellationToken);
 
         foreach (var sellerUser in sellerUsers)
@@ -118,6 +121,7 @@ public class WebAdminController(
         return Ok(ApiResponse<string>.Ok("updated"));
     }
 
+    [Authorize(Roles = SystemRoles.Admin)]
     [HttpGet("investors")]
     public async Task<IActionResult> GetInvestors(CancellationToken cancellationToken)
     {
@@ -128,8 +132,12 @@ public class WebAdminController(
             {
                 Id = $"i-{x.Id}",
                 FullName = x.FullName,
+                Email = x.Email,
+                PhoneNumber = x.PhoneNumber ?? string.Empty,
                 RiskLevel = "medium",
                 WalletBalance = dbContext.Wallets.Where(w => w.UserId == x.Id).Select(w => w.CashBalance).FirstOrDefault(),
+                TotalTransactions = dbContext.TransactionHistories.Count(th => th.UserId == x.Id),
+                CreatedAt = x.CreatedAtUtc,
                 Status = x.IsActive ? "active" : "blocked"
             })
             .ToListAsync(cancellationToken);
@@ -137,6 +145,7 @@ public class WebAdminController(
         return Ok(ApiResponse<List<WebInvestorDto>>.Ok(investors));
     }
 
+    [Authorize(Roles = SystemRoles.Admin)]
     [HttpPut("investors/{id}/status")]
     public async Task<IActionResult> UpdateInvestorStatus(string id, [FromBody] UpdateStatusRequest request, CancellationToken cancellationToken)
     {
@@ -173,25 +182,33 @@ public class WebAdminController(
                 dbContext.Users.AsNoTracking(),
                 history => history.UserId,
                 user => user.Id,
-                (history, user) => new WebRequestDto
+                (history, user) => new { history, user })
+            .GroupJoin(
+                dbContext.Sellers.AsNoTracking(),
+                x => x.history.SellerId,
+                seller => (int?)seller.Id,
+                (x, sellers) => new { x.history, x.user, seller = sellers.FirstOrDefault() })
+            .Select(x => new WebRequestDto
                 {
-                    Id = $"r-{history.Id}",
-                    InvestorId = $"i-{history.UserId}",
-                    InvestorName = user.FullName,
-                    Type = history.TransactionType,
-                    ProductName = history.Category,
-                    Category = history.Category,
-                    Quantity = history.Quantity,
-                    UnitPrice = history.UnitPrice,
-                    Weight = history.Weight,
-                    Unit = history.Unit,
-                    Purity = history.Purity,
-                    Amount = history.Amount,
-                    Status = MapRequestStatusForView(history.TransactionType, history.Status),
-                    Currency = history.Currency,
-                    Notes = history.Notes,
-                    CreatedAt = history.CreatedAtUtc,
-                    UpdatedAt = history.UpdatedAtUtc
+                    Id = $"r-{x.history.Id}",
+                    SellerId = x.history.SellerId.HasValue ? $"s-{x.history.SellerId.Value}" : string.Empty,
+                    SellerName = x.seller != null ? x.seller.Name : string.Empty,
+                    InvestorId = $"i-{x.history.UserId}",
+                    InvestorName = x.user.FullName,
+                    Type = x.history.TransactionType,
+                    ProductName = x.history.Category,
+                    Category = x.history.Category,
+                    Quantity = x.history.Quantity,
+                    UnitPrice = x.history.UnitPrice,
+                    Weight = x.history.Weight,
+                    Unit = x.history.Unit,
+                    Purity = x.history.Purity,
+                    Amount = x.history.Amount,
+                    Status = MapRequestStatusForView(x.history.TransactionType, x.history.Status),
+                    Currency = x.history.Currency,
+                    Notes = x.history.Notes,
+                    CreatedAt = x.history.CreatedAtUtc,
+                    UpdatedAt = x.history.UpdatedAtUtc
                 })
             .ToListAsync(cancellationToken);
 
@@ -361,8 +378,8 @@ public class WebAdminController(
 
         if (sellerScope.HasValue)
         {
-            invoicesQuery = invoicesQuery.Where(x => dbContext.Users
-                .Any(u => u.Id == x.SellerUserId && u.SellerId == sellerScope.Value));
+            invoicesQuery = invoicesQuery.Where(x => dbContext.Sellers
+                .Any(s => s.UserId == x.SellerUserId && s.Id == sellerScope.Value));
         }
 
         var invoices = await invoicesQuery
@@ -370,7 +387,7 @@ public class WebAdminController(
             .Select(x => new WebInvoiceDto
             {
                 Id = $"inv-{x.Id}",
-                SellerId = $"s-{x.SellerUserId}",
+                SellerId = $"s-{(dbContext.Sellers.Where(s => s.UserId == x.SellerUserId).Select(s => (int?)s.Id).FirstOrDefault() ?? 0)}",
                 InvestorName = dbContext.Users.Where(u => u.Id == x.InvestorUserId).Select(u => u.FullName).FirstOrDefault() ?? $"User {x.InvestorUserId}",
                 TotalAmount = x.TotalAmount,
                 IssuedAt = x.IssuedOnUtc,
@@ -390,11 +407,13 @@ public class WebAdminController(
                              await dbContext.Users.Where(x => x.FullName == request.InvestorName).Select(x => (int?)x.Id).FirstOrDefaultAsync(cancellationToken) ??
                              await dbContext.Users.Where(x => x.Role == SystemRoles.Investor).Select(x => x.Id).FirstOrDefaultAsync(cancellationToken);
 
-        var sellerUserId = TryParsePrefixedId(request.SellerId, "s-") ??
-                           await dbContext.Users.Where(x => x.Role == SystemRoles.Seller).Select(x => (int?)x.Id).FirstOrDefaultAsync(cancellationToken) ?? 0;
-        var sellerUserSellerId = await dbContext.Users
-            .Where(x => x.Id == sellerUserId)
-            .Select(x => x.SellerId)
+        var requestSellerId = TryParsePrefixedId(request.SellerId, "s-");
+        var sellerUserId = requestSellerId.HasValue
+            ? await dbContext.Sellers.Where(x => x.Id == requestSellerId.Value).Select(x => (int?)x.UserId).FirstOrDefaultAsync(cancellationToken) ?? 0
+            : await dbContext.Sellers.Select(x => (int?)x.UserId).FirstOrDefaultAsync(cancellationToken) ?? 0;
+        var sellerUserSellerId = await dbContext.Sellers
+            .Where(x => x.UserId == sellerUserId)
+            .Select(x => (int?)x.Id)
             .FirstOrDefaultAsync(cancellationToken);
         if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
@@ -446,9 +465,9 @@ public class WebAdminController(
 
         var invoice = await dbContext.Invoices.FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null) return NotFound(ApiResponse<object>.Fail("Invoice not found", 404));
-        var sellerUserSellerId = await dbContext.Users
-            .Where(x => x.Id == invoice.SellerUserId)
-            .Select(x => x.SellerId)
+        var sellerUserSellerId = await dbContext.Sellers
+            .Where(x => x.UserId == invoice.SellerUserId)
+            .Select(x => (int?)x.Id)
             .FirstOrDefaultAsync(cancellationToken);
         if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
@@ -471,9 +490,9 @@ public class WebAdminController(
 
         var invoice = await dbContext.Invoices.FirstOrDefaultAsync(x => x.Id == invoiceId, cancellationToken);
         if (invoice is null) return NotFound(ApiResponse<object>.Fail("Invoice not found", 404));
-        var sellerUserSellerId = await dbContext.Users
-            .Where(x => x.Id == invoice.SellerUserId)
-            .Select(x => x.SellerId)
+        var sellerUserSellerId = await dbContext.Sellers
+            .Where(x => x.UserId == invoice.SellerUserId)
+            .Select(x => (int?)x.Id)
             .FirstOrDefaultAsync(cancellationToken);
         if (!CanAccessSellerData(sellerUserSellerId)) return Forbid();
 
@@ -492,27 +511,9 @@ public class WebAdminController(
     [HttpPut("fees")]
     public async Task<IActionResult> UpdateFees([FromBody] WebFeesDto request, CancellationToken cancellationToken)
     {
-        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == FeesConfigKey, cancellationToken);
-        if (config is null)
-        {
-            config = new Domain.Entities.MobileAppConfiguration
-            {
-                ConfigKey = FeesConfigKey,
-                JsonValue = JsonSerializer.Serialize(request),
-                IsEnabled = true,
-                Description = "Web admin fees configuration",
-                CreatedAtUtc = DateTime.UtcNow
-            };
-            dbContext.MobileAppConfigurations.Add(config);
-        }
-        else
-        {
-            config.JsonValue = JsonSerializer.Serialize(request);
-            config.IsEnabled = true;
-            config.UpdatedAtUtc = DateTime.UtcNow;
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await UpsertDecimalConfigurationAsync(MobileAppConfigurationKeys.FeesDelivery, "Fees Delivery", request.DeliveryFee, "Web admin delivery fee", cancellationToken);
+        await UpsertDecimalConfigurationAsync(MobileAppConfigurationKeys.FeesStorage, "Fees Storage", request.StorageFee, "Web admin storage fee", cancellationToken);
+        await UpsertDecimalConfigurationAsync(MobileAppConfigurationKeys.FeesServiceChargePercent, "Fees Service Charge", request.ServiceChargePercent, "Web admin service charge percent", cancellationToken);
         return Ok(ApiResponse<WebFeesDto>.Ok(request));
     }
 
@@ -520,16 +521,9 @@ public class WebAdminController(
     [HttpGet("wallet/sell-configuration")]
     public async Task<IActionResult> GetWalletSellConfiguration(CancellationToken cancellationToken)
     {
-        var config = await dbContext.MobileAppConfigurations
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ConfigKey == WalletSellConfigKey && x.IsEnabled, cancellationToken);
-
-        var payload = config?.JsonValue;
-        if (string.IsNullOrWhiteSpace(payload))
-        {
-            payload = JsonSerializer.Serialize(new { mode = "locked_30_seconds", lockSeconds = 30 });
-        }
-
+        var mode = await ReadConfigStringAsync(MobileAppConfigurationKeys.WalletSellMode, "locked_30_seconds", cancellationToken);
+        var lockSeconds = await ReadConfigIntAsync(MobileAppConfigurationKeys.WalletSellLockSeconds, 30, cancellationToken);
+        var payload = JsonSerializer.Serialize(new { mode, lockSeconds });
         return Ok(ApiResponse<string>.Ok(payload));
     }
 
@@ -550,31 +544,10 @@ public class WebAdminController(
             ? Math.Clamp(lockElement.GetInt32(), 5, 300)
             : 30;
 
+        await UpsertStringConfigurationAsync(MobileAppConfigurationKeys.WalletSellMode, "Wallet Sell Mode", mode, "Wallet sell execution behavior", cancellationToken);
+        await UpsertIntConfigurationAsync(MobileAppConfigurationKeys.WalletSellLockSeconds, "Wallet Sell Lock Seconds", lockSeconds, "Wallet sell lock duration seconds", cancellationToken);
+
         var payload = JsonSerializer.Serialize(new { mode, lockSeconds });
-
-        var config = await dbContext.MobileAppConfigurations
-            .FirstOrDefaultAsync(x => x.ConfigKey == WalletSellConfigKey, cancellationToken);
-
-        if (config is null)
-        {
-            config = new Domain.Entities.MobileAppConfiguration
-            {
-                ConfigKey = WalletSellConfigKey,
-                JsonValue = payload,
-                IsEnabled = true,
-                Description = "Wallet sell execution behavior",
-                CreatedAtUtc = DateTime.UtcNow
-            };
-            dbContext.MobileAppConfigurations.Add(config);
-        }
-        else
-        {
-            config.JsonValue = payload;
-            config.IsEnabled = true;
-            config.UpdatedAtUtc = DateTime.UtcNow;
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ApiResponse<string>.Ok(payload));
     }
 
@@ -700,14 +673,123 @@ public class WebAdminController(
 
     private async Task<WebFeesDto> ReadFeesAsync(CancellationToken cancellationToken)
     {
-        var config = await dbContext.MobileAppConfigurations
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ConfigKey == FeesConfigKey && x.IsEnabled, cancellationToken);
+        return new WebFeesDto
+        {
+            DeliveryFee = await ReadConfigDecimalAsync(MobileAppConfigurationKeys.FeesDelivery, 12m, cancellationToken),
+            StorageFee = await ReadConfigDecimalAsync(MobileAppConfigurationKeys.FeesStorage, 4m, cancellationToken),
+            ServiceChargePercent = await ReadConfigDecimalAsync(MobileAppConfigurationKeys.FeesServiceChargePercent, 2.5m, cancellationToken)
+        };
+    }
 
-        if (config is null || string.IsNullOrWhiteSpace(config.JsonValue))
-            return new WebFeesDto { DeliveryFee = 12, StorageFee = 4, ServiceChargePercent = 2.5m };
+    private async Task<string> ReadConfigStringAsync(string key, string fallback, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        return string.IsNullOrWhiteSpace(config?.ValueString) ? fallback : config.ValueString;
+    }
 
-        return JsonSerializer.Deserialize<WebFeesDto>(config.JsonValue) ?? new WebFeesDto { DeliveryFee = 12, StorageFee = 4, ServiceChargePercent = 2.5m };
+    private async Task<int> ReadConfigIntAsync(string key, int fallback, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        return config?.ValueInt ?? fallback;
+    }
+
+    private async Task<decimal> ReadConfigDecimalAsync(string key, decimal fallback, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        return config?.ValueDecimal ?? fallback;
+    }
+
+    private async Task UpsertStringConfigurationAsync(string key, string name, string value, string description, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = key,
+                Name = name,
+                ValueType = ConfigurationValueType.String,
+                ValueString = value,
+                Description = description,
+                SellerAccess = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            config.Name = name;
+            config.ValueType = ConfigurationValueType.String;
+            config.ValueString = value;
+            config.ValueBool = null;
+            config.ValueInt = null;
+            config.ValueDecimal = null;
+            config.Description = description;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task UpsertIntConfigurationAsync(string key, string name, int value, string description, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = key,
+                Name = name,
+                ValueType = ConfigurationValueType.Int,
+                ValueInt = value,
+                Description = description,
+                SellerAccess = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            config.Name = name;
+            config.ValueType = ConfigurationValueType.Int;
+            config.ValueString = null;
+            config.ValueBool = null;
+            config.ValueInt = value;
+            config.ValueDecimal = null;
+            config.Description = description;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task UpsertDecimalConfigurationAsync(string key, string name, decimal value, string description, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = key,
+                Name = name,
+                ValueType = ConfigurationValueType.Decimal,
+                ValueDecimal = value,
+                Description = description,
+                SellerAccess = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            config.Name = name;
+            config.ValueType = ConfigurationValueType.Decimal;
+            config.ValueString = null;
+            config.ValueBool = null;
+            config.ValueInt = null;
+            config.ValueDecimal = value;
+            config.Description = description;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private static int? TryParsePrefixedId(string value, string prefix)
@@ -1049,9 +1131,9 @@ public class WebAdminController(
 
     private async Task CreateInvoiceForApprovedRequestAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
     {
-        var sellerUserId = await dbContext.Users
-            .Where(x => x.Role == SystemRoles.Seller && x.SellerId == request.SellerId)
-            .Select(x => (int?)x.Id)
+        var sellerUserId = await dbContext.Sellers
+            .Where(x => x.Id == request.SellerId)
+            .Select(x => (int?)x.UserId)
             .FirstOrDefaultAsync(cancellationToken) ?? 0;
 
         var pdfUrl = await SaveInvoiceDocumentAsync(request, cancellationToken);
