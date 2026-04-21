@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { reactive, computed } from "vue";
-import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import RegisterForm from "../components/RegisterForm.vue";
 import {
@@ -10,7 +9,7 @@ import {
 import { buildRegisterSellerPayload } from "../store/useAuthPage";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 
-const router = useRouter();
+const emit = defineEmits<{ toLogin: [] }>();
 const marketplace = useMarketplace();
 
 const model = reactive<RegisterFormModel>(createEmptyRegisterForm());
@@ -70,12 +69,8 @@ const onSubmit = async () => {
 
   if (!marketplace.error.value) {
     ElMessage.success("Registration submitted successfully.");
-    router.push("/Login");
+    emit("toLogin");
   }
-};
-
-const onToLogin = () => {
-  router.push("/Login");
 };
 </script>
 
@@ -86,7 +81,7 @@ const onToLogin = () => {
         :model="model"
         :loading="loading"
         @submit="onSubmit"
-        @to-login="onToLogin"
+        @to-login="emit('toLogin')"
       />
     </div>
   </section>

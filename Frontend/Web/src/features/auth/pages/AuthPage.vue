@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router";
+import { ref } from "vue";
+import LoginPage from "./LoginPage.vue";
+import RegisterPage from "./RegisterPage.vue";
 
-const router = useRouter();
-router.replace("/Login");
+defineProps<{ marketplace: unknown }>();
+const mode = ref<"login" | "register">("login");
 </script>
 
 <template>
-  <section />
+  <LoginPage v-if="mode === 'login'" @to-register="mode = 'register'" />
+  <RegisterPage v-else @to-login="mode = 'login'" />
 </template>
