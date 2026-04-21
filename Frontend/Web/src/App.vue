@@ -7,6 +7,7 @@ import DashboardFeaturePage from "./features/dashboard/pages/DashboardFeaturePag
 import ProductFeaturePage from "./features/products/pages/ProductFeaturePage.vue";
 import InvestorsFeaturePage from "./features/investors/pages/InvestorsFeaturePage.vue";
 import SellersFeaturePage from "./features/dashboard/pages/SellersFeaturePage.vue";
+import SellerDetailsPage from "./features/dashboard/pages/SellerDetailsPage.vue";
 import SettingsFeaturePage from "./features/dashboard/pages/SettingsFeaturePage.vue";
 import TransactionsFeaturePage from "./features/transactions/pages/TransactionsFeaturePage.vue";
 import ReportsFeaturePage from "./features/reports/pages/ReportsFeaturePage.vue";
@@ -26,26 +27,26 @@ const ROUTE_BY_MENU: Partial<Record<NavigationKey, string>> = {
   reports: "/reports"
 };
 
-const readHashPath = () => {
-  const value = window.location.hash.replace(/^#/, "");
-  if (!value) return "/overview";
+const readPath = () => {
+  const value = window.location.pathname;
+  if (!value || value === "/" || value === "/Login" || value === "/Register") return "/overview";
   return value.startsWith("/") ? value : "/overview";
 };
 
 const currentPath = ref("/overview");
-const syncHashPath = () => {
-  currentPath.value = readHashPath();
+const syncPath = () => {
+  currentPath.value = readPath();
 };
 
 onMounted(() => {
   void marketplace.restoreSession();
   isDark.value = window.localStorage.getItem(THEME_KEY) === "dark";
-  syncHashPath();
-  window.addEventListener("hashchange", syncHashPath);
+  syncPath();
+  window.addEventListener("popstate", syncPath);
 });
 
 onUnmounted(() => {
-  window.removeEventListener("hashchange", syncHashPath);
+  window.removeEventListener("popstate", syncPath);
 });
 
 watch(isDark, (value) => {
@@ -82,6 +83,7 @@ watch(activeMenu, (menu) => {
 }, { immediate: true });
 
 const activeComponent = computed(() => {
+  if (currentPath.value.startsWith("/sellers/")) return marketplace.role.value === "Admin" ? SellerDetailsPage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/products")) return ProductFeaturePage;
   if (currentPath.value.startsWith("/investors")) return marketplace.role.value === "Admin" ? InvestorsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/sellers")) return marketplace.role.value === "Admin" ? SellersFeaturePage : DashboardFeaturePage;
@@ -97,25 +99,32 @@ const welcomeText = computed(() => {
   return `Welcome back, ${fullName}`;
 });
 
+
+watch(() => marketplace.session.value, (session) => {
+  if (session && (window.location.pathname === "/Login" || window.location.pathname === "/Register" || window.location.pathname === "/")) {
+    window.history.replaceState({}, "", "/overview");
+    syncPath();
+  }
+});
 const handleMenuChange = (menu: NavigationKey) => {
   if (menu === "logout") {
     marketplace.logout();
-    window.location.hash = "#/overview";
-    syncHashPath();
+    window.history.pushState({}, "", "/overview");
+    syncPath();
     return;
   }
 
   const target = ROUTE_BY_MENU[menu as keyof typeof ROUTE_BY_MENU];
   if (target) {
-    window.location.hash = `#${target}`;
-    syncHashPath();
+    window.history.pushState({}, "", target);
+    syncPath();
   }
 };
 
 const handleLogout = () => {
   marketplace.logout();
-  window.location.hash = "#/overview";
-  syncHashPath();
+  window.history.pushState({}, "", "/overview");
+  syncPath();
 };
 </script>
 

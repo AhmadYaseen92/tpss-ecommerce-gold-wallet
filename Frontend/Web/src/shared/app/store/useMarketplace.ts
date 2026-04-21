@@ -72,7 +72,10 @@ function readStoredSession(): UserSession | null {
   }
 }
 
+let marketplaceStore: any = null;
+
 export function useMarketplace() {
+  if (marketplaceStore) return marketplaceStore;
   const persistedSession = readStoredSession();
   const role = ref<UserRole>(persistedSession?.role ?? "Admin");
   const activeMenu = ref<NavigationKey>("overview");
@@ -203,6 +206,20 @@ export function useMarketplace() {
     }
   };
 
+  const blockKyc = async (sellerId: string) => {
+    state.value.sellers = updateSellerKycStatus(state.value.sellers, sellerId, "blocked");
+    if (session.value?.accessToken) {
+      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "blocked");
+    }
+  };
+
+  const markKycUnderReview = async (sellerId: string) => {
+    state.value.sellers = updateSellerKycStatus(state.value.sellers, sellerId, "underreview");
+    if (session.value?.accessToken) {
+      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "underreview");
+    }
+  };
+
   const setMarketPrice = (productId: string, marketPrice: number) => {
     state.value.products = updateProductMarketPrice(state.value.products, productId, marketPrice);
   };
@@ -300,7 +317,7 @@ export function useMarketplace() {
 
   watch(session, (value) => persistSession(value), { deep: true });
 
-  return {
+  marketplaceStore = {
     role,
     activeMenu,
     session,
@@ -317,6 +334,8 @@ export function useMarketplace() {
     registerSeller,
     approveKyc,
     rejectKyc,
+    blockKyc,
+    markKycUnderReview,
     setMarketPrice,
     addProduct,
     updateProduct,
@@ -333,6 +352,8 @@ export function useMarketplace() {
     walletSellConfiguration,
     saveWalletSellConfiguration
   };
+
+  return marketplaceStore;
 }
 
 

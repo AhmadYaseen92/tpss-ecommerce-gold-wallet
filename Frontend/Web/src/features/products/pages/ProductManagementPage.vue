@@ -53,7 +53,7 @@ const pagedProducts = computed(() => {
 <template>
   <section>
     <p v-if="productError" class="error-text">{{ productError }}</p>
-    <div class="report-actions" v-if="role === 'seller'"><button @click="emit('add')">Add Product</button></div>
+    <div class="report-actions" v-if="role === 'Seller'"><button @click="emit('add')">Add Product</button></div>
 
     <div v-if="productPage === 'list'">
       <div class="filters" style="grid-template-columns: repeat(4, minmax(140px, 1fr)); margin-bottom: 16px; align-items:end;">

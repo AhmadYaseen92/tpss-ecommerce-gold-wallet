@@ -1,5 +1,5 @@
 export type UserRole = "Admin" | "Seller";
-export type KycStatus = "pending" | "approved" | "rejected";
+export type KycStatus = "pending" | "underreview" | "approved" | "rejected" | "blocked";
 
 export type NavigationKey =
   | "overview"
@@ -23,7 +23,11 @@ export interface Seller {
   code?: string;
   email: string;
   businessName: string;
+  companyCode?: string;
+  loginEmail?: string;
   contactPhone?: string;
+  isActive?: boolean;
+  reviewedAt?: string;
   country?: string;
   city?: string;
   street?: string;
@@ -163,20 +167,64 @@ export interface SellerRegistration {
   lastName: string;
   email: string;
   password: string;
-  phoneNumber: string;
-  country: string;
-  city: string;
-  street: string;
-  buildingNumber: string;
-  postalCode: string;
-  companyName: string;
-  tradeLicenseNumber: string;
-  vatNumber: string;
-  nationalIdNumber: string;
-  bankName: string;
-  iban: string;
-  accountHolderName: string;
-  nationalIdFrontPath: string;
-  nationalIdBackPath: string;
-  tradeLicensePath: string;
+  role: "Seller";
+  companyInfo: {
+    companyName: string;
+    companyCode: string;
+    commercialRegistrationNumber: string;
+    vatNumber: string;
+    businessActivity: string;
+    establishedDate?: string;
+    country: string;
+    city: string;
+    street: string;
+    buildingNumber: string;
+    postalCode: string;
+    companyPhone: string;
+    companyEmail: string;
+    website?: string;
+    description?: string;
+  };
+  manager: {
+    fullName: string;
+    positionTitle: string;
+    nationality: string;
+    mobileNumber: string;
+    emailAddress: string;
+    idType: string;
+    idNumber: string;
+    idExpiryDate?: string;
+  };
+  branches: Array<{
+    branchName: string;
+    country: string;
+    city: string;
+    fullAddress: string;
+    buildingNumber: string;
+    postalCode: string;
+    phoneNumber: string;
+    email: string;
+    isMainBranch: boolean;
+  }>;
+  bankAccounts: Array<{
+    bankName: string;
+    accountHolderName: string;
+    accountNumber: string;
+    iban: string;
+    swiftCode: string;
+    bankCountry: string;
+    bankCity: string;
+    branchName: string;
+    branchAddress: string;
+    currency: string;
+    isMainAccount: boolean;
+  }>;
+  documents: Array<{
+    documentType: string;
+    fileName: string;
+    filePath: string;
+    contentType: string;
+    isRequired: boolean;
+    relatedEntityType?: string;
+  }>;
 }

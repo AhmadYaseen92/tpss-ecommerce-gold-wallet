@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { reactive, computed } from "vue";
-import { useRouter } from "vue-router";
 import LoginForm from "../components/LoginForm.vue";
 import type { LoginFormModel } from "../types/authTypes";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 
-const router = useRouter();
+const emit = defineEmits<{ toRegister: [] }>();
 const marketplace = useMarketplace();
 
 const model = reactive<LoginFormModel>({
@@ -22,17 +21,14 @@ const onSubmit = async () => {
     password: model.password,
   });
 
-  if (!marketplace.error.value) {
-    router.push("/OverView");
+  if (!marketplace.error.value && marketplace.session.value) {
+    window.history.replaceState({}, "", "/overview");
+    window.dispatchEvent(new PopStateEvent("popstate"));
   }
 };
 
 const onForgot = () => {
   console.log("Forgot password clicked");
-};
-
-const onToRegister = () => {
-  router.push("/Register");
 };
 </script>
 
@@ -47,7 +43,7 @@ const onToRegister = () => {
         :loading="loading"
         @submit="onSubmit"
         @forgot="onForgot"
-        @to-register="onToRegister"
+        @to-register="emit('toRegister')"
       />
     </div>
   </section>

@@ -74,9 +74,14 @@ public class WebAdminController(
             .Select(x => new WebSellerDto
             {
                 Id = $"s-{x.Id}",
-                Name = x.Name,
-                Email = x.ContactEmail ?? dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
+                Name = x.CompanyName,
+                Email = x.CompanyEmail ?? dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
                 BusinessName = x.CompanyName,
+                CompanyCode = x.CompanyCode,
+                ContactPhone = x.CompanyPhone,
+                LoginEmail = dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
+                IsActive = x.IsActive,
+                ReviewedAt = x.ReviewedAtUtc,
                 KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
                 SubmittedAt = x.CreatedAtUtc,
                 GoldPrice = x.GoldPrice,
@@ -86,6 +91,195 @@ public class WebAdminController(
             .ToListAsync(cancellationToken);
 
         return Ok(ApiResponse<List<WebSellerDto>>.Ok(sellers));
+    }
+
+    [HttpGet("sellers/{id}")]
+    public async Task<IActionResult> GetSellerDetails(string id, CancellationToken cancellationToken)
+    {
+        var sellerId = TryParsePrefixedId(id, "s-");
+        if (sellerId is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
+
+        var sellerIdClaim = User.FindFirst("seller_id")?.Value;
+        var currentSellerId = int.TryParse(sellerIdClaim, out var parsedSellerId) ? parsedSellerId : 0;
+        if (!User.IsInRole(SystemRoles.Admin) && currentSellerId != sellerId.Value)
+        {
+            return Forbid();
+        }
+
+        var seller = await dbContext.Sellers
+            .AsNoTracking()
+            .Include(x => x.Address)
+            .Include(x => x.Managers)
+            .Include(x => x.Branches)
+            .Include(x => x.BankAccounts)
+            .Include(x => x.Documents)
+            .FirstOrDefaultAsync(x => x.Id == sellerId.Value, cancellationToken);
+
+        if (seller is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
+
+        var loginEmail = await dbContext.Users
+            .Where(x => x.Id == seller.UserId)
+            .Select(x => x.Email)
+            .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
+
+        var details = new WebSellerDetailsDto
+        {
+            Id = $"s-{seller.Id}",
+            CompanyName = seller.CompanyName,
+            CompanyCode = seller.CompanyCode,
+            CommercialRegistrationNumber = seller.CommercialRegistrationNumber,
+            VatNumber = seller.VatNumber,
+            BusinessActivity = seller.BusinessActivity,
+            EstablishedDate = seller.EstablishedDate,
+            CompanyPhone = seller.CompanyPhone,
+            CompanyEmail = seller.CompanyEmail,
+            Website = seller.Website,
+            Description = seller.Description,
+            LoginEmail = loginEmail,
+            IsActive = seller.IsActive,
+            KycStatus = seller.KycStatus.ToString().ToLowerInvariant(),
+            ReviewNotes = seller.ReviewNotes,
+            SubmittedAt = seller.CreatedAtUtc,
+            ReviewedAt = seller.ReviewedAtUtc,
+            GoldPrice = seller.GoldPrice,
+            SilverPrice = seller.SilverPrice,
+            DiamondPrice = seller.DiamondPrice,
+            Address = seller.Address is null
+                ? null
+                : new WebSellerAddressDto
+                {
+                    Country = seller.Address.Country,
+                    City = seller.Address.City,
+                    Street = seller.Address.Street,
+                    BuildingNumber = seller.Address.BuildingNumber,
+                    PostalCode = seller.Address.PostalCode
+                },
+            Managers = seller.Managers
+                .OrderByDescending(x => x.IsPrimary)
+                .ThenBy(x => x.Id)
+                .Select(x => new WebSellerManagerDto
+                {
+                    FullName = x.FullName,
+                    PositionTitle = x.PositionTitle,
+                    Nationality = x.Nationality,
+                    MobileNumber = x.MobileNumber,
+                    EmailAddress = x.EmailAddress,
+                    IdType = x.IdType,
+                    IdNumber = x.IdNumber,
+                    IdExpiryDate = x.IdExpiryDate,
+                    IsPrimary = x.IsPrimary
+                })
+                .ToList(),
+            Branches = seller.Branches
+                .OrderByDescending(x => x.IsMainBranch)
+                .ThenBy(x => x.Id)
+                .Select(x => new WebSellerBranchDto
+                {
+                    BranchName = x.BranchName,
+                    Country = x.Country,
+                    City = x.City,
+                    FullAddress = x.FullAddress,
+                    BuildingNumber = x.BuildingNumber,
+                    PostalCode = x.PostalCode,
+                    PhoneNumber = x.PhoneNumber,
+                    Email = x.Email,
+                    IsMainBranch = x.IsMainBranch
+                })
+                .ToList(),
+            BankAccounts = seller.BankAccounts
+                .OrderByDescending(x => x.IsMainAccount)
+                .ThenBy(x => x.Id)
+                .Select(x => new WebSellerBankAccountDto
+                {
+                    BankName = x.BankName,
+                    AccountHolderName = x.AccountHolderName,
+                    AccountNumber = x.AccountNumber,
+                    Iban = x.IBAN,
+                    SwiftCode = x.SwiftCode,
+                    BankCountry = x.BankCountry,
+                    BankCity = x.BankCity,
+                    BranchName = x.BranchName,
+                    BranchAddress = x.BranchAddress,
+                    Currency = x.Currency,
+                    IsMainAccount = x.IsMainAccount
+                })
+                .ToList(),
+            Documents = seller.Documents
+                .OrderByDescending(x => x.UploadedAtUtc)
+                .ThenBy(x => x.Id)
+                .Select(x => new WebSellerDocumentDto
+                {
+                    Id = x.Id,
+                    DocumentType = x.DocumentType,
+                    FileName = x.FileName,
+                    FilePath = x.FilePath,
+                    ContentType = x.ContentType,
+                    IsRequired = x.IsRequired,
+                    UploadedAtUtc = x.UploadedAtUtc,
+                    RelatedEntityType = x.RelatedEntityType
+                })
+                .ToList()
+        };
+
+        return Ok(ApiResponse<WebSellerDetailsDto>.Ok(details));
+    }
+
+    [HttpGet("sellers/{id}/documents/{documentId:int}/view")]
+    public async Task<IActionResult> ViewSellerDocument(string id, int documentId, CancellationToken cancellationToken)
+    {
+        var sellerId = TryParsePrefixedId(id, "s-");
+        if (sellerId is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
+
+        var sellerIdClaim = User.FindFirst("seller_id")?.Value;
+        var currentSellerId = int.TryParse(sellerIdClaim, out var parsedSellerId) ? parsedSellerId : 0;
+        if (!User.IsInRole(SystemRoles.Admin) && currentSellerId != sellerId.Value)
+        {
+            return Forbid();
+        }
+
+        var document = await dbContext.SellerDocuments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == documentId && x.SellerId == sellerId.Value, cancellationToken);
+
+        if (document is null) return NotFound(ApiResponse<object>.Fail("Document not found", 404));
+
+        if (Uri.TryCreate(document.FilePath, UriKind.Absolute, out var absoluteUri) &&
+            (absoluteUri.Scheme == Uri.UriSchemeHttp || absoluteUri.Scheme == Uri.UriSchemeHttps))
+        {
+            return Redirect(document.FilePath);
+        }
+
+        var candidates = new List<string>();
+        if (!string.IsNullOrWhiteSpace(document.FilePath))
+        {
+            if (Path.IsPathRooted(document.FilePath))
+            {
+                candidates.Add(document.FilePath);
+            }
+            else
+            {
+                candidates.Add(document.FilePath);
+                candidates.Add(Path.Combine(environment.ContentRootPath, document.FilePath));
+                if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
+                {
+                    candidates.Add(Path.Combine(environment.WebRootPath, document.FilePath));
+                }
+                candidates.Add(Path.Combine(environment.ContentRootPath, "uploads", document.FilePath));
+                if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
+                {
+                    candidates.Add(Path.Combine(environment.WebRootPath, "uploads", document.FilePath));
+                }
+            }
+        }
+
+        var physicalPath = candidates.FirstOrDefault(System.IO.File.Exists);
+        if (physicalPath is null)
+        {
+            return NotFound(ApiResponse<object>.Fail("Document file is not available on server.", 404));
+        }
+
+        var contentType = string.IsNullOrWhiteSpace(document.ContentType) ? "application/octet-stream" : document.ContentType;
+        return PhysicalFile(physicalPath, contentType, enableRangeProcessing: true);
     }
 
     [Authorize(Roles = SystemRoles.Admin)]
@@ -192,7 +386,7 @@ public class WebAdminController(
                 {
                     Id = $"r-{x.history.Id}",
                     SellerId = x.history.SellerId.HasValue ? $"s-{x.history.SellerId.Value}" : string.Empty,
-                    SellerName = x.seller != null ? x.seller.Name : string.Empty,
+                    SellerName = x.seller != null ? x.seller.CompanyName : string.Empty,
                     InvestorId = $"i-{x.history.UserId}",
                     InvestorName = x.user.FullName,
                     Type = x.history.TransactionType,
@@ -855,7 +1049,7 @@ public class WebAdminController(
             {
                 WalletId = wallet.Id,
                 SellerId = request.SellerId,
-                SellerName = await dbContext.Sellers.Where(s => s.Id == request.SellerId).Select(s => s.Name).FirstOrDefaultAsync(cancellationToken) ?? string.Empty,
+                SellerName = await dbContext.Sellers.Where(s => s.Id == request.SellerId).Select(s => s.CompanyName).FirstOrDefaultAsync(cancellationToken) ?? string.Empty,
                 Category = Enum.TryParse<ProductCategory>(request.Category, true, out var cat) ? cat : ProductCategory.Gold,
                 AssetType = AssetType.GoldBar,
                 Quantity = Math.Max(1, request.Quantity),

@@ -8,6 +8,11 @@ namespace GoldWalletSystem.Infrastructure.Database.Context;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Seller> Sellers => Set<Seller>();
+    public DbSet<SellerAddress> SellerAddresses => Set<SellerAddress>();
+    public DbSet<SellerManager> SellerManagers => Set<SellerManager>();
+    public DbSet<SellerBranch> SellerBranches => Set<SellerBranch>();
+    public DbSet<SellerBankAccount> SellerBankAccounts => Set<SellerBankAccount>();
+    public DbSet<SellerDocument> SellerDocuments => Set<SellerDocument>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
@@ -34,6 +39,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         base.OnModelCreating(modelBuilder);
 
         ConfigureSeller(modelBuilder);
+        ConfigureSellerAddress(modelBuilder);
+        ConfigureSellerManager(modelBuilder);
+        ConfigureSellerBranch(modelBuilder);
+        ConfigureSellerBankAccount(modelBuilder);
+        ConfigureSellerDocument(modelBuilder);
         ConfigureUser(modelBuilder);
         ConfigureUserProfile(modelBuilder);
         ConfigurePaymentMethod(modelBuilder);
@@ -63,35 +73,116 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.ToTable("Sellers");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.UserId).IsRequired();
-            entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
-            entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
-            entity.Property(x => x.ContactEmail).HasMaxLength(200);
-            entity.Property(x => x.ContactPhone).HasMaxLength(50);
-            entity.Property(x => x.Country).IsRequired().HasMaxLength(80);
-            entity.Property(x => x.City).IsRequired().HasMaxLength(80);
-            entity.Property(x => x.Street).IsRequired().HasMaxLength(150);
-            entity.Property(x => x.BuildingNumber).IsRequired().HasMaxLength(30);
-            entity.Property(x => x.PostalCode).IsRequired().HasMaxLength(30);
             entity.Property(x => x.CompanyName).IsRequired().HasMaxLength(150);
-            entity.Property(x => x.TradeLicenseNumber).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.CompanyCode).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.CommercialRegistrationNumber).IsRequired().HasMaxLength(100);
             entity.Property(x => x.VatNumber).IsRequired().HasMaxLength(100);
-            entity.Property(x => x.NationalIdNumber).IsRequired().HasMaxLength(100);
-            entity.Property(x => x.BankName).IsRequired().HasMaxLength(150);
-            entity.Property(x => x.IBAN).IsRequired().HasMaxLength(100);
-            entity.Property(x => x.AccountHolderName).IsRequired().HasMaxLength(150);
-            entity.Property(x => x.NationalIdFrontPath).IsRequired().HasMaxLength(500);
-            entity.Property(x => x.NationalIdBackPath).IsRequired().HasMaxLength(500);
-            entity.Property(x => x.TradeLicensePath).IsRequired().HasMaxLength(500);
+            entity.Property(x => x.BusinessActivity).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.CompanyPhone).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.CompanyEmail).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.Website).HasMaxLength(250);
+            entity.Property(x => x.Description).HasMaxLength(2000);
             entity.Property(x => x.KycStatus).HasConversion<int>();
             entity.Property(x => x.ReviewNotes).HasMaxLength(1000);
             entity.Property(x => x.GoldPrice).HasPrecision(18, 2);
             entity.Property(x => x.SilverPrice).HasPrecision(18, 2);
             entity.Property(x => x.DiamondPrice).HasPrecision(18, 2);
-            entity.HasIndex(x => x.Code).IsUnique();
+            entity.HasIndex(x => x.CompanyCode).IsUnique();
             entity.HasIndex(x => x.UserId).IsUnique();
-            entity.HasIndex(x => x.Name);
+            entity.HasIndex(x => x.CompanyName);
             entity.HasIndex(x => x.KycStatus);
             entity.HasOne(x => x.User).WithOne(x => x.SellerProfile).HasForeignKey<Seller>(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    private static void ConfigureSellerAddress(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SellerAddress>(entity =>
+        {
+            entity.ToTable("SellerAddresses");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Country).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.City).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.Street).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.BuildingNumber).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.PostalCode).IsRequired().HasMaxLength(30);
+            entity.HasIndex(x => x.SellerId).IsUnique();
+            entity.HasOne(x => x.Seller).WithOne(x => x.Address).HasForeignKey<SellerAddress>(x => x.SellerId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureSellerManager(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SellerManager>(entity =>
+        {
+            entity.ToTable("SellerManagers");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.FullName).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.PositionTitle).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Nationality).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.MobileNumber).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.EmailAddress).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.IdType).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.IdNumber).IsRequired().HasMaxLength(100);
+            entity.HasIndex(x => x.SellerId);
+            entity.HasOne(x => x.Seller).WithMany(x => x.Managers).HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureSellerBranch(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SellerBranch>(entity =>
+        {
+            entity.ToTable("SellerBranches");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.BranchName).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.Country).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.City).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.FullAddress).IsRequired().HasMaxLength(250);
+            entity.Property(x => x.BuildingNumber).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.PostalCode).IsRequired().HasMaxLength(30);
+            entity.Property(x => x.PhoneNumber).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.Email).IsRequired().HasMaxLength(200);
+            entity.HasIndex(x => x.SellerId);
+            entity.HasOne(x => x.Seller).WithMany(x => x.Branches).HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureSellerBankAccount(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SellerBankAccount>(entity =>
+        {
+            entity.ToTable("SellerBankAccounts");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.BankName).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.AccountHolderName).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.AccountNumber).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.IBAN).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.SwiftCode).IsRequired().HasMaxLength(50);
+            entity.Property(x => x.BankCountry).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.BankCity).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.BranchName).IsRequired().HasMaxLength(120);
+            entity.Property(x => x.BranchAddress).IsRequired().HasMaxLength(250);
+            entity.Property(x => x.Currency).IsRequired().HasMaxLength(10);
+            entity.HasIndex(x => x.SellerId);
+            entity.HasOne(x => x.Seller).WithMany(x => x.BankAccounts).HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureSellerDocument(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SellerDocument>(entity =>
+        {
+            entity.ToTable("SellerDocuments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.DocumentType).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.FileName).IsRequired().HasMaxLength(255);
+            entity.Property(x => x.FilePath).IsRequired().HasMaxLength(500);
+            entity.Property(x => x.ContentType).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.RelatedEntityType).HasMaxLength(50);
+            entity.HasIndex(x => x.SellerId);
+            entity.HasIndex(x => new { x.SellerId, x.DocumentType });
+            entity.HasOne(x => x.Seller).WithMany(x => x.Documents).HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 

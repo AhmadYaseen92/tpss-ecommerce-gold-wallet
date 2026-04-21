@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
+import type { KycStatus, Seller } from "../../../shared/types/models";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
@@ -9,11 +10,12 @@ const kycFilter = ref("all");
 const pageNumber = ref(1);
 const pageSize = 20;
 
-const filtered = computed(() => props.marketplace.state.value.sellers.filter((seller) => {
+const filtered = computed(() => props.marketplace.state.value.sellers.filter((seller: Seller) => {
   if (kycFilter.value !== "all" && seller.kycStatus !== kycFilter.value) return false;
   if (!search.value.trim()) return true;
   const term = search.value.toLowerCase();
-  return [seller.name, seller.businessName, seller.email].join(" ").toLowerCase().includes(term);
+  return [seller.name, seller.businessName, seller.email, seller.companyCode, seller.loginEmail, seller.contactPhone]
+    .join(" ").toLowerCase().includes(term);
 }));
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)));
@@ -22,9 +24,38 @@ const pageItems = computed(() => {
   return filtered.value.slice(start, start + pageSize);
 });
 
-const setKyc = async (sellerId: string, status: "approved" | "rejected") => {
-  if (status === "approved") await props.marketplace.approveKyc(sellerId);
-  if (status === "rejected") await props.marketplace.rejectKyc(sellerId);
+const openSellerDetails = (sellerId: string) => {
+  window.history.pushState({}, "", `/sellers/${sellerId}`);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+};
+
+type SellerAction = "approve" | "reject" | "block" | "underreview";
+
+const availableActions = (status: KycStatus): SellerAction[] => {
+  if (status === "pending" || status === "underreview") return ["approve", "reject"];
+  if (status === "approved") return ["block"];
+  return [];
+};
+
+const actionLabel: Record<SellerAction, string> = {
+  approve: "Approve",
+  reject: "Reject",
+  block: "Block",
+  underreview: "Set Under Review",
+};
+
+const setKyc = async (sellerId: string, action: SellerAction) => {
+  if (action === "approve") await props.marketplace.approveKyc(sellerId);
+  if (action === "reject") await props.marketplace.rejectKyc(sellerId);
+  if (action === "block") await props.marketplace.blockKyc(sellerId);
+  if (action === "underreview") await props.marketplace.markKycUnderReview(sellerId);
+};
+
+const runActionFromDropdown = async (sellerId: string, event: Event) => {
+  const nextAction = (event.target as HTMLSelectElement).value as SellerAction | "";
+  if (!nextAction) return;
+  await setKyc(sellerId, nextAction);
+  (event.target as HTMLSelectElement).value = "";
 };
 
 onMounted(() => {
@@ -35,18 +66,25 @@ onMounted(() => {
 </script>
 
 <template>
-  <SectionCard title="Sellers Management">
+  <SectionCard title="Seller Registration Requests">
     <div class="filters">
-      <input v-model="search" placeholder="Search seller, company, email" />
-      <select v-model="kycFilter"><option value="all">All KYC</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+      <input v-model="search" placeholder="Search company, code, login email, phone" />
+      <select v-model="kycFilter"><option value="all">All KYC</option><option value="underreview">Under Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="blocked">Blocked</option><option value="pending">Pending (legacy)</option></select>
     </div>
     <table>
-      <thead><tr><th>Seller Name</th><th>Company</th><th>Email</th><th>KYC</th><th>Gold/Silver/Diamond</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Company Name</th><th>Company Code</th><th>Login Email</th><th>Contact Phone</th><th>KYC Status</th><th>Is Active</th><th>Created Date</th><th>Reviewed Date</th><th>Actions</th></tr></thead>
       <tbody>
-        <tr v-for="seller in pageItems" :key="seller.id">
-          <td>{{ seller.name }}</td><td>{{ seller.businessName }}</td><td>{{ seller.email }}</td><td>{{ seller.kycStatus }}</td>
-          <td>{{ seller.goldPrice ?? '-' }} / {{ seller.silverPrice ?? '-' }} / {{ seller.diamondPrice ?? '-' }}</td>
-          <td><button @click="setKyc(seller.id, 'approved')">Approve</button> <button class="danger" @click="setKyc(seller.id, 'rejected')">Reject</button></td>
+        <tr v-for="seller in pageItems" :key="seller.id" @click="openSellerDetails(seller.id)">
+          <td>{{ seller.businessName }}</td><td>{{ seller.companyCode || '-' }}</td><td>{{ seller.loginEmail || seller.email }}</td><td>{{ seller.contactPhone || '-' }}</td>
+          <td>{{ seller.kycStatus }}</td><td>{{ seller.isActive ? 'Yes' : 'No' }}</td><td>{{ seller.submittedAt }}</td><td>{{ seller.reviewedAt || '-' }}</td>
+          <td class="actions-cell">
+            <select @click.stop @change="runActionFromDropdown(seller.id, $event)">
+              <option value="">Select action</option>
+              <option v-for="action in availableActions(seller.kycStatus)" :key="`${seller.id}-${action}`" :value="action">
+                {{ actionLabel[action] }}
+              </option>
+            </select>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -55,10 +93,13 @@ onMounted(() => {
       <span>{{ pageNumber }} / {{ totalPages }}</span>
       <button :disabled="pageNumber >= totalPages" @click="pageNumber++">&gt;</button>
     </div>
+
   </SectionCard>
 </template>
 
 <style scoped>
 .filters { display:grid; grid-template-columns:1fr 220px; gap:10px; margin-bottom:12px; }
 .pager { margin-top: 10px; display:flex; gap:8px; align-items:center; justify-content:flex-end; }
+tr { cursor: pointer; }
+.actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
 </style>

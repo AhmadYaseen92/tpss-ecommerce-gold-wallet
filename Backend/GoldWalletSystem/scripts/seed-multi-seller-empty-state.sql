@@ -61,27 +61,48 @@ BEGIN TRY
     MERGE [Sellers] AS T
     USING (
         VALUES
-            (N'Imseeh',        N'IMSEEH',  N'contact@imseeh.com',       N'+962700000001', N'Amman, Jordan'),
-            (N'Gold Palace',   N'GOLDPAL', N'contact@goldpalace.com',   N'+15550000002',  N'Dallas, TX'),
-            (N'Bullion House', N'BULLION', N'contact@bullionhouse.com', N'+15550000003',  N'Miami, FL')
-    ) AS S([Name],[Code],[ContactEmail],[ContactPhone],[Address])
-    ON T.[Code] = S.[Code]
+            (N'IMSEEH', N'Imseeh', N'contact@imseeh.com', N'+962700000001', N'CR-IMSEEH-001', N'VAT-IMSEEH-001', N'Precious Metals Trading', N'Jordan', N'Amman', N'Wasfi Al Tal St', N'12A', N'11181'),
+            (N'GOLDPAL', N'Gold Palace', N'contact@goldpalace.com', N'+15550000002', N'CR-GOLDPAL-002', N'VAT-GOLDPAL-002', N'Bullion Retail', N'United States', N'Dallas', N'Elm Street', N'401', N'75201'),
+            (N'BULLION', N'Bullion House', N'contact@bullionhouse.com', N'+15550000003', N'CR-BULLION-003', N'VAT-BULLION-003', N'Coins & Precious Metals', N'United States', N'Miami', N'Biscayne Blvd', N'908', N'33132')
+    ) AS S([CompanyCode],[CompanyName],[CompanyEmail],[CompanyPhone],[CommercialRegistrationNumber],[VatNumber],[BusinessActivity],[Country],[City],[Street],[BuildingNumber],[PostalCode])
+    ON T.[CompanyCode] = S.[CompanyCode]
     WHEN MATCHED THEN
         UPDATE SET
-            T.[Name] = S.[Name],
-            T.[ContactEmail] = S.[ContactEmail],
-            T.[ContactPhone] = S.[ContactPhone],
-            T.[Address] = S.[Address],
-            T.[UserId] = COALESCE((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[ContactEmail]), T.[UserId]),
+            T.[CompanyName] = S.[CompanyName],
+            T.[CompanyEmail] = S.[CompanyEmail],
+            T.[CompanyPhone] = S.[CompanyPhone],
+            T.[CommercialRegistrationNumber] = S.[CommercialRegistrationNumber],
+            T.[VatNumber] = S.[VatNumber],
+            T.[BusinessActivity] = S.[BusinessActivity],
+            T.[UserId] = COALESCE((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[CompanyEmail]), T.[UserId]),
+            T.[KycStatus] = 2,
             T.[IsActive] = 1,
+            T.[ReviewedAtUtc] = @Now,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([Name],[Code],[ContactEmail],[ContactPhone],[Address],[UserId],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[Name],S.[Code],S.[ContactEmail],S.[ContactPhone],S.[Address],(SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[ContactEmail]),1,@Now,NULL);
+        INSERT ([UserId],[CompanyName],[CompanyCode],[CommercialRegistrationNumber],[VatNumber],[BusinessActivity],[CompanyPhone],[CompanyEmail],[IsActive],[KycStatus],[ReviewedAtUtc],[ReviewNotes],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES ((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[CompanyEmail]),S.[CompanyName],S.[CompanyCode],S.[CommercialRegistrationNumber],S.[VatNumber],S.[BusinessActivity],S.[CompanyPhone],S.[CompanyEmail],1,2,@Now,N'Seeded as approved seller',@Now,NULL);
 
-    DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'IMSEEH');
-    DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'GOLDPAL');
-    DECLARE @SellerBullion int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [Code] = N'BULLION');
+    MERGE [SellerAddresses] AS T
+    USING (
+        SELECT S1.Id AS SellerId, S2.Country,S2.City,S2.Street,S2.BuildingNumber,S2.PostalCode
+        FROM [Sellers] S1
+        JOIN (
+            VALUES
+                (N'IMSEEH', N'Jordan', N'Amman', N'Wasfi Al Tal St', N'12A', N'11181'),
+                (N'GOLDPAL', N'United States', N'Dallas', N'Elm Street', N'401', N'75201'),
+                (N'BULLION', N'United States', N'Miami', N'Biscayne Blvd', N'908', N'33132')
+        ) S2(CompanyCode,Country,City,Street,BuildingNumber,PostalCode) ON S1.CompanyCode = S2.CompanyCode
+    ) AS X
+    ON T.SellerId = X.SellerId
+    WHEN MATCHED THEN UPDATE SET T.Country=X.Country,T.City=X.City,T.Street=X.Street,T.BuildingNumber=X.BuildingNumber,T.PostalCode=X.PostalCode,T.UpdatedAtUtc=@Now
+    WHEN NOT MATCHED THEN
+        INSERT (SellerId,Country,City,Street,BuildingNumber,PostalCode,CreatedAtUtc,UpdatedAtUtc)
+        VALUES (X.SellerId,X.Country,X.City,X.Street,X.BuildingNumber,X.PostalCode,@Now,NULL);
+
+    DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [CompanyCode] = N'IMSEEH');
+    DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [CompanyCode] = N'GOLDPAL');
+    DECLARE @SellerBullion int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [CompanyCode] = N'BULLION');
 
     ------------------------------------------------------------
     -- 2) Users (upsert)

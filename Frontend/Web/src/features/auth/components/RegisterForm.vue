@@ -18,25 +18,82 @@ const emit = defineEmits<{
 
 const steps = [
   "Company Information",
-  "Owner / Manager",
-  "Branches / Locations",
+  "Company Owner / Manager",
+  "Company Branches / Locations",
   "Bank Details",
   "Login Credentials",
-  "Summary",
+  "Order Summary",
 ];
 
 const activeStep = ref(0);
+const stepError = ref("");
+const stepRefs = ref<Array<HTMLElement | null>>([]);
+
+const setSingleFile = (listRef: any[], event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  listRef.splice(0, listRef.length);
+  if (file) listRef.push({ name: file.name });
+};
+
+const validateStep = (step: number) => {
+  if (step === 0) {
+    const required = [
+      props.model.companyInfo.companyName,
+      props.model.companyInfo.companyCode,
+      props.model.companyInfo.crNumber,
+      props.model.companyInfo.vatNumber,
+      props.model.companyInfo.country,
+      props.model.companyInfo.city,
+      props.model.companyInfo.street,
+      props.model.companyInfo.phone,
+      props.model.companyInfo.email
+    ];
+    if (required.some((x) => !x?.trim())) return "Please complete all required Company Information fields.";
+  }
+  if (step === 1) {
+    const required = [props.model.ownerInfo.name, props.model.ownerInfo.position, props.model.ownerInfo.mobile, props.model.ownerInfo.email, props.model.ownerInfo.idType, props.model.ownerInfo.idNumber];
+    if (required.some((x) => !x?.trim())) return "Please complete all required Owner / Manager fields.";
+  }
+  if (step === 2 && props.model.branches.some((x) => !x.branchName || !x.country || !x.city || !x.address)) return "Please complete branch details before continuing.";
+  if (step === 3 && props.model.banks.some((x) => !x.bankName || !x.accountHolder || !x.accountNumber || !x.iban)) return "Please complete bank account details before continuing.";
+  if (step === 4) {
+    const required = [props.model.credentials.loginEmail, props.model.credentials.password, props.model.credentials.confirmPassword];
+    if (required.some((x) => !x?.trim())) return "Please complete login credentials before continuing.";
+    if (props.model.credentials.password !== props.model.credentials.confirmPassword) return "Password and Confirm Password do not match.";
+  }
+  return "";
+};
+
+const reportCurrentStepValidity = (step: number) => {
+  const container = stepRefs.value[step];
+  if (!container) return true;
+
+  const fields = container.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
+    "input, textarea, select",
+  );
+
+  for (const field of fields) {
+    if (!field.checkValidity()) {
+      field.reportValidity();
+      return false;
+    }
+  }
+
+  return true;
+};
 
 function nextStep() {
-  if (activeStep.value < steps.length - 1) {
-    activeStep.value++;
-  }
+  if (!reportCurrentStepValidity(activeStep.value)) return;
+  const error = validateStep(activeStep.value);
+  stepError.value = error;
+  if (error) return;
+  if (activeStep.value < steps.length - 1) activeStep.value++;
 }
 
 function prevStep() {
-  if (activeStep.value > 0) {
-    activeStep.value--;
-  }
+  stepError.value = "";
+  if (activeStep.value > 0) activeStep.value--;
 }
 
 function addBranch() {
@@ -44,19 +101,13 @@ function addBranch() {
 }
 
 function removeBranch(idx: number) {
-  if (props.model.branches.length > 1) {
-    props.model.branches.splice(idx, 1);
-
-    if (!props.model.branches.some((branch) => branch.isMain) && props.model.branches.length > 0) {
-      props.model.branches[0].isMain = true;
-    }
-  }
+  if (props.model.branches.length <= 1) return;
+  props.model.branches.splice(idx, 1);
+  if (!props.model.branches.some((x) => x.isMain)) props.model.branches[0].isMain = true;
 }
 
 function setMainBranch(idx: number) {
-  props.model.branches.forEach((branch, index) => {
-    branch.isMain = index === idx;
-  });
+  props.model.branches.forEach((x, i) => (x.isMain = i === idx));
 }
 
 function addBank() {
@@ -64,592 +115,173 @@ function addBank() {
 }
 
 function removeBank(idx: number) {
-  if (props.model.banks.length > 1) {
-    props.model.banks.splice(idx, 1);
-
-    if (!props.model.banks.some((bank) => bank.isMain) && props.model.banks.length > 0) {
-      props.model.banks[0].isMain = true;
-    }
-  }
+  if (props.model.banks.length <= 1) return;
+  props.model.banks.splice(idx, 1);
+  if (!props.model.banks.some((x) => x.isMain)) props.model.banks[0].isMain = true;
 }
 
 function setMainBank(idx: number) {
-  props.model.banks.forEach((bank, index) => {
-    bank.isMain = index === idx;
-  });
+  props.model.banks.forEach((x, i) => (x.isMain = i === idx));
 }
 
-function goToStep(stepIndex: number) {
-  activeStep.value = stepIndex;
+function goToStep(idx: number) {
+  if (idx <= activeStep.value) {
+    activeStep.value = idx;
+    return;
+  }
+
+  if (!reportCurrentStepValidity(activeStep.value)) return;
+
+  const error = validateStep(activeStep.value);
+  stepError.value = error;
+  if (error) return;
+
+  activeStep.value = idx;
 }
 </script>
 
 <template>
   <section class="register-wizard">
     <h1>Create Seller Account</h1>
-    <p class="subtitle">
-      Register company information, owner details, branches, bank accounts, and login credentials.
-    </p>
+    <p class="subtitle">Register company information, owner details, branches, bank accounts, and login credentials.</p>
 
-    <el-steps :active="activeStep" finish-status="success" align-center class="wizard-steps">
-      <el-step v-for="(step, idx) in steps" :key="idx" :title="step" />
-    </el-steps>
+    <p v-if="stepError" class="error-banner">{{ stepError }}</p>
 
-    <div v-show="activeStep === 0">
+    <div class="stepper">
+      <button
+        v-for="(step, idx) in steps"
+        :key="step"
+        type="button"
+        class="step-btn"
+        :class="{ active: idx === activeStep }"
+        @click="goToStep(idx)"
+      >
+        {{ idx + 1 }}. {{ step }}
+      </button>
+    </div>
+
+    <div v-if="activeStep === 0" :ref="(el) => (stepRefs[0] = el as HTMLElement)" class="form-grid">
       <h2>Company Information</h2>
+      <label>Company Name <input v-model="model.companyInfo.companyName" required /></label>
+      <label>Company Code <input v-model="model.companyInfo.companyCode" required /></label>
+      <label>Commercial Registration Number (CR) <input v-model="model.companyInfo.crNumber" required /></label>
+      <label>Tax / VAT Number <input v-model="model.companyInfo.vatNumber" required /></label>
+      <label>Business Activity / Industry Type <input v-model="model.companyInfo.businessActivity" /></label>
+      <label>Established Date <input v-model="model.companyInfo.establishedDate" type="date" /></label>
+      <label>Country <input v-model="model.companyInfo.country" required /></label>
+      <label>City <input v-model="model.companyInfo.city" required /></label>
+      <label>Street <input v-model="model.companyInfo.street" required /></label>
+      <label>Building Number <input v-model="model.companyInfo.buildingNumber" /></label>
+      <label>Postal Code <input v-model="model.companyInfo.postalCode" /></label>
+      <label>Company Phone <input v-model="model.companyInfo.phone" required /></label>
+      <label>Company Email <input v-model="model.companyInfo.email" type="email" required /></label>
+      <label>Website (optional) <input v-model="model.companyInfo.website" /></label>
+      <label class="full">Description (optional) <textarea v-model="model.companyInfo.description" rows="3" /></label>
 
-      <el-form :model="model.companyInfo" label-width="220px" class="step-form">
-        <el-form-item label="Company Name">
-          <el-input v-model="model.companyInfo.companyName" placeholder="Enter company name" />
-        </el-form-item>
-
-        <el-form-item label="Company Code">
-          <el-input v-model="model.companyInfo.companyCode" placeholder="Enter company code" />
-        </el-form-item>
-
-        <el-form-item label="Commercial Registration Number (CR)">
-          <el-input v-model="model.companyInfo.crNumber" placeholder="Enter CR number" />
-        </el-form-item>
-
-        <el-form-item label="Tax / VAT Number">
-          <el-input v-model="model.companyInfo.vatNumber" placeholder="Enter VAT number" />
-        </el-form-item>
-
-        <el-form-item label="Business Activity / Industry Type">
-          <el-input v-model="model.companyInfo.businessActivity" placeholder="Enter business activity" />
-        </el-form-item>
-
-        <el-form-item label="Established Date">
-          <el-date-picker
-            v-model="model.companyInfo.establishedDate"
-            type="date"
-            placeholder="Pick a date"
-            style="width: 100%"
-          />
-        </el-form-item>
-
-        <el-divider>Address</el-divider>
-
-        <el-form-item label="Country">
-          <el-input v-model="model.companyInfo.country" placeholder="Enter country" />
-        </el-form-item>
-
-        <el-form-item label="City">
-          <el-input v-model="model.companyInfo.city" placeholder="Enter city" />
-        </el-form-item>
-
-        <el-form-item label="Street">
-          <el-input v-model="model.companyInfo.street" placeholder="Enter street" />
-        </el-form-item>
-
-        <el-form-item label="Building Number">
-          <el-input v-model="model.companyInfo.buildingNumber" placeholder="Enter building number" />
-        </el-form-item>
-
-        <el-form-item label="Postal Code">
-          <el-input v-model="model.companyInfo.postalCode" placeholder="Enter postal code" />
-        </el-form-item>
-
-        <el-divider>Contact</el-divider>
-
-        <el-form-item label="Company Phone">
-          <el-input v-model="model.companyInfo.phone" placeholder="Enter company phone number" />
-        </el-form-item>
-
-        <el-form-item label="Company Email">
-          <el-input v-model="model.companyInfo.email" placeholder="Enter company email address" />
-        </el-form-item>
-
-        <el-form-item label="Website">
-          <el-input v-model="model.companyInfo.website" placeholder="Enter website (optional)" />
-        </el-form-item>
-
-        <el-form-item label="Description">
-          <el-input
-            v-model="model.companyInfo.description"
-            type="textarea"
-            :rows="4"
-            placeholder="Enter description (optional)"
-          />
-        </el-form-item>
-
-        <el-divider>Company Documents</el-divider>
-
-        <el-form-item label="Commercial Registration Document">
-          <el-upload
-            v-model:file-list="model.companyInfo.documents.crDoc"
-            :auto-upload="false"
-            :limit="1"
-            list-type="text"
-          >
-            <el-button type="primary">Upload</el-button>
-          </el-upload>
-        </el-form-item>
-
-        <el-form-item label="Articles of Association">
-          <el-upload
-            v-model:file-list="model.companyInfo.documents.articles"
-            :auto-upload="false"
-            :limit="1"
-            list-type="text"
-          >
-            <el-button type="primary">Upload</el-button>
-          </el-upload>
-        </el-form-item>
-
-        <el-form-item label="Proof of Address">
-          <el-upload
-            v-model:file-list="model.companyInfo.documents.proofOfAddress"
-            :auto-upload="false"
-            :limit="1"
-            list-type="text"
-          >
-            <el-button type="primary">Upload</el-button>
-          </el-upload>
-        </el-form-item>
-
-        <el-form-item label="VAT Certificate">
-          <el-upload
-            v-model:file-list="model.companyInfo.documents.vatCert"
-            :auto-upload="false"
-            :limit="1"
-            list-type="text"
-          >
-            <el-button type="primary">Upload</el-button>
-          </el-upload>
-        </el-form-item>
-
-        <el-form-item label="AML Documentation">
-          <el-upload
-            v-model:file-list="model.companyInfo.documents.amlDoc"
-            :auto-upload="false"
-            :limit="1"
-            list-type="text"
-          >
-            <el-button type="primary">Upload</el-button>
-          </el-upload>
-        </el-form-item>
-      </el-form>
+      <label>Commercial Registration Document <input type="file" @change="setSingleFile(model.companyInfo.documents.crDoc, $event)" /></label>
+      <label>Articles of Association <input type="file" @change="setSingleFile(model.companyInfo.documents.articles, $event)" /></label>
+      <label>Proof of Address <input type="file" @change="setSingleFile(model.companyInfo.documents.proofOfAddress, $event)" /></label>
+      <label>VAT Certificate <input type="file" @change="setSingleFile(model.companyInfo.documents.vatCert, $event)" /></label>
+      <label>AML Documentation <input type="file" @change="setSingleFile(model.companyInfo.documents.amlDoc, $event)" /></label>
     </div>
 
-    <div v-show="activeStep === 1">
-      <h2>Owner / Manager</h2>
-
-      <el-form :model="model.ownerInfo" label-width="220px" class="step-form">
-        <el-form-item label="Manager (Owner) Name">
-          <el-input v-model="model.ownerInfo.name" placeholder="Enter manager or owner name" />
-        </el-form-item>
-
-        <el-form-item label="Position / Job Title">
-          <el-input v-model="model.ownerInfo.position" placeholder="Enter position or job title" />
-        </el-form-item>
-
-        <el-form-item label="Nationality">
-          <el-input v-model="model.ownerInfo.nationality" placeholder="Enter nationality" />
-        </el-form-item>
-
-        <el-form-item label="Mobile Number">
-          <el-input v-model="model.ownerInfo.mobile" placeholder="Enter mobile number" />
-        </el-form-item>
-
-        <el-form-item label="Email Address">
-          <el-input v-model="model.ownerInfo.email" placeholder="Enter email address" />
-        </el-form-item>
-
-        <el-form-item label="ID Type">
-          <el-select v-model="model.ownerInfo.idType" placeholder="Select ID type" style="width: 100%">
-            <el-option label="National ID" value="National ID" />
-            <el-option label="Passport" value="Passport" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="ID Number">
-          <el-input v-model="model.ownerInfo.idNumber" placeholder="Enter ID number" />
-        </el-form-item>
-
-        <el-form-item label="ID Expiry Date">
-          <el-date-picker
-            v-model="model.ownerInfo.idExpiry"
-            type="date"
-            placeholder="Pick expiry date"
-            style="width: 100%"
-          />
-        </el-form-item>
-
-        <el-divider>Attachments</el-divider>
-
-        <el-form-item label="Owner / Manager ID Copy">
-          <el-upload
-            v-model:file-list="model.ownerInfo.idCopy"
-            :auto-upload="false"
-            :limit="1"
-            list-type="text"
-          >
-            <el-button type="primary">Upload</el-button>
-          </el-upload>
-        </el-form-item>
-
-        <el-form-item label="Authorization Letter">
-          <el-upload
-            v-model:file-list="model.ownerInfo.authLetter"
-            :auto-upload="false"
-            :limit="1"
-            list-type="text"
-          >
-            <el-button type="primary">Upload</el-button>
-          </el-upload>
-        </el-form-item>
-      </el-form>
+    <div v-if="activeStep === 1" :ref="(el) => (stepRefs[1] = el as HTMLElement)" class="form-grid">
+      <h2>Company Owner / Manager</h2>
+      <label>Manager / Owner Name <input v-model="model.ownerInfo.name" required /></label>
+      <label>Position / Job Title <input v-model="model.ownerInfo.position" required /></label>
+      <label>Nationality <input v-model="model.ownerInfo.nationality" /></label>
+      <label>Mobile Number <input v-model="model.ownerInfo.mobile" required /></label>
+      <label>Email Address <input v-model="model.ownerInfo.email" type="email" required /></label>
+      <label>ID Type
+        <select v-model="model.ownerInfo.idType" required>
+          <option value="">Select</option>
+          <option>National ID</option>
+          <option>Passport</option>
+        </select>
+      </label>
+      <label>ID Number <input v-model="model.ownerInfo.idNumber" required /></label>
+      <label>ID Expiry Date <input v-model="model.ownerInfo.idExpiry" type="date" /></label>
+      <label>Owner / Manager ID Copy <input type="file" @change="setSingleFile(model.ownerInfo.idCopy, $event)" /></label>
+      <label>Authorization Letter (if applicable) <input type="file" @change="setSingleFile(model.ownerInfo.authLetter, $event)" /></label>
     </div>
 
-    <div v-show="activeStep === 2">
-      <div class="section-header">
-        <h2>Branches / Locations</h2>
-        <el-button type="primary" @click="addBranch">Add Branch</el-button>
-      </div>
-
-      <div v-for="(branch, idx) in model.branches" :key="idx" class="dynamic-card">
-        <div class="dynamic-card-header">
-          <h3>Branch {{ idx + 1 }}</h3>
-          <el-button
-            v-if="model.branches.length > 1"
-            type="danger"
-            plain
-            size="small"
-            @click="removeBranch(idx)"
-          >
-            Remove
-          </el-button>
-        </div>
-
-        <el-form :model="branch" label-width="180px" class="step-form">
-          <el-form-item label="Branch Name">
-            <el-input v-model="branch.branchName" placeholder="Enter branch name" />
-          </el-form-item>
-
-          <el-form-item label="Country">
-            <el-input v-model="branch.country" placeholder="Enter country" />
-          </el-form-item>
-
-          <el-form-item label="City">
-            <el-input v-model="branch.city" placeholder="Enter city" />
-          </el-form-item>
-
-          <el-form-item label="Full Address">
-            <el-input v-model="branch.address" placeholder="Enter full address" />
-          </el-form-item>
-
-          <el-form-item label="Building Number">
-            <el-input v-model="branch.buildingNumber" placeholder="Enter building number" />
-          </el-form-item>
-
-          <el-form-item label="Postal Code">
-            <el-input v-model="branch.postalCode" placeholder="Enter postal code" />
-          </el-form-item>
-
-          <el-form-item label="Phone Number">
-            <el-input v-model="branch.phone" placeholder="Enter phone number" />
-          </el-form-item>
-
-          <el-form-item label="Email">
-            <el-input v-model="branch.email" placeholder="Enter email address" />
-          </el-form-item>
-
-          <el-form-item label="Is Main Branch">
-            <el-radio :model-value="branch.isMain" :label="true" @change="setMainBranch(idx)">
-              Main Branch
-            </el-radio>
-          </el-form-item>
-        </el-form>
+    <div v-if="activeStep === 2" :ref="(el) => (stepRefs[2] = el as HTMLElement)" class="form-grid">
+      <div class="title-row"><h2>Company Branches / Locations</h2><button type="button" @click="addBranch">Add Branch</button></div>
+      <div v-for="(branch, idx) in model.branches" :key="idx" class="card full">
+        <div class="title-row"><strong>Branch {{ idx + 1 }}</strong><button type="button" @click="removeBranch(idx)">Remove</button></div>
+        <label>Branch Name <input v-model="branch.branchName" required /></label>
+        <label>Country <input v-model="branch.country" required /></label>
+        <label>City <input v-model="branch.city" required /></label>
+        <label>Full Address <input v-model="branch.address" required /></label>
+        <label>Building Number <input v-model="branch.buildingNumber" /></label>
+        <label>Postal Code <input v-model="branch.postalCode" /></label>
+        <label>Phone Number <input v-model="branch.phone" /></label>
+        <label>Email <input v-model="branch.email" type="email" /></label>
+        <label><input type="radio" name="mainBranch" :checked="branch.isMain" @change="setMainBranch(idx)" /> Is Main Branch</label>
       </div>
     </div>
 
-    <div v-show="activeStep === 3">
-      <div class="section-header">
-        <h2>Bank Details</h2>
-        <el-button type="primary" @click="addBank">Add Bank</el-button>
-      </div>
-
-      <div v-for="(bank, idx) in model.banks" :key="idx" class="dynamic-card">
-        <div class="dynamic-card-header">
-          <h3>Bank {{ idx + 1 }}</h3>
-          <el-button
-            v-if="model.banks.length > 1"
-            type="danger"
-            plain
-            size="small"
-            @click="removeBank(idx)"
-          >
-            Remove
-          </el-button>
-        </div>
-
-        <el-form :model="bank" label-width="180px" class="step-form">
-          <el-form-item label="Bank Name">
-            <el-input v-model="bank.bankName" placeholder="Enter bank name" />
-          </el-form-item>
-
-          <el-form-item label="Account Holder Name">
-            <el-input v-model="bank.accountHolder" placeholder="Enter account holder name" />
-          </el-form-item>
-
-          <el-form-item label="Account Number">
-            <el-input v-model="bank.accountNumber" placeholder="Enter account number" />
-          </el-form-item>
-
-          <el-form-item label="IBAN">
-            <el-input v-model="bank.iban" placeholder="Enter IBAN" />
-          </el-form-item>
-
-          <el-form-item label="SWIFT Code">
-            <el-input v-model="bank.swift" placeholder="Enter SWIFT code" />
-          </el-form-item>
-
-          <el-form-item label="Bank Country">
-            <el-input v-model="bank.country" placeholder="Enter bank country" />
-          </el-form-item>
-
-          <el-form-item label="Bank City">
-            <el-input v-model="bank.city" placeholder="Enter bank city" />
-          </el-form-item>
-
-          <el-form-item label="Branch Name">
-            <el-input v-model="bank.branchName" placeholder="Enter bank branch name" />
-          </el-form-item>
-
-          <el-form-item label="Branch Address">
-            <el-input v-model="bank.branchAddress" placeholder="Enter bank branch address" />
-          </el-form-item>
-
-          <el-form-item label="Currency">
-            <el-input v-model="bank.currency" placeholder="Enter currency" />
-          </el-form-item>
-
-          <el-form-item label="Is Main Account">
-            <el-radio :model-value="bank.isMain" :label="true" @change="setMainBank(idx)">
-              Main Account
-            </el-radio>
-          </el-form-item>
-
-          <el-divider>Attachments</el-divider>
-
-          <el-form-item label="Bank Confirmation Letter">
-            <el-upload
-              v-model:file-list="bank.bankLetter"
-              :auto-upload="false"
-              :limit="1"
-              list-type="text"
-            >
-              <el-button type="primary">Upload</el-button>
-            </el-upload>
-          </el-form-item>
-
-          <el-form-item label="IBAN Proof Document">
-            <el-upload
-              v-model:file-list="bank.ibanProof"
-              :auto-upload="false"
-              :limit="1"
-              list-type="text"
-            >
-              <el-button type="primary">Upload</el-button>
-            </el-upload>
-          </el-form-item>
-        </el-form>
+    <div v-if="activeStep === 3" :ref="(el) => (stepRefs[3] = el as HTMLElement)" class="form-grid">
+      <div class="title-row"><h2>Bank Details</h2><button type="button" @click="addBank">Add Bank Account</button></div>
+      <div v-for="(bank, idx) in model.banks" :key="idx" class="card full">
+        <div class="title-row"><strong>Bank Account {{ idx + 1 }}</strong><button type="button" @click="removeBank(idx)">Remove</button></div>
+        <label>Bank Name <input v-model="bank.bankName" required /></label>
+        <label>Account Holder Name <input v-model="bank.accountHolder" required /></label>
+        <label>Account Number <input v-model="bank.accountNumber" required /></label>
+        <label>IBAN <input v-model="bank.iban" required /></label>
+        <label>SWIFT Code <input v-model="bank.swift" /></label>
+        <label>Bank Country <input v-model="bank.country" /></label>
+        <label>Bank City <input v-model="bank.city" /></label>
+        <label>Branch Name <input v-model="bank.branchName" /></label>
+        <label>Branch Address <input v-model="bank.branchAddress" /></label>
+        <label>Currency <input v-model="bank.currency" /></label>
+        <label><input type="radio" name="mainBank" :checked="bank.isMain" @change="setMainBank(idx)" /> Is Main Account</label>
+        <label>Bank Confirmation Letter <input type="file" @change="setSingleFile(bank.bankLetter, $event)" /></label>
+        <label>IBAN Proof Document <input type="file" @change="setSingleFile(bank.ibanProof, $event)" /></label>
       </div>
     </div>
 
-    <div v-show="activeStep === 4">
+    <div v-if="activeStep === 4" :ref="(el) => (stepRefs[4] = el as HTMLElement)" class="form-grid">
       <h2>Login Credentials</h2>
-
-      <el-form :model="model.credentials" label-width="180px" class="step-form">
-        <el-form-item label="Login Email">
-          <el-input v-model="model.credentials.loginEmail" placeholder="Enter login email" />
-        </el-form-item>
-
-        <el-form-item label="Password">
-          <el-input
-            v-model="model.credentials.password"
-            type="password"
-            show-password
-            placeholder="Enter password"
-          />
-        </el-form-item>
-
-        <el-form-item label="Confirm Password">
-          <el-input
-            v-model="model.credentials.confirmPassword"
-            type="password"
-            show-password
-            placeholder="Confirm password"
-          />
-        </el-form-item>
-      </el-form>
+      <label>Login Email <input v-model="model.credentials.loginEmail" type="email" required /></label>
+      <label>Password <input v-model="model.credentials.password" type="password" required /></label>
+      <label>Confirm Password <input v-model="model.credentials.confirmPassword" type="password" required /></label>
     </div>
 
-    <div v-show="activeStep === 5">
-      <h2>Summary</h2>
-
-      <div class="summary-card">
-        <div class="summary-section">
-          <div class="summary-title-row">
-            <h3>Company Information</h3>
-            <el-button text type="primary" @click="goToStep(0)">Edit</el-button>
-          </div>
-          <p><strong>Company Name:</strong> {{ model.companyInfo.companyName || "-" }}</p>
-          <p><strong>Company Code:</strong> {{ model.companyInfo.companyCode || "-" }}</p>
-          <p><strong>CR Number:</strong> {{ model.companyInfo.crNumber || "-" }}</p>
-          <p><strong>VAT Number:</strong> {{ model.companyInfo.vatNumber || "-" }}</p>
-        </div>
-
-        <div class="summary-section">
-          <div class="summary-title-row">
-            <h3>Owner / Manager</h3>
-            <el-button text type="primary" @click="goToStep(1)">Edit</el-button>
-          </div>
-          <p><strong>Name:</strong> {{ model.ownerInfo.name || "-" }}</p>
-          <p><strong>Position:</strong> {{ model.ownerInfo.position || "-" }}</p>
-          <p><strong>ID Number:</strong> {{ model.ownerInfo.idNumber || "-" }}</p>
-        </div>
-
-        <div class="summary-section">
-          <div class="summary-title-row">
-            <h3>Branches / Locations</h3>
-            <el-button text type="primary" @click="goToStep(2)">Edit</el-button>
-          </div>
-          <div v-for="(branch, idx) in model.branches" :key="`summary-branch-${idx}`" class="summary-item">
-            <p><strong>Branch {{ idx + 1 }}:</strong> {{ branch.branchName || "-" }}</p>
-            <p><strong>Main Branch:</strong> {{ branch.isMain ? "Yes" : "No" }}</p>
-          </div>
-        </div>
-
-        <div class="summary-section">
-          <div class="summary-title-row">
-            <h3>Bank Details</h3>
-            <el-button text type="primary" @click="goToStep(3)">Edit</el-button>
-          </div>
-          <div v-for="(bank, idx) in model.banks" :key="`summary-bank-${idx}`" class="summary-item">
-            <p><strong>Bank {{ idx + 1 }}:</strong> {{ bank.bankName || "-" }}</p>
-            <p><strong>IBAN:</strong> {{ bank.iban || "-" }}</p>
-            <p><strong>Main Account:</strong> {{ bank.isMain ? "Yes" : "No" }}</p>
-          </div>
-        </div>
-
-        <div class="summary-section">
-          <div class="summary-title-row">
-            <h3>Login Credentials</h3>
-            <el-button text type="primary" @click="goToStep(4)">Edit</el-button>
-          </div>
-          <p><strong>Login Email:</strong> {{ model.credentials.loginEmail || "-" }}</p>
-        </div>
-      </div>
+    <div v-if="activeStep === 5" class="form-grid">
+      <h2>Order Summary</h2>
+      <p><strong>Company:</strong> {{ model.companyInfo.companyName || '-' }}</p>
+      <p><strong>Owner/Manager:</strong> {{ model.ownerInfo.name || '-' }}</p>
+      <p><strong>Branches:</strong> {{ model.branches.length }}</p>
+      <p><strong>Bank Accounts:</strong> {{ model.banks.length }}</p>
+      <p><strong>Login Email:</strong> {{ model.credentials.loginEmail || '-' }}</p>
     </div>
 
     <div class="wizard-actions">
-      <el-button @click="prevStep" :disabled="activeStep === 0">Previous</el-button>
-
-      <div class="wizard-actions-right">
-        <el-button plain @click="emit('toLogin')">Back to Login</el-button>
-
-        <el-button
-          v-if="activeStep < steps.length - 1"
-          @click="nextStep"
-          type="primary"
-        >
-          Next
-        </el-button>
-
-        <el-button
-          v-else
-          @click="emit('submit')"
-          type="success"
-          :loading="loading"
-        >
-          Submit
-        </el-button>
+      <button type="button" @click="prevStep" :disabled="activeStep === 0">Previous</button>
+      <div>
+        <button type="button" class="ghost" @click="emit('toLogin')">Back to Login</button>
+        <button v-if="activeStep < steps.length - 1" type="button" @click="nextStep">Next</button>
+        <button v-else type="button" :disabled="loading" @click="emit('submit')">Submit</button>
       </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-.register-wizard {
-  width: 100%;
-}
-
-.subtitle {
-  margin-top: 0.5rem;
-  margin-bottom: 1.5rem;
-  color: #6b7280;
-}
-
-.wizard-steps {
-  margin-bottom: 2rem;
-}
-
-.step-form {
-  margin-top: 1rem;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.dynamic-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background: #fafafa;
-}
-
-.dynamic-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.summary-card {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.summary-section {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 1rem;
-  background: #fafafa;
-}
-
-.summary-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.summary-item {
-  padding: 0.75rem 0;
-  border-top: 1px solid #e5e7eb;
-}
-
-.summary-item:first-of-type {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.wizard-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2rem;
-}
-
-.wizard-actions-right {
-  display: flex;
-  gap: 0.75rem;
-}
+.register-wizard { display: grid; gap: 14px; }
+.subtitle { color: #5f6b7a; margin: 0; }
+.stepper { display: flex; gap: 8px; flex-wrap: wrap; }
+.step-btn { border: 1px solid #d7dbe3; background: #fff; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.step-btn.active { background: #1f2937; color: #fff; }
+.form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.form-grid h2, .full, .title-row { grid-column: 1 / -1; }
+label { display: grid; gap: 6px; font-weight: 600; }
+input, textarea, select { padding: 8px; border: 1px solid #cfd6e4; border-radius: 8px; font: inherit; }
+.card { border: 1px solid #e4e7ee; border-radius: 10px; padding: 10px; display:grid; gap: 8px; }
+.title-row { display:flex; justify-content: space-between; align-items: center; }
+.wizard-actions { display:flex; justify-content: space-between; margin-top: 8px; }
+.ghost { margin-right: 8px; }
+.error-banner { margin: 0; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; border-radius: 8px; padding: 8px 10px; }
+@media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } }
 </style>

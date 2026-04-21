@@ -9,7 +9,7 @@ withDefaults(
     rows?: Array<Record<string, string | number>>;
   }>(),
   {
-    role: "seller",
+    role: "Seller",
     sellers: () => [],
     reportTypeCards: () => [],
     rows: () => [],

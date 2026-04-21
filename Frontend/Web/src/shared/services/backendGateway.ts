@@ -25,6 +25,7 @@ import type {
   WebInvestorDto,
   WebNotificationDto,
   WebRequestDto,
+  WebSellerDetailsDto,
   WebSellerDto,
   WalletDto
 } from "../types/apiTypes";
@@ -62,8 +63,13 @@ const mapSeller = (dto: WebSellerDto): Seller => ({
   name: dto.name,
   email: dto.email,
   businessName: dto.businessName,
-  kycStatus: (dto.kycStatus?.toLowerCase() as "pending" | "approved" | "rejected") ?? "pending",
+  companyCode: dto.companyCode,
+  loginEmail: dto.loginEmail,
+  contactPhone: dto.contactPhone,
+  isActive: dto.isActive,
+  kycStatus: (dto.kycStatus?.toLowerCase() as Seller["kycStatus"]) ?? "underreview",
   submittedAt: dto.submittedAt,
+  reviewedAt: dto.reviewedAt,
   goldPrice: dto.goldPrice ?? null,
   silverPrice: dto.silverPrice ?? null,
   diamondPrice: dto.diamondPrice ?? null
@@ -166,31 +172,20 @@ export async function registerSellerWithBackend(registration: SellerRegistration
     lastName: registration.lastName,
     email: registration.email,
     password: registration.password,
-    phoneNumber: registration.phoneNumber,
+    role: registration.role,
+    phoneNumber: registration.manager.mobileNumber || registration.companyInfo.companyPhone,
     dateOfBirth: null,
-    nationality: registration.country,
-    documentType: "NationalId",
-    idNumber: registration.nationalIdNumber,
+    nationality: registration.manager.nationality,
+    documentType: registration.manager.idType,
+    idNumber: registration.manager.idNumber,
     profilePhotoUrl: "",
     preferredLanguage: "en",
     preferredTheme: "light",
-    role: "Seller",
-    sellerCode: "",
-    country: registration.country,
-    city: registration.city,
-    street: registration.street,
-    buildingNumber: registration.buildingNumber,
-    postalCode: registration.postalCode,
-    companyName: registration.companyName,
-    tradeLicenseNumber: registration.tradeLicenseNumber,
-    vatNumber: registration.vatNumber,
-    nationalIdNumber: registration.nationalIdNumber,
-    bankName: registration.bankName,
-    iban: registration.iban,
-    accountHolderName: registration.accountHolderName,
-    nationalIdFrontPath: registration.nationalIdFrontPath,
-    nationalIdBackPath: registration.nationalIdBackPath,
-    tradeLicensePath: registration.tradeLicensePath
+    companyInfo: registration.companyInfo,
+    manager: registration.manager,
+    branches: registration.branches,
+    bankAccounts: registration.bankAccounts,
+    documents: registration.documents
   };
 
   const data = await postJson<RegisterResponseDto, typeof request>("/api/auth/register", request);
@@ -200,8 +195,12 @@ export async function registerSellerWithBackend(registration: SellerRegistration
     sellerId: data.sellerId || data.userId || 0,
     name: data.fullName,
     email: data.email,
-    businessName: registration.companyName,
-    kycStatus: "pending",
+    businessName: registration.companyInfo.companyName,
+    companyCode: registration.companyInfo.companyCode,
+    loginEmail: registration.email,
+    contactPhone: registration.companyInfo.companyPhone,
+    isActive: false,
+    kycStatus: "underreview",
     submittedAt: new Date().toISOString()
   };
 }
@@ -246,10 +245,14 @@ export async function fetchSellers(accessToken: string): Promise<Seller[]> {
   return sellers.map(mapSeller);
 }
 
+export async function fetchSellerDetailsByAdmin(accessToken: string, sellerId: string): Promise<WebSellerDetailsDto> {
+  return getJson<WebSellerDetailsDto>(`/api/web-admin/sellers/${sellerId}`, accessToken);
+}
+
 export async function updateSellerKycStatusByAdmin(
   accessToken: string,
   sellerId: string,
-  status: "approved" | "rejected",
+  status: "approved" | "rejected" | "blocked" | "underreview",
   reviewNotes?: string
 ): Promise<void> {
   await putJson<string, { status: string; reviewNotes?: string }>(

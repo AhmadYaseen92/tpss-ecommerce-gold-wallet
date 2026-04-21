@@ -19,11 +19,107 @@ public class WebSellerDto
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string BusinessName { get; set; } = string.Empty;
+    public string CompanyCode { get; set; } = string.Empty;
+    public string LoginEmail { get; set; } = string.Empty;
+    public string ContactPhone { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
     public string KycStatus { get; set; } = "pending";
     public DateTime SubmittedAt { get; set; }
+    public DateTime? ReviewedAt { get; set; }
     public decimal? GoldPrice { get; set; }
     public decimal? SilverPrice { get; set; }
     public decimal? DiamondPrice { get; set; }
+}
+
+public class WebSellerDetailsDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public string CompanyCode { get; set; } = string.Empty;
+    public string CommercialRegistrationNumber { get; set; } = string.Empty;
+    public string VatNumber { get; set; } = string.Empty;
+    public string BusinessActivity { get; set; } = string.Empty;
+    public DateOnly? EstablishedDate { get; set; }
+    public string CompanyPhone { get; set; } = string.Empty;
+    public string CompanyEmail { get; set; } = string.Empty;
+    public string? Website { get; set; }
+    public string? Description { get; set; }
+    public string LoginEmail { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public string KycStatus { get; set; } = "pending";
+    public string? ReviewNotes { get; set; }
+    public DateTime SubmittedAt { get; set; }
+    public DateTime? ReviewedAt { get; set; }
+    public decimal? GoldPrice { get; set; }
+    public decimal? SilverPrice { get; set; }
+    public decimal? DiamondPrice { get; set; }
+    public WebSellerAddressDto? Address { get; set; }
+    public List<WebSellerManagerDto> Managers { get; set; } = [];
+    public List<WebSellerBranchDto> Branches { get; set; } = [];
+    public List<WebSellerBankAccountDto> BankAccounts { get; set; } = [];
+    public List<WebSellerDocumentDto> Documents { get; set; } = [];
+}
+
+public class WebSellerAddressDto
+{
+    public string Country { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string Street { get; set; } = string.Empty;
+    public string BuildingNumber { get; set; } = string.Empty;
+    public string PostalCode { get; set; } = string.Empty;
+}
+
+public class WebSellerManagerDto
+{
+    public string FullName { get; set; } = string.Empty;
+    public string PositionTitle { get; set; } = string.Empty;
+    public string Nationality { get; set; } = string.Empty;
+    public string MobileNumber { get; set; } = string.Empty;
+    public string EmailAddress { get; set; } = string.Empty;
+    public string IdType { get; set; } = string.Empty;
+    public string IdNumber { get; set; } = string.Empty;
+    public DateOnly? IdExpiryDate { get; set; }
+    public bool IsPrimary { get; set; }
+}
+
+public class WebSellerBranchDto
+{
+    public string BranchName { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string FullAddress { get; set; } = string.Empty;
+    public string BuildingNumber { get; set; } = string.Empty;
+    public string PostalCode { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public bool IsMainBranch { get; set; }
+}
+
+public class WebSellerBankAccountDto
+{
+    public string BankName { get; set; } = string.Empty;
+    public string AccountHolderName { get; set; } = string.Empty;
+    public string AccountNumber { get; set; } = string.Empty;
+    public string Iban { get; set; } = string.Empty;
+    public string SwiftCode { get; set; } = string.Empty;
+    public string BankCountry { get; set; } = string.Empty;
+    public string BankCity { get; set; } = string.Empty;
+    public string BranchName { get; set; } = string.Empty;
+    public string BranchAddress { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public bool IsMainAccount { get; set; }
+}
+
+public class WebSellerDocumentDto
+{
+    public int Id { get; set; }
+    public string DocumentType { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
+    public string ContentType { get; set; } = string.Empty;
+    public bool IsRequired { get; set; }
+    public DateTime UploadedAtUtc { get; set; }
+    public string? RelatedEntityType { get; set; }
 }
 
 public class UpdateSellerKycRequest
