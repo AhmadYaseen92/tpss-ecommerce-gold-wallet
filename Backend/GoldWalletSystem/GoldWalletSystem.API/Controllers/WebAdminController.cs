@@ -209,6 +209,7 @@ public class WebAdminController(
                 .ThenBy(x => x.Id)
                 .Select(x => new WebSellerDocumentDto
                 {
+                    Id = x.Id,
                     DocumentType = x.DocumentType,
                     FileName = x.FileName,
                     FilePath = x.FilePath,
@@ -221,6 +222,64 @@ public class WebAdminController(
         };
 
         return Ok(ApiResponse<WebSellerDetailsDto>.Ok(details));
+    }
+
+    [HttpGet("sellers/{id}/documents/{documentId:int}/view")]
+    public async Task<IActionResult> ViewSellerDocument(string id, int documentId, CancellationToken cancellationToken)
+    {
+        var sellerId = TryParsePrefixedId(id, "s-");
+        if (sellerId is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
+
+        var sellerIdClaim = User.FindFirst("seller_id")?.Value;
+        var currentSellerId = int.TryParse(sellerIdClaim, out var parsedSellerId) ? parsedSellerId : 0;
+        if (!User.IsInRole(SystemRoles.Admin) && currentSellerId != sellerId.Value)
+        {
+            return Forbid();
+        }
+
+        var document = await dbContext.SellerDocuments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == documentId && x.SellerId == sellerId.Value, cancellationToken);
+
+        if (document is null) return NotFound(ApiResponse<object>.Fail("Document not found", 404));
+
+        if (Uri.TryCreate(document.FilePath, UriKind.Absolute, out var absoluteUri) &&
+            (absoluteUri.Scheme == Uri.UriSchemeHttp || absoluteUri.Scheme == Uri.UriSchemeHttps))
+        {
+            return Redirect(document.FilePath);
+        }
+
+        var candidates = new List<string>();
+        if (!string.IsNullOrWhiteSpace(document.FilePath))
+        {
+            if (Path.IsPathRooted(document.FilePath))
+            {
+                candidates.Add(document.FilePath);
+            }
+            else
+            {
+                candidates.Add(document.FilePath);
+                candidates.Add(Path.Combine(environment.ContentRootPath, document.FilePath));
+                if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
+                {
+                    candidates.Add(Path.Combine(environment.WebRootPath, document.FilePath));
+                }
+                candidates.Add(Path.Combine(environment.ContentRootPath, "uploads", document.FilePath));
+                if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
+                {
+                    candidates.Add(Path.Combine(environment.WebRootPath, "uploads", document.FilePath));
+                }
+            }
+        }
+
+        var physicalPath = candidates.FirstOrDefault(System.IO.File.Exists);
+        if (physicalPath is null)
+        {
+            return NotFound(ApiResponse<object>.Fail("Document file is not available on server.", 404));
+        }
+
+        var contentType = string.IsNullOrWhiteSpace(document.ContentType) ? "application/octet-stream" : document.ContentType;
+        return PhysicalFile(physicalPath, contentType, enableRangeProcessing: true);
     }
 
     [Authorize(Roles = SystemRoles.Admin)]

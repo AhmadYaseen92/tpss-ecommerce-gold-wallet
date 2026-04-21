@@ -97,6 +97,7 @@ export interface WebSellerBankAccountDto {
 }
 
 export interface WebSellerDocumentDto {
+  id: number;
   documentType: string;
   fileName: string;
   filePath: string;

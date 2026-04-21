@@ -12,6 +12,10 @@ const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
 const loading = ref(false);
 const details = ref<WebSellerDetailsDto | null>(null);
 const viewerDoc = ref<WebSellerDocumentDto | null>(null);
+const viewerUrl = computed(() => {
+  if (!viewerDoc.value || !details.value) return "";
+  return `/api/web-admin/sellers/${details.value.id}/documents/${viewerDoc.value.id}/view`;
+});
 
 const sellerIdFromPath = computed(() => {
   const parts = window.location.pathname.split("/").filter(Boolean);
@@ -176,7 +180,7 @@ onMounted(() => {
         <strong>{{ viewerDoc.fileName || viewerDoc.documentType }}</strong>
         <button type="button" @click="viewerDoc = null">Close</button>
       </div>
-      <iframe :src="viewerDoc.filePath" title="Attachment Viewer" class="viewer-frame" />
+      <iframe :src="viewerUrl" title="Attachment Viewer" class="viewer-frame" />
     </div>
   </div>
 </template>
