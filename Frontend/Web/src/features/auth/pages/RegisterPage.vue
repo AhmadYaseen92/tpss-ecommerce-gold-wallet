@@ -68,8 +68,10 @@ const onSubmit = async () => {
   await marketplace.registerSeller(payload);
 
   if (!marketplace.error.value) {
-    ElMessage.success("Registration submitted successfully.");
+    ElMessage.success("Registration submitted successfully. Region: Seller Onboarding");
     emit("toLogin");
+  } else {
+    ElMessage.error(`Registration failed (Seller Onboarding): ${marketplace.error.value}`);
   }
 };
 </script>

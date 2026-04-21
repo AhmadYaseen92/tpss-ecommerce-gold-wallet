@@ -26,6 +26,7 @@ const steps = [
 ];
 
 const activeStep = ref(0);
+const stepError = ref("");
 
 const setSingleFile = (listRef: any[], event: Event) => {
   const input = event.target as HTMLInputElement;
@@ -34,11 +35,45 @@ const setSingleFile = (listRef: any[], event: Event) => {
   if (file) listRef.push({ name: file.name });
 };
 
+
+const validateStep = (step: number) => {
+  if (step === 0) {
+    const required = [
+      props.model.companyInfo.companyName,
+      props.model.companyInfo.companyCode,
+      props.model.companyInfo.crNumber,
+      props.model.companyInfo.vatNumber,
+      props.model.companyInfo.country,
+      props.model.companyInfo.city,
+      props.model.companyInfo.street,
+      props.model.companyInfo.phone,
+      props.model.companyInfo.email
+    ];
+    if (required.some((x) => !x?.trim())) return "Please complete all required Company Information fields.";
+  }
+  if (step === 1) {
+    const required = [props.model.ownerInfo.name, props.model.ownerInfo.position, props.model.ownerInfo.mobile, props.model.ownerInfo.email, props.model.ownerInfo.idType, props.model.ownerInfo.idNumber];
+    if (required.some((x) => !x?.trim())) return "Please complete all required Owner / Manager fields.";
+  }
+  if (step === 2 && props.model.branches.some((x) => !x.branchName || !x.country || !x.city || !x.address)) return "Please complete branch details before continuing.";
+  if (step === 3 && props.model.banks.some((x) => !x.bankName || !x.accountHolder || !x.accountNumber || !x.iban)) return "Please complete bank account details before continuing.";
+  if (step === 4) {
+    const required = [props.model.credentials.loginEmail, props.model.credentials.password, props.model.credentials.confirmPassword];
+    if (required.some((x) => !x?.trim())) return "Please complete login credentials before continuing.";
+    if (props.model.credentials.password !== props.model.credentials.confirmPassword) return "Password and Confirm Password do not match.";
+  }
+  return "";
+};
+
 function nextStep() {
+  const error = validateStep(activeStep.value);
+  stepError.value = error;
+  if (error) return;
   if (activeStep.value < steps.length - 1) activeStep.value++;
 }
 
 function prevStep() {
+  stepError.value = "";
   if (activeStep.value > 0) activeStep.value--;
 }
 
@@ -75,6 +110,8 @@ function setMainBank(idx: number) {
   <section class="register-wizard">
     <h1>Create Seller Account</h1>
     <p class="subtitle">Register company information, owner details, branches, bank accounts, and login credentials.</p>
+
+    <p v-if="stepError" class="error-banner">{{ stepError }}</p>
 
     <div class="stepper">
       <button
@@ -211,5 +248,6 @@ input, textarea, select { padding: 8px; border: 1px solid #cfd6e4; border-radius
 .title-row { display:flex; justify-content: space-between; align-items: center; }
 .wizard-actions { display:flex; justify-content: space-between; margin-top: 8px; }
 .ghost { margin-right: 8px; }
+.error-banner { margin: 0; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; border-radius: 8px; padding: 8px 10px; }
 @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } }
 </style>

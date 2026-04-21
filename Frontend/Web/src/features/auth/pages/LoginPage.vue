@@ -20,6 +20,11 @@ const onSubmit = async () => {
     email: model.email,
     password: model.password,
   });
+
+  if (!marketplace.error.value && marketplace.session.value) {
+    window.history.replaceState({}, "", "/overview");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }
 };
 
 const onForgot = () => {

@@ -72,7 +72,10 @@ function readStoredSession(): UserSession | null {
   }
 }
 
+let marketplaceStore: any = null;
+
 export function useMarketplace() {
+  if (marketplaceStore) return marketplaceStore;
   const persistedSession = readStoredSession();
   const role = ref<UserRole>(persistedSession?.role ?? "Admin");
   const activeMenu = ref<NavigationKey>("overview");
@@ -307,7 +310,7 @@ export function useMarketplace() {
 
   watch(session, (value) => persistSession(value), { deep: true });
 
-  return {
+  marketplaceStore = {
     role,
     activeMenu,
     session,
@@ -341,6 +344,8 @@ export function useMarketplace() {
     walletSellConfiguration,
     saveWalletSellConfiguration
   };
+
+  return marketplaceStore;
 }
 
 

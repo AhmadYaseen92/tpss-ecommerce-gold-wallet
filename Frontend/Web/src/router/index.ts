@@ -1,29 +1,16 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 
 const routes: Array<RouteRecordRaw> = [
-  {
-    path: '/',
-    redirect: '/Login',
-  },
-  {
-    path: '/Login',
-    name: 'Login',
-    component: () => import('../features/auth/pages/LoginPage.vue'),
-  },
-  {
-    path: '/Register',
-    name: 'Register',
-    component: () => import('../features/auth/pages/RegisterPage.vue'),
-  },
-  {
-    path: '/OverView',
-    name: 'OverView',
-    component: () => import('../features/auth/pages/LoginPage.vue'),
-  },
-  {
-    path: '/overview',
-    redirect: '/OverView',
-  },
+  { path: '/', redirect: '/Login' },
+  { path: '/Login', name: 'Login', component: () => import('../features/auth/pages/LoginPage.vue') },
+  { path: '/Register', name: 'Register', component: () => import('../features/auth/pages/RegisterPage.vue') },
+  { path: '/overview', name: 'overview', component: () => import('../features/auth/pages/LoginPage.vue') },
+  { path: '/products', component: () => import('../features/auth/pages/LoginPage.vue') },
+  { path: '/investors', component: () => import('../features/auth/pages/LoginPage.vue') },
+  { path: '/sellers', component: () => import('../features/auth/pages/LoginPage.vue') },
+  { path: '/settings', component: () => import('../features/auth/pages/LoginPage.vue') },
+  { path: '/transactions', component: () => import('../features/auth/pages/LoginPage.vue') },
+  { path: '/reports', component: () => import('../features/auth/pages/LoginPage.vue') },
 ];
 
 const router = createRouter({
