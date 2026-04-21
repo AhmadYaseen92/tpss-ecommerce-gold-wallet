@@ -74,9 +74,14 @@ public class WebAdminController(
             .Select(x => new WebSellerDto
             {
                 Id = $"s-{x.Id}",
-                Name = x.Name,
-                Email = x.ContactEmail ?? dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
+                Name = x.CompanyName,
+                Email = x.CompanyEmail ?? dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
                 BusinessName = x.CompanyName,
+                CompanyCode = x.CompanyCode,
+                ContactPhone = x.CompanyPhone,
+                LoginEmail = dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
+                IsActive = x.IsActive,
+                ReviewedAt = x.ReviewedAtUtc,
                 KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
                 SubmittedAt = x.CreatedAtUtc,
                 GoldPrice = x.GoldPrice,
@@ -192,7 +197,7 @@ public class WebAdminController(
                 {
                     Id = $"r-{x.history.Id}",
                     SellerId = x.history.SellerId.HasValue ? $"s-{x.history.SellerId.Value}" : string.Empty,
-                    SellerName = x.seller != null ? x.seller.Name : string.Empty,
+                    SellerName = x.seller != null ? x.seller.CompanyName : string.Empty,
                     InvestorId = $"i-{x.history.UserId}",
                     InvestorName = x.user.FullName,
                     Type = x.history.TransactionType,

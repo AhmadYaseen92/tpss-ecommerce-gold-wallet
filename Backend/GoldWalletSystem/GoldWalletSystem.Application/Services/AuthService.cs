@@ -68,23 +68,24 @@ public class AuthService(
             UpdatedAtUtc = DateTime.UtcNow,
         };
 
-        var created = await userAuthRepository.AddAsync(user, profile, cancellationToken);
-        var sellerId = await EnsureSellerProfileAsync(created, request, role, fullName, cancellationToken);
+        var seller = BuildSellerEntity(request, role);
+        var createdResult = await userAuthRepository.AddWithOptionalSellerAsync(user, profile, seller, cancellationToken);
+
         var otp = await otpService.RequestAsync(new RequestOtpRequestDto
         {
-            UserId = created.Id,
+            UserId = createdResult.User.Id,
             ActionType = OtpActionTypes.Registration,
-            ActionReferenceId = created.Id.ToString(),
+            ActionReferenceId = createdResult.User.Id.ToString(),
             ForceEmailFallback = false
         }, cancellationToken);
 
         return new RegisterResponseDto
         {
-            UserId = created.Id,
-            Email = created.Email,
-            FullName = created.FullName,
-            Role = created.Role,
-            SellerId = sellerId,
+            UserId = createdResult.User.Id,
+            Email = createdResult.User.Email,
+            FullName = createdResult.User.FullName,
+            Role = createdResult.User.Role,
+            SellerId = createdResult.Seller?.Id,
             RequiresOtpVerification = true,
             OtpRequestId = otp.OtpRequestId
         };
@@ -193,10 +194,15 @@ public class AuthService(
             throw new UnauthorizedAccessException("Seller account is not linked.");
 
         if (seller.KycStatus != KycStatus.Approved || !seller.IsActive)
-            throw new UnauthorizedAccessException("Seller account is awaiting admin approval.");
+        {
+            var reason = seller.KycStatus == KycStatus.Blocked
+                ? "Seller account is blocked."
+                : "Seller account is awaiting admin approval.";
+            throw new UnauthorizedAccessException(reason);
+        }
     }
 
-    private async Task<int?> EnsureSellerProfileAsync(User createdUser, RegisterRequestDto request, string role, string fullName, CancellationToken cancellationToken)
+    private Seller? BuildSellerEntity(RegisterRequestDto request, string role)
     {
         var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
         if (!isSeller)
@@ -206,43 +212,97 @@ public class AuthService(
 
         var seller = new Seller
         {
-            UserId = createdUser.Id,
-            Name = fullName,
-            Code = BuildSellerCode(request),
-            ContactEmail = request.Email.Trim(),
-            ContactPhone = request.PhoneNumber?.Trim(),
+            CompanyName = request.CompanyInfo.CompanyName.Trim(),
+            CompanyCode = BuildSellerCode(request),
+            CommercialRegistrationNumber = request.CompanyInfo.CommercialRegistrationNumber.Trim(),
+            VatNumber = request.CompanyInfo.VatNumber.Trim(),
+            BusinessActivity = request.CompanyInfo.BusinessActivity.Trim(),
+            EstablishedDate = request.CompanyInfo.EstablishedDate,
+            CompanyPhone = request.CompanyInfo.CompanyPhone.Trim(),
+            CompanyEmail = request.CompanyInfo.CompanyEmail.Trim(),
+            Website = request.CompanyInfo.Website?.Trim(),
+            Description = request.CompanyInfo.Description?.Trim(),
             IsActive = false,
-            Country = request.Country.Trim(),
-            City = request.City.Trim(),
-            Street = request.Street.Trim(),
-            BuildingNumber = request.BuildingNumber.Trim(),
-            PostalCode = request.PostalCode.Trim(),
-            CompanyName = request.CompanyName.Trim(),
-            TradeLicenseNumber = request.TradeLicenseNumber.Trim(),
-            VatNumber = request.VatNumber.Trim(),
-            NationalIdNumber = request.NationalIdNumber.Trim(),
-            BankName = request.BankName.Trim(),
-            IBAN = request.Iban.Trim(),
-            AccountHolderName = request.AccountHolderName.Trim(),
-            NationalIdFrontPath = request.NationalIdFrontPath.Trim(),
-            NationalIdBackPath = request.NationalIdBackPath.Trim(),
-            TradeLicensePath = request.TradeLicensePath.Trim(),
             KycStatus = KycStatus.Pending,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
+            Address = new SellerAddress
+            {
+                Country = request.CompanyInfo.Country.Trim(),
+                City = request.CompanyInfo.City.Trim(),
+                Street = request.CompanyInfo.Street.Trim(),
+                BuildingNumber = request.CompanyInfo.BuildingNumber.Trim(),
+                PostalCode = request.CompanyInfo.PostalCode.Trim(),
+                CreatedAtUtc = DateTime.UtcNow
+            },
+            Managers =
+            [
+                new SellerManager
+                {
+                    FullName = request.Manager.FullName.Trim(),
+                    PositionTitle = request.Manager.PositionTitle.Trim(),
+                    Nationality = request.Manager.Nationality.Trim(),
+                    MobileNumber = request.Manager.MobileNumber.Trim(),
+                    EmailAddress = request.Manager.EmailAddress.Trim(),
+                    IdType = request.Manager.IdType.Trim(),
+                    IdNumber = request.Manager.IdNumber.Trim(),
+                    IdExpiryDate = request.Manager.IdExpiryDate,
+                    IsPrimary = true,
+                    CreatedAtUtc = DateTime.UtcNow
+                }
+            ],
+            Branches = request.Branches.Select(branch => new SellerBranch
+            {
+                BranchName = branch.BranchName.Trim(),
+                Country = branch.Country.Trim(),
+                City = branch.City.Trim(),
+                FullAddress = branch.FullAddress.Trim(),
+                BuildingNumber = branch.BuildingNumber.Trim(),
+                PostalCode = branch.PostalCode.Trim(),
+                PhoneNumber = branch.PhoneNumber.Trim(),
+                Email = branch.Email.Trim(),
+                IsMainBranch = branch.IsMainBranch,
+                CreatedAtUtc = DateTime.UtcNow
+            }).ToList(),
+            BankAccounts = request.BankAccounts.Select(bank => new SellerBankAccount
+            {
+                BankName = bank.BankName.Trim(),
+                AccountHolderName = bank.AccountHolderName.Trim(),
+                AccountNumber = bank.AccountNumber.Trim(),
+                IBAN = bank.Iban.Trim(),
+                SwiftCode = bank.SwiftCode.Trim(),
+                BankCountry = bank.BankCountry.Trim(),
+                BankCity = bank.BankCity.Trim(),
+                BranchName = bank.BranchName.Trim(),
+                BranchAddress = bank.BranchAddress.Trim(),
+                Currency = bank.Currency.Trim(),
+                IsMainAccount = bank.IsMainAccount,
+                CreatedAtUtc = DateTime.UtcNow
+            }).ToList(),
+            Documents = request.Documents.Select(doc => new SellerDocument
+            {
+                DocumentType = doc.DocumentType.Trim(),
+                FileName = doc.FileName.Trim(),
+                FilePath = doc.FilePath.Trim(),
+                ContentType = doc.ContentType.Trim(),
+                IsRequired = doc.IsRequired,
+                UploadedAtUtc = DateTime.UtcNow,
+                RelatedEntityType = doc.RelatedEntityType,
+                RelatedEntityId = doc.RelatedEntityId,
+                CreatedAtUtc = DateTime.UtcNow
+            }).ToList()
         };
 
-        var createdSeller = await userAuthRepository.AddSellerProfileAsync(seller, cancellationToken);
-        return createdSeller.Id;
+        return seller;
     }
 
     private static string BuildSellerCode(RegisterRequestDto request)
     {
-        if (!string.IsNullOrWhiteSpace(request.SellerCode))
-            return request.SellerCode.Trim().ToUpperInvariant();
+        if (!string.IsNullOrWhiteSpace(request.CompanyInfo.CompanyCode))
+            return request.CompanyInfo.CompanyCode.Trim().ToUpperInvariant();
 
-        var companySeed = string.IsNullOrWhiteSpace(request.CompanyName)
+        var companySeed = string.IsNullOrWhiteSpace(request.CompanyInfo.CompanyName)
             ? "SELL"
-            : new string(request.CompanyName.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
+            : new string(request.CompanyInfo.CompanyName.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
 
         if (companySeed.Length > 6)
             companySeed = companySeed[..6];
@@ -253,26 +313,56 @@ public class AuthService(
 
     private static void ValidateSellerRegistration(RegisterRequestDto request)
     {
+        var company = request.CompanyInfo;
+        var manager = request.Manager;
+
         var requiredFields = new[]
         {
-            request.Country,
-            request.City,
-            request.Street,
-            request.BuildingNumber,
-            request.PostalCode,
-            request.CompanyName,
-            request.TradeLicenseNumber,
-            request.VatNumber,
-            request.NationalIdNumber,
-            request.BankName,
-            request.Iban,
-            request.AccountHolderName,
-            request.NationalIdFrontPath,
-            request.NationalIdBackPath,
-            request.TradeLicensePath
+            company.CompanyName,
+            company.CommercialRegistrationNumber,
+            company.VatNumber,
+            company.BusinessActivity,
+            company.Country,
+            company.City,
+            company.Street,
+            company.BuildingNumber,
+            company.PostalCode,
+            company.CompanyPhone,
+            company.CompanyEmail,
+            manager.FullName,
+            manager.PositionTitle,
+            manager.Nationality,
+            manager.MobileNumber,
+            manager.EmailAddress,
+            manager.IdType,
+            manager.IdNumber
         };
 
         if (requiredFields.Any(string.IsNullOrWhiteSpace))
-            throw new InvalidOperationException("All seller registration and KYC fields are required.");
+            throw new InvalidOperationException("All required seller registration fields must be provided.");
+
+        if (request.Branches.Count == 0 || request.Branches.Any(x => string.IsNullOrWhiteSpace(x.BranchName)))
+            throw new InvalidOperationException("At least one complete branch is required.");
+
+        if (request.BankAccounts.Count == 0 || request.BankAccounts.Any(x => string.IsNullOrWhiteSpace(x.BankName) || string.IsNullOrWhiteSpace(x.Iban)))
+            throw new InvalidOperationException("At least one complete bank account is required.");
+
+        var requiredDocs = new[]
+        {
+            "CommercialRegistrationDocument",
+            "ArticlesOfAssociation",
+            "ProofOfAddress",
+            "VatCertificate",
+            "AmlDocumentation",
+            "ManagerIdCopy"
+        };
+
+        var providedDocTypes = request.Documents
+            .Select(x => x.DocumentType)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (requiredDocs.Any(x => !providedDocTypes.Contains(x)))
+            throw new InvalidOperationException("Required seller KYC documents are missing.");
     }
 }

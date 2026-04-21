@@ -17,12 +17,12 @@ const emit = defineEmits<{
 }>();
 
 const steps = [
+  "Order Summary",
   "Company Information",
-  "Owner / Manager",
-  "Branches / Locations",
+  "Company Owner / Manager",
+  "Company Branches / Locations",
   "Bank Details",
   "Login Credentials",
-  "Summary",
 ];
 
 const activeStep = ref(0);
@@ -95,7 +95,7 @@ function goToStep(stepIndex: number) {
       <el-step v-for="(step, idx) in steps" :key="idx" :title="step" />
     </el-steps>
 
-    <div v-show="activeStep === 0">
+    <div v-show="activeStep === 1">
       <h2>Company Information</h2>
 
       <el-form :model="model.companyInfo" label-width="220px" class="step-form">
@@ -232,7 +232,7 @@ function goToStep(stepIndex: number) {
       </el-form>
     </div>
 
-    <div v-show="activeStep === 1">
+    <div v-show="activeStep === 2">
       <h2>Owner / Manager</h2>
 
       <el-form :model="model.ownerInfo" label-width="220px" class="step-form">
@@ -302,7 +302,7 @@ function goToStep(stepIndex: number) {
       </el-form>
     </div>
 
-    <div v-show="activeStep === 2">
+    <div v-show="activeStep === 3">
       <div class="section-header">
         <h2>Branches / Locations</h2>
         <el-button type="primary" @click="addBranch">Add Branch</el-button>
@@ -364,7 +364,7 @@ function goToStep(stepIndex: number) {
       </div>
     </div>
 
-    <div v-show="activeStep === 3">
+    <div v-show="activeStep === 4">
       <div class="section-header">
         <h2>Bank Details</h2>
         <el-button type="primary" @click="addBank">Add Bank</el-button>
@@ -458,7 +458,7 @@ function goToStep(stepIndex: number) {
       </div>
     </div>
 
-    <div v-show="activeStep === 4">
+    <div v-show="activeStep === 5">
       <h2>Login Credentials</h2>
 
       <el-form :model="model.credentials" label-width="180px" class="step-form">
@@ -486,14 +486,14 @@ function goToStep(stepIndex: number) {
       </el-form>
     </div>
 
-    <div v-show="activeStep === 5">
-      <h2>Summary</h2>
+    <div v-show="activeStep === 0">
+      <h2>Order Summary</h2>
 
       <div class="summary-card">
         <div class="summary-section">
           <div class="summary-title-row">
             <h3>Company Information</h3>
-            <el-button text type="primary" @click="goToStep(0)">Edit</el-button>
+            <el-button text type="primary" @click="goToStep(1)">Edit</el-button>
           </div>
           <p><strong>Company Name:</strong> {{ model.companyInfo.companyName || "-" }}</p>
           <p><strong>Company Code:</strong> {{ model.companyInfo.companyCode || "-" }}</p>
@@ -504,7 +504,7 @@ function goToStep(stepIndex: number) {
         <div class="summary-section">
           <div class="summary-title-row">
             <h3>Owner / Manager</h3>
-            <el-button text type="primary" @click="goToStep(1)">Edit</el-button>
+            <el-button text type="primary" @click="goToStep(2)">Edit</el-button>
           </div>
           <p><strong>Name:</strong> {{ model.ownerInfo.name || "-" }}</p>
           <p><strong>Position:</strong> {{ model.ownerInfo.position || "-" }}</p>
@@ -514,7 +514,7 @@ function goToStep(stepIndex: number) {
         <div class="summary-section">
           <div class="summary-title-row">
             <h3>Branches / Locations</h3>
-            <el-button text type="primary" @click="goToStep(2)">Edit</el-button>
+            <el-button text type="primary" @click="goToStep(3)">Edit</el-button>
           </div>
           <div v-for="(branch, idx) in model.branches" :key="`summary-branch-${idx}`" class="summary-item">
             <p><strong>Branch {{ idx + 1 }}:</strong> {{ branch.branchName || "-" }}</p>
@@ -525,7 +525,7 @@ function goToStep(stepIndex: number) {
         <div class="summary-section">
           <div class="summary-title-row">
             <h3>Bank Details</h3>
-            <el-button text type="primary" @click="goToStep(3)">Edit</el-button>
+            <el-button text type="primary" @click="goToStep(4)">Edit</el-button>
           </div>
           <div v-for="(bank, idx) in model.banks" :key="`summary-bank-${idx}`" class="summary-item">
             <p><strong>Bank {{ idx + 1 }}:</strong> {{ bank.bankName || "-" }}</p>
@@ -537,7 +537,7 @@ function goToStep(stepIndex: number) {
         <div class="summary-section">
           <div class="summary-title-row">
             <h3>Login Credentials</h3>
-            <el-button text type="primary" @click="goToStep(4)">Edit</el-button>
+            <el-button text type="primary" @click="goToStep(5)">Edit</el-button>
           </div>
           <p><strong>Login Email:</strong> {{ model.credentials.loginEmail || "-" }}</p>
         </div>

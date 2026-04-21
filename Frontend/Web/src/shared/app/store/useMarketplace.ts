@@ -203,6 +203,13 @@ export function useMarketplace() {
     }
   };
 
+  const blockKyc = async (sellerId: string) => {
+    state.value.sellers = updateSellerKycStatus(state.value.sellers, sellerId, "blocked");
+    if (session.value?.accessToken) {
+      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "blocked");
+    }
+  };
+
   const setMarketPrice = (productId: string, marketPrice: number) => {
     state.value.products = updateProductMarketPrice(state.value.products, productId, marketPrice);
   };
@@ -317,6 +324,7 @@ export function useMarketplace() {
     registerSeller,
     approveKyc,
     rejectKyc,
+    blockKyc,
     setMarketPrice,
     addProduct,
     updateProduct,

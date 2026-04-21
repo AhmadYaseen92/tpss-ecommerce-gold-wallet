@@ -13,7 +13,8 @@ const filtered = computed(() => props.marketplace.state.value.sellers.filter((se
   if (kycFilter.value !== "all" && seller.kycStatus !== kycFilter.value) return false;
   if (!search.value.trim()) return true;
   const term = search.value.toLowerCase();
-  return [seller.name, seller.businessName, seller.email].join(" ").toLowerCase().includes(term);
+  return [seller.name, seller.businessName, seller.email, seller.companyCode, seller.loginEmail, seller.contactPhone]
+    .join(" ").toLowerCase().includes(term);
 }));
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)));
@@ -22,9 +23,10 @@ const pageItems = computed(() => {
   return filtered.value.slice(start, start + pageSize);
 });
 
-const setKyc = async (sellerId: string, status: "approved" | "rejected") => {
+const setKyc = async (sellerId: string, status: "approved" | "rejected" | "blocked") => {
   if (status === "approved") await props.marketplace.approveKyc(sellerId);
   if (status === "rejected") await props.marketplace.rejectKyc(sellerId);
+  if (status === "blocked") await props.marketplace.blockKyc(sellerId);
 };
 
 onMounted(() => {
@@ -35,18 +37,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <SectionCard title="Sellers Management">
+  <SectionCard title="Seller Registration Requests">
     <div class="filters">
-      <input v-model="search" placeholder="Search seller, company, email" />
-      <select v-model="kycFilter"><option value="all">All KYC</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+      <input v-model="search" placeholder="Search company, code, login email, phone" />
+      <select v-model="kycFilter"><option value="all">All KYC</option><option value="pending">Pending</option><option value="underreview">Under Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="blocked">Blocked</option></select>
     </div>
     <table>
-      <thead><tr><th>Seller Name</th><th>Company</th><th>Email</th><th>KYC</th><th>Gold/Silver/Diamond</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Company Name</th><th>Company Code</th><th>Login Email</th><th>Contact Phone</th><th>KYC Status</th><th>Is Active</th><th>Created Date</th><th>Reviewed Date</th><th>Actions</th></tr></thead>
       <tbody>
         <tr v-for="seller in pageItems" :key="seller.id">
-          <td>{{ seller.name }}</td><td>{{ seller.businessName }}</td><td>{{ seller.email }}</td><td>{{ seller.kycStatus }}</td>
-          <td>{{ seller.goldPrice ?? '-' }} / {{ seller.silverPrice ?? '-' }} / {{ seller.diamondPrice ?? '-' }}</td>
-          <td><button @click="setKyc(seller.id, 'approved')">Approve</button> <button class="danger" @click="setKyc(seller.id, 'rejected')">Reject</button></td>
+          <td>{{ seller.businessName }}</td><td>{{ seller.companyCode || '-' }}</td><td>{{ seller.loginEmail || seller.email }}</td><td>{{ seller.contactPhone || '-' }}</td>
+          <td>{{ seller.kycStatus }}</td><td>{{ seller.isActive ? 'Yes' : 'No' }}</td><td>{{ seller.submittedAt }}</td><td>{{ seller.reviewedAt || '-' }}</td>
+          <td><button @click="setKyc(seller.id, 'approved')">Approve</button> <button class="danger" @click="setKyc(seller.id, 'rejected')">Reject</button> <button class="danger" @click="setKyc(seller.id, 'blocked')">Block</button></td>
         </tr>
       </tbody>
     </table>

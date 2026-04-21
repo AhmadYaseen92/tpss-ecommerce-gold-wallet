@@ -39,7 +39,12 @@ export interface WebSellerDto {
   email: string;
   businessName: string;
   kycStatus: string;
+  companyCode: string;
+  loginEmail: string;
+  contactPhone: string;
+  isActive: boolean;
   submittedAt: string;
+  reviewedAt?: string;
   goldPrice?: number | null;
   silverPrice?: number | null;
   diamondPrice?: number | null;

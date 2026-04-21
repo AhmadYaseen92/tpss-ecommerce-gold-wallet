@@ -26,6 +26,31 @@ public class UserAuthRepository(AppDbContext dbContext) : IUserAuthRepository
         return seller;
     }
 
+
+    public async Task<(User User, Seller? Seller)> AddWithOptionalSellerAsync(User user, UserProfile? profile, Seller? seller, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        dbContext.Users.Add(user);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (profile is not null)
+        {
+            profile.UserId = user.Id;
+            dbContext.UserProfiles.Add(profile);
+        }
+
+        if (seller is not null)
+        {
+            seller.UserId = user.Id;
+            dbContext.Sellers.Add(seller);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return (user, seller);
+    }
+
     public async Task<User> AddAsync(User user, UserProfile? profile = null, CancellationToken cancellationToken = default)
     {
         dbContext.Users.Add(user);

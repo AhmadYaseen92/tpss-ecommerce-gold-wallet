@@ -3,6 +3,8 @@ namespace GoldWalletSystem.Domain.Enums;
 public enum KycStatus
 {
     Pending = 0,
-    Approved = 1,
-    Rejected = 2
+    UnderReview = 1,
+    Approved = 2,
+    Rejected = 3,
+    Blocked = 4
 }

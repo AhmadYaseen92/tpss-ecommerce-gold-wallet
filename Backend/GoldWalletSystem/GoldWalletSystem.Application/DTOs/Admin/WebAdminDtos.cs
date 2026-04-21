@@ -19,8 +19,13 @@ public class WebSellerDto
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string BusinessName { get; set; } = string.Empty;
+    public string CompanyCode { get; set; } = string.Empty;
+    public string LoginEmail { get; set; } = string.Empty;
+    public string ContactPhone { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
     public string KycStatus { get; set; } = "pending";
     public DateTime SubmittedAt { get; set; }
+    public DateTime? ReviewedAt { get; set; }
     public decimal? GoldPrice { get; set; }
     public decimal? SilverPrice { get; set; }
     public decimal? DiamondPrice { get; set; }
