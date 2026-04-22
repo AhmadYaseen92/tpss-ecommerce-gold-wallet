@@ -46,7 +46,9 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.WeightValue,
                 x.WeightUnit,
                 x.BaseMarketPrice,
-                x.ManualSellPrice,
+                x.AutoPrice,
+                x.FixedPrice,
+                x.SellPrice,
                 x.OfferPercent,
                 x.OfferNewPrice,
                 x.OfferType,
@@ -59,11 +61,6 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
 
         var items = rows.Select(x =>
         {
-            var basePrice = x.PricingMode == ProductPricingMode.Manual
-                ? x.ManualSellPrice
-                : ProductPricingCalculator.CalculateAutoPrice(x.MaterialType, x.BaseMarketPrice, x.WeightValue, x.PurityFactor);
-            var finalPrice = ProductPricingCalculator.ApplyOffer(basePrice, x.OfferType, x.OfferPercent, x.OfferNewPrice);
-
             return new ProductDto(
                 x.Id,
                 x.Name,
@@ -80,10 +77,12 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.WeightValue,
                 x.WeightUnit,
                 x.BaseMarketPrice,
+                x.AutoPrice,
+                x.FixedPrice,
+                x.SellPrice,
                 x.OfferPercent,
                 x.OfferNewPrice,
                 x.OfferType,
-                finalPrice,
                 x.IsHasOffer,
                 x.AvailableStock,
                 x.SellerId,

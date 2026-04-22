@@ -17,6 +17,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
       super(TransferAssetActionInitial()) {
     quantityController.addListener(_emitUpdated);
     recipientContactController.addListener(_onRecipientChanged);
+    _emitUpdated();
   }
 
   final WalletTransactionEntity asset;
@@ -43,8 +44,9 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
 
   bool get isGift => transferType == WalletActionType.gift;
   double get grossAmount => unitPrice * quantity;
-  double get feeAmount => 10;
-  double get estimatedValue => grossAmount - feeAmount;
+  WalletActionPreviewResult? _preview;
+  double get feeAmount => (_preview?.totalFeesAmount ?? 0) - (_preview?.discountAmount ?? 0);
+  double get estimatedValue => _preview?.finalAmount ?? 0;
 
   String formatCurrency(double value) =>
       NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(value);
@@ -91,7 +93,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
       isRecipientVerified = false;
       recipientInvestorUserId = null;
     }
-    _emitUpdated();
+    await _emitUpdated();
   }
 
   void _onRecipientChanged() {
@@ -111,6 +113,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
       primaryValue: '$quantity Units',
       feeValue: formatCurrency(feeAmount),
       totalValue: formatCurrency(estimatedValue),
+      preview: _preview,
       destinationLabel: 'Recipient Account No.',
       destinationValue: recipientContactController.text.trim(),
       recipientInvestorUserId: recipientInvestorUserId,
@@ -126,7 +129,23 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
     return double.tryParse(clean) ?? 0;
   }
 
-  void _emitUpdated() => emit(TransferAssetActionUpdated());
+  Future<void> _emitUpdated() async {
+    try {
+      final quantityToSend = quantity;
+      final requestedWeight = maxQuantity == 0 ? 0 : (asset.weightInGrams / maxQuantity) * quantityToSend;
+      _preview = await _walletActionRepository.previewWalletAction(
+        actionType: transferType,
+        walletAssetId: asset.walletAssetId,
+        quantity: quantityToSend,
+        unitPrice: unitPrice,
+        weight: requestedWeight,
+        amount: grossAmount,
+      );
+    } catch (_) {
+      _preview = null;
+    }
+    emit(TransferAssetActionUpdated());
+  }
 
   @override
   Future<void> close() {

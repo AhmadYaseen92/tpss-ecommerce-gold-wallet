@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
@@ -7,6 +9,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/walle
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/pages/wallet_actions/action_review_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 
 class PickupRequestPage extends StatefulWidget {
   final WalletTransactionEntity asset;
@@ -17,8 +20,57 @@ class PickupRequestPage extends StatefulWidget {
 }
 
 class _PickupRequestPageState extends State<PickupRequestPage> {
+  final Dio _dio = InjectionContainer.dio();
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
+  WalletActionPreviewResult? _preview;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreview();
+  }
+
+  Future<void> _loadPreview() async {
+    try {
+      final quantity = 1;
+      final unitPrice = widget.asset.marketPricePerGram;
+      final amount = unitPrice * widget.asset.weightInGrams;
+      final response = await _dio.post(
+        '/wallet/actions/preview',
+        data: {
+          'userId': AuthSessionStore.userId,
+          'walletAssetId': widget.asset.id,
+          'actionType': 'pickup',
+          'quantity': quantity,
+          'unitPrice': unitPrice,
+          'weight': widget.asset.weightInGrams,
+          'amount': amount,
+        },
+      );
+      final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      final feeBreakdowns = (data['feeBreakdowns'] as List<dynamic>? ?? [])
+          .whereType<Map<String, dynamic>>()
+          .map((line) => WalletActionPreviewFeeLine(
+                feeName: (line['feeName'] ?? '').toString(),
+                appliedValue: (line['appliedValue'] as num?)?.toDouble() ?? 0,
+                isDiscount: (line['isDiscount'] as bool?) ?? false,
+              ))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        _preview = WalletActionPreviewResult(
+          subTotalAmount: (data['subTotalAmount'] as num?)?.toDouble() ?? 0,
+          totalFeesAmount: (data['totalFeesAmount'] as num?)?.toDouble() ?? 0,
+          discountAmount: (data['discountAmount'] as num?)?.toDouble() ?? 0,
+          finalAmount: (data['finalAmount'] as num?)?.toDouble() ?? 0,
+          currency: (data['currency'] ?? 'USD').toString(),
+          feeBreakdowns: feeBreakdowns,
+        );
+      });
+    } catch (_) {}
+  }
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -66,13 +118,10 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
           ActionSectionCard(
             title: 'Fees Summary',
             child: Column(
-              children: const [
-                _FeeRow('Delivery', '\$20.00'),
-                _FeeRow('Storage', '\$10.00'),
-                _FeeRow('Service Charge', '\$5.00'),
-                _FeeRow('Premium/Discount', '-\$2.50'),
-                Divider(height: 20),
-                _FeeRow('Total Fees', '\$32.50', bold: true),
+              children: [
+                ...?_preview?.feeBreakdowns.map((line) => _FeeRow(line.feeName, '${line.isDiscount ? '-' : ''}\$${line.appliedValue.toStringAsFixed(2)}')),
+                const Divider(height: 20),
+                _FeeRow('Total Fees', '\$${((_preview?.totalFeesAmount ?? 0) - (_preview?.discountAmount ?? 0)).toStringAsFixed(2)}', bold: true),
               ],
             ),
           ),
@@ -80,9 +129,9 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
             title: 'Amount Summary',
             child: Column(
               children: [
-                _FeeRow('Amount', widget.asset.marketValue),
-                const _FeeRow('Fees', '\$32.50'),
-                const _FeeRow('Total Amount', '\$1,232.50', bold: true),
+                _FeeRow('Subtotal', '\$${(_preview?.subTotalAmount ?? 0).toStringAsFixed(2)}'),
+                _FeeRow('Discount', '-\$${(_preview?.discountAmount ?? 0).toStringAsFixed(2)}'),
+                _FeeRow('Final Amount', '\$${(_preview?.finalAmount ?? 0).toStringAsFixed(2)}', bold: true),
               ],
             ),
           ),
@@ -133,8 +182,9 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
       actionType: WalletActionType.pickup,
       title: 'Pickup Asset',
       primaryValue: '1 Units',
-      feeValue: '\$32.50',
-      totalValue: widget.asset.marketValue,
+      feeValue: '\$${(((_preview?.totalFeesAmount ?? 0) - (_preview?.discountAmount ?? 0))).toStringAsFixed(2)}',
+      totalValue: '\$${(_preview?.finalAmount ?? 0).toStringAsFixed(2)}',
+      preview: _preview,
       destinationLabel: 'Pickup Schedule',
       destinationValue: schedule,
       note: 'pickup_schedule=$schedule',

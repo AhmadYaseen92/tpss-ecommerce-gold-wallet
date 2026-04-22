@@ -8,6 +8,14 @@ abstract class IWalletActionRepository {
   Future<double> lockUnitPrice(double requestedUnitPrice);
 
   Future<SellExecutionMode> getSellExecutionMode();
+  Future<WalletActionPreviewResult> previewWalletAction({
+    required WalletActionType actionType,
+    required int walletAssetId,
+    required int quantity,
+    required double unitPrice,
+    required double weight,
+    required double amount,
+  });
 
   Future<WalletActionExecutionResult> executeWalletAction(WalletActionExecutionRequest request);
   Future<void> cancelWalletRequest({required int walletAssetId});

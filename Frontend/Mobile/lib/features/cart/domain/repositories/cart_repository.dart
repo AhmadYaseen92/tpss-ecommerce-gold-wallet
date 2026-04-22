@@ -8,4 +8,6 @@ abstract class ICartRepository {
   Future<void> removeProduct(String id);
 
   Future<void> updateProductQuantity(String id, int quantity);
+
+  Future<CartSummaryEntity> previewSummary(List<String> productIds);
 }

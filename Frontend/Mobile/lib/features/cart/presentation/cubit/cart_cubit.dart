@@ -1,14 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/add_cart_product_usecase.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/calculate_cart_summary_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/filter_cart_items_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/get_available_sellers_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/get_cart_items_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/remove_cart_product_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/update_cart_product_quantity_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/repositories/cart_repository.dart';
 
 part 'cart_state.dart';
 
@@ -18,14 +19,14 @@ class CartCubit extends Cubit<CartState> {
     required AddCartProductUseCase addCartProductUseCase,
     required RemoveCartProductUseCase removeCartProductUseCase,
     required UpdateCartProductQuantityUseCase updateCartProductQuantityUseCase,
-    CalculateCartSummaryUseCase calculateCartSummaryUseCase = const CalculateCartSummaryUseCase(),
+    required ICartRepository cartRepository,
     FilterCartItemsUseCase filterCartItemsUseCase = const FilterCartItemsUseCase(),
     GetAvailableSellersUseCase getAvailableSellersUseCase = const GetAvailableSellersUseCase(),
   }) : _getCartItemsUseCase = getCartItemsUseCase,
        _addCartProductUseCase = addCartProductUseCase,
        _removeCartProductUseCase = removeCartProductUseCase,
        _updateCartProductQuantityUseCase = updateCartProductQuantityUseCase,
-       _calculateCartSummaryUseCase = calculateCartSummaryUseCase,
+       _cartRepository = cartRepository,
        _filterCartItemsUseCase = filterCartItemsUseCase,
        _getAvailableSellersUseCase = getAvailableSellersUseCase,
        super(CartInitial());
@@ -34,7 +35,7 @@ class CartCubit extends Cubit<CartState> {
   final AddCartProductUseCase _addCartProductUseCase;
   final RemoveCartProductUseCase _removeCartProductUseCase;
   final UpdateCartProductQuantityUseCase _updateCartProductQuantityUseCase;
-  final CalculateCartSummaryUseCase _calculateCartSummaryUseCase;
+  final ICartRepository _cartRepository;
   final FilterCartItemsUseCase _filterCartItemsUseCase;
   final GetAvailableSellersUseCase _getAvailableSellersUseCase;
 
@@ -58,7 +59,7 @@ class CartCubit extends Cubit<CartState> {
         _sellerFilter = sellerFilter;
       }
 
-      _emitLoaded();
+      await _emitLoaded();
     } catch (e) {
       emit(CartError('Failed to load cart products: $e'));
     }
@@ -67,27 +68,27 @@ class CartCubit extends Cubit<CartState> {
   Future<void> addProduct(CartItemEntity product) async {
     await _addCartProductUseCase(product);
     _allItems = await _getCartItemsUseCase();
-    _emitLoaded();
+    await _emitLoaded();
   }
 
   Future<void> removeProduct(String id) async {
     await _removeCartProductUseCase(id);
     _allItems = await _getCartItemsUseCase();
-    _emitLoaded();
+    await _emitLoaded();
   }
 
   Future<void> updateProductQuantity(String id, int quantity) async {
     await _updateCartProductQuantityUseCase(id, quantity);
     _allItems = await _getCartItemsUseCase();
-    _emitLoaded();
+    await _emitLoaded();
   }
 
   void setCategoryFilter(int? categoryId) {
     _categoryFilter = categoryId;
-    _emitLoaded();
+    unawaited(_emitLoaded());
   }
 
-  void _emitLoaded() {
+  Future<void> _emitLoaded() async {
     var filtered = _filterCartItemsUseCase(items: _allItems, sellerFilter: _sellerFilter);
     if (_categoryFilter != null) {
       filtered = filtered.where((item) {
@@ -105,7 +106,7 @@ class CartCubit extends Cubit<CartState> {
       filtered = _filterCartItemsUseCase(items: _allItems, sellerFilter: _sellerFilter);
     }
 
-    final summary = _calculateCartSummaryUseCase(filtered);
+    final summary = await _cartRepository.previewSummary(filtered.map((item) => item.id).toList());
 
     emit(
       CartLoaded(

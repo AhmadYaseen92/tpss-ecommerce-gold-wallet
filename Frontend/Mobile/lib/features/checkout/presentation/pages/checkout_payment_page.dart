@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dio/dio.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
@@ -21,9 +22,12 @@ class CheckoutPaymentPage extends StatefulWidget {
 }
 
 class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
-  final TextEditingController _discountCodeController = TextEditingController();
-  String? _discountError;
-  double _discountAmount = 0.0;
+  final Dio _dio = InjectionContainer.dio();
+  double _subTotalAmount = 0;
+  double _totalFeesAmount = 0;
+  double _discountAmount = 0;
+  double _finalAmount = 0;
+  List<Map<String, dynamic>> _feeBreakdowns = const [];
 
   Map<String, dynamic> get _checkoutArgs {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -35,9 +39,9 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   }
 
   @override
-  void dispose() {
-    _discountCodeController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadPreview();
   }
 
   @override
@@ -67,8 +71,6 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         },
         builder: (context, state) {
           final cubit = context.read<CheckoutCubit>();
-          final amount = ((_checkoutArgs['amount'] as num?) ?? 1250).toDouble();
-          final total = (amount - _discountAmount).clamp(0.0, double.infinity);
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
@@ -138,23 +140,6 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                     ),
                   ),
                   ActionSectionCard(
-                    title: 'Discount Code (Optional)',
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: _discountCodeController,
-                          textCapitalization: TextCapitalization.characters,
-                          decoration: InputDecoration(hintText: 'Enter discount code', errorText: _discountError, border: const OutlineInputBorder()),
-                        ),
-                        const SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: OutlinedButton(onPressed: () => _applyDiscountCode(amount), child: const Text('Apply Code')),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ActionSectionCard(
                     title: 'Review Summary',
                     child: Column(
                       children: [
@@ -163,11 +148,11 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                           _row(context, 'Account', cubit.linkedBankAccounts[cubit.selectedBankIndex].name),
                         if (cubit.selectedPaymentType == CheckoutPaymentType.card)
                           _row(context, 'Method', cubit.predefinedPaymentMethods[cubit.selectedPaymentIndex].name),
-                        _row(context, 'Amount', '\$${amount.toStringAsFixed(2)}'),
-                        _row(context, 'Fee', '\$0.00'),
+                        _row(context, 'Subtotal', '\$${_subTotalAmount.toStringAsFixed(2)}'),
+                        ..._feeBreakdowns.map((line) => _row(context, '${line['feeName']}', '${(line['isDiscount'] == true) ? '-' : ''}\$${((line['appliedValue'] as num?) ?? 0).toStringAsFixed(2)}')),
                         _row(context, 'Discount', '-\$${_discountAmount.toStringAsFixed(2)}'),
                         Divider(color: palette.border),
-                        _row(context, 'Total', '\$${total.toStringAsFixed(2)}', bold: true),
+                        _row(context, 'Final Amount', '\$${_finalAmount.toStringAsFixed(2)}', bold: true),
                       ],
                     ),
                   ),
@@ -259,30 +244,52 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     }
   }
 
-  void _applyDiscountCode(double amount) {
-    final raw = _discountCodeController.text.trim().toUpperCase();
-    if (raw.isEmpty) {
+  Future<void> _loadPreview() async {
+    final args = _checkoutArgs;
+    final summary = args['summary'];
+    if (summary != null && summary is dynamic) {
       setState(() {
-        _discountAmount = 0.0;
-        _discountError = null;
+        _subTotalAmount = (summary.subtotal as double?) ?? 0;
+        _totalFeesAmount = (summary.totalFeesAmount as double?) ?? 0;
+        _discountAmount = (summary.discountAmount as double?) ?? 0;
+        _finalAmount = (summary.total as double?) ?? 0;
+        _feeBreakdowns = (summary.feeBreakdowns as List<dynamic>? ?? [])
+            .map((line) => {
+                  'feeName': line.feeName,
+                  'appliedValue': line.appliedValue,
+                  'isDiscount': line.isDiscount,
+                })
+            .toList();
       });
       return;
     }
 
-    const discountMap = <String, double>{'SAVE10': 0.10, 'GOLD5': 0.05, 'VIP15': 0.15};
-    final percent = discountMap[raw];
-    if (percent == null) {
-      setState(() {
-        _discountAmount = 0.0;
-        _discountError = 'Invalid discount code';
-      });
-      return;
-    }
+    final userId = AuthSessionStore.userId;
+    final productId = args['productId'];
+    final quantity = args['quantity'];
+    if (userId == null || productId == null || quantity == null) return;
 
-    setState(() {
-      _discountError = null;
-      _discountAmount = amount * percent;
-    });
+    try {
+      final response = await _dio.post(
+        '/wallet/actions/preview',
+        data: {
+          'userId': userId,
+          'actionType': 'buy',
+          'fromCart': false,
+          'productId': productId,
+          'quantity': quantity,
+        },
+      );
+      final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      if (!mounted) return;
+      setState(() {
+        _subTotalAmount = (data['subTotalAmount'] as num?)?.toDouble() ?? 0;
+        _totalFeesAmount = (data['totalFeesAmount'] as num?)?.toDouble() ?? 0;
+        _discountAmount = (data['discountAmount'] as num?)?.toDouble() ?? 0;
+        _finalAmount = (data['finalAmount'] as num?)?.toDouble() ?? 0;
+        _feeBreakdowns = (data['feeBreakdowns'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>().toList();
+      });
+    } catch (_) {}
   }
 
   IconData _icon(CheckoutPaymentType type) {

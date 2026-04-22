@@ -22,16 +22,24 @@ class HomeRemoteDataSource {
       final items = data?['items'] as List<dynamic>? ?? const [];
       final mapped = items
           .whereType<Map<String, dynamic>>()
-          .where((item) => (item['isHasOffer'] as bool?) ?? false)
           .map((item) {
             final offerPercent = (item['offerPercent'] as num?)?.toDouble() ?? 0;
-            final offerNewPrice = (item['offerNewPrice'] as num?)?.toDouble() ?? 0;
+            final offerType = (item['offerType'] ?? '').toString();
+            final sellPrice = (item['sellPrice'] as num?)?.toDouble() ?? 0;
+            final pricingMode = (item['pricingMode'] ?? '').toString().toLowerCase();
+            final sourcePrice = pricingMode.contains('auto')
+                ? ((item['autoPrice'] as num?)?.toDouble() ?? sellPrice)
+                : ((item['fixedPrice'] as num?)?.toDouble() ?? sellPrice);
             return HomeCarsouleItemModel(
               id: (item['id'] ?? '').toString(),
               imgUrl: (item['imageUrl'] ?? '').toString(),
               title: (item['name'] ?? 'Product').toString(),
               sellerName: (item['sellerName'] ?? 'Seller').toString(),
-              offerLabel: _offerLabel(offerPercent: offerPercent, offerNewPrice: offerNewPrice),
+              materialType: (item['materialType'] ?? 'Gold').toString(),
+              pricingModeLabel: pricingMode.contains('auto') ? 'Auto Price' : 'Manual Price',
+              sourcePrice: sourcePrice,
+              sellPrice: sellPrice,
+              offerLabel: _offerLabel(offerPercent: offerPercent, offerType: offerType, sellPrice: sellPrice),
             );
           })
           .where((item) => item.imgUrl.trim().isNotEmpty)
@@ -45,14 +53,15 @@ class HomeRemoteDataSource {
 
   String? _offerLabel({
     required double offerPercent,
-    required double offerNewPrice,
+    required String offerType,
+    required double sellPrice,
   }) {
-    if (offerPercent > 0) {
+    if (offerType.toLowerCase().contains('percent') && offerPercent > 0) {
       return '${offerPercent.toStringAsFixed(0)}% OFF';
     }
-    if (offerNewPrice > 0) {
-      return 'Offer \$${offerNewPrice.toStringAsFixed(2)}';
+    if (offerType.toLowerCase() != 'none') {
+      return 'Offer • Now ${sellPrice.toStringAsFixed(2)} JOD';
     }
-    return 'Special Offer';
+    return null;
   }
 }

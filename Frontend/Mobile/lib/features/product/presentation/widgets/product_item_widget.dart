@@ -15,6 +15,7 @@ class ProductItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
+    final hasOffer = product.offerType.toLowerCase() != 'none';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
@@ -31,6 +32,7 @@ class ProductItemWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(product.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.textPrimary)),
+                    Text(product.materialTypeLabel, style: TextStyle(fontSize: 12, color: palette.primary, fontWeight: FontWeight.w700)),
                     if (AppReleaseConfig.showWeightInGrams && product.weight.trim().isNotEmpty)
                       GramsHintLabel(grams: GramsConverter.fromWeightText(product.weight), prefix: 'Weight:'),
                     if (product.purity.trim().isNotEmpty)
@@ -38,25 +40,28 @@ class ProductItemWidget extends StatelessWidget {
                         'Purity: ${product.purity}',
                         style: TextStyle(fontSize: 12, color: palette.textSecondary, fontWeight: FontWeight.w600),
                       ),
+                    Text(product.pricingModeLabel, style: TextStyle(fontSize: 12, color: palette.textSecondary)),
                     if (AppReleaseConfig.showSellerUi)
                       Text('Seller: ${product.sellerName}', style: TextStyle(fontSize: 12, color: palette.primary)),
                     const SizedBox(height: 6),
+                    if (hasOffer)
+                      Text(
+                        '\$${_sourcePrice(product).toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: palette.textSecondary,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
                     Text(
-                      product.description,
-                      style: TextStyle(fontSize: 13, color: palette.textSecondary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '\$${product.finalPrice.toStringAsFixed(2)}',
+                      '\$${product.sellPrice.toStringAsFixed(2)}',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.textPrimary),
                     ),
-                    if (product.offerType.toLowerCase() != 'none')
+                    if (hasOffer)
                       Text(
                         product.offerType.toLowerCase().contains('percent')
-                            ? 'Offer: ${product.offerPercent.toStringAsFixed(1)}% off'
-                            : 'Offer Price: \$${product.offerNewPrice.toStringAsFixed(2)}',
+                            ? '${product.offerPercent.toStringAsFixed(0)}% OFF'
+                            : 'Offer • Now \$${product.sellPrice.toStringAsFixed(2)}',
                         style: TextStyle(fontSize: 12, color: palette.primary, fontWeight: FontWeight.w600),
                       ),
                   ],
@@ -73,6 +78,11 @@ class ProductItemWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  double _sourcePrice(ProductEntity product) {
+    final isAuto = product.pricingModeLabel.toLowerCase().contains('auto');
+    return isAuto ? product.autoPrice : product.fixedPrice;
   }
 
   Widget _buildProductImage(String imageUrl, dynamic palette) {

@@ -263,8 +263,87 @@ public class WalletController(
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
 
         var actionType = request.ActionType.Trim().ToLowerInvariant();
-        if (actionType is not ("sell" or "transfer" or "gift" or "pickup" or "certificate" or "invoice"))
+        if (actionType is not ("sell" or "transfer" or "gift" or "pickup" or "certificate" or "invoice" or "buy"))
             return BadRequest(ApiResponse<object>.Fail("Unsupported wallet action.", 400));
+
+        if (actionType == "buy")
+        {
+            var lines = new List<(Product Product, int Quantity)>();
+            if (request.FromCart)
+            {
+                var cart = await dbContext.Carts
+                    .Include(x => x.Items)
+                    .ThenInclude(x => x.Product)
+                    .FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+
+                if (cart is null)
+                    return NotFound(ApiResponse<object>.Fail("Cart not found.", 404));
+
+                var productIds = request.ProductIds ?? [];
+                var selectedItems = productIds.Count > 0
+                    ? cart.Items.Where(x => productIds.Contains(x.ProductId))
+                    : cart.Items;
+
+                lines.AddRange(selectedItems
+                    .Where(x => x.Product is not null)
+                    .Select(x => (x.Product!, x.Quantity)));
+            }
+            else
+            {
+                if (!request.ProductId.HasValue || request.Quantity <= 0)
+                    return BadRequest(ApiResponse<object>.Fail("ProductId and Quantity are required for direct buy preview.", 400));
+
+                var product = await dbContext.Products
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == request.ProductId.Value && x.IsActive, cancellationToken);
+
+                if (product is null)
+                    return NotFound(ApiResponse<object>.Fail("Product not found.", 404));
+
+                lines.Add((product, request.Quantity));
+            }
+
+            if (lines.Count == 0)
+                return BadRequest(ApiResponse<object>.Fail("No valid line items for buy preview.", 400));
+
+            decimal subTotalAmount = 0;
+            decimal totalFeesAmount = 0;
+            decimal discountAmount = 0;
+            decimal finalAmount = 0;
+            var feeBreakdowns = new List<Application.DTOs.Fees.FeeLineDto>();
+
+            foreach (var (product, quantity) in lines)
+            {
+                var unitPrice = product.SellPrice;
+                var lineSubTotal = unitPrice * quantity;
+                var feeResult = await feeCalculationService.CalculateAsync(
+                    new Application.DTOs.Fees.FeeCalculationRequest(
+                        ActionType: "buy",
+                        ProductId: product.Id,
+                        SellerId: product.SellerId,
+                        NotionalAmount: lineSubTotal,
+                        Quantity: quantity,
+                        ClosePrice: unitPrice,
+                        DaysHeldAfterGrace: 0),
+                    cancellationToken);
+
+                subTotalAmount += feeResult.SubTotalAmount;
+                totalFeesAmount += feeResult.TotalFeesAmount;
+                discountAmount += feeResult.DiscountAmount;
+                finalAmount += feeResult.FinalAmount;
+                feeBreakdowns.AddRange(feeResult.Lines);
+            }
+
+            return Ok(ApiResponse<object>.Ok(new
+            {
+                subTotalAmount,
+                totalFeesAmount,
+                discountAmount,
+                finalAmount,
+                currency = feeBreakdowns.FirstOrDefault()?.Currency ?? "USD",
+                feeBreakdowns
+            }));
+        }
 
         var wallet = await dbContext.Wallets
             .Include(x => x.Assets)
@@ -942,6 +1021,9 @@ public class WalletController(
     {
         public int UserId { get; set; }
         public int WalletAssetId { get; set; }
+        public int? ProductId { get; set; }
+        public List<int>? ProductIds { get; set; }
+        public bool FromCart { get; set; }
         public string ActionType { get; set; } = "sell";
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }

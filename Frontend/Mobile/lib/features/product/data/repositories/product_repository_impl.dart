@@ -84,7 +84,10 @@ class ProductRepositoryImpl implements IProductRepository {
       sellerId: model.sellerId,
       name: model.name,
       description: model.description,
-      price: model.price,
+      baseMarketPrice: model.baseMarketPrice,
+      autoPrice: model.autoPrice,
+      fixedPrice: model.fixedPrice,
+      sellPrice: model.sellPrice,
       availableStock: model.availableStock,
       imageUrl: normalizedImageUrl,
       category: _categoryLabelById(model.categoryId),
@@ -92,14 +95,14 @@ class ProductRepositoryImpl implements IProductRepository {
       isFavorite: _favoriteProductIds.contains(model.id.toString()),
       purity: _resolvePurity(model),
       weight: _weightText(model.weightValue, model.weightUnit),
-      metal: _metalByName(model.name),
+      materialTypeLabel: _materialTypeLabel(model.materialType, model.categoryId),
       isInCart: false,
       quantity: 1,
       sellerName: model.sellerName,
       offerType: model.offerType,
       offerPercent: model.offerPercent,
       offerNewPrice: model.offerNewPrice,
-      finalPrice: model.finalPrice,
+      pricingModeLabel: _pricingModeLabel(model.pricingMode),
     );
   }
 
@@ -125,12 +128,24 @@ class ProductRepositoryImpl implements IProductRepository {
     };
   }
 
-  String _metalByName(String name) {
-    final value = name.toLowerCase();
-    if (value.contains('silver')) return 'Silver';
-    if (value.contains('platinum')) return 'Platinum';
-    if (value.contains('palladium')) return 'Palladium';
-    return 'Gold';
+  String _materialTypeLabel(String materialType, int categoryId) {
+    final normalized = materialType.trim().toLowerCase();
+    if (normalized == 'gold' || normalized == 'silver' || normalized == 'diamond') {
+      return '${normalized[0].toUpperCase()}${normalized.substring(1)}';
+    }
+
+    return switch (categoryId) {
+      1 => 'Gold',
+      2 => 'Silver',
+      3 => 'Diamond',
+      _ => 'Gold',
+    };
+  }
+
+  String _pricingModeLabel(String pricingMode) {
+    final normalized = pricingMode.trim().toLowerCase();
+    if (normalized.contains('auto')) return 'Auto Price';
+    return 'Manual Price';
   }
 
   String _purityByDescription(String description) {
@@ -143,17 +158,32 @@ class ProductRepositoryImpl implements IProductRepository {
   }
 
   String _resolvePurity(ProductRemoteModel model) {
-    final karatValue = model.purityKarat.trim();
-    if (karatValue.isNotEmpty && !karatValue.toLowerCase().contains('none')) {
-      final normalized = karatValue.replaceAll(' ', '');
-      return normalized.toUpperCase().contains('K') ? normalized.toUpperCase() : '${normalized.toUpperCase()}K';
+    final material = model.materialType.trim().toLowerCase();
+
+    if (material == 'diamond') {
+      return '';
+    }
+
+    if (material == 'silver') {
+      if (model.purityFactor >= 0.999) return 'Fine Silver (.999)';
+      if (model.purityFactor >= 0.925) return 'Sterling Silver (.925)';
+      return model.purityFactor > 0 ? 'Silver (${model.purityFactor.toStringAsFixed(3)})' : '';
+    }
+
+    final karatValue = model.purityKarat.trim().toUpperCase();
+    const validKarats = {'24K', '22K', '21K', '18K', '14K'};
+    if (validKarats.contains(karatValue)) {
+      return karatValue;
     }
 
     if (model.purityFactor > 0) {
-      return model.purityFactor.toStringAsFixed(3).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+      final mapped = (model.purityFactor * 24).round();
+      if (validKarats.contains('${mapped}K')) {
+        return '${mapped}K';
+      }
     }
 
-    return _purityByDescription(model.description);
+    return _purityByDescription(model.description).toUpperCase();
   }
 
   String _weightText(double weightValue, String weightUnit) {
