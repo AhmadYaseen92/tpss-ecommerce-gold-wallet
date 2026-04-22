@@ -24,21 +24,19 @@ BEGIN TRY
     DECLARE @CleanDatabaseExceptUsersAndSellers bit = 0;
     IF @CleanDatabaseExceptUsersAndSellers = 1
     BEGIN
+        -- Child tables first (to satisfy FK constraints), then parents.
         IF OBJECT_ID(N'[TransactionFeeBreakdowns]') IS NOT NULL DELETE FROM [TransactionFeeBreakdowns];
-        IF OBJECT_ID(N'[SellerProductFees]') IS NOT NULL DELETE FROM [SellerProductFees];
         IF OBJECT_ID(N'[AdminTransactionFees]') IS NOT NULL DELETE FROM [AdminTransactionFees];
-        IF OBJECT_ID(N'[Products]') IS NOT NULL DELETE FROM [Products];
-
         IF OBJECT_ID(N'[CartItems]') IS NOT NULL DELETE FROM [CartItems];
         IF OBJECT_ID(N'[Carts]') IS NOT NULL DELETE FROM [Carts];
-
-        IF OBJECT_ID(N'[WalletAssets]') IS NOT NULL DELETE FROM [WalletAssets];
-        IF OBJECT_ID(N'[Wallets]') IS NOT NULL DELETE FROM [Wallets];
 
         IF OBJECT_ID(N'[Invoices]') IS NOT NULL DELETE FROM [Invoices];
         IF OBJECT_ID(N'[TransactionHistories]') IS NOT NULL DELETE FROM [TransactionHistories];
         IF OBJECT_ID(N'[PaymentTransactions]') IS NOT NULL DELETE FROM [PaymentTransactions];
         IF OBJECT_ID(N'[Orders]') IS NOT NULL DELETE FROM [Orders];
+
+        IF OBJECT_ID(N'[WalletAssets]') IS NOT NULL DELETE FROM [WalletAssets];
+        IF OBJECT_ID(N'[Wallets]') IS NOT NULL DELETE FROM [Wallets];
 
         IF OBJECT_ID(N'[CardPaymentMethodDetails]') IS NOT NULL DELETE FROM [CardPaymentMethodDetails];
         IF OBJECT_ID(N'[ApplePayPaymentMethodDetails]') IS NOT NULL DELETE FROM [ApplePayPaymentMethodDetails];
@@ -50,6 +48,9 @@ BEGIN TRY
         IF OBJECT_ID(N'[AppNotifications]') IS NOT NULL DELETE FROM [AppNotifications];
         IF OBJECT_ID(N'[UserPushTokens]') IS NOT NULL DELETE FROM [UserPushTokens];
         IF OBJECT_ID(N'[AuditLogs]') IS NOT NULL DELETE FROM [AuditLogs];
+
+        IF OBJECT_ID(N'[SellerProductFees]') IS NOT NULL DELETE FROM [SellerProductFees];
+        IF OBJECT_ID(N'[Products]') IS NOT NULL DELETE FROM [Products];
 
         PRINT 'Cleanup mode complete: kept Users/Sellers information, cleared products + action/transaction data.';
     END;
