@@ -12,6 +12,30 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "AdminTransactionFees",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FeeCode = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    IsEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    CalculationMode = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    RatePercent = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: true),
+                    FixedAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    AppliesToBuy = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToSell = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToPickup = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToTransfer = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToGift = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AdminTransactionFees", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SystemConfigration",
                 columns: table => new
                 {
@@ -32,6 +56,63 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SystemConfigration", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SystemFeeTypes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FeeCode = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    IsEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToBuy = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToSell = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToPickup = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToTransfer = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToGift = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToInvoice = table.Column<bool>(type: "bit", nullable: false),
+                    AppliesToReports = table.Column<bool>(type: "bit", nullable: false),
+                    IsAdminManaged = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    SortOrder = table.Column<int>(type: "int", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SystemFeeTypes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TransactionFeeBreakdowns",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TransactionHistoryId = table.Column<int>(type: "int", nullable: true),
+                    WalletActionId = table.Column<int>(type: "int", nullable: true),
+                    ProductId = table.Column<int>(type: "int", nullable: true),
+                    SellerId = table.Column<int>(type: "int", nullable: true),
+                    FeeCode = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    FeeName = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
+                    CalculationMode = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    BaseAmount = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: false),
+                    Quantity = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: false),
+                    AppliedRate = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: true),
+                    AppliedValue = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    Currency = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    SourceType = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    ConfigSnapshotJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsDiscount = table.Column<bool>(type: "bit", nullable: false),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionFeeBreakdowns", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -61,6 +142,14 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    ReferenceId = table.Column<int>(type: "int", nullable: true),
+                    ReferenceType = table.Column<int>(type: "int", nullable: true),
+                    ActionUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    ImageUrl = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    ReadAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Role = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Priority = table.Column<int>(type: "int", nullable: true),
                     Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Body = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
                     IsRead = table.Column<bool>(type: "bit", nullable: false),
@@ -161,26 +250,17 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    ContactEmail = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    ContactPhone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    Country = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    City = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    Street = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    BuildingNumber = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    PostalCode = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
                     CompanyName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    TradeLicenseNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    CompanyCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    CommercialRegistrationNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     VatNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    NationalIdNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    BankName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    IBAN = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    AccountHolderName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    NationalIdFrontPath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    NationalIdBackPath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    TradeLicensePath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    BusinessActivity = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    EstablishedDate = table.Column<DateOnly>(type: "date", nullable: true),
+                    CompanyPhone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    CompanyEmail = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Website = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
                     KycStatus = table.Column<int>(type: "int", nullable: false),
                     ReviewedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ReviewNotes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
@@ -223,6 +303,31 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     table.PrimaryKey("PK_UserProfiles", x => x.Id);
                     table.ForeignKey(
                         name: "FK_UserProfiles_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserPushTokens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    DeviceToken = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: false),
+                    Platform = table.Column<int>(type: "int", nullable: false),
+                    DeviceName = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserPushTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserPushTokens_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -296,15 +401,13 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     WeightValue = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
                     WeightUnit = table.Column<int>(type: "int", nullable: false),
                     BaseMarketPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    ManualSellPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    DeliveryFee = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    StorageFee = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    ServiceCharge = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    AutoPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    FixedPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    SellPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     OfferPercent = table.Column<decimal>(type: "decimal(8,3)", precision: 8, scale: 3, nullable: false),
                     OfferNewPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     OfferType = table.Column<int>(type: "int", nullable: false),
                     IsHasOffer = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     AvailableStock = table.Column<int>(type: "int", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     SellerId = table.Column<int>(type: "int", nullable: false),
@@ -320,6 +423,153 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         principalTable: "Sellers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SellerAddresses",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SellerId = table.Column<int>(type: "int", nullable: false),
+                    Country = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    City = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    Street = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    BuildingNumber = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    PostalCode = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SellerAddresses", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SellerAddresses_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SellerBankAccounts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SellerId = table.Column<int>(type: "int", nullable: false),
+                    BankName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    AccountHolderName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    AccountNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    IBAN = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    SwiftCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    BankCountry = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    BankCity = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    BranchName = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
+                    BranchAddress = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
+                    Currency = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    IsMainAccount = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SellerBankAccounts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SellerBankAccounts_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SellerBranches",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SellerId = table.Column<int>(type: "int", nullable: false),
+                    BranchName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    Country = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    City = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    FullAddress = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
+                    BuildingNumber = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    PostalCode = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    IsMainBranch = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SellerBranches", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SellerBranches_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SellerDocuments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SellerId = table.Column<int>(type: "int", nullable: false),
+                    DocumentType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    FilePath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    ContentType = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    IsRequired = table.Column<bool>(type: "bit", nullable: false),
+                    UploadedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RelatedEntityType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    RelatedEntityId = table.Column<int>(type: "int", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SellerDocuments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SellerDocuments_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SellerManagers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SellerId = table.Column<int>(type: "int", nullable: false),
+                    FullName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    PositionTitle = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Nationality = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    MobileNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    EmailAddress = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    IdType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    IdNumber = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    IdExpiryDate = table.Column<DateOnly>(type: "date", nullable: true),
+                    IsPrimary = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SellerManagers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SellerManagers_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -453,6 +703,47 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         principalTable: "Sellers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SellerProductFees",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SellerId = table.Column<int>(type: "int", nullable: false),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    FeeCode = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    IsEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    CalculationMode = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    RatePercent = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: true),
+                    MinimumAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    FlatAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    PremiumDiscountType = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
+                    ValuePerUnit = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: true),
+                    FeePercent = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: true),
+                    GracePeriodDays = table.Column<int>(type: "int", nullable: true),
+                    FixedAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    FeePerUnit = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: true),
+                    IsOverride = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SellerProductFees", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SellerProductFees_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SellerProductFees_Sellers_SellerId",
+                        column: x => x.SellerId,
+                        principalTable: "Sellers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -645,12 +936,17 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
                     Category = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
+                    ProductId = table.Column<int>(type: "int", nullable: true),
                     UnitPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Weight = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
                     Unit = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Purity = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    SubTotalAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    TotalFeesAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    DiscountAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    FinalAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Currency = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     WalletItemId = table.Column<int>(type: "int", nullable: true),
                     InvoiceId = table.Column<int>(type: "int", nullable: true),
@@ -685,6 +981,12 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AdminTransactionFees_FeeCode",
+                table: "AdminTransactionFees",
+                column: "FeeCode",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ApplePayPaymentMethodDetails_PaymentMethodId",
@@ -870,20 +1172,62 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Sellers_Code",
-                table: "Sellers",
-                column: "Code",
+                name: "IX_SellerAddresses_SellerId",
+                table: "SellerAddresses",
+                column: "SellerId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SellerBankAccounts_SellerId",
+                table: "SellerBankAccounts",
+                column: "SellerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SellerBranches_SellerId",
+                table: "SellerBranches",
+                column: "SellerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SellerDocuments_SellerId",
+                table: "SellerDocuments",
+                column: "SellerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SellerDocuments_SellerId_DocumentType",
+                table: "SellerDocuments",
+                columns: new[] { "SellerId", "DocumentType" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SellerManagers_SellerId",
+                table: "SellerManagers",
+                column: "SellerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SellerProductFees_ProductId",
+                table: "SellerProductFees",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SellerProductFees_SellerId_ProductId_FeeCode",
+                table: "SellerProductFees",
+                columns: new[] { "SellerId", "ProductId", "FeeCode" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Sellers_CompanyCode",
+                table: "Sellers",
+                column: "CompanyCode",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Sellers_CompanyName",
+                table: "Sellers",
+                column: "CompanyName");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Sellers_KycStatus",
                 table: "Sellers",
                 column: "KycStatus");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Sellers_Name",
-                table: "Sellers",
-                column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Sellers_UserId",
@@ -896,6 +1240,27 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 table: "SystemConfigration",
                 column: "ConfigKey",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SystemFeeTypes_FeeCode",
+                table: "SystemFeeTypes",
+                column: "FeeCode",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionFeeBreakdowns_FeeCode_CreatedAtUtc",
+                table: "TransactionFeeBreakdowns",
+                columns: new[] { "FeeCode", "CreatedAtUtc" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionFeeBreakdowns_TransactionHistoryId",
+                table: "TransactionFeeBreakdowns",
+                column: "TransactionHistoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionFeeBreakdowns_WalletActionId",
+                table: "TransactionFeeBreakdowns",
+                column: "WalletActionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionHistories_Category",
@@ -911,6 +1276,11 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 name: "IX_TransactionHistories_InvoiceId",
                 table: "TransactionHistories",
                 column: "InvoiceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionHistories_ProductId",
+                table: "TransactionHistories",
+                column: "ProductId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionHistories_SellerId",
@@ -936,6 +1306,17 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 name: "IX_UserProfiles_UserId",
                 table: "UserProfiles",
                 column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserPushTokens_UserId",
+                table: "UserPushTokens",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserPushTokens_UserId_DeviceToken_Platform",
+                table: "UserPushTokens",
+                columns: new[] { "UserId", "DeviceToken", "Platform" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1033,6 +1414,9 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 table: "Invoices");
 
             migrationBuilder.DropTable(
+                name: "AdminTransactionFees");
+
+            migrationBuilder.DropTable(
                 name: "ApplePayPaymentMethodDetails");
 
             migrationBuilder.DropTable(
@@ -1057,7 +1441,34 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                 name: "PaymentTransactions");
 
             migrationBuilder.DropTable(
+                name: "SellerAddresses");
+
+            migrationBuilder.DropTable(
+                name: "SellerBankAccounts");
+
+            migrationBuilder.DropTable(
+                name: "SellerBranches");
+
+            migrationBuilder.DropTable(
+                name: "SellerDocuments");
+
+            migrationBuilder.DropTable(
+                name: "SellerManagers");
+
+            migrationBuilder.DropTable(
+                name: "SellerProductFees");
+
+            migrationBuilder.DropTable(
                 name: "SystemConfigration");
+
+            migrationBuilder.DropTable(
+                name: "SystemFeeTypes");
+
+            migrationBuilder.DropTable(
+                name: "TransactionFeeBreakdowns");
+
+            migrationBuilder.DropTable(
+                name: "UserPushTokens");
 
             migrationBuilder.DropTable(
                 name: "WalletPaymentMethodDetails");

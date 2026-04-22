@@ -57,7 +57,7 @@ public class OtpService(
         };
 
         await otpSessionStore.UpsertSessionAsync(session, cancellationToken);
-        await otpDeliveryService.SendOtpAsync(user, otpCode, [channel], CancellationToken.None);
+        //await otpDeliveryService.SendOtpAsync(user, otpCode, [channel], CancellationToken.None);
         await LogAsync(user.Id, "OtpRequested", $"action={actionType};ref={actionReferenceId};channel={channel};requestId={session.OtpRequestId}", cancellationToken);
 
         return ToDispatchResponse(session, settings);
