@@ -14,6 +14,11 @@ const managedProducts = computed(() => pm.filteredManagedProducts.value);
 const selectedProduct = computed(() => pm.selectedProduct.value);
 const categories = computed(() => pm.categories.value);
 const weightUnits = computed(() => pm.weightUnits.value);
+
+const openManageFees = () => {
+  window.history.pushState({}, "", "/fees");
+  window.dispatchEvent(new PopStateEvent("popstate"));
+};
 </script>
 
 <template>
@@ -49,6 +54,7 @@ const weightUnits = computed(() => pm.weightUnits.value);
       @update:active-filter="pm.activeFilter.value = $event"
       @update:category-filter="pm.categoryFilter.value = $event"
       @update:seller-filter="pm.sellerFilter.value = $event"
+      @manage-fees="openManageFees"
     />
   </SectionCard>
 </template>
