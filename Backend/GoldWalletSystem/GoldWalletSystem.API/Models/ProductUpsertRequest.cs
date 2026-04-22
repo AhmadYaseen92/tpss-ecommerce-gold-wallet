@@ -18,9 +18,6 @@ public sealed class ProductUpsertRequest
     public decimal WeightValue { get; set; }
     public ProductWeightUnit WeightUnit { get; set; } = ProductWeightUnit.Gram;
     public decimal ManualSellPrice { get; set; }
-    public decimal DeliveryFee { get; set; }
-    public decimal StorageFee { get; set; }
-    public decimal ServiceCharge { get; set; }
     public decimal OfferPercent { get; set; }
     public decimal OfferNewPrice { get; set; }
     public ProductOfferType OfferType { get; set; } = ProductOfferType.None;

@@ -67,14 +67,11 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 WeightUnit = x.WeightUnit,
                 BaseMarketPrice = x.BaseMarketPrice,
                 ManualSellPrice = x.ManualSellPrice,
-                DeliveryFee = x.DeliveryFee,
-                StorageFee = x.StorageFee,
-                ServiceCharge = x.ServiceCharge,
                 OfferPercent = x.OfferPercent,
                 OfferNewPrice = x.OfferNewPrice,
                 OfferType = x.OfferType,
                 IsHasOffer = x.IsHasOffer,
-                Price = x.Price,
+                Price = ProductPricingCalculator.ApplyOffer(x.PricingMode == ProductPricingMode.Manual ? x.ManualSellPrice : ProductPricingCalculator.CalculateAutoPrice(x.MaterialType, x.BaseMarketPrice, x.WeightValue, x.PurityFactor), x.OfferType, x.OfferPercent, x.OfferNewPrice),
                 AvailableStock = x.AvailableStock,
                 IsActive = x.IsActive,
                 SellerId = x.SellerId
@@ -116,14 +113,11 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             WeightUnit = x.WeightUnit,
             BaseMarketPrice = x.BaseMarketPrice,
             ManualSellPrice = x.ManualSellPrice,
-            DeliveryFee = x.DeliveryFee,
-            StorageFee = x.StorageFee,
-            ServiceCharge = x.ServiceCharge,
             OfferPercent = x.OfferPercent,
             OfferNewPrice = x.OfferNewPrice,
             OfferType = x.OfferType,
             IsHasOffer = x.IsHasOffer,
-            Price = x.Price,
+            Price = ProductPricingCalculator.ApplyOffer(x.PricingMode == ProductPricingMode.Manual ? x.ManualSellPrice : ProductPricingCalculator.CalculateAutoPrice(x.MaterialType, x.BaseMarketPrice, x.WeightValue, x.PurityFactor), x.OfferType, x.OfferPercent, x.OfferNewPrice),
             AvailableStock = x.AvailableStock,
             IsActive = x.IsActive,
             SellerId = x.SellerId
@@ -161,14 +155,10 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             WeightUnit = ProductWeightUnit.Gram,
             BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, sellerId, cancellationToken),
             ManualSellPrice = request.ManualSellPrice,
-            DeliveryFee = request.DeliveryFee,
-            StorageFee = request.StorageFee,
-            ServiceCharge = request.ServiceCharge,
             OfferPercent = request.OfferPercent,
             OfferNewPrice = request.OfferNewPrice,
             OfferType = request.OfferType,
             IsHasOffer = request.OfferType != ProductOfferType.None,
-            Price = await ResolveFinalPriceAsync(request, sellerId, cancellationToken),
             AvailableStock = request.AvailableStock,
             IsActive = request.IsActive,
             SellerId = sellerId
@@ -222,14 +212,10 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.WeightUnit = ProductWeightUnit.Gram;
         product.BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, nextSellerId, cancellationToken);
         product.ManualSellPrice = request.ManualSellPrice;
-        product.DeliveryFee = request.DeliveryFee;
-        product.StorageFee = request.StorageFee;
-        product.ServiceCharge = request.ServiceCharge;
         product.OfferPercent = request.OfferPercent;
         product.OfferNewPrice = request.OfferNewPrice;
         product.OfferType = request.OfferType;
         product.IsHasOffer = request.OfferType != ProductOfferType.None;
-        product.Price = await ResolveFinalPriceAsync(request, nextSellerId, cancellationToken);
         product.AvailableStock = request.AvailableStock;
         product.IsActive = request.IsActive;
         product.SellerId = nextSellerId;
@@ -322,10 +308,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 request.MaterialType,
                 marketPrice,
                 request.WeightValue,
-                request.PurityFactor,
-                request.DeliveryFee,
-                request.StorageFee,
-                request.ServiceCharge);
+                request.PurityFactor);
 
         return ProductPricingCalculator.ApplyOffer(sellPrice, request.OfferType, request.OfferPercent, request.OfferNewPrice);
     }
@@ -406,13 +389,10 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 product.MaterialType,
                 marketPrice,
                 product.WeightValue,
-                product.PurityFactor,
-                product.DeliveryFee,
-                product.StorageFee,
-                product.ServiceCharge);
+                product.PurityFactor);
 
             product.BaseMarketPrice = marketPrice;
-            product.Price = ProductPricingCalculator.ApplyOffer(autoPrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
+            product.ManualSellPrice = ProductPricingCalculator.ApplyOffer(autoPrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
             product.UpdatedAtUtc = DateTime.UtcNow;
         }
 

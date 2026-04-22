@@ -504,9 +504,6 @@ function buildProductForm(payload: ProductFormPayload): FormData {
   form.append("WeightValue", String(payload.weightValue));
   form.append("WeightUnit", "1");
   form.append("ManualSellPrice", String(payload.manualSellPrice));
-  form.append("DeliveryFee", String(payload.deliveryFee));
-  form.append("StorageFee", String(payload.storageFee));
-  form.append("ServiceCharge", String(payload.serviceCharge));
   form.append("OfferType", String(payload.offerType));
   form.append("OfferPercent", String(payload.offerPercent));
   form.append("OfferNewPrice", String(payload.offerNewPrice));
@@ -530,6 +527,7 @@ export interface SystemFeeTypePayload {
   appliesToGift: boolean;
   appliesToInvoice: boolean;
   appliesToReports: boolean;
+  isAdminManaged?: boolean;
   sortOrder: number;
 }
 

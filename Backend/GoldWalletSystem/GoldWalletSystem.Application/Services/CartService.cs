@@ -60,8 +60,8 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
                 SellerId = product.SellerId,
                 Category = product.Category,
                 Quantity = quantity,
-                UnitPrice = product.Price,
-                LineTotal = product.Price * quantity,
+                UnitPrice = ResolveProductUnitPrice(product),
+                LineTotal = ResolveProductUnitPrice(product) * quantity,
             });
         }
         else

@@ -24,6 +24,7 @@ public class SystemFeeService(AppDbContext dbContext) : ISystemFeeService
                 x.AppliesToGift,
                 x.AppliesToInvoice,
                 x.AppliesToReports,
+                x.IsAdminManaged,
                 x.SortOrder))
             .ToListAsync(cancellationToken);
 
@@ -43,6 +44,7 @@ public class SystemFeeService(AppDbContext dbContext) : ISystemFeeService
                 x.AppliesToGift,
                 x.AppliesToInvoice,
                 x.AppliesToReports,
+                x.IsAdminManaged,
                 x.SortOrder))
             .ToListAsync(cancellationToken);
 
@@ -65,6 +67,7 @@ public class SystemFeeService(AppDbContext dbContext) : ISystemFeeService
         entity.AppliesToGift = request.AppliesToGift;
         entity.AppliesToInvoice = request.AppliesToInvoice;
         entity.AppliesToReports = request.AppliesToReports;
+        entity.IsAdminManaged = request.IsAdminManaged;
         entity.SortOrder = request.SortOrder;
         entity.UpdatedAtUtc = DateTime.UtcNow;
 
@@ -90,7 +93,7 @@ public class SystemFeeService(AppDbContext dbContext) : ISystemFeeService
     };
 
     private static SystemFeeTypeDto Map(SystemFeeType x) => new(
-        x.FeeCode, x.Name, x.Description, x.IsEnabled, x.AppliesToBuy, x.AppliesToSell, x.AppliesToPickup, x.AppliesToTransfer, x.AppliesToGift, x.AppliesToInvoice, x.AppliesToReports, x.SortOrder);
+        x.FeeCode, x.Name, x.Description, x.IsEnabled, x.AppliesToBuy, x.AppliesToSell, x.AppliesToPickup, x.AppliesToTransfer, x.AppliesToGift, x.AppliesToInvoice, x.AppliesToReports, x.IsAdminManaged, x.SortOrder);
 }
 
 public class SellerProductFeeService(AppDbContext dbContext, ISystemFeeService systemFeeService) : ISellerProductFeeService
@@ -262,6 +265,7 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
     {
         var lines = new List<FeeLineDto>();
         var action = request.ActionType.ToLowerInvariant();
+        var currency = "USD";
 
         if (request.ProductId.HasValue && request.SellerId.HasValue)
         {
@@ -272,7 +276,7 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
             foreach (var fee in sellerFees)
             {
                 if (!IsActionCompatible(fee.FeeCode, action)) continue;
-                var line = CalculateSellerLine(fee, request, lines.Count + 1);
+                var line = CalculateSellerLine(fee, request, lines.Count + 1, currency);
                 if (line is not null) lines.Add(line);
             }
         }
@@ -283,15 +287,16 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
             var amount = serviceFee.CalculationMode.Equals("percent", StringComparison.OrdinalIgnoreCase)
                 ? request.NotionalAmount * (serviceFee.RatePercent ?? 0m) / 100m
                 : (serviceFee.FixedAmount ?? 0m);
-            lines.Add(new FeeLineDto(FeeCodes.ServiceFee, "Service Fee", serviceFee.CalculationMode, request.NotionalAmount, request.Quantity, serviceFee.RatePercent, decimal.Round(amount, 2), false, lines.Count + 1));
+            lines.Add(new FeeLineDto(FeeCodes.ServiceFee, "Service Fee", serviceFee.CalculationMode, request.NotionalAmount, request.Quantity, serviceFee.RatePercent, decimal.Round(amount, 2), false, currency, "admin_transaction_fee", $"{{\"feeCode\":\"{FeeCodes.ServiceFee}\",\"mode\":\"{serviceFee.CalculationMode}\"}}", lines.Count + 1));
         }
 
         var totalFees = lines.Where(x => !x.IsDiscount).Sum(x => x.AppliedValue);
         var totalDiscounts = lines.Where(x => x.IsDiscount).Sum(x => x.AppliedValue);
-        return new FeeCalculationResultDto(totalFees, totalDiscounts, totalFees - totalDiscounts, lines);
+        var finalAmount = request.NotionalAmount + totalFees - totalDiscounts;
+        return new FeeCalculationResultDto(request.NotionalAmount, totalFees, totalDiscounts, finalAmount, currency, lines);
     }
 
-    private static FeeLineDto? CalculateSellerLine(SellerProductFee fee, FeeCalculationRequest request, int order)
+    private static FeeLineDto? CalculateSellerLine(SellerProductFee fee, FeeCalculationRequest request, int order, string currency)
     {
         var code = fee.FeeCode;
         decimal amount = 0m;
@@ -319,7 +324,7 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
                 return null;
         }
 
-        return new FeeLineDto(code, code.Replace("_", " "), fee.CalculationMode, request.NotionalAmount, request.Quantity, fee.RatePercent, decimal.Round(amount, 2), isDiscount, order);
+        return new FeeLineDto(code, code.Replace("_", " "), fee.CalculationMode, request.NotionalAmount, request.Quantity, fee.RatePercent, decimal.Round(amount, 2), isDiscount, currency, "seller_product_fee", $"{{\"feeCode\":\"{code}\",\"mode\":\"{fee.CalculationMode}\"}}", order);
     }
 
     private static bool IsActionCompatible(string feeCode, string action) => feeCode switch

@@ -22,6 +22,7 @@ public class WalletController(
     IOtpService otpService,
     INotificationService notificationService,
     ICurrentUserService currentUser,
+    IFeeCalculationService feeCalculationService,
     AppDbContext dbContext,
     IWebHostEnvironment environment,
     API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
@@ -306,6 +307,17 @@ public class WalletController(
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
 
+        var feeResult = await feeCalculationService.CalculateAsync(
+            new Application.DTOs.Fees.FeeCalculationRequest(
+                ActionType: actionType,
+                ProductId: null,
+                SellerId: asset.SellerId,
+                NotionalAmount: grossAmount,
+                Quantity: request.Quantity,
+                ClosePrice: unitPrice,
+                DaysHeldAfterGrace: 0),
+            cancellationToken);
+
         var sellConfig = await ReadSellExecutionConfigurationAsync(cancellationToken);
         var executionMode = sellConfig.Mode;
         var lockUntilUtc = executionMode == "locked_30_seconds" ? DateTime.UtcNow.AddSeconds(Math.Max(5, sellConfig.LockSeconds)) : (DateTime?)null;
@@ -382,7 +394,11 @@ public class WalletController(
                 Weight = requestedWeight,
                 Unit = asset.Unit,
                 Purity = asset.Purity,
-                Amount = grossAmount,
+                Amount = feeResult.FinalAmount,
+                SubTotalAmount = feeResult.SubTotalAmount,
+                TotalFeesAmount = feeResult.TotalFeesAmount,
+                DiscountAmount = feeResult.DiscountAmount,
+                FinalAmount = feeResult.FinalAmount,
                 Currency = recipientWallet.CurrencyCode,
                 Notes = $"direction=received|from_investor_user_id={request.UserId}|from_investor_name={senderName}|{BuildNotes(request, executionMode)}",
                 CreatedAtUtc = DateTime.UtcNow
@@ -400,7 +416,7 @@ public class WalletController(
 
         if (!shouldRequireSellerApproval && actionType is "sell")
         {
-            wallet.CashBalance += grossAmount;
+            wallet.CashBalance += feeResult.FinalAmount;
         }
 
         wallet.UpdatedAtUtc = DateTime.UtcNow;
@@ -418,7 +434,11 @@ public class WalletController(
             Weight = requestedWeight,
             Unit = asset.Unit,
             Purity = asset.Purity,
-            Amount = grossAmount,
+            Amount = feeResult.FinalAmount,
+            SubTotalAmount = feeResult.SubTotalAmount,
+            TotalFeesAmount = feeResult.TotalFeesAmount,
+            DiscountAmount = feeResult.DiscountAmount,
+            FinalAmount = feeResult.FinalAmount,
             Currency = wallet.CurrencyCode,
             Notes = BuildNotes(request, executionMode, recipientInvestorName),
             CreatedAtUtc = DateTime.UtcNow
@@ -445,11 +465,11 @@ public class WalletController(
                 InvoiceCategory = NormalizeInvoiceCategory(actionType),
                 SourceChannel = "MobileWallet",
                 ExternalReference = $"WALLET-TX-{history.Id}",
-                SubTotal = grossAmount,
-                FeesAmount = 0,
-                DiscountAmount = 0,
+                SubTotal = feeResult.SubTotalAmount,
+                FeesAmount = feeResult.TotalFeesAmount,
+                DiscountAmount = feeResult.DiscountAmount,
                 TaxAmount = 0,
-                TotalAmount = grossAmount,
+                TotalAmount = feeResult.FinalAmount,
                 Currency = wallet.CurrencyCode,
                 PaymentMethod = actionType is "sell" ? "WalletCredit" : "N/A",
                 PaymentStatus = actionType is "sell" ? "Paid" : "Pending",
@@ -516,6 +536,34 @@ public class WalletController(
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        foreach (var line in feeResult.Lines)
+        {
+            dbContext.TransactionFeeBreakdowns.Add(new TransactionFeeBreakdown
+            {
+                TransactionHistoryId = history.Id,
+                ProductId = history.ProductId,
+                SellerId = history.SellerId,
+                FeeCode = line.FeeCode,
+                FeeName = line.FeeName,
+                CalculationMode = line.CalculationMode,
+                BaseAmount = line.BaseAmount,
+                Quantity = line.Quantity,
+                AppliedRate = line.AppliedRate,
+                AppliedValue = line.AppliedValue,
+                IsDiscount = line.IsDiscount,
+                Currency = line.Currency,
+                SourceType = line.SourceType,
+                ConfigSnapshotJson = line.ConfigSnapshotJson ?? string.Empty,
+                DisplayOrder = line.DisplayOrder,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        if (feeResult.Lines.Count > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         var transactionReference = $"wtx-{history.Id}";
 
@@ -590,7 +638,13 @@ public class WalletController(
                 ? $"{actionType} request submitted and pending seller approval."
                 : "Wallet action processed successfully.",
             InvoiceUrl = invoiceUrl,
-            InvoiceId = createdInvoice?.Id
+            InvoiceId = createdInvoice?.Id,
+            SubTotalAmount = feeResult.SubTotalAmount,
+            TotalFeesAmount = feeResult.TotalFeesAmount,
+            DiscountAmount = feeResult.DiscountAmount,
+            FinalAmount = feeResult.FinalAmount,
+            Currency = feeResult.Currency,
+            FeeBreakdowns = feeResult.Lines
         }));
     }
 
@@ -652,6 +706,10 @@ public class WalletController(
             Unit = string.IsNullOrWhiteSpace(request.Unit) ? "gram" : request.Unit,
             Purity = request.Purity,
             Amount = request.Amount,
+            SubTotalAmount = request.Amount,
+            TotalFeesAmount = 0,
+            DiscountAmount = 0,
+            FinalAmount = request.Amount,
             Currency = wallet?.CurrencyCode ?? "USD",
             Notes = request.Notes ?? "Mobile wallet action request",
             CreatedAtUtc = DateTime.UtcNow
@@ -873,6 +931,12 @@ public class WalletController(
         public string Message { get; set; } = string.Empty;
         public string? InvoiceUrl { get; set; }
         public int? InvoiceId { get; set; }
+        public decimal SubTotalAmount { get; set; }
+        public decimal TotalFeesAmount { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public decimal FinalAmount { get; set; }
+        public string Currency { get; set; } = "USD";
+        public IReadOnlyList<Application.DTOs.Fees.FeeLineDto> FeeBreakdowns { get; set; } = [];
     }
 
     public sealed class CancelWalletRequestResponse

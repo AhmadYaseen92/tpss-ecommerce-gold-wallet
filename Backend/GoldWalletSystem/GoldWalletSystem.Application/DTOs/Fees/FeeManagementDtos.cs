@@ -12,6 +12,7 @@ public record SystemFeeTypeDto(
     bool AppliesToGift,
     bool AppliesToInvoice,
     bool AppliesToReports,
+    bool IsAdminManaged,
     int SortOrder);
 
 public class UpsertSystemFeeTypeRequest
@@ -27,6 +28,7 @@ public class UpsertSystemFeeTypeRequest
     public bool AppliesToGift { get; set; }
     public bool AppliesToInvoice { get; set; }
     public bool AppliesToReports { get; set; }
+    public bool IsAdminManaged { get; set; }
     public int SortOrder { get; set; }
 }
 
@@ -92,10 +94,15 @@ public record FeeLineDto(
     decimal? AppliedRate,
     decimal AppliedValue,
     bool IsDiscount,
+    string Currency,
+    string SourceType,
+    string? ConfigSnapshotJson,
     int DisplayOrder);
 
 public record FeeCalculationResultDto(
-    decimal TotalFees,
-    decimal TotalDiscounts,
-    decimal NetFees,
+    decimal SubTotalAmount,
+    decimal TotalFeesAmount,
+    decimal DiscountAmount,
+    decimal FinalAmount,
+    string Currency,
     IReadOnlyList<FeeLineDto> Lines);

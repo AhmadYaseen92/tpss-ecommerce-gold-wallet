@@ -10,10 +10,7 @@ public static class ProductPricingCalculator
         ProductMaterialType materialType,
         decimal baseMarketPrice,
         decimal weightInGrams,
-        decimal purityFactor,
-        decimal deliveryFee,
-        decimal storageFee,
-        decimal serviceCharge)
+        decimal purityFactor)
     {
         var basePrice = materialType switch
         {
@@ -23,7 +20,7 @@ public static class ProductPricingCalculator
         };
 
         var purityAdjusted = purityFactor > 0 ? basePrice * purityFactor : basePrice;
-        return decimal.Round(purityAdjusted + deliveryFee + storageFee + serviceCharge, 2, MidpointRounding.AwayFromZero);
+        return decimal.Round(purityAdjusted, 2, MidpointRounding.AwayFromZero);
     }
 
     public static decimal ApplyOffer(decimal sellPrice, ProductOfferType offerType, decimal offerPercent, decimal offerNewPrice)

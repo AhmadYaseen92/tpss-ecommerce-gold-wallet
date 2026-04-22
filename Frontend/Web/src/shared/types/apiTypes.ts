@@ -160,13 +160,9 @@ export interface ProductDto {
   weightValue: number;
   weightUnit: string;
   baseMarketPrice: number;
-  deliveryFee: number;
-  storageFee: number;
-  serviceCharge: number;
   offerPercent: number;
   offerNewPrice: number;
   offerType: string;
-  price: number;
   finalPrice: number;
   isHasOffer: boolean;
   availableStock: number;
@@ -246,14 +242,10 @@ export interface ProductManagementDto {
   weightUnit: string;
   baseMarketPrice: number;
   manualSellPrice: number;
-  deliveryFee: number;
-  storageFee: number;
-  serviceCharge: number;
   offerType: string;
   isHasOffer: boolean;
   offerPercent: number;
   offerNewPrice: number;
-  price: number;
   availableStock: number;
   isActive: boolean;
   sellerId: number;

@@ -44,8 +44,8 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
 
         var cartItems = await cartItemsQuery.ToListAsync(cancellationToken);
 
-        var totalSales = products.Sum(p => p.Price * p.AvailableStock);
-        var goldAvg = products.Where(p => p.Category == ProductCategory.Gold).Select(p => p.Price).DefaultIfEmpty(0).Average();
+        var totalSales = products.Sum(p => p.ManualSellPrice * p.AvailableStock);
+        var goldAvg = products.Where(p => p.Category == ProductCategory.Gold).Select(p => p.ManualSellPrice).DefaultIfEmpty(0).Average();
 
         var statusCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {

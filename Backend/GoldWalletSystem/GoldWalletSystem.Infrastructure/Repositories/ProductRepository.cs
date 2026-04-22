@@ -2,6 +2,7 @@ using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Products;
 using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.Application.Services;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
@@ -26,8 +27,44 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
 
         query = query.OrderByDescending(x => x.CreatedAtUtc).ThenByDescending(x => x.Id);
         var totalCount = await query.CountAsync(cancellationToken);
-        var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize)
-            .Select(x => new ProductDto(
+        var rows = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new
+            {
+                x.Id,
+                x.Name,
+                x.Sku,
+                x.Description,
+                x.ImageUrl,
+                x.Category,
+                x.MaterialType,
+                x.FormType,
+                x.PricingMode,
+                x.PurityKarat,
+                x.PurityFactor,
+                x.WeightValue,
+                x.WeightUnit,
+                x.BaseMarketPrice,
+                x.ManualSellPrice,
+                x.OfferPercent,
+                x.OfferNewPrice,
+                x.OfferType,
+                x.IsHasOffer,
+                x.AvailableStock,
+                x.SellerId,
+                SellerName = x.Seller.CompanyName
+            })
+            .ToListAsync(cancellationToken);
+
+        var items = rows.Select(x =>
+        {
+            var basePrice = x.PricingMode == ProductPricingMode.Manual
+                ? x.ManualSellPrice
+                : ProductPricingCalculator.CalculateAutoPrice(x.MaterialType, x.BaseMarketPrice, x.WeightValue, x.PurityFactor);
+            var finalPrice = ProductPricingCalculator.ApplyOffer(basePrice, x.OfferType, x.OfferPercent, x.OfferNewPrice);
+
+            return new ProductDto(
                 x.Id,
                 x.Name,
                 x.Sku,
@@ -43,19 +80,15 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.WeightValue,
                 x.WeightUnit,
                 x.BaseMarketPrice,
-                x.DeliveryFee,
-                x.StorageFee,
-                x.ServiceCharge,
                 x.OfferPercent,
                 x.OfferNewPrice,
                 x.OfferType,
-                x.Price,
-                x.Price,
+                finalPrice,
                 x.IsHasOffer,
                 x.AvailableStock,
                 x.SellerId,
-                x.Seller.CompanyName))
-            .ToListAsync(cancellationToken);
+                x.SellerName);
+        }).ToList();
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
         return new PagedResult<ProductDto>(items, totalCount, pageNumber, pageSize, totalPages);
     }
