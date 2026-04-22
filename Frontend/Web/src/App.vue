@@ -11,6 +11,7 @@ import SellerDetailsPage from "./features/dashboard/pages/SellerDetailsPage.vue"
 import SettingsFeaturePage from "./features/dashboard/pages/SettingsFeaturePage.vue";
 import TransactionsFeaturePage from "./features/transactions/pages/TransactionsFeaturePage.vue";
 import ReportsFeaturePage from "./features/reports/pages/ReportsFeaturePage.vue";
+import FeeManagementFeaturePage from "./features/fees/pages/FeeManagementFeaturePage.vue";
 import { useMarketplace } from "./shared/app/store/useMarketplace";
 
 const marketplace = useMarketplace();
@@ -24,7 +25,8 @@ const ROUTE_BY_MENU: Partial<Record<NavigationKey, string>> = {
   sellers: "/sellers",
   settings: "/settings",
   requests: "/transactions",
-  reports: "/reports"
+  reports: "/reports",
+  fees: "/fees"
 };
 
 const readPath = () => {
@@ -58,6 +60,7 @@ const menuItems = computed<Array<{ key: NavigationKey; label: string }>>(() => {
   const common: Array<{ key: NavigationKey; label: string }> = [
     { key: "overview", label: "Dashboard" },
     { key: "products", label: "Products" },
+    { key: "fees" as NavigationKey, label: "Fees" },
     { key: "requests", label: "Transactions" },
     { key: "reports", label: "Reports" },
     { key: "logout", label: "Logout" }
@@ -74,6 +77,7 @@ const activeMenu = computed<NavigationKey>(() => {
   if (currentPath.value.startsWith("/sellers")) return "sellers";
   if (currentPath.value.startsWith("/settings")) return "settings";
   if (currentPath.value.startsWith("/transactions")) return "requests";
+  if (currentPath.value.startsWith("/fees")) return "fees" as NavigationKey;
   if (currentPath.value.startsWith("/reports")) return "reports";
   return "overview";
 });
@@ -89,6 +93,7 @@ const activeComponent = computed(() => {
   if (currentPath.value.startsWith("/sellers")) return marketplace.role.value === "Admin" ? SellersFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/settings")) return marketplace.role.value === "Admin" ? SettingsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/transactions")) return TransactionsFeaturePage;
+  if (currentPath.value.startsWith("/fees")) return FeeManagementFeaturePage;
   if (currentPath.value.startsWith("/reports")) return ReportsFeaturePage;
   return DashboardFeaturePage;
 });

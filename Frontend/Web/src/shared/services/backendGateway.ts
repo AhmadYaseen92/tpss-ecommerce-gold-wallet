@@ -80,8 +80,8 @@ const mapProduct = (dto: ProductDto): Product => ({
   sellerId: `s-${dto.sellerId}`,
   name: dto.name,
   category: dto.category,
-  unitPrice: dto.price,
-  marketPrice: dto.price,
+  unitPrice: dto.finalPrice,
+  marketPrice: dto.finalPrice,
   stock: dto.availableStock,
   updatedAt: new Date().toISOString().split("T")[0]
 });
@@ -124,7 +124,12 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
     weight: item.weight,
     unit: item.unit,
     purity: item.purity,
-    amount: item.amount,
+    amount: item.finalAmount ?? item.amount,
+    subTotalAmount: item.subTotalAmount ?? item.amount,
+    totalFeesAmount: item.totalFeesAmount ?? 0,
+    discountAmount: item.discountAmount ?? 0,
+    finalAmount: item.finalAmount ?? item.amount,
+    feeBreakdowns: item.feeBreakdowns ?? [],
     status: ["pending", "approved", "rejected", "pending_delivered", "delivered", "cancelled", "canceled"].includes(item.status.toLowerCase())
       ? (item.status.toLowerCase() as InvestorRequest["status"])
       : "pending",
@@ -398,13 +403,9 @@ export interface ProductFormPayload {
   weightValue: number;
   baseMarketPrice: number;
   manualSellPrice: number;
-  deliveryFee: number;
-  storageFee: number;
-  serviceCharge: number;
   offerType: number;
   offerPercent: number;
   offerNewPrice: number;
-  price: number;
   availableStock: number;
   isActive: boolean;
   sellerId?: number;
@@ -435,15 +436,12 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
     weightValue: item.weightValue,
     weightUnit: item.weightUnit,
     baseMarketPrice: item.baseMarketPrice,
-    manualSellPrice: item.price,
-    deliveryFee: item.deliveryFee,
-    storageFee: item.storageFee,
-    serviceCharge: item.serviceCharge,
+    manualSellPrice: item.finalPrice,
     offerType: item.offerType,
     isHasOffer: item.isHasOffer,
     offerPercent: item.offerPercent,
     offerNewPrice: item.offerNewPrice,
-    price: item.price,
+    finalPrice: item.finalPrice,
     availableStock: item.availableStock,
     isActive: true,
     sellerId: item.sellerId,
@@ -504,9 +502,6 @@ function buildProductForm(payload: ProductFormPayload): FormData {
   form.append("WeightValue", String(payload.weightValue));
   form.append("WeightUnit", "1");
   form.append("ManualSellPrice", String(payload.manualSellPrice));
-  form.append("DeliveryFee", String(payload.deliveryFee));
-  form.append("StorageFee", String(payload.storageFee));
-  form.append("ServiceCharge", String(payload.serviceCharge));
   form.append("OfferType", String(payload.offerType));
   form.append("OfferPercent", String(payload.offerPercent));
   form.append("OfferNewPrice", String(payload.offerNewPrice));
@@ -516,4 +511,90 @@ function buildProductForm(payload: ProductFormPayload): FormData {
   if (payload.existingImageUrl) form.append("ExistingImageUrl", payload.existingImageUrl);
   if (payload.imageFile) form.append("Image", payload.imageFile);
   return form;
+}
+
+export interface SystemFeeTypePayload {
+  feeCode: string;
+  name: string;
+  description: string;
+  isEnabled: boolean;
+  appliesToBuy: boolean;
+  appliesToSell: boolean;
+  appliesToPickup: boolean;
+  appliesToTransfer: boolean;
+  appliesToGift: boolean;
+  appliesToInvoice: boolean;
+  appliesToReports: boolean;
+  isAdminManaged?: boolean;
+  sortOrder: number;
+}
+
+export interface AdminServiceFeePayload {
+  isEnabled: boolean;
+  calculationMode: "percent" | "fixed";
+  ratePercent?: number | null;
+  fixedAmount?: number | null;
+  appliesToBuy: boolean;
+  appliesToSell: boolean;
+  appliesToPickup: boolean;
+  appliesToTransfer: boolean;
+  appliesToGift: boolean;
+}
+
+export interface SellerProductFeePayload {
+  sellerId?: number;
+  productId: number;
+  feeCode: string;
+  isEnabled: boolean;
+  calculationMode: string;
+  ratePercent?: number | null;
+  minimumAmount?: number | null;
+  flatAmount?: number | null;
+  premiumDiscountType?: string | null;
+  valuePerUnit?: number | null;
+  feePercent?: number | null;
+  gracePeriodDays?: number | null;
+  fixedAmount?: number | null;
+  feePerUnit?: number | null;
+  isOverride: boolean;
+}
+
+export async function fetchSystemFeeTypes(accessToken: string): Promise<SystemFeeTypePayload[]> {
+  return getJson<SystemFeeTypePayload[]>("/api/fees/system", accessToken);
+}
+
+export async function updateSystemFeeType(accessToken: string, payload: SystemFeeTypePayload): Promise<SystemFeeTypePayload> {
+  return putJson<SystemFeeTypePayload, SystemFeeTypePayload>("/api/fees/system", payload, accessToken);
+}
+
+export async function fetchAdminServiceFee(accessToken: string): Promise<AdminServiceFeePayload> {
+  return getJson<AdminServiceFeePayload>("/api/fees/service-fee", accessToken);
+}
+
+export async function updateAdminServiceFee(accessToken: string, payload: AdminServiceFeePayload): Promise<AdminServiceFeePayload> {
+  return putJson<AdminServiceFeePayload, AdminServiceFeePayload>("/api/fees/service-fee", payload, accessToken);
+}
+
+export async function fetchSellerFeeTabs(accessToken: string): Promise<SystemFeeTypePayload[]> {
+  return getJson<SystemFeeTypePayload[]>("/api/fees/seller/tabs", accessToken);
+}
+
+export async function fetchSellerProductFees(accessToken: string, feeCode: string): Promise<SellerProductFeePayload[]> {
+  return getJson<SellerProductFeePayload[]>(`/api/fees/seller/products/${feeCode}`, accessToken);
+}
+
+export async function upsertSellerProductFee(accessToken: string, payload: SellerProductFeePayload): Promise<SellerProductFeePayload> {
+  return putJson<SellerProductFeePayload, SellerProductFeePayload>("/api/fees/seller/products", payload, accessToken);
+}
+
+export async function bulkApplySellerProductFee(
+  accessToken: string,
+  feeCode: string,
+  template: SellerProductFeePayload
+): Promise<{ updated: number }> {
+  return putJson<{ updated: number }, { feeCode: string; applyToAll: boolean; productIds: number[]; template: SellerProductFeePayload }>(
+    "/api/fees/seller/products/bulk",
+    { feeCode, applyToAll: true, productIds: [], template },
+    accessToken
+  );
 }

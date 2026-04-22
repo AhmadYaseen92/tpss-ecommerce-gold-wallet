@@ -100,8 +100,7 @@ const estimatedAutoPrice = computed(() => {
   const market = Number(selectedMarketPrice.value || 0);
   if (weight <= 0 || market <= 0) return 0;
   const base = isDiamond.value ? (weight / 0.2) * market : (weight / 31.1035) * market;
-  const fees = Number(props.model.deliveryFee || 0) + Number(props.model.storageFee || 0) + Number(props.model.serviceCharge || 0);
-  return Number.isFinite(base) ? base * Number(props.model.purityFactor || 1) + fees : 0;
+  return Number.isFinite(base) ? base * Number(props.model.purityFactor || 1) : 0;
 });
 
 const finalSellPrice = computed(() => {
@@ -150,10 +149,7 @@ const sellPriceSummary = computed(() => `${materialLabel.value} ${Number(props.m
     </section>
 
     <section class="section-card">
-      <h4>4) Fees & Offer</h4>
-      <BaseFormField label="Delivery Fee" :error="errors.deliveryFee"><input v-model.number="model.deliveryFee" type="number" min="0" /></BaseFormField>
-      <BaseFormField label="Storage Fee" :error="errors.storageFee"><input v-model.number="model.storageFee" type="number" min="0" /></BaseFormField>
-      <BaseFormField label="Service Charge" :error="errors.serviceCharge"><input v-model.number="model.serviceCharge" type="number" min="0" /></BaseFormField>
+      <h4>4) Offer</h4>
       <BaseFormField label="Enable Offer"><label class="checkbox-line"><input v-model="offerEnabled" type="checkbox" /> Enable offer pricing</label></BaseFormField>
       <BaseFormField v-if="offerEnabled" label="Offer Type"><select v-model.number="model.offerType"><option :value="1">Percent-Based</option><option :value="2">Fixed-Price-Based</option></select></BaseFormField>
       <BaseFormField v-if="offerEnabled && model.offerType === 1" label="Offer Percent" :error="errors.offerPercent"><input v-model.number="model.offerPercent" type="number" min="0" max="100" /></BaseFormField>

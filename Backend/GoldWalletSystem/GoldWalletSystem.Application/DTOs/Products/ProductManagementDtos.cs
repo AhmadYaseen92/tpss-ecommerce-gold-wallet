@@ -22,9 +22,6 @@ public sealed class ProductManagementDto
     public ProductWeightUnit WeightUnit { get; set; }
     public decimal BaseMarketPrice { get; set; }
     public decimal ManualSellPrice { get; set; }
-    public decimal DeliveryFee { get; set; }
-    public decimal StorageFee { get; set; }
-    public decimal ServiceCharge { get; set; }
     public decimal OfferPercent { get; set; }
     public decimal OfferNewPrice { get; set; }
     public ProductOfferType OfferType { get; set; }

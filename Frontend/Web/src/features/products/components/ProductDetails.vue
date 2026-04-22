@@ -52,9 +52,6 @@ const formatMoney = (value: number) => Number(value || 0).toFixed(2);
         <p><strong>Pricing Mode:</strong> {{ product.pricingMode || "—" }}</p>
         <p><strong>Base Market Price:</strong> {{ formatMoney(product.baseMarketPrice) }}</p>
         <p><strong>Manual Sell Price:</strong> {{ formatMoney(product.manualSellPrice) }}</p>
-        <p><strong>Delivery Fee:</strong> {{ formatMoney(product.deliveryFee) }}</p>
-        <p><strong>Storage Fee:</strong> {{ formatMoney(product.storageFee) }}</p>
-        <p><strong>Service Charge:</strong> {{ formatMoney(product.serviceCharge) }}</p>
       </section>
 
       <section class="detail-card">
@@ -62,7 +59,7 @@ const formatMoney = (value: number) => Number(value || 0).toFixed(2);
         <p><strong>Offer Type:</strong> {{ product.offerType || "None" }}</p>
         <p><strong>Offer Percent:</strong> {{ product.offerPercent }}%</p>
         <p><strong>Offer New Price:</strong> {{ formatMoney(product.offerNewPrice) }}</p>
-        <p><strong>Final Sell Price:</strong> {{ formatMoney(product.price) }}</p>
+        <p><strong>Final Sell Price:</strong> {{ formatMoney(product.finalPrice) }}</p>
         <p><strong>Image URL:</strong> <span class="url-value">{{ product.imageUrl || "—" }}</span></p>
       </section>
     </div>

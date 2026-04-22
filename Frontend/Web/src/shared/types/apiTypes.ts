@@ -160,13 +160,9 @@ export interface ProductDto {
   weightValue: number;
   weightUnit: string;
   baseMarketPrice: number;
-  deliveryFee: number;
-  storageFee: number;
-  serviceCharge: number;
   offerPercent: number;
   offerNewPrice: number;
   offerType: string;
-  price: number;
   finalPrice: number;
   isHasOffer: boolean;
   availableStock: number;
@@ -209,6 +205,23 @@ export interface WebRequestDto {
   unit: string;
   purity: number;
   amount: number;
+  subTotalAmount?: number;
+  totalFeesAmount?: number;
+  discountAmount?: number;
+  finalAmount?: number;
+  feeBreakdowns?: Array<{
+    feeCode: string;
+    feeName: string;
+    calculationMode: string;
+    baseAmount: number;
+    quantity: number;
+    appliedRate?: number | null;
+    appliedValue: number;
+    isDiscount: boolean;
+    currency: string;
+    sourceType: string;
+    displayOrder: number;
+  }>;
   status: string;
   currency: string;
   notes: string;
@@ -246,14 +259,11 @@ export interface ProductManagementDto {
   weightUnit: string;
   baseMarketPrice: number;
   manualSellPrice: number;
-  deliveryFee: number;
-  storageFee: number;
-  serviceCharge: number;
   offerType: string;
   isHasOffer: boolean;
   offerPercent: number;
   offerNewPrice: number;
-  price: number;
+  finalPrice: number;
   availableStock: number;
   isActive: boolean;
   sellerId: number;
@@ -290,6 +300,23 @@ export interface WebRecentTransactionDto {
   productName: string;
   type: string;
   amount: number;
+  subTotalAmount?: number;
+  totalFeesAmount?: number;
+  discountAmount?: number;
+  finalAmount?: number;
+  feeBreakdowns?: Array<{
+    feeCode: string;
+    feeName: string;
+    calculationMode: string;
+    baseAmount: number;
+    quantity: number;
+    appliedRate?: number | null;
+    appliedValue: number;
+    isDiscount: boolean;
+    currency: string;
+    sourceType: string;
+    displayOrder: number;
+  }>;
   status: string;
   createdAt: string;
 }

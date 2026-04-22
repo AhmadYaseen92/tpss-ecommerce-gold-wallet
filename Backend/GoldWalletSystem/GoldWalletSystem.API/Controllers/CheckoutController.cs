@@ -3,6 +3,7 @@ using GoldWalletSystem.Application.DTOs.Notifications;
 using GoldWalletSystem.Application.DTOs.Otp;
 using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.Application.Services;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
@@ -20,6 +21,7 @@ public class CheckoutController(
     ICurrentUserService currentUser,
     IOtpService otpService,
     INotificationService notificationService,
+    IFeeCalculationService feeCalculationService,
     API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     [HttpPost("otp/request")]
@@ -137,12 +139,26 @@ public class CheckoutController(
 
         decimal totalAmount = 0;
         var createdRequests = new List<TransactionHistory>();
+        var pendingFeeBreakdowns = new List<(TransactionHistory History, int ProductId, int SellerId, global::GoldWalletSystem.Application.DTOs.Fees.FeeLineDto Line)>();
         foreach (var (product, quantity) in lines)
         {
             if (product.AvailableStock < quantity)
                 throw new InvalidOperationException($"Insufficient stock for {product.Name}. Available {product.AvailableStock}, requested {quantity}.");
 
-            totalAmount += product.Price * quantity;
+            var unitPrice = ResolveProductUnitPrice(product);
+            var subTotal = unitPrice * quantity;
+            totalAmount += subTotal;
+
+            var feeResult = await feeCalculationService.CalculateAsync(
+                new Application.DTOs.Fees.FeeCalculationRequest(
+                    ActionType: "buy",
+                    ProductId: product.Id,
+                    SellerId: product.SellerId,
+                    NotionalAmount: subTotal,
+                    Quantity: quantity,
+                    ClosePrice: unitPrice,
+                    DaysHeldAfterGrace: 0),
+                cancellationToken);
 
             var grams = ToGrams(product.WeightValue, product.WeightUnit) * quantity;
             var purity = ParsePurity(product.Description);
@@ -151,21 +167,31 @@ public class CheckoutController(
             {
                 UserId = request.UserId,
                 SellerId = product.SellerId,
+                ProductId = product.Id,
                 TransactionType = "BUY",
                 Status = "pending",
                 Category = product.Category.ToString(),
                 Quantity = quantity,
-                UnitPrice = product.Price,
+                UnitPrice = unitPrice,
                 Weight = grams,
                 Unit = "gram",
                 Purity = purity,
                 Notes = $"Checkout request from {(fromCart ? "cart" : "direct buy")}. SKU={product.Sku}",
-                Amount = product.Price * quantity,
+                Amount = feeResult.FinalAmount,
+                SubTotalAmount = feeResult.SubTotalAmount,
+                TotalFeesAmount = feeResult.TotalFeesAmount,
+                DiscountAmount = feeResult.DiscountAmount,
+                FinalAmount = feeResult.FinalAmount,
                 Currency = wallet.CurrencyCode,
                 CreatedAtUtc = DateTime.UtcNow,
             };
             dbContext.TransactionHistories.Add(requestHistory);
             createdRequests.Add(requestHistory);
+
+            foreach (var line in feeResult.Lines)
+            {
+                pendingFeeBreakdowns.Add((History: requestHistory, ProductId: product.Id, SellerId: product.SellerId, Line: line));
+            }
         }
 
         if (fromCart && cart is not null)
@@ -192,6 +218,35 @@ public class CheckoutController(
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        foreach (var pending in pendingFeeBreakdowns)
+        {
+            dbContext.TransactionFeeBreakdowns.Add(new TransactionFeeBreakdown
+            {
+                TransactionHistoryId = pending.History.Id,
+                ProductId = pending.ProductId,
+                SellerId = pending.SellerId,
+                FeeCode = pending.Line.FeeCode,
+                FeeName = pending.Line.FeeName,
+                CalculationMode = pending.Line.CalculationMode,
+                BaseAmount = pending.Line.BaseAmount,
+                Quantity = pending.Line.Quantity,
+                AppliedRate = pending.Line.AppliedRate,
+                AppliedValue = pending.Line.AppliedValue,
+                IsDiscount = pending.Line.IsDiscount,
+                Currency = pending.Line.Currency,
+                SourceType = pending.Line.SourceType,
+                ConfigSnapshotJson = pending.Line.ConfigSnapshotJson ?? string.Empty,
+                DisplayOrder = pending.Line.DisplayOrder,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        if (pendingFeeBreakdowns.Count > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         var requestNumbers = createdRequests.Select(x => $"r-{x.Id}").ToList();
         var requestNumbersText = string.Join(", ", requestNumbers.Take(3));
         if (requestNumbers.Count > 3)
@@ -247,8 +302,12 @@ public class CheckoutController(
             userId = request.UserId,
             fromCart,
             itemsCount = lines.Count,
-            totalAmount,
+            subTotalAmount = createdRequests.Sum(x => x.SubTotalAmount),
+            totalFeesAmount = createdRequests.Sum(x => x.TotalFeesAmount),
+            discountAmount = createdRequests.Sum(x => x.DiscountAmount),
+            finalAmount = createdRequests.Sum(x => x.FinalAmount),
             currency = wallet.CurrencyCode,
+            feeBreakdowns = pendingFeeBreakdowns.Select(x => x.Line).ToList(),
         }, "Checkout completed"));
     }
 
@@ -258,6 +317,23 @@ public class CheckoutController(
         ProductWeightUnit.Ounce => weightValue * 31.1035m,
         _ => weightValue
     };
+
+    private static decimal ResolveProductUnitPrice(Product product)
+    {
+        var sellPrice = product.PricingMode == ProductPricingMode.Manual
+            ? product.ManualSellPrice
+            : ProductPricingCalculator.CalculateAutoPrice(
+                product.MaterialType,
+                product.BaseMarketPrice,
+                product.WeightValue,
+                product.PurityFactor);
+
+        return ProductPricingCalculator.ApplyOffer(
+            sellPrice,
+            product.OfferType,
+            product.OfferPercent,
+            product.OfferNewPrice);
+    }
 
     private static AssetType ToAssetType(ProductCategory category) => category switch
     {

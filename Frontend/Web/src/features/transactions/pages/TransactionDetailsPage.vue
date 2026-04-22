@@ -38,8 +38,19 @@ const formatStatus = (status: string) => {
     <p><strong>Weight:</strong> {{ item.weight.toFixed(3) }} {{ item.unit }}</p>
     <p><strong>Purity:</strong> {{ item.purity }}%</p>
     <p><strong>Unit Price:</strong> {{ formatCurrency(item.unitPrice, item.currency) }}</p>
-    <p><strong>Amount:</strong> {{ formatCurrency(item.amount, item.currency) }}</p>
+    <p><strong>Subtotal:</strong> {{ formatCurrency(item.subTotalAmount ?? item.finalAmount, item.currency) }}</p>
+    <p><strong>Fees:</strong> {{ formatCurrency(item.totalFeesAmount ?? 0, item.currency) }}</p>
+    <p><strong>Discount:</strong> {{ formatCurrency(item.discountAmount ?? 0, item.currency) }}</p>
+    <p><strong>Final Amount:</strong> {{ formatCurrency(item.finalAmount, item.currency) }}</p>
     <p><strong>Currency:</strong> {{ item.currency }}</p>
+    <div v-if="item.feeBreakdowns && item.feeBreakdowns.length">
+      <p><strong>Fee Breakdown:</strong></p>
+      <ul>
+        <li v-for="line in item.feeBreakdowns" :key="`${line.feeCode}-${line.displayOrder}`">
+          {{ line.feeName }} ({{ line.sourceType }}): {{ formatCurrency(line.appliedValue, item.currency) }}
+        </li>
+      </ul>
+    </div>
     <p><strong>Notes:</strong> {{ item.notes || "—" }}</p>
     <p><strong>Status:</strong> <span :class="statusClass(item.status)">{{ formatStatus(item.status) }}</span></p>
     <p><strong>Created At:</strong> {{ formatDateTime(item.createdAt) }}</p>

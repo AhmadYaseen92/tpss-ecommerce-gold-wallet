@@ -412,15 +412,15 @@ BEGIN TRY
     BEGIN
         INSERT INTO [TransactionHistories] (
             [UserId],[SellerId],[TransactionType],[Status],[Category],[Quantity],
-            [UnitPrice],[Weight],[Unit],[Purity],[Amount],[Currency],[Notes],[CreatedAtUtc],[UpdatedAtUtc]
+            [UnitPrice],[Weight],[Unit],[Purity],[Amount],[SubTotalAmount],[TotalFeesAmount],[DiscountAmount],[FinalAmount],[Currency],[Notes],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES
-            (@InvestorMain, @SellerImseeh, N'sell', N'pending', N'Gold', 1, 740, 5.000, N'gram', 24, 740, N'USD', N'SKU=IMSEEH-PRD-001|execution_mode=locked_30_seconds|wallet_asset_id=1', DATEADD(HOUR, -6, @Now), NULL),
-            (@InvestorMain, @SellerImseeh, N'pickup', N'pending_delivered', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, N'USD', N'SKU=IMSEEH-PRD-005|pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
-            (@InvestorImseeh, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=', @InvestorMain, N'|recipient_investor_name=Gold Wallet Investor'), DATEADD(DAY, -2, @Now), NULL),
-            (@InvestorMain, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=', @InvestorImseeh, N'|from_investor_name=Imseeh Investor 1|wallet_asset_id=2'), DATEADD(DAY, -2, DATEADD(MINUTE, 1, @Now)), NULL),
-            (@InvestorImseeh, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=', @InvestorMain, N'|recipient_investor_name=Gold Wallet Investor'), DATEADD(DAY, -1, @Now), NULL),
-            (@InvestorMain, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=', @InvestorImseeh, N'|from_investor_name=Imseeh Investor 1|wallet_asset_id=2'), DATEADD(DAY, -1, DATEADD(MINUTE, 1, @Now)), NULL);
+            (@InvestorMain, @SellerImseeh, N'sell', N'pending', N'Gold', 1, 740, 5.000, N'gram', 24, 740, 730, 10, 0, 740, N'USD', N'SKU=IMSEEH-PRD-001|execution_mode=locked_30_seconds|wallet_asset_id=1', DATEADD(HOUR, -6, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'pickup', N'pending_delivered', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, 2650, 35, 0, 2685, N'USD', N'SKU=IMSEEH-PRD-005|pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, 720, 10, 0, 730, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=', @InvestorMain, N'|recipient_investor_name=Gold Wallet Investor'), DATEADD(DAY, -2, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, 720, 10, 0, 730, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=', @InvestorImseeh, N'|from_investor_name=Imseeh Investor 1|wallet_asset_id=2'), DATEADD(DAY, -2, DATEADD(MINUTE, 1, @Now)), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, 715, 10, 0, 725, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=', @InvestorMain, N'|recipient_investor_name=Gold Wallet Investor'), DATEADD(DAY, -1, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, 715, 10, 0, 725, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=', @InvestorImseeh, N'|from_investor_name=Imseeh Investor 1|wallet_asset_id=2'), DATEADD(DAY, -1, DATEADD(MINUTE, 1, @Now)), NULL);
     END
     ELSE
     BEGIN
@@ -478,7 +478,6 @@ BEGIN TRY
             T.[SellerId] = S.[SellerId],
             T.[Name] = S.[Name],
             T.[Description] = S.[Description],
-            T.[Price] = S.[Price],
             T.[AvailableStock] = S.[AvailableStock],
             T.[WeightValue] = S.[WeightValue],
             T.[WeightUnit] = S.[WeightUnit],
@@ -489,9 +488,6 @@ BEGIN TRY
             T.[PurityFactor] = CASE WHEN S.[Category] = 2 THEN 0.999 ELSE 1.0 END,
             T.[BaseMarketPrice] = S.[Price],
             T.[ManualSellPrice] = S.[Price],
-            T.[DeliveryFee] = 5,
-            T.[StorageFee] = 2,
-            T.[ServiceCharge] = 1,
             T.[OfferPercent] = CASE
                 WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004') THEN 12
                 WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 7
@@ -516,7 +512,6 @@ BEGIN TRY
             [Name],
             [Sku],
             [Description],
-            [Price],
             [AvailableStock],
             [WeightValue],
             [WeightUnit],
@@ -527,9 +522,6 @@ BEGIN TRY
             [PurityFactor],
             [BaseMarketPrice],
             [ManualSellPrice],
-            [DeliveryFee],
-            [StorageFee],
-            [ServiceCharge],
             [OfferPercent],
             [OfferNewPrice],
             [OfferType],
@@ -544,7 +536,6 @@ BEGIN TRY
             S.[Name],
             S.[Sku],
             S.[Description],
-            S.[Price],
             S.[AvailableStock],
             S.[WeightValue],
             S.[WeightUnit],
@@ -555,9 +546,6 @@ BEGIN TRY
             CASE WHEN S.[Category] = 2 THEN 0.999 ELSE 1.0 END,
             S.[Price],
             S.[Price],
-            5,
-            2,
-            1,
             CASE
                 WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004') THEN 12
                 WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 7
@@ -719,9 +707,6 @@ BEGIN TRY
     MERGE [SystemConfigration] AS T
     USING (
         VALUES
-        (N'Fees_Delivery', N'Fees Delivery', N'Web admin delivery fee', 4, NULL, NULL, 12.00, NULL, CAST(0 AS bit)),
-        (N'Fees_Storage', N'Fees Storage', N'Web admin storage fee', 4, NULL, NULL, 4.00, NULL, CAST(0 AS bit)),
-        (N'Fees_ServiceChargePercent', N'Fees Service Charge Percent', N'Web admin service charge percent', 4, NULL, NULL, 2.50, NULL, CAST(0 AS bit)),
         (N'WalletSell_Mode', N'Wallet Sell Mode', N'Wallet sell execution behavior for mobile and web', 1, NULL, NULL, NULL, N'locked_30_seconds', CAST(0 AS bit)),
         (N'WalletSell_LockSeconds', N'Wallet Sell Lock Seconds', N'Wallet sell lock duration in seconds', 3, NULL, 30, NULL, NULL, CAST(0 AS bit)),
         (N'MobileRelease_IsIndividualSeller', N'Mobile Release Is Individual Seller', N'Mobile release: show single seller mode', 2, CAST(0 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
@@ -751,6 +736,114 @@ BEGIN TRY
     WHEN NOT MATCHED THEN
         INSERT ([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess],[CreatedAtUtc],[UpdatedAtUtc])
         VALUES (S.[ConfigKey],S.[Name],S.[Description],S.[ValueType],S.[ValueBool],S.[ValueInt],S.[ValueDecimal],S.[ValueString],S.[SellerAccess],@Now,NULL);
+
+    -- 6.b) Seed fee-management tables when available.
+    IF OBJECT_ID(N'[SystemFeeTypes]', N'U') IS NOT NULL
+    BEGIN
+        MERGE [SystemFeeTypes] AS T
+        USING (
+            VALUES
+            (N'commission_per_transaction', N'Commission Per Transaction', N'Seller managed commission fee', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 1),
+            (N'premium_discount', N'Premium / Discount', N'Seller managed premium or discount fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 2),
+            (N'storage_custody_fee', N'Storage / Custody Fee', N'Seller managed custody fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 3),
+            (N'delivery_fee', N'Delivery Fee', N'Seller managed delivery fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 4),
+            (N'service_charge', N'Service Charge', N'Seller managed service charge', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 5),
+            (N'service_fee', N'Service Fee', N'Admin managed service fee', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), 6)
+        ) AS S([FeeCode],[Name],[Description],[IsEnabled],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[AppliesToInvoice],[AppliesToReports],[IsAdminManaged],[SortOrder])
+        ON T.[FeeCode] = S.[FeeCode]
+        WHEN MATCHED THEN UPDATE SET
+            T.[Name] = S.[Name],
+            T.[Description] = S.[Description],
+            T.[IsEnabled] = S.[IsEnabled],
+            T.[AppliesToBuy] = S.[AppliesToBuy],
+            T.[AppliesToSell] = S.[AppliesToSell],
+            T.[AppliesToPickup] = S.[AppliesToPickup],
+            T.[AppliesToTransfer] = S.[AppliesToTransfer],
+            T.[AppliesToGift] = S.[AppliesToGift],
+            T.[AppliesToInvoice] = S.[AppliesToInvoice],
+            T.[AppliesToReports] = S.[AppliesToReports],
+            T.[IsAdminManaged] = S.[IsAdminManaged],
+            T.[SortOrder] = S.[SortOrder],
+            T.[UpdatedAtUtc] = @Now
+        WHEN NOT MATCHED THEN
+            INSERT ([FeeCode],[Name],[Description],[IsEnabled],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[AppliesToInvoice],[AppliesToReports],[IsAdminManaged],[SortOrder],[CreatedAtUtc],[UpdatedAtUtc])
+            VALUES (S.[FeeCode],S.[Name],S.[Description],S.[IsEnabled],S.[AppliesToBuy],S.[AppliesToSell],S.[AppliesToPickup],S.[AppliesToTransfer],S.[AppliesToGift],S.[AppliesToInvoice],S.[AppliesToReports],S.[IsAdminManaged],S.[SortOrder],@Now,NULL);
+    END
+
+    IF OBJECT_ID(N'[AdminTransactionFees]', N'U') IS NOT NULL
+    BEGIN
+        MERGE [AdminTransactionFees] AS T
+        USING (
+            VALUES
+            (N'service_fee', CAST(1 AS bit), N'percent', 1.25, NULL, CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit))
+        ) AS S([FeeCode],[IsEnabled],[CalculationMode],[RatePercent],[FixedAmount],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift])
+        ON T.[FeeCode] = S.[FeeCode]
+        WHEN MATCHED THEN UPDATE SET
+            T.[IsEnabled] = S.[IsEnabled],
+            T.[CalculationMode] = S.[CalculationMode],
+            T.[RatePercent] = S.[RatePercent],
+            T.[FixedAmount] = S.[FixedAmount],
+            T.[AppliesToBuy] = S.[AppliesToBuy],
+            T.[AppliesToSell] = S.[AppliesToSell],
+            T.[AppliesToPickup] = S.[AppliesToPickup],
+            T.[AppliesToTransfer] = S.[AppliesToTransfer],
+            T.[AppliesToGift] = S.[AppliesToGift],
+            T.[UpdatedAtUtc] = @Now
+        WHEN NOT MATCHED THEN
+            INSERT ([FeeCode],[IsEnabled],[CalculationMode],[RatePercent],[FixedAmount],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[CreatedAtUtc],[UpdatedAtUtc])
+            VALUES (S.[FeeCode],S.[IsEnabled],S.[CalculationMode],S.[RatePercent],S.[FixedAmount],S.[AppliesToBuy],S.[AppliesToSell],S.[AppliesToPickup],S.[AppliesToTransfer],S.[AppliesToGift],@Now,NULL);
+    END
+
+    IF OBJECT_ID(N'[SellerProductFees]', N'U') IS NOT NULL
+    BEGIN
+        MERGE [SellerProductFees] AS T
+        USING (
+            SELECT P.[SellerId] AS SellerId, P.[Id] AS ProductId, N'commission_per_transaction' AS FeeCode, CAST(1 AS bit) AS IsEnabled, N'percent_with_minimum' AS CalculationMode, CAST(1.50 AS decimal(18,6)) AS RatePercent, CAST(5.00 AS decimal(18,2)) AS MinimumAmount, NULL AS FlatAmount, NULL AS PremiumDiscountType, NULL AS ValuePerUnit, NULL AS FeePercent, NULL AS GracePeriodDays, NULL AS FixedAmount, NULL AS FeePerUnit, CAST(0 AS bit) AS IsOverride
+            FROM [Products] P
+            WHERE P.[SellerId] IN (@SellerImseeh, @SellerGoldPal)
+            UNION ALL
+            SELECT P.[SellerId], P.[Id], N'service_charge', CAST(1 AS bit), N'fixed', NULL, NULL, NULL, NULL, NULL, NULL, NULL, CAST(2.50 AS decimal(18,2)), NULL, CAST(0 AS bit)
+            FROM [Products] P
+            WHERE P.[SellerId] IN (@SellerImseeh, @SellerGoldPal)
+            UNION ALL
+            SELECT P.[SellerId], P.[Id], N'delivery_fee', CAST(1 AS bit), N'fixed', NULL, NULL, NULL, NULL, NULL, NULL, NULL, CAST(12.00 AS decimal(18,2)), NULL, CAST(0 AS bit)
+            FROM [Products] P
+            WHERE P.[SellerId] IN (@SellerImseeh, @SellerGoldPal)
+        ) AS S
+        ON T.[SellerId] = S.[SellerId] AND T.[ProductId] = S.[ProductId] AND T.[FeeCode] = S.[FeeCode]
+        WHEN MATCHED THEN UPDATE SET
+            T.[IsEnabled] = S.[IsEnabled],
+            T.[CalculationMode] = S.[CalculationMode],
+            T.[RatePercent] = S.[RatePercent],
+            T.[MinimumAmount] = S.[MinimumAmount],
+            T.[FlatAmount] = S.[FlatAmount],
+            T.[PremiumDiscountType] = S.[PremiumDiscountType],
+            T.[ValuePerUnit] = S.[ValuePerUnit],
+            T.[FeePercent] = S.[FeePercent],
+            T.[GracePeriodDays] = S.[GracePeriodDays],
+            T.[FixedAmount] = S.[FixedAmount],
+            T.[FeePerUnit] = S.[FeePerUnit],
+            T.[IsOverride] = S.[IsOverride],
+            T.[UpdatedAtUtc] = @Now
+        WHEN NOT MATCHED THEN
+            INSERT ([SellerId],[ProductId],[FeeCode],[IsEnabled],[CalculationMode],[RatePercent],[MinimumAmount],[FlatAmount],[PremiumDiscountType],[ValuePerUnit],[FeePercent],[GracePeriodDays],[FixedAmount],[FeePerUnit],[IsOverride],[CreatedAtUtc],[UpdatedAtUtc])
+            VALUES (S.[SellerId],S.[ProductId],S.[FeeCode],S.[IsEnabled],S.[CalculationMode],S.[RatePercent],S.[MinimumAmount],S.[FlatAmount],S.[PremiumDiscountType],S.[ValuePerUnit],S.[FeePercent],S.[GracePeriodDays],S.[FixedAmount],S.[FeePerUnit],S.[IsOverride],@Now,NULL);
+    END
+
+
+
+    -- 6.c) Seed transaction fee breakdown rows when table exists.
+    IF OBJECT_ID(N'[TransactionFeeBreakdowns]', N'U') IS NOT NULL
+    BEGIN
+        INSERT INTO [TransactionFeeBreakdowns] (
+            [TransactionHistoryId],[ProductId],[SellerId],[FeeCode],[FeeName],[CalculationMode],[BaseAmount],[Quantity],[AppliedRate],[AppliedValue],[IsDiscount],[Currency],[SourceType],[ConfigSnapshotJson],[DisplayOrder],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        SELECT TH.[Id], NULL, TH.[SellerId], N'service_fee', N'Service Fee', N'percent', TH.[SubTotalAmount], TH.[Quantity], 1.25, TH.[TotalFeesAmount], 0, TH.[Currency], N'AdminServiceFee', N'{"seed":true}', 1, @Now, NULL
+        FROM [TransactionHistories] TH
+        WHERE TH.[CreatedAtUtc] >= DATEADD(DAY, -10, @Now)
+          AND TH.[TotalFeesAmount] > 0
+          AND NOT EXISTS (SELECT 1 FROM [TransactionFeeBreakdowns] FB WHERE FB.[TransactionHistoryId] = TH.[Id]);
+    END
 
     -- 7) Seed audit marker.
     INSERT INTO [AuditLogs] ([UserId],[Action],[EntityName],[EntityId],[Details],[CreatedAtUtc],[UpdatedAtUtc])

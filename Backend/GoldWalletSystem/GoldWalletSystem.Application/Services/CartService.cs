@@ -2,6 +2,7 @@ using GoldWalletSystem.Application.DTOs.Cart;
 using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Entities;
+using GoldWalletSystem.Domain.Enums;
 
 namespace GoldWalletSystem.Application.Services;
 
@@ -54,14 +55,15 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
 
         if (existingItem is null)
         {
+            var unitPrice = ResolveProductUnitPrice(product);
             cart.Items.Add(new CartItem
             {
                 ProductId = productId,
                 SellerId = product.SellerId,
                 Category = product.Category,
                 Quantity = quantity,
-                UnitPrice = product.Price,
-                LineTotal = product.Price * quantity,
+                UnitPrice = unitPrice,
+                LineTotal = unitPrice * quantity,
             });
         }
         else
@@ -145,5 +147,22 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
 
         if (requestedQuantity > availableStock)
             throw new InvalidOperationException($"Requested quantity {requestedQuantity} exceeds available stock {availableStock} for product id {productId}.");
+    }
+
+    private static decimal ResolveProductUnitPrice(Product product)
+    {
+        var sellPrice = product.PricingMode == ProductPricingMode.Manual
+            ? product.ManualSellPrice
+            : ProductPricingCalculator.CalculateAutoPrice(
+                product.MaterialType,
+                product.BaseMarketPrice,
+                product.WeightValue,
+                product.PurityFactor);
+
+        return ProductPricingCalculator.ApplyOffer(
+            sellPrice,
+            product.OfferType,
+            product.OfferPercent,
+            product.OfferNewPrice);
     }
 }

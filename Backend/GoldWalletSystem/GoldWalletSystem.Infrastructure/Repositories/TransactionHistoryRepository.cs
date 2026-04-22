@@ -84,6 +84,23 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
                 .Select(x => new { x.Id, x.PdfUrl })
                 .ToDictionaryAsync(x => x.Id, x => x.PdfUrl, cancellationToken);
 
+        var historyIds = rows.Select(r => r.history.Id).ToList();
+        var feeBreakdownLookup = new Dictionary<int, List<TransactionFeeBreakdownDto>>();
+        if (historyIds.Count > 0)
+        {
+            var feeRows = await dbContext.TransactionFeeBreakdowns
+                .AsNoTracking()
+                .Where(x => x.TransactionHistoryId.HasValue && historyIds.Contains(x.TransactionHistoryId.Value))
+                .OrderBy(x => x.DisplayOrder)
+                .Select(x => new { x.TransactionHistoryId, Item = new TransactionFeeBreakdownDto(x.FeeCode, x.FeeName, x.CalculationMode, x.BaseAmount, x.Quantity, x.AppliedRate, x.AppliedValue, x.IsDiscount, x.Currency, x.SourceType, x.DisplayOrder) })
+                .ToListAsync(cancellationToken);
+
+            feeBreakdownLookup = feeRows
+                .Where(x => x.TransactionHistoryId.HasValue)
+                .GroupBy(x => x.TransactionHistoryId!.Value)
+                .ToDictionary(g => g.Key, g => g.Select(v => v.Item).ToList());
+        }
+
         var sellerIds = rows
             .Where(x => x.history.SellerId.HasValue)
             .Select(x => x.history.SellerId!.Value)
@@ -123,14 +140,19 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
                     row.history.Weight,
                     row.history.Unit,
                     row.history.Purity,
-                    row.history.Amount,
+                    row.history.FinalAmount,
+                    row.history.SubTotalAmount,
+                    row.history.TotalFeesAmount,
+                    row.history.DiscountAmount,
+                    row.history.FinalAmount,
                     row.history.Currency,
                     row.history.WalletItemId,
                     row.history.InvoiceId,
                     row.history.InvoiceId.HasValue && invoiceLookup.TryGetValue(row.history.InvoiceId.Value, out var pdfUrl) ? pdfUrl : null,
                     row.history.Notes,
                     row.history.CreatedAtUtc,
-                    productImageUrl);
+                    productImageUrl,
+                    feeBreakdownLookup.TryGetValue(row.history.Id, out var feeLines) ? feeLines : []);
             })
             .ToList();
 

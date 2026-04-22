@@ -8,12 +8,17 @@ public class TransactionHistory : BaseEntity
     public string Status { get; set; } = "pending";
     public string Category { get; set; } = "Gold";
     public int Quantity { get; set; } = 1;
+    public int? ProductId { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal Weight { get; set; }
     public string Unit { get; set; } = "gram";
     public decimal Purity { get; set; }
     public string Notes { get; set; } = string.Empty;
     public decimal Amount { get; set; }
+    public decimal SubTotalAmount { get; set; }
+    public decimal TotalFeesAmount { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public decimal FinalAmount { get; set; }
     public string Currency { get; set; } = "USD";
     public int? WalletItemId { get; set; }
     public int? InvoiceId { get; set; }

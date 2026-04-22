@@ -66,6 +66,7 @@ const statusOptions = (trx: TransactionRowView) => {
         <th>Qty</th>
         <th>Weight</th>
         <th>Amount</th>
+        <th>Flags</th>
         <th>Status</th>
         <th>Created</th>
         <th>Updated</th>
@@ -96,7 +97,7 @@ const statusOptions = (trx: TransactionRowView) => {
         </td>
         <td>{{ formatQty(trx.quantity) }}</td>
         <td>{{ formatWeight(trx.weight, trx.unit) }}</td>
-        <td>{{ formatAmount(trx.amount, trx.currency) }}</td>
+        <td>{{ formatAmount(trx.finalAmount, trx.currency) }}</td>
         <td>
           <select
             v-if="canEditStatus(trx)"
@@ -138,4 +139,8 @@ const statusOptions = (trx: TransactionRowView) => {
   margin-left: 8px;
   color: #b42318;
 }
+
+.fee-tag,.discount-tag{font-size:11px;padding:2px 6px;border-radius:999px;margin-right:4px;}
+.fee-tag{background:#eef6ff;color:#235;}
+.discount-tag{background:#ecfff0;color:#164;}
 </style>

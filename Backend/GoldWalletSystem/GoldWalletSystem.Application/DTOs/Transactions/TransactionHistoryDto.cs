@@ -1,5 +1,18 @@
 namespace GoldWalletSystem.Application.DTOs.Transactions;
 
+public sealed record TransactionFeeBreakdownDto(
+    string FeeCode,
+    string FeeName,
+    string CalculationMode,
+    decimal BaseAmount,
+    decimal Quantity,
+    decimal? AppliedRate,
+    decimal AppliedValue,
+    bool IsDiscount,
+    string Currency,
+    string SourceType,
+    int DisplayOrder);
+
 public sealed record TransactionHistoryDto(
     int Id,
     int UserId,
@@ -15,10 +28,15 @@ public sealed record TransactionHistoryDto(
     string Unit,
     decimal Purity,
     decimal Amount,
+    decimal SubTotalAmount,
+    decimal TotalFeesAmount,
+    decimal DiscountAmount,
+    decimal FinalAmount,
     string Currency,
     int? WalletItemId,
     int? InvoiceId,
     string? InvoicePdfUrl,
     string Notes,
     DateTime CreatedAtUtc,
-    string ProductImageUrl);
+    string ProductImageUrl,
+    IReadOnlyList<TransactionFeeBreakdownDto> FeeBreakdowns);

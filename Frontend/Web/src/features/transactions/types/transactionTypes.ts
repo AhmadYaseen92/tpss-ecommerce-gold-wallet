@@ -1,3 +1,17 @@
+export interface TransactionFeeBreakdownView {
+  feeCode: string;
+  feeName: string;
+  calculationMode: string;
+  baseAmount: number;
+  quantity: number;
+  appliedRate?: number | null;
+  appliedValue: number;
+  isDiscount: boolean;
+  currency: string;
+  sourceType: string;
+  displayOrder: number;
+}
+
 export interface TransactionRowView {
   id: string;
   sellerId?: string;
@@ -14,6 +28,11 @@ export interface TransactionRowView {
   unit: string;
   purity: number;
   amount: number;
+  subTotalAmount?: number;
+  totalFeesAmount?: number;
+  discountAmount?: number;
+  finalAmount: number;
+  feeBreakdowns?: TransactionFeeBreakdownView[];
   currency: string;
   status: string;
   notes?: string;

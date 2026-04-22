@@ -32,7 +32,7 @@ public class DashboardRepository(AppDbContext dbContext, ICurrentUserService cur
         monthlySpentQuery = sellerScope.HasValue
             ? monthlySpentQuery.Where(x => x.SellerId == sellerScope.Value)
             : monthlySpentQuery.Where(x => x.UserId == userId);
-        var monthlySpent = await monthlySpentQuery.SumAsync(x => (decimal?)x.Amount, cancellationToken) ?? 0;
+        var monthlySpent = await monthlySpentQuery.SumAsync(x => (decimal?)x.FinalAmount, cancellationToken) ?? 0;
 
         return new DashboardDto(userId, user.FullName, walletBalance, cartItemsCount, unreadNotifications, monthlySpent);
     }
