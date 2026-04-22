@@ -357,35 +357,51 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
       };
 
   String _extractDisplayErrorMessage(Object error) {
-    if (error is DioException) {
-      final data = error.response?.data;
-      if (data is Map<String, dynamic>) {
-        final nestedData = data['data'];
-        if (nestedData is Map<String, dynamic>) {
-          final nestedMessage = (nestedData['message'] ?? nestedData['error'] ?? '').toString().trim();
-          if (nestedMessage.isNotEmpty) return nestedMessage;
-        }
+    String pickMessageFromMap(Map<String, dynamic> map) {
+      final nested = map['data'];
+      if (nested is Map) {
+        final nestedMap = nested.map((key, value) => MapEntry('$key', value));
+        final nestedMessage = pickMessageFromMap(nestedMap);
+        if (nestedMessage.isNotEmpty) return nestedMessage;
+      }
 
-        final directMessage = (data['message'] ?? data['error'] ?? data['title'] ?? '').toString().trim();
-        if (directMessage.isNotEmpty) return directMessage;
+      final directMessage = (map['message'] ?? map['error'] ?? map['title'] ?? '').toString().trim();
+      if (directMessage.isNotEmpty) return directMessage;
 
-        final errors = data['errors'];
-        if (errors is List && errors.isNotEmpty) {
-          final first = errors.first.toString().trim();
-          if (first.isNotEmpty) return first;
-        }
-        if (errors is Map) {
-          for (final value in errors.values) {
-            if (value is List && value.isNotEmpty) {
-              final first = value.first.toString().trim();
-              if (first.isNotEmpty) return first;
-            }
-            final plain = value.toString().trim();
-            if (plain.isNotEmpty) return plain;
+      final errors = map['errors'];
+      if (errors is List && errors.isNotEmpty) {
+        final first = errors.first.toString().trim();
+        if (first.isNotEmpty) return first;
+      }
+      if (errors is Map) {
+        for (final value in errors.values) {
+          if (value is List && value.isNotEmpty) {
+            final first = value.first.toString().trim();
+            if (first.isNotEmpty) return first;
           }
+          final plain = value.toString().trim();
+          if (plain.isNotEmpty) return plain;
         }
-      } else if (data is String && data.trim().isNotEmpty) {
-        return data.trim();
+      }
+      return '';
+    }
+
+    if (error is DioException) {
+      final responseData = error.response?.data;
+      if (responseData is Map) {
+        final mapData = responseData.map((key, value) => MapEntry('$key', value));
+        final mappedMessage = pickMessageFromMap(mapData);
+        if (mappedMessage.isNotEmpty) return mappedMessage;
+      }
+
+      if (responseData is String && responseData.trim().isNotEmpty) {
+        return responseData.trim();
+      }
+
+      final fallbackErrorText = error.error?.toString().trim() ?? '';
+      if (fallbackErrorText.isNotEmpty &&
+          !fallbackErrorText.toLowerCase().contains('dioexception')) {
+        return fallbackErrorText;
       }
     }
 
