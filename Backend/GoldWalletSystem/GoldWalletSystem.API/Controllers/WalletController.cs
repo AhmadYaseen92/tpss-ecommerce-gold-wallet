@@ -358,11 +358,12 @@ public class WalletController(
 
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
+        var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset.Id, asset.SellerId, cancellationToken);
 
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
                 ActionType: actionType,
-                ProductId: null,
+                ProductId: resolvedProductId,
                 SellerId: asset.SellerId,
                 NotionalAmount: grossAmount,
                 Quantity: request.Quantity,
@@ -431,11 +432,12 @@ public class WalletController(
 
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
+        var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset.Id, asset.SellerId, cancellationToken);
 
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
                 ActionType: actionType,
-                ProductId: null,
+                ProductId: resolvedProductId,
                 SellerId: asset.SellerId,
                 NotionalAmount: grossAmount,
                 Quantity: request.Quantity,
@@ -985,6 +987,43 @@ public class WalletController(
         }
 
         return result;
+    }
+
+    private async Task<int?> ResolveWalletAssetProductIdAsync(
+        int userId,
+        int walletAssetId,
+        int? sellerId,
+        CancellationToken cancellationToken)
+    {
+        var historyProductId = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.ProductId.HasValue)
+            .Where(x => x.WalletItemId == walletAssetId || EF.Functions.Like(x.Notes, $"%wallet_asset_id={walletAssetId}%"))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => x.ProductId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (historyProductId.HasValue && historyProductId.Value > 0)
+            return historyProductId.Value;
+
+        if (!sellerId.HasValue) return null;
+
+        var historyWithSku = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.SellerId == sellerId)
+            .Where(x => x.WalletItemId == walletAssetId || EF.Functions.Like(x.Notes, $"%wallet_asset_id={walletAssetId}%"))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new { x.Notes })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var sku = TryExtractSku(historyWithSku?.Notes);
+        if (string.IsNullOrWhiteSpace(sku)) return null;
+
+        return await dbContext.Products
+            .AsNoTracking()
+            .Where(x => x.SellerId == sellerId.Value && x.Sku == sku)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     private async Task<SellExecutionConfigurationResponse> ReadSellExecutionConfigurationAsync(CancellationToken cancellationToken)

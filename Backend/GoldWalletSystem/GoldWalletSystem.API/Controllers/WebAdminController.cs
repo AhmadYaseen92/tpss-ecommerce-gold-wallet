@@ -1133,21 +1133,28 @@ public class WebAdminController(
         var action = request.TransactionType.Trim().ToLowerInvariant();
         if (action == "buy")
         {
-            wallet.Assets.Add(new Domain.Entities.WalletAsset
+            var quantity = Math.Max(1, request.Quantity);
+            var feeAwareUnitCost = request.FinalAmount > 0
+                ? request.FinalAmount / quantity
+                : request.UnitPrice;
+
+            var createdAsset = new Domain.Entities.WalletAsset
             {
                 WalletId = wallet.Id,
                 SellerId = request.SellerId,
                 SellerName = await dbContext.Sellers.Where(s => s.Id == request.SellerId).Select(s => s.CompanyName).FirstOrDefaultAsync(cancellationToken) ?? string.Empty,
                 Category = Enum.TryParse<ProductCategory>(request.Category, true, out var cat) ? cat : ProductCategory.Gold,
                 AssetType = AssetType.GoldBar,
-                Quantity = Math.Max(1, request.Quantity),
-                AverageBuyPrice = request.UnitPrice,
+                Quantity = quantity,
+                AverageBuyPrice = feeAwareUnitCost,
                 CurrentMarketPrice = request.UnitPrice,
                 Weight = request.Weight,
                 Unit = request.Unit,
                 Purity = request.Purity,
                 CreatedAtUtc = DateTime.UtcNow
-            });
+            };
+
+            wallet.Assets.Add(createdAsset);
         }
         else if (action is "sell" or "pickup" or "transfer" or "gift")
         {

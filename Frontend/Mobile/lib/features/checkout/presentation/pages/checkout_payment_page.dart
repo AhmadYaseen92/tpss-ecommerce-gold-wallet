@@ -275,9 +275,18 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     }
 
     final userId = AuthSessionStore.userId;
+    if (userId == null) return;
+
+    final fromCart = (args['fromCart'] as bool?) ?? false;
     final productId = args['productId'];
     final quantity = args['quantity'];
-    if (userId == null || productId == null || quantity == null) return;
+    final productIds = (args['productIds'] as List<dynamic>? ?? [])
+        .map((e) => e is num ? e.toInt() : int.tryParse('$e'))
+        .whereType<int>()
+        .toList();
+
+    if (fromCart && productIds.isEmpty) return;
+    if (!fromCart && (productId == null || quantity == null)) return;
 
     try {
       final response = await _dio.post(
@@ -285,9 +294,10 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         data: {
           'userId': userId,
           'actionType': 'buy',
-          'fromCart': false,
-          'productId': productId,
-          'quantity': quantity,
+          'fromCart': fromCart,
+          if (fromCart) 'productIds': productIds,
+          if (!fromCart) 'productId': productId,
+          if (!fromCart) 'quantity': quantity,
         },
       );
       final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
