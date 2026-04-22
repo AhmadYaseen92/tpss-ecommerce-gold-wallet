@@ -60,13 +60,21 @@ class NotificationRemoteModel {
   final DateTime createdAtUtc;
 
   factory NotificationRemoteModel.fromJson(Map<String, dynamic> json) {
+    final createdAtRaw = (json['createdAtUtc'] ?? '').toString();
+    final createdAtValue = _parseServerUtc(createdAtRaw) ?? DateTime.now().toUtc();
     return NotificationRemoteModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       title: (json['title'] ?? '') as String,
       body: (json['body'] ?? '') as String,
       isRead: (json['isRead'] ?? false) as bool,
-      createdAtUtc:
-          DateTime.tryParse((json['createdAtUtc'] ?? '').toString()) ?? DateTime.now().toUtc(),
+      createdAtUtc: createdAtValue,
     );
+  }
+
+  static DateTime? _parseServerUtc(String value) {
+    if (value.isEmpty) return null;
+    final hasZone = value.endsWith('Z') || value.contains('+') || value.lastIndexOf('-') > 9;
+    final normalized = hasZone ? value : '${value}Z';
+    return DateTime.tryParse(normalized)?.toUtc();
   }
 }

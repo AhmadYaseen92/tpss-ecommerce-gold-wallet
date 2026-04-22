@@ -265,6 +265,12 @@ body {
   margin-bottom: 12px;
 }
 
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .settings-message {
   margin: 0;
   font-size: 13px;
@@ -304,6 +310,15 @@ body {
   padding: 8px;
   display: grid;
   gap: 6px;
+}
+
+.vertical-modal li.unread {
+  border-color: #d4a72c;
+  background: #fffaf0;
+}
+
+.vertical-modal li.unread strong {
+  font-weight: 800;
 }
 
 .vertical-modal li p {

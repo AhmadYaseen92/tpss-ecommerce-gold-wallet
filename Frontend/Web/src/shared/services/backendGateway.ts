@@ -371,6 +371,14 @@ export async function updateWebRequestStatus(
   await putJson<string, { status: string }>(`/api/web-admin/requests/${requestId}/status`, { status }, accessToken);
 }
 
+export async function markWebNotificationAsRead(accessToken: string, notificationId: string): Promise<void> {
+  await putJson<string, Record<string, never>>(`/api/web-admin/notifications/${notificationId}/read`, {}, accessToken);
+}
+
+export async function markAllWebNotificationsAsRead(accessToken: string): Promise<void> {
+  await putJson<string, Record<string, never>>("/api/web-admin/notifications/read-all", {}, accessToken);
+}
+
 export async function getWebRequestDetails(accessToken: string, requestId: string): Promise<InvestorRequest> {
   const item = await getJson<WebRequestDto>(`/api/web-admin/requests/${requestId}`, accessToken);
   return mapWebRequests([item])[0];

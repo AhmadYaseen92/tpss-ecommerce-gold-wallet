@@ -16,6 +16,7 @@ const emit = defineEmits<{
   logout: [];
   themeToggle: [];
   notificationRead: [notificationId: string];
+  notificationsReadAll: [];
 }>();
 
 const openNotifications = ref(false);
@@ -143,10 +144,13 @@ const formatLocalDateTime = (iso: string) => {
       <aside v-if="openNotifications" class="vertical-modal right">
         <div class="modal-head">
           <h4>Notifications</h4>
-          <button class="ghost" @click="openNotifications = false">✕</button>
+          <div class="modal-actions">
+            <button class="ghost" @click="emit('notificationsReadAll')">Mark all read</button>
+            <button class="ghost" @click="openNotifications = false">✕</button>
+          </div>
         </div>
         <ul>
-          <li v-for="notice in notifications.slice(0, 8)" :key="notice.id">
+          <li v-for="notice in notifications.slice(0, 8)" :key="notice.id" :class="{ unread: !notice.isRead }">
             <div>
               <strong>{{ notice.title }}</strong>
               <p>{{ notice.message }}</p>
