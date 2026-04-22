@@ -10,6 +10,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/get_car
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/remove_cart_product_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/usecases/update_cart_product_quantity_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/repositories/cart_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 
 part 'cart_state.dart';
 
@@ -42,24 +43,21 @@ class CartCubit extends Cubit<CartState> {
   String _sellerFilter = AppReleaseConfig.defaultSeller;
   int? _categoryFilter;
   List<CartItemEntity> _allItems = [];
+  StreamSubscription<String>? _realtimeSubscription;
+  DateTime? _lastAutoRefreshAt;
 
   Future<void> loadCartProducts({String sellerFilter = AppReleaseConfig.defaultAllSellersLabel}) async {
     emit(CartLoading());
     try {
       _allItems = await _getCartItemsUseCase();
       final sellers = _getAvailableSellersUseCase(_allItems);
-
-      if (AppReleaseConfig.isIndividualSellerRelease) {
-        _sellerFilter = AppReleaseConfig.individualSellerName;
-      } else if (sellers.contains(sellerFilter)) {
-        _sellerFilter = sellerFilter;
-      } else if (sellers.isNotEmpty) {
-        _sellerFilter = sellers.first;
-      } else {
-        _sellerFilter = sellerFilter;
-      }
+      _sellerFilter = _resolveSellerFilter(
+        sellers: sellers,
+        requestedSellerFilter: sellerFilter,
+      );
 
       await _emitLoaded();
+      await _startAutoRefresh();
     } catch (e) {
       emit(CartError('Failed to load cart products: $e'));
     }
@@ -106,7 +104,15 @@ class CartCubit extends Cubit<CartState> {
       filtered = _filterCartItemsUseCase(items: _allItems, sellerFilter: _sellerFilter);
     }
 
-    final summary = await _cartRepository.previewSummary(filtered.map((item) => item.id).toList());
+    final summary = filtered.isEmpty
+        ? const CartSummaryEntity(
+            subtotal: 0,
+            totalFeesAmount: 0,
+            discountAmount: 0,
+            total: 0,
+            feeBreakdowns: [],
+          )
+        : await _cartRepository.previewSummary(filtered.map((item) => item.id).toList());
 
     emit(
       CartLoaded(
@@ -117,5 +123,54 @@ class CartCubit extends Cubit<CartState> {
         selectedCategoryId: _categoryFilter,
       ),
     );
+  }
+
+  String _resolveSellerFilter({
+    required List<String> sellers,
+    required String requestedSellerFilter,
+  }) {
+    if (AppReleaseConfig.isIndividualSellerRelease) {
+      return AppReleaseConfig.individualSellerName;
+    }
+    if (sellers.contains(requestedSellerFilter)) {
+      return requestedSellerFilter;
+    }
+    if (sellers.contains(_sellerFilter)) {
+      return _sellerFilter;
+    }
+    if (sellers.isNotEmpty) {
+      return sellers.first;
+    }
+    return requestedSellerFilter;
+  }
+
+  Future<void> _startAutoRefresh() async {
+    await InjectionContainer.realtimeRefreshService().ensureStarted();
+    await _realtimeSubscription?.cancel();
+    _realtimeSubscription = InjectionContainer.realtimeRefreshService().refreshes.listen((_) {
+      unawaited(_silentRefreshCartProducts());
+    });
+  }
+
+  Future<void> _silentRefreshCartProducts() async {
+    final now = DateTime.now();
+    final last = _lastAutoRefreshAt;
+    if (last != null && now.difference(last) < const Duration(seconds: 4)) {
+      return;
+    }
+    _lastAutoRefreshAt = now;
+
+    try {
+      _allItems = await _getCartItemsUseCase();
+      await _emitLoaded();
+    } catch (_) {
+      // Keep previous cart view on transient refresh failures.
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    await _realtimeSubscription?.cancel();
+    return super.close();
   }
 }
