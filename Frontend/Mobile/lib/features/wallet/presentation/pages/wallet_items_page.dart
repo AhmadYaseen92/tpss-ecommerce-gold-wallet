@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
@@ -163,10 +164,14 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
                           'Sell Gold',
                       primaryValue:
                           '${item.quantity} Units',
-                      feeValue:
-                          '\$25',
-                      totalValue:
-                          item.marketValue,
+                      summary: ActionSummaryBuilder.fromBackendData({
+                        'subTotalAmount': 0,
+                        'totalFeesAmount': 0,
+                        'discountAmount': 0,
+                        'finalAmount': 0,
+                        'currency': 'USD',
+                        'feeBreakdowns': const [],
+                      }),
                       destinationLabel:
                           'Payout',
                       destinationValue:

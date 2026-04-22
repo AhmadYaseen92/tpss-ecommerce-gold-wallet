@@ -64,6 +64,7 @@ class CartRemoteDataSource {
       totalFeesAmount: (data['totalFeesAmount'] as num?)?.toDouble() ?? 0,
       discountAmount: (data['discountAmount'] as num?)?.toDouble() ?? 0,
       finalAmount: (data['finalAmount'] as num?)?.toDouble() ?? 0,
+      currency: (data['currency'] ?? 'USD').toString(),
       feeBreakdowns: feeBreakdowns,
     );
   }
@@ -136,6 +137,7 @@ class CartPreviewRemoteModel {
     required this.totalFeesAmount,
     required this.discountAmount,
     required this.finalAmount,
+    required this.currency,
     required this.feeBreakdowns,
   });
 
@@ -143,6 +145,7 @@ class CartPreviewRemoteModel {
   final double totalFeesAmount;
   final double discountAmount;
   final double finalAmount;
+  final String currency;
   final List<CartPreviewFeeBreakdownModel> feeBreakdowns;
 }
 

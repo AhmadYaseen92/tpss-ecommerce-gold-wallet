@@ -84,6 +84,7 @@ class WalletTransactionEntity {
     required this.purity,
     required this.quantity,
     required this.marketValue,
+    String? displayValue,
     required this.change,
     required this.investmentValue,
     required this.profitOrLossValue,
@@ -95,7 +96,7 @@ class WalletTransactionEntity {
     this.status = 'Bought',
     this.statusDetails,
     this.sourceInvestorName,
-  });
+  }) : displayValue = displayValue ?? marketValue;
 
   final int id;
   final String name;
@@ -107,6 +108,7 @@ class WalletTransactionEntity {
   final String purity;
   final int quantity;
   final String marketValue;
+  final String displayValue;
   final String change;
   final double investmentValue;
   final double profitOrLossValue;
@@ -152,6 +154,7 @@ class WalletTransactionEntity {
     String? purity,
     int? quantity,
     String? marketValue,
+    String? displayValue,
     String? change,
     double? investmentValue,
     double? profitOrLossValue,
@@ -175,6 +178,7 @@ class WalletTransactionEntity {
       purity: purity ?? this.purity,
       quantity: quantity ?? this.quantity,
       marketValue: marketValue ?? this.marketValue,
+      displayValue: displayValue ?? this.displayValue,
       change: change ?? this.change,
       investmentValue: investmentValue ?? this.investmentValue,
       profitOrLossValue: profitOrLossValue ?? this.profitOrLossValue,

@@ -45,6 +45,7 @@ class CartSummaryEntity {
     required this.totalFeesAmount,
     required this.discountAmount,
     required this.total,
+    required this.currency,
     required this.feeBreakdowns,
   });
 
@@ -52,6 +53,7 @@ class CartSummaryEntity {
   final double totalFeesAmount;
   final double discountAmount;
   final double total;
+  final String currency;
   final List<CartFeeBreakdownEntity> feeBreakdowns;
 }
 

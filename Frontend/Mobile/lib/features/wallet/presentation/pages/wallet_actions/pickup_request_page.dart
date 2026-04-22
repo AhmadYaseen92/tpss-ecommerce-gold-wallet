@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/pages/wallet_actions/action_review_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
@@ -182,8 +183,7 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
       actionType: WalletActionType.pickup,
       title: 'Pickup Asset',
       primaryValue: '1 Units',
-      feeValue: '\$${(((_preview?.totalFeesAmount ?? 0) - (_preview?.discountAmount ?? 0))).toStringAsFixed(2)}',
-      totalValue: '\$${(_preview?.finalAmount ?? 0).toStringAsFixed(2)}',
+      summary: ActionSummaryBuilder.fromAny(_preview),
       preview: _preview,
       destinationLabel: 'Pickup Schedule',
       destinationValue: schedule,

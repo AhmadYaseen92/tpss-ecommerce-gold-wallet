@@ -37,12 +37,6 @@ BEGIN TRY
     IF OBJECT_ID(N'[WalletAssets]') IS NOT NULL DELETE FROM [WalletAssets];
     IF OBJECT_ID(N'[Wallets]') IS NOT NULL DELETE FROM [Wallets];
 
-    IF OBJECT_ID(N'[CardPaymentMethodDetails]') IS NOT NULL DELETE FROM [CardPaymentMethodDetails];
-    IF OBJECT_ID(N'[ApplePayPaymentMethodDetails]') IS NOT NULL DELETE FROM [ApplePayPaymentMethodDetails];
-    IF OBJECT_ID(N'[WalletPaymentMethodDetails]') IS NOT NULL DELETE FROM [WalletPaymentMethodDetails];
-    IF OBJECT_ID(N'[CliqPaymentMethodDetails]') IS NOT NULL DELETE FROM [CliqPaymentMethodDetails];
-    IF OBJECT_ID(N'[PaymentMethods]') IS NOT NULL DELETE FROM [PaymentMethods];
-    IF OBJECT_ID(N'[LinkedBankAccounts]') IS NOT NULL DELETE FROM [LinkedBankAccounts];
 
     IF OBJECT_ID(N'[AppNotifications]') IS NOT NULL DELETE FROM [AppNotifications];
     IF OBJECT_ID(N'[UserPushTokens]') IS NOT NULL DELETE FROM [UserPushTokens];

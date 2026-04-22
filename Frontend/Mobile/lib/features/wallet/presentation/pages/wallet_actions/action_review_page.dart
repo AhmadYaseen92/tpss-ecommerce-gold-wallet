@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/pages/wallet_actions/action_confirmation_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_bottom_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
@@ -28,7 +29,10 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
       ),
       bottomNavigationBar: ActionBottomBar(
         summaryLabel: 'Total',
-        summaryValue: widget.summary.totalValue,
+        summaryValue: ActionSummaryBuilder.formatMoney(
+          widget.summary.summary.finalAmount,
+          currency: widget.summary.summary.currency,
+        ),
         buttonText: widget.summary.actionType == WalletActionType.sell ? 'Confirm Sell' : 'Confirm',
         onPressed: () {
           Navigator.push(
@@ -70,23 +74,30 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
                 children: [
                   ReadonlyInfoRow(
                     label: 'Subtotal',
-                    value: widget.summary.preview == null
-                        ? '-'
-                        : '\$${widget.summary.preview!.subTotalAmount.toStringAsFixed(2)}',
+                    value: ActionSummaryBuilder.formatMoney(
+                      widget.summary.summary.subTotalAmount,
+                      currency: widget.summary.summary.currency,
+                    ),
                   ),
-                  ...?widget.summary.preview?.feeBreakdowns.map(
+                  ...widget.summary.summary.feeBreakdowns.map(
                     (line) => ReadonlyInfoRow(
                       label: line.feeName,
-                      value: '${line.isDiscount ? '-' : ''}\$${line.appliedValue.toStringAsFixed(2)}',
+                      value:
+                          '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: widget.summary.summary.currency)}',
                     ),
                   ),
                   ReadonlyInfoRow(
                     label: 'Discount',
-                    value: widget.summary.preview == null
-                        ? '\$0.00'
-                        : '-\$${widget.summary.preview!.discountAmount.toStringAsFixed(2)}',
+                    value:
+                        '-${ActionSummaryBuilder.formatMoney(widget.summary.summary.discountAmount, currency: widget.summary.summary.currency)}',
                   ),
-                  ReadonlyInfoRow(label: 'Final Amount', value: widget.summary.totalValue),
+                  ReadonlyInfoRow(
+                    label: 'Final Amount',
+                    value: ActionSummaryBuilder.formatMoney(
+                      widget.summary.summary.finalAmount,
+                      currency: widget.summary.summary.currency,
+                    ),
+                  ),
                 ],
               ),
             ),
