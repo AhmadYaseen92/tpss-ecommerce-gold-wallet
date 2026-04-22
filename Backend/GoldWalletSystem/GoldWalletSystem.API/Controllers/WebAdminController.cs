@@ -501,6 +501,20 @@ public class WebAdminController(
             Body = $"Your {item.TransactionType} request was {item.Status}. Request: r-{item.Id}."
         }, cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{item.Status}", cancellationToken);
+        await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+            item.UserId,
+            scope: "actions",
+            reason: $"request-status:{item.Status}",
+            walletAssetId: TryExtractWalletAssetId(item.Notes),
+            transactionId: item.Id,
+            cancellationToken: cancellationToken);
+        await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+            item.UserId,
+            scope: "review-transaction",
+            reason: $"request-status:{item.Status}",
+            walletAssetId: TryExtractWalletAssetId(item.Notes),
+            transactionId: item.Id,
+            cancellationToken: cancellationToken);
         if (nextStatus == "approved" && item.TransactionType is not null)
         {
             var recipientAction = item.TransactionType.Trim().ToLowerInvariant();
@@ -512,6 +526,13 @@ public class WebAdminController(
                     await realtimeNotifier.BroadcastRefreshHintAsync(
                         $"wallet-action:{recipientAction}:{recipientInvestorId.Value}",
                         cancellationToken);
+                    await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+                        recipientInvestorId.Value,
+                        scope: "wallet-items",
+                        reason: $"wallet-action:{recipientAction}:approved",
+                        walletAssetId: TryExtractWalletAssetId(item.Notes),
+                        transactionId: item.Id,
+                        cancellationToken: cancellationToken);
                 }
             }
         }

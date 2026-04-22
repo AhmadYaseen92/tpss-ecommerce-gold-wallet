@@ -738,11 +738,32 @@ public class WalletController(
             await notificationService.CreateAsync(notification, cancellationToken);
         }
         await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-action:{actionType}:{request.UserId}", cancellationToken);
+        await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+            request.UserId,
+            scope: "wallet-items",
+            reason: $"wallet-action:{actionType}",
+            walletAssetId: request.WalletAssetId,
+            transactionId: history.Id,
+            cancellationToken: cancellationToken);
+        await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+            request.UserId,
+            scope: "review-transaction",
+            reason: $"wallet-action:{actionType}",
+            walletAssetId: request.WalletAssetId,
+            transactionId: history.Id,
+            cancellationToken: cancellationToken);
         if (!shouldRequireSellerApproval && actionType is "transfer" or "gift" && request.RecipientInvestorUserId.HasValue)
         {
             await realtimeNotifier.BroadcastRefreshHintAsync(
                 $"wallet-action:{actionType}:{request.RecipientInvestorUserId.Value}",
                 cancellationToken);
+            await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+                request.RecipientInvestorUserId.Value,
+                scope: "wallet-items",
+                reason: $"wallet-action:{actionType}:recipient",
+                walletAssetId: request.WalletAssetId,
+                transactionId: history.Id,
+                cancellationToken: cancellationToken);
         }
 
         var portfolioValue = await dbContext.WalletAssets
@@ -799,6 +820,12 @@ public class WalletController(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-request-cancelled:{request.UserId}:{request.WalletAssetId}", cancellationToken);
+        await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+            request.UserId,
+            scope: "actions",
+            reason: "wallet-request-cancelled",
+            walletAssetId: request.WalletAssetId,
+            cancellationToken: cancellationToken);
 
         return Ok(ApiResponse<CancelWalletRequestResponse>.Ok(new CancelWalletRequestResponse
         {
@@ -849,6 +876,13 @@ public class WalletController(
         });
         await dbContext.SaveChangesAsync(cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-request:{entity.TransactionType}:{request.UserId}", cancellationToken);
+        await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+            request.UserId,
+            scope: "actions",
+            reason: $"wallet-request:{entity.TransactionType}",
+            walletAssetId: TryExtractWalletAssetId(entity.Notes),
+            transactionId: entity.Id,
+            cancellationToken: cancellationToken);
 
         return Ok(ApiResponse<object>.Ok(new { id = $"r-{entity.Id}", status = entity.Status }, "Request submitted"));
     }
