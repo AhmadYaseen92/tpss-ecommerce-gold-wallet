@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 
 class NotificationRemoteDataSource {
   NotificationRemoteDataSource(this._dio);
@@ -10,11 +9,9 @@ class NotificationRemoteDataSource {
     required int pageNumber,
     required int pageSize,
   }) async {
-    final userId = _requireUserId();
     final response = await _dio.post(
-      '/notifications/search',
+      '/notifications/my/search',
       data: {
-        'userId': userId,
         'pageNumber': pageNumber,
         'pageSize': pageSize,
       },
@@ -30,23 +27,21 @@ class NotificationRemoteDataSource {
   }
 
   Future<void> markAsRead(int notificationId) async {
-    final userId = _requireUserId();
     await _dio.put(
-      '/notifications/read',
+      '/notifications/my/read',
       data: {
-        'userId': userId,
         'notificationId': notificationId,
       },
     );
   }
 
-  int _requireUserId() {
-    final id = AuthSessionStore.userId;
-    if (id == null) {
-      throw Exception('No logged-in user. Please login first.');
-    }
-    return id;
+  Future<int> getUnreadCount() async {
+    final response = await _dio.get('/notifications/my/unread-count');
+    final payload = response.data as Map<String, dynamic>;
+    final data = payload['data'] as Map<String, dynamic>?;
+    return (data?['unreadCount'] as num?)?.toInt() ?? 0;
   }
+
 }
 
 class NotificationRemoteModel {

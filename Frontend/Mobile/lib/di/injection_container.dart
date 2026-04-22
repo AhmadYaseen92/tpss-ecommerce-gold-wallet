@@ -24,6 +24,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/notification/data/datasource
 import 'package:tpss_ecommerce_gold_wallet/features/notification/data/repositories/notification_repository_impl.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/repositories/notification_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/get_notifications_usecase.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/get_unread_notifications_count_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/mark_all_notifications_read_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/mark_notification_read_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/data/datasources/product_local_datasource.dart';
@@ -187,6 +188,10 @@ class InjectionContainer {
 
   static MarkAllNotificationsReadUseCase markAllNotificationsReadUseCase() {
     return MarkAllNotificationsReadUseCase(notificationRepository());
+  }
+
+  static GetUnreadNotificationsCountUseCase getUnreadNotificationsCountUseCase() {
+    return GetUnreadNotificationsCountUseCase(notificationRepository());
   }
 
   static GetProductDetailUseCase getProductDetailUseCase() {

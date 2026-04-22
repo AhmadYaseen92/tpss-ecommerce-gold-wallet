@@ -11,6 +11,22 @@ public class NotificationRepository(AppDbContext dbContext) : INotificationRepos
 {
     public async Task<NotificationDto> CreateAsync(AppNotification notification, CancellationToken cancellationToken = default)
     {
+        var duplicate = await dbContext.AppNotifications
+            .AsNoTracking()
+            .Where(x => x.UserId == notification.UserId
+                        && x.Title == notification.Title
+                        && x.Body == notification.Body
+                        && x.ReferenceId == notification.ReferenceId
+                        && x.ReferenceType == notification.ReferenceType
+                        && x.CreatedAtUtc >= DateTime.UtcNow.AddSeconds(-30))
+            .OrderByDescending(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (duplicate is not null)
+        {
+            return Map(duplicate);
+        }
+
         dbContext.AppNotifications.Add(notification);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Map(notification);

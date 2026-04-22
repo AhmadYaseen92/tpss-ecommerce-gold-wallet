@@ -312,6 +312,24 @@ body {
   font-size: 13px;
 }
 
+.vertical-modal li small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.notification-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  max-width: 360px;
+  background: #1f2937;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  z-index: 60;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 28%);
+}
+
 .settings-list {
   display: grid;
   gap: 10px;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/entities/notification_entity.dart';
@@ -20,6 +21,8 @@ class NotificationItemWidget extends StatelessWidget {
     final palette = context.appPalette;
     final iconData = _iconForTitle(notification.title);
     final iconColor = _iconColorForTitle(notification.title);
+
+    final localDateText = DateFormat.yMMMd().add_jm().format(notification.createdAt.toLocal());
 
     return GestureDetector(
       onTap: () => context.read<NotificationCubit>().markNotificationAsRead(notification.id),
@@ -71,7 +74,7 @@ class NotificationItemWidget extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          context.read<NotificationCubit>().formatTime(notification.createdAt),
+                          localDateText,
                           style: TextStyle(fontSize: 12, color: palette.textSecondary),
                         ),
                       ],

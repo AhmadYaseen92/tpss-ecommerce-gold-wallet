@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,7 +26,10 @@ const _tabTitles = ['Gold Wallet', 'Shop', 'My Wallet', 'My Cart', 'Transactions
 
 class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
   late final CartCubit cartCubit;
+  late final Future<int> Function() _getUnreadCount;
+  Timer? _unreadTimer;
   int _currentTabIndex = 0;
+  int _unreadCount = 0;
 
   void _openHistoryTab() {
     setState(() => _currentTabIndex = 4);
@@ -39,12 +44,31 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
       removeCartProductUseCase: InjectionContainer.removeCartProductUseCase(),
       updateCartProductQuantityUseCase: InjectionContainer.updateCartProductQuantityUseCase(),
     );
+    _getUnreadCount = InjectionContainer.getUnreadNotificationsCountUseCase().call;
+    _refreshUnreadCount();
+    _unreadTimer = Timer.periodic(const Duration(seconds: 20), (_) => _refreshUnreadCount(showToastOnIncrease: true));
   }
 
   @override
   void dispose() {
+    _unreadTimer?.cancel();
     cartCubit.close();
     super.dispose();
+  }
+
+  Future<void> _refreshUnreadCount({bool showToastOnIncrease = false}) async {
+    try {
+      final nextCount = await _getUnreadCount();
+      if (!mounted) return;
+      if (showToastOnIncrease && nextCount > _unreadCount) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You have a new notification')),
+        );
+      }
+      setState(() => _unreadCount = nextCount);
+    } catch (_) {
+      // Keep previous badge count on transient network issues.
+    }
   }
 
   @override
@@ -87,8 +111,34 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
               icon: Icon(Icons.person_outline, color: palette.primary),
             ),
             IconButton(
-              onPressed: () => Navigator.of(context).pushNamed(AppRoutes.notificationRoute),
-              icon: Icon(Icons.notifications_outlined, color: palette.primary),
+              onPressed: () async {
+                await Navigator.of(context).pushNamed(AppRoutes.notificationRoute);
+                await _refreshUnreadCount();
+              },
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(Icons.notifications_outlined, color: palette.primary),
+                  if (_unreadCount > 0)
+                    Positioned(
+                      right: -6,
+                      top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16),
+                        child: Text(
+                          _unreadCount > 99 ? '99+' : '$_unreadCount',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ],
         ),

@@ -34,4 +34,9 @@ class NotificationRepositoryImpl implements INotificationRepository {
   Future<void> markAsRead(int notificationId) {
     return _remoteDataSource.markAsRead(notificationId);
   }
+
+  @override
+  Future<int> getUnreadCount() {
+    return _remoteDataSource.getUnreadCount();
+  }
 }
