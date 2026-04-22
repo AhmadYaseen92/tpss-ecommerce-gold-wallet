@@ -38,6 +38,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddApiLayer();
+builder.Services.Configure<GoldWalletSystem.Infrastructure.Services.NotificationDeliveryOptions>(
+    builder.Configuration.GetSection(GoldWalletSystem.Infrastructure.Services.NotificationDeliveryOptions.SectionName));
 
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "Please-Override-In-Production-32-Char-Min";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "GoldWallet";

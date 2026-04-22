@@ -1,4 +1,5 @@
 using GoldWalletSystem.Application.DTOs.Common;
+using GoldWalletSystem.Application.DTOs.Notifications;
 using GoldWalletSystem.Application.DTOs.Otp;
 using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Services;
@@ -18,6 +19,7 @@ public class CheckoutController(
     AppDbContext dbContext,
     ICurrentUserService currentUser,
     IOtpService otpService,
+    INotificationService notificationService,
     API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     [HttpPost("otp/request")]
@@ -187,6 +189,46 @@ public class CheckoutController(
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var adminUserIds = await dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.Role == "Admin" && x.IsActive)
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        var distinctSellerIds = lines.Select(x => x.Product.SellerId).Distinct().ToList();
+        var sellerUserIds = await dbContext.Sellers
+            .AsNoTracking()
+            .Where(x => distinctSellerIds.Contains(x.Id))
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+
+        await notificationService.CreateAsync(new CreateNotificationRequestDto
+        {
+            UserId = request.UserId,
+            Type = NotificationType.RequestUpdated,
+            ReferenceType = NotificationReferenceType.Request,
+            ActionUrl = "/wallet/requests",
+            Title = "Checkout submitted",
+            Body = $"Your {(fromCart ? "cart" : "buy")} request is pending approval."
+        }, cancellationToken);
+
+        var reviewerIds = adminUserIds.Concat(sellerUserIds).Distinct().ToList();
+        foreach (var reviewerId in reviewerIds)
+        {
+            await notificationService.CreateAsync(new CreateNotificationRequestDto
+            {
+                UserId = reviewerId,
+                Type = NotificationType.RequestUpdated,
+                ReferenceType = NotificationReferenceType.Request,
+                ActionUrl = "/web-admin/requests",
+                Role = "Admin",
+                Priority = 1,
+                Title = "New request needs your action",
+                Body = $"Investor #{request.UserId} submitted {lines.Count} checkout request item(s)."
+            }, cancellationToken);
+        }
+
         await realtimeNotifier.BroadcastRefreshHintAsync($"checkout:{request.UserId}", cancellationToken);
 
         return Ok(ApiResponse<object>.Ok(new

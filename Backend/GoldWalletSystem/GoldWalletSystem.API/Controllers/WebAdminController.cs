@@ -4,6 +4,7 @@ using GoldWalletSystem.Application.Constants;
 using System.Text;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Admin;
+using GoldWalletSystem.Application.DTOs.Notifications;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Enums;
@@ -20,6 +21,7 @@ namespace GoldWalletSystem.API.Controllers;
 public class WebAdminController(
     AppDbContext dbContext,
     IWebAdminDashboardService dashboardService,
+    INotificationService notificationService,
     IMarketplaceRealtimeNotifier realtimeNotifier,
     IWebHostEnvironment environment) : ControllerBase
 {
@@ -485,16 +487,17 @@ public class WebAdminController(
             Details = $"Request {item.Id}: {previousStatus} -> {item.Status}, type={item.TransactionType}, amount={item.Amount} {item.Currency}",
             CreatedAtUtc = DateTime.UtcNow
         });
-        dbContext.AppNotifications.Add(new Domain.Entities.AppNotification
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await notificationService.CreateAsync(new CreateNotificationRequestDto
         {
             UserId = item.UserId,
+            Type = nextStatus == "approved" ? NotificationType.OrderApproved : NotificationType.RequestUpdated,
+            ReferenceType = NotificationReferenceType.Request,
+            ReferenceId = item.Id,
+            ActionUrl = "/wallet/requests",
             Title = "Request Status Updated",
-            Body = $"Your {item.TransactionType} request was {item.Status}.",
-            IsRead = false,
-            CreatedAtUtc = DateTime.UtcNow
-        });
-
-        await dbContext.SaveChangesAsync(cancellationToken);
+            Body = $"Your {item.TransactionType} request was {item.Status}."
+        }, cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{item.Status}", cancellationToken);
         if (nextStatus == "approved" && item.TransactionType is not null)
         {
