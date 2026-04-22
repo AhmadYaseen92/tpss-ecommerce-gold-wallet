@@ -4,6 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/helpers/predefined_accounts_data
 import 'package:tpss_ecommerce_gold_wallet/core/network/api_error_parser.dart';
 import 'package:dio/dio.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/data/models/checkout_payment_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/checkout/domain/entities/checkout_route_args.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/profile_remote_datasource.dart';
 
 part 'checkout_state.dart';
@@ -82,7 +83,7 @@ class CheckoutCubit extends Cubit<CheckoutState> {
   }
 
   Future<void> confirmOtp({
-    required Map<String, dynamic> checkoutArgs,
+    required CheckoutRouteArgs checkoutArgs,
     String? otpVerificationToken,
     String? otpRequestId,
   }) async {
@@ -94,42 +95,21 @@ class CheckoutCubit extends Cubit<CheckoutState> {
         return;
       }
 
-      final productIdRaw = checkoutArgs['productId'];
-      final quantityRaw = checkoutArgs['quantity'];
-      final productId = productIdRaw is num
-          ? productIdRaw.toInt()
-          : int.tryParse('$productIdRaw');
-      final quantity = quantityRaw is num
-          ? quantityRaw.toInt()
-          : int.tryParse('$quantityRaw');
-      final isDirectCheckout = productId != null && (quantity ?? 0) > 0;
-      final fromCart = !isDirectCheckout;
-      final productIdsRaw = checkoutArgs['productIds'];
-      final productIds = productIdsRaw is List
-          ? productIdsRaw
-                .map((e) => e is num ? e.toInt() : int.tryParse('$e'))
-                .whereType<int>()
-                .toList()
-          : <int>[];
-
-      if (!fromCart &&
-          (productId == null || quantity == null || quantity <= 0)) {
-        emit(
-          CheckoutError(
-            'Missing product checkout data. Please retry from product details.',
-          ),
-        );
+      final validationError = checkoutArgs.validate();
+      if (validationError != null) {
+        emit(CheckoutError(validationError));
         return;
       }
+      final fromCart = checkoutArgs.source == CheckoutSource.cart;
 
       await _dio.post(
         '/checkout/confirm',
         data: {
           'userId': userId,
           'fromCart': fromCart,
-          if (fromCart) 'productIds': productIds,
-          if (!fromCart) 'productId': productId,
-          if (!fromCart) 'quantity': quantity,
+          if (fromCart) 'productIds': checkoutArgs.productIds,
+          if (!fromCart) 'productId': checkoutArgs.productId,
+          if (!fromCart) 'quantity': checkoutArgs.quantity,
           if (otpVerificationToken != null && otpVerificationToken.trim().isNotEmpty) 'otpVerificationToken': otpVerificationToken.trim(),
           if (otpRequestId != null && otpRequestId.trim().isNotEmpty) 'otpRequestId': otpRequestId.trim(),
         },
