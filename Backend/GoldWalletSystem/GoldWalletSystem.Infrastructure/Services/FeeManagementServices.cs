@@ -10,13 +10,40 @@ namespace GoldWalletSystem.Infrastructure.Services;
 public class SystemFeeService(AppDbContext dbContext) : ISystemFeeService
 {
     public async Task<IReadOnlyList<SystemFeeTypeDto>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await dbContext.SystemFeeTypes.AsNoTracking().OrderBy(x => x.SortOrder).Select(Map).ToListAsync(cancellationToken);
+        => await dbContext.SystemFeeTypes.AsNoTracking()
+            .OrderBy(x => x.SortOrder)
+            .Select(x => new SystemFeeTypeDto(
+                x.FeeCode,
+                x.Name,
+                x.Description,
+                x.IsEnabled,
+                x.AppliesToBuy,
+                x.AppliesToSell,
+                x.AppliesToPickup,
+                x.AppliesToTransfer,
+                x.AppliesToGift,
+                x.AppliesToInvoice,
+                x.AppliesToReports,
+                x.SortOrder))
+            .ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<SystemFeeTypeDto>> GetEnabledSellerFeeTabsAsync(CancellationToken cancellationToken = default)
         => await dbContext.SystemFeeTypes.AsNoTracking()
             .Where(x => x.IsEnabled && FeeCodes.SellerManaged.Contains(x.FeeCode))
             .OrderBy(x => x.SortOrder)
-            .Select(Map)
+            .Select(x => new SystemFeeTypeDto(
+                x.FeeCode,
+                x.Name,
+                x.Description,
+                x.IsEnabled,
+                x.AppliesToBuy,
+                x.AppliesToSell,
+                x.AppliesToPickup,
+                x.AppliesToTransfer,
+                x.AppliesToGift,
+                x.AppliesToInvoice,
+                x.AppliesToReports,
+                x.SortOrder))
             .ToListAsync(cancellationToken);
 
     public async Task<SystemFeeTypeDto> UpsertAsync(UpsertSystemFeeTypeRequest request, CancellationToken cancellationToken = default)
@@ -77,7 +104,24 @@ public class SellerProductFeeService(AppDbContext dbContext, ISystemFeeService s
 
         return await dbContext.SellerProductFees.AsNoTracking()
             .Where(x => x.SellerId == sellerId && x.FeeCode == feeCode)
-            .Select(Map)
+            .Select(x => new SellerProductFeeDto
+            {
+                SellerId = x.SellerId,
+                ProductId = x.ProductId,
+                FeeCode = x.FeeCode,
+                IsEnabled = x.IsEnabled,
+                CalculationMode = x.CalculationMode,
+                RatePercent = x.RatePercent,
+                MinimumAmount = x.MinimumAmount,
+                FlatAmount = x.FlatAmount,
+                PremiumDiscountType = x.PremiumDiscountType,
+                ValuePerUnit = x.ValuePerUnit,
+                FeePercent = x.FeePercent,
+                GracePeriodDays = x.GracePeriodDays,
+                FixedAmount = x.FixedAmount,
+                FeePerUnit = x.FeePerUnit,
+                IsOverride = x.IsOverride
+            })
             .ToListAsync(cancellationToken);
     }
 
