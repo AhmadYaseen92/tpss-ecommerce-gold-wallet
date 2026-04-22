@@ -459,6 +459,8 @@ public class WebAdminController(
 
         if (canTransitionPickupToFinal && nextStatus == "delivered")
         {
+            await ApplyPickupDeliveredSideEffectsAsync(item, cancellationToken);
+
             dbContext.TransactionHistories.Add(new Domain.Entities.TransactionHistory
             {
                 UserId = item.UserId,
@@ -515,6 +517,48 @@ public class WebAdminController(
         }
 
         return Ok(ApiResponse<object>.Ok(new { status = item.Status }, "updated"));
+    }
+
+    private async Task ApplyPickupDeliveredSideEffectsAsync(
+        Domain.Entities.TransactionHistory request,
+        CancellationToken cancellationToken)
+    {
+        if (!string.Equals(request.TransactionType, "pickup", StringComparison.OrdinalIgnoreCase)) return;
+
+        var wallet = await dbContext.Wallets
+            .Include(x => x.Assets)
+            .FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+        if (wallet is null) return;
+
+        var walletAssetId = TryExtractWalletAssetId(request.Notes);
+        var asset = walletAssetId.HasValue
+            ? wallet.Assets.FirstOrDefault(x => x.Id == walletAssetId.Value)
+            : wallet.Assets.FirstOrDefault(x =>
+                x.SellerId == request.SellerId &&
+                x.Category.ToString().Equals(request.Category, StringComparison.OrdinalIgnoreCase));
+        if (asset is null) return;
+
+        var qtyToRemove = Math.Max(1, request.Quantity);
+        var perUnitWeight = asset.Quantity == 0 ? 0 : asset.Weight / asset.Quantity;
+        var maxWeightForRequestedQty = perUnitWeight > 0 ? perUnitWeight * qtyToRemove : request.Weight;
+        var weightToRemove = request.Weight > 0 ? request.Weight : maxWeightForRequestedQty;
+
+        if (maxWeightForRequestedQty > 0)
+        {
+            weightToRemove = Math.Min(weightToRemove, maxWeightForRequestedQty);
+        }
+        weightToRemove = Math.Min(weightToRemove, asset.Weight);
+
+        asset.Quantity = Math.Max(asset.Quantity - qtyToRemove, 0);
+        asset.Weight = Math.Max(asset.Weight - weightToRemove, 0);
+        asset.UpdatedAtUtc = DateTime.UtcNow;
+
+        if (asset.Quantity == 0 || asset.Weight <= 0)
+        {
+            dbContext.WalletAssets.Remove(asset);
+        }
+
+        wallet.UpdatedAtUtc = DateTime.UtcNow;
     }
 
     [HttpGet("requests/{id}")]

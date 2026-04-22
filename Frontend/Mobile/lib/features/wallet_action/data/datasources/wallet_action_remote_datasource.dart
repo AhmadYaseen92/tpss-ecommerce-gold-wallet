@@ -47,6 +47,8 @@ class WalletActionRemoteDataSource {
         'amount': request.amount,
         'recipientInvestorUserId': request.recipientInvestorUserId,
         'notes': request.notes,
+        'otpVerificationToken': request.otpVerificationToken,
+        'otpActionReferenceId': request.otpActionReferenceId,
       },
     );
 

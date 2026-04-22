@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
-import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/pages/wallet_actions/action_review_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 
 class PickupRequestPage extends StatefulWidget {
   final WalletTransactionEntity asset;
@@ -21,8 +19,6 @@ class PickupRequestPage extends StatefulWidget {
 class _PickupRequestPageState extends State<PickupRequestPage> {
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
-  final IWalletActionRepository _walletActionRepository = InjectionContainer.walletActionRepository();
-  bool _isSubmitting = false;
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -56,7 +52,7 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: true,
-        title:  Text(
+        title: Text(
           'Pickup Request',
           style: TextStyle(
             fontWeight: FontWeight.w600,
@@ -111,7 +107,7 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
             ),
           ),
           FilledButton(
-            onPressed: _isSubmitting ? null : () {
+            onPressed: () {
               if (selectedDate == null || selectedTime == null) {
                 AppModalAlert.show(
                   context,
@@ -121,59 +117,35 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
                 return;
               }
 
-              _submitPickupRequest(dateText, timeText);
+              _goToReview(dateText, timeText);
             },
-            child: _isSubmitting
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('Confirm Pickup'),
+            child: const Text('Review Pickup'),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _submitPickupRequest(String dateText, String timeText) async {
-    setState(() => _isSubmitting = true);
-    try {
-      final quantity = widget.asset.quantity > 0 ? 1 : 0;
-      final perUnitWeight = widget.asset.quantity == 0 ? 0.0 : widget.asset.weightInGrams / widget.asset.quantity;
-      final unitPrice = widget.asset.marketPricePerGram;
+  void _goToReview(String dateText, String timeText) {
+    final schedule = '$dateText $timeText';
+    final summary = WalletActionSummary(
+      asset: widget.asset,
+      actionType: WalletActionType.pickup,
+      title: 'Pickup Asset',
+      primaryValue: '1 Units',
+      feeValue: '\$32.50',
+      totalValue: widget.asset.marketValue,
+      destinationLabel: 'Pickup Schedule',
+      destinationValue: schedule,
+      note: 'pickup_schedule=$schedule',
+      referenceNumber: '',
+      createdAt: DateTime.now(),
+    );
 
-      await _walletActionRepository.executeWalletAction(
-        WalletActionExecutionRequest(
-          walletAssetId: widget.asset.id,
-          actionType: WalletActionType.pickup,
-          quantity: quantity <= 0 ? 1 : quantity,
-          unitPrice: unitPrice,
-          weight: perUnitWeight <= 0 ? widget.asset.weightInGrams : perUnitWeight,
-          amount: unitPrice * (perUnitWeight <= 0 ? widget.asset.weightInGrams : perUnitWeight),
-          notes: 'pickup_schedule=$dateText $timeText',
-        ),
-      );
-
-      if (!mounted) return;
-      await AppModalAlert.show(
-        context,
-        title: 'Pickup Submitted',
-        message: 'Pickup request submitted successfully.',
-        variant: AppModalAlertVariant.success,
-      );
-      if (!mounted) return;
-      Navigator.popUntil(
-        context,
-        (route) => route.settings.name == AppRoutes.walletItemsRoute || route.isFirst,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      await AppModalAlert.show(
-        context,
-        title: 'Pickup Failed',
-        message: 'Failed: $e',
-        variant: AppModalAlertVariant.failed,
-      );
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ActionReviewPage(summary: summary)),
+    );
   }
 }
 
