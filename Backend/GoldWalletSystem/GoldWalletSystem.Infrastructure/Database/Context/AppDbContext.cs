@@ -34,6 +34,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
     public DbSet<MobileAppConfiguration> MobileAppConfigurations => Set<MobileAppConfiguration>();
+    public DbSet<SystemFeeType> SystemFeeTypes => Set<SystemFeeType>();
+    public DbSet<SellerProductFee> SellerProductFees => Set<SellerProductFee>();
+    public DbSet<AdminTransactionFee> AdminTransactionFees => Set<AdminTransactionFee>();
+    public DbSet<TransactionFeeBreakdown> TransactionFeeBreakdowns => Set<TransactionFeeBreakdown>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -66,6 +70,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureAppNotification(modelBuilder);
         ConfigureUserPushToken(modelBuilder);
         ConfigureMobileAppConfiguration(modelBuilder);
+        ConfigureSystemFeeType(modelBuilder);
+        ConfigureSellerProductFee(modelBuilder);
+        ConfigureAdminTransactionFee(modelBuilder);
+        ConfigureTransactionFeeBreakdown(modelBuilder);
     }
 
     private static void ConfigureSeller(ModelBuilder modelBuilder)
@@ -583,6 +591,74 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.SellerAccess).HasDefaultValue(false);
             entity.Property(x => x.Description).HasMaxLength(500);
             entity.HasIndex(x => x.ConfigKey).IsUnique();
+        });
+    }
+
+    private static void ConfigureSystemFeeType(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SystemFeeType>(entity =>
+        {
+            entity.ToTable("SystemFeeTypes");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.FeeCode).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(120);
+            entity.Property(x => x.Description).HasMaxLength(500);
+            entity.HasIndex(x => x.FeeCode).IsUnique();
+        });
+    }
+
+    private static void ConfigureSellerProductFee(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SellerProductFee>(entity =>
+        {
+            entity.ToTable("SellerProductFees");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.FeeCode).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.CalculationMode).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.PremiumDiscountType).HasMaxLength(30);
+            entity.Property(x => x.RatePercent).HasPrecision(18, 6);
+            entity.Property(x => x.MinimumAmount).HasPrecision(18, 2);
+            entity.Property(x => x.FlatAmount).HasPrecision(18, 2);
+            entity.Property(x => x.ValuePerUnit).HasPrecision(18, 6);
+            entity.Property(x => x.FeePercent).HasPrecision(18, 6);
+            entity.Property(x => x.FixedAmount).HasPrecision(18, 2);
+            entity.Property(x => x.FeePerUnit).HasPrecision(18, 6);
+            entity.HasIndex(x => new { x.SellerId, x.ProductId, x.FeeCode }).IsUnique();
+            entity.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Seller).WithMany().HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureAdminTransactionFee(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AdminTransactionFee>(entity =>
+        {
+            entity.ToTable("AdminTransactionFees");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.FeeCode).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.CalculationMode).IsRequired().HasMaxLength(40);
+            entity.Property(x => x.RatePercent).HasPrecision(18, 6);
+            entity.Property(x => x.FixedAmount).HasPrecision(18, 2);
+            entity.HasIndex(x => x.FeeCode).IsUnique();
+        });
+    }
+
+    private static void ConfigureTransactionFeeBreakdown(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<TransactionFeeBreakdown>(entity =>
+        {
+            entity.ToTable("TransactionFeeBreakdowns");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.FeeCode).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.FeeName).IsRequired().HasMaxLength(120);
+            entity.Property(x => x.CalculationMode).IsRequired().HasMaxLength(80);
+            entity.Property(x => x.BaseAmount).HasPrecision(18, 6);
+            entity.Property(x => x.Quantity).HasPrecision(18, 6);
+            entity.Property(x => x.AppliedRate).HasPrecision(18, 6);
+            entity.Property(x => x.AppliedValue).HasPrecision(18, 2);
+            entity.HasIndex(x => x.TransactionHistoryId);
+            entity.HasIndex(x => x.WalletActionId);
+            entity.HasIndex(x => new { x.FeeCode, x.CreatedAtUtc });
         });
     }
 

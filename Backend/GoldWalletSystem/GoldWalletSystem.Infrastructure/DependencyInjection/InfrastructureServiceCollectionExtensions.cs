@@ -46,6 +46,10 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IAdminWorkspaceService, AdminWorkspaceService>();
         services.AddScoped<ISellerWorkspaceService, SellerWorkspaceService>();
         services.AddScoped<IWebAdminDashboardService, WebAdminDashboardService>();
+        services.AddScoped<ISystemFeeService, SystemFeeService>();
+        services.AddScoped<ISellerProductFeeService, SellerProductFeeService>();
+        services.AddScoped<IAdminTransactionFeeService, AdminTransactionFeeService>();
+        services.AddScoped<IFeeCalculationService, FeeCalculationService>();
         services.AddScoped<IOtpDeliveryService, OtpDeliveryService>();
         services.AddSingleton<IOtpSessionStore, OtpSessionMemoryStore>();
         services.AddScoped<IOtpService, OtpService>();
