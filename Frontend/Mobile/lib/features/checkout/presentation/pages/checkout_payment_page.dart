@@ -260,10 +260,13 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     final userId = AuthSessionStore.userId;
     if (userId == null) return;
 
-    final source = (args['source'] ?? '').toString().toLowerCase();
-    final fromCart = (args['fromCart'] as bool?) ?? source == 'cart';
     final productId = args['productId'];
     final quantity = args['quantity'];
+    final source = (args['source'] ?? '').toString().toLowerCase();
+    final rawFromCart = args['fromCart'];
+    final fromCart = rawFromCart is bool
+        ? rawFromCart
+        : source == 'cart' || (productId == null && quantity == null);
     var productIds = (args['productIds'] as List<dynamic>? ?? [])
         .map((e) => e is num ? e.toInt() : int.tryParse('$e'))
         .whereType<int>()
