@@ -209,6 +209,124 @@ BEGIN TRY
     ------------------------------------------------------------
     -- Mobile app config
     ------------------------------------------------------------
+    IF OBJECT_ID(N'[SystemConfigration]', N'U') IS NOT NULL
+    BEGIN
+        MERGE [SystemConfigration] AS T
+        USING (
+            VALUES
+            (N'Fees_Delivery', N'Fees Delivery', N'Web admin delivery fee', 4, NULL, NULL, 12.00, NULL, CAST(0 AS bit)),
+            (N'Fees_Storage', N'Fees Storage', N'Web admin storage fee', 4, NULL, NULL, 4.00, NULL, CAST(0 AS bit)),
+            (N'Fees_ServiceChargePercent', N'Fees Service Charge Percent', N'Web admin service charge percent', 4, NULL, NULL, 2.50, NULL, CAST(0 AS bit))
+        ) AS S([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess])
+        ON T.[ConfigKey] = S.[ConfigKey]
+        WHEN MATCHED THEN UPDATE SET
+            T.[Name] = S.[Name],
+            T.[Description] = S.[Description],
+            T.[ValueType] = S.[ValueType],
+            T.[ValueBool] = S.[ValueBool],
+            T.[ValueInt] = S.[ValueInt],
+            T.[ValueDecimal] = S.[ValueDecimal],
+            T.[ValueString] = S.[ValueString],
+            T.[SellerAccess] = S.[SellerAccess],
+            T.[UpdatedAtUtc] = @Now
+        WHEN NOT MATCHED THEN
+            INSERT ([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess],[CreatedAtUtc],[UpdatedAtUtc])
+            VALUES (S.[ConfigKey],S.[Name],S.[Description],S.[ValueType],S.[ValueBool],S.[ValueInt],S.[ValueDecimal],S.[ValueString],S.[SellerAccess],@Now,NULL);
+    END
+
+    ------------------------------------------------------------
+    -- Fee-management tables
+    ------------------------------------------------------------
+    IF OBJECT_ID(N'[SystemFeeTypes]', N'U') IS NOT NULL
+    BEGIN
+        MERGE [SystemFeeTypes] AS T
+        USING (
+            VALUES
+            (N'commission_per_transaction', N'Commission Per Transaction', N'Seller managed commission fee', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), 1),
+            (N'premium_discount', N'Premium / Discount', N'Seller managed premium or discount fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), 2),
+            (N'storage_custody_fee', N'Storage / Custody Fee', N'Seller managed custody fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), 3),
+            (N'delivery_fee', N'Delivery Fee', N'Seller managed delivery fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), 4),
+            (N'service_charge', N'Service Charge', N'Seller managed service charge', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), 5),
+            (N'service_fee', N'Service Fee', N'Admin managed service fee', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), 6)
+        ) AS S([FeeCode],[Name],[Description],[IsEnabled],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[AppliesToInvoice],[AppliesToReports],[SortOrder])
+        ON T.[FeeCode] = S.[FeeCode]
+        WHEN MATCHED THEN UPDATE SET
+            T.[Name] = S.[Name],
+            T.[Description] = S.[Description],
+            T.[IsEnabled] = S.[IsEnabled],
+            T.[AppliesToBuy] = S.[AppliesToBuy],
+            T.[AppliesToSell] = S.[AppliesToSell],
+            T.[AppliesToPickup] = S.[AppliesToPickup],
+            T.[AppliesToTransfer] = S.[AppliesToTransfer],
+            T.[AppliesToGift] = S.[AppliesToGift],
+            T.[AppliesToInvoice] = S.[AppliesToInvoice],
+            T.[AppliesToReports] = S.[AppliesToReports],
+            T.[SortOrder] = S.[SortOrder],
+            T.[UpdatedAtUtc] = @Now
+        WHEN NOT MATCHED THEN
+            INSERT ([FeeCode],[Name],[Description],[IsEnabled],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[AppliesToInvoice],[AppliesToReports],[SortOrder],[CreatedAtUtc],[UpdatedAtUtc])
+            VALUES (S.[FeeCode],S.[Name],S.[Description],S.[IsEnabled],S.[AppliesToBuy],S.[AppliesToSell],S.[AppliesToPickup],S.[AppliesToTransfer],S.[AppliesToGift],S.[AppliesToInvoice],S.[AppliesToReports],S.[SortOrder],@Now,NULL);
+    END
+
+    IF OBJECT_ID(N'[AdminTransactionFees]', N'U') IS NOT NULL
+    BEGIN
+        MERGE [AdminTransactionFees] AS T
+        USING (
+            VALUES
+            (N'service_fee', CAST(1 AS bit), N'percent', 1.25, NULL, CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit))
+        ) AS S([FeeCode],[IsEnabled],[CalculationMode],[RatePercent],[FixedAmount],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift])
+        ON T.[FeeCode] = S.[FeeCode]
+        WHEN MATCHED THEN UPDATE SET
+            T.[IsEnabled] = S.[IsEnabled],
+            T.[CalculationMode] = S.[CalculationMode],
+            T.[RatePercent] = S.[RatePercent],
+            T.[FixedAmount] = S.[FixedAmount],
+            T.[AppliesToBuy] = S.[AppliesToBuy],
+            T.[AppliesToSell] = S.[AppliesToSell],
+            T.[AppliesToPickup] = S.[AppliesToPickup],
+            T.[AppliesToTransfer] = S.[AppliesToTransfer],
+            T.[AppliesToGift] = S.[AppliesToGift],
+            T.[UpdatedAtUtc] = @Now
+        WHEN NOT MATCHED THEN
+            INSERT ([FeeCode],[IsEnabled],[CalculationMode],[RatePercent],[FixedAmount],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[CreatedAtUtc],[UpdatedAtUtc])
+            VALUES (S.[FeeCode],S.[IsEnabled],S.[CalculationMode],S.[RatePercent],S.[FixedAmount],S.[AppliesToBuy],S.[AppliesToSell],S.[AppliesToPickup],S.[AppliesToTransfer],S.[AppliesToGift],@Now,NULL);
+    END
+
+    IF OBJECT_ID(N'[SellerProductFees]', N'U') IS NOT NULL
+    BEGIN
+        MERGE [SellerProductFees] AS T
+        USING (
+            SELECT P.[SellerId] AS SellerId, P.[Id] AS ProductId, N'commission_per_transaction' AS FeeCode, CAST(1 AS bit) AS IsEnabled, N'percent_with_minimum' AS CalculationMode, CAST(1.50 AS decimal(18,6)) AS RatePercent, CAST(5.00 AS decimal(18,2)) AS MinimumAmount, NULL AS FlatAmount, NULL AS PremiumDiscountType, NULL AS ValuePerUnit, NULL AS FeePercent, NULL AS GracePeriodDays, NULL AS FixedAmount, NULL AS FeePerUnit, CAST(0 AS bit) AS IsOverride
+            FROM [Products] P
+            WHERE P.[SellerId] IN (@SellerImseeh, @SellerGoldPal, @SellerBullion)
+            UNION ALL
+            SELECT P.[SellerId], P.[Id], N'service_charge', CAST(1 AS bit), N'fixed', NULL, NULL, NULL, NULL, NULL, NULL, NULL, CAST(2.50 AS decimal(18,2)), NULL, CAST(0 AS bit)
+            FROM [Products] P
+            WHERE P.[SellerId] IN (@SellerImseeh, @SellerGoldPal, @SellerBullion)
+            UNION ALL
+            SELECT P.[SellerId], P.[Id], N'delivery_fee', CAST(1 AS bit), N'fixed', NULL, NULL, NULL, NULL, NULL, NULL, NULL, CAST(12.00 AS decimal(18,2)), NULL, CAST(0 AS bit)
+            FROM [Products] P
+            WHERE P.[SellerId] IN (@SellerImseeh, @SellerGoldPal, @SellerBullion)
+        ) AS S
+        ON T.[SellerId] = S.[SellerId] AND T.[ProductId] = S.[ProductId] AND T.[FeeCode] = S.[FeeCode]
+        WHEN MATCHED THEN UPDATE SET
+            T.[IsEnabled] = S.[IsEnabled],
+            T.[CalculationMode] = S.[CalculationMode],
+            T.[RatePercent] = S.[RatePercent],
+            T.[MinimumAmount] = S.[MinimumAmount],
+            T.[FlatAmount] = S.[FlatAmount],
+            T.[PremiumDiscountType] = S.[PremiumDiscountType],
+            T.[ValuePerUnit] = S.[ValuePerUnit],
+            T.[FeePercent] = S.[FeePercent],
+            T.[GracePeriodDays] = S.[GracePeriodDays],
+            T.[FixedAmount] = S.[FixedAmount],
+            T.[FeePerUnit] = S.[FeePerUnit],
+            T.[IsOverride] = S.[IsOverride],
+            T.[UpdatedAtUtc] = @Now
+        WHEN NOT MATCHED THEN
+            INSERT ([SellerId],[ProductId],[FeeCode],[IsEnabled],[CalculationMode],[RatePercent],[MinimumAmount],[FlatAmount],[PremiumDiscountType],[ValuePerUnit],[FeePercent],[GracePeriodDays],[FixedAmount],[FeePerUnit],[IsOverride],[CreatedAtUtc],[UpdatedAtUtc])
+            VALUES (S.[SellerId],S.[ProductId],S.[FeeCode],S.[IsEnabled],S.[CalculationMode],S.[RatePercent],S.[MinimumAmount],S.[FlatAmount],S.[PremiumDiscountType],S.[ValuePerUnit],S.[FeePercent],S.[GracePeriodDays],S.[FixedAmount],S.[FeePerUnit],S.[IsOverride],@Now,NULL);
+    END
 
     ------------------------------------------------------------
     -- Seed marker in audit
