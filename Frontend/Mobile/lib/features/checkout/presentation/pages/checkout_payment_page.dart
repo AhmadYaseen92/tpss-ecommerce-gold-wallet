@@ -260,13 +260,18 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     final userId = AuthSessionStore.userId;
     if (userId == null) return;
 
-    final fromCart = (args['fromCart'] as bool?) ?? false;
+    final source = (args['source'] ?? '').toString().toLowerCase();
+    final fromCart = (args['fromCart'] as bool?) ?? source == 'cart';
     final productId = args['productId'];
     final quantity = args['quantity'];
-    final productIds = (args['productIds'] as List<dynamic>? ?? [])
+    var productIds = (args['productIds'] as List<dynamic>? ?? [])
         .map((e) => e is num ? e.toInt() : int.tryParse('$e'))
         .whereType<int>()
         .toList();
+
+    if (fromCart && productIds.isEmpty) {
+      productIds = await _loadCartProductIdsFromServer(userId);
+    }
 
     if (fromCart && productIds.isEmpty) return;
     if (!fromCart && (productId == null || quantity == null)) return;
@@ -290,6 +295,21 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
       });
     } catch (_) {
       // Keep the pre-applied args summary as a fallback only when preview fails.
+    }
+  }
+
+  Future<List<int>> _loadCartProductIdsFromServer(int userId) async {
+    try {
+      final response = await _dio.post('/cart/by-user', data: {'userId': userId});
+      final payload = response.data as Map<String, dynamic>;
+      final data = payload['data'] as Map<String, dynamic>? ?? {};
+      final items = (data['items'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>();
+      return items
+          .map((item) => (item['productId'] as num?)?.toInt())
+          .whereType<int>()
+          .toList();
+    } catch (_) {
+      return const <int>[];
     }
   }
 
