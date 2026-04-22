@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
-import { ElMessage } from "element-plus";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import SmallCheckbox from "../../../shared/components/SmallCheckbox.vue";
+import SmallToggle from "../../../shared/components/SmallToggle.vue";
+import CommonModal from "../../../shared/components/CommonModal.vue";
 import {
   fetchAdminServiceFee,
   fetchManagedProducts,
@@ -62,6 +63,9 @@ const pageSize = ref(10);
 const pageIndex = ref(1);
 
 const isAdmin = computed(() => marketplace.role.value === "Admin");
+const successModalOpen = ref(false);
+const successMessage = ref("Saved successfully");
+const adminSnapshot = ref("");
 
 const feeMetadata: Record<string, { modes: string[] }> = {
   commission_per_transaction: { modes: ["percent_with_minimum", "flat"] },
@@ -172,6 +176,7 @@ const pagedSellerRows = computed(() => {
   return sellerTableRows.value.slice(start, start + pageSize.value);
 });
 const dirtyRows = computed(() => sellerTableRows.value.filter((x) => x.dirty));
+const adminDirty = computed(() => JSON.stringify({ systemFees: systemFees.value, serviceFee }) !== adminSnapshot.value);
 
 const formulaByMode = (feeCode: string, mode: string) => {
   if (feeCode === "commission_per_transaction") return mode === "percent_with_minimum" ? "max(Notional × Rate, Min)" : "Flat Fee";
@@ -245,6 +250,7 @@ const load = async () => {
     if (isAdmin.value) {
       systemFees.value = await fetchSystemFeeTypes(token);
       Object.assign(serviceFee, await fetchAdminServiceFee(token));
+      adminSnapshot.value = JSON.stringify({ systemFees: systemFees.value, serviceFee: { ...serviceFee } });
       return;
     }
 
@@ -265,16 +271,20 @@ watch(activeSellerTab, () => {
   pageIndex.value = 1;
 });
 
-const saveSystemFee = async (fee: SystemFeeTypePayload) => {
-  const token = marketplace.session.value?.accessToken;
-  if (!token) return;
-  await updateSystemFeeType(token, fee);
+const showSuccess = (message: string) => {
+  successMessage.value = message;
+  successModalOpen.value = true;
 };
 
-const saveServiceFee = async () => {
+const saveAdminAllChanges = async () => {
   const token = marketplace.session.value?.accessToken;
   if (!token) return;
+  for (const fee of systemFees.value) {
+    await updateSystemFeeType(token, fee);
+  }
   await updateAdminServiceFee(token, serviceFee);
+  adminSnapshot.value = JSON.stringify({ systemFees: systemFees.value, serviceFee: { ...serviceFee } });
+  showSuccess("Saved successfully");
 };
 
 const toggleOverride = (productId: number, checked: boolean) => {
@@ -315,7 +325,7 @@ const applyBulkToAll = async () => {
     await upsertSellerProductFee(token, template);
   }
   await loadSellerRows();
-  ElMessage.success("Fee settings applied to all products successfully.");
+  showSuccess("Fee settings applied to all products successfully.");
 };
 
 const saveAllChanges = async () => {
@@ -328,7 +338,7 @@ const saveAllChanges = async () => {
       await upsertSellerProductFee(token, payload);
       savedRowSnapshot[row.productId] = toSnapshot(payload);
     }
-    ElMessage.success("Saved successfully");
+    showSuccess("Saved successfully");
   } finally {
     savingAll.value = false;
   }
@@ -343,33 +353,48 @@ const saveAllChanges = async () => {
 
     <template v-if="isAdmin">
       <h3>System Fee Types</h3>
-      <table>
-        <thead><tr><th>Fee</th><th>Enabled</th><th>Buy</th><th>Sell</th><th>Pickup</th><th>Transfer</th><th>Gift</th><th>Save</th></tr></thead>
-        <tbody>
-          <tr v-for="fee in systemFees" :key="fee.feeCode">
-            <td>{{ fee.name }}</td>
-            <td><input v-model="fee.isEnabled" type="checkbox" /></td>
-            <td v-for="action in actionLabels" :key="`${fee.feeCode}-${action}`"><input v-model="fee[action]" type="checkbox" /></td>
-            <td><button @click="saveSystemFee(fee)">Save</button></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-toolbar">
+        <button v-if="adminDirty" @click="saveAdminAllChanges">Save All Changes</button>
+      </div>
+
+      <div class="admin-fee-cards">
+        <article v-for="fee in systemFees" :key="fee.feeCode" class="fee-card">
+          <header class="fee-card-header">
+            <h4>{{ fee.name }}</h4>
+            <label class="inline-toggle"><SmallToggle v-model="fee.isEnabled" /> Enabled</label>
+          </header>
+          <div class="fee-actions" :class="{ muted: !fee.isEnabled }">
+            <span>Applies To:</span>
+            <label v-for="action in actionLabels" :key="`${fee.feeCode}-${action}`" class="inline-toggle">
+              <SmallToggle v-model="fee[action]" :disabled="!fee.isEnabled" />
+              {{ action.replace("appliesTo", "") }}
+            </label>
+          </div>
+        </article>
+      </div>
 
       <h3>Service Fee (Admin Only)</h3>
-      <div class="grid">
-        <label><input v-model="serviceFee.isEnabled" type="checkbox" /> Enabled</label>
-        <label>Mode <select v-model="serviceFee.calculationMode"><option value="percent">Percent</option><option value="fixed">Fixed</option></select></label>
-        <label v-if="serviceFee.calculationMode === 'percent'">Rate % <input v-model.number="serviceFee.ratePercent" type="number" min="0" step="0.01" /></label>
-        <label v-else>Fixed Amount <input v-model.number="serviceFee.fixedAmount" type="number" min="0" step="0.01" /></label>
-      </div>
-      <div class="actions-grid">
-        <label><input v-model="serviceFee.appliesToBuy" type="checkbox" /> Buy</label>
-        <label><input v-model="serviceFee.appliesToSell" type="checkbox" /> Sell</label>
-        <label><input v-model="serviceFee.appliesToPickup" type="checkbox" /> Pickup</label>
-        <label><input v-model="serviceFee.appliesToTransfer" type="checkbox" /> Transfer</label>
-        <label><input v-model="serviceFee.appliesToGift" type="checkbox" /> Gift</label>
-      </div>
-      <button @click="saveServiceFee">Save Service Fee</button>
+      <article class="fee-card">
+        <header class="fee-card-header">
+          <h4>Service Fee</h4>
+          <label class="inline-toggle"><SmallToggle v-model="serviceFee.isEnabled" /> Enabled</label>
+        </header>
+        <div class="bulk-grid" :class="{ muted: !serviceFee.isEnabled }">
+          <label>Mode
+            <select v-model="serviceFee.calculationMode" :disabled="!serviceFee.isEnabled"><option value="percent">Percent</option><option value="fixed">Fixed</option></select>
+          </label>
+          <label v-if="serviceFee.calculationMode === 'percent'">Rate % <input v-model.number="serviceFee.ratePercent" type="number" min="0" step="0.01" :disabled="!serviceFee.isEnabled" /></label>
+          <label v-else>Fixed Amount <input v-model.number="serviceFee.fixedAmount" type="number" min="0" step="0.01" :disabled="!serviceFee.isEnabled" /></label>
+        </div>
+        <div class="fee-actions" :class="{ muted: !serviceFee.isEnabled }">
+          <span>Applies To:</span>
+          <label class="inline-toggle"><SmallToggle v-model="serviceFee.appliesToBuy" :disabled="!serviceFee.isEnabled" /> Buy</label>
+          <label class="inline-toggle"><SmallToggle v-model="serviceFee.appliesToSell" :disabled="!serviceFee.isEnabled" /> Sell</label>
+          <label class="inline-toggle"><SmallToggle v-model="serviceFee.appliesToPickup" :disabled="!serviceFee.isEnabled" /> Pickup</label>
+          <label class="inline-toggle"><SmallToggle v-model="serviceFee.appliesToTransfer" :disabled="!serviceFee.isEnabled" /> Transfer</label>
+          <label class="inline-toggle"><SmallToggle v-model="serviceFee.appliesToGift" :disabled="!serviceFee.isEnabled" /> Gift</label>
+        </div>
+      </article>
     </template>
 
     <template v-else>
@@ -468,6 +493,7 @@ const saveAllChanges = async () => {
         <button :disabled="pageIndex >= totalPages" @click="pageIndex++">&gt;</button>
       </div>
     </template>
+    <CommonModal :open="successModalOpen" title="Success" :message="successMessage" @close="successModalOpen = false" />
   </section>
 </template>
 
@@ -478,6 +504,12 @@ const saveAllChanges = async () => {
 .actions-grid { display:flex; gap: 12px; margin: 10px 0; }
 .bulk-setup { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
 .bulk-grid { display:grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 8px; margin-bottom: 8px; }
+.admin-fee-cards { display: grid; gap: 10px; margin-bottom: 16px; }
+.fee-card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; background: #fff; }
+.fee-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.fee-card-header h4 { margin: 0; }
+.fee-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.inline-toggle { display: inline-flex; align-items: center; gap: 6px; }
 .row-inherited { background: #fafafa; }
 .row-custom { background: #fff7e6; }
 .row-disabled { opacity: 0.65; background: #f5f5f5; }
