@@ -117,7 +117,6 @@ class ProductDetailWidget extends StatelessWidget {
             }
           },
           productCubit: productCubit,
-          quantity: productCubit.quantity,
         ),
       ],
     );

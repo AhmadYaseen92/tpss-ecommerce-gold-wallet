@@ -27,10 +27,12 @@ class ProductDetailPage extends StatelessWidget {
         return cubit;
       },
       child: BlocBuilder<ProductCubit, ProductState>(
+        buildWhen: (previous, current) => current is! ProductQuantityChanged,
         builder: (context, state) {
           final palette = context.appPalette;
           final cubit = BlocProvider.of<ProductCubit>(context);
-          final isFavorite = state is ProductDetailLoaded ? state.product.isFavorite : product.isFavorite;
+          final detailProduct = cubit.currentDetailProduct ?? product;
+          final isFavorite = detailProduct.isFavorite;
 
           PreferredSizeWidget appBar() => AppBar(
                 centerTitle: true,
@@ -41,7 +43,7 @@ class ProductDetailPage extends StatelessWidget {
                     color: palette.primary,
                   ),
                 ),
-                actions: state is ProductDetailLoaded || state is ProductQuantityChanged
+                actions: state is ProductDetailLoaded || cubit.currentDetailProduct != null
                     ? [
                         IconButton(
                           onPressed: () => cubit.toggleDetailFavorite(product.id),
@@ -59,10 +61,8 @@ class ProductDetailPage extends StatelessWidget {
             );
           }
 
-          if (state is ProductDetailLoaded || state is ProductQuantityChanged) {
-            final loadedProduct = state is ProductDetailLoaded
-                ? state.product
-                : product;
+          if (state is ProductDetailLoaded || cubit.currentDetailProduct != null) {
+            final loadedProduct = cubit.currentDetailProduct ?? product;
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: appBar(),
