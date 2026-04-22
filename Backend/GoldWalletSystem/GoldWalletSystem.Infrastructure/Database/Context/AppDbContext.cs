@@ -28,6 +28,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<TransactionHistory> TransactionHistories => Set<TransactionHistory>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<AppNotification> AppNotifications => Set<AppNotification>();
+    public DbSet<UserPushToken> UserPushTokens => Set<UserPushToken>();
     public DbSet<Wallet> Wallets => Set<Wallet>();
     public DbSet<WalletAsset> WalletAssets => Set<WalletAsset>();
     public DbSet<Order> Orders => Set<Order>();
@@ -63,6 +64,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigurePaymentTransaction(modelBuilder);
         ConfigureInvoice(modelBuilder);
         ConfigureAppNotification(modelBuilder);
+        ConfigureUserPushToken(modelBuilder);
         ConfigureMobileAppConfiguration(modelBuilder);
     }
 
@@ -537,11 +539,32 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.ToTable("AppNotifications");
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.Type).HasConversion<int>().HasDefaultValue(NotificationType.General);
+            entity.Property(x => x.ReferenceType).HasConversion<int?>();
+            entity.Property(x => x.ActionUrl).HasMaxLength(500);
+            entity.Property(x => x.ImageUrl).HasMaxLength(1000);
+            entity.Property(x => x.Role).HasMaxLength(50);
             entity.Property(x => x.Title).IsRequired().HasMaxLength(200);
             entity.Property(x => x.Body).IsRequired().HasMaxLength(2000);
             entity.HasIndex(x => x.UserId);
             entity.HasIndex(x => new { x.UserId, x.IsRead });
             entity.HasIndex(x => x.CreatedAtUtc);
+            entity.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureUserPushToken(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<UserPushToken>(entity =>
+        {
+            entity.ToTable("UserPushTokens");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.DeviceToken).IsRequired().HasMaxLength(512);
+            entity.Property(x => x.Platform).HasConversion<int>();
+            entity.Property(x => x.DeviceName).HasMaxLength(120);
+            entity.Property(x => x.IsActive).HasDefaultValue(true);
+            entity.HasIndex(x => x.UserId);
+            entity.HasIndex(x => new { x.UserId, x.DeviceToken, x.Platform }).IsUnique();
             entity.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
     }

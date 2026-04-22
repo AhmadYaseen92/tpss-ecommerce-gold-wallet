@@ -93,6 +93,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IMarketplaceRealtimeNotifier, MarketplaceRealtimeNotifier>();
+builder.Services.AddScoped<GoldWalletSystem.Application.Interfaces.Services.INotificationRealtimePublisher, SignalRNotificationRealtimePublisher>();
 
 var app = builder.Build();
 

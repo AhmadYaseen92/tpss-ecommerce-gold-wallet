@@ -1,8 +1,8 @@
 using GoldWalletSystem.Domain.Enums;
 
-namespace GoldWalletSystem.Domain.Entities;
+namespace GoldWalletSystem.Application.DTOs.Notifications;
 
-public class AppNotification : BaseEntity
+public class CreateNotificationRequestDto
 {
     public int UserId { get; set; }
     public NotificationType Type { get; set; } = NotificationType.General;
@@ -10,10 +10,8 @@ public class AppNotification : BaseEntity
     public NotificationReferenceType? ReferenceType { get; set; }
     public string? ActionUrl { get; set; }
     public string? ImageUrl { get; set; }
-    public DateTime? ReadAtUtc { get; set; }
     public string? Role { get; set; }
     public int? Priority { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
-    public bool IsRead { get; set; }
 }

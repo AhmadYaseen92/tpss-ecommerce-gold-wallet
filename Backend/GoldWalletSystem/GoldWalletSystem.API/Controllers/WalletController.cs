@@ -1,4 +1,5 @@
 using GoldWalletSystem.Application.DTOs.Common;
+using GoldWalletSystem.Application.DTOs.Notifications;
 using GoldWalletSystem.Application.DTOs.Wallet;
 using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Services;
@@ -19,6 +20,7 @@ public class WalletController(
     IWalletService walletService,
     IWalletActionValidationService walletActionValidationService,
     IOtpService otpService,
+    INotificationService notificationService,
     ICurrentUserService currentUser,
     AppDbContext dbContext,
     IWebHostEnvironment environment,
@@ -264,6 +266,7 @@ public class WalletController(
             cancellationToken);
 
         var actionType = request.ActionType.Trim().ToLowerInvariant();
+        var pendingNotifications = new List<CreateNotificationRequestDto>();
         if (actionType is not ("sell" or "transfer" or "gift" or "pickup" or "certificate" or "invoice"))
             return BadRequest(ApiResponse<object>.Fail("Unsupported wallet action.", 400));
 
@@ -378,13 +381,13 @@ public class WalletController(
                 CreatedAtUtc = DateTime.UtcNow
             });
 
-            dbContext.AppNotifications.Add(new AppNotification
+            pendingNotifications.Add(new CreateNotificationRequestDto
             {
                 UserId = request.RecipientInvestorUserId.Value,
+                Type = actionType == "gift" ? NotificationType.GiftReceived : NotificationType.TransferReceived,
+                ReferenceType = actionType == "gift" ? NotificationReferenceType.Gift : NotificationReferenceType.Transfer,
                 Title = actionType == "gift" ? "Gift received" : "Transfer received",
-                Body = $"{request.Quantity} unit(s) received from {senderName}.",
-                IsRead = false,
-                CreatedAtUtc = DateTime.UtcNow
+                Body = $"{request.Quantity} unit(s) received from {senderName}."
             });
         }
 
@@ -470,34 +473,34 @@ public class WalletController(
             };
             dbContext.Invoices.Add(createdInvoice);
 
-            dbContext.AppNotifications.Add(new AppNotification
+            pendingNotifications.Add(new CreateNotificationRequestDto
             {
                 UserId = request.UserId,
+                Type = NotificationType.InvoiceIssued,
+                ReferenceType = NotificationReferenceType.Invoice,
                 Title = "Invoice created",
-                Body = $"Invoice {createdInvoice.InvoiceNumber} is now available.",
-                IsRead = false,
-                CreatedAtUtc = DateTime.UtcNow
+                Body = $"Invoice {createdInvoice.InvoiceNumber} is now available."
             });
 
             if (actionType is "sell")
             {
-                dbContext.AppNotifications.Add(new AppNotification
+                pendingNotifications.Add(new CreateNotificationRequestDto
                 {
                     UserId = request.UserId,
+                    Type = NotificationType.RequestUpdated,
+                    ReferenceType = NotificationReferenceType.Invoice,
                     Title = "Invoice paid",
-                    Body = $"Invoice {createdInvoice.InvoiceNumber} has been paid.",
-                    IsRead = false,
-                    CreatedAtUtc = DateTime.UtcNow
+                    Body = $"Invoice {createdInvoice.InvoiceNumber} has been paid."
                 });
             }
 
-            dbContext.AppNotifications.Add(new AppNotification
+            pendingNotifications.Add(new CreateNotificationRequestDto
             {
                 UserId = request.UserId,
+                Type = NotificationType.InvoiceIssued,
+                ReferenceType = NotificationReferenceType.Invoice,
                 Title = "Invoice PDF available",
-                Body = $"Invoice {createdInvoice.InvoiceNumber} PDF is ready to view or download.",
-                IsRead = false,
-                CreatedAtUtc = DateTime.UtcNow
+                Body = $"Invoice {createdInvoice.InvoiceNumber} PDF is ready to view or download."
             });
         }
 
@@ -511,15 +514,15 @@ public class WalletController(
             CreatedAtUtc = DateTime.UtcNow
         });
 
-        dbContext.AppNotifications.Add(new AppNotification
+        pendingNotifications.Add(new CreateNotificationRequestDto
         {
             UserId = request.UserId,
+            Type = shouldRequireSellerApproval ? NotificationType.RequestUpdated : NotificationType.OrderApproved,
+            ReferenceType = NotificationReferenceType.Transaction,
             Title = shouldRequireSellerApproval ? "Wallet action submitted" : "Wallet action completed",
             Body = shouldRequireSellerApproval
                 ? $"{actionType} request submitted and pending seller approval."
-                : $"{actionType} completed for {request.Quantity} unit(s).",
-            IsRead = false,
-            CreatedAtUtc = DateTime.UtcNow
+                : $"{actionType} completed for {request.Quantity} unit(s)."
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -531,6 +534,16 @@ public class WalletController(
             createdInvoice.RelatedTransactionId = history.Id;
             createdInvoice.UpdatedAtUtc = DateTime.UtcNow;
             await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        foreach (var notification in pendingNotifications)
+        {
+            if (createdInvoice is not null && notification.ReferenceType == NotificationReferenceType.Invoice)
+            {
+                notification.ReferenceId = createdInvoice.Id;
+                notification.ActionUrl ??= $"/invoices/{createdInvoice.Id}";
+            }
+
+            await notificationService.CreateAsync(notification, cancellationToken);
         }
         await realtimeNotifier.BroadcastRefreshHintAsync($"wallet-action:{actionType}:{request.UserId}", cancellationToken);
         if (!shouldRequireSellerApproval && actionType is "transfer" or "gift" && request.RecipientInvestorUserId.HasValue)
