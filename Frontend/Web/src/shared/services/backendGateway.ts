@@ -590,3 +590,15 @@ export async function fetchSellerProductFees(accessToken: string, feeCode: strin
 export async function upsertSellerProductFee(accessToken: string, payload: SellerProductFeePayload): Promise<SellerProductFeePayload> {
   return putJson<SellerProductFeePayload, SellerProductFeePayload>("/api/fees/seller/products", payload, accessToken);
 }
+
+export async function bulkApplySellerProductFee(
+  accessToken: string,
+  feeCode: string,
+  template: SellerProductFeePayload
+): Promise<{ updated: number }> {
+  return putJson<{ updated: number }, { feeCode: string; applyToAll: boolean; productIds: number[]; template: SellerProductFeePayload }>(
+    "/api/fees/seller/products/bulk",
+    { feeCode, applyToAll: true, productIds: [], template },
+    accessToken
+  );
+}
