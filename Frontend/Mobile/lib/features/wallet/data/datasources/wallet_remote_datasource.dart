@@ -31,6 +31,65 @@ class WalletRemoteDataSource {
       rethrow;
     }
   }
+
+  Future<Map<int, WalletPurchaseSnapshot>> getLatestApprovedBuySnapshots() async {
+    final userId = AuthSessionStore.userId;
+    if (userId == null) {
+      throw Exception('No logged-in user. Please login first.');
+    }
+
+    final response = await _dio.post(
+      '/transaction-history/filter',
+      data: {
+        'userId': userId,
+        'pageNumber': 1,
+        'pageSize': 200,
+      },
+    );
+
+    final payload = response.data as Map<String, dynamic>;
+    final data = payload['data'] as Map<String, dynamic>? ?? {};
+    final items = (data['items'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>();
+
+    final snapshots = <int, WalletPurchaseSnapshot>{};
+    for (final item in items) {
+      final walletItemId = (item['walletItemId'] as num?)?.toInt();
+      if (walletItemId == null || walletItemId <= 0) continue;
+
+      final type = (item['transactionType'] ?? '').toString().toLowerCase();
+      final status = (item['status'] ?? '').toString().toLowerCase();
+      if (type != 'buy' || status != 'approved') continue;
+
+      snapshots.putIfAbsent(
+        walletItemId,
+        () => WalletPurchaseSnapshot(
+          walletItemId: walletItemId,
+          productName: (item['productName'] ?? '').toString(),
+          purity: (item['purity'] as num?)?.toDouble() ?? 0,
+          amount: (item['amount'] as num?)?.toDouble() ?? 0,
+          currency: (item['currency'] ?? 'USD').toString(),
+        ),
+      );
+    }
+
+    return snapshots;
+  }
+}
+
+class WalletPurchaseSnapshot {
+  WalletPurchaseSnapshot({
+    required this.walletItemId,
+    required this.productName,
+    required this.purity,
+    required this.amount,
+    required this.currency,
+  });
+
+  final int walletItemId;
+  final String productName;
+  final double purity;
+  final double amount;
+  final String currency;
 }
 
 class WalletRemoteModel {

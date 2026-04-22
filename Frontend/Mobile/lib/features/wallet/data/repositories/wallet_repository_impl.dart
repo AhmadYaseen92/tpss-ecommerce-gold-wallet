@@ -17,7 +17,13 @@ class WalletRepositoryImpl implements IWalletRepository {
   @override
   Future<List<wallet_entity.WalletEntity>> loadWallets() async {
     final wallet = await _remoteDataSource.getWalletByCurrentUser();
-    return _toWalletEntities(wallet);
+    Map<int, WalletPurchaseSnapshot> snapshots = const {};
+    try {
+      snapshots = await _remoteDataSource.getLatestApprovedBuySnapshots();
+    } catch (_) {
+      snapshots = const {};
+    }
+    return _toWalletEntities(wallet, snapshots);
   }
 
   @override
@@ -28,7 +34,10 @@ class WalletRepositoryImpl implements IWalletRepository {
     yield* _realtimeRefreshService.refreshes.asyncMap((_) => loadWallets());
   }
 
-  List<wallet_entity.WalletEntity> _toWalletEntities(WalletRemoteModel wallet) {
+  List<wallet_entity.WalletEntity> _toWalletEntities(
+    WalletRemoteModel wallet,
+    Map<int, WalletPurchaseSnapshot> snapshots,
+  ) {
     final byCategory = <wallet_entity.WalletCategory, List<WalletAssetRemoteModel>>{};
     for (final asset in wallet.assets) {
       final category = _toCategory(asset.category, asset.assetType);
@@ -46,7 +55,9 @@ class WalletRepositoryImpl implements IWalletRepository {
 
     return categories.map((category) {
       final assets = byCategory[category] ?? const <WalletAssetRemoteModel>[];
-      final transactions = assets.map((asset) => _toTransactionEntity(category, asset)).toList();
+      final transactions = assets
+          .map((asset) => _toTransactionEntity(category, asset, snapshots[asset.id]))
+          .toList();
       final totalWeightInGrams = transactions.fold<double>(0, (sum, tx) => sum + tx.weightInGrams * tx.quantity);
       final totalMarket = transactions.fold<double>(0, (sum, tx) => sum + tx.marketValueAmount);
       final totalBuy = assets.fold<double>(0, (sum, asset) => sum + (asset.averageBuyPrice * asset.quantity));
@@ -76,6 +87,7 @@ class WalletRepositoryImpl implements IWalletRepository {
   wallet_entity.WalletTransactionEntity _toTransactionEntity(
     wallet_entity.WalletCategory category,
     WalletAssetRemoteModel asset,
+    WalletPurchaseSnapshot? snapshot,
   ) {
     final totalWeightInGrams = _toGrams(asset.weight, asset.unit) * asset.quantity;
     final totalValue = asset.currentMarketPrice * asset.quantity;
@@ -83,11 +95,16 @@ class WalletRepositoryImpl implements IWalletRepository {
     final changePercent = totalBuy == 0 ? 0 : ((totalValue - totalBuy) / totalBuy) * 100;
     final signed = changePercent >= 0 ? '+' : '';
     final profitOrLossValue = totalValue - totalBuy;
-    final resolvedName = asset.productName.trim().isNotEmpty
+    final resolvedName = snapshot?.productName.trim().isNotEmpty == true
+        ? snapshot!.productName.trim()
+        : asset.productName.trim().isNotEmpty
         ? asset.productName.trim()
         : (asset.productSku?.trim().isNotEmpty ?? false)
         ? asset.productSku!.trim()
         : _toDisplayName(asset.assetType);
+    final purchaseValue = snapshot != null && snapshot.amount > 0
+        ? snapshot.amount
+        : totalBuy;
 
     return wallet_entity.WalletTransactionEntity(
       id: asset.id,
@@ -97,11 +114,14 @@ class WalletRepositoryImpl implements IWalletRepository {
       assetType: _toAssetType(asset.assetType),
       subtitle: asset.productSku?.trim().isNotEmpty == true ? 'SKU: ${asset.productSku!.trim()}' : _toDisplayName(asset.assetType),
       weightInGrams: totalWeightInGrams,
-      purity: _formatPurity(asset.purity),
+      purity: _formatPurity(
+        snapshot != null && snapshot.purity > 0 ? snapshot.purity : asset.purity,
+      ),
       quantity: asset.quantity,
       marketValue: '\$${totalValue.toStringAsFixed(2)}',
+      displayValue: '\$${purchaseValue.toStringAsFixed(2)}',
       change: '$signed${changePercent.toStringAsFixed(2)}%',
-      investmentValue: totalBuy,
+      investmentValue: purchaseValue,
       profitOrLossValue: profitOrLossValue,
       imageUrl: _imageByAssetMeta(assetType: asset.assetType, category: asset.category, productName: resolvedName),
       sellerName: asset.sellerName.isEmpty ? 'Unknown Seller' : asset.sellerName,

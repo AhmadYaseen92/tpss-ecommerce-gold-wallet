@@ -114,7 +114,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
                           children: [
                             Text('Current Value:', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.textSecondary)),
                             const SizedBox(width: 6),
-                            Text(item.marketValue, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: palette.textPrimary)),
+                            Text(item.displayValue, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: palette.textPrimary)),
                           ],
                         ),
                         if (showMarketWidgets) ...[
