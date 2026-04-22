@@ -3,6 +3,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/checkout/domain/entities/checkout_route_args.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 
@@ -81,15 +82,16 @@ class CartSummary extends StatelessWidget {
             child: AppButton(
               label: 'Proceed to Checkout',
               onPressed: () async {
+                final parsedProductIds = cartProductIds
+                    .map(int.tryParse)
+                    .whereType<int>()
+                    .toList();
                 final result = await Navigator.of(context, rootNavigator: true).pushNamed(
                   AppRoutes.checkoutRoute,
-                  arguments: {
-                    'source': 'cart',
-                    'fromCart': true,
-                    'productIds': cartProductIds,
-                    'amount': summary.total,
-                    'summary': summary,
-                  },
+                  arguments: CheckoutRouteArgs.cart(
+                    productIds: parsedProductIds,
+                    summary: summary,
+                  ),
                 );
                 if (result == true) {
                   await onCheckoutCompleted?.call();

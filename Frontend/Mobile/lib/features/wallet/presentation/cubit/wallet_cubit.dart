@@ -23,7 +23,7 @@ class WalletCubit extends Cubit<WalletState> {
   StreamSubscription<List<WalletEntity>>? _walletSubscription;
 
   Future<void> loadWallets() async {
-    emit(WalletLoading());
+    _safeEmit(WalletLoading());
     try {
       _wallets
         ..clear()
@@ -31,7 +31,7 @@ class WalletCubit extends Cubit<WalletState> {
       _emitWallets();
       await _startWalletWatch();
     } catch (e) {
-      emit(WalletError('Failed to load wallets: $e'));
+      _safeEmit(WalletError('Failed to load wallets: $e'));
     }
   }
 
@@ -61,13 +61,18 @@ class WalletCubit extends Cubit<WalletState> {
       return sum + parsed;
     });
 
-    emit(
+    _safeEmit(
       WalletLoaded(
         wallets: List.unmodifiable(filtered),
         selectedCategoryId: _selectedCategoryId,
         totalPortfolioValue: totalPortfolioValue,
       ),
     );
+  }
+
+  void _safeEmit(WalletState state) {
+    if (isClosed) return;
+    emit(state);
   }
 
   int _categoryIdFor(WalletEntity wallet) {

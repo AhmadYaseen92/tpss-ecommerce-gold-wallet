@@ -47,7 +47,7 @@ class CartCubit extends Cubit<CartState> {
   DateTime? _lastAutoRefreshAt;
 
   Future<void> loadCartProducts({String sellerFilter = AppReleaseConfig.defaultAllSellersLabel}) async {
-    emit(CartLoading());
+    _safeEmit(CartLoading());
     try {
       _allItems = await _getCartItemsUseCase();
       final sellers = _getAvailableSellersUseCase(_allItems);
@@ -59,7 +59,7 @@ class CartCubit extends Cubit<CartState> {
       await _emitLoaded();
       await _startAutoRefresh();
     } catch (e) {
-      emit(CartError('Failed to load cart products: $e'));
+      _safeEmit(CartError('Failed to load cart products: $e'));
     }
   }
 
@@ -115,7 +115,7 @@ class CartCubit extends Cubit<CartState> {
           )
         : await _cartRepository.previewSummary(filtered.map((item) => item.id).toList());
 
-    emit(
+    _safeEmit(
       CartLoaded(
         cartProducts: filtered,
         summary: summary,
@@ -173,5 +173,10 @@ class CartCubit extends Cubit<CartState> {
   Future<void> close() async {
     await _realtimeSubscription?.cancel();
     return super.close();
+  }
+
+  void _safeEmit(CartState state) {
+    if (isClosed) return;
+    emit(state);
   }
 }

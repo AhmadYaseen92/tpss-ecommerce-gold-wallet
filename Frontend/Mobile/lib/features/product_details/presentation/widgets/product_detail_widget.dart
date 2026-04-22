@@ -3,6 +3,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dar
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/checkout/domain/entities/checkout_route_args.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product_details/presentation/widgets/bottombar_widget.dart';
@@ -96,15 +97,12 @@ class ProductDetailWidget extends StatelessWidget {
             try {
               Navigator.of(context, rootNavigator: true).pushNamed(
                 AppRoutes.checkoutRoute,
-                arguments: {
-                  'source': 'product',
-                  'fromCart': false,
-                  'title': product.name,
-                  'seller': product.sellerName,
-                  'productId': int.tryParse(product.id),
-                  'quantity': productCubit.quantity,
-                  'amount': product.sellPrice * productCubit.quantity,
-                },
+                arguments: CheckoutRouteArgs.product(
+                  productId: int.parse(product.id),
+                  quantity: productCubit.quantity,
+                  title: product.name,
+                  seller: product.sellerName,
+                ),
               );
             } catch (e) {
               if (!context.mounted) return;

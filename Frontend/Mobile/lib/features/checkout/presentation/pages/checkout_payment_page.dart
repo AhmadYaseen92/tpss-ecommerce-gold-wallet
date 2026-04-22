@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dio/dio.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
@@ -14,6 +13,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/predefined_account_selector.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/checkout/domain/entities/checkout_route_args.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 
 class CheckoutPaymentPage extends StatefulWidget {
@@ -24,14 +24,21 @@ class CheckoutPaymentPage extends StatefulWidget {
 }
 
 class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
-  final Dio _dio = InjectionContainer.dio();
-  ActionSummaryModel _summary = ActionSummaryModel.zero;
-  Map<String, dynamic> _checkoutArgs = const {};
+  late final CheckoutCubit _checkoutCubit;
+  CheckoutRouteArgs? _checkoutArgs;
   bool _didInitPreview = false;
+  String? _routeArgsError;
 
   @override
   void initState() {
     super.initState();
+    _checkoutCubit = CheckoutCubit(InjectionContainer.dio());
+  }
+
+  @override
+  void dispose() {
+    _checkoutCubit.close();
+    super.dispose();
   }
 
   @override
@@ -40,24 +47,38 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     if (_didInitPreview) return;
 
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map<String, dynamic>) {
+    if (args is CheckoutRouteArgs) {
       _checkoutArgs = args;
-    } else if (args is Map) {
-      _checkoutArgs = args.map((key, value) => MapEntry('$key', value));
+      _routeArgsError = args.validate();
     } else {
-      _checkoutArgs = const {};
+      _routeArgsError = 'Invalid checkout arguments. Please retry from product details or cart.';
     }
 
     _didInitPreview = true;
-    _loadPreview();
+    if (_routeArgsError != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await AppModalAlert.show(
+          context,
+          message: _routeArgsError!,
+          variant: AppModalAlertVariant.failed,
+        );
+        if (!mounted) return;
+        Navigator.of(context).maybePop();
+      });
+      return;
+    }
+    final initialSummary = _summaryFromArgs(_checkoutArgs?.summary);
+    _checkoutCubit.load(initialSummary: initialSummary);
+    _checkoutCubit.loadPreview(checkoutArgs: _checkoutArgs!);
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
 
-    return BlocProvider(
-      create: (_) => CheckoutCubit(InjectionContainer.dio())..load(),
+    return BlocProvider.value(
+      value: _checkoutCubit,
       child: BlocConsumer<CheckoutCubit, CheckoutState>(
         listener: (context, state) async {
           if (state is CheckoutSuccess) {
@@ -79,6 +100,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         },
         builder: (context, state) {
           final cubit = context.read<CheckoutCubit>();
+          final summary = cubit.summary;
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
@@ -141,9 +163,9 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                     title: 'Order Details',
                     child: Column(
                       children: [
-                        _row(context, 'Asset', (_checkoutArgs['title'] ?? 'Gold Asset').toString()),
+                        _row(context, 'Asset', (_checkoutArgs?.title ?? 'Gold Asset').toString()),
                         if (AppReleaseConfig.showSellerUi)
-                          _row(context, 'Seller', (_checkoutArgs['seller'] ?? AppReleaseConfig.defaultSeller).toString()),
+                          _row(context, 'Seller', (_checkoutArgs?.seller ?? AppReleaseConfig.defaultSeller).toString()),
                       ],
                     ),
                   ),
@@ -156,11 +178,11 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                           _row(context, 'Account', cubit.linkedBankAccounts[cubit.selectedBankIndex].name),
                         if (cubit.selectedPaymentType == CheckoutPaymentType.card)
                           _row(context, 'Method', cubit.predefinedPaymentMethods[cubit.selectedPaymentIndex].name),
-                        _row(context, 'Subtotal', ActionSummaryBuilder.formatMoney(_summary.subTotalAmount, currency: _summary.currency)),
-                        ..._summary.feeBreakdowns.map((line) => _row(context, line.feeName, '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: _summary.currency)}')),
-                        _row(context, 'Discount', '-${ActionSummaryBuilder.formatMoney(_summary.discountAmount, currency: _summary.currency)}'),
+                        _row(context, 'Subtotal', ActionSummaryBuilder.formatMoney(summary.subTotalAmount, currency: summary.currency)),
+                        ...summary.feeBreakdowns.map((line) => _row(context, line.feeName, '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: summary.currency)}')),
+                        _row(context, 'Discount', '-${ActionSummaryBuilder.formatMoney(summary.discountAmount, currency: summary.currency)}'),
                         Divider(color: palette.border),
-                        _row(context, 'Final Amount', ActionSummaryBuilder.formatMoney(_summary.finalAmount, currency: _summary.currency), bold: true),
+                        _row(context, 'Final Amount', ActionSummaryBuilder.formatMoney(summary.finalAmount, currency: summary.currency), bold: true),
                       ],
                     ),
                   ),
@@ -174,6 +196,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                   height: 52,
                           child: FilledButton.icon(
                     onPressed: state is CheckoutLoading
+                        || _checkoutArgs == null
                         ? null
                         : () async {
                             final userId = AuthSessionStore.userId;
@@ -189,24 +212,29 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                             final otpResult = await Navigator.pushNamed(
                               context,
                               AppRoutes.confirmOtpRoute,
-                              arguments: {
-                                'title': 'Confirm Buy OTP',
-                                'subtitle': 'Enter the OTP to confirm your checkout payment.',
-                                'otpFlow': 'checkout',
-                                'userId': userId,
-                                'productId': _checkoutArgs['productId'],
-                                'quantity': _checkoutArgs['quantity'],
-                                'productIds': _checkoutArgs['productIds'],
-                              },
+                              arguments: (() {
+                                final otpContext = _checkoutArgs?.toOtpContext(
+                                  userId: userId,
+                                );
+                                return {
+                                  'title': 'Confirm Buy OTP',
+                                  'subtitle': 'Enter the OTP to confirm your checkout payment.',
+                                  'otpFlow': 'checkout',
+                                  'userId': userId,
+                                  'productId': otpContext?.productId,
+                                  'quantity': otpContext?.quantity,
+                                  'productIds': otpContext?.productIds,
+                                };
+                              })(),
                             );
                             if (otpResult is Map && otpResult['verified'] == true) {
                               await cubit.confirmOtp(
-                                checkoutArgs: _checkoutArgs,
+                                checkoutArgs: _checkoutArgs!,
                                 otpVerificationToken: '${otpResult['otpVerificationToken'] ?? ''}',
                                 otpRequestId: '${otpResult['otpRequestId'] ?? ''}',
                               );
                             } else if (otpResult == true) {
-                              await cubit.confirmOtp(checkoutArgs: _checkoutArgs);
+                              await cubit.confirmOtp(checkoutArgs: _checkoutArgs!);
                             }
                           },
                     icon: state is CheckoutLoading
@@ -224,124 +252,15 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   }
 
   void _navigateAfterSuccess() {
-    final source = (_checkoutArgs['source'] ?? '').toString().toLowerCase();
     final navigator = Navigator.of(context, rootNavigator: true);
-    if (source == 'cart') {
-      navigator.pop(true);
-      return;
-    }
-
-    if (source != 'product') {
-      navigator.pop();
-      return;
-    }
-
-    var foundProductRoute = false;
-    navigator.popUntil((route) {
-      final isProductRoute = route.settings.name == AppRoutes.productRoute;
-      if (isProductRoute) {
-        foundProductRoute = true;
-      }
-      return isProductRoute || route.isFirst;
-    });
-    if (!foundProductRoute) {
-      navigator.pushNamedAndRemoveUntil(
-        AppRoutes.productRoute,
-        (route) => false,
-      );
-    }
+    navigator.pop(true);
   }
 
-  Future<void> _loadPreview() async {
-    final args = _checkoutArgs;
-    final summary = args['summary'];
-    _applySummaryFromArgs(summary);
-
-    final userId = AuthSessionStore.userId;
-    if (userId == null) return;
-
-    final source = (args['source'] ?? '').toString().toLowerCase();
-    final rawFromCart = args['fromCart'];
-    final parsedProductId = _toInt(args['productId']);
-    final parsedQuantity = _toInt(args['quantity']);
-    var productIds = (args['productIds'] as List<dynamic>? ?? [])
-        .map(_toInt)
-        .whereType<int>()
-        .toList();
-
-    final fromCart = rawFromCart is bool
-        ? rawFromCart
-        : source == 'cart'
-            ? true
-            : source == 'product'
-                ? false
-                : productIds.isNotEmpty
-                    ? true
-                    : (parsedProductId != null && parsedQuantity != null && parsedQuantity > 0)
-                        ? false
-                        : true;
-
-    if (fromCart && productIds.isEmpty) {
-      productIds = await _loadCartProductIdsFromServer(userId);
-    }
-
-    if (fromCart && productIds.isEmpty) return;
-    if (!fromCart && (parsedProductId == null || parsedQuantity == null || parsedQuantity <= 0)) return;
-
+  ActionSummaryModel _summaryFromArgs(dynamic summary) {
     try {
-      final response = await _dio.post(
-        '/wallet/actions/preview',
-        data: {
-          'userId': userId,
-          'actionType': 'buy',
-          'fromCart': fromCart,
-          if (fromCart) 'productIds': productIds,
-          if (!fromCart) 'productId': parsedProductId,
-          if (!fromCart) 'quantity': parsedQuantity,
-        },
-      );
-      final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
-      if (!mounted) return;
-      setState(() {
-        _summary = ActionSummaryBuilder.fromBackendData(data);
-      });
+      return ActionSummaryBuilder.fromAny(summary);
     } catch (_) {
-      // Keep the pre-applied args summary as a fallback only when preview fails.
-    }
-  }
-
-  Future<List<int>> _loadCartProductIdsFromServer(int userId) async {
-    try {
-      final response = await _dio.post('/cart/by-user', data: {'userId': userId});
-      final payload = response.data as Map<String, dynamic>;
-      final data = payload['data'] as Map<String, dynamic>? ?? {};
-      final items = (data['items'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>();
-      return items
-          .map((item) => (item['productId'] as num?)?.toInt())
-          .whereType<int>()
-          .toList();
-    } catch (_) {
-      return const <int>[];
-    }
-  }
-
-  int? _toInt(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    return int.tryParse('$value');
-  }
-
-  bool _applySummaryFromArgs(dynamic summary) {
-    if (summary == null) return false;
-
-    try {
-      if (!mounted) return false;
-      setState(() {
-        _summary = ActionSummaryBuilder.fromAny(summary);
-      });
-      return true;
-    } catch (_) {
-      return false;
+      return ActionSummaryModel.zero;
     }
   }
 
