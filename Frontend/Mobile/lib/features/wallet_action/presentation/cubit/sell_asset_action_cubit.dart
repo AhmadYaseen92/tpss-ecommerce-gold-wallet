@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/helpers/predefined_accounts_data
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/profile_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/entities/sell_asset_entities.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 
 part 'sell_asset_action_state.dart';
@@ -106,11 +107,11 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
       final liquidity = await _repository.availableLiquidity();
       final lockedPrice = await _repository.lockUnitPrice(unitPrice);
       final quantityToSell = quantity;
-      final requestedWeight = maxQuantity == 0 ? 0 : (initialAsset.asset.weightInGrams / maxQuantity) * quantityToSell;
+      final requestedWeight = maxQuantity == 0 ? 0.0 : (initialAsset.asset.weightInGrams / maxQuantity) * quantityToSell;
       final grossAmount = unitPrice * quantityToSell;
       final preview = await _repository.previewWalletAction(
         actionType: WalletActionType.sell,
-        walletAssetId: initialAsset.asset.walletAssetId,
+        walletAssetId: initialAsset.asset.id,
         quantity: quantityToSell,
         unitPrice: unitPrice,
         weight: requestedWeight,

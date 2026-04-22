@@ -132,10 +132,10 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
   Future<void> _emitUpdated() async {
     try {
       final quantityToSend = quantity;
-      final requestedWeight = maxQuantity == 0 ? 0 : (asset.weightInGrams / maxQuantity) * quantityToSend;
+      final requestedWeight = maxQuantity == 0 ? 0.0 : (asset.weightInGrams / maxQuantity) * quantityToSend;
       _preview = await _walletActionRepository.previewWalletAction(
         actionType: transferType,
-        walletAssetId: asset.walletAssetId,
+        walletAssetId: asset.id,
         quantity: quantityToSend,
         unitPrice: unitPrice,
         weight: requestedWeight,
