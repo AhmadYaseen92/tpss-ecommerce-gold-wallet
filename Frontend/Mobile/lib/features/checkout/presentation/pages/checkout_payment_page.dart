@@ -257,20 +257,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   Future<void> _loadPreview() async {
     final args = _checkoutArgs;
     final summary = args['summary'];
-    if (summary != null && summary is dynamic) {
-      setState(() {
-        _subTotalAmount = (summary.subtotal as double?) ?? 0;
-        _totalFeesAmount = (summary.totalFeesAmount as double?) ?? 0;
-        _discountAmount = (summary.discountAmount as double?) ?? 0;
-        _finalAmount = (summary.total as double?) ?? 0;
-        _feeBreakdowns = (summary.feeBreakdowns as List<dynamic>? ?? [])
-            .map((line) => {
-                  'feeName': line.feeName,
-                  'appliedValue': line.appliedValue,
-                  'isDiscount': line.isDiscount,
-                })
-            .toList();
-      });
+    if (_applySummaryFromArgs(summary)) {
       return;
     }
 
@@ -309,7 +296,68 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         _finalAmount = (data['finalAmount'] as num?)?.toDouble() ?? 0;
         _feeBreakdowns = (data['feeBreakdowns'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>().toList();
       });
-    } catch (_) {}
+    } catch (_) {
+      _applySummaryFromArgs(summary);
+    }
+  }
+
+  bool _applySummaryFromArgs(dynamic summary) {
+    if (summary == null) return false;
+
+    try {
+      if (summary is Map) {
+        final map = summary.map((key, value) => MapEntry('$key', value));
+        final feeLines = (map['feeBreakdowns'] as List<dynamic>? ?? [])
+            .map((line) {
+              if (line is Map) {
+                return {
+                  'feeName': (line['feeName'] ?? '').toString(),
+                  'appliedValue': _toDouble(line['appliedValue']),
+                  'isDiscount': line['isDiscount'] == true,
+                };
+              }
+              return <String, dynamic>{
+                'feeName': (line.feeName ?? '').toString(),
+                'appliedValue': _toDouble(line.appliedValue),
+                'isDiscount': line.isDiscount == true,
+              };
+            })
+            .toList();
+
+        if (!mounted) return false;
+        setState(() {
+          _subTotalAmount = _toDouble(map['subtotal'] ?? map['subTotalAmount']);
+          _totalFeesAmount = _toDouble(map['totalFeesAmount']);
+          _discountAmount = _toDouble(map['discountAmount']);
+          _finalAmount = _toDouble(map['total'] ?? map['finalAmount']);
+          _feeBreakdowns = feeLines;
+        });
+        return true;
+      }
+
+      if (!mounted) return false;
+      setState(() {
+        _subTotalAmount = _toDouble(summary.subtotal ?? summary.subTotalAmount);
+        _totalFeesAmount = _toDouble(summary.totalFeesAmount);
+        _discountAmount = _toDouble(summary.discountAmount);
+        _finalAmount = _toDouble(summary.total ?? summary.finalAmount);
+        _feeBreakdowns = (summary.feeBreakdowns as List<dynamic>? ?? [])
+            .map((line) => {
+                  'feeName': (line.feeName ?? '').toString(),
+                  'appliedValue': _toDouble(line.appliedValue),
+                  'isDiscount': line.isDiscount == true,
+                })
+            .toList();
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse('$value') ?? 0;
   }
 
   IconData _icon(CheckoutPaymentType type) {
