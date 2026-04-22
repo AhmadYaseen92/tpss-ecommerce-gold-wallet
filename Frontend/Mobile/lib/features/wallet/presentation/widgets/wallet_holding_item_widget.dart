@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
@@ -31,9 +30,6 @@ class WalletHoldingItemWidget extends StatelessWidget {
     final isActionBlocked = isPending || isDelivered;
     final showMarketWidgets = AppReleaseConfig.isIndividualSellerRelease;
     final status = item.status;
-    final pnlAmount = item.profitOrLossValue;
-    final pnlLabel = pnlAmount >= 0 ? 'Profit' : 'Loss';
-    final signedPnlAmount = pnlAmount >= 0 ? '+' : '-';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
@@ -116,23 +112,9 @@ class WalletHoldingItemWidget extends StatelessWidget {
                         ],
                         Row(
                           children: [
+                            Text('Current Value:', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.textSecondary)),
+                            const SizedBox(width: 6),
                             Text(item.marketValue, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: palette.textPrimary)),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: item.change.startsWith('+') ? AppColors.green.withAlpha(18) : AppColors.red.withAlpha(18),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: item.change.startsWith('+') ? AppColors.green.withAlpha(60) : AppColors.red.withAlpha(60)),
-                              ),
-                              child: Text(
-                                item.change,
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: item.change.startsWith('+') ? AppColors.green : AppColors.red,
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                         if (showMarketWidgets) ...[
@@ -141,14 +123,6 @@ class WalletHoldingItemWidget extends StatelessWidget {
                             'Live Price: \$${item.marketPricePerGram.toStringAsFixed(2)}/g',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: palette.textSecondary,
-                                ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '$pnlLabel: $signedPnlAmount\$${pnlAmount.abs().toStringAsFixed(2)} (${item.change})',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: item.change.startsWith('+') ? AppColors.green : AppColors.red,
-                                  fontWeight: FontWeight.w600,
                                 ),
                           ),
                         ],

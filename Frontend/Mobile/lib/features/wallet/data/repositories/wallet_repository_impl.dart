@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/realtime/realtime_refresh_service.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/data/datasources/wallet_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart'
@@ -76,27 +77,33 @@ class WalletRepositoryImpl implements IWalletRepository {
     wallet_entity.WalletCategory category,
     WalletAssetRemoteModel asset,
   ) {
+    final totalWeightInGrams = _toGrams(asset.weight, asset.unit) * asset.quantity;
     final totalValue = asset.currentMarketPrice * asset.quantity;
     final totalBuy = asset.averageBuyPrice * asset.quantity;
     final changePercent = totalBuy == 0 ? 0 : ((totalValue - totalBuy) / totalBuy) * 100;
     final signed = changePercent >= 0 ? '+' : '';
     final profitOrLossValue = totalValue - totalBuy;
+    final resolvedName = asset.productName.trim().isNotEmpty
+        ? asset.productName.trim()
+        : (asset.productSku?.trim().isNotEmpty ?? false)
+        ? asset.productSku!.trim()
+        : _toDisplayName(asset.assetType);
 
     return wallet_entity.WalletTransactionEntity(
       id: asset.id,
-      name: asset.productName.trim().isNotEmpty ? asset.productName : _toDisplayName(asset.assetType),
+      name: resolvedName,
       productSku: asset.productSku,
       category: category,
       assetType: _toAssetType(asset.assetType),
-      subtitle: '${asset.purity.toStringAsFixed(1)} purity',
-      weightInGrams: _toGrams(asset.weight, asset.unit),
-      purity: asset.purity.toStringAsFixed(2),
+      subtitle: asset.productSku?.trim().isNotEmpty == true ? 'SKU: ${asset.productSku!.trim()}' : _toDisplayName(asset.assetType),
+      weightInGrams: totalWeightInGrams,
+      purity: _formatPurity(asset.purity),
       quantity: asset.quantity,
       marketValue: '\$${totalValue.toStringAsFixed(2)}',
       change: '$signed${changePercent.toStringAsFixed(2)}%',
       investmentValue: totalBuy,
       profitOrLossValue: profitOrLossValue,
-      imageUrl: _imageByAssetType(asset.assetType),
+      imageUrl: _imageByAssetMeta(assetType: asset.assetType, category: asset.category, productName: resolvedName),
       sellerName: asset.sellerName.isEmpty ? 'Unknown Seller' : asset.sellerName,
       certificateUrl: asset.certificateUrl,
       isDelivered: asset.isDelivered,
@@ -151,6 +158,16 @@ class WalletRepositoryImpl implements IWalletRepository {
     return wallet_entity.AssetType.bar;
   }
 
+  String _formatPurity(double value) {
+    if (value <= 0) return 'N/A';
+    if (value <= 24) {
+      final karat = value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1);
+      return '${karat}K';
+    }
+    if (value % 1 == 0) return value.toInt().toString();
+    return value.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+  }
+
   String _tabLabel(wallet_entity.WalletCategory category) => switch (category) {
         wallet_entity.WalletCategory.gold => 'Gold',
         wallet_entity.WalletCategory.silver => 'Silver',
@@ -171,7 +188,24 @@ class WalletRepositoryImpl implements IWalletRepository {
         wallet_entity.WalletCategory.spotMr => Icons.show_chart_rounded,
       };
 
-  String _imageByAssetType(String assetType) {
-    return '';
+  String _imageByAssetMeta({required String assetType, required String category, required String productName}) {
+    final descriptor = '${assetType.toLowerCase()} ${category.toLowerCase()} ${productName.toLowerCase()}';
+    if (descriptor.contains('jewel') || descriptor.contains('ring') || descriptor.contains('bracelet') || descriptor.contains('necklace')) {
+      return _serverImage('/images/products/jewelry.jpg');
+    }
+    if (descriptor.contains('silver')) {
+      return _serverImage('/images/products/silver.png');
+    }
+    if (descriptor.contains('coin')) {
+      return _serverImage('/images/products/gold-coin.jpg');
+    }
+    return _serverImage('/images/products/gold-bar.png');
+  }
+
+  String _serverImage(String path) {
+    final apiBase = Uri.tryParse(ApiConfig.baseUrl);
+    if (apiBase == null) return path;
+    final origin = '${apiBase.scheme}://${apiBase.host}${apiBase.hasPort ? ':${apiBase.port}' : ''}';
+    return '$origin$path';
   }
 }
