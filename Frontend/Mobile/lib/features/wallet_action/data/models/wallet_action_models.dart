@@ -47,6 +47,8 @@ class WalletActionExecutionRequest {
   final double amount;
   final String? notes;
   final int? recipientInvestorUserId;
+  final String? otpVerificationToken;
+  final String? otpActionReferenceId;
 
   const WalletActionExecutionRequest({
     required this.walletAssetId,
@@ -57,6 +59,8 @@ class WalletActionExecutionRequest {
     required this.amount,
     this.notes,
     this.recipientInvestorUserId,
+    this.otpVerificationToken,
+    this.otpActionReferenceId,
   });
 }
 
