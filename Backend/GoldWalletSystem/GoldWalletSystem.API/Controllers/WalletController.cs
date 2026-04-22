@@ -113,6 +113,7 @@ public class WalletController(
                     SourceInvestorName = sourceInvestorName
                 };
             })
+            .Where(asset => !string.Equals(asset.Status, "Delivered", StringComparison.OrdinalIgnoreCase))
             .ToList();
         return Ok(ApiResponse<WalletDto>.Ok(data with { Assets = assets }));
     }
