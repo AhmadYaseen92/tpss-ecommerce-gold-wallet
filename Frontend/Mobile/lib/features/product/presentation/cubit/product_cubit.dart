@@ -52,6 +52,10 @@ class ProductCubit extends Cubit<ProductState> {
 
   StreamSubscription<List<MarketSymbolEntity>>? _marketSubscription;
   StreamSubscription<String>? _realtimeSubscription;
+  String? _activeDetailProductId;
+  ProductEntity? _currentDetailProduct;
+
+  ProductEntity? get currentDetailProduct => _currentDetailProduct;
 
   Future<void> loadProducts({
     String seller = AppReleaseConfig.defaultAllSellersLabel,
@@ -100,7 +104,10 @@ class ProductCubit extends Cubit<ProductState> {
   Future<void> loadProductDetail(String productId) async {
     emit(ProductDetailLoading());
     try {
+      _activeDetailProductId = productId;
+      await _startProductAutoRefresh();
       final product = await _getProductDetailUseCase(productId);
+      _currentDetailProduct = product;
       emit(ProductDetailLoaded(product));
     } catch (e) {
       emit(ProductDetailError('Failed to load product detail: $e'));
@@ -110,6 +117,7 @@ class ProductCubit extends Cubit<ProductState> {
   Future<void> toggleDetailFavorite(String productId) async {
     await _toggleProductFavoriteUseCase(productId);
     final product = await _getProductDetailUseCase(productId);
+    _currentDetailProduct = product;
     emit(ProductDetailLoaded(product));
   }
 
@@ -136,6 +144,11 @@ class ProductCubit extends Cubit<ProductState> {
     try {
       allProducts = await _getProductsUseCase(categoryId: selectedCategoryId);
       _emitCatalog();
+      if (_activeDetailProductId != null) {
+        final product = await _getProductDetailUseCase(_activeDetailProductId!);
+        _currentDetailProduct = product;
+        emit(ProductDetailLoaded(product));
+      }
     } catch (_) {
       // Keep last rendered catalog on background refresh failures.
     }

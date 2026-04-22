@@ -1,44 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 
 class ProductSpecsWidget extends StatelessWidget {
   final String purity;
   final String weight;
-  final String metal;
+  final String materialType;
 
-  const ProductSpecsWidget({super.key, required this.purity, required this.weight, required this.metal});
+  const ProductSpecsWidget({super.key, required this.purity, required this.weight, required this.materialType});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _productSpecsCard(context, label: 'Purity', value: purity),
-        const SizedBox(width: 10),
-        _productSpecsCard(context, label: 'Weight', value: weight),
-        const SizedBox(width: 10),
-        _productSpecsCard(context, label: 'Metal', value: metal),
-      ],
-    );
+    final specs = <Widget>[
+      _productSpecsCard(context, label: 'Material', value: materialType),
+      _productSpecsCard(context, label: 'Weight', value: weight),
+    ];
+
+    if (materialType.toLowerCase() != 'diamond' && purity.trim().isNotEmpty) {
+      specs.add(_productSpecsCard(context, label: 'Purity', value: purity));
+    }
+
+    return Wrap(spacing: 10, runSpacing: 10, children: specs);
   }
 
   Widget _productSpecsCard(BuildContext context, {required String label, required String value}) {
-    final palette = context.appPalette;
-
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: palette.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: palette.border),
-        ),
-        child: Column(
-          children: [
-            Text(label, style: TextStyle(fontSize: 15, color: palette.textPrimary, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(value, style: TextStyle(fontSize: 15, color: palette.textSecondary), textAlign: TextAlign.center),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: Theme.of(context).colorScheme.surface,
+        border: Border.all(color: Theme.of(context).dividerColor.withAlpha(80)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 4),
+          Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+        ],
       ),
     );
   }

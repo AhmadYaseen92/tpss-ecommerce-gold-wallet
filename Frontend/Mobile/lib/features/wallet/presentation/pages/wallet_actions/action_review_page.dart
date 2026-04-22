@@ -68,8 +68,25 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
               title: 'Fees',
               child: Column(
                 children: [
-                  ReadonlyInfoRow(label: 'Fee', value: widget.summary.feeValue),
-                  ReadonlyInfoRow(label: 'Total', value: widget.summary.totalValue),
+                  ReadonlyInfoRow(
+                    label: 'Subtotal',
+                    value: widget.summary.preview == null
+                        ? '-'
+                        : '\$${widget.summary.preview!.subTotalAmount.toStringAsFixed(2)}',
+                  ),
+                  ...?widget.summary.preview?.feeBreakdowns.map(
+                    (line) => ReadonlyInfoRow(
+                      label: line.feeName,
+                      value: '${line.isDiscount ? '-' : ''}\$${line.appliedValue.toStringAsFixed(2)}',
+                    ),
+                  ),
+                  ReadonlyInfoRow(
+                    label: 'Discount',
+                    value: widget.summary.preview == null
+                        ? '\$0.00'
+                        : '-\$${widget.summary.preview!.discountAmount.toStringAsFixed(2)}',
+                  ),
+                  ReadonlyInfoRow(label: 'Final Amount', value: widget.summary.totalValue),
                 ],
               ),
             ),

@@ -21,12 +21,13 @@ public sealed class ProductManagementDto
     public decimal WeightValue { get; set; }
     public ProductWeightUnit WeightUnit { get; set; }
     public decimal BaseMarketPrice { get; set; }
-    public decimal ManualSellPrice { get; set; }
+    public decimal AutoPrice { get; set; }
+    public decimal FixedPrice { get; set; }
+    public decimal SellPrice { get; set; }
     public decimal OfferPercent { get; set; }
     public decimal OfferNewPrice { get; set; }
     public ProductOfferType OfferType { get; set; }
     public bool IsHasOffer { get; set; }
-    public decimal Price { get; set; }
     public int AvailableStock { get; set; }
     public bool IsActive { get; set; }
     public int SellerId { get; set; }

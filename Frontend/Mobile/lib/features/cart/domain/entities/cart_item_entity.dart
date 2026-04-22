@@ -42,11 +42,27 @@ class CartItemEntity {
 class CartSummaryEntity {
   const CartSummaryEntity({
     required this.subtotal,
-    required this.tax,
+    required this.totalFeesAmount,
+    required this.discountAmount,
     required this.total,
+    required this.feeBreakdowns,
   });
 
   final double subtotal;
-  final double tax;
+  final double totalFeesAmount;
+  final double discountAmount;
   final double total;
+  final List<CartFeeBreakdownEntity> feeBreakdowns;
+}
+
+class CartFeeBreakdownEntity {
+  const CartFeeBreakdownEntity({
+    required this.feeName,
+    required this.appliedValue,
+    required this.isDiscount,
+  });
+
+  final String feeName;
+  final double appliedValue;
+  final bool isDiscount;
 }

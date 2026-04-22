@@ -29,6 +29,54 @@ class WalletActionRemoteDataSource {
     return mode == 'live_price' ? SellExecutionMode.livePrice : SellExecutionMode.locked30Seconds;
   }
 
+  Future<WalletActionPreviewResult> previewWalletAction({
+    required WalletActionType actionType,
+    required int walletAssetId,
+    required int quantity,
+    required double unitPrice,
+    required double weight,
+    required double amount,
+  }) async {
+    final userId = AuthSessionStore.userId;
+    if (userId == null) {
+      throw Exception('No logged-in user. Please login first.');
+    }
+
+    final response = await _dio.post(
+      '/wallet/actions/preview',
+      data: {
+        'userId': userId,
+        'walletAssetId': walletAssetId,
+        'actionType': _mapActionType(actionType),
+        'quantity': quantity,
+        'unitPrice': unitPrice,
+        'weight': weight,
+        'amount': amount,
+      },
+    );
+
+    final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+    final feeBreakdowns = (data['feeBreakdowns'] as List<dynamic>? ?? [])
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (line) => WalletActionPreviewFeeLine(
+            feeName: (line['feeName'] ?? '').toString(),
+            appliedValue: (line['appliedValue'] as num?)?.toDouble() ?? 0,
+            isDiscount: (line['isDiscount'] as bool?) ?? false,
+          ),
+        )
+        .toList();
+
+    return WalletActionPreviewResult(
+      subTotalAmount: (data['subTotalAmount'] as num?)?.toDouble() ?? 0,
+      totalFeesAmount: (data['totalFeesAmount'] as num?)?.toDouble() ?? 0,
+      discountAmount: (data['discountAmount'] as num?)?.toDouble() ?? 0,
+      finalAmount: (data['finalAmount'] as num?)?.toDouble() ?? 0,
+      currency: (data['currency'] ?? 'USD').toString(),
+      feeBreakdowns: feeBreakdowns,
+    );
+  }
+
   Future<WalletActionExecutionResult> executeWalletAction(WalletActionExecutionRequest request) async {
     final userId = AuthSessionStore.userId;
     if (userId == null) {

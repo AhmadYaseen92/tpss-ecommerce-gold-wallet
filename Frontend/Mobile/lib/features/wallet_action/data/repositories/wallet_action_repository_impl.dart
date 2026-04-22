@@ -28,6 +28,25 @@ class WalletActionRepositoryImpl implements IWalletActionRepository {
   }
 
   @override
+  Future<WalletActionPreviewResult> previewWalletAction({
+    required WalletActionType actionType,
+    required int walletAssetId,
+    required int quantity,
+    required double unitPrice,
+    required double weight,
+    required double amount,
+  }) {
+    return _remoteDataSource.previewWalletAction(
+      actionType: actionType,
+      walletAssetId: walletAssetId,
+      quantity: quantity,
+      unitPrice: unitPrice,
+      weight: weight,
+      amount: amount,
+    );
+  }
+
+  @override
   Future<WalletActionExecutionResult> executeWalletAction(WalletActionExecutionRequest request) {
     return _remoteDataSource.executeWalletAction(request);
   }

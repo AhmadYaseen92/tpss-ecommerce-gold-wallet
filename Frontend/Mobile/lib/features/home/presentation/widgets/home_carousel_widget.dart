@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
@@ -5,132 +7,148 @@ import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/data/datasources/home_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/data/models/home_carousel_Item_model.dart';
 
-class HomeCarouselWidget extends StatelessWidget {
-  HomeCarouselWidget({super.key});
+class HomeCarouselWidget extends StatefulWidget {
+  const HomeCarouselWidget({super.key});
 
-  final HomeRemoteDataSource _remoteDataSource =
-      HomeRemoteDataSource(InjectionContainer.dio());
+  @override
+  State<HomeCarouselWidget> createState() => _HomeCarouselWidgetState();
+}
+
+class _HomeCarouselWidgetState extends State<HomeCarouselWidget> {
+  final HomeRemoteDataSource _remoteDataSource = HomeRemoteDataSource(InjectionContainer.dio());
+  StreamSubscription<String>? _realtimeSubscription;
+  List<HomeCarsouleItemModel> _items = const [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+    unawaited(_bindRealtime());
+  }
+
+  Future<void> _bindRealtime() async {
+    await InjectionContainer.realtimeRefreshService().ensureStarted();
+    _realtimeSubscription = InjectionContainer.realtimeRefreshService().refreshes.listen((_) {
+      unawaited(_load(silent: true));
+    });
+  }
+
+  Future<void> _load({bool silent = false}) async {
+    if (!silent && mounted) {
+      setState(() => _loading = true);
+    }
+    final data = await _remoteDataSource.getCarouselProductsWithOffers();
+    if (!mounted) return;
+    setState(() {
+      _items = data;
+      _loading = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    _realtimeSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<HomeCarsouleItemModel>>(
-      future: _remoteDataSource.getCarouselProductsWithOffers(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            height: 220,
-            child: Center(child: CircularProgressIndicator.adaptive()),
-          );
-        }
-        final items = snapshot.data ?? const <HomeCarsouleItemModel>[];
-        if (items.isEmpty) {
-          return Container(
-            height: 140,
-            width: double.infinity,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.black.withAlpha(10),
-            ),
-            child: const Text('No offer products available right now.'),
-          );
-        }
+    if (_loading) {
+      return const SizedBox(
+        height: 220,
+        child: Center(child: CircularProgressIndicator.adaptive()),
+      );
+    }
 
-        return FlutterCarousel.builder(
-          itemCount: items.length,
-          itemBuilder: (BuildContext context, int itemIndex, int pageViewIndex) =>
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 16.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12.0),
-                  child: Stack(
-                    fit: StackFit.expand,
+    if (_items.isEmpty) {
+      return Container(
+        height: 140,
+        width: double.infinity,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.black.withAlpha(10),
+        ),
+        child: const Text('No offer products available right now.'),
+      );
+    }
+
+    return FlutterCarousel.builder(
+      itemCount: _items.length,
+      itemBuilder: (BuildContext context, int itemIndex, int pageViewIndex) {
+        final item = _items[itemIndex];
+        final hasOffer = (item.offerLabel ?? '').isNotEmpty;
+        return Padding(
+          padding: const EdgeInsetsDirectional.only(end: 16.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12.0),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CachedNetworkImage(
+                  imageUrl: item.imgUrl,
+                  placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withAlpha(30),
+                        Colors.black.withAlpha(140),
+                      ],
+                    ),
+                  ),
+                ),
+                if (hasOffer)
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Text(
+                        item.offerLabel!,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: 12,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CachedNetworkImage(
-                        imageUrl: items[itemIndex].imgUrl,
-                        placeholder: (context, url) =>
-                            const Center(child: CircularProgressIndicator()),
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.error),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withAlpha(30),
-                              Colors.black.withAlpha(120),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if ((items[itemIndex].offerLabel ?? '').isNotEmpty)
-                        Positioned(
-                          top: 12,
-                          left: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent,
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: Text(
-                              items[itemIndex].offerLabel!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        left: 12,
-                        right: 12,
-                        bottom: 12,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              items[itemIndex].title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              items[itemIndex].sellerName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                      Text('${item.materialType} • ${item.pricingModeLabel}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      Text(item.sellerName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
+                      if (hasOffer)
+                        Text('\$${item.sourcePrice.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white70, fontSize: 11, decoration: TextDecoration.lineThrough)),
+                      Text('\$${item.sellPrice.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
-              ),
-          options: FlutterCarouselOptions(
-            height: 220.0,
-            autoPlay: true,
-            showIndicator: false,
-            enlargeCenterPage: true,
-            slideIndicator: CircularSlideIndicator(),
+              ],
+            ),
           ),
         );
       },
+      options: FlutterCarouselOptions(
+        height: 220.0,
+        autoPlay: true,
+        showIndicator: false,
+        enlargeCenterPage: true,
+        slideIndicator: CircularSlideIndicator(),
+      ),
     );
   }
 }

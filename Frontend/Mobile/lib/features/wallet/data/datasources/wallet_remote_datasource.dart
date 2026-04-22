@@ -12,10 +12,24 @@ class WalletRemoteDataSource {
       throw Exception('No logged-in user. Please login first.');
     }
 
-    final response = await _dio.post('/wallet/by-user', data: {'userId': userId});
-    final payload = response.data as Map<String, dynamic>;
-    final data = payload['data'] as Map<String, dynamic>? ?? {};
-    return WalletRemoteModel.fromJson(data);
+    try {
+      final response = await _dio.post('/wallet/by-user', data: {'userId': userId});
+      final payload = response.data as Map<String, dynamic>;
+      final data = payload['data'] as Map<String, dynamic>? ?? {};
+      return WalletRemoteModel.fromJson(data);
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode ?? 0;
+      if (statusCode == 400 || statusCode == 404) {
+        return WalletRemoteModel(
+          id: 0,
+          userId: userId,
+          cashBalance: 0,
+          currencyCode: 'USD',
+          assets: const <WalletAssetRemoteModel>[],
+        );
+      }
+      rethrow;
+    }
   }
 }
 

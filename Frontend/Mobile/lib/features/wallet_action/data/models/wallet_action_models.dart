@@ -13,6 +13,7 @@ class WalletActionSummary {
   final String primaryValue;
   final String feeValue;
   final String totalValue;
+  final WalletActionPreviewResult? preview;
   final String destinationLabel;
   final String destinationValue;
   final int? recipientInvestorUserId;
@@ -28,6 +29,7 @@ class WalletActionSummary {
     required this.primaryValue,
     required this.feeValue,
     required this.totalValue,
+    this.preview,
     required this.destinationLabel,
     required this.destinationValue,
     this.recipientInvestorUserId,
@@ -36,6 +38,36 @@ class WalletActionSummary {
     required this.createdAt,
     this.isPending = false,
   });
+}
+
+class WalletActionPreviewFeeLine {
+  const WalletActionPreviewFeeLine({
+    required this.feeName,
+    required this.appliedValue,
+    required this.isDiscount,
+  });
+
+  final String feeName;
+  final double appliedValue;
+  final bool isDiscount;
+}
+
+class WalletActionPreviewResult {
+  const WalletActionPreviewResult({
+    required this.subTotalAmount,
+    required this.totalFeesAmount,
+    required this.discountAmount,
+    required this.finalAmount,
+    required this.currency,
+    required this.feeBreakdowns,
+  });
+
+  final double subTotalAmount;
+  final double totalFeesAmount;
+  final double discountAmount;
+  final double finalAmount;
+  final String currency;
+  final List<WalletActionPreviewFeeLine> feeBreakdowns;
 }
 
 class WalletActionExecutionRequest {

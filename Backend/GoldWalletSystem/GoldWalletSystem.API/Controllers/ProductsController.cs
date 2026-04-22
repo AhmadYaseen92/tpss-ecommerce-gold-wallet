@@ -18,14 +18,14 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/products")]
-public class ProductsController(IProductService productService, AppDbContext dbContext, IWebHostEnvironment environment) : ControllerBase
+public class ProductsController(IProductService productService, AppDbContext dbContext, IWebHostEnvironment environment, API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
 {
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] ProductSearchRequestDto request, CancellationToken cancellationToken = default)
     {
         var data = await productService.GetProductsAsync(request.PageNumber, request.PageSize, request.Category, cancellationToken);
         var normalizedItems = data.Items
-            .Select(product => product with { ImageUrl = ToAbsoluteAssetUrl(product.ImageUrl) })
+            .Select(product => product with { ImageUrl = NormalizeRelativeImagePath(product.ImageUrl) })
             .ToList();
 
         var normalizedData = data with { Items = normalizedItems };
@@ -55,7 +55,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 Name = x.Name,
                 Sku = x.Sku,
                 Description = x.Description,
-                ImageUrl = ToAbsoluteAssetUrl(x.ImageUrl),
+                ImageUrl = NormalizeRelativeImagePath(x.ImageUrl),
                 Category = x.Category,
                 MaterialType = x.MaterialType,
                 FormType = x.FormType,
@@ -66,12 +66,13 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 WeightValue = x.WeightValue,
                 WeightUnit = x.WeightUnit,
                 BaseMarketPrice = x.BaseMarketPrice,
-                ManualSellPrice = x.ManualSellPrice,
+                AutoPrice = x.AutoPrice,
+                FixedPrice = x.FixedPrice,
+                SellPrice = x.SellPrice,
                 OfferPercent = x.OfferPercent,
                 OfferNewPrice = x.OfferNewPrice,
                 OfferType = x.OfferType,
                 IsHasOffer = x.IsHasOffer,
-                Price = ProductPricingCalculator.ApplyOffer(x.PricingMode == ProductPricingMode.Manual ? x.ManualSellPrice : ProductPricingCalculator.CalculateAutoPrice(x.MaterialType, x.BaseMarketPrice, x.WeightValue, x.PurityFactor), x.OfferType, x.OfferPercent, x.OfferNewPrice),
                 AvailableStock = x.AvailableStock,
                 IsActive = x.IsActive,
                 SellerId = x.SellerId
@@ -101,7 +102,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             Name = x.Name,
             Sku = x.Sku,
             Description = x.Description,
-            ImageUrl = ToAbsoluteAssetUrl(x.ImageUrl),
+            ImageUrl = NormalizeRelativeImagePath(x.ImageUrl),
             Category = x.Category,
             MaterialType = x.MaterialType,
             FormType = x.FormType,
@@ -112,12 +113,13 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             WeightValue = x.WeightValue,
             WeightUnit = x.WeightUnit,
             BaseMarketPrice = x.BaseMarketPrice,
-            ManualSellPrice = x.ManualSellPrice,
+            AutoPrice = x.AutoPrice,
+            FixedPrice = x.FixedPrice,
+            SellPrice = x.SellPrice,
             OfferPercent = x.OfferPercent,
             OfferNewPrice = x.OfferNewPrice,
             OfferType = x.OfferType,
             IsHasOffer = x.IsHasOffer,
-            Price = ProductPricingCalculator.ApplyOffer(x.PricingMode == ProductPricingMode.Manual ? x.ManualSellPrice : ProductPricingCalculator.CalculateAutoPrice(x.MaterialType, x.BaseMarketPrice, x.WeightValue, x.PurityFactor), x.OfferType, x.OfferPercent, x.OfferNewPrice),
             AvailableStock = x.AvailableStock,
             IsActive = x.IsActive,
             SellerId = x.SellerId
@@ -154,7 +156,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             WeightValue = request.WeightValue,
             WeightUnit = ProductWeightUnit.Gram,
             BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, sellerId, cancellationToken),
-            ManualSellPrice = request.ManualSellPrice,
+            FixedPrice = request.FixedPrice,
             OfferPercent = request.OfferPercent,
             OfferNewPrice = request.OfferNewPrice,
             OfferType = request.OfferType,
@@ -165,7 +167,9 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         };
 
         dbContext.Products.Add(product);
+        RecalculateComputedPrices(product);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"product:create:{product.Id}", cancellationToken);
 
         return Ok(ApiResponse<string>.Ok("Created"));
     }
@@ -211,7 +215,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.WeightValue = request.WeightValue;
         product.WeightUnit = ProductWeightUnit.Gram;
         product.BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, nextSellerId, cancellationToken);
-        product.ManualSellPrice = request.ManualSellPrice;
+        product.FixedPrice = request.FixedPrice;
         product.OfferPercent = request.OfferPercent;
         product.OfferNewPrice = request.OfferNewPrice;
         product.OfferType = request.OfferType;
@@ -220,7 +224,9 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.IsActive = request.IsActive;
         product.SellerId = nextSellerId;
 
+        RecalculateComputedPrices(product);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"product:update:{product.Id}", cancellationToken);
         return Ok(ApiResponse<string>.Ok("Updated"));
     }
 
@@ -246,6 +252,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
         dbContext.Products.Remove(product);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"product:delete:{id}", cancellationToken);
         return Ok(ApiResponse<string>.Ok("Deleted"));
     }
 
@@ -302,15 +309,14 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     private async Task<decimal> ResolveFinalPriceAsync(ProductUpsertRequest request, int sellerId, CancellationToken cancellationToken)
     {
         var marketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, sellerId, cancellationToken);
-        var sellPrice = request.PricingMode == ProductPricingMode.Manual
-            ? request.ManualSellPrice
-            : ProductPricingCalculator.CalculateAutoPrice(
+        var autoPrice = ProductPricingCalculator.CalculateAutoPrice(
                 request.MaterialType,
                 marketPrice,
                 request.WeightValue,
                 request.PurityFactor);
 
-        return ProductPricingCalculator.ApplyOffer(sellPrice, request.OfferType, request.OfferPercent, request.OfferNewPrice);
+        var sourcePrice = request.PricingMode == ProductPricingMode.Manual ? request.FixedPrice : autoPrice;
+        return ProductPricingCalculator.ApplyOffer(sourcePrice, request.OfferType, request.OfferPercent, request.OfferNewPrice);
     }
 
     [HttpGet("market-prices")]
@@ -341,6 +347,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await RecalculateAutoPricedProductsAsync(sellerId, cancellationToken);
+        await realtimeNotifier.BroadcastRefreshHintAsync($"market-price:{sellerId}", cancellationToken);
         return Ok(ApiResponse<MarketPriceConfigDto>.Ok(request));
     }
 
@@ -392,7 +399,8 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 product.PurityFactor);
 
             product.BaseMarketPrice = marketPrice;
-            product.ManualSellPrice = ProductPricingCalculator.ApplyOffer(autoPrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
+            product.AutoPrice = autoPrice;
+            RecalculateComputedPrices(product);
             product.UpdatedAtUtc = DateTime.UtcNow;
         }
 
@@ -400,6 +408,20 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
+    }
+
+
+    private static void RecalculateComputedPrices(Product product)
+    {
+        var autoPrice = ProductPricingCalculator.CalculateAutoPrice(
+            product.MaterialType,
+            product.BaseMarketPrice,
+            product.WeightValue,
+            product.PurityFactor);
+
+        product.AutoPrice = autoPrice;
+        var sourcePrice = product.PricingMode == ProductPricingMode.Manual ? product.FixedPrice : product.AutoPrice;
+        product.SellPrice = ProductPricingCalculator.ApplyOffer(sourcePrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
     }
 
     private int? ResolveSellerScope()
@@ -461,7 +483,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     {
         if (image is null || image.Length == 0)
         {
-            return existingImageUrl ?? string.Empty;
+            return NormalizeRelativeImagePath(existingImageUrl);
         }
 
         var root = environment.WebRootPath;
@@ -480,22 +502,32 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         await using var stream = System.IO.File.Create(fullPath);
         await image.CopyToAsync(stream, cancellationToken);
 
-        return $"/images/products/{fileName}";
+        return NormalizeRelativeImagePath($"/images/products/{fileName}");
     }
 
-    private string ToAbsoluteAssetUrl(string path)
+    private string NormalizeRelativeImagePath(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
-            return path;
+            return string.Empty;
         }
 
-        if (Uri.TryCreate(path, UriKind.Absolute, out _))
+        var trimmed = path.Trim();
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var absoluteUri))
         {
-            return path;
+            var isCurrentHost = string.Equals(absoluteUri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase);
+            var isLocalHost = string.Equals(absoluteUri.Host, "localhost", StringComparison.OrdinalIgnoreCase)
+                              || string.Equals(absoluteUri.Host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
+                              || string.Equals(absoluteUri.Host, "::1", StringComparison.OrdinalIgnoreCase);
+
+            if (isCurrentHost || isLocalHost)
+            {
+                return $"{absoluteUri.AbsolutePath}{absoluteUri.Query}";
+            }
+
+            return trimmed;
         }
 
-        var normalizedPath = path.StartsWith('/') ? path : $"/{path}";
-        return $"{Request.Scheme}://{Request.Host}{normalizedPath}";
+        return trimmed.StartsWith('/') ? trimmed : $"/{trimmed}";
     }
 }

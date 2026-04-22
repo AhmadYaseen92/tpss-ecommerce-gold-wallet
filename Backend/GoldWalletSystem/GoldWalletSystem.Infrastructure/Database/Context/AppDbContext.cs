@@ -335,7 +335,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.WeightValue).HasPrecision(18, 3);
             entity.Property(x => x.WeightUnit).HasConversion<int>();
             entity.Property(x => x.BaseMarketPrice).HasPrecision(18, 2);
-            entity.Property(x => x.ManualSellPrice).HasPrecision(18, 2);
+            entity.Property(x => x.AutoPrice).HasPrecision(18, 2);
+            entity.Property(x => x.FixedPrice).HasPrecision(18, 2);
+            entity.Property(x => x.SellPrice).HasPrecision(18, 2);
             entity.Property(x => x.OfferPercent).HasPrecision(8, 3);
             entity.Property(x => x.OfferNewPrice).HasPrecision(18, 2);
             entity.Property(x => x.OfferType).HasConversion<int>();

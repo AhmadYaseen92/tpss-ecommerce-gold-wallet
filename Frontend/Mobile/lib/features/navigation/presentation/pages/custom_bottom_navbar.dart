@@ -43,6 +43,7 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
       addCartProductUseCase: InjectionContainer.addCartProductUseCase(),
       removeCartProductUseCase: InjectionContainer.removeCartProductUseCase(),
       updateCartProductQuantityUseCase: InjectionContainer.updateCartProductQuantityUseCase(),
+      cartRepository: InjectionContainer.cartRepository(),
     );
     _getUnreadCount = InjectionContainer.getUnreadNotificationsCountUseCase().call;
     _refreshUnreadCount();

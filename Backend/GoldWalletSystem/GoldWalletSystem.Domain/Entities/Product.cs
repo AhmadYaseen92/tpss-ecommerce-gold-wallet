@@ -17,7 +17,9 @@ public class Product : BaseEntity
     public decimal WeightValue { get; set; }
     public ProductWeightUnit WeightUnit { get; set; } = ProductWeightUnit.Gram;
     public decimal BaseMarketPrice { get; set; }
-    public decimal ManualSellPrice { get; set; }
+    public decimal AutoPrice { get; set; }
+    public decimal FixedPrice { get; set; }
+    public decimal SellPrice { get; set; }
     public decimal OfferPercent { get; set; }
     public decimal OfferNewPrice { get; set; }
     public ProductOfferType OfferType { get; set; } = ProductOfferType.None;

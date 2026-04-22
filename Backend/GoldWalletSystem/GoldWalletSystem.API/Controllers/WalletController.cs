@@ -263,8 +263,87 @@ public class WalletController(
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
 
         var actionType = request.ActionType.Trim().ToLowerInvariant();
-        if (actionType is not ("sell" or "transfer" or "gift" or "pickup" or "certificate" or "invoice"))
+        if (actionType is not ("sell" or "transfer" or "gift" or "pickup" or "certificate" or "invoice" or "buy"))
             return BadRequest(ApiResponse<object>.Fail("Unsupported wallet action.", 400));
+
+        if (actionType == "buy")
+        {
+            var lines = new List<(Product Product, int Quantity)>();
+            if (request.FromCart)
+            {
+                var cart = await dbContext.Carts
+                    .Include(x => x.Items)
+                    .ThenInclude(x => x.Product)
+                    .FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+
+                if (cart is null)
+                    return NotFound(ApiResponse<object>.Fail("Cart not found.", 404));
+
+                var productIds = request.ProductIds ?? [];
+                var selectedItems = productIds.Count > 0
+                    ? cart.Items.Where(x => productIds.Contains(x.ProductId))
+                    : cart.Items;
+
+                lines.AddRange(selectedItems
+                    .Where(x => x.Product is not null)
+                    .Select(x => (x.Product!, x.Quantity)));
+            }
+            else
+            {
+                if (!request.ProductId.HasValue || request.Quantity <= 0)
+                    return BadRequest(ApiResponse<object>.Fail("ProductId and Quantity are required for direct buy preview.", 400));
+
+                var product = await dbContext.Products
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Id == request.ProductId.Value && x.IsActive, cancellationToken);
+
+                if (product is null)
+                    return NotFound(ApiResponse<object>.Fail("Product not found.", 404));
+
+                lines.Add((product, request.Quantity));
+            }
+
+            if (lines.Count == 0)
+                return BadRequest(ApiResponse<object>.Fail("No valid line items for buy preview.", 400));
+
+            decimal subTotalAmount = 0;
+            decimal totalFeesAmount = 0;
+            decimal discountAmount = 0;
+            decimal finalAmount = 0;
+            var feeBreakdowns = new List<Application.DTOs.Fees.FeeLineDto>();
+
+            foreach (var (product, quantity) in lines)
+            {
+                var productUnitPrice = product.SellPrice;
+                var lineSubTotal = productUnitPrice * quantity;
+                var lineFeeResult = await feeCalculationService.CalculateAsync(
+                    new Application.DTOs.Fees.FeeCalculationRequest(
+                        ActionType: "buy",
+                        ProductId: product.Id,
+                        SellerId: product.SellerId,
+                        NotionalAmount: lineSubTotal,
+                        Quantity: quantity,
+                        ClosePrice: productUnitPrice,
+                        DaysHeldAfterGrace: 0),
+                    cancellationToken);
+
+                subTotalAmount += lineFeeResult.SubTotalAmount;
+                totalFeesAmount += lineFeeResult.TotalFeesAmount;
+                discountAmount += lineFeeResult.DiscountAmount;
+                finalAmount += lineFeeResult.FinalAmount;
+                feeBreakdowns.AddRange(lineFeeResult.Lines);
+            }
+
+            return Ok(ApiResponse<object>.Ok(new
+            {
+                subTotalAmount,
+                totalFeesAmount,
+                discountAmount,
+                finalAmount,
+                currency = feeBreakdowns.FirstOrDefault()?.Currency ?? "USD",
+                feeBreakdowns
+            }));
+        }
 
         var wallet = await dbContext.Wallets
             .Include(x => x.Assets)
@@ -279,11 +358,12 @@ public class WalletController(
 
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
+        var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset.Id, asset.SellerId, cancellationToken);
 
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
                 ActionType: actionType,
-                ProductId: null,
+                ProductId: resolvedProductId,
                 SellerId: asset.SellerId,
                 NotionalAmount: grossAmount,
                 Quantity: request.Quantity,
@@ -352,11 +432,12 @@ public class WalletController(
 
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
+        var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset.Id, asset.SellerId, cancellationToken);
 
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
                 ActionType: actionType,
-                ProductId: null,
+                ProductId: resolvedProductId,
                 SellerId: asset.SellerId,
                 NotionalAmount: grossAmount,
                 Quantity: request.Quantity,
@@ -908,6 +989,43 @@ public class WalletController(
         return result;
     }
 
+    private async Task<int?> ResolveWalletAssetProductIdAsync(
+        int userId,
+        int walletAssetId,
+        int? sellerId,
+        CancellationToken cancellationToken)
+    {
+        var historyProductId = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.ProductId.HasValue)
+            .Where(x => x.WalletItemId == walletAssetId || EF.Functions.Like(x.Notes, $"%wallet_asset_id={walletAssetId}%"))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => x.ProductId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (historyProductId.HasValue && historyProductId.Value > 0)
+            return historyProductId.Value;
+
+        if (!sellerId.HasValue) return null;
+
+        var historyWithSku = await dbContext.TransactionHistories
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.SellerId == sellerId)
+            .Where(x => x.WalletItemId == walletAssetId || EF.Functions.Like(x.Notes, $"%wallet_asset_id={walletAssetId}%"))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new { x.Notes })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var sku = TryExtractSku(historyWithSku?.Notes);
+        if (string.IsNullOrWhiteSpace(sku)) return null;
+
+        return await dbContext.Products
+            .AsNoTracking()
+            .Where(x => x.SellerId == sellerId.Value && x.Sku == sku)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     private async Task<SellExecutionConfigurationResponse> ReadSellExecutionConfigurationAsync(CancellationToken cancellationToken)
     {
         var modeConfig = await dbContext.MobileAppConfigurations.AsNoTracking().FirstOrDefaultAsync(x => x.ConfigKey == MobileAppConfigurationKeys.WalletSellMode, cancellationToken);
@@ -942,6 +1060,9 @@ public class WalletController(
     {
         public int UserId { get; set; }
         public int WalletAssetId { get; set; }
+        public int? ProductId { get; set; }
+        public List<int>? ProductIds { get; set; }
+        public bool FromCart { get; set; }
         public string ActionType { get; set; } = "sell";
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }

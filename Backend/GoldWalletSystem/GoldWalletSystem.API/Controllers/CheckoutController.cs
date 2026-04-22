@@ -320,19 +320,7 @@ public class CheckoutController(
 
     private static decimal ResolveProductUnitPrice(Product product)
     {
-        var sellPrice = product.PricingMode == ProductPricingMode.Manual
-            ? product.ManualSellPrice
-            : ProductPricingCalculator.CalculateAutoPrice(
-                product.MaterialType,
-                product.BaseMarketPrice,
-                product.WeightValue,
-                product.PurityFactor);
-
-        return ProductPricingCalculator.ApplyOffer(
-            sellPrice,
-            product.OfferType,
-            product.OfferPercent,
-            product.OfferNewPrice);
+        return product.SellPrice;
     }
 
     private static AssetType ToAssetType(ProductCategory category) => category switch

@@ -4,7 +4,10 @@ class ProductEntity {
     required this.sellerId,
     required this.name,
     required this.description,
-    required this.price,
+    required this.baseMarketPrice,
+    required this.autoPrice,
+    required this.fixedPrice,
+    required this.sellPrice,
     required this.availableStock,
     required this.imageUrl,
     required this.category,
@@ -12,21 +15,24 @@ class ProductEntity {
     required this.isFavorite,
     required this.purity,
     required this.weight,
-    required this.metal,
+    required this.materialTypeLabel,
     required this.isInCart,
     required this.quantity,
     required this.sellerName,
     required this.offerType,
     required this.offerPercent,
     required this.offerNewPrice,
-    required this.finalPrice,
+    required this.pricingModeLabel,
   });
 
   final String id;
   final int sellerId;
   final String name;
   final String description;
-  final double price;
+  final double baseMarketPrice;
+  final double autoPrice;
+  final double fixedPrice;
+  final double sellPrice;
   final int availableStock;
   final String imageUrl;
   final String category;
@@ -34,21 +40,24 @@ class ProductEntity {
   final bool isFavorite;
   final String purity;
   final String weight;
-  final String metal;
+  final String materialTypeLabel;
   final bool isInCart;
   final int quantity;
   final String sellerName;
   final String offerType;
   final double offerPercent;
   final double offerNewPrice;
-  final double finalPrice;
+  final String pricingModeLabel;
 
   ProductEntity copyWith({
     String? id,
     int? sellerId,
     String? name,
     String? description,
-    double? price,
+    double? baseMarketPrice,
+    double? autoPrice,
+    double? fixedPrice,
+    double? sellPrice,
     int? availableStock,
     String? imageUrl,
     String? category,
@@ -56,21 +65,24 @@ class ProductEntity {
     bool? isFavorite,
     String? purity,
     String? weight,
-    String? metal,
+    String? materialTypeLabel,
     bool? isInCart,
     int? quantity,
     String? sellerName,
     String? offerType,
     double? offerPercent,
     double? offerNewPrice,
-    double? finalPrice,
+    String? pricingModeLabel,
   }) {
     return ProductEntity(
       id: id ?? this.id,
       sellerId: sellerId ?? this.sellerId,
       name: name ?? this.name,
       description: description ?? this.description,
-      price: price ?? this.price,
+      baseMarketPrice: baseMarketPrice ?? this.baseMarketPrice,
+      autoPrice: autoPrice ?? this.autoPrice,
+      fixedPrice: fixedPrice ?? this.fixedPrice,
+      sellPrice: sellPrice ?? this.sellPrice,
       availableStock: availableStock ?? this.availableStock,
       imageUrl: imageUrl ?? this.imageUrl,
       category: category ?? this.category,
@@ -78,14 +90,14 @@ class ProductEntity {
       isFavorite: isFavorite ?? this.isFavorite,
       purity: purity ?? this.purity,
       weight: weight ?? this.weight,
-      metal: metal ?? this.metal,
+      materialTypeLabel: materialTypeLabel ?? this.materialTypeLabel,
       isInCart: isInCart ?? this.isInCart,
       quantity: quantity ?? this.quantity,
       sellerName: sellerName ?? this.sellerName,
       offerType: offerType ?? this.offerType,
       offerPercent: offerPercent ?? this.offerPercent,
       offerNewPrice: offerNewPrice ?? this.offerNewPrice,
-      finalPrice: finalPrice ?? this.finalPrice,
+      pricingModeLabel: pricingModeLabel ?? this.pricingModeLabel,
     );
   }
 }

@@ -7,7 +7,6 @@ import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/pro
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/entities/sell_asset_entities.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/usecases/prepare_sell_asset_usecase.dart';
 
 part 'sell_asset_action_state.dart';
 
@@ -16,10 +15,8 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
     required this.initialAsset,
     required IWalletActionRepository repository,
     ProfileRemoteDataSource? profileRemoteDataSource,
-    PrepareSellAssetUseCase? prepareSellAssetUseCase,
   }) : _repository = repository,
        _profileRemoteDataSource = profileRemoteDataSource ?? ProfileRemoteDataSource(InjectionContainer.dio()),
-       _prepareSellAssetUseCase = prepareSellAssetUseCase ?? const PrepareSellAssetUseCase(),
        quantityController = TextEditingController(text: '1'),
        noteController = TextEditingController(),
        super(SellAssetActionInitial()) {
@@ -31,7 +28,6 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
   final WalletActionSummary initialAsset;
   final IWalletActionRepository _repository;
   final ProfileRemoteDataSource _profileRemoteDataSource;
-  final PrepareSellAssetUseCase _prepareSellAssetUseCase;
   final TextEditingController quantityController;
   final TextEditingController noteController;
 
@@ -110,19 +106,27 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
       final marketOpen = await _repository.isMarketOpen();
       final liquidity = await _repository.availableLiquidity();
       final lockedPrice = await _repository.lockUnitPrice(unitPrice);
-
-      final result = _prepareSellAssetUseCase(
-        SellAssetRequestEntity(
-          quantity: quantity,
-          maxQuantity: maxQuantity,
-          unitPrice: unitPrice,
-          marketOpen: marketOpen,
-          availableLiquidity: liquidity,
-          lockedPrice: lockedPrice,
-        ),
+      final quantityToSell = quantity;
+      final requestedWeight = maxQuantity == 0 ? 0.0 : (initialAsset.asset.weightInGrams / maxQuantity) * quantityToSell;
+      final grossAmount = unitPrice * quantityToSell;
+      final preview = await _repository.previewWalletAction(
+        actionType: WalletActionType.sell,
+        walletAssetId: initialAsset.asset.id,
+        quantity: quantityToSell,
+        unitPrice: unitPrice,
+        weight: requestedWeight,
+        amount: grossAmount,
       );
 
-      emit(SellAssetActionUpdated(result: result));
+      final result = SellAssetResultEntity(
+        quantity: quantityToSell,
+        grossAmount: preview.subTotalAmount,
+        feeAmount: preview.totalFeesAmount - preview.discountAmount,
+        receivedAmount: preview.finalAmount,
+        lockedUnitPrice: lockedPrice,
+      );
+
+      emit(SellAssetActionUpdated(result: result, preview: preview));
     } catch (e) {
       emit(SellAssetActionUpdated(result: null, errorMessage: e.toString()));
     }
@@ -196,6 +200,7 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
       primaryValue: '${result.quantity} Units',
       feeValue: formatCurrency(result.feeAmount),
       totalValue: formatCurrency(result.receivedAmount),
+      preview: state is SellAssetActionUpdated ? (state as SellAssetActionUpdated).preview : null,
       destinationLabel: 'Payout Method',
       destinationValue: payout,
       note: noteController.text.trim(),

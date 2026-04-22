@@ -38,30 +38,24 @@ class CartSummary extends StatelessWidget {
               Text('\$${summary.subtotal.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Opacity(opacity: 0.9, child: Text('Tax (5.0%)', style: TextStyle(color: palette.textSecondary))),
-              Text('\$${summary.tax.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
-            ],
+          ...summary.feeBreakdowns.map(
+            (line) => Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Opacity(opacity: 0.9, child: Text(line.feeName, style: TextStyle(color: palette.textSecondary))),
+                  Text('${line.isDiscount ? '-' : ''}\$${line.appliedValue.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Opacity(opacity: 0.9, child: Text('Fee', style: TextStyle(color: palette.textSecondary))),
-                  const SizedBox(width: 6),
-                  Icon(Icons.info_outline, size: 16, color: palette.textSecondary),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: AppColors.greenShade50, borderRadius: BorderRadius.circular(8)),
-                child: const Text('FREE', style: TextStyle(color: AppColors.green)),
-              ),
+              Opacity(opacity: 0.9, child: Text('Discount', style: TextStyle(color: palette.textSecondary))),
+              Text('-\$${summary.discountAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
             ],
           ),
           Divider(height: 20, color: palette.border),
@@ -92,6 +86,7 @@ class CartSummary extends StatelessWidget {
                     'fromCart': true,
                     'productIds': cartProductIds,
                     'amount': summary.total,
+                    'summary': summary,
                   },
                 );
                 if (result == true) {

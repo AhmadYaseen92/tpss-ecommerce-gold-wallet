@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dio/dio.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
@@ -21,23 +22,36 @@ class CheckoutPaymentPage extends StatefulWidget {
 }
 
 class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
-  final TextEditingController _discountCodeController = TextEditingController();
-  String? _discountError;
-  double _discountAmount = 0.0;
+  final Dio _dio = InjectionContainer.dio();
+  double _subTotalAmount = 0;
+  double _totalFeesAmount = 0;
+  double _discountAmount = 0;
+  double _finalAmount = 0;
+  List<Map<String, dynamic>> _feeBreakdowns = const [];
+  Map<String, dynamic> _checkoutArgs = const {};
+  bool _didInitPreview = false;
 
-  Map<String, dynamic> get _checkoutArgs {
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map<String, dynamic>) return args;
-    if (args is Map) {
-      return args.map((key, value) => MapEntry('$key', value));
-    }
-    return const {};
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override
-  void dispose() {
-    _discountCodeController.dispose();
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didInitPreview) return;
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic>) {
+      _checkoutArgs = args;
+    } else if (args is Map) {
+      _checkoutArgs = args.map((key, value) => MapEntry('$key', value));
+    } else {
+      _checkoutArgs = const {};
+    }
+
+    _didInitPreview = true;
+    _loadPreview();
   }
 
   @override
@@ -67,8 +81,6 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         },
         builder: (context, state) {
           final cubit = context.read<CheckoutCubit>();
-          final amount = ((_checkoutArgs['amount'] as num?) ?? 1250).toDouble();
-          final total = (amount - _discountAmount).clamp(0.0, double.infinity);
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
@@ -138,23 +150,6 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                     ),
                   ),
                   ActionSectionCard(
-                    title: 'Discount Code (Optional)',
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: _discountCodeController,
-                          textCapitalization: TextCapitalization.characters,
-                          decoration: InputDecoration(hintText: 'Enter discount code', errorText: _discountError, border: const OutlineInputBorder()),
-                        ),
-                        const SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: OutlinedButton(onPressed: () => _applyDiscountCode(amount), child: const Text('Apply Code')),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ActionSectionCard(
                     title: 'Review Summary',
                     child: Column(
                       children: [
@@ -163,11 +158,11 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                           _row(context, 'Account', cubit.linkedBankAccounts[cubit.selectedBankIndex].name),
                         if (cubit.selectedPaymentType == CheckoutPaymentType.card)
                           _row(context, 'Method', cubit.predefinedPaymentMethods[cubit.selectedPaymentIndex].name),
-                        _row(context, 'Amount', '\$${amount.toStringAsFixed(2)}'),
-                        _row(context, 'Fee', '\$0.00'),
+                        _row(context, 'Subtotal', '\$${_subTotalAmount.toStringAsFixed(2)}'),
+                        ..._feeBreakdowns.map((line) => _row(context, '${line['feeName']}', '${(line['isDiscount'] == true) ? '-' : ''}\$${((line['appliedValue'] as num?) ?? 0).toStringAsFixed(2)}')),
                         _row(context, 'Discount', '-\$${_discountAmount.toStringAsFixed(2)}'),
                         Divider(color: palette.border),
-                        _row(context, 'Total', '\$${total.toStringAsFixed(2)}', bold: true),
+                        _row(context, 'Final Amount', '\$${_finalAmount.toStringAsFixed(2)}', bold: true),
                       ],
                     ),
                   ),
@@ -259,30 +254,110 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     }
   }
 
-  void _applyDiscountCode(double amount) {
-    final raw = _discountCodeController.text.trim().toUpperCase();
-    if (raw.isEmpty) {
-      setState(() {
-        _discountAmount = 0.0;
-        _discountError = null;
-      });
+  Future<void> _loadPreview() async {
+    final args = _checkoutArgs;
+    final summary = args['summary'];
+    if (_applySummaryFromArgs(summary)) {
       return;
     }
 
-    const discountMap = <String, double>{'SAVE10': 0.10, 'GOLD5': 0.05, 'VIP15': 0.15};
-    final percent = discountMap[raw];
-    if (percent == null) {
-      setState(() {
-        _discountAmount = 0.0;
-        _discountError = 'Invalid discount code';
-      });
-      return;
-    }
+    final userId = AuthSessionStore.userId;
+    if (userId == null) return;
 
-    setState(() {
-      _discountError = null;
-      _discountAmount = amount * percent;
-    });
+    final fromCart = (args['fromCart'] as bool?) ?? false;
+    final productId = args['productId'];
+    final quantity = args['quantity'];
+    final productIds = (args['productIds'] as List<dynamic>? ?? [])
+        .map((e) => e is num ? e.toInt() : int.tryParse('$e'))
+        .whereType<int>()
+        .toList();
+
+    if (fromCart && productIds.isEmpty) return;
+    if (!fromCart && (productId == null || quantity == null)) return;
+
+    try {
+      final response = await _dio.post(
+        '/wallet/actions/preview',
+        data: {
+          'userId': userId,
+          'actionType': 'buy',
+          'fromCart': fromCart,
+          if (fromCart) 'productIds': productIds,
+          if (!fromCart) 'productId': productId,
+          if (!fromCart) 'quantity': quantity,
+        },
+      );
+      final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      if (!mounted) return;
+      setState(() {
+        _subTotalAmount = (data['subTotalAmount'] as num?)?.toDouble() ?? 0;
+        _totalFeesAmount = (data['totalFeesAmount'] as num?)?.toDouble() ?? 0;
+        _discountAmount = (data['discountAmount'] as num?)?.toDouble() ?? 0;
+        _finalAmount = (data['finalAmount'] as num?)?.toDouble() ?? 0;
+        _feeBreakdowns = (data['feeBreakdowns'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>().toList();
+      });
+    } catch (_) {
+      _applySummaryFromArgs(summary);
+    }
+  }
+
+  bool _applySummaryFromArgs(dynamic summary) {
+    if (summary == null) return false;
+
+    try {
+      if (summary is Map) {
+        final map = summary.map((key, value) => MapEntry('$key', value));
+        final feeLines = (map['feeBreakdowns'] as List<dynamic>? ?? [])
+            .map((line) {
+              if (line is Map) {
+                return {
+                  'feeName': (line['feeName'] ?? '').toString(),
+                  'appliedValue': _toDouble(line['appliedValue']),
+                  'isDiscount': line['isDiscount'] == true,
+                };
+              }
+              return <String, dynamic>{
+                'feeName': (line.feeName ?? '').toString(),
+                'appliedValue': _toDouble(line.appliedValue),
+                'isDiscount': line.isDiscount == true,
+              };
+            })
+            .toList();
+
+        if (!mounted) return false;
+        setState(() {
+          _subTotalAmount = _toDouble(map['subtotal'] ?? map['subTotalAmount']);
+          _totalFeesAmount = _toDouble(map['totalFeesAmount']);
+          _discountAmount = _toDouble(map['discountAmount']);
+          _finalAmount = _toDouble(map['total'] ?? map['finalAmount']);
+          _feeBreakdowns = feeLines;
+        });
+        return true;
+      }
+
+      if (!mounted) return false;
+      setState(() {
+        _subTotalAmount = _toDouble(summary.subtotal ?? summary.subTotalAmount);
+        _totalFeesAmount = _toDouble(summary.totalFeesAmount);
+        _discountAmount = _toDouble(summary.discountAmount);
+        _finalAmount = _toDouble(summary.total ?? summary.finalAmount);
+        _feeBreakdowns = (summary.feeBreakdowns as List<dynamic>? ?? [])
+            .map((line) => {
+                  'feeName': (line.feeName ?? '').toString(),
+                  'appliedValue': _toDouble(line.appliedValue),
+                  'isDiscount': line.isDiscount == true,
+                })
+            .toList();
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse('$value') ?? 0;
   }
 
   IconData _icon(CheckoutPaymentType type) {

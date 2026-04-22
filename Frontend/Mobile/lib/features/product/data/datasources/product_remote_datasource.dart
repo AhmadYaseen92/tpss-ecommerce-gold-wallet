@@ -48,7 +48,10 @@ class ProductRemoteModel {
     required this.sku,
     required this.description,
     required this.imageUrl,
-    required this.price,
+    required this.baseMarketPrice,
+    required this.autoPrice,
+    required this.fixedPrice,
+    required this.sellPrice,
     required this.availableStock,
     required this.categoryId,
     required this.weightValue,
@@ -58,7 +61,9 @@ class ProductRemoteModel {
     required this.offerType,
     required this.offerPercent,
     required this.offerNewPrice,
-    required this.finalPrice,
+    required this.pricingMode,
+    required this.materialType,
+    required this.isHasOffer,
     required this.purityKarat,
     required this.purityFactor,
   });
@@ -68,7 +73,10 @@ class ProductRemoteModel {
   final String sku;
   final String description;
   final String imageUrl;
-  final double price;
+  final double baseMarketPrice;
+  final double autoPrice;
+  final double fixedPrice;
+  final double sellPrice;
   final int availableStock;
   final int categoryId;
   final double weightValue;
@@ -78,7 +86,9 @@ class ProductRemoteModel {
   final String offerType;
   final double offerPercent;
   final double offerNewPrice;
-  final double finalPrice;
+  final String pricingMode;
+  final String materialType;
+  final bool isHasOffer;
   final String purityKarat;
   final double purityFactor;
 
@@ -89,7 +99,10 @@ class ProductRemoteModel {
       sku: (json['sku'] ?? '') as String,
       description: (json['description'] ?? '') as String,
       imageUrl: (json['imageUrl'] ?? '') as String,
-      price: (json['price'] as num?)?.toDouble() ?? 0,
+      baseMarketPrice: (json['baseMarketPrice'] as num?)?.toDouble() ?? 0,
+      autoPrice: (json['autoPrice'] as num?)?.toDouble() ?? 0,
+      fixedPrice: (json['fixedPrice'] as num?)?.toDouble() ?? 0,
+      sellPrice: (json['sellPrice'] as num?)?.toDouble() ?? (json['finalPrice'] as num?)?.toDouble() ?? (json['price'] as num?)?.toDouble() ?? 0,
       availableStock: (json['availableStock'] as num?)?.toInt() ?? 0,
       categoryId: _parseCategoryId(json['category']),
       weightValue: (json['weightValue'] as num?)?.toDouble() ?? 0,
@@ -99,7 +112,9 @@ class ProductRemoteModel {
       offerType: (json['offerType'] ?? 'None').toString(),
       offerPercent: (json['offerPercent'] as num?)?.toDouble() ?? 0,
       offerNewPrice: (json['offerNewPrice'] as num?)?.toDouble() ?? 0,
-      finalPrice: (json['finalPrice'] as num?)?.toDouble() ?? ((json['price'] as num?)?.toDouble() ?? 0),
+      pricingMode: (json['pricingMode'] ?? '').toString(),
+      materialType: (json['materialType'] ?? '').toString(),
+      isHasOffer: (json['isHasOffer'] as bool?) ?? false,
       purityKarat: (json['purityKarat'] ?? '').toString(),
       purityFactor: (json['purityFactor'] as num?)?.toDouble() ?? 0,
     );

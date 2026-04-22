@@ -41,6 +41,27 @@ class CartRepositoryImpl implements ICartRepository {
     await _remoteDataSource.updateProductQuantity(productId: productId, quantity: quantity);
   }
 
+  @override
+  Future<CartSummaryEntity> previewSummary(List<String> productIds) async {
+    final parsed = productIds.map((e) => int.tryParse(e)).whereType<int>().toList();
+    final preview = await _remoteDataSource.previewCheckout(productIds: parsed);
+    return CartSummaryEntity(
+      subtotal: preview.subTotalAmount,
+      totalFeesAmount: preview.totalFeesAmount,
+      discountAmount: preview.discountAmount,
+      total: preview.finalAmount,
+      feeBreakdowns: preview.feeBreakdowns
+          .map(
+            (line) => CartFeeBreakdownEntity(
+              feeName: line.feeName,
+              appliedValue: line.appliedValue,
+              isDiscount: line.isDiscount,
+            ),
+          )
+          .toList(),
+    );
+  }
+
   CartItemEntity _toEntity(CartRemoteItemModel model) {
     final normalizedImageUrl = _normalizeImageUrl(model.productImageUrl);
 

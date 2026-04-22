@@ -8,8 +8,16 @@ class CartRemoteDataSource {
 
   Future<List<CartRemoteItemModel>> getCartItems() async {
     final userId = _requireUserId();
-    final response = await _dio.post('/cart/by-user', data: {'userId': userId});
-    return _parseItems(response.data);
+    try {
+      final response = await _dio.post('/cart/by-user', data: {'userId': userId});
+      return _parseItems(response.data);
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode ?? 0;
+      if (statusCode == 400 || statusCode == 404) {
+        return const <CartRemoteItemModel>[];
+      }
+      rethrow;
+    }
   }
 
   Future<void> addProduct({required int productId, required int quantity}) async {
@@ -25,6 +33,39 @@ class CartRemoteDataSource {
   Future<void> removeProduct({required int productId}) async {
     final userId = _requireUserId();
     await _dio.delete('/cart/items/$userId/$productId');
+  }
+
+  Future<CartPreviewRemoteModel> previewCheckout({required List<int> productIds}) async {
+    final userId = _requireUserId();
+    final response = await _dio.post(
+      '/wallet/actions/preview',
+      data: {
+        'userId': userId,
+        'actionType': 'buy',
+        'fromCart': true,
+        'productIds': productIds,
+      },
+    );
+
+    final data = ((response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {});
+    final feeBreakdowns = (data['feeBreakdowns'] as List<dynamic>? ?? [])
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (line) => CartPreviewFeeBreakdownModel(
+            feeName: (line['feeName'] ?? '').toString(),
+            appliedValue: (line['appliedValue'] as num?)?.toDouble() ?? 0,
+            isDiscount: (line['isDiscount'] as bool?) ?? false,
+          ),
+        )
+        .toList();
+
+    return CartPreviewRemoteModel(
+      subTotalAmount: (data['subTotalAmount'] as num?)?.toDouble() ?? 0,
+      totalFeesAmount: (data['totalFeesAmount'] as num?)?.toDouble() ?? 0,
+      discountAmount: (data['discountAmount'] as num?)?.toDouble() ?? 0,
+      finalAmount: (data['finalAmount'] as num?)?.toDouble() ?? 0,
+      feeBreakdowns: feeBreakdowns,
+    );
   }
 
   int _requireUserId() {
@@ -87,4 +128,32 @@ class CartRemoteItemModel {
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
     );
   }
+}
+
+class CartPreviewRemoteModel {
+  CartPreviewRemoteModel({
+    required this.subTotalAmount,
+    required this.totalFeesAmount,
+    required this.discountAmount,
+    required this.finalAmount,
+    required this.feeBreakdowns,
+  });
+
+  final double subTotalAmount;
+  final double totalFeesAmount;
+  final double discountAmount;
+  final double finalAmount;
+  final List<CartPreviewFeeBreakdownModel> feeBreakdowns;
+}
+
+class CartPreviewFeeBreakdownModel {
+  CartPreviewFeeBreakdownModel({
+    required this.feeName,
+    required this.appliedValue,
+    required this.isDiscount,
+  });
+
+  final String feeName;
+  final double appliedValue;
+  final bool isDiscount;
 }
