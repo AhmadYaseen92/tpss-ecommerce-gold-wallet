@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dio/dio.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
@@ -25,8 +24,7 @@ class CheckoutPaymentPage extends StatefulWidget {
 }
 
 class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
-  final Dio _dio = InjectionContainer.dio();
-  ActionSummaryModel _summary = ActionSummaryModel.zero;
+  late final CheckoutCubit _checkoutCubit;
   CheckoutRouteArgs? _checkoutArgs;
   bool _didInitPreview = false;
   String? _routeArgsError;
@@ -34,6 +32,13 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   @override
   void initState() {
     super.initState();
+    _checkoutCubit = CheckoutCubit(InjectionContainer.dio());
+  }
+
+  @override
+  void dispose() {
+    _checkoutCubit.close();
+    super.dispose();
   }
 
   @override
@@ -63,15 +68,17 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
       });
       return;
     }
-    _loadPreview();
+    final initialSummary = _summaryFromArgs(_checkoutArgs?.summary);
+    _checkoutCubit.load(initialSummary: initialSummary);
+    _checkoutCubit.loadPreview(checkoutArgs: _checkoutArgs!);
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
 
-    return BlocProvider(
-      create: (_) => CheckoutCubit(InjectionContainer.dio())..load(),
+    return BlocProvider.value(
+      value: _checkoutCubit,
       child: BlocConsumer<CheckoutCubit, CheckoutState>(
         listener: (context, state) async {
           if (state is CheckoutSuccess) {
@@ -93,6 +100,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         },
         builder: (context, state) {
           final cubit = context.read<CheckoutCubit>();
+          final summary = cubit.summary;
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
@@ -170,11 +178,11 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                           _row(context, 'Account', cubit.linkedBankAccounts[cubit.selectedBankIndex].name),
                         if (cubit.selectedPaymentType == CheckoutPaymentType.card)
                           _row(context, 'Method', cubit.predefinedPaymentMethods[cubit.selectedPaymentIndex].name),
-                        _row(context, 'Subtotal', ActionSummaryBuilder.formatMoney(_summary.subTotalAmount, currency: _summary.currency)),
-                        ..._summary.feeBreakdowns.map((line) => _row(context, line.feeName, '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: _summary.currency)}')),
-                        _row(context, 'Discount', '-${ActionSummaryBuilder.formatMoney(_summary.discountAmount, currency: _summary.currency)}'),
+                        _row(context, 'Subtotal', ActionSummaryBuilder.formatMoney(summary.subTotalAmount, currency: summary.currency)),
+                        ...summary.feeBreakdowns.map((line) => _row(context, line.feeName, '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: summary.currency)}')),
+                        _row(context, 'Discount', '-${ActionSummaryBuilder.formatMoney(summary.discountAmount, currency: summary.currency)}'),
                         Divider(color: palette.border),
-                        _row(context, 'Final Amount', ActionSummaryBuilder.formatMoney(_summary.finalAmount, currency: _summary.currency), bold: true),
+                        _row(context, 'Final Amount', ActionSummaryBuilder.formatMoney(summary.finalAmount, currency: summary.currency), bold: true),
                       ],
                     ),
                   ),
@@ -267,59 +275,11 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     }
   }
 
-  Future<void> _loadPreview() async {
-    final args = _checkoutArgs;
-    if (args == null) return;
-
-    _applySummaryFromArgs(args.summary);
-
-    final userId = AuthSessionStore.userId;
-    if (userId == null) return;
-    final validationError = args.validate();
-    if (validationError != null) {
-      await AppModalAlert.show(
-        context,
-        message: validationError,
-        variant: AppModalAlertVariant.failed,
-      );
-      return;
-    }
-
-    final fromCart = args.source == CheckoutSource.cart;
-
+  ActionSummaryModel _summaryFromArgs(dynamic summary) {
     try {
-      final response = await _dio.post(
-        '/wallet/actions/preview',
-        data: {
-          'userId': userId,
-          'actionType': 'buy',
-          'fromCart': fromCart,
-          if (fromCart) 'productIds': args.productIds,
-          if (!fromCart) 'productId': args.productId,
-          if (!fromCart) 'quantity': args.quantity,
-        },
-      );
-      final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
-      if (!mounted) return;
-      setState(() {
-        _summary = ActionSummaryBuilder.fromBackendData(data);
-      });
+      return ActionSummaryBuilder.fromAny(summary);
     } catch (_) {
-      // Keep the pre-applied args summary as a fallback only when preview fails.
-    }
-  }
-
-  bool _applySummaryFromArgs(dynamic summary) {
-    if (summary == null) return false;
-
-    try {
-      if (!mounted) return false;
-      setState(() {
-        _summary = ActionSummaryBuilder.fromAny(summary);
-      });
-      return true;
-    } catch (_) {
-      return false;
+      return ActionSummaryModel.zero;
     }
   }
 
