@@ -5,13 +5,22 @@ class ActionSummaryBuilder {
 
   static ActionSummaryModel fromBackendData(Map<String, dynamic> data) {
     final feeBreakdowns = (data['feeBreakdowns'] as List<dynamic>? ?? [])
-        .whereType<Map>()
         .map(
-          (line) => ActionSummaryFeeBreakdownRow(
-            feeName: (line['feeName'] ?? '').toString(),
-            appliedValue: _toDouble(line['appliedValue']),
-            isDiscount: line['isDiscount'] == true,
-          ),
+          (line) {
+            if (line is Map) {
+              return ActionSummaryFeeBreakdownRow(
+                feeName: (line['feeName'] ?? '').toString(),
+                appliedValue: _toDouble(line['appliedValue']),
+                isDiscount: line['isDiscount'] == true,
+              );
+            }
+
+            return ActionSummaryFeeBreakdownRow(
+              feeName: _readDynamic(line, ['feeName']).toString(),
+              appliedValue: _toDouble(_readDynamic(line, ['appliedValue'])),
+              isDiscount: _readDynamic(line, ['isDiscount']) == true,
+            );
+          },
         )
         .toList();
 
@@ -44,12 +53,12 @@ class ActionSummaryBuilder {
 
     try {
       return fromBackendData({
-        'subTotalAmount': raw.subTotalAmount ?? raw.subtotal,
-        'totalFeesAmount': raw.totalFeesAmount,
-        'discountAmount': raw.discountAmount,
-        'finalAmount': raw.finalAmount ?? raw.total,
-        'currency': raw.currency,
-        'feeBreakdowns': raw.feeBreakdowns,
+        'subTotalAmount': _readDynamic(raw, ['subTotalAmount', 'subtotal']),
+        'totalFeesAmount': _readDynamic(raw, ['totalFeesAmount']),
+        'discountAmount': _readDynamic(raw, ['discountAmount']),
+        'finalAmount': _readDynamic(raw, ['finalAmount', 'total']),
+        'currency': _readDynamic(raw, ['currency']),
+        'feeBreakdowns': _readDynamic(raw, ['feeBreakdowns']),
       });
     } catch (_) {
       return ActionSummaryModel.zero;
@@ -72,5 +81,30 @@ class ActionSummaryBuilder {
   static double _toDouble(dynamic value) {
     if (value is num) return value.toDouble();
     return double.tryParse('$value') ?? 0;
+  }
+
+  static dynamic _readDynamic(dynamic raw, List<String> keys) {
+    for (final key in keys) {
+      try {
+        final value = switch (key) {
+          'subTotalAmount' => raw.subTotalAmount,
+          'subtotal' => raw.subtotal,
+          'totalFeesAmount' => raw.totalFeesAmount,
+          'discountAmount' => raw.discountAmount,
+          'finalAmount' => raw.finalAmount,
+          'total' => raw.total,
+          'currency' => raw.currency,
+          'feeBreakdowns' => raw.feeBreakdowns,
+          'feeName' => raw.feeName,
+          'appliedValue' => raw.appliedValue,
+          'isDiscount' => raw.isDiscount,
+          _ => null,
+        };
+        if (value != null) return value;
+      } catch (_) {
+        // Try next key.
+      }
+    }
+    return null;
   }
 }

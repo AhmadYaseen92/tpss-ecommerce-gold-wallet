@@ -255,9 +255,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   Future<void> _loadPreview() async {
     final args = _checkoutArgs;
     final summary = args['summary'];
-    if (_applySummaryFromArgs(summary)) {
-      return;
-    }
+    _applySummaryFromArgs(summary);
 
     final userId = AuthSessionStore.userId;
     if (userId == null) return;
@@ -291,7 +289,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         _summary = ActionSummaryBuilder.fromBackendData(data);
       });
     } catch (_) {
-      _applySummaryFromArgs(summary);
+      // Keep the pre-applied args summary as a fallback only when preview fails.
     }
   }
 
