@@ -37,6 +37,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<INotificationRealtimePublisher, NotificationRealtimePublisher>();
+        services.AddScoped<IPushNotificationSender, PushNotificationSender>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IMobileAppConfigurationService, MobileAppConfigurationService>();
         services.AddScoped<IWalletService, WalletService>();

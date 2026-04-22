@@ -7,4 +7,5 @@ abstract class INotificationRepository {
   });
 
   Future<void> markAsRead(int notificationId);
+  Future<int> getUnreadCount();
 }

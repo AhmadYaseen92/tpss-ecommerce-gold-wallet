@@ -30,6 +30,8 @@ import {
   fetchMarketplaceState,
   fetchWalletSellConfiguration,
   loginWithBackend,
+  markAllWebNotificationsAsRead,
+  markWebNotificationAsRead,
   registerSellerWithBackend,
   updateSellerKycStatusByAdmin,
   updateWalletSellConfiguration,
@@ -265,8 +267,18 @@ export function useMarketplace() {
     }
   };
 
-  const readNotification = (notificationId: string) => {
+  const readNotification = async (notificationId: string) => {
+    if (session.value?.accessToken) {
+      await markWebNotificationAsRead(session.value.accessToken, notificationId).catch(() => undefined);
+    }
     state.value.notifications = markNotificationAsRead(state.value.notifications, notificationId);
+  };
+
+  const readAllNotifications = async () => {
+    if (session.value?.accessToken) {
+      await markAllWebNotificationsAsRead(session.value.accessToken).catch(() => undefined);
+    }
+    state.value.notifications = state.value.notifications.map((item) => ({ ...item, isRead: true }));
   };
 
   const logout = () => {
@@ -346,6 +358,7 @@ export function useMarketplace() {
     updateInvestorStatus,
     updateRequestStatus,
     readNotification,
+    readAllNotifications,
     refreshMarketplaceState,
     signalRConnected,
     realtimeRefreshTick,

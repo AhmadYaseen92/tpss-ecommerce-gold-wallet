@@ -1,4 +1,5 @@
 using GoldWalletSystem.Application.DTOs.Common;
+using GoldWalletSystem.Application.DTOs.Notifications;
 using GoldWalletSystem.Application.DTOs.Otp;
 using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Services;
@@ -18,6 +19,7 @@ public class CheckoutController(
     AppDbContext dbContext,
     ICurrentUserService currentUser,
     IOtpService otpService,
+    INotificationService notificationService,
     API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
 {
     [HttpPost("otp/request")]
@@ -134,6 +136,7 @@ public class CheckoutController(
         }
 
         decimal totalAmount = 0;
+        var createdRequests = new List<TransactionHistory>();
         foreach (var (product, quantity) in lines)
         {
             if (product.AvailableStock < quantity)
@@ -144,7 +147,7 @@ public class CheckoutController(
             var grams = ToGrams(product.WeightValue, product.WeightUnit) * quantity;
             var purity = ParsePurity(product.Description);
 
-            dbContext.TransactionHistories.Add(new TransactionHistory
+            var requestHistory = new TransactionHistory
             {
                 UserId = request.UserId,
                 SellerId = product.SellerId,
@@ -160,7 +163,9 @@ public class CheckoutController(
                 Amount = product.Price * quantity,
                 Currency = wallet.CurrencyCode,
                 CreatedAtUtc = DateTime.UtcNow,
-            });
+            };
+            dbContext.TransactionHistories.Add(requestHistory);
+            createdRequests.Add(requestHistory);
         }
 
         if (fromCart && cart is not null)
@@ -187,6 +192,54 @@ public class CheckoutController(
         });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        var requestNumbers = createdRequests.Select(x => $"r-{x.Id}").ToList();
+        var requestNumbersText = string.Join(", ", requestNumbers.Take(3));
+        if (requestNumbers.Count > 3)
+        {
+            requestNumbersText = $"{requestNumbersText} +{requestNumbers.Count - 3} more";
+        }
+
+        var adminUserIds = await dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.Role == "Admin" && x.IsActive)
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        var distinctSellerIds = lines.Select(x => x.Product.SellerId).Distinct().ToList();
+        var sellerUserIds = await dbContext.Sellers
+            .AsNoTracking()
+            .Where(x => distinctSellerIds.Contains(x.Id))
+            .Select(x => x.UserId)
+            .ToListAsync(cancellationToken);
+
+        await notificationService.CreateAsync(new CreateNotificationRequestDto
+        {
+            UserId = request.UserId,
+            Type = NotificationType.RequestUpdated,
+            ReferenceType = NotificationReferenceType.Request,
+            ReferenceId = createdRequests.FirstOrDefault()?.Id,
+            ActionUrl = "/wallet/requests",
+            Title = "Checkout submitted",
+            Body = $"Your {(fromCart ? "cart" : "buy")} request is pending approval. Request: {requestNumbersText}."
+        }, cancellationToken);
+
+        var reviewerIds = adminUserIds.Concat(sellerUserIds).Distinct().ToList();
+        foreach (var reviewerId in reviewerIds)
+        {
+            await notificationService.CreateAsync(new CreateNotificationRequestDto
+            {
+                UserId = reviewerId,
+                Type = NotificationType.RequestUpdated,
+                ReferenceType = NotificationReferenceType.Request,
+                ReferenceId = createdRequests.FirstOrDefault()?.Id,
+                ActionUrl = "/web-admin/requests",
+                Role = "Admin",
+                Priority = 1,
+                Title = "New request needs your action",
+                Body = $"Investor #{request.UserId} submitted {lines.Count} checkout request item(s). Request: {requestNumbersText}."
+            }, cancellationToken);
+        }
+
         await realtimeNotifier.BroadcastRefreshHintAsync($"checkout:{request.UserId}", cancellationToken);
 
         return Ok(ApiResponse<object>.Ok(new

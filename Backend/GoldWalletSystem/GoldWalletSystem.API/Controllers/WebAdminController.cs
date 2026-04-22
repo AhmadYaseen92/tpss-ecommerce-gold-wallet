@@ -4,6 +4,7 @@ using GoldWalletSystem.Application.Constants;
 using System.Text;
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.DTOs.Admin;
+using GoldWalletSystem.Application.DTOs.Notifications;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Enums;
@@ -20,6 +21,7 @@ namespace GoldWalletSystem.API.Controllers;
 public class WebAdminController(
     AppDbContext dbContext,
     IWebAdminDashboardService dashboardService,
+    INotificationService notificationService,
     IMarketplaceRealtimeNotifier realtimeNotifier,
     IWebHostEnvironment environment) : ControllerBase
 {
@@ -485,16 +487,17 @@ public class WebAdminController(
             Details = $"Request {item.Id}: {previousStatus} -> {item.Status}, type={item.TransactionType}, amount={item.Amount} {item.Currency}",
             CreatedAtUtc = DateTime.UtcNow
         });
-        dbContext.AppNotifications.Add(new Domain.Entities.AppNotification
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await notificationService.CreateAsync(new CreateNotificationRequestDto
         {
             UserId = item.UserId,
+            Type = nextStatus == "approved" ? NotificationType.OrderApproved : NotificationType.RequestUpdated,
+            ReferenceType = NotificationReferenceType.Request,
+            ReferenceId = item.Id,
+            ActionUrl = "/wallet/requests",
             Title = "Request Status Updated",
-            Body = $"Your {item.TransactionType} request was {item.Status}.",
-            IsRead = false,
-            CreatedAtUtc = DateTime.UtcNow
-        });
-
-        await dbContext.SaveChangesAsync(cancellationToken);
+            Body = $"Your {item.TransactionType} request was {item.Status}. Request: r-{item.Id}."
+        }, cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"request-status:{requestId}:{item.Status}", cancellationToken);
         if (nextStatus == "approved" && item.TransactionType is not null)
         {
@@ -748,8 +751,12 @@ public class WebAdminController(
     [HttpGet("notifications")]
     public async Task<IActionResult> GetNotifications(CancellationToken cancellationToken)
     {
+        var currentUserId = GetCurrentUserId();
+        if (currentUserId is null) return Unauthorized(ApiResponse<object>.Fail("Unauthorized", 401));
+
         var notifications = await dbContext.AppNotifications
             .AsNoTracking()
+            .Where(x => x.UserId == currentUserId.Value)
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(50)
             .Select(x => new WebNotificationDto
@@ -779,16 +786,53 @@ public class WebAdminController(
     [HttpPut("notifications/{id}/read")]
     public async Task<IActionResult> MarkNotificationAsRead(string id, CancellationToken cancellationToken)
     {
+        var currentUserId = GetCurrentUserId();
+        if (currentUserId is null) return Unauthorized(ApiResponse<object>.Fail("Unauthorized", 401));
+
         var notificationId = TryParsePrefixedId(id, "n-");
         if (notificationId is null) return NotFound(ApiResponse<object>.Fail("Notification not found", 404));
 
-        var item = await dbContext.AppNotifications.FirstOrDefaultAsync(x => x.Id == notificationId, cancellationToken);
+        var item = await dbContext.AppNotifications.FirstOrDefaultAsync(x => x.Id == notificationId && x.UserId == currentUserId.Value, cancellationToken);
         if (item is null) return NotFound(ApiResponse<object>.Fail("Notification not found", 404));
 
         item.IsRead = true;
         item.UpdatedAtUtc = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ApiResponse<string>.Ok("updated"));
+    }
+
+    [HttpPut("notifications/read-all")]
+    public async Task<IActionResult> MarkAllNotificationsAsRead(CancellationToken cancellationToken)
+    {
+        var currentUserId = GetCurrentUserId();
+        if (currentUserId is null) return Unauthorized(ApiResponse<object>.Fail("Unauthorized", 401));
+
+        var unread = await dbContext.AppNotifications
+            .Where(x => x.UserId == currentUserId.Value && !x.IsRead)
+            .ToListAsync(cancellationToken);
+
+        var utcNow = DateTime.UtcNow;
+        foreach (var item in unread)
+        {
+            item.IsRead = true;
+            item.ReadAtUtc = utcNow;
+            item.UpdatedAtUtc = utcNow;
+        }
+
+        if (unread.Count > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return Ok(ApiResponse<string>.Ok("updated"));
+    }
+
+    private int? GetCurrentUserId()
+    {
+        var claimValue = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value
+            ?? User.FindFirst("sub")?.Value
+            ?? User.FindFirst("user_id")?.Value;
+        return int.TryParse(claimValue, out var parsed) ? parsed : null;
     }
 
     private async Task PopulateRequestProductNamesAsync(List<WebRequestDto> requests, CancellationToken cancellationToken)

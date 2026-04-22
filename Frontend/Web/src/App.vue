@@ -143,6 +143,7 @@ const handleLogout = () => {
     @logout="handleLogout"
     @theme-toggle="isDark = !isDark"
     @notification-read="marketplace.readNotification"
+    @notifications-read-all="marketplace.readAllNotifications"
   >
     <component :is="activeComponent" :marketplace="marketplace" />
   </AppShell>

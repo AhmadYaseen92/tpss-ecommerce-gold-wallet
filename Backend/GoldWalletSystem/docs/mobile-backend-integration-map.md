@@ -65,10 +65,16 @@ Required entities/fields:
 ## 6) Notifications
 
 - `POST /api/notifications/search`
-- `PUT /api/notifications/read`
+- `POST /api/notifications/my/search`
+- `GET /api/notifications/my/unread-count`
+- `PUT /api/notifications/my/read`
+- `PUT /api/notifications/my/read-all`
+- `POST /api/notifications/my/push-tokens/register`
+- `POST /api/notifications/my/push-tokens/unregister`
 
 Required entities/fields:
-- `AppNotifications`: `UserId`, `Title`, `Body`, `IsRead`, `CreatedAtUtc`
+- `AppNotifications`: `UserId`, `Type`, `ReferenceType`, `ReferenceId`, `ActionUrl`, `Title`, `Body`, `IsRead`, `ReadAtUtc`, `CreatedAtUtc`
+- `UserPushTokens`: `UserId`, `DeviceToken`, `Platform`, `DeviceName`, `IsActive`, `CreatedAtUtc`
 
 ## Seller scoping rules
 

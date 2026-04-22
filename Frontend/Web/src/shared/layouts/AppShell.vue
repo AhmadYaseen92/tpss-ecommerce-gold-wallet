@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import type { NavigationKey, NotificationItem, UserRole } from "../types/models";
 
-defineProps<{
+const props = defineProps<{
   role: UserRole;
   activeMenu: NavigationKey;
   menuItems: Array<{ key: NavigationKey; label: string }>;
@@ -16,12 +16,15 @@ const emit = defineEmits<{
   logout: [];
   themeToggle: [];
   notificationRead: [notificationId: string];
+  notificationsReadAll: [];
 }>();
 
 const openNotifications = ref(false);
 const openSettings = ref(false);
+const toastMessage = ref("");
 const passwordForm = reactive({ currentPassword: "", newPassword: "", confirmPassword: "" });
 const passwordMessage = ref("");
+let lastSeenNotificationId: string | null = null;
 
 const closeAllPanels = () => {
   openNotifications.value = false;
@@ -53,11 +56,36 @@ const submitPasswordChange = () => {
 
 onMounted(() => {
   window.addEventListener("keydown", onEsc);
+  lastSeenNotificationId = props.notifications[0]?.id ?? null;
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", onEsc);
 });
+
+watch(
+  () => props.notifications,
+  (items) => {
+    if (items.length === 0) return;
+    const newest = items[0];
+    if (!newest.isRead && newest.id !== lastSeenNotificationId) {
+      toastMessage.value = `${newest.title} — ${newest.message}`;
+      window.setTimeout(() => {
+        toastMessage.value = "";
+      }, 4000);
+    }
+    lastSeenNotificationId = newest.id;
+  },
+  { deep: true }
+);
+
+const formatLocalDateTime = (iso: string) => {
+  const value = new Date(iso);
+  return value.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+};
 </script>
 
 <template>
@@ -116,18 +144,26 @@ onBeforeUnmount(() => {
       <aside v-if="openNotifications" class="vertical-modal right">
         <div class="modal-head">
           <h4>Notifications</h4>
-          <button class="ghost" @click="openNotifications = false">✕</button>
+          <div class="modal-actions">
+            <button class="ghost" @click="emit('notificationsReadAll')">Mark all read</button>
+            <button class="ghost" @click="openNotifications = false">✕</button>
+          </div>
         </div>
         <ul>
-          <li v-for="notice in notifications.slice(0, 8)" :key="notice.id">
+          <li v-for="notice in notifications.slice(0, 8)" :key="notice.id" :class="{ unread: !notice.isRead }">
             <div>
               <strong>{{ notice.title }}</strong>
               <p>{{ notice.message }}</p>
+              <small>{{ formatLocalDateTime(notice.createdAt) }}</small>
             </div>
             <button class="ghost" @click="emit('notificationRead', notice.id)">Mark read</button>
           </li>
         </ul>
       </aside>
+
+      <div v-if="toastMessage" class="notification-toast">
+        {{ toastMessage }}
+      </div>
 
       <aside v-if="openSettings" class="vertical-modal right settings">
         <div class="modal-head">

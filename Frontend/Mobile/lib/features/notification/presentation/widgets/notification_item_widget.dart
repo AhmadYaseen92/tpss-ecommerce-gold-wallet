@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/entities/notification_entity.dart';
@@ -21,17 +22,29 @@ class NotificationItemWidget extends StatelessWidget {
     final iconData = _iconForTitle(notification.title);
     final iconColor = _iconColorForTitle(notification.title);
 
+    final createdAtLocal = notification.createdAt.toLocal();
+    final now = DateTime.now();
+    final isTodayDate = createdAtLocal.year == now.year &&
+        createdAtLocal.month == now.month &&
+        createdAtLocal.day == now.day;
+    final localDateText = isTodayDate
+        ? 'Today ${DateFormat.jm().format(createdAtLocal)}'
+        : DateFormat.yMMMd().add_jm().format(createdAtLocal);
+
     return GestureDetector(
       onTap: () => context.read<NotificationCubit>().markNotificationAsRead(notification.id),
       child: Opacity(
-        opacity: notification.isRead ? 0.7 : 1,
+        opacity: notification.isRead ? 0.78 : 1,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: palette.surface,
+            color: notification.isRead ? palette.surface : palette.surface.withOpacity(0.95),
             borderRadius: BorderRadius.circular(14),
-            border: isToday ? null : Border.all(color: palette.border, width: 1),
+            border: Border.all(
+              color: notification.isRead ? palette.border : palette.primary.withOpacity(0.5),
+              width: notification.isRead ? 1 : 1.3,
+            ),
             boxShadow: isToday
                 ? [BoxShadow(color: Colors.black.withAlpha(30), blurRadius: 8, offset: const Offset(0, 2))]
                 : null,
@@ -66,12 +79,16 @@ class NotificationItemWidget extends StatelessWidget {
                         Expanded(
                           child: Text(
                             notification.title,
-                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: palette.textPrimary),
+                            style: TextStyle(
+                              fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.w800,
+                              fontSize: 14,
+                              color: palette.textPrimary,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          context.read<NotificationCubit>().formatTime(notification.createdAt),
+                          localDateText,
                           style: TextStyle(fontSize: 12, color: palette.textSecondary),
                         ),
                       ],
@@ -79,7 +96,12 @@ class NotificationItemWidget extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       notification.body,
-                      style: TextStyle(fontSize: 13, color: palette.textSecondary, height: 1.4),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: notification.isRead ? palette.textSecondary : palette.textPrimary,
+                        fontWeight: notification.isRead ? FontWeight.w400 : FontWeight.w500,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),
