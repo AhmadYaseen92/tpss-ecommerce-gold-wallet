@@ -11,6 +11,7 @@ class CalculateCartSummaryUseCase {
       totalFeesAmount: 0,
       discountAmount: 0,
       total: subtotal,
+      currency: 'USD',
       feeBreakdowns: const [],
     );
   }
