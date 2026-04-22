@@ -38,10 +38,10 @@ const formatStatus = (status: string) => {
     <p><strong>Weight:</strong> {{ item.weight.toFixed(3) }} {{ item.unit }}</p>
     <p><strong>Purity:</strong> {{ item.purity }}%</p>
     <p><strong>Unit Price:</strong> {{ formatCurrency(item.unitPrice, item.currency) }}</p>
-    <p><strong>Subtotal:</strong> {{ formatCurrency(item.subTotalAmount ?? item.amount, item.currency) }}</p>
-    <p><strong>Total Fees:</strong> {{ formatCurrency(item.totalFeesAmount ?? 0, item.currency) }}</p>
+    <p><strong>Subtotal:</strong> {{ formatCurrency(item.subTotalAmount ?? item.finalAmount, item.currency) }}</p>
+    <p><strong>Fees:</strong> {{ formatCurrency(item.totalFeesAmount ?? 0, item.currency) }}</p>
     <p><strong>Discount:</strong> {{ formatCurrency(item.discountAmount ?? 0, item.currency) }}</p>
-    <p><strong>Final Amount:</strong> {{ formatCurrency(item.finalAmount ?? item.amount, item.currency) }}</p>
+    <p><strong>Final Amount:</strong> {{ formatCurrency(item.finalAmount, item.currency) }}</p>
     <p><strong>Currency:</strong> {{ item.currency }}</p>
     <div v-if="item.feeBreakdowns && item.feeBreakdowns.length">
       <p><strong>Fee Breakdown:</strong></p>

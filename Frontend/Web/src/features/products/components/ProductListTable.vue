@@ -18,7 +18,7 @@ const emit = defineEmits<{ view: [product: ProductListItem]; edit: [product: Pro
         <td>{{ p.sku }}</td>
         <td>{{ p.category }}</td>
         <td>{{ p.weightValue }} {{ p.weightUnit }}</td>
-        <td>{{ p.price }}</td>
+        <td>{{ p.finalPrice }}</td>
         <td>{{ p.availableStock }}</td>
         <td>{{ p.isActive }}</td>
         <td>

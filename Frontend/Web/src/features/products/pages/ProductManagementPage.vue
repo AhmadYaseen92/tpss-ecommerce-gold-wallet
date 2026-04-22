@@ -105,7 +105,7 @@ const pagedProducts = computed(() => {
             <td class="description">{{ product.description }}</td>
             <td>{{ product.category }}</td>
             <td>{{ product.weightValue }} {{ product.weightUnit }}</td>
-            <td>{{ product.price }}</td>
+            <td>{{ product.finalPrice }}</td>
             <td>{{ product.availableStock }}</td>
             <td>{{ product.isActive ? 'Yes' : 'No' }}</td>
             <td>

@@ -31,7 +31,7 @@ export interface TransactionRowView {
   subTotalAmount?: number;
   totalFeesAmount?: number;
   discountAmount?: number;
-  finalAmount?: number;
+  finalAmount: number;
   feeBreakdowns?: TransactionFeeBreakdownView[];
   currency: string;
   status: string;

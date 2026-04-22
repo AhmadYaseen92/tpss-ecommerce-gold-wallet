@@ -263,6 +263,7 @@ export interface ProductManagementDto {
   isHasOffer: boolean;
   offerPercent: number;
   offerNewPrice: number;
+  finalPrice: number;
   availableStock: number;
   isActive: boolean;
   sellerId: number;

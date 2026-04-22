@@ -80,8 +80,8 @@ const mapProduct = (dto: ProductDto): Product => ({
   sellerId: `s-${dto.sellerId}`,
   name: dto.name,
   category: dto.category,
-  unitPrice: dto.price,
-  marketPrice: dto.price,
+  unitPrice: dto.finalPrice,
+  marketPrice: dto.finalPrice,
   stock: dto.availableStock,
   updatedAt: new Date().toISOString().split("T")[0]
 });
@@ -403,13 +403,9 @@ export interface ProductFormPayload {
   weightValue: number;
   baseMarketPrice: number;
   manualSellPrice: number;
-  deliveryFee: number;
-  storageFee: number;
-  serviceCharge: number;
   offerType: number;
   offerPercent: number;
   offerNewPrice: number;
-  price: number;
   availableStock: number;
   isActive: boolean;
   sellerId?: number;
@@ -440,15 +436,12 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
     weightValue: item.weightValue,
     weightUnit: item.weightUnit,
     baseMarketPrice: item.baseMarketPrice,
-    manualSellPrice: item.price,
-    deliveryFee: item.deliveryFee,
-    storageFee: item.storageFee,
-    serviceCharge: item.serviceCharge,
+    manualSellPrice: item.finalPrice,
     offerType: item.offerType,
     isHasOffer: item.isHasOffer,
     offerPercent: item.offerPercent,
     offerNewPrice: item.offerNewPrice,
-    price: item.price,
+    finalPrice: item.finalPrice,
     availableStock: item.availableStock,
     isActive: true,
     sellerId: item.sellerId,

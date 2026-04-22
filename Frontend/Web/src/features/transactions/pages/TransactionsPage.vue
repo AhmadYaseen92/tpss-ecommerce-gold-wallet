@@ -97,7 +97,7 @@ const statusOptions = (trx: TransactionRowView) => {
         </td>
         <td>{{ formatQty(trx.quantity) }}</td>
         <td>{{ formatWeight(trx.weight, trx.unit) }}</td>
-        <td>{{ formatAmount(trx.finalAmount ?? trx.amount, trx.currency) }}</td>
+        <td>{{ formatAmount(trx.finalAmount, trx.currency) }}</td>
         <td>
           <select
             v-if="canEditStatus(trx)"
