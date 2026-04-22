@@ -2,6 +2,7 @@ using GoldWalletSystem.Application.DTOs.Cart;
 using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Entities;
+using GoldWalletSystem.Domain.Enums;
 
 namespace GoldWalletSystem.Application.Services;
 
@@ -150,10 +151,18 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
 
     private static decimal ResolveProductUnitPrice(Product product)
     {
-        var basePrice = product.HasManualPrice
-            ? product.PricePerGram
-            : ProductPricingCalculator.CalculateAutoBasePrice(product.WeightValue, product.WeightUnit);
+        var sellPrice = product.PricingMode == ProductPricingMode.Manual
+            ? product.ManualSellPrice
+            : ProductPricingCalculator.CalculateAutoPrice(
+                product.MaterialType,
+                product.BaseMarketPrice,
+                product.WeightValue,
+                product.PurityFactor);
 
-        return ProductPricingCalculator.ApplyOffer(basePrice, product.OfferType, product.OfferValue);
+        return ProductPricingCalculator.ApplyOffer(
+            sellPrice,
+            product.OfferType,
+            product.OfferPercent,
+            product.OfferNewPrice);
     }
 }
