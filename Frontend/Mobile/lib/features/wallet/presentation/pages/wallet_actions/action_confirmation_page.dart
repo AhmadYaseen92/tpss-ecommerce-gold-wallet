@@ -7,6 +7,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/otp_input_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/readonly_info_row.dart';
@@ -106,23 +107,30 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                         ReadonlyInfoRow(label: 'Amount', value: widget.summary.primaryValue),
                         ReadonlyInfoRow(
                           label: 'Subtotal',
-                          value: widget.summary.preview == null
-                              ? '-'
-                              : '\$${widget.summary.preview!.subTotalAmount.toStringAsFixed(2)}',
+                          value: ActionSummaryBuilder.formatMoney(
+                            widget.summary.summary.subTotalAmount,
+                            currency: widget.summary.summary.currency,
+                          ),
                         ),
-                        ...?widget.summary.preview?.feeBreakdowns.map(
+                        ...widget.summary.summary.feeBreakdowns.map(
                           (line) => ReadonlyInfoRow(
                             label: line.feeName,
-                            value: '${line.isDiscount ? '-' : ''}\$${line.appliedValue.toStringAsFixed(2)}',
+                            value:
+                                '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: widget.summary.summary.currency)}',
                           ),
                         ),
                         ReadonlyInfoRow(
                           label: 'Discount',
-                          value: widget.summary.preview == null
-                              ? '\$0.00'
-                              : '-\$${widget.summary.preview!.discountAmount.toStringAsFixed(2)}',
+                          value:
+                              '-${ActionSummaryBuilder.formatMoney(widget.summary.summary.discountAmount, currency: widget.summary.summary.currency)}',
                         ),
-                        ReadonlyInfoRow(label: 'Final Amount', value: widget.summary.totalValue),
+                        ReadonlyInfoRow(
+                          label: 'Final Amount',
+                          value: ActionSummaryBuilder.formatMoney(
+                            widget.summary.summary.finalAmount,
+                            currency: widget.summary.summary.currency,
+                          ),
+                        ),
                         ReadonlyInfoRow(label: widget.summary.destinationLabel, value: widget.summary.destinationValue),
                         if (widget.summary.note != null && widget.summary.note!.isNotEmpty)
                           ReadonlyInfoRow(label: 'Note', value: widget.summary.note!),
@@ -143,7 +151,13 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (_isSellFlow && _sellExecutionMode == SellExecutionMode.locked30Seconds) ...[
-                          ReadonlyInfoRow(label: 'Locked Price', value: widget.summary.totalValue),
+                          ReadonlyInfoRow(
+                            label: 'Locked Price',
+                            value: ActionSummaryBuilder.formatMoney(
+                              widget.summary.summary.finalAmount,
+                              currency: widget.summary.summary.currency,
+                            ),
+                          ),
                           ReadonlyInfoRow(label: 'Timer', value: _formatSeconds(_secondsLeft)),
                           const SizedBox(height: 8),
                           const Text('This price is locked for 30 seconds.'),

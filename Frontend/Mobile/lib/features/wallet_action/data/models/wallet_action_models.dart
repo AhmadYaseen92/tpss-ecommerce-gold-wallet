@@ -1,4 +1,5 @@
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/models/action_summary_model.dart';
 
 enum WalletActionType { sell, transfer, gift, pickup, convertToCash, convertToCrypto }
 
@@ -11,8 +12,7 @@ class WalletActionSummary {
   final WalletActionType actionType;
   final String title;
   final String primaryValue;
-  final String feeValue;
-  final String totalValue;
+  final ActionSummaryModel summary;
   final WalletActionPreviewResult? preview;
   final String destinationLabel;
   final String destinationValue;
@@ -27,8 +27,7 @@ class WalletActionSummary {
     required this.actionType,
     required this.title,
     required this.primaryValue,
-    required this.feeValue,
-    required this.totalValue,
+    required this.summary,
     this.preview,
     required this.destinationLabel,
     required this.destinationValue,

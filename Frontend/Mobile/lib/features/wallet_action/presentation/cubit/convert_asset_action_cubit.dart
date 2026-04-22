@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/profile_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
@@ -97,8 +98,14 @@ class ConvertAssetActionCubit extends Cubit<ConvertAssetActionState> {
       actionType: isCrypto ? WalletActionType.convertToCrypto : WalletActionType.convertToCash,
       title: isCrypto ? 'Convert to Crypto' : 'Convert to Cash',
       primaryValue: '$quantity Units',
-      feeValue: formatCurrency(totalFee),
-      totalValue: isCrypto ? '${cryptoReceived.toStringAsFixed(6)} $cryptoType' : formatCurrency(cashReceived),
+      summary: ActionSummaryBuilder.fromBackendData({
+        'subTotalAmount': grossAmount,
+        'totalFeesAmount': totalFee,
+        'discountAmount': 0,
+        'finalAmount': cashReceived,
+        'currency': 'USD',
+        'feeBreakdowns': const [],
+      }),
       destinationLabel: isCrypto ? 'Wallet Address' : 'Cash Destination',
       destinationValue: isCrypto ? walletAddressController.text.trim() : cashDestination,
       note: isCrypto ? '$cryptoType conversion' : null,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/predefined_accounts_data.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/profile_remote_datasource.dart';
@@ -198,8 +199,7 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
       actionType: WalletActionType.sell,
       title: 'Sell Asset',
       primaryValue: '${result.quantity} Units',
-      feeValue: formatCurrency(result.feeAmount),
-      totalValue: formatCurrency(result.receivedAmount),
+      summary: ActionSummaryBuilder.fromAny(state is SellAssetActionUpdated ? (state as SellAssetActionUpdated).preview : null),
       preview: state is SellAssetActionUpdated ? (state as SellAssetActionUpdated).preview : null,
       destinationLabel: 'Payout Method',
       destinationValue: payout,

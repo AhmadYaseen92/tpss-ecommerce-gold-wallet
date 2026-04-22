@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/models/action_summary_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/data/models/checkout_payment_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/presentation/cubit/checkout_cubit.dart';
@@ -23,11 +25,7 @@ class CheckoutPaymentPage extends StatefulWidget {
 
 class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   final Dio _dio = InjectionContainer.dio();
-  double _subTotalAmount = 0;
-  double _totalFeesAmount = 0;
-  double _discountAmount = 0;
-  double _finalAmount = 0;
-  List<Map<String, dynamic>> _feeBreakdowns = const [];
+  ActionSummaryModel _summary = ActionSummaryModel.zero;
   Map<String, dynamic> _checkoutArgs = const {};
   bool _didInitPreview = false;
 
@@ -158,11 +156,11 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                           _row(context, 'Account', cubit.linkedBankAccounts[cubit.selectedBankIndex].name),
                         if (cubit.selectedPaymentType == CheckoutPaymentType.card)
                           _row(context, 'Method', cubit.predefinedPaymentMethods[cubit.selectedPaymentIndex].name),
-                        _row(context, 'Subtotal', '\$${_subTotalAmount.toStringAsFixed(2)}'),
-                        ..._feeBreakdowns.map((line) => _row(context, '${line['feeName']}', '${(line['isDiscount'] == true) ? '-' : ''}\$${((line['appliedValue'] as num?) ?? 0).toStringAsFixed(2)}')),
-                        _row(context, 'Discount', '-\$${_discountAmount.toStringAsFixed(2)}'),
+                        _row(context, 'Subtotal', ActionSummaryBuilder.formatMoney(_summary.subTotalAmount, currency: _summary.currency)),
+                        ..._summary.feeBreakdowns.map((line) => _row(context, line.feeName, '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: _summary.currency)}')),
+                        _row(context, 'Discount', '-${ActionSummaryBuilder.formatMoney(_summary.discountAmount, currency: _summary.currency)}'),
                         Divider(color: palette.border),
-                        _row(context, 'Final Amount', '\$${_finalAmount.toStringAsFixed(2)}', bold: true),
+                        _row(context, 'Final Amount', ActionSummaryBuilder.formatMoney(_summary.finalAmount, currency: _summary.currency), bold: true),
                       ],
                     ),
                   ),
@@ -290,11 +288,7 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
       final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
       if (!mounted) return;
       setState(() {
-        _subTotalAmount = (data['subTotalAmount'] as num?)?.toDouble() ?? 0;
-        _totalFeesAmount = (data['totalFeesAmount'] as num?)?.toDouble() ?? 0;
-        _discountAmount = (data['discountAmount'] as num?)?.toDouble() ?? 0;
-        _finalAmount = (data['finalAmount'] as num?)?.toDouble() ?? 0;
-        _feeBreakdowns = (data['feeBreakdowns'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>().toList();
+        _summary = ActionSummaryBuilder.fromBackendData(data);
       });
     } catch (_) {
       _applySummaryFromArgs(summary);
@@ -305,59 +299,14 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
     if (summary == null) return false;
 
     try {
-      if (summary is Map) {
-        final map = summary.map((key, value) => MapEntry('$key', value));
-        final feeLines = (map['feeBreakdowns'] as List<dynamic>? ?? [])
-            .map((line) {
-              if (line is Map) {
-                return {
-                  'feeName': (line['feeName'] ?? '').toString(),
-                  'appliedValue': _toDouble(line['appliedValue']),
-                  'isDiscount': line['isDiscount'] == true,
-                };
-              }
-              return <String, dynamic>{
-                'feeName': (line.feeName ?? '').toString(),
-                'appliedValue': _toDouble(line.appliedValue),
-                'isDiscount': line.isDiscount == true,
-              };
-            })
-            .toList();
-
-        if (!mounted) return false;
-        setState(() {
-          _subTotalAmount = _toDouble(map['subtotal'] ?? map['subTotalAmount']);
-          _totalFeesAmount = _toDouble(map['totalFeesAmount']);
-          _discountAmount = _toDouble(map['discountAmount']);
-          _finalAmount = _toDouble(map['total'] ?? map['finalAmount']);
-          _feeBreakdowns = feeLines;
-        });
-        return true;
-      }
-
       if (!mounted) return false;
       setState(() {
-        _subTotalAmount = _toDouble(summary.subtotal ?? summary.subTotalAmount);
-        _totalFeesAmount = _toDouble(summary.totalFeesAmount);
-        _discountAmount = _toDouble(summary.discountAmount);
-        _finalAmount = _toDouble(summary.total ?? summary.finalAmount);
-        _feeBreakdowns = (summary.feeBreakdowns as List<dynamic>? ?? [])
-            .map((line) => {
-                  'feeName': (line.feeName ?? '').toString(),
-                  'appliedValue': _toDouble(line.appliedValue),
-                  'isDiscount': line.isDiscount == true,
-                })
-            .toList();
+        _summary = ActionSummaryBuilder.fromAny(summary);
       });
       return true;
     } catch (_) {
       return false;
     }
-  }
-
-  double _toDouble(dynamic value) {
-    if (value is num) return value.toDouble();
-    return double.tryParse('$value') ?? 0;
   }
 
   IconData _icon(CheckoutPaymentType type) {

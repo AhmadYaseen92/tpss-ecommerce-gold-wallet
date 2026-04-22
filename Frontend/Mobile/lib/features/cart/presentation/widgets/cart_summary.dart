@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 
@@ -20,6 +21,7 @@ class CartSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
+    final currency = summary.currency;
 
     return Container(
       decoration: BoxDecoration(
@@ -35,7 +37,7 @@ class CartSummary extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Opacity(opacity: 0.9, child: Text('Subtotal', style: TextStyle(color: palette.textSecondary))),
-              Text('\$${summary.subtotal.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
+              Text(ActionSummaryBuilder.formatMoney(summary.subtotal, currency: currency), style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
             ],
           ),
           ...summary.feeBreakdowns.map(
@@ -45,7 +47,7 @@ class CartSummary extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Opacity(opacity: 0.9, child: Text(line.feeName, style: TextStyle(color: palette.textSecondary))),
-                  Text('${line.isDiscount ? '-' : ''}\$${line.appliedValue.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
+                  Text('${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: currency)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
                 ],
               ),
             ),
@@ -55,7 +57,7 @@ class CartSummary extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Opacity(opacity: 0.9, child: Text('Discount', style: TextStyle(color: palette.textSecondary))),
-              Text('-\$${summary.discountAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
+              Text('-${ActionSummaryBuilder.formatMoney(summary.discountAmount, currency: currency)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
             ],
           ),
           Divider(height: 20, color: palette.border),
@@ -69,7 +71,7 @@ class CartSummary extends StatelessWidget {
                   Opacity(opacity: 0.75, child: Text('Includes all duties', style: TextStyle(fontSize: 12, color: palette.textSecondary))),
                 ],
               ),
-              Text('\$${summary.total.toStringAsFixed(2)}', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: palette.textPrimary)),
+              Text(ActionSummaryBuilder.formatMoney(summary.total, currency: currency), style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: palette.textPrimary)),
             ],
           ),
           const SizedBox(height: 12),

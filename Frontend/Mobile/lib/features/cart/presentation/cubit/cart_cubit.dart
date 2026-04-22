@@ -110,6 +110,7 @@ class CartCubit extends Cubit<CartState> {
             totalFeesAmount: 0,
             discountAmount: 0,
             total: 0,
+            currency: 'USD',
             feeBreakdowns: [],
           )
         : await _cartRepository.previewSummary(filtered.map((item) => item.id).toList());

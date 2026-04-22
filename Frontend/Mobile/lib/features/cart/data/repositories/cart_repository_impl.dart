@@ -1,4 +1,5 @@
 import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/data/datasources/cart_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/repositories/cart_repository.dart';
@@ -45,12 +46,29 @@ class CartRepositoryImpl implements ICartRepository {
   Future<CartSummaryEntity> previewSummary(List<String> productIds) async {
     final parsed = productIds.map((e) => int.tryParse(e)).whereType<int>().toList();
     final preview = await _remoteDataSource.previewCheckout(productIds: parsed);
+    final summary = ActionSummaryBuilder.fromBackendData({
+      'subTotalAmount': preview.subTotalAmount,
+      'totalFeesAmount': preview.totalFeesAmount,
+      'discountAmount': preview.discountAmount,
+      'finalAmount': preview.finalAmount,
+      'currency': preview.currency,
+      'feeBreakdowns': preview.feeBreakdowns
+          .map(
+            (line) => {
+              'feeName': line.feeName,
+              'appliedValue': line.appliedValue,
+              'isDiscount': line.isDiscount,
+            },
+          )
+          .toList(),
+    });
     return CartSummaryEntity(
-      subtotal: preview.subTotalAmount,
-      totalFeesAmount: preview.totalFeesAmount,
-      discountAmount: preview.discountAmount,
-      total: preview.finalAmount,
-      feeBreakdowns: preview.feeBreakdowns
+      subtotal: summary.subTotalAmount,
+      totalFeesAmount: summary.totalFeesAmount,
+      discountAmount: summary.discountAmount,
+      total: summary.finalAmount,
+      currency: summary.currency,
+      feeBreakdowns: summary.feeBreakdowns
           .map(
             (line) => CartFeeBreakdownEntity(
               feeName: line.feeName,

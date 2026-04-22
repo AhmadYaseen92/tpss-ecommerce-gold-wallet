@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
@@ -111,8 +112,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
       actionType: transferType,
       title: isGift ? 'Gift Asset' : 'Transfer Asset',
       primaryValue: '$quantity Units',
-      feeValue: formatCurrency(feeAmount),
-      totalValue: formatCurrency(estimatedValue),
+      summary: ActionSummaryBuilder.fromAny(_preview),
       preview: _preview,
       destinationLabel: 'Recipient Account No.',
       destinationValue: recipientContactController.text.trim(),
