@@ -1137,10 +1137,24 @@ public class WebAdminController(
             var feeAwareUnitCost = request.FinalAmount > 0
                 ? request.FinalAmount / quantity
                 : request.UnitPrice;
+            var sourceProduct = request.ProductId.HasValue
+                ? await dbContext.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.ProductId.Value, cancellationToken)
+                : null;
+            var (purityKarat, purityDisplayName) = ResolvePurityMetadata(sourceProduct);
 
             var createdAsset = new Domain.Entities.WalletAsset
             {
                 WalletId = wallet.Id,
+                ProductId = sourceProduct?.Id ?? request.ProductId,
+                ProductName = sourceProduct?.Name ?? request.Category,
+                ProductSku = sourceProduct?.Sku,
+                ProductImageUrl = sourceProduct?.ImageUrl,
+                MaterialType = sourceProduct?.MaterialType.ToString() ?? request.Category,
+                FormType = sourceProduct?.FormType.ToString() ?? "Other",
+                PurityKarat = purityKarat,
+                PurityDisplayName = purityDisplayName,
+                WeightValue = sourceProduct?.WeightValue ?? request.Weight,
+                WeightUnit = sourceProduct?.WeightUnit.ToString() ?? request.Unit,
                 SellerId = request.SellerId,
                 SellerName = await dbContext.Sellers.Where(s => s.Id == request.SellerId).Select(s => s.CompanyName).FirstOrDefaultAsync(cancellationToken) ?? string.Empty,
                 Category = Enum.TryParse<ProductCategory>(request.Category, true, out var cat) ? cat : ProductCategory.Gold,
@@ -1151,6 +1165,12 @@ public class WebAdminController(
                 Weight = request.Weight,
                 Unit = request.Unit,
                 Purity = request.Purity,
+                AcquisitionSubTotalAmount = request.SubTotalAmount,
+                AcquisitionFeesAmount = request.TotalFeesAmount,
+                AcquisitionDiscountAmount = request.DiscountAmount,
+                AcquisitionFinalAmount = request.FinalAmount,
+                LastTransactionHistoryId = request.Id,
+                SourceInvoiceId = request.InvoiceId,
                 CreatedAtUtc = DateTime.UtcNow
             };
 
@@ -1241,6 +1261,34 @@ public class WebAdminController(
             }
 
         }
+    }
+
+    private static (string? PurityKarat, string? PurityDisplayName) ResolvePurityMetadata(Domain.Entities.Product? product)
+    {
+        if (product is null) return (null, null);
+
+        var karatLabel = product.PurityKarat switch
+        {
+            ProductPurityKarat.K24 => "24K",
+            ProductPurityKarat.K22 => "22K",
+            ProductPurityKarat.K21 => "21K",
+            ProductPurityKarat.K18 => "18K",
+            ProductPurityKarat.K14 => "14K",
+            _ => null
+        };
+
+        return product.MaterialType switch
+        {
+            ProductMaterialType.Gold => (karatLabel, karatLabel),
+            ProductMaterialType.Silver => (karatLabel, karatLabel switch
+            {
+                "24K" => ".999",
+                "22K" => ".925",
+                _ => ".999"
+            }),
+            ProductMaterialType.Diamond => (null, null),
+            _ => (karatLabel, karatLabel)
+        };
     }
 
     private async Task ApplyRequestStockSideEffectsAsync(
@@ -1392,6 +1440,16 @@ public class WebAdminController(
         {
             recipientWallet.Assets.Add(new Domain.Entities.WalletAsset
             {
+                ProductId = sourceAsset.ProductId,
+                ProductName = sourceAsset.ProductName,
+                ProductSku = sourceAsset.ProductSku,
+                ProductImageUrl = sourceAsset.ProductImageUrl,
+                MaterialType = sourceAsset.MaterialType,
+                FormType = sourceAsset.FormType,
+                PurityKarat = sourceAsset.PurityKarat,
+                PurityDisplayName = sourceAsset.PurityDisplayName,
+                WeightValue = sourceAsset.WeightValue,
+                WeightUnit = sourceAsset.WeightUnit,
                 SellerId = sourceAsset.SellerId,
                 SellerName = sourceAsset.SellerName,
                 Category = sourceAsset.Category,
@@ -1402,6 +1460,12 @@ public class WebAdminController(
                 Purity = sourceAsset.Purity,
                 AverageBuyPrice = unitPrice,
                 CurrentMarketPrice = sourceAsset.CurrentMarketPrice > 0 ? sourceAsset.CurrentMarketPrice : unitPrice,
+                AcquisitionSubTotalAmount = sourceAsset.AcquisitionSubTotalAmount,
+                AcquisitionFeesAmount = sourceAsset.AcquisitionFeesAmount,
+                AcquisitionDiscountAmount = sourceAsset.AcquisitionDiscountAmount,
+                AcquisitionFinalAmount = sourceAsset.AcquisitionFinalAmount,
+                LastTransactionHistoryId = sourceAsset.LastTransactionHistoryId,
+                SourceInvoiceId = sourceAsset.SourceInvoiceId,
                 CreatedAtUtc = DateTime.UtcNow,
                 UpdatedAtUtc = DateTime.UtcNow
             });
@@ -1415,6 +1479,8 @@ public class WebAdminController(
         existing.Quantity = newTotalQty;
         existing.Weight += weightToAdd;
         existing.CurrentMarketPrice = sourceAsset.CurrentMarketPrice > 0 ? sourceAsset.CurrentMarketPrice : unitPrice;
+        existing.LastTransactionHistoryId = sourceAsset.LastTransactionHistoryId;
+        existing.SourceInvoiceId = sourceAsset.SourceInvoiceId;
         existing.UpdatedAtUtc = DateTime.UtcNow;
     }
 

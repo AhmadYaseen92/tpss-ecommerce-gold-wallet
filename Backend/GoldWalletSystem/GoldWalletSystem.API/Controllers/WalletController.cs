@@ -71,8 +71,6 @@ public class WalletController(
                 .ToDictionaryAsync(x => x.Id, x => x.FullName, cancellationToken);
         }
 
-        var walletAssetProductMeta = await ResolveWalletAssetProductMetaAsync(request.UserId, assetIds, cancellationToken);
-
         var (statusByAssetId, detailsByAssetId) = await ResolveAssetStatusesAsync(request.UserId, data.Assets, cancellationToken);
         var assets = data.Assets
             .Select(asset =>
@@ -107,10 +105,8 @@ public class WalletController(
                     StatusDetails = resolvedDetailsWithFallback,
                     InvoiceId = invoiceMeta.InvoiceId == 0 ? null : invoiceMeta.InvoiceId,
                     CertificateUrl = ToAbsoluteFileUrl(invoiceMeta.PdfUrl),
-                    ProductName = string.IsNullOrWhiteSpace(invoiceMeta.ProductName)
-                        ? walletAssetProductMeta.TryGetValue(asset.Id, out var productMeta) ? productMeta.ProductName : asset.ProductName
-                        : invoiceMeta.ProductName,
-                    ProductSku = walletAssetProductMeta.TryGetValue(asset.Id, out var meta) ? meta.ProductSku : asset.ProductSku,
+                    ProductName = asset.ProductName,
+                    ProductSku = asset.ProductSku,
                     SourceInvestorName = sourceInvestorName
                 };
             })
@@ -358,7 +354,7 @@ public class WalletController(
 
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
-        var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset.Id, asset.SellerId, cancellationToken);
+        var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset, cancellationToken);
 
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
@@ -432,7 +428,7 @@ public class WalletController(
 
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
-        var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset.Id, asset.SellerId, cancellationToken);
+        var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset, cancellationToken);
 
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
@@ -913,6 +909,16 @@ public class WalletController(
         {
             recipientWallet.Assets.Add(new WalletAsset
             {
+                ProductId = sourceAsset.ProductId,
+                ProductName = sourceAsset.ProductName,
+                ProductSku = sourceAsset.ProductSku,
+                ProductImageUrl = sourceAsset.ProductImageUrl,
+                MaterialType = sourceAsset.MaterialType,
+                FormType = sourceAsset.FormType,
+                PurityKarat = sourceAsset.PurityKarat,
+                PurityDisplayName = sourceAsset.PurityDisplayName,
+                WeightValue = sourceAsset.WeightValue,
+                WeightUnit = sourceAsset.WeightUnit,
                 SellerId = sourceAsset.SellerId,
                 SellerName = sourceAsset.SellerName,
                 Category = sourceAsset.Category,
@@ -923,6 +929,12 @@ public class WalletController(
                 Purity = sourceAsset.Purity,
                 AverageBuyPrice = unitPrice,
                 CurrentMarketPrice = sourceAsset.CurrentMarketPrice > 0 ? sourceAsset.CurrentMarketPrice : unitPrice,
+                AcquisitionSubTotalAmount = sourceAsset.AcquisitionSubTotalAmount,
+                AcquisitionFeesAmount = sourceAsset.AcquisitionFeesAmount,
+                AcquisitionDiscountAmount = sourceAsset.AcquisitionDiscountAmount,
+                AcquisitionFinalAmount = sourceAsset.AcquisitionFinalAmount,
+                LastTransactionHistoryId = sourceAsset.LastTransactionHistoryId,
+                SourceInvoiceId = sourceAsset.SourceInvoiceId,
                 CreatedAtUtc = DateTime.UtcNow,
                 UpdatedAtUtc = DateTime.UtcNow
             });
@@ -936,69 +948,23 @@ public class WalletController(
         existing.Quantity = newTotalQty;
         existing.Weight += weightToAdd;
         existing.CurrentMarketPrice = sourceAsset.CurrentMarketPrice > 0 ? sourceAsset.CurrentMarketPrice : unitPrice;
+        existing.LastTransactionHistoryId = sourceAsset.LastTransactionHistoryId;
+        existing.SourceInvoiceId = sourceAsset.SourceInvoiceId;
         existing.UpdatedAtUtc = DateTime.UtcNow;
-    }
-
-    private async Task<Dictionary<int, (string ProductName, string ProductSku)>> ResolveWalletAssetProductMetaAsync(
-        int userId,
-        IReadOnlyList<int> assetIds,
-        CancellationToken cancellationToken)
-    {
-        if (assetIds.Count == 0) return new Dictionary<int, (string ProductName, string ProductSku)>();
-
-        var histories = await dbContext.TransactionHistories
-            .AsNoTracking()
-            .Where(x => x.UserId == userId && (x.WalletItemId.HasValue || EF.Functions.Like(x.Notes, "%wallet_asset_id=%")))
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Select(x => new { x.WalletItemId, x.Notes, x.SellerId, x.Category })
-            .ToListAsync(cancellationToken);
-
-        var sellerIds = histories
-            .Where(x => x.SellerId.HasValue)
-            .Select(x => x.SellerId!.Value)
-            .Distinct()
-            .ToList();
-
-        var products = sellerIds.Count == 0
-            ? []
-            : await dbContext.Products
-                .AsNoTracking()
-                .Where(x => sellerIds.Contains(x.SellerId))
-                .Select(x => new { x.SellerId, x.Sku, x.Name })
-                .ToListAsync(cancellationToken);
-
-        var productLookup = products.ToDictionary(x => (x.SellerId, x.Sku), x => x.Name);
-        var result = new Dictionary<int, (string ProductName, string ProductSku)>();
-
-        foreach (var history in histories)
-        {
-            var walletAssetId = history.WalletItemId ?? TryExtractWalletAssetId(history.Notes);
-            if (!walletAssetId.HasValue || !assetIds.Contains(walletAssetId.Value) || result.ContainsKey(walletAssetId.Value))
-                continue;
-
-            var sku = TryExtractSku(history.Notes);
-            if (!string.IsNullOrWhiteSpace(sku) && history.SellerId.HasValue && productLookup.TryGetValue((history.SellerId.Value, sku), out var productName))
-            {
-                result[walletAssetId.Value] = (productName, sku);
-                continue;
-            }
-
-            result[walletAssetId.Value] = (history.Category, sku ?? string.Empty);
-        }
-
-        return result;
     }
 
     private async Task<int?> ResolveWalletAssetProductIdAsync(
         int userId,
-        int walletAssetId,
-        int? sellerId,
+        WalletAsset asset,
         CancellationToken cancellationToken)
     {
+        if (asset.ProductId.HasValue && asset.ProductId.Value > 0)
+            return asset.ProductId.Value;
+
         var historyProductId = await dbContext.TransactionHistories
             .AsNoTracking()
             .Where(x => x.UserId == userId && x.ProductId.HasValue)
-            .Where(x => x.WalletItemId == walletAssetId || EF.Functions.Like(x.Notes, $"%wallet_asset_id={walletAssetId}%"))
+            .Where(x => x.WalletItemId == asset.Id || EF.Functions.Like(x.Notes, $"%wallet_asset_id={asset.Id}%"))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Select(x => x.ProductId)
             .FirstOrDefaultAsync(cancellationToken);
@@ -1006,24 +972,7 @@ public class WalletController(
         if (historyProductId.HasValue && historyProductId.Value > 0)
             return historyProductId.Value;
 
-        if (!sellerId.HasValue) return null;
-
-        var historyWithSku = await dbContext.TransactionHistories
-            .AsNoTracking()
-            .Where(x => x.UserId == userId && x.SellerId == sellerId)
-            .Where(x => x.WalletItemId == walletAssetId || EF.Functions.Like(x.Notes, $"%wallet_asset_id={walletAssetId}%"))
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Select(x => new { x.Notes })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var sku = TryExtractSku(historyWithSku?.Notes);
-        if (string.IsNullOrWhiteSpace(sku)) return null;
-
-        return await dbContext.Products
-            .AsNoTracking()
-            .Where(x => x.SellerId == sellerId.Value && x.Sku == sku)
-            .Select(x => (int?)x.Id)
-            .FirstOrDefaultAsync(cancellationToken);
+        return null;
     }
 
     private async Task<SellExecutionConfigurationResponse> ReadSellExecutionConfigurationAsync(CancellationToken cancellationToken)

@@ -448,6 +448,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.ToTable("WalletAssets");
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.ProductName).HasMaxLength(200);
+            entity.Property(x => x.ProductSku).HasMaxLength(100);
+            entity.Property(x => x.ProductImageUrl).HasMaxLength(1000);
+            entity.Property(x => x.MaterialType).HasMaxLength(50);
+            entity.Property(x => x.FormType).HasMaxLength(50);
+            entity.Property(x => x.PurityKarat).HasMaxLength(30);
+            entity.Property(x => x.PurityDisplayName).HasMaxLength(50);
+            entity.Property(x => x.WeightValue).HasPrecision(18, 3);
+            entity.Property(x => x.WeightUnit).HasMaxLength(20);
             entity.Property(x => x.Unit).IsRequired().HasMaxLength(20);
             entity.Property(x => x.Weight).HasPrecision(18, 3);
             entity.Property(x => x.Purity).HasPrecision(5, 2);
@@ -455,9 +464,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.SellerName).HasMaxLength(200);
             entity.Property(x => x.AverageBuyPrice).HasPrecision(18, 2);
             entity.Property(x => x.CurrentMarketPrice).HasPrecision(18, 2);
+            entity.Property(x => x.AcquisitionSubTotalAmount).HasPrecision(18, 2);
+            entity.Property(x => x.AcquisitionFeesAmount).HasPrecision(18, 2);
+            entity.Property(x => x.AcquisitionDiscountAmount).HasPrecision(18, 2);
+            entity.Property(x => x.AcquisitionFinalAmount).HasPrecision(18, 2);
             entity.HasIndex(x => x.WalletId);
             entity.HasIndex(x => x.Category);
             entity.HasIndex(x => x.SellerId);
+            entity.HasIndex(x => x.ProductId);
+            entity.HasIndex(x => x.LastTransactionHistoryId);
+            entity.HasIndex(x => x.SourceInvoiceId);
             entity.HasOne(x => x.Wallet).WithMany(x => x.Assets).HasForeignKey(x => x.WalletId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne<Seller>().WithMany().HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict);
         });
