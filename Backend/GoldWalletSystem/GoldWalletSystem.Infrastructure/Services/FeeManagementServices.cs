@@ -273,21 +273,33 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
                 .Where(x => x.ProductId == request.ProductId.Value && x.SellerId == request.SellerId.Value && x.IsEnabled)
                 .ToListAsync(cancellationToken);
 
+            var feeCodes = sellerFees.Select(x => x.FeeCode).Distinct().ToList();
+            var systemFeeLookup = feeCodes.Count == 0
+                ? new Dictionary<string, SystemFeeType>(StringComparer.OrdinalIgnoreCase)
+                : await dbContext.SystemFeeTypes.AsNoTracking()
+                    .Where(x => feeCodes.Contains(x.FeeCode) && x.IsEnabled)
+                    .ToDictionaryAsync(x => x.FeeCode, x => x, StringComparer.OrdinalIgnoreCase, cancellationToken);
+
             foreach (var fee in sellerFees)
             {
+                if (!systemFeeLookup.TryGetValue(fee.FeeCode, out var systemFee)) continue;
+                if (!AppliesToAction(systemFee, action)) continue;
                 if (!IsActionCompatible(fee.FeeCode, action)) continue;
                 var line = CalculateSellerLine(fee, request, lines.Count + 1, currency);
                 if (line is not null) lines.Add(line);
             }
         }
 
+        var serviceFeeType = await dbContext.SystemFeeTypes.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.FeeCode == FeeCodes.ServiceFee && x.IsEnabled && x.IsAdminManaged, cancellationToken);
+
         var serviceFee = await dbContext.AdminTransactionFees.AsNoTracking().FirstOrDefaultAsync(x => x.FeeCode == FeeCodes.ServiceFee && x.IsEnabled, cancellationToken);
-        if (serviceFee is not null && IsServiceFeeActionEnabled(serviceFee, action))
+        if (serviceFee is not null && serviceFeeType is not null && AppliesToAction(serviceFeeType, action) && IsServiceFeeActionEnabled(serviceFee, action))
         {
             var amount = serviceFee.CalculationMode.Equals("percent", StringComparison.OrdinalIgnoreCase)
                 ? request.NotionalAmount * (serviceFee.RatePercent ?? 0m) / 100m
                 : (serviceFee.FixedAmount ?? 0m);
-            lines.Add(new FeeLineDto(FeeCodes.ServiceFee, "Service Fee", serviceFee.CalculationMode, request.NotionalAmount, request.Quantity, serviceFee.RatePercent, decimal.Round(amount, 2), false, currency, "admin_transaction_fee", $"{{\"feeCode\":\"{FeeCodes.ServiceFee}\",\"mode\":\"{serviceFee.CalculationMode}\"}}", lines.Count + 1));
+            lines.Add(new FeeLineDto(FeeCodes.ServiceFee, "Service Fee", serviceFee.CalculationMode, request.NotionalAmount, request.Quantity, serviceFee.RatePercent, decimal.Round(amount, 2), false, currency, "AdminServiceFee", $"{{\"feeCode\":\"{FeeCodes.ServiceFee}\",\"mode\":\"{serviceFee.CalculationMode}\"}}", lines.Count + 1));
         }
 
         var totalFees = lines.Where(x => !x.IsDiscount).Sum(x => x.AppliedValue);
@@ -324,7 +336,7 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
                 return null;
         }
 
-        return new FeeLineDto(code, code.Replace("_", " "), fee.CalculationMode, request.NotionalAmount, request.Quantity, fee.RatePercent, decimal.Round(amount, 2), isDiscount, currency, "seller_product_fee", $"{{\"feeCode\":\"{code}\",\"mode\":\"{fee.CalculationMode}\"}}", order);
+        return new FeeLineDto(code, code.Replace("_", " "), fee.CalculationMode, request.NotionalAmount, request.Quantity, fee.RatePercent, decimal.Round(amount, 2), isDiscount, currency, "SellerProductFee", $"{{\"feeCode\":\"{code}\",\"mode\":\"{fee.CalculationMode}\"}}", order);
     }
 
     private static bool IsActionCompatible(string feeCode, string action) => feeCode switch
@@ -334,6 +346,16 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
         var c when c == FeeCodes.StorageCustodyFee => action == "pickup",
         var c when c == FeeCodes.DeliveryFee => action == "pickup",
         var c when c == FeeCodes.ServiceCharge => action is "buy" or "sell" or "pickup",
+        _ => false
+    };
+
+    private static bool AppliesToAction(SystemFeeType fee, string action) => action switch
+    {
+        "buy" => fee.AppliesToBuy,
+        "sell" => fee.AppliesToSell,
+        "pickup" => fee.AppliesToPickup,
+        "transfer" => fee.AppliesToTransfer,
+        "gift" => fee.AppliesToGift,
         _ => false
     };
 

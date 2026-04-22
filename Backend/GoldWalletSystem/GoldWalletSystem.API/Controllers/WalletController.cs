@@ -256,6 +256,52 @@ public class WalletController(
         return Ok(ApiResponse<InvestorRecipientDto?>.Ok(investor));
     }
 
+
+    [HttpPost("actions/preview")]
+    public async Task<IActionResult> PreviewWalletAction([FromBody] ExecuteWalletActionRequest request, CancellationToken cancellationToken = default)
+    {
+        if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
+
+        var actionType = request.ActionType.Trim().ToLowerInvariant();
+        if (actionType is not ("sell" or "transfer" or "gift" or "pickup" or "certificate" or "invoice"))
+            return BadRequest(ApiResponse<object>.Fail("Unsupported wallet action.", 400));
+
+        var wallet = await dbContext.Wallets
+            .Include(x => x.Assets)
+            .FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+
+        if (wallet is null)
+            return NotFound(ApiResponse<object>.Fail("Wallet not found.", 404));
+
+        var asset = wallet.Assets.FirstOrDefault(x => x.Id == request.WalletAssetId);
+        if (asset is null)
+            return NotFound(ApiResponse<object>.Fail("Wallet asset not found.", 404));
+
+        var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
+        var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
+
+        var feeResult = await feeCalculationService.CalculateAsync(
+            new Application.DTOs.Fees.FeeCalculationRequest(
+                ActionType: actionType,
+                ProductId: null,
+                SellerId: asset.SellerId,
+                NotionalAmount: grossAmount,
+                Quantity: request.Quantity,
+                ClosePrice: unitPrice,
+                DaysHeldAfterGrace: 0),
+            cancellationToken);
+
+        return Ok(ApiResponse<object>.Ok(new
+        {
+            subTotalAmount = feeResult.SubTotalAmount,
+            totalFeesAmount = feeResult.TotalFeesAmount,
+            discountAmount = feeResult.DiscountAmount,
+            finalAmount = feeResult.FinalAmount,
+            currency = feeResult.Currency,
+            feeBreakdowns = feeResult.Lines
+        }));
+    }
+
     [HttpPost("actions/execute")]
     public async Task<IActionResult> ExecuteWalletAction([FromBody] ExecuteWalletActionRequest request, CancellationToken cancellationToken = default)
     {

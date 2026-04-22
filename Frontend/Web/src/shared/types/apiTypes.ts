@@ -205,6 +205,23 @@ export interface WebRequestDto {
   unit: string;
   purity: number;
   amount: number;
+  subTotalAmount?: number;
+  totalFeesAmount?: number;
+  discountAmount?: number;
+  finalAmount?: number;
+  feeBreakdowns?: Array<{
+    feeCode: string;
+    feeName: string;
+    calculationMode: string;
+    baseAmount: number;
+    quantity: number;
+    appliedRate?: number | null;
+    appliedValue: number;
+    isDiscount: boolean;
+    currency: string;
+    sourceType: string;
+    displayOrder: number;
+  }>;
   status: string;
   currency: string;
   notes: string;
@@ -282,6 +299,23 @@ export interface WebRecentTransactionDto {
   productName: string;
   type: string;
   amount: number;
+  subTotalAmount?: number;
+  totalFeesAmount?: number;
+  discountAmount?: number;
+  finalAmount?: number;
+  feeBreakdowns?: Array<{
+    feeCode: string;
+    feeName: string;
+    calculationMode: string;
+    baseAmount: number;
+    quantity: number;
+    appliedRate?: number | null;
+    appliedValue: number;
+    isDiscount: boolean;
+    currency: string;
+    sourceType: string;
+    displayOrder: number;
+  }>;
   status: string;
   createdAt: string;
 }

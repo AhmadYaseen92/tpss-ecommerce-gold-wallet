@@ -69,6 +69,23 @@ export interface InvestorRequest {
   unit: string;
   purity: number;
   amount: number;
+  subTotalAmount?: number;
+  totalFeesAmount?: number;
+  discountAmount?: number;
+  finalAmount?: number;
+  feeBreakdowns?: Array<{
+    feeCode: string;
+    feeName: string;
+    calculationMode: string;
+    baseAmount: number;
+    quantity: number;
+    appliedRate?: number | null;
+    appliedValue: number;
+    isDiscount: boolean;
+    currency: string;
+    sourceType: string;
+    displayOrder: number;
+  }>;
   status: "pending" | "approved" | "rejected" | "pending_delivered" | "delivered" | "cancelled";
   currency: string;
   notes?: string;

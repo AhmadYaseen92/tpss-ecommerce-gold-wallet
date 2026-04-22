@@ -307,6 +307,7 @@ public class CheckoutController(
             discountAmount = createdRequests.Sum(x => x.DiscountAmount),
             finalAmount = createdRequests.Sum(x => x.FinalAmount),
             currency = wallet.CurrencyCode,
+            feeBreakdowns = pendingFeeBreakdowns.Select(x => x.Line).ToList(),
         }, "Checkout completed"));
     }
 
