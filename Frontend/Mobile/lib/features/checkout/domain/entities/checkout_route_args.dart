@@ -69,17 +69,17 @@ class CheckoutRouteArgs {
     }
   }
 
-  CheckoutOtpRequestContextEntity toOtpContext() {
+  CheckoutOtpRequestContextEntity toOtpContext({required int userId}) {
     if (source == CheckoutSource.product) {
       return CheckoutOtpRequestContextEntity(
-        source: 'product',
+        userId: userId,
         productId: productId,
         quantity: quantity,
       );
     }
 
     return CheckoutOtpRequestContextEntity(
-      source: 'cart',
+      userId: userId,
       productIds: productIds,
     );
   }

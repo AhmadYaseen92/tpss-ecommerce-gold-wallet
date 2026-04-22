@@ -205,16 +205,18 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                               context,
                               AppRoutes.confirmOtpRoute,
                               arguments: (() {
-                                final otpContext = _checkoutArgs?.toOtpContext();
+                                final otpContext = _checkoutArgs?.toOtpContext(
+                                  userId: userId,
+                                );
                                 return {
-                                'title': 'Confirm Buy OTP',
-                                'subtitle': 'Enter the OTP to confirm your checkout payment.',
-                                'otpFlow': 'checkout',
-                                'userId': userId,
-                                'productId': otpContext?.productId,
-                                'quantity': otpContext?.quantity,
-                                'productIds': otpContext?.productIds,
-                              };
+                                  'title': 'Confirm Buy OTP',
+                                  'subtitle': 'Enter the OTP to confirm your checkout payment.',
+                                  'otpFlow': 'checkout',
+                                  'userId': userId,
+                                  'productId': otpContext?.productId,
+                                  'quantity': otpContext?.quantity,
+                                  'productIds': otpContext?.productIds,
+                                };
                               })(),
                             );
                             if (otpResult is Map && otpResult['verified'] == true) {
