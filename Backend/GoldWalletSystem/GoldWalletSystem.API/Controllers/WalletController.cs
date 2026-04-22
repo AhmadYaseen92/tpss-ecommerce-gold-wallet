@@ -314,24 +314,24 @@ public class WalletController(
 
             foreach (var (product, quantity) in lines)
             {
-                var unitPrice = product.SellPrice;
-                var lineSubTotal = unitPrice * quantity;
-                var feeResult = await feeCalculationService.CalculateAsync(
+                var productUnitPrice = product.SellPrice;
+                var lineSubTotal = productUnitPrice * quantity;
+                var lineFeeResult = await feeCalculationService.CalculateAsync(
                     new Application.DTOs.Fees.FeeCalculationRequest(
                         ActionType: "buy",
                         ProductId: product.Id,
                         SellerId: product.SellerId,
                         NotionalAmount: lineSubTotal,
                         Quantity: quantity,
-                        ClosePrice: unitPrice,
+                        ClosePrice: productUnitPrice,
                         DaysHeldAfterGrace: 0),
                     cancellationToken);
 
-                subTotalAmount += feeResult.SubTotalAmount;
-                totalFeesAmount += feeResult.TotalFeesAmount;
-                discountAmount += feeResult.DiscountAmount;
-                finalAmount += feeResult.FinalAmount;
-                feeBreakdowns.AddRange(feeResult.Lines);
+                subTotalAmount += lineFeeResult.SubTotalAmount;
+                totalFeesAmount += lineFeeResult.TotalFeesAmount;
+                discountAmount += lineFeeResult.DiscountAmount;
+                finalAmount += lineFeeResult.FinalAmount;
+                feeBreakdowns.AddRange(lineFeeResult.Lines);
             }
 
             return Ok(ApiResponse<object>.Ok(new
