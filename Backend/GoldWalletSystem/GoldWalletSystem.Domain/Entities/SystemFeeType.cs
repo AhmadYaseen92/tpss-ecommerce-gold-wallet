@@ -13,5 +13,6 @@ public class SystemFeeType : BaseEntity
     public bool AppliesToGift { get; set; }
     public bool AppliesToInvoice { get; set; }
     public bool AppliesToReports { get; set; }
+    public bool IsAdminManaged { get; set; }
     public int SortOrder { get; set; }
 }

@@ -18,14 +18,10 @@ public class Product : BaseEntity
     public ProductWeightUnit WeightUnit { get; set; } = ProductWeightUnit.Gram;
     public decimal BaseMarketPrice { get; set; }
     public decimal ManualSellPrice { get; set; }
-    public decimal DeliveryFee { get; set; }
-    public decimal StorageFee { get; set; }
-    public decimal ServiceCharge { get; set; }
     public decimal OfferPercent { get; set; }
     public decimal OfferNewPrice { get; set; }
     public ProductOfferType OfferType { get; set; } = ProductOfferType.None;
     public bool IsHasOffer { get; set; }
-    public decimal Price { get; set; }
     public int AvailableStock { get; set; }
     public bool IsActive { get; set; } = true;
     public int SellerId { get; set; }

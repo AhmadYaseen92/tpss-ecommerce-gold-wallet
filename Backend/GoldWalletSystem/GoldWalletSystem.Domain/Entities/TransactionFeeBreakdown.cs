@@ -13,6 +13,9 @@ public class TransactionFeeBreakdown : BaseEntity
     public decimal Quantity { get; set; }
     public decimal? AppliedRate { get; set; }
     public decimal AppliedValue { get; set; }
+    public string Currency { get; set; } = "USD";
+    public string SourceType { get; set; } = string.Empty;
+    public string ConfigSnapshotJson { get; set; } = string.Empty;
     public bool IsDiscount { get; set; }
     public int DisplayOrder { get; set; }
 }
