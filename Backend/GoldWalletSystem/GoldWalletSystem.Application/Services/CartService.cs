@@ -54,14 +54,15 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
 
         if (existingItem is null)
         {
+            var unitPrice = ResolveProductUnitPrice(product);
             cart.Items.Add(new CartItem
             {
                 ProductId = productId,
                 SellerId = product.SellerId,
                 Category = product.Category,
                 Quantity = quantity,
-                UnitPrice = ResolveProductUnitPrice(product),
-                LineTotal = ResolveProductUnitPrice(product) * quantity,
+                UnitPrice = unitPrice,
+                LineTotal = unitPrice * quantity,
             });
         }
         else
@@ -145,5 +146,14 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
 
         if (requestedQuantity > availableStock)
             throw new InvalidOperationException($"Requested quantity {requestedQuantity} exceeds available stock {availableStock} for product id {productId}.");
+    }
+
+    private static decimal ResolveProductUnitPrice(Product product)
+    {
+        var basePrice = product.HasManualPrice
+            ? product.PricePerGram
+            : ProductPricingCalculator.CalculateAutoBasePrice(product.WeightValue, product.WeightUnit);
+
+        return ProductPricingCalculator.ApplyOffer(basePrice, product.OfferType, product.OfferValue);
     }
 }
