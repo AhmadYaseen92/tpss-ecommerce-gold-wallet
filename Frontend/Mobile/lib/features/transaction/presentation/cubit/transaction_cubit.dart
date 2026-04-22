@@ -52,12 +52,12 @@ class TransactionCubit extends Cubit<TransactionState> {
 
     final userId = AuthSessionStore.userId;
     if (userId == null) {
-      emit(TransactionError('No logged in user found. Please login again.'));
+      _safeEmit(TransactionError('No logged in user found. Please login again.'));
       return;
     }
 
     if (!silent) {
-      emit(TransactionLoading());
+      _safeEmit(TransactionLoading());
     }
     _isLoading = true;
     try {
@@ -78,9 +78,9 @@ class TransactionCubit extends Cubit<TransactionState> {
           .map((item) => TransactionModel.fromJson(item as Map<String, dynamic>))
           .toList();
 
-      emit(TransactionLoaded(transactions: _applyAllFilters()));
+      _safeEmit(TransactionLoaded(transactions: _applyAllFilters()));
     } catch (e) {
-      emit(TransactionError('Failed to load transactions: $e'));
+      _safeEmit(TransactionError('Failed to load transactions: $e'));
     } finally {
       _isLoading = false;
     }
@@ -126,12 +126,12 @@ class TransactionCubit extends Cubit<TransactionState> {
   }
 
   void applyFilters(String period, String type, String status) {
-    emit(TransactionLoaded(transactions: _applyAllFilters()));
+    _safeEmit(TransactionLoaded(transactions: _applyAllFilters()));
   }
 
   void onGlobalSellerChanged(String seller) {
     activeSeller = seller;
-    emit(TransactionLoaded(transactions: _applyAllFilters()));
+    _safeEmit(TransactionLoaded(transactions: _applyAllFilters()));
   }
 
   void filterByPeriod(String period) {
@@ -173,5 +173,10 @@ class TransactionCubit extends Cubit<TransactionState> {
   Future<void> close() async {
     await _realtimeSubscription?.cancel();
     return super.close();
+  }
+
+  void _safeEmit(TransactionState state) {
+    if (isClosed) return;
+    emit(state);
   }
 }

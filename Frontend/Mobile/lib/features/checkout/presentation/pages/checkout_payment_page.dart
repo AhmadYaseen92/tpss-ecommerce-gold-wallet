@@ -252,27 +252,8 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   }
 
   void _navigateAfterSuccess() {
-    final args = _checkoutArgs;
-    if (args == null) return;
     final navigator = Navigator.of(context, rootNavigator: true);
-    if (args.source == CheckoutSource.cart) {
-      navigator.pop(true);
-      return;
-    }
-    var foundProductRoute = false;
-    navigator.popUntil((route) {
-      final isProductRoute = route.settings.name == AppRoutes.productRoute;
-      if (isProductRoute) {
-        foundProductRoute = true;
-      }
-      return isProductRoute || route.isFirst;
-    });
-    if (!foundProductRoute) {
-      navigator.pushNamedAndRemoveUntil(
-        AppRoutes.productRoute,
-        (route) => false,
-      );
-    }
+    navigator.pop(true);
   }
 
   ActionSummaryModel _summaryFromArgs(dynamic summary) {

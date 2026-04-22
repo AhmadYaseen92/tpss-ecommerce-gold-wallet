@@ -58,7 +58,7 @@ class CheckoutCubit extends Cubit<CheckoutState> {
 
     final validationError = checkoutArgs.validate();
     if (validationError != null) {
-      emit(CheckoutError(validationError));
+      _safeEmit(CheckoutError(validationError));
       return;
     }
 
@@ -96,13 +96,13 @@ class CheckoutCubit extends Cubit<CheckoutState> {
     try {
       final userId = AuthSessionStore.userId;
       if (userId == null) {
-        emit(CheckoutError('No logged-in user.'));
+        _safeEmit(CheckoutError('No logged-in user.'));
         return;
       }
 
       final validationError = checkoutArgs.validate();
       if (validationError != null) {
-        emit(CheckoutError(validationError));
+        _safeEmit(CheckoutError(validationError));
         return;
       }
       final fromCart = checkoutArgs.source == CheckoutSource.cart;
@@ -121,10 +121,10 @@ class CheckoutCubit extends Cubit<CheckoutState> {
       );
 
       otpConfirmed = true;
-      emit(CheckoutSuccess());
+      _safeEmit(CheckoutSuccess());
       _emitDataChanged();
     } on DioException catch (e) {
-      emit(
+      _safeEmit(
         CheckoutError(
           ApiErrorParser.friendlyMessage(
             e,
@@ -133,7 +133,7 @@ class CheckoutCubit extends Cubit<CheckoutState> {
         ),
       );
     } catch (_) {
-      emit(CheckoutError('Checkout could not be completed. Please try again.'));
+      _safeEmit(CheckoutError('Checkout could not be completed. Please try again.'));
     }
   }
 
@@ -176,7 +176,7 @@ class CheckoutCubit extends Cubit<CheckoutState> {
   }
 
   void _emitDataChanged() {
-    emit(
+    _safeEmit(
       CheckoutDataChanged(
         selectedPaymentType: selectedPaymentType,
         otpConfirmed: otpConfirmed,
@@ -186,5 +186,10 @@ class CheckoutCubit extends Cubit<CheckoutState> {
         selectedPaymentIndex: selectedPaymentIndex,
       ),
     );
+  }
+
+  void _safeEmit(CheckoutState state) {
+    if (isClosed) return;
+    emit(state);
   }
 }
