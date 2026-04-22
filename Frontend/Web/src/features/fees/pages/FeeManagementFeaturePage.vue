@@ -4,7 +4,6 @@ import { ElMessage } from "element-plus";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import SmallCheckbox from "../../../shared/components/SmallCheckbox.vue";
 import {
-  bulkApplySellerProductFee,
   fetchAdminServiceFee,
   fetchManagedProducts,
   fetchSellerFeeTabs,
@@ -58,7 +57,9 @@ const bulkByFee = reactive<Record<string, BulkConfig>>({});
 const overrides = reactive<Record<string, SellerProductFeePayload>>({});
 const enabledByProduct = reactive<Record<number, boolean>>({});
 const savedRowSnapshot = reactive<Record<number, string>>({});
-const savingRows = reactive<Record<number, boolean>>({});
+const savingAll = ref(false);
+const pageSize = ref(10);
+const pageIndex = ref(1);
 
 const isAdmin = computed(() => marketplace.role.value === "Admin");
 
@@ -165,6 +166,13 @@ const sellerTableRows = computed(() =>
   }))
 );
 
+const totalPages = computed(() => Math.max(1, Math.ceil(sellerTableRows.value.length / pageSize.value)));
+const pagedSellerRows = computed(() => {
+  const start = (pageIndex.value - 1) * pageSize.value;
+  return sellerTableRows.value.slice(start, start + pageSize.value);
+});
+const dirtyRows = computed(() => sellerTableRows.value.filter((x) => x.dirty));
+
 const formulaByMode = (feeCode: string, mode: string) => {
   if (feeCode === "commission_per_transaction") return mode === "percent_with_minimum" ? "max(Notional × Rate, Min)" : "Flat Fee";
   if (feeCode === "premium_discount") return "Quantity × ValuePerUnit";
@@ -253,6 +261,9 @@ const load = async () => {
 
 onMounted(load);
 watch(activeSellerTab, loadSellerRows);
+watch(activeSellerTab, () => {
+  pageIndex.value = 1;
+});
 
 const saveSystemFee = async (fee: SystemFeeTypePayload) => {
   const token = marketplace.session.value?.accessToken;
@@ -283,38 +294,43 @@ const onEnabledChange = (productId: number, value: boolean) => {
 const applyBulkToAll = async () => {
   const token = marketplace.session.value?.accessToken;
   if (!token || !activeSellerTab.value || sellerProducts.value.length === 0) return;
-  const template: SellerProductFeePayload = {
-    productId: sellerProducts.value[0].id,
-    feeCode: activeSellerTab.value,
-    isEnabled: currentBulk.value.isEnabled,
-    calculationMode: currentBulk.value.calculationMode,
-    ratePercent: currentBulk.value.ratePercent,
-    minimumAmount: currentBulk.value.minimumAmount,
-    flatAmount: currentBulk.value.flatAmount,
-    fixedAmount: currentBulk.value.fixedAmount,
-    feePerUnit: currentBulk.value.feePerUnit,
-    valuePerUnit: currentBulk.value.valuePerUnit,
-    feePercent: currentBulk.value.feePercent,
-    gracePeriodDays: currentBulk.value.gracePeriodDays,
-    premiumDiscountType: currentBulk.value.premiumDiscountType,
-    isOverride: false
-  };
-  await bulkApplySellerProductFee(token, activeSellerTab.value, template);
+  const inheritedRows = sellerProducts.value.filter((p) => !isOverridden(p.id));
+  for (const product of inheritedRows) {
+    const template: SellerProductFeePayload = {
+      productId: product.id,
+      feeCode: activeSellerTab.value,
+      isEnabled: currentBulk.value.isEnabled,
+      calculationMode: currentBulk.value.calculationMode,
+      ratePercent: currentBulk.value.ratePercent,
+      minimumAmount: currentBulk.value.minimumAmount,
+      flatAmount: currentBulk.value.flatAmount,
+      fixedAmount: currentBulk.value.fixedAmount,
+      feePerUnit: currentBulk.value.feePerUnit,
+      valuePerUnit: currentBulk.value.valuePerUnit,
+      feePercent: currentBulk.value.feePercent,
+      gracePeriodDays: currentBulk.value.gracePeriodDays,
+      premiumDiscountType: currentBulk.value.premiumDiscountType,
+      isOverride: false
+    };
+    await upsertSellerProductFee(token, template);
+  }
   await loadSellerRows();
   ElMessage.success("Fee settings applied to all products successfully.");
 };
 
-const saveRow = async (productId: number) => {
+const saveAllChanges = async () => {
   const token = marketplace.session.value?.accessToken;
-  if (!token) return;
-  const payload = getEffectiveRow(productId);
-  savingRows[productId] = true;
+  if (!token || dirtyRows.value.length === 0) return;
+  savingAll.value = true;
   try {
-    await upsertSellerProductFee(token, payload);
-    savedRowSnapshot[productId] = toSnapshot(payload);
-    ElMessage.success("Fee settings saved successfully.");
+    for (const row of dirtyRows.value) {
+      const payload = getEffectiveRow(row.productId);
+      await upsertSellerProductFee(token, payload);
+      savedRowSnapshot[row.productId] = toSnapshot(payload);
+    }
+    ElMessage.success("Saved successfully");
   } finally {
-    savingRows[productId] = false;
+    savingAll.value = false;
   }
 };
 </script>
@@ -358,6 +374,11 @@ const saveRow = async (productId: number) => {
 
     <template v-else>
       <h3>Seller Manage Fees</h3>
+      <div class="table-toolbar">
+        <button v-if="dirtyRows.length > 0" :disabled="savingAll" @click="saveAllChanges">
+          {{ savingAll ? "Saving..." : `Save All Changes (${dirtyRows.length})` }}
+        </button>
+      </div>
       <div class="tabs">
         <button v-for="tab in sellerTabs" :key="tab.feeCode" :class="{ active: activeSellerTab === tab.feeCode }" @click="activeSellerTab = tab.feeCode">{{ tab.name }}</button>
       </div>
@@ -398,7 +419,7 @@ const saveRow = async (productId: number) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="row in sellerTableRows" :key="row.productId" :class="[{ 'row-disabled': !row.effective.isEnabled, 'row-custom': row.override, 'row-inherited': !row.override }]">
+          <tr v-for="row in pagedSellerRows" :key="row.productId" :class="[{ 'row-disabled': !row.effective.isEnabled, 'row-custom': row.override, 'row-inherited': !row.override }]">
             <td>
               <SmallCheckbox :model-value="row.effective.isEnabled" @update:model-value="onEnabledChange(row.productId, $event)" />
             </td>
@@ -436,11 +457,16 @@ const saveRow = async (productId: number) => {
                 <input v-else v-model.number="overrides[rowKey(row.productId, activeSellerTab)].fixedAmount" type="number" min="0" step="0.01" placeholder="Fixed" />
               </div>
               <span v-else>{{ valueSummary(row.effective) }}</span>
-              <button v-if="row.dirty" class="save-row" :disabled="savingRows[row.productId]" @click="saveRow(row.productId)">{{ savingRows[row.productId] ? 'Saving...' : 'Save' }}</button>
             </td>
           </tr>
         </tbody>
       </table>
+      <div class="pager">
+        <span>Rows {{ (pageIndex - 1) * pageSize + 1 }} - {{ Math.min(pageIndex * pageSize, sellerTableRows.length) }} of {{ sellerTableRows.length }}</span>
+        <button :disabled="pageIndex <= 1" @click="pageIndex--">&lt;</button>
+        <span>{{ pageIndex }} / {{ totalPages }}</span>
+        <button :disabled="pageIndex >= totalPages" @click="pageIndex++">&gt;</button>
+      </div>
     </template>
   </section>
 </template>
@@ -460,5 +486,6 @@ const saveRow = async (productId: number) => {
 .badge { margin-left: 6px; font-size: 11px; padding: 1px 6px; border-radius: 8px; }
 .badge.inherited { background: #edf2f7; color: #4a5568; }
 .badge.custom { background: #fef3c7; color: #92400e; }
-.save-row { margin-left: 8px; }
+.table-toolbar { margin-bottom: 8px; display: flex; justify-content: flex-end; }
+.pager { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
 </style>
