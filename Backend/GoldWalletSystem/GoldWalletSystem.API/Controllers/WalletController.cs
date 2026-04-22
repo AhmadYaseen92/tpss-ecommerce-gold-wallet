@@ -312,6 +312,12 @@ public class WalletController(
         if (actionType == "sell" && executionMode == "locked_30_seconds" && request.QuoteLockedUntilUtc is DateTime lockedUntil && lockedUntil < DateTime.UtcNow)
             return BadRequest(ApiResponse<object>.Fail("Locked sell quote expired. Please refresh and retry.", 400));
 
+        var sellerUserId = await dbContext.Users
+            .Where(x => x.Role == "Seller")
+            .Where(x => dbContext.Sellers.Any(s => s.UserId == x.Id && s.Id == asset.SellerId))
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
         var oldQty = asset.Quantity;
         var oldWeight = asset.Weight;
         var oldCash = wallet.CashBalance;
@@ -422,12 +428,6 @@ public class WalletController(
         Invoice? createdInvoice = null;
         if (!shouldRequireSellerApproval && actionType is "certificate" or "invoice" or "sell" or "transfer" or "gift" or "pickup")
         {
-            var sellerUserId = await dbContext.Users
-                .Where(x => x.Role == "Seller")
-                .Where(x => dbContext.Sellers.Any(s => s.UserId == x.Id && s.Id == asset.SellerId))
-                .Select(x => (int?)x.Id)
-                .FirstOrDefaultAsync(cancellationToken) ?? 0;
-
             invoiceUrl = await SaveInvoiceDocumentAsync(
                 investorUserId: request.UserId,
                 actionType: actionType,
@@ -439,7 +439,7 @@ public class WalletController(
             createdInvoice = new Invoice
             {
                 InvestorUserId = request.UserId,
-                SellerUserId = sellerUserId,
+                SellerUserId = sellerUserId ?? 0,
                 InvoiceNumber = $"INV-WAL-{DateTime.UtcNow:yyyyMMddHHmmssfff}",
                 InvoiceCategory = NormalizeInvoiceCategory(actionType),
                 SourceChannel = "MobileWallet",
@@ -514,18 +514,38 @@ public class WalletController(
             CreatedAtUtc = DateTime.UtcNow
         });
 
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var transactionReference = $"wtx-{history.Id}";
+
         pendingNotifications.Add(new CreateNotificationRequestDto
         {
             UserId = request.UserId,
             Type = shouldRequireSellerApproval ? NotificationType.RequestUpdated : NotificationType.OrderApproved,
             ReferenceType = NotificationReferenceType.Transaction,
+            ReferenceId = history.Id,
             Title = shouldRequireSellerApproval ? "Wallet action submitted" : "Wallet action completed",
             Body = shouldRequireSellerApproval
-                ? $"{actionType} request submitted and pending seller approval."
-                : $"{actionType} completed for {request.Quantity} unit(s)."
+                ? $"{actionType} request submitted and pending seller approval. Transaction ID: {transactionReference}."
+                : $"{actionType} completed for {request.Quantity} unit(s). Transaction ID: {transactionReference}.",
+            ActionUrl = $"/transactions/{history.Id}"
         });
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        if (sellerUserId.HasValue && sellerUserId.Value > 0)
+        {
+            pendingNotifications.Add(new CreateNotificationRequestDto
+            {
+                UserId = sellerUserId.Value,
+                Type = NotificationType.RequestUpdated,
+                ReferenceType = NotificationReferenceType.Transaction,
+                ReferenceId = history.Id,
+                Title = "Wallet action update",
+                Body = shouldRequireSellerApproval
+                    ? $"New {actionType} request requires review. Transaction ID: {transactionReference}."
+                    : $"{actionType} was completed by investor. Transaction ID: {transactionReference}.",
+                ActionUrl = $"/transactions/{history.Id}"
+            });
+        }
 
         if (createdInvoice is not null)
         {
