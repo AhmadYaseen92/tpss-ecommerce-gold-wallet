@@ -1,9 +1,13 @@
+using GoldWalletSystem.Infrastructure.Database.Context;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace GoldWalletSystem.Infrastructure.Database.Migrations
 {
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260422162000_AddWalletAssetStableFields")]
     public partial class AddWalletAssetStableFields : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
