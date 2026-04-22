@@ -165,7 +165,10 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const AccountSummaryPage());
 
       case AppRoutes.checkoutRoute:
-        return MaterialPageRoute(builder: (_) => const CheckoutPaymentPage());
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const CheckoutPaymentPage(),
+        );
 
       case AppRoutes.marketOrderCheckoutRoute:
         return MaterialPageRoute(builder: (_) => const MarketOrderCheckoutPage(), settings: settings);
