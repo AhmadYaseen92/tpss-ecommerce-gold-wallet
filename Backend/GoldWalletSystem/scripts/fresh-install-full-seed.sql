@@ -176,17 +176,23 @@ BEGIN TRY
             T.[SellerId] = S.[SellerId],
             T.[Name] = S.[Name],
             T.[Description] = S.[Description],
-            T.[Price] = S.[Price],
             T.[AvailableStock] = S.[AvailableStock],
             T.[Category] = S.[Category],
+            T.[MaterialType] = CASE WHEN S.[Category] IN (2,6) THEN 2 WHEN S.[Category] = 9 THEN 3 ELSE 1 END,
+            T.[FormType] = CASE WHEN S.[Category] IN (8,9) THEN 1 WHEN S.[Category] IN (5,6) THEN 2 ELSE 3 END,
+            T.[PricingMode] = 1,
+            T.[PurityKarat] = 1,
+            T.[PurityFactor] = 1.0,
             T.[WeightValue] = S.[WeightValue],
             T.[WeightUnit] = S.[WeightUnit],
+            T.[BaseMarketPrice] = S.[Price],
+            T.[ManualSellPrice] = S.[Price],
             T.[ImageUrl] = S.[ImageUrl],
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[Category],[WeightValue],[WeightUnit],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[Price],S.[AvailableStock],S.[Category],S.[WeightValue],S.[WeightUnit],S.[ImageUrl],1,@Now,NULL);
+        INSERT ([SellerId],[Name],[Sku],[Description],[AvailableStock],[Category],[MaterialType],[FormType],[PricingMode],[PurityKarat],[PurityFactor],[WeightValue],[WeightUnit],[BaseMarketPrice],[ManualSellPrice],[OfferPercent],[OfferNewPrice],[OfferType],[IsHasOffer],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[AvailableStock],S.[Category],CASE WHEN S.[Category] IN (2,6) THEN 2 WHEN S.[Category] = 9 THEN 3 ELSE 1 END,CASE WHEN S.[Category] IN (8,9) THEN 1 WHEN S.[Category] IN (5,6) THEN 2 ELSE 3 END,1,1,1.0,S.[WeightValue],S.[WeightUnit],S.[Price],S.[Price],0,0,0,0,S.[ImageUrl],1,@Now,NULL);
 
     ------------------------------------------------------------
     -- WalletAssets portfolio rows
@@ -217,13 +223,13 @@ BEGIN TRY
         MERGE [SystemFeeTypes] AS T
         USING (
             VALUES
-            (N'commission_per_transaction', N'Commission Per Transaction', N'Seller managed commission fee', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), 1),
-            (N'premium_discount', N'Premium / Discount', N'Seller managed premium or discount fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), 2),
-            (N'storage_custody_fee', N'Storage / Custody Fee', N'Seller managed custody fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), 3),
-            (N'delivery_fee', N'Delivery Fee', N'Seller managed delivery fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), 4),
-            (N'service_charge', N'Service Charge', N'Seller managed service charge', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), 5),
-            (N'service_fee', N'Service Fee', N'Admin managed service fee', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), 6)
-        ) AS S([FeeCode],[Name],[Description],[IsEnabled],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[AppliesToInvoice],[AppliesToReports],[SortOrder])
+            (N'commission_per_transaction', N'Commission Per Transaction', N'Seller managed commission fee', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 1),
+            (N'premium_discount', N'Premium / Discount', N'Seller managed premium or discount fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 2),
+            (N'storage_custody_fee', N'Storage / Custody Fee', N'Seller managed custody fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 3),
+            (N'delivery_fee', N'Delivery Fee', N'Seller managed delivery fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 4),
+            (N'service_charge', N'Service Charge', N'Seller managed service charge', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 5),
+            (N'service_fee', N'Service Fee', N'Admin managed service fee', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), 6)
+        ) AS S([FeeCode],[Name],[Description],[IsEnabled],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[AppliesToInvoice],[AppliesToReports],[IsAdminManaged],[SortOrder])
         ON T.[FeeCode] = S.[FeeCode]
         WHEN MATCHED THEN UPDATE SET
             T.[Name] = S.[Name],
@@ -236,11 +242,12 @@ BEGIN TRY
             T.[AppliesToGift] = S.[AppliesToGift],
             T.[AppliesToInvoice] = S.[AppliesToInvoice],
             T.[AppliesToReports] = S.[AppliesToReports],
+            T.[IsAdminManaged] = S.[IsAdminManaged],
             T.[SortOrder] = S.[SortOrder],
             T.[UpdatedAtUtc] = @Now
         WHEN NOT MATCHED THEN
-            INSERT ([FeeCode],[Name],[Description],[IsEnabled],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[AppliesToInvoice],[AppliesToReports],[SortOrder],[CreatedAtUtc],[UpdatedAtUtc])
-            VALUES (S.[FeeCode],S.[Name],S.[Description],S.[IsEnabled],S.[AppliesToBuy],S.[AppliesToSell],S.[AppliesToPickup],S.[AppliesToTransfer],S.[AppliesToGift],S.[AppliesToInvoice],S.[AppliesToReports],S.[SortOrder],@Now,NULL);
+            INSERT ([FeeCode],[Name],[Description],[IsEnabled],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[AppliesToInvoice],[AppliesToReports],[IsAdminManaged],[SortOrder],[CreatedAtUtc],[UpdatedAtUtc])
+            VALUES (S.[FeeCode],S.[Name],S.[Description],S.[IsEnabled],S.[AppliesToBuy],S.[AppliesToSell],S.[AppliesToPickup],S.[AppliesToTransfer],S.[AppliesToGift],S.[AppliesToInvoice],S.[AppliesToReports],S.[IsAdminManaged],S.[SortOrder],@Now,NULL);
     END
 
     IF OBJECT_ID(N'[AdminTransactionFees]', N'U') IS NOT NULL

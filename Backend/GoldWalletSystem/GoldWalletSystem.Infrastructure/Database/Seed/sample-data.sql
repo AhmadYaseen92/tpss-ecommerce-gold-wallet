@@ -412,15 +412,15 @@ BEGIN TRY
     BEGIN
         INSERT INTO [TransactionHistories] (
             [UserId],[SellerId],[TransactionType],[Status],[Category],[Quantity],
-            [UnitPrice],[Weight],[Unit],[Purity],[Amount],[Currency],[Notes],[CreatedAtUtc],[UpdatedAtUtc]
+            [UnitPrice],[Weight],[Unit],[Purity],[Amount],[SubTotalAmount],[TotalFeesAmount],[DiscountAmount],[FinalAmount],[Currency],[Notes],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES
-            (@InvestorMain, @SellerImseeh, N'sell', N'pending', N'Gold', 1, 740, 5.000, N'gram', 24, 740, N'USD', N'SKU=IMSEEH-PRD-001|execution_mode=locked_30_seconds|wallet_asset_id=1', DATEADD(HOUR, -6, @Now), NULL),
-            (@InvestorMain, @SellerImseeh, N'pickup', N'pending_delivered', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, N'USD', N'SKU=IMSEEH-PRD-005|pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
-            (@InvestorImseeh, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=', @InvestorMain, N'|recipient_investor_name=Gold Wallet Investor'), DATEADD(DAY, -2, @Now), NULL),
-            (@InvestorMain, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=', @InvestorImseeh, N'|from_investor_name=Imseeh Investor 1|wallet_asset_id=2'), DATEADD(DAY, -2, DATEADD(MINUTE, 1, @Now)), NULL),
-            (@InvestorImseeh, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=', @InvestorMain, N'|recipient_investor_name=Gold Wallet Investor'), DATEADD(DAY, -1, @Now), NULL),
-            (@InvestorMain, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=', @InvestorImseeh, N'|from_investor_name=Imseeh Investor 1|wallet_asset_id=2'), DATEADD(DAY, -1, DATEADD(MINUTE, 1, @Now)), NULL);
+            (@InvestorMain, @SellerImseeh, N'sell', N'pending', N'Gold', 1, 740, 5.000, N'gram', 24, 740, 730, 10, 0, 740, N'USD', N'SKU=IMSEEH-PRD-001|execution_mode=locked_30_seconds|wallet_asset_id=1', DATEADD(HOUR, -6, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'pickup', N'pending_delivered', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, 2650, 35, 0, 2685, N'USD', N'SKU=IMSEEH-PRD-005|pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, 720, 10, 0, 730, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=', @InvestorMain, N'|recipient_investor_name=Gold Wallet Investor'), DATEADD(DAY, -2, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, 720, 10, 0, 730, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=', @InvestorImseeh, N'|from_investor_name=Imseeh Investor 1|wallet_asset_id=2'), DATEADD(DAY, -2, DATEADD(MINUTE, 1, @Now)), NULL),
+            (@InvestorImseeh, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, 715, 10, 0, 725, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=', @InvestorMain, N'|recipient_investor_name=Gold Wallet Investor'), DATEADD(DAY, -1, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, 715, 10, 0, 725, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=', @InvestorImseeh, N'|from_investor_name=Imseeh Investor 1|wallet_asset_id=2'), DATEADD(DAY, -1, DATEADD(MINUTE, 1, @Now)), NULL);
     END
     ELSE
     BEGIN
@@ -828,6 +828,21 @@ BEGIN TRY
         WHEN NOT MATCHED THEN
             INSERT ([SellerId],[ProductId],[FeeCode],[IsEnabled],[CalculationMode],[RatePercent],[MinimumAmount],[FlatAmount],[PremiumDiscountType],[ValuePerUnit],[FeePercent],[GracePeriodDays],[FixedAmount],[FeePerUnit],[IsOverride],[CreatedAtUtc],[UpdatedAtUtc])
             VALUES (S.[SellerId],S.[ProductId],S.[FeeCode],S.[IsEnabled],S.[CalculationMode],S.[RatePercent],S.[MinimumAmount],S.[FlatAmount],S.[PremiumDiscountType],S.[ValuePerUnit],S.[FeePercent],S.[GracePeriodDays],S.[FixedAmount],S.[FeePerUnit],S.[IsOverride],@Now,NULL);
+    END
+
+
+
+    -- 6.c) Seed transaction fee breakdown rows when table exists.
+    IF OBJECT_ID(N'[TransactionFeeBreakdowns]', N'U') IS NOT NULL
+    BEGIN
+        INSERT INTO [TransactionFeeBreakdowns] (
+            [TransactionHistoryId],[ProductId],[SellerId],[FeeCode],[FeeName],[CalculationMode],[BaseAmount],[Quantity],[AppliedRate],[AppliedValue],[IsDiscount],[Currency],[SourceType],[ConfigSnapshotJson],[DisplayOrder],[CreatedAtUtc],[UpdatedAtUtc]
+        )
+        SELECT TH.[Id], NULL, TH.[SellerId], N'service_fee', N'Service Fee', N'percent', TH.[SubTotalAmount], TH.[Quantity], 1.25, TH.[TotalFeesAmount], 0, TH.[Currency], N'AdminServiceFee', N'{"seed":true}', 1, @Now, NULL
+        FROM [TransactionHistories] TH
+        WHERE TH.[CreatedAtUtc] >= DATEADD(DAY, -10, @Now)
+          AND TH.[TotalFeesAmount] > 0
+          AND NOT EXISTS (SELECT 1 FROM [TransactionFeeBreakdowns] FB WHERE FB.[TransactionHistoryId] = TH.[Id]);
     END
 
     -- 7) Seed audit marker.
