@@ -139,7 +139,7 @@ public class CheckoutController(
 
         decimal totalAmount = 0;
         var createdRequests = new List<TransactionHistory>();
-        var pendingFeeBreakdowns = new List<(TransactionHistory History, int ProductId, int SellerId, Application.DTOs.Fees.FeeLineDto Line)>();
+        var pendingFeeBreakdowns = new List<(TransactionHistory History, int ProductId, int SellerId, global::GoldWalletSystem.Application.DTOs.Fees.FeeLineDto Line)>();
         foreach (var (product, quantity) in lines)
         {
             if (product.AvailableStock < quantity)
@@ -190,7 +190,7 @@ public class CheckoutController(
 
             foreach (var line in feeResult.Lines)
             {
-                pendingFeeBreakdowns.Add((requestHistory, product.Id, product.SellerId, line));
+                pendingFeeBreakdowns.Add((History: requestHistory, ProductId: product.Id, SellerId: product.SellerId, Line: line));
             }
         }
 
@@ -317,6 +317,23 @@ public class CheckoutController(
         ProductWeightUnit.Ounce => weightValue * 31.1035m,
         _ => weightValue
     };
+
+    private static decimal ResolveProductUnitPrice(Product product)
+    {
+        var sellPrice = product.PricingMode == ProductPricingMode.Manual
+            ? product.ManualSellPrice
+            : ProductPricingCalculator.CalculateAutoPrice(
+                product.MaterialType,
+                product.BaseMarketPrice,
+                product.WeightValue,
+                product.PurityFactor);
+
+        return ProductPricingCalculator.ApplyOffer(
+            sellPrice,
+            product.OfferType,
+            product.OfferPercent,
+            product.OfferNewPrice);
+    }
 
     private static AssetType ToAssetType(ProductCategory category) => category switch
     {
