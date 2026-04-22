@@ -255,23 +255,38 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   Future<void> _loadPreview() async {
     final args = _checkoutArgs;
     final summary = args['summary'];
-    if (_applySummaryFromArgs(summary)) {
-      return;
-    }
+    _applySummaryFromArgs(summary);
 
     final userId = AuthSessionStore.userId;
     if (userId == null) return;
 
-    final fromCart = (args['fromCart'] as bool?) ?? false;
-    final productId = args['productId'];
-    final quantity = args['quantity'];
-    final productIds = (args['productIds'] as List<dynamic>? ?? [])
-        .map((e) => e is num ? e.toInt() : int.tryParse('$e'))
+    final source = (args['source'] ?? '').toString().toLowerCase();
+    final rawFromCart = args['fromCart'];
+    final parsedProductId = _toInt(args['productId']);
+    final parsedQuantity = _toInt(args['quantity']);
+    var productIds = (args['productIds'] as List<dynamic>? ?? [])
+        .map(_toInt)
         .whereType<int>()
         .toList();
 
+    final fromCart = rawFromCart is bool
+        ? rawFromCart
+        : source == 'cart'
+            ? true
+            : source == 'product'
+                ? false
+                : productIds.isNotEmpty
+                    ? true
+                    : (parsedProductId != null && parsedQuantity != null && parsedQuantity > 0)
+                        ? false
+                        : true;
+
+    if (fromCart && productIds.isEmpty) {
+      productIds = await _loadCartProductIdsFromServer(userId);
+    }
+
     if (fromCart && productIds.isEmpty) return;
-    if (!fromCart && (productId == null || quantity == null)) return;
+    if (!fromCart && (parsedProductId == null || parsedQuantity == null || parsedQuantity <= 0)) return;
 
     try {
       final response = await _dio.post(
@@ -281,8 +296,8 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
           'actionType': 'buy',
           'fromCart': fromCart,
           if (fromCart) 'productIds': productIds,
-          if (!fromCart) 'productId': productId,
-          if (!fromCart) 'quantity': quantity,
+          if (!fromCart) 'productId': parsedProductId,
+          if (!fromCart) 'quantity': parsedQuantity,
         },
       );
       final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
@@ -291,8 +306,29 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
         _summary = ActionSummaryBuilder.fromBackendData(data);
       });
     } catch (_) {
-      _applySummaryFromArgs(summary);
+      // Keep the pre-applied args summary as a fallback only when preview fails.
     }
+  }
+
+  Future<List<int>> _loadCartProductIdsFromServer(int userId) async {
+    try {
+      final response = await _dio.post('/cart/by-user', data: {'userId': userId});
+      final payload = response.data as Map<String, dynamic>;
+      final data = payload['data'] as Map<String, dynamic>? ?? {};
+      final items = (data['items'] as List<dynamic>? ?? []).whereType<Map<String, dynamic>>();
+      return items
+          .map((item) => (item['productId'] as num?)?.toInt())
+          .whereType<int>()
+          .toList();
+    } catch (_) {
+      return const <int>[];
+    }
+  }
+
+  int? _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse('$value');
   }
 
   bool _applySummaryFromArgs(dynamic summary) {
