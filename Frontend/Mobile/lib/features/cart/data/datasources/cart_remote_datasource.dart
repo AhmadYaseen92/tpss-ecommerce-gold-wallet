@@ -8,8 +8,16 @@ class CartRemoteDataSource {
 
   Future<List<CartRemoteItemModel>> getCartItems() async {
     final userId = _requireUserId();
-    final response = await _dio.post('/cart/by-user', data: {'userId': userId});
-    return _parseItems(response.data);
+    try {
+      final response = await _dio.post('/cart/by-user', data: {'userId': userId});
+      return _parseItems(response.data);
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode ?? 0;
+      if (statusCode == 400 || statusCode == 404) {
+        return const <CartRemoteItemModel>[];
+      }
+      rethrow;
+    }
   }
 
   Future<void> addProduct({required int productId, required int quantity}) async {

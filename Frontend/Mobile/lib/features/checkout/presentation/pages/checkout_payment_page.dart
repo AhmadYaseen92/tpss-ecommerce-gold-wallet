@@ -28,19 +28,29 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
   double _discountAmount = 0;
   double _finalAmount = 0;
   List<Map<String, dynamic>> _feeBreakdowns = const [];
-
-  Map<String, dynamic> get _checkoutArgs {
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map<String, dynamic>) return args;
-    if (args is Map) {
-      return args.map((key, value) => MapEntry('$key', value));
-    }
-    return const {};
-  }
+  Map<String, dynamic> _checkoutArgs = const {};
+  bool _didInitPreview = false;
 
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didInitPreview) return;
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic>) {
+      _checkoutArgs = args;
+    } else if (args is Map) {
+      _checkoutArgs = args.map((key, value) => MapEntry('$key', value));
+    } else {
+      _checkoutArgs = const {};
+    }
+
+    _didInitPreview = true;
     _loadPreview();
   }
 
