@@ -31,6 +31,27 @@ class AuthApiService {
     return response.data ?? <String, dynamic>{};
   }
 
+
+  Future<Map<String, dynamic>> refreshToken(String refreshToken) async {
+    final response = await _dio.fetch<Map<String, dynamic>>(
+      Options(method: 'POST')
+          .compose(_dio.options, '/auth/refresh-token', data: {'refreshToken': refreshToken})
+          .copyWith(baseUrl: _resolveBaseUrl()),
+    );
+
+    return response.data ?? <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> logout(String? refreshToken) async {
+    final response = await _dio.fetch<Map<String, dynamic>>(
+      Options(method: 'POST')
+          .compose(_dio.options, '/auth/logout', data: {'refreshToken': refreshToken})
+          .copyWith(baseUrl: _resolveBaseUrl()),
+    );
+
+    return response.data ?? <String, dynamic>{};
+  }
+
   String _resolveBaseUrl() {
     final configuredBaseUrl = (_baseUrl ?? '').trim();
     if (configuredBaseUrl.isEmpty) {

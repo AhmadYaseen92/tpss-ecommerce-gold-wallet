@@ -20,6 +20,8 @@ class AuthRepositoryImpl implements IAuthRepository {
       role: result.role,
       userId: result.userId,
       sellerId: result.sellerId,
+      refreshToken: result.refreshToken,
+      refreshTokenExpiresAtUtc: result.refreshTokenExpiresAtUtc,
     );
   }
 

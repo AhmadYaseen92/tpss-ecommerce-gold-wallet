@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/cubit/login_cubit.dart';
@@ -24,9 +25,12 @@ class LoginPage extends StatelessWidget {
       child: BlocConsumer<LoginCubit, LoginState>(
         listener: (context, state) {
           if (state is LoginSuccess) {
+            final next = (AuthSessionStore.quickUnlockEnabled || AuthSessionStore.pinSetupComplete)
+                ? AppRoutes.homeRoute
+                : AppRoutes.securitySetupRoute;
             Navigator.pushNamedAndRemoveUntil(
               context,
-              AppRoutes.homeRoute,
+              next,
               (route) => false,
             );
           } else if (state is LoginError) {

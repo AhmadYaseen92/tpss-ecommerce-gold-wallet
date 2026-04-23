@@ -48,6 +48,8 @@ class RegisterRequestModel {
   final String? preferredLanguage;
   final String? preferredTheme;
   final int sellerId;
+  final String refreshToken;
+  final DateTime refreshTokenExpiresAtUtc;
 
   Map<String, dynamic> toJson() => _$RegisterRequestModelToJson(this);
 }
@@ -60,6 +62,8 @@ class LoginResponseModel {
     required this.role,
     required this.userId,
     required this.sellerId,
+    required this.refreshToken,
+    required this.refreshTokenExpiresAtUtc,
   });
 
   final String accessToken;
@@ -67,9 +71,20 @@ class LoginResponseModel {
   final String role;
   final int userId;
   final int sellerId;
+  final String refreshToken;
+  final DateTime refreshTokenExpiresAtUtc;
 
   factory LoginResponseModel.fromJson(Map<String, dynamic> json) =>
       _$LoginResponseModelFromJson(json);
+}
+
+@JsonSerializable()
+class RefreshTokenRequestModel {
+  const RefreshTokenRequestModel({required this.refreshToken});
+
+  final String refreshToken;
+
+  Map<String, dynamic> toJson() => {'refreshToken': refreshToken};
 }
 
 @JsonSerializable(genericArgumentFactories: true)

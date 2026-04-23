@@ -24,6 +24,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/sell/presentation/pages/sell
 import 'package:tpss_ecommerce_gold_wallet/features/transfer/presentation/pages/transfer_gift_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/forgot_password/presentation/pages/forgot_password_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/splash/presentation/pages/splash_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/security/presentation/pages/security_setup_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/pages/confirm_otp_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/data/datasources/checkout_otp_remote_datasource.dart';
@@ -90,6 +91,9 @@ class AppRouter {
 
       case AppRoutes.securitySettingsRoute:
         return MaterialPageRoute(builder: (_) => const SecuritySettingsPage());
+
+      case AppRoutes.securitySetupRoute:
+        return MaterialPageRoute(builder: (_) => const SecuritySetupPage());
 
       case AppRoutes.linkedBankAccountsRoute:
         return MaterialPageRoute(

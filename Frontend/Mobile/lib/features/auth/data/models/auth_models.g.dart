@@ -30,6 +30,8 @@ RegisterRequestModel _$RegisterRequestModelFromJson(Map<String, dynamic> json) =
       preferredLanguage: json['preferredLanguage'] as String?,
       preferredTheme: json['preferredTheme'] as String?,
       sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
+      refreshToken: json['refreshToken'] as String,
+      refreshTokenExpiresAtUtc: DateTime.parse(json['refreshTokenExpiresAtUtc'] as String),
     );
 
 Map<String, dynamic> _$RegisterRequestModelToJson(
@@ -58,6 +60,8 @@ LoginResponseModel _$LoginResponseModelFromJson(Map<String, dynamic> json) =>
       role: json['role'] as String,
       userId: (json['userId'] as num).toInt(),
       sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
+      refreshToken: json['refreshToken'] as String,
+      refreshTokenExpiresAtUtc: DateTime.parse(json['refreshTokenExpiresAtUtc'] as String),
     );
 
 Map<String, dynamic> _$LoginResponseModelToJson(LoginResponseModel instance) =>
@@ -67,7 +71,17 @@ Map<String, dynamic> _$LoginResponseModelToJson(LoginResponseModel instance) =>
       'role': instance.role,
       'userId': instance.userId,
       'sellerId': instance.sellerId,
+      'refreshToken': instance.refreshToken,
+      'refreshTokenExpiresAtUtc': instance.refreshTokenExpiresAtUtc.toIso8601String(),
     };
+
+RefreshTokenRequestModel _$RefreshTokenRequestModelFromJson(
+  Map<String, dynamic> json,
+) => RefreshTokenRequestModel(refreshToken: json['refreshToken'] as String);
+
+Map<String, dynamic> _$RefreshTokenRequestModelToJson(
+  RefreshTokenRequestModel instance,
+) => <String, dynamic>{'refreshToken': instance.refreshToken};
 
 ApiEnvelope<T> _$ApiEnvelopeFromJson<T>(
   Map<String, dynamic> json,

@@ -6,6 +6,7 @@ using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
+using System.Security.Cryptography;
 
 namespace GoldWalletSystem.Application.Services;
 
@@ -22,6 +23,48 @@ public class AuthService(
 
         var user = await ValidateCredentialsAsync(request.Email, request.Password, cancellationToken);
         return await BuildLoginResponseAsync(user, cancellationToken);
+    }
+
+    public async Task<LoginResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+            throw new UnauthorizedAccessException("Invalid refresh token.");
+
+        var payload = ParseRefreshToken(request.RefreshToken);
+        var existing = await userAuthRepository.GetActiveRefreshTokenAsync(payload.UserId, HashToken(request.RefreshToken), cancellationToken)
+            ?? throw new UnauthorizedAccessException("Refresh token is expired or revoked.");
+
+        await userAuthRepository.RevokeRefreshTokenAsync(existing.Id, cancellationToken);
+
+        var user = await userAuthRepository.GetByIdAsync(payload.UserId, cancellationToken)
+            ?? throw new UnauthorizedAccessException("User not found.");
+
+        return await BuildLoginResponseAsync(user, cancellationToken);
+    }
+
+    public async Task LogoutAsync(int userId, string? refreshToken = null, CancellationToken cancellationToken = default)
+    {
+        if (!string.IsNullOrWhiteSpace(refreshToken))
+        {
+            try
+            {
+                var payload = ParseRefreshToken(refreshToken);
+                if (payload.UserId == userId)
+                {
+                    var existing = await userAuthRepository.GetActiveRefreshTokenAsync(payload.UserId, HashToken(refreshToken), cancellationToken);
+                    if (existing is not null)
+                    {
+                        await userAuthRepository.RevokeRefreshTokenAsync(existing.Id, cancellationToken);
+                        return;
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        await userAuthRepository.RevokeAllRefreshTokensAsync(userId, cancellationToken);
     }
 
     public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
@@ -159,10 +202,23 @@ public class AuthService(
         var sellerId = sellerProfile?.Id;
 
         var token = tokenService.GenerateAccessToken(user.Id, user.Email, role, sellerId);
+        var refreshToken = BuildRefreshToken(user.Id);
+
+        await userAuthRepository.AddRefreshTokenAsync(new RefreshToken
+        {
+            UserId = user.Id,
+            TokenHash = HashToken(refreshToken.Token),
+            ExpiresAtUtc = refreshToken.ExpiresAtUtc,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        }, cancellationToken);
+
         return new LoginResponseDto
         {
             AccessToken = token.Token,
             ExpiresAtUtc = token.ExpiresAtUtc,
+            RefreshToken = refreshToken.Token,
+            RefreshTokenExpiresAtUtc = refreshToken.ExpiresAtUtc,
             Role = role,
             UserId = user.Id,
             FullName = user.FullName,
@@ -309,6 +365,38 @@ public class AuthService(
 
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
         return $"{companySeed}-{timestamp[^6..]}";
+    }
+
+
+    private static (int UserId, DateTime ExpiresAtUtc) ParseRefreshToken(string rawToken)
+    {
+        var parts = rawToken.Split('.', 3);
+        if (parts.Length != 3 || !int.TryParse(parts[0], out var userId))
+            throw new UnauthorizedAccessException("Invalid refresh token.");
+
+        var unixTime = Convert.FromBase64String(parts[1]);
+        var ticks = BitConverter.ToInt64(unixTime, 0);
+        var expires = DateTimeOffset.FromUnixTimeSeconds(ticks).UtcDateTime;
+        if (expires <= DateTime.UtcNow)
+            throw new UnauthorizedAccessException("Refresh token expired.");
+
+        return (userId, expires);
+    }
+
+    private static (string Token, DateTime ExpiresAtUtc) BuildRefreshToken(int userId)
+    {
+        var expiresAtUtc = DateTime.UtcNow.AddDays(7);
+        var expiresUnix = new DateTimeOffset(expiresAtUtc).ToUnixTimeSeconds();
+        var random = RandomNumberGenerator.GetBytes(64);
+        var token = $"{userId}.{Convert.ToBase64String(BitConverter.GetBytes(expiresUnix))}.{Convert.ToBase64String(random)}";
+        return (token, expiresAtUtc);
+    }
+
+    private static string HashToken(string token)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(token);
+        var hash = SHA256.HashData(bytes);
+        return Convert.ToHexString(hash);
     }
 
     private static void ValidateSellerRegistration(RegisterRequestDto request)

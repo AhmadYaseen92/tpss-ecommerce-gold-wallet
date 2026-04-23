@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/session_manager.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
@@ -55,7 +56,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 AppButton(
                   label: 'Logout',
                   icon: Icons.logout_rounded,
-                  onPressed: () {
+                  onPressed: () async {
+                    await SessionManager.forceLogout();
+                    if (!mounted) return;
                     Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
                       AppRoutes.loginRoute,
                       (route) => false,

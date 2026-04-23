@@ -147,8 +147,11 @@ class LoginCubit extends Cubit<LoginState> {
         email: identifier,
         password: password,
       );
-      AuthSessionStore.setSession(
+      await AuthSessionStore.setSession(
         token: session.accessToken,
+        tokenExpiresAtUtc: session.expiresAtUtc,
+        newRefreshToken: session.refreshToken,
+        newRefreshTokenExpiresAtUtc: session.refreshTokenExpiresAtUtc,
         uid: session.userId,
         sid: session.sellerId,
       );

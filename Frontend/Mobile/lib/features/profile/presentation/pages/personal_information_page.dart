@@ -58,7 +58,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                 'subtitle': 'Enter the OTP sent to your updated email address.',
               },
             );
-            AuthSessionStore.clear();
+            await AuthSessionStore.clearAll();
             if (!context.mounted) return;
             Navigator.pushNamedAndRemoveUntil(
               context,
