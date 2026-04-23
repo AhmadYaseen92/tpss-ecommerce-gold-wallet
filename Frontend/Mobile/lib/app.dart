@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/session_manager.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_router.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
@@ -46,7 +47,9 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
     await _syncRemoteConfiguration();
     await AuthSessionStore.applyAdminUnlockPolicy();
 
-    if (AuthSessionStore.isLoggedIn && !AuthSessionStore.hasUnlockMethod) {
+    if (AuthSessionStore.isLoggedIn &&
+        AppReleaseConfig.quickUnlockAllowed &&
+        !AuthSessionStore.hasUnlockMethod) {
       await SessionManager.forceLogout(localOnly: true);
       await AuthSessionStore.hydrate();
     }

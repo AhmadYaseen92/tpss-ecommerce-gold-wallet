@@ -10,6 +10,7 @@ class AppReleaseConfig {
   static bool showWeightInGrams = true;
   static bool loginByBiometricEnabled = true;
   static bool loginByPinEnabled = true;
+  static bool get quickUnlockAllowed => loginByBiometricEnabled || loginByPinEnabled;
 
   static bool get showSellerUi => !isIndividualSellerRelease;
 
