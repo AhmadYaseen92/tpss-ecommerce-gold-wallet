@@ -48,8 +48,6 @@ class RegisterRequestModel {
   final String? preferredLanguage;
   final String? preferredTheme;
   final int sellerId;
-  final String refreshToken;
-  final DateTime refreshTokenExpiresAtUtc;
 
   Map<String, dynamic> toJson() => _$RegisterRequestModelToJson(this);
 }
