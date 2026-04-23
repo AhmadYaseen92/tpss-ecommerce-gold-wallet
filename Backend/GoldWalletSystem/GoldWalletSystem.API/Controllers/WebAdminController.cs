@@ -533,6 +533,20 @@ public class WebAdminController(
                         walletAssetId: TryExtractWalletAssetId(item.Notes),
                         transactionId: item.Id,
                         cancellationToken: cancellationToken);
+                    await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+                        recipientInvestorId.Value,
+                        scope: "actions",
+                        reason: $"wallet-action:{recipientAction}:approved",
+                        walletAssetId: TryExtractWalletAssetId(item.Notes),
+                        transactionId: item.Id,
+                        cancellationToken: cancellationToken);
+                    await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+                        recipientInvestorId.Value,
+                        scope: "review-transaction",
+                        reason: $"wallet-action:{recipientAction}:approved",
+                        walletAssetId: TryExtractWalletAssetId(item.Notes),
+                        transactionId: item.Id,
+                        cancellationToken: cancellationToken);
                 }
             }
         }

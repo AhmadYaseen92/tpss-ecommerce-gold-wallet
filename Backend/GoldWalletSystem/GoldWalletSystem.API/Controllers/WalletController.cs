@@ -764,6 +764,20 @@ public class WalletController(
                 walletAssetId: request.WalletAssetId,
                 transactionId: history.Id,
                 cancellationToken: cancellationToken);
+            await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+                request.RecipientInvestorUserId.Value,
+                scope: "actions",
+                reason: $"wallet-action:{actionType}:recipient",
+                walletAssetId: request.WalletAssetId,
+                transactionId: history.Id,
+                cancellationToken: cancellationToken);
+            await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+                request.RecipientInvestorUserId.Value,
+                scope: "review-transaction",
+                reason: $"wallet-action:{actionType}:recipient",
+                walletAssetId: request.WalletAssetId,
+                transactionId: history.Id,
+                cancellationToken: cancellationToken);
         }
 
         var portfolioValue = await dbContext.WalletAssets
@@ -826,6 +840,20 @@ public class WalletController(
             reason: "wallet-request-cancelled",
             walletAssetId: request.WalletAssetId,
             cancellationToken: cancellationToken);
+        var cancelledAction = (history.TransactionType ?? string.Empty).Trim().ToLowerInvariant();
+        var cancelledRecipientInvestorId = cancelledAction is "transfer" or "gift"
+            ? TryExtractRecipientInvestorUserId(history.Notes)
+            : null;
+        if (cancelledRecipientInvestorId.HasValue)
+        {
+            await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+                cancelledRecipientInvestorId.Value,
+                scope: "actions",
+                reason: $"wallet-request-cancelled:{cancelledAction}:recipient",
+                walletAssetId: request.WalletAssetId,
+                transactionId: history.Id,
+                cancellationToken: cancellationToken);
+        }
 
         return Ok(ApiResponse<CancelWalletRequestResponse>.Ok(new CancelWalletRequestResponse
         {
@@ -883,6 +911,20 @@ public class WalletController(
             walletAssetId: TryExtractWalletAssetId(entity.Notes),
             transactionId: entity.Id,
             cancellationToken: cancellationToken);
+        var requestAction = (entity.TransactionType ?? string.Empty).Trim().ToLowerInvariant();
+        var recipientInvestorId = requestAction is "transfer" or "gift"
+            ? TryExtractRecipientInvestorUserId(entity.Notes)
+            : null;
+        if (recipientInvestorId.HasValue)
+        {
+            await realtimeNotifier.NotifyWalletRefreshSignalAsync(
+                recipientInvestorId.Value,
+                scope: "actions",
+                reason: $"wallet-request:{requestAction}:recipient",
+                walletAssetId: TryExtractWalletAssetId(entity.Notes),
+                transactionId: entity.Id,
+                cancellationToken: cancellationToken);
+        }
 
         return Ok(ApiResponse<object>.Ok(new { id = $"r-{entity.Id}", status = entity.Status }, "Request submitted"));
     }
@@ -1286,6 +1328,12 @@ public class WalletController(
         var stopAt = tail.IndexOfAny(['|', ',', ';']);
         var rawValue = stopAt > 0 ? tail[..stopAt].Trim() : tail.Trim();
         return string.IsNullOrWhiteSpace(rawValue) ? null : rawValue;
+    }
+
+    private static int? TryExtractRecipientInvestorUserId(string? notes)
+    {
+        var rawValue = TryExtractMeta(notes, "recipient_investor_user_id");
+        return int.TryParse(rawValue, out var parsedId) ? parsedId : null;
     }
 
     private async Task<string?> SaveInvoiceDocumentAsync(
