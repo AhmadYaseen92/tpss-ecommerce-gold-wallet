@@ -56,6 +56,8 @@ class ProfileRemoteDataSource {
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
+    String? otpVerificationToken,
+    String? otpActionReferenceId,
   }) async {
     final userId = _requireUserId();
     await _dio.put(
@@ -64,6 +66,8 @@ class ProfileRemoteDataSource {
         'userId': userId,
         'currentPassword': currentPassword,
         'newPassword': newPassword,
+        'otpVerificationToken': otpVerificationToken ?? '',
+        'otpActionReferenceId': otpActionReferenceId ?? '',
       },
     );
   }

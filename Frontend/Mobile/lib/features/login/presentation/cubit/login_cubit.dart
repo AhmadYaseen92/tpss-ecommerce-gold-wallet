@@ -23,7 +23,6 @@ class LoginCubit extends Cubit<LoginState> {
   final LocalAuthentication _auth = LocalAuthentication();
   BiometricTypeUI biometricType = BiometricTypeUI.none;
 
-  bool rememberMe = false;
   bool obscurePassword = true;
   String identifier = 'investor@goldwallet.com';
   String password = 'Password@123';
@@ -76,11 +75,6 @@ class LoginCubit extends Cubit<LoginState> {
   void togglePasswordVisibility() {
     obscurePassword = !obscurePassword;
     emit(LoginPasswordVisibilityChanged(obscurePassword: obscurePassword));
-  }
-
-  void toggleRememberMe(bool value) {
-    rememberMe = value;
-    emit(LoginRememberMeChanged(rememberMe: rememberMe));
   }
 
   Future<bool> _canUseBiometrics() async {
@@ -147,8 +141,11 @@ class LoginCubit extends Cubit<LoginState> {
         email: identifier,
         password: password,
       );
-      AuthSessionStore.setSession(
+      await AuthSessionStore.setSession(
         token: session.accessToken,
+        tokenExpiresAtUtc: session.expiresAtUtc,
+        newRefreshToken: session.refreshToken,
+        newRefreshTokenExpiresAtUtc: session.refreshTokenExpiresAtUtc,
         uid: session.userId,
         sid: session.sellerId,
       );

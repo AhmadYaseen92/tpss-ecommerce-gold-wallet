@@ -9,7 +9,13 @@ class WalletRemoteDataSource {
   Future<WalletRemoteModel> getWalletByCurrentUser() async {
     final userId = AuthSessionStore.userId;
     if (userId == null) {
-      throw Exception('No logged-in user. Please login first.');
+      return WalletRemoteModel(
+        id: 0,
+        userId: 0,
+        cashBalance: 0,
+        currencyCode: 'USD',
+        assets: const <WalletAssetRemoteModel>[],
+      );
     }
 
     try {
@@ -35,7 +41,7 @@ class WalletRemoteDataSource {
   Future<Map<int, WalletPurchaseSnapshot>> getLatestApprovedBuySnapshots() async {
     final userId = AuthSessionStore.userId;
     if (userId == null) {
-      throw Exception('No logged-in user. Please login first.');
+      return const <int, WalletPurchaseSnapshot>{};
     }
 
     final response = await _dio.post(

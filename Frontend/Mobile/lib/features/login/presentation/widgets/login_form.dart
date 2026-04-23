@@ -4,7 +4,6 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/cubit/login_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/widgets/remember_me_row_widget.dart';
 
 class LoginForm extends StatelessWidget {
   LoginForm({super.key});
@@ -88,8 +87,6 @@ class LoginForm extends StatelessWidget {
             },
             onChanged: cubit.updatePassword,
           ),
-          const SizedBox(height: 14),
-          RememberMeRow(cubit: cubit),
           const SizedBox(height: 24),
           AppButton(
             cubit: cubit,

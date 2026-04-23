@@ -21,4 +21,7 @@ public static class MobileAppConfigurationKeys
     public const string MobileReleaseIsIndividualSeller = "MobileRelease_IsIndividualSeller";
     public const string MobileReleaseIndividualSellerName = "MobileRelease_IndividualSellerName";
     public const string MobileReleaseShowWeightInGrams = "MobileRelease_ShowWeightInGrams";
+    public const string MobileReleaseMarketWatchEnabled = "MobileRelease_MarketWatchEnabled";
+    public const string LoginByBiometricEnabled = "MobileSecurity_LoginByBiometric";
+    public const string LoginByPinEnabled = "MobileSecurity_LoginByPin";
 }

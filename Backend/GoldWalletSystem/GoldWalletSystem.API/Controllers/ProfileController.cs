@@ -33,7 +33,7 @@ public class ProfileController(IProfileService profileService, IOtpService otpSe
         var otpAction = !string.Equals(current.Email, request.Email, StringComparison.OrdinalIgnoreCase)
             ? OtpActionTypes.ChangeEmail
             : OtpActionTypes.ChangeMobileNumber;
-        await otpService.ConsumeVerificationGrantAsync(
+        await ConsumeOtpIfRequiredAsync(
             request.UserId,
             otpAction,
             request.OtpActionReferenceId,
@@ -55,7 +55,7 @@ public class ProfileController(IProfileService profileService, IOtpService otpSe
     public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordRequestDto request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        await otpService.ConsumeVerificationGrantAsync(
+        await ConsumeOtpIfRequiredAsync(
             request.UserId,
             OtpActionTypes.ChangePassword,
             request.OtpActionReferenceId,
@@ -69,7 +69,7 @@ public class ProfileController(IProfileService profileService, IOtpService otpSe
     public async Task<IActionResult> UpsertPaymentMethod([FromBody] UpsertPaymentMethodRequestDto request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        await otpService.ConsumeVerificationGrantAsync(
+        await ConsumeOtpIfRequiredAsync(
             request.UserId,
             request.PaymentMethodId.HasValue ? OtpActionTypes.EditPaymentMethod : OtpActionTypes.AddPaymentMethod,
             request.OtpActionReferenceId,
@@ -83,7 +83,7 @@ public class ProfileController(IProfileService profileService, IOtpService otpSe
     public async Task<IActionResult> UpsertLinkedBank([FromBody] UpsertLinkedBankAccountRequestDto request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        await otpService.ConsumeVerificationGrantAsync(
+        await ConsumeOtpIfRequiredAsync(
             request.UserId,
             request.LinkedBankAccountId.HasValue ? OtpActionTypes.EditBankAccount : OtpActionTypes.AddBankAccount,
             request.OtpActionReferenceId,
@@ -97,7 +97,7 @@ public class ProfileController(IProfileService profileService, IOtpService otpSe
     public async Task<IActionResult> RemovePaymentMethod([FromBody] RemovePaymentMethodRequestDto request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        await otpService.ConsumeVerificationGrantAsync(
+        await ConsumeOtpIfRequiredAsync(
             request.UserId,
             OtpActionTypes.RemovePaymentMethod,
             request.OtpActionReferenceId,
@@ -111,7 +111,7 @@ public class ProfileController(IProfileService profileService, IOtpService otpSe
     public async Task<IActionResult> RemoveLinkedBank([FromBody] RemoveLinkedBankAccountRequestDto request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        await otpService.ConsumeVerificationGrantAsync(
+        await ConsumeOtpIfRequiredAsync(
             request.UserId,
             OtpActionTypes.RemoveBankAccount,
             request.OtpActionReferenceId,
@@ -119,5 +119,23 @@ public class ProfileController(IProfileService profileService, IOtpService otpSe
             cancellationToken);
         var data = await profileService.RemoveLinkedBankAccountAsync(request, cancellationToken);
         return Ok(ApiResponse<ProfileDto>.Ok(data, "Linked bank account removed"));
+    }
+
+    private async Task ConsumeOtpIfRequiredAsync(
+        int userId,
+        string actionType,
+        string actionReferenceId,
+        string verificationToken,
+        CancellationToken cancellationToken)
+    {
+        var isOtpRequired = await otpService.IsActionProtectedAsync(actionType, cancellationToken);
+        if (!isOtpRequired) return;
+
+        await otpService.ConsumeVerificationGrantAsync(
+            userId,
+            actionType,
+            actionReferenceId,
+            verificationToken,
+            cancellationToken);
     }
 }

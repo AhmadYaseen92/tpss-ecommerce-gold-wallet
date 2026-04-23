@@ -39,6 +39,7 @@ BEGIN TRY
 
 
     IF OBJECT_ID(N'[AppNotifications]') IS NOT NULL DELETE FROM [AppNotifications];
+    IF OBJECT_ID(N'[RefreshTokens]') IS NOT NULL DELETE FROM [RefreshTokens];
     IF OBJECT_ID(N'[UserPushTokens]') IS NOT NULL DELETE FROM [UserPushTokens];
     IF OBJECT_ID(N'[AuditLogs]') IS NOT NULL DELETE FROM [AuditLogs];
 

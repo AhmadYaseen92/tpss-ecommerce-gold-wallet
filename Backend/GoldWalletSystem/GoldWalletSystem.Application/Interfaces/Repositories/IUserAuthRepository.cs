@@ -13,4 +13,8 @@ public interface IUserAuthRepository
     Task<User> AddAsync(User user, UserProfile? profile = null, CancellationToken cancellationToken = default);
     Task ActivateUserAsync(int userId, CancellationToken cancellationToken = default);
     Task UpdatePasswordAsync(int userId, string passwordHash, CancellationToken cancellationToken = default);
+    Task AddRefreshTokenAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default);
+    Task<RefreshToken?> GetActiveRefreshTokenAsync(int userId, string tokenHash, CancellationToken cancellationToken = default);
+    Task RevokeRefreshTokenAsync(int refreshTokenId, CancellationToken cancellationToken = default);
+    Task RevokeAllRefreshTokensAsync(int userId, CancellationToken cancellationToken = default);
 }

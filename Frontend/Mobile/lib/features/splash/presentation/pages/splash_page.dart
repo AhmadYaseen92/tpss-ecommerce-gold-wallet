@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
 
   Future<void> load(BuildContext context) async {
-    await Future.delayed(const Duration(seconds: 3));
-    Navigator.pushReplacementNamed(context, AppRoutes.onboardingRoute);
+    await Future.delayed(const Duration(seconds: 2));
+    if (!AuthSessionStore.onboardingSeen) {
+      await AuthSessionStore.setOnboardingSeen(true);
+      if (!context.mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.onboardingRoute);
+      return;
+    }
+
+    final loggedIn = AuthSessionStore.isLoggedIn;
+    final requireSecuritySetup =
+        AppReleaseConfig.quickUnlockAllowed && !AuthSessionStore.securitySetupDone;
+    final route = !loggedIn
+        ? AppRoutes.loginRoute
+        : (requireSecuritySetup ? AppRoutes.securitySetupRoute : AppRoutes.homeRoute);
+    Navigator.pushReplacementNamed(context, route);
   }
 
   @override

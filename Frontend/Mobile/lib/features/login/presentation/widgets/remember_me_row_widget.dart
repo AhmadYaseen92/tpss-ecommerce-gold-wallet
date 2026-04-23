@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/login/presentation/cubit/login_cubit.dart';
 
 class RememberMeRow extends StatelessWidget {
-  const RememberMeRow({super.key, required this.cubit});
-
-  final LoginCubit cubit;
+  const RememberMeRow({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,22 +14,8 @@ class RememberMeRow extends StatelessWidget {
           children: [
             Row(
               children: [
-                SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: Checkbox(
-                    value: cubit.rememberMe,
-                    onChanged: (val) => cubit.toggleRememberMe(val ?? false),
-                    activeColor: palette.primary,
-                    side: BorderSide(color: palette.border),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Text(
-                  'Remember me',
+                  'Session is persisted securely',
                   style: TextStyle(fontSize: 13, color: palette.textPrimary),
                 ),
               ],

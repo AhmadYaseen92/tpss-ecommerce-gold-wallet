@@ -215,6 +215,32 @@ BEGIN TRY
     ------------------------------------------------------------
     -- Mobile app config
     ------------------------------------------------------------
+    MERGE [SystemConfigration] AS T
+    USING (
+        VALUES
+            (N'MobileRelease_IsIndividualSeller', N'Mobile Release Is Individual Seller', N'Mobile release: show single seller mode', 2, CAST(0 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'MobileRelease_IndividualSellerName', N'Mobile Release Individual Seller Name', N'Mobile release seller name when single seller mode is enabled', 1, NULL, NULL, NULL, N'Imseeh', CAST(0 AS bit)),
+            (N'MobileRelease_ShowWeightInGrams', N'Mobile Release Show Weight In Grams', N'Mobile release flag to show weight in grams', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'MobileRelease_MarketWatchEnabled', N'Mobile Release Market Watch Enabled', N'Mobile release flag to enable Market Watch tab in Product screen', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'MobileSecurity_LoginByBiometric', N'Mobile Security Login By Biometric', N'Allow biometric quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'MobileSecurity_LoginByPin', N'Mobile Security Login By PIN', N'Allow PIN quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit))
+    ) AS S([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess])
+    ON T.[ConfigKey] = S.[ConfigKey]
+    WHEN MATCHED THEN
+        UPDATE SET
+            T.[Name] = S.[Name],
+            T.[Description] = S.[Description],
+            T.[ValueType] = S.[ValueType],
+            T.[ValueBool] = S.[ValueBool],
+            T.[ValueInt] = S.[ValueInt],
+            T.[ValueDecimal] = S.[ValueDecimal],
+            T.[ValueString] = S.[ValueString],
+            T.[SellerAccess] = S.[SellerAccess],
+            T.[UpdatedAtUtc] = @Now
+    WHEN NOT MATCHED THEN
+        INSERT ([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[ConfigKey],S.[Name],S.[Description],S.[ValueType],S.[ValueBool],S.[ValueInt],S.[ValueDecimal],S.[ValueString],S.[SellerAccess],@Now,NULL);
+
     ------------------------------------------------------------
     -- Fee-management tables
     ------------------------------------------------------------

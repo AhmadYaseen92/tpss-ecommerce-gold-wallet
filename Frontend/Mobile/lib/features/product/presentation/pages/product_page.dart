@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
@@ -33,63 +36,77 @@ class ProductPage extends StatelessWidget {
             length: 2,
             child: Material(
               color: Colors.transparent,
-              child: BlocListener<AppCubit, AppState>(
-                listenWhen: (previous, current) =>
-                    previous.selectedSeller != current.selectedSeller ||
-                    previous.checkoutRefreshTick !=
-                        current.checkoutRefreshTick,
-                listener: (context, state) {
-                  context.read<ProductCubit>().loadProducts(
-                    seller: state.selectedSeller,
-                    categoryId: context.read<ProductCubit>().selectedCategoryId,
-                  );
-                },
-                child: Column(
-                  children: [
-                    TabBar(
-                      labelStyle: Theme.of(context).textTheme.titleMedium!
-                          .copyWith(fontWeight: FontWeight.bold),
-                      labelColor: context.appPalette.primary,
-                      unselectedLabelColor: context.appPalette.textSecondary,
-                      indicatorColor: context.appPalette.primary,
-                      tabs: [
-                        Tab(text: 'Catalog'),
-                        Tab(text: 'Market Watch'),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: TabBarView(
+              child: ValueListenableBuilder<int>(
+                valueListenable: AppReleaseConfig.revisionListenable,
+                builder: (context, _, __) {
+                  unawaited(context.read<ProductCubit>().syncMarketWatchWithConfig());
+                  return BlocListener<AppCubit, AppState>(
+                    listenWhen: (previous, current) =>
+                        previous.selectedSeller != current.selectedSeller ||
+                        previous.checkoutRefreshTick !=
+                            current.checkoutRefreshTick,
+                    listener: (context, state) {
+                      context.read<ProductCubit>().loadProducts(
+                        seller: state.selectedSeller,
+                        categoryId: context.read<ProductCubit>().selectedCategoryId,
+                      );
+                    },
+                    child: AppReleaseConfig.marketWatchEnabled
+                        ? Column(
                         children: [
-                          RefreshIndicator(
-                            onRefresh: () => context
-                                .read<ProductCubit>()
-                                .loadProducts(
-                                  seller:
-                                      context.read<ProductCubit>().activeSeller,
-                                  categoryId: context
-                                      .read<ProductCubit>()
-                                      .selectedCategoryId,
-                                ),
-                            child: CatalogTabWidget(),
+                          TabBar(
+                            labelStyle: Theme.of(context).textTheme.titleMedium!
+                                .copyWith(fontWeight: FontWeight.bold),
+                            labelColor: context.appPalette.primary,
+                            unselectedLabelColor: context.appPalette.textSecondary,
+                            indicatorColor: context.appPalette.primary,
+                            tabs: [
+                              Tab(text: 'Catalog'),
+                              Tab(text: 'Market Watch'),
+                            ],
                           ),
-                          RefreshIndicator(
-                            onRefresh: () => context
-                                .read<ProductCubit>()
-                                .loadProducts(
-                                  seller:
-                                      context.read<ProductCubit>().activeSeller,
-                                  categoryId: context
+                          const SizedBox(height: 10),
+                          Expanded(
+                            child: TabBarView(
+                              children: [
+                                RefreshIndicator(
+                                  onRefresh: () => context
                                       .read<ProductCubit>()
-                                      .selectedCategoryId,
+                                      .loadProducts(
+                                        seller:
+                                            context.read<ProductCubit>().activeSeller,
+                                        categoryId: context
+                                            .read<ProductCubit>()
+                                            .selectedCategoryId,
+                                      ),
+                                  child: CatalogTabWidget(),
                                 ),
-                            child: MarketWatchTabWidget(),
+                                RefreshIndicator(
+                                  onRefresh: () => context
+                                      .read<ProductCubit>()
+                                      .loadProducts(
+                                        seller:
+                                            context.read<ProductCubit>().activeSeller,
+                                        categoryId: context
+                                            .read<ProductCubit>()
+                                            .selectedCategoryId,
+                                      ),
+                                  child: MarketWatchTabWidget(),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
-                      ),
-                    ),
-                  ],
-                ),
+                        )
+                        : RefreshIndicator(
+                            onRefresh: () => context.read<ProductCubit>().loadProducts(
+                              seller: context.read<ProductCubit>().activeSeller,
+                              categoryId: context.read<ProductCubit>().selectedCategoryId,
+                            ),
+                            child: CatalogTabWidget(),
+                          ),
+                  );
+                },
               ),
             ),
           );

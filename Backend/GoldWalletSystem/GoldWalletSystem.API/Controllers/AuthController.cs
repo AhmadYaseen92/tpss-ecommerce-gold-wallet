@@ -4,6 +4,7 @@ using GoldWalletSystem.Application.DTOs.Otp;
 using GoldWalletSystem.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace GoldWalletSystem.API.Controllers;
 
@@ -36,6 +37,16 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Login successful"));
     }
 
+
+    [HttpPost("refresh-token")]
+    [ProducesResponseType(typeof(ApiResponse<LoginResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var result = await authService.RefreshTokenAsync(request, cancellationToken);
+        return Ok(ApiResponse<LoginResponseDto>.Ok(result, "Token refreshed"));
+    }
+
     [HttpPost("register/verify-otp")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     public async Task<IActionResult> VerifyRegistrationOtp([FromBody] VerifyRegistrationOtpRequestDto request, CancellationToken cancellationToken = default)
@@ -65,8 +76,13 @@ public class AuthController(IAuthService authService) : ControllerBase
     [Authorize]
     [HttpPost("logout")]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout([FromBody] LogoutRequestDto? request, CancellationToken cancellationToken = default)
     {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized(ApiResponse<object>.Fail("Unauthorized", 401));
+
+        await authService.LogoutAsync(userId, request?.RefreshToken, cancellationToken);
         return Ok(ApiResponse<string>.Ok("Logged out", "Logout successful"));
     }
 }

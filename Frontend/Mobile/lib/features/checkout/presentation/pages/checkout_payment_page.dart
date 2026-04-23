@@ -209,6 +209,14 @@ class _CheckoutPaymentPageState extends State<CheckoutPaymentPage> {
                               return;
                             }
 
+                            final requiresOtpForCheckout =
+                                AppReleaseConfig.isOtpRequiredForAction('checkout') ||
+                                AppReleaseConfig.isOtpRequiredForAction('buy');
+                            if (!requiresOtpForCheckout) {
+                              await cubit.confirmOtp(checkoutArgs: _checkoutArgs!);
+                              return;
+                            }
+
                             final otpResult = await Navigator.pushNamed(
                               context,
                               AppRoutes.confirmOtpRoute,

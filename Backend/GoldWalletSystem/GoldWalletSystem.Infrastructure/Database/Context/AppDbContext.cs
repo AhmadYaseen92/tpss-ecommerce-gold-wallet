@@ -38,6 +38,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SellerProductFee> SellerProductFees => Set<SellerProductFee>();
     public DbSet<AdminTransactionFee> AdminTransactionFees => Set<AdminTransactionFee>();
     public DbSet<TransactionFeeBreakdown> TransactionFeeBreakdowns => Set<TransactionFeeBreakdown>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +75,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureSellerProductFee(modelBuilder);
         ConfigureAdminTransactionFee(modelBuilder);
         ConfigureTransactionFeeBreakdown(modelBuilder);
+        ConfigureRefreshToken(modelBuilder);
     }
 
     private static void ConfigureSeller(ModelBuilder modelBuilder)
@@ -293,6 +295,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.AccountHolderName).IsRequired().HasMaxLength(120);
             entity.HasIndex(x => x.PaymentMethodId).IsUnique();
             entity.HasOne(x => x.PaymentMethod).WithOne(x => x.CliqDetails).HasForeignKey<CliqPaymentMethodDetails>(x => x.PaymentMethodId).OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureRefreshToken(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("RefreshTokens");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.TokenHash).IsRequired().HasMaxLength(500);
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+            entity.HasIndex(x => new { x.UserId, x.ExpiresAtUtc });
+            entity.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 

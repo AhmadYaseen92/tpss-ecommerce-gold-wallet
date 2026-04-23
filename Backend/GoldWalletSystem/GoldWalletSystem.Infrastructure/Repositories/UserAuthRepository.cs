@@ -83,4 +83,47 @@ public class UserAuthRepository(AppDbContext dbContext) : IUserAuthRepository
         user.UpdatedAtUtc = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task AddRefreshTokenAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
+    {
+        dbContext.Add(refreshToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<RefreshToken?> GetActiveRefreshTokenAsync(int userId, string tokenHash, CancellationToken cancellationToken = default)
+        => dbContext.Set<RefreshToken>()
+            .FirstOrDefaultAsync(x =>
+                x.UserId == userId &&
+                x.TokenHash == tokenHash &&
+                x.RevokedAtUtc == null &&
+                x.ExpiresAtUtc > DateTime.UtcNow,
+                cancellationToken);
+
+    public async Task RevokeRefreshTokenAsync(int refreshTokenId, CancellationToken cancellationToken = default)
+    {
+        var entity = await dbContext.Set<RefreshToken>().FirstOrDefaultAsync(x => x.Id == refreshTokenId, cancellationToken);
+        if (entity is null || entity.RevokedAtUtc.HasValue) return;
+        entity.RevokedAtUtc = DateTime.UtcNow;
+        entity.UpdatedAtUtc = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RevokeAllRefreshTokensAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var tokens = await dbContext.Set<RefreshToken>()
+            .Where(x => x.UserId == userId && x.RevokedAtUtc == null)
+            .ToListAsync(cancellationToken);
+
+        if (tokens.Count == 0) return;
+
+        var now = DateTime.UtcNow;
+        foreach (var token in tokens)
+        {
+            token.RevokedAtUtc = now;
+            token.UpdatedAtUtc = now;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
 }
