@@ -25,7 +25,7 @@ class LoginPage extends StatelessWidget {
       child: BlocConsumer<LoginCubit, LoginState>(
         listener: (context, state) {
           if (state is LoginSuccess) {
-            final next = (AuthSessionStore.quickUnlockEnabled || AuthSessionStore.pinSetupComplete)
+            final next = AuthSessionStore.securitySetupDone
                 ? AppRoutes.homeRoute
                 : AppRoutes.securitySetupRoute;
             Navigator.pushNamedAndRemoveUntil(

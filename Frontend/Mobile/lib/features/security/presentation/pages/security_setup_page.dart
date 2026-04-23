@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 
@@ -13,23 +14,55 @@ class SecuritySetupPage extends StatefulWidget {
 
 class _SecuritySetupPageState extends State<SecuritySetupPage> {
   bool _biometric = false;
+  bool _deviceHasBiometric = false;
   final _pinController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometric();
+  }
+
+  Future<void> _checkBiometric() async {
+    final auth = LocalAuthentication();
+    final supported = await auth.canCheckBiometrics || await auth.isDeviceSupported();
+    if (!mounted) return;
+    setState(() => _deviceHasBiometric = supported);
+  }
+
   Future<void> _complete() async {
-    if (_pinController.text.isNotEmpty && (_pinController.text.length < 4 || _pinController.text.length > 6)) {
+    final pin = _pinController.text.trim();
+    if (pin.isNotEmpty && (pin.length < 4 || pin.length > 6)) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN must be 4-6 digits')));
       return;
     }
 
-    if (_pinController.text.isNotEmpty) {
-      await AuthSessionStore.setPin(_pinController.text);
-      await AuthSessionStore.setQuickUnlockEnabled(true);
+    if (!_biometric && pin.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enable biometric or set a PIN to use quick unlock.')),
+      );
+      return;
     }
-    await AuthSessionStore.setBiometricEnabled(_biometric);
+
+    if (pin.isNotEmpty) {
+      await AuthSessionStore.setPin(pin);
+    }
+    await AuthSessionStore.setBiometricEnabled(_biometric && _deviceHasBiometric);
+    await AuthSessionStore.setQuickUnlockEnabled(AuthSessionStore.hasUnlockMethod);
+    await AuthSessionStore.setSecuritySetupDone(true);
     await AuthSessionStore.setLocked(false);
 
     if (!mounted) return;
     widget.onDone?.call();
+    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.homeRoute, (_) => false);
+  }
+
+  Future<void> _skip() async {
+    await AuthSessionStore.setQuickUnlockEnabled(false);
+    await AuthSessionStore.setBiometricEnabled(false);
+    await AuthSessionStore.removePin();
+    await AuthSessionStore.setSecuritySetupDone(true);
+    if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, AppRoutes.homeRoute, (_) => false);
   }
 
@@ -44,8 +77,9 @@ class _SecuritySetupPageState extends State<SecuritySetupPage> {
           children: [
             SwitchListTile(
               title: const Text('Enable Biometric'),
+              subtitle: Text(_deviceHasBiometric ? 'Use Face ID / Touch ID to unlock.' : 'Biometric not available.'),
               value: _biometric,
-              onChanged: (v) => setState(() => _biometric = v),
+              onChanged: _deviceHasBiometric ? (v) => setState(() => _biometric = v) : null,
             ),
             TextField(
               controller: _pinController,
@@ -59,13 +93,7 @@ class _SecuritySetupPageState extends State<SecuritySetupPage> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () async {
-                      await AuthSessionStore.setQuickUnlockEnabled(false);
-                      await AuthSessionStore.removePin();
-                      await AuthSessionStore.setBiometricEnabled(false);
-                      if (!mounted) return;
-                      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.homeRoute, (_) => false);
-                    },
+                    onPressed: _skip,
                     child: const Text('Skip'),
                   ),
                 ),

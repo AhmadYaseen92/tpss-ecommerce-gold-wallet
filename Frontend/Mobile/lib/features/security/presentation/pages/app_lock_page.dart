@@ -15,6 +15,20 @@ class AppLockPage extends StatefulWidget {
 class _AppLockPageState extends State<AppLockPage> {
   final _pinController = TextEditingController();
   String? _error;
+  bool _showPin = false;
+
+  bool get _canUseBiometric => AuthSessionStore.quickUnlockEnabled && AuthSessionStore.biometricEnabled;
+  bool get _canUsePin => AuthSessionStore.quickUnlockEnabled && AuthSessionStore.hasPin;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_canUseBiometric) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _unlockWithBiometric());
+    } else if (_canUsePin) {
+      _showPin = true;
+    }
+  }
 
   Future<void> _unlockWithBiometric() async {
     final auth = LocalAuthentication();
@@ -26,14 +40,22 @@ class _AppLockPageState extends State<AppLockPage> {
       if (ok) {
         await AuthSessionStore.setLocked(false);
         widget.onUnlocked();
+      } else if (_canUsePin) {
+        setState(() {
+          _showPin = true;
+          _error = 'Biometric cancelled. Use PIN.';
+        });
       }
     } catch (_) {
-      setState(() => _error = 'Biometric failed. Try PIN.');
+      setState(() {
+        _showPin = _canUsePin;
+        _error = _canUsePin ? 'Biometric failed. Try PIN.' : 'Biometric failed.';
+      });
     }
   }
 
   Future<void> _unlockWithPin() async {
-    final ok = await AuthSessionStore.verifyPin(_pinController.text);
+    final ok = await AuthSessionStore.verifyPin(_pinController.text.trim());
     if (!ok) {
       setState(() => _error = 'Invalid PIN, try again.');
       return;
@@ -51,15 +73,18 @@ class _AppLockPageState extends State<AppLockPage> {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Text('App Locked', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _unlockWithBiometric, child: const Text('Unlock with biometrics')),
-            TextField(
-              controller: _pinController,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'PIN'),
-            ),
-            ElevatedButton(onPressed: _unlockWithPin, child: const Text('Unlock with PIN')),
+            if (_canUseBiometric)
+              ElevatedButton(onPressed: _unlockWithBiometric, child: const Text('Unlock with biometrics')),
+            if (_showPin || (!_canUseBiometric && _canUsePin)) ...[
+              TextField(
+                controller: _pinController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'PIN'),
+              ),
+              ElevatedButton(onPressed: _unlockWithPin, child: const Text('Unlock with PIN')),
+            ],
             TextButton(onPressed: widget.onLoginFallback, child: const Text('Login instead')),
             if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
           ]),

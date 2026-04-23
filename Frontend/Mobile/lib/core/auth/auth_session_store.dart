@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -14,6 +15,9 @@ class AuthSessionStore {
   static const _kUserId = 'auth_user_id';
   static const _kSellerId = 'auth_seller_id';
 
+  static const _kRememberMe = 'auth_remember_me';
+  static const _kAutoLockEnabled = 'security_auto_lock_enabled';
+  static const _kSecuritySetupDone = 'security_setup_done';
   static const _kQuickUnlockEnabled = 'security_quick_unlock_enabled';
   static const _kBiometricEnabled = 'security_biometric_enabled';
   static const _kPinHash = 'security_pin_hash';
@@ -29,23 +33,52 @@ class AuthSessionStore {
   static int? userId;
   static int? sellerId;
 
+  static bool rememberMe = true;
+  static bool autoLockEnabled = true;
+  static bool securitySetupDone = false;
   static bool quickUnlockEnabled = false;
   static bool biometricEnabled = false;
   static bool pinSetupComplete = false;
 
+  static bool get hasPin => pinSetupComplete;
+  static bool get hasUnlockMethod => biometricEnabled || pinSetupComplete;
+  static bool get isLoggedIn => accessToken != null && accessToken!.isNotEmpty;
+
   static Future<void> hydrate() async {
+    rememberMe = (await _secure.read(key: _kRememberMe)) != '0';
+    autoLockEnabled = (await _secure.read(key: _kAutoLockEnabled)) != '0';
+    securitySetupDone = (await _secure.read(key: _kSecuritySetupDone)) == '1';
+    quickUnlockEnabled = (await _secure.read(key: _kQuickUnlockEnabled)) == '1';
+    biometricEnabled = (await _secure.read(key: _kBiometricEnabled)) == '1';
+    pinSetupComplete = (await _secure.read(key: _kPinSetupComplete)) == '1';
+
     accessToken = await _secure.read(key: _kAccessToken);
     refreshToken = await _secure.read(key: _kRefreshToken);
     accessTokenExpiresAtUtc = _tryParseDate(await _secure.read(key: _kAccessTokenExp));
     refreshTokenExpiresAtUtc = _tryParseDate(await _secure.read(key: _kRefreshTokenExp));
     userId = int.tryParse(await _secure.read(key: _kUserId) ?? '');
     sellerId = int.tryParse(await _secure.read(key: _kSellerId) ?? '');
-    quickUnlockEnabled = (await _secure.read(key: _kQuickUnlockEnabled)) == '1';
-    biometricEnabled = (await _secure.read(key: _kBiometricEnabled)) == '1';
-    pinSetupComplete = (await _secure.read(key: _kPinSetupComplete)) == '1';
+
+    await _normalizeSecurityState();
   }
 
-  static bool get isLoggedIn => accessToken != null && accessToken!.isNotEmpty;
+  static Future<void> setRememberMe(bool enabled) async {
+    rememberMe = enabled;
+    await _secure.write(key: _kRememberMe, value: enabled ? '1' : '0');
+  }
+
+  static Future<void> setAutoLockEnabled(bool enabled) async {
+    autoLockEnabled = enabled;
+    await _secure.write(key: _kAutoLockEnabled, value: enabled ? '1' : '0');
+    if (!enabled) {
+      await setLocked(false);
+    }
+  }
+
+  static Future<void> setSecuritySetupDone(bool done) async {
+    securitySetupDone = done;
+    await _secure.write(key: _kSecuritySetupDone, value: done ? '1' : '0');
+  }
 
   static Future<void> setSession({
     required String token,
@@ -62,12 +95,30 @@ class AuthSessionStore {
     userId = uid;
     sellerId = sid;
 
+    if (!rememberMe) return;
+
     await _secure.write(key: _kAccessToken, value: token);
     await _secure.write(key: _kRefreshToken, value: newRefreshToken);
     await _secure.write(key: _kAccessTokenExp, value: tokenExpiresAtUtc.toUtc().toIso8601String());
     await _secure.write(key: _kRefreshTokenExp, value: newRefreshTokenExpiresAtUtc.toUtc().toIso8601String());
     await _secure.write(key: _kUserId, value: '$uid');
     await _secure.write(key: _kSellerId, value: '$sid');
+  }
+
+  static Future<void> clearSessionOnly() async {
+    accessToken = null;
+    refreshToken = null;
+    accessTokenExpiresAtUtc = null;
+    refreshTokenExpiresAtUtc = null;
+    userId = null;
+    sellerId = null;
+
+    await _secure.delete(key: _kAccessToken);
+    await _secure.delete(key: _kAccessTokenExp);
+    await _secure.delete(key: _kRefreshToken);
+    await _secure.delete(key: _kRefreshTokenExp);
+    await _secure.delete(key: _kUserId);
+    await _secure.delete(key: _kSellerId);
   }
 
   static Future<void> clearAll() async {
@@ -77,6 +128,9 @@ class AuthSessionStore {
     refreshTokenExpiresAtUtc = null;
     userId = null;
     sellerId = null;
+    rememberMe = true;
+    autoLockEnabled = true;
+    securitySetupDone = false;
     quickUnlockEnabled = false;
     biometricEnabled = false;
     pinSetupComplete = false;
@@ -84,9 +138,14 @@ class AuthSessionStore {
   }
 
   static Future<void> setQuickUnlockEnabled(bool enabled) async {
+    if (enabled && !hasUnlockMethod) {
+      throw StateError('Set PIN or biometric before enabling quick unlock.');
+    }
     quickUnlockEnabled = enabled;
     await _secure.write(key: _kQuickUnlockEnabled, value: enabled ? '1' : '0');
     if (!enabled) {
+      biometricEnabled = false;
+      await _secure.write(key: _kBiometricEnabled, value: '0');
       await setLocked(false);
     }
   }
@@ -94,6 +153,7 @@ class AuthSessionStore {
   static Future<void> setBiometricEnabled(bool enabled) async {
     biometricEnabled = enabled;
     await _secure.write(key: _kBiometricEnabled, value: enabled ? '1' : '0');
+    await _normalizeSecurityState();
   }
 
   static Future<void> setPin(String pin) async {
@@ -103,6 +163,7 @@ class AuthSessionStore {
     await _secure.write(key: _kPinHash, value: hash);
     pinSetupComplete = true;
     await _secure.write(key: _kPinSetupComplete, value: '1');
+    await _normalizeSecurityState(enableQuickUnlockWhenPossible: true);
   }
 
   static Future<void> removePin() async {
@@ -110,6 +171,7 @@ class AuthSessionStore {
     await _secure.delete(key: _kPinSalt);
     await _secure.delete(key: _kPinHash);
     await _secure.write(key: _kPinSetupComplete, value: '0');
+    await _normalizeSecurityState();
   }
 
   static Future<bool> verifyPin(String pin) async {
@@ -125,7 +187,7 @@ class AuthSessionStore {
   }
 
   static Future<bool> shouldLockForInactivity({Duration timeout = const Duration(minutes: 5)}) async {
-    if (!quickUnlockEnabled) return false;
+    if (!quickUnlockEnabled || !autoLockEnabled || !hasUnlockMethod) return false;
     final raw = await _secure.read(key: _kLastInactiveAt);
     final at = _tryParseDate(raw);
     if (at == null) return false;
@@ -137,6 +199,20 @@ class AuthSessionStore {
   }
 
   static Future<bool> isLocked() async => (await _secure.read(key: _kLocked)) == '1';
+
+  static Future<void> _normalizeSecurityState({bool enableQuickUnlockWhenPossible = false}) async {
+    if (!hasUnlockMethod) {
+      quickUnlockEnabled = false;
+      await _secure.write(key: _kQuickUnlockEnabled, value: '0');
+      await setLocked(false);
+      return;
+    }
+
+    if (enableQuickUnlockWhenPossible && !quickUnlockEnabled) {
+      quickUnlockEnabled = true;
+      await _secure.write(key: _kQuickUnlockEnabled, value: '1');
+    }
+  }
 
   static DateTime? _tryParseDate(String? raw) {
     if (raw == null || raw.isEmpty) return null;

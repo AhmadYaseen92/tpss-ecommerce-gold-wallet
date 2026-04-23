@@ -18,6 +18,7 @@ class GoldWalletApp extends StatefulWidget {
 
 class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserver {
   bool _locked = false;
+  bool _ready = false;
 
   @override
   void initState() {
@@ -28,18 +29,33 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
 
   Future<void> _bootstrap() async {
     await AuthSessionStore.hydrate();
-    final needsRefresh = AuthSessionStore.accessTokenExpiresAtUtc != null &&
-        AuthSessionStore.accessTokenExpiresAtUtc!.isBefore(DateTime.now().toUtc());
-    if (needsRefresh && SessionManager.hasValidRefreshToken) {
-      try {
-        await SessionManager.refreshTokenIfNeeded();
-      } catch (_) {
-        await SessionManager.forceLogout(localOnly: true);
+
+    if (!AuthSessionStore.rememberMe) {
+      await AuthSessionStore.clearSessionOnly();
+    }
+
+    if (AuthSessionStore.isLoggedIn) {
+      final expired = AuthSessionStore.accessTokenExpiresAtUtc != null &&
+          AuthSessionStore.accessTokenExpiresAtUtc!.isBefore(DateTime.now().toUtc());
+      if (expired) {
+        try {
+          await SessionManager.refreshTokenIfNeeded();
+        } catch (_) {
+          await SessionManager.forceLogout(localOnly: true);
+        }
       }
     }
 
-    final locked = await AuthSessionStore.isLocked();
-    if (mounted) setState(() => _locked = locked);
+    final shouldLockImmediately = AuthSessionStore.isLoggedIn &&
+        AuthSessionStore.quickUnlockEnabled &&
+        AuthSessionStore.hasUnlockMethod;
+
+    if (mounted) {
+      setState(() {
+        _locked = shouldLockImmediately;
+        _ready = true;
+      });
+    }
   }
 
   @override
@@ -72,15 +88,20 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
             themeMode: state.themeMode,
             onGenerateRoute: AppRouter.onGenerateRoute,
             builder: (context, child) {
-              if (!_locked) return child ?? const SizedBox.shrink();
-              return AppLockPage(
-                onUnlocked: () => setState(() => _locked = false),
-                onLoginFallback: () async {
-                  await SessionManager.forceLogout();
-                  if (!context.mounted) return;
-                  Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.loginRoute, (_) => false);
-                },
-              );
+              if (!_ready) {
+                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              }
+              if (_locked) {
+                return AppLockPage(
+                  onUnlocked: () => setState(() => _locked = false),
+                  onLoginFallback: () async {
+                    await SessionManager.forceLogout();
+                    if (!context.mounted) return;
+                    Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.loginRoute, (_) => false);
+                  },
+                );
+              }
+              return child ?? const SizedBox.shrink();
             },
           );
         },

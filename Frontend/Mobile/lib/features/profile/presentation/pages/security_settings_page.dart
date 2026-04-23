@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/profile/presentation/cubit/profile_cubit.dart';
 
 class SecuritySettingsPage extends StatefulWidget {
   const SecuritySettingsPage({super.key});
@@ -9,9 +16,61 @@ class SecuritySettingsPage extends StatefulWidget {
 }
 
 class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
-  bool _quickUnlock = AuthSessionStore.quickUnlockEnabled;
-  bool _biometric = AuthSessionStore.biometricEnabled;
+  final _passwordFormKey = GlobalKey<FormState>();
   final _pinController = TextEditingController();
+  bool _quickUnlock = false;
+  bool _autoLock = true;
+  bool _biometric = false;
+  bool _hasBiometricSupport = false;
+  bool _obscureCurrent = true;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _quickUnlock = AuthSessionStore.quickUnlockEnabled;
+    _autoLock = AuthSessionStore.autoLockEnabled;
+    _biometric = AuthSessionStore.biometricEnabled;
+    _checkBiometricSupport();
+  }
+
+  Future<void> _checkBiometricSupport() async {
+    final auth = LocalAuthentication();
+    final supported = await auth.canCheckBiometrics || await auth.isDeviceSupported();
+    if (!mounted) return;
+    setState(() => _hasBiometricSupport = supported);
+  }
+
+  Future<void> _toggleQuickUnlock(bool enabled) async {
+    if (enabled && !AuthSessionStore.hasUnlockMethod) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enable biometric or set a PIN first.')),
+      );
+      return;
+    }
+
+    await AuthSessionStore.setQuickUnlockEnabled(enabled);
+    setState(() {
+      _quickUnlock = AuthSessionStore.quickUnlockEnabled;
+      _biometric = AuthSessionStore.biometricEnabled;
+    });
+  }
+
+  Future<void> _toggleBiometric(bool enabled) async {
+    if (enabled && !_hasBiometricSupport) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Biometric is not supported on this device.')),
+      );
+      return;
+    }
+
+    await AuthSessionStore.setBiometricEnabled(enabled);
+    setState(() {
+      _biometric = AuthSessionStore.biometricEnabled;
+      _quickUnlock = AuthSessionStore.quickUnlockEnabled;
+    });
+  }
 
   Future<void> _savePin() async {
     final pin = _pinController.text.trim();
@@ -21,54 +80,162 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
     }
 
     await AuthSessionStore.setPin(pin);
-    await AuthSessionStore.setQuickUnlockEnabled(true);
-    if (!mounted) return;
-    setState(() => _quickUnlock = true);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN updated successfully.')));
+    _pinController.clear();
+    setState(() => _quickUnlock = AuthSessionStore.quickUnlockEnabled);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN updated.')));
   }
 
   Future<void> _removePin() async {
     await AuthSessionStore.removePin();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN removed.')));
+    setState(() => _quickUnlock = AuthSessionStore.quickUnlockEnabled);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AuthSessionStore.quickUnlockEnabled
+              ? 'PIN removed. Biometric unlock still active.'
+              : 'PIN removed. Quick unlock is now disabled.',
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Security')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          SwitchListTile(
-            title: const Text('Enable quick unlock'),
-            subtitle: const Text('Lock app after 5 min in background and unlock with biometric/PIN.'),
-            value: _quickUnlock,
-            onChanged: (value) async {
-              await AuthSessionStore.setQuickUnlockEnabled(value);
-              setState(() => _quickUnlock = value);
-            },
-          ),
-          SwitchListTile(
-            title: const Text('Enable biometric'),
-            subtitle: const Text('Use biometric to unlock local session.'),
-            value: _biometric,
-            onChanged: (value) async {
-              await AuthSessionStore.setBiometricEnabled(value);
-              setState(() => _biometric = value);
-            },
-          ),
-          const Divider(),
-          TextField(
-            controller: _pinController,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            obscureText: true,
-            decoration: const InputDecoration(labelText: 'Set or change PIN (4-6 digits)'),
-          ),
-          ElevatedButton(onPressed: _savePin, child: const Text('Save PIN')),
-          TextButton(onPressed: _removePin, child: const Text('Remove PIN')),
-        ],
+    return BlocProvider(
+      create: (_) => ProfileCubit(),
+      child: BlocConsumer<ProfileCubit, ProfileState>(
+        listener: (context, state) async {
+          if (state is ProfilePasswordChangedRequiresRelogin) {
+            await AppModalAlert.show(
+              context,
+              title: 'Password Updated',
+              message: 'For security, please login again with your new password.',
+            );
+            await AuthSessionStore.clearAll();
+            if (!context.mounted) return;
+            Navigator.pushNamedAndRemoveUntil(context, AppRoutes.loginRoute, (route) => false);
+          }
+          if (state is ProfileError) {
+            await AppModalAlert.show(
+              context,
+              title: 'Error',
+              message: state.message,
+              variant: AppModalAlertVariant.failed,
+            );
+          }
+        },
+        builder: (context, state) {
+          final cubit = context.read<ProfileCubit>();
+
+          return Scaffold(
+            appBar: AppBar(title: const Text('Security')),
+            body: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const Text('Local Session Protection', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                SwitchListTile(
+                  title: const Text('Quick Unlock'),
+                  subtitle: const Text('Protect remembered session with biometric and/or PIN on reopen.'),
+                  value: _quickUnlock,
+                  onChanged: _toggleQuickUnlock,
+                ),
+                SwitchListTile(
+                  title: const Text('Auto-Lock after 5 minutes'),
+                  subtitle: const Text('Lock app after inactivity/background timeout.'),
+                  value: _autoLock,
+                  onChanged: (value) async {
+                    await AuthSessionStore.setAutoLockEnabled(value);
+                    setState(() => _autoLock = value);
+                  },
+                ),
+                SwitchListTile(
+                  title: const Text('Biometric unlock'),
+                  subtitle: Text(_hasBiometricSupport ? 'Use Face ID / Touch ID.' : 'Biometric not available'),
+                  value: _biometric,
+                  onChanged: _quickUnlock ? _toggleBiometric : null,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _pinController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Set / Change PIN (4-6 digits)'),
+                ),
+                Row(
+                  children: [
+                    Expanded(child: ElevatedButton(onPressed: _savePin, child: const Text('Save PIN'))),
+                    const SizedBox(width: 12),
+                    Expanded(child: TextButton(onPressed: AuthSessionStore.hasPin ? _removePin : null, child: const Text('Remove PIN'))),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Remember Me: ${AuthSessionStore.rememberMe ? 'ON' : 'OFF'} (controlled from login screen).',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const Divider(height: 32),
+                const Text('Change Password', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                Form(
+                  key: _passwordFormKey,
+                  child: Column(
+                    children: [
+                      AppTextField(
+                        label: 'Current Password',
+                        hint: 'Current Password',
+                        prefixIcon: Icons.lock_outline,
+                        controller: cubit.securityControllers['Current Password'],
+                        enabled: true,
+                        isPassword: true,
+                        obscureText: _obscureCurrent,
+                        onToggleObscure: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                        validator: (value) => (value == null || value.trim().isEmpty) ? 'Current password is required' : null,
+                      ),
+                      AppTextField(
+                        label: 'New Password',
+                        hint: 'New Password',
+                        prefixIcon: Icons.lock_reset,
+                        controller: cubit.securityControllers['New Password'],
+                        enabled: true,
+                        isPassword: true,
+                        obscureText: _obscureNew,
+                        onToggleObscure: () => setState(() => _obscureNew = !_obscureNew),
+                        validator: (value) => (value == null || value.trim().isEmpty) ? 'New password is required' : null,
+                      ),
+                      AppTextField(
+                        label: 'Confirm New Password',
+                        hint: 'Confirm New Password',
+                        prefixIcon: Icons.lock,
+                        controller: cubit.securityControllers['Confirm New Password'],
+                        enabled: true,
+                        isPassword: true,
+                        obscureText: _obscureConfirm,
+                        onToggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) return 'Confirm password is required';
+                          if (value.trim() != (cubit.securityControllers['New Password']?.text.trim() ?? '')) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                AppButton(
+                  cubit: cubit,
+                  label: 'Update Password',
+                  onPressed: () {
+                    if (_passwordFormKey.currentState?.validate() ?? false) {
+                      cubit.saveSecuritySettings();
+                    }
+                  },
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

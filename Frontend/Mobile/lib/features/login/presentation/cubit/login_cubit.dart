@@ -16,6 +16,7 @@ class LoginCubit extends Cubit<LoginState> {
     : _loginUseCase = loginUseCase,
       _dio = dio,
       super(LoginInitial()) {
+    rememberMe = AuthSessionStore.rememberMe;
     detectBiometricType();
   }
   final LoginUseCase _loginUseCase;
@@ -80,6 +81,7 @@ class LoginCubit extends Cubit<LoginState> {
 
   void toggleRememberMe(bool value) {
     rememberMe = value;
+    AuthSessionStore.setRememberMe(value);
     emit(LoginRememberMeChanged(rememberMe: rememberMe));
   }
 
@@ -147,6 +149,7 @@ class LoginCubit extends Cubit<LoginState> {
         email: identifier,
         password: password,
       );
+      await AuthSessionStore.setRememberMe(rememberMe);
       await AuthSessionStore.setSession(
         token: session.accessToken,
         tokenExpiresAtUtc: session.expiresAtUtc,

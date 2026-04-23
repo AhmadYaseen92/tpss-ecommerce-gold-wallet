@@ -11,7 +11,7 @@ class SplashPage extends StatelessWidget {
     final loggedIn = AuthSessionStore.isLoggedIn;
     final route = !loggedIn
         ? AppRoutes.onboardingRoute
-        : (AuthSessionStore.quickUnlockEnabled || AuthSessionStore.pinSetupComplete
+        : (AuthSessionStore.securitySetupDone
             ? AppRoutes.homeRoute
             : AppRoutes.securitySetupRoute);
     Navigator.pushReplacementNamed(context, route);
