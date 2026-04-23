@@ -8,6 +8,7 @@ class AppReleaseConfig {
   static const String allSellersLabel = defaultAllSellersLabel;
 
   static bool showWeightInGrams = true;
+  static bool marketWatchEnabled = true;
   static bool loginByBiometricEnabled = true;
   static bool loginByPinEnabled = true;
   static bool get quickUnlockAllowed => loginByBiometricEnabled || loginByPinEnabled;
@@ -35,6 +36,8 @@ class AppReleaseConfig {
         (values['MobileRelease_IndividualSellerName'] as String?) ?? individualSellerName;
     showWeightInGrams =
         (values['MobileRelease_ShowWeightInGrams'] as bool?) ?? showWeightInGrams;
+    marketWatchEnabled =
+        (values['MobileRelease_MarketWatchEnabled'] as bool?) ?? marketWatchEnabled;
     loginByBiometricEnabled =
         (values['MobileSecurity_LoginByBiometric'] as bool?) ?? loginByBiometricEnabled;
     loginByPinEnabled =

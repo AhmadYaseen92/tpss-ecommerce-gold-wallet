@@ -5,7 +5,6 @@ class ProductCategoryFilter {
     (label: 'Diamond', categoryId: 3),
     (label: 'Jewelry', categoryId: 4),
     (label: 'Coins', categoryId: 5),
-    (label: 'Spot MR', categoryId: 6),
   ];
 
   static int inferCategoryId({

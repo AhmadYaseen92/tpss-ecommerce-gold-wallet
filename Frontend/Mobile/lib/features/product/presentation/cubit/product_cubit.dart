@@ -70,7 +70,14 @@ class ProductCubit extends Cubit<ProductState> {
           : seller;
 
       _emitCatalog();
-      await _startMarketWatch();
+      if (AppReleaseConfig.marketWatchEnabled) {
+        await _startMarketWatch();
+      } else {
+        await _marketSubscription?.cancel();
+        _marketSubscription = null;
+        marketSymbols = [];
+        visibleMarketSymbols = [];
+      }
       await _startProductAutoRefresh();
     } catch (e) {
       emit(ProductError('Failed to load products: $e'));
