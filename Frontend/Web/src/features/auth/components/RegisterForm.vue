@@ -33,7 +33,7 @@ const setSingleFile = (listRef: any[], event: Event) => {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   listRef.splice(0, listRef.length);
-  if (file) listRef.push({ name: file.name });
+  if (file) listRef.push(file);
 };
 
 const validateStep = (step: number) => {

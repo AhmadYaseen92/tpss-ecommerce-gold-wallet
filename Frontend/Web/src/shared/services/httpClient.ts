@@ -30,16 +30,21 @@ function extractMessageFromUnknown(value: unknown): string | undefined {
   if (typeof asRecord.detail === "string" && asRecord.detail.trim()) return asRecord.detail.trim();
 
   if (Array.isArray(asRecord.errors) && asRecord.errors.length > 0) {
-    const firstError = asRecord.errors.find((item) => typeof item === "string" && item.trim());
-    if (typeof firstError === "string") return firstError.trim();
+    const allErrors = asRecord.errors
+      .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+      .map((item) => item.trim());
+    if (allErrors.length > 0) return allErrors.join(" | ");
   }
 
   if (asRecord.errors && typeof asRecord.errors === "object") {
-    const firstErrorsEntry = Object.values(asRecord.errors as Record<string, unknown>).find((entry) => Array.isArray(entry));
-    if (Array.isArray(firstErrorsEntry)) {
-      const firstError = firstErrorsEntry.find((item) => typeof item === "string" && item.trim());
-      if (typeof firstError === "string") return firstError.trim();
-    }
+    const collectedErrors = Object.entries(asRecord.errors as Record<string, unknown>)
+      .flatMap(([field, entry]) => {
+        if (!Array.isArray(entry)) return [];
+        return entry
+          .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+          .map((item) => `${field}: ${item.trim()}`);
+      });
+    if (collectedErrors.length > 0) return collectedErrors.join(" | ");
   }
 
   return undefined;

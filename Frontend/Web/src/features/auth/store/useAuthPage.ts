@@ -22,6 +22,17 @@ const toDoc = (documentType: string, fileName: string, isRequired: boolean, rela
   relatedEntityType,
 });
 
+const normalizeOptionalDate = (value?: string) => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+};
+
+const getSelectedFileName = (value: unknown): string => {
+  if (!value || typeof value !== "object") return "";
+  const withName = value as { name?: unknown };
+  return typeof withName.name === "string" ? withName.name : "";
+};
+
 export function buildRegisterSellerPayload(form: RegisterFormModel) {
   const nameParts = splitFullName(form.ownerInfo.name);
 
@@ -38,7 +49,7 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
       commercialRegistrationNumber: form.companyInfo.crNumber,
       vatNumber: form.companyInfo.vatNumber,
       businessActivity: form.companyInfo.businessActivity,
-      establishedDate: form.companyInfo.establishedDate,
+      establishedDate: normalizeOptionalDate(form.companyInfo.establishedDate),
       country: form.companyInfo.country,
       city: form.companyInfo.city,
       street: form.companyInfo.street,
@@ -57,7 +68,7 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
       emailAddress: form.ownerInfo.email,
       idType: form.ownerInfo.idType,
       idNumber: form.ownerInfo.idNumber,
-      idExpiryDate: form.ownerInfo.idExpiry,
+      idExpiryDate: normalizeOptionalDate(form.ownerInfo.idExpiry),
     },
     branches: form.branches.map((branch) => ({
       branchName: branch.branchName,
@@ -84,16 +95,16 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
       isMainAccount: bank.isMain,
     })),
     documents: [
-      toDoc("CommercialRegistrationDocument", form.companyInfo.documents.crDoc?.[0]?.name ?? "", true, "Seller"),
-      toDoc("ArticlesOfAssociation", form.companyInfo.documents.articles?.[0]?.name ?? "", true, "Seller"),
-      toDoc("ProofOfAddress", form.companyInfo.documents.proofOfAddress?.[0]?.name ?? "", true, "Seller"),
-      toDoc("VatCertificate", form.companyInfo.documents.vatCert?.[0]?.name ?? "", true, "Seller"),
-      toDoc("AmlDocumentation", form.companyInfo.documents.amlDoc?.[0]?.name ?? "", true, "Seller"),
-      toDoc("ManagerIdCopy", form.ownerInfo.idCopy?.[0]?.name ?? "", true, "Manager"),
-      toDoc("AuthorizationLetter", form.ownerInfo.authLetter?.[0]?.name ?? "", false, "Manager"),
+      toDoc("CommercialRegistrationDocument", getSelectedFileName(form.companyInfo.documents.crDoc?.[0]), true, "Seller"),
+      toDoc("ArticlesOfAssociation", getSelectedFileName(form.companyInfo.documents.articles?.[0]), true, "Seller"),
+      toDoc("ProofOfAddress", getSelectedFileName(form.companyInfo.documents.proofOfAddress?.[0]), true, "Seller"),
+      toDoc("VatCertificate", getSelectedFileName(form.companyInfo.documents.vatCert?.[0]), true, "Seller"),
+      toDoc("AmlDocumentation", getSelectedFileName(form.companyInfo.documents.amlDoc?.[0]), true, "Seller"),
+      toDoc("ManagerIdCopy", getSelectedFileName(form.ownerInfo.idCopy?.[0]), true, "Manager"),
+      toDoc("AuthorizationLetter", getSelectedFileName(form.ownerInfo.authLetter?.[0]), false, "Manager"),
       ...form.banks.flatMap((bank) => [
-        toDoc("BankConfirmationLetter", bank.bankLetter?.[0]?.name ?? "", false, "BankAccount"),
-        toDoc("IbanProofDocument", bank.ibanProof?.[0]?.name ?? "", false, "BankAccount"),
+        toDoc("BankConfirmationLetter", getSelectedFileName(bank.bankLetter?.[0]), false, "BankAccount"),
+        toDoc("IbanProofDocument", getSelectedFileName(bank.ibanProof?.[0]), false, "BankAccount"),
       ])
     ].filter((doc) => doc.fileName),
   };

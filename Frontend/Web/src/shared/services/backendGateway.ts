@@ -193,6 +193,8 @@ export async function registerSellerWithBackend(registration: SellerRegistration
     documents: registration.documents
   };
 
+  console.info("[SellerRegistration] Request payload to /api/auth/register", request);
+
   const data = await postJson<RegisterResponseDto, typeof request>("/api/auth/register", request);
 
   return {
