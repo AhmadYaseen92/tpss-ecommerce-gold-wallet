@@ -32,6 +32,7 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
     _quickUnlock = AuthSessionStore.quickUnlockEnabled;
     _autoLock = AuthSessionStore.autoLockEnabled;
     _biometric = AuthSessionStore.biometricEnabled;
+    _pinController.text = AuthSessionStore.hasPin ? '••••' : '';
     _checkBiometricSupport();
   }
 
@@ -66,6 +67,9 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
     }
 
     await AuthSessionStore.setBiometricEnabled(enabled);
+    if (enabled && !AuthSessionStore.quickUnlockEnabled) {
+      await AuthSessionStore.setQuickUnlockEnabled(true);
+    }
     setState(() {
       _biometric = AuthSessionStore.biometricEnabled;
       _quickUnlock = AuthSessionStore.quickUnlockEnabled;
@@ -152,7 +156,7 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
                   title: const Text('Biometric unlock'),
                   subtitle: Text(_hasBiometricSupport ? 'Use Face ID / Touch ID.' : 'Biometric not available'),
                   value: _biometric,
-                  onChanged: _quickUnlock ? _toggleBiometric : null,
+                  onChanged: _toggleBiometric,
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -160,6 +164,11 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
                   keyboardType: TextInputType.number,
                   maxLength: 6,
                   obscureText: true,
+                  onTap: () {
+                    if (_pinController.text == '••••') {
+                      _pinController.clear();
+                    }
+                  },
                   decoration: const InputDecoration(labelText: 'Set / Change PIN (4-6 digits)'),
                 ),
                 Row(
@@ -168,11 +177,6 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
                     const SizedBox(width: 12),
                     Expanded(child: TextButton(onPressed: AuthSessionStore.hasPin ? _removePin : null, child: const Text('Remove PIN'))),
                   ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Remember Me: ${AuthSessionStore.rememberMe ? 'ON' : 'OFF'} (controlled from login screen).',
-                  style: const TextStyle(fontSize: 12),
                 ),
                 const Divider(height: 32),
                 const Text('Change Password', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),

@@ -8,9 +8,16 @@ class SplashPage extends StatelessWidget {
 
   Future<void> load(BuildContext context) async {
     await Future.delayed(const Duration(seconds: 2));
+    if (!AuthSessionStore.onboardingSeen) {
+      await AuthSessionStore.setOnboardingSeen(true);
+      if (!context.mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.onboardingRoute);
+      return;
+    }
+
     final loggedIn = AuthSessionStore.isLoggedIn;
     final route = !loggedIn
-        ? AppRoutes.onboardingRoute
+        ? AppRoutes.loginRoute
         : (AuthSessionStore.securitySetupDone
             ? AppRoutes.homeRoute
             : AppRoutes.securitySetupRoute);

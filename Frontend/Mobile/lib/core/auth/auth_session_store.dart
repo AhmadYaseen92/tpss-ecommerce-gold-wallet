@@ -15,8 +15,8 @@ class AuthSessionStore {
   static const _kUserId = 'auth_user_id';
   static const _kSellerId = 'auth_seller_id';
 
-  static const _kRememberMe = 'auth_remember_me';
   static const _kAutoLockEnabled = 'security_auto_lock_enabled';
+  static const _kOnboardingSeen = 'onboarding_seen';
   static const _kSecuritySetupDone = 'security_setup_done';
   static const _kQuickUnlockEnabled = 'security_quick_unlock_enabled';
   static const _kBiometricEnabled = 'security_biometric_enabled';
@@ -33,8 +33,8 @@ class AuthSessionStore {
   static int? userId;
   static int? sellerId;
 
-  static bool rememberMe = true;
   static bool autoLockEnabled = true;
+  static bool onboardingSeen = false;
   static bool securitySetupDone = false;
   static bool quickUnlockEnabled = false;
   static bool biometricEnabled = false;
@@ -45,8 +45,8 @@ class AuthSessionStore {
   static bool get isLoggedIn => accessToken != null && accessToken!.isNotEmpty;
 
   static Future<void> hydrate() async {
-    rememberMe = (await _secure.read(key: _kRememberMe)) != '0';
     autoLockEnabled = (await _secure.read(key: _kAutoLockEnabled)) != '0';
+    onboardingSeen = (await _secure.read(key: _kOnboardingSeen)) == '1';
     securitySetupDone = (await _secure.read(key: _kSecuritySetupDone)) == '1';
     quickUnlockEnabled = (await _secure.read(key: _kQuickUnlockEnabled)) == '1';
     biometricEnabled = (await _secure.read(key: _kBiometricEnabled)) == '1';
@@ -62,17 +62,17 @@ class AuthSessionStore {
     await _normalizeSecurityState();
   }
 
-  static Future<void> setRememberMe(bool enabled) async {
-    rememberMe = enabled;
-    await _secure.write(key: _kRememberMe, value: enabled ? '1' : '0');
-  }
-
   static Future<void> setAutoLockEnabled(bool enabled) async {
     autoLockEnabled = enabled;
     await _secure.write(key: _kAutoLockEnabled, value: enabled ? '1' : '0');
     if (!enabled) {
       await setLocked(false);
     }
+  }
+
+  static Future<void> setOnboardingSeen(bool seen) async {
+    onboardingSeen = seen;
+    await _secure.write(key: _kOnboardingSeen, value: seen ? '1' : '0');
   }
 
   static Future<void> setSecuritySetupDone(bool done) async {
@@ -94,8 +94,6 @@ class AuthSessionStore {
     refreshTokenExpiresAtUtc = newRefreshTokenExpiresAtUtc.toUtc();
     userId = uid;
     sellerId = sid;
-
-    if (!rememberMe) return;
 
     await _secure.write(key: _kAccessToken, value: token);
     await _secure.write(key: _kRefreshToken, value: newRefreshToken);
@@ -128,8 +126,8 @@ class AuthSessionStore {
     refreshTokenExpiresAtUtc = null;
     userId = null;
     sellerId = null;
-    rememberMe = true;
     autoLockEnabled = true;
+    onboardingSeen = false;
     securitySetupDone = false;
     quickUnlockEnabled = false;
     biometricEnabled = false;

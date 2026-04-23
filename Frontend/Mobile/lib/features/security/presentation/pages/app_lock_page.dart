@@ -16,6 +16,7 @@ class _AppLockPageState extends State<AppLockPage> {
   final _pinController = TextEditingController();
   String? _error;
   bool _showPin = false;
+  int _failedAttempts = 0;
 
   bool get _canUseBiometric => AuthSessionStore.quickUnlockEnabled && AuthSessionStore.biometricEnabled;
   bool get _canUsePin => AuthSessionStore.quickUnlockEnabled && AuthSessionStore.hasPin;
@@ -41,12 +42,16 @@ class _AppLockPageState extends State<AppLockPage> {
         await AuthSessionStore.setLocked(false);
         widget.onUnlocked();
       } else if (_canUsePin) {
+        _registerFailure();
         setState(() {
           _showPin = true;
           _error = 'Biometric cancelled. Use PIN.';
         });
+      } else {
+        _registerFailure();
       }
     } catch (_) {
+      _registerFailure();
       setState(() {
         _showPin = _canUsePin;
         _error = _canUsePin ? 'Biometric failed. Try PIN.' : 'Biometric failed.';
@@ -57,11 +62,18 @@ class _AppLockPageState extends State<AppLockPage> {
   Future<void> _unlockWithPin() async {
     final ok = await AuthSessionStore.verifyPin(_pinController.text.trim());
     if (!ok) {
+      _registerFailure();
       setState(() => _error = 'Invalid PIN, try again.');
       return;
     }
     await AuthSessionStore.setLocked(false);
     widget.onUnlocked();
+  }
+
+  void _registerFailure() {
+    _failedAttempts++;
+    if (_failedAttempts < 3) return;
+    widget.onLoginFallback();
   }
 
   @override

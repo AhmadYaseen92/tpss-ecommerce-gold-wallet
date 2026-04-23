@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
@@ -19,6 +21,7 @@ class GoldWalletApp extends StatefulWidget {
 class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserver {
   bool _locked = false;
   bool _ready = false;
+  Timer? _inactivityTimer;
 
   @override
   void initState() {
@@ -29,10 +32,6 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
 
   Future<void> _bootstrap() async {
     await AuthSessionStore.hydrate();
-
-    if (!AuthSessionStore.rememberMe) {
-      await AuthSessionStore.clearSessionOnly();
-    }
 
     if (AuthSessionStore.isLoggedIn) {
       final expired = AuthSessionStore.accessTokenExpiresAtUtc != null &&
@@ -56,6 +55,8 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
         _ready = true;
       });
     }
+    await AuthSessionStore.markInactiveNow();
+    _startInactivityWatcher();
   }
 
   @override
@@ -72,6 +73,18 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
         setState(() => _locked = true);
       });
     }
+  }
+
+  void _startInactivityWatcher() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
+      if (!mounted || _locked || !AuthSessionStore.isLoggedIn) return;
+      final shouldLock = await AuthSessionStore.shouldLockForInactivity();
+      if (!shouldLock) return;
+      await AuthSessionStore.setLocked(true);
+      if (!mounted) return;
+      setState(() => _locked = true);
+    });
   }
 
   @override
@@ -95,13 +108,21 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
                 return AppLockPage(
                   onUnlocked: () => setState(() => _locked = false),
                   onLoginFallback: () async {
+                    await AuthSessionStore.removePin();
+                    await AuthSessionStore.setQuickUnlockEnabled(false);
+                    await AuthSessionStore.setSecuritySetupDone(false);
                     await SessionManager.forceLogout();
                     if (!context.mounted) return;
                     Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.loginRoute, (_) => false);
                   },
                 );
               }
-              return child ?? const SizedBox.shrink();
+              return Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerDown: (_) => AuthSessionStore.markInactiveNow(),
+                onPointerSignal: (_) => AuthSessionStore.markInactiveNow(),
+                child: child ?? const SizedBox.shrink(),
+              );
             },
           );
         },
@@ -112,6 +133,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _inactivityTimer?.cancel();
     super.dispose();
   }
 }
