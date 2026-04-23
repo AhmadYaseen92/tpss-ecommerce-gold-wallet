@@ -433,7 +433,8 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
         WalletActionType.transfer => 'transfer',
         WalletActionType.gift => 'gift',
         WalletActionType.pickup => 'pickup',
-        _ => 'sell',
+        WalletActionType.convertToCash => '',
+        WalletActionType.convertToCrypto => '',
       };
 
   String _extractDisplayErrorMessage(Object error) {
