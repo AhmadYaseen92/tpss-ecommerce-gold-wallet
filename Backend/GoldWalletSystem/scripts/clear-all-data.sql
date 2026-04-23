@@ -29,6 +29,7 @@ BEGIN TRY
     IF OBJECT_ID(N'[LinkedBankAccounts]', N'U') IS NOT NULL DELETE FROM [LinkedBankAccounts];
 
     IF OBJECT_ID(N'[AppNotifications]', N'U') IS NOT NULL DELETE FROM [AppNotifications];
+    IF OBJECT_ID(N'[RefreshTokens]', N'U') IS NOT NULL DELETE FROM [RefreshTokens];
     IF OBJECT_ID(N'[UserPushTokens]', N'U') IS NOT NULL DELETE FROM [UserPushTokens];
     IF OBJECT_ID(N'[AuditLogs]', N'U') IS NOT NULL DELETE FROM [AuditLogs];
 

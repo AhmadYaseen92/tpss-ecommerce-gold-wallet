@@ -392,6 +392,11 @@ BEGIN TRY
     INNER JOIN [Users] U ON U.[Id] = TH.[UserId]
     WHERE U.[Email] IN (SELECT [Email] FROM @Users);
 
+    DELETE RT
+    FROM [RefreshTokens] RT
+    INNER JOIN [Users] U ON U.[Id] = RT.[UserId]
+    WHERE U.[Email] IN (SELECT [Email] FROM @Users);
+
     DELETE N
     FROM [AppNotifications] N
     INNER JOIN [Users] U ON U.[Id] = N.[UserId]
