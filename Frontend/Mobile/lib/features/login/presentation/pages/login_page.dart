@@ -24,12 +24,14 @@ class LoginPage extends StatelessWidget {
         dio: InjectionContainer.dio(),
       ),
       child: BlocConsumer<LoginCubit, LoginState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is LoginSuccess) {
+            await InjectionContainer.syncReleaseConfiguration();
             final requireSecuritySetup =
                 AppReleaseConfig.quickUnlockAllowed && !AuthSessionStore.securitySetupDone;
             final next =
                 requireSecuritySetup ? AppRoutes.securitySetupRoute : AppRoutes.homeRoute;
+            if (!context.mounted) return;
             Navigator.pushNamedAndRemoveUntil(
               context,
               next,

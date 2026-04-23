@@ -121,7 +121,6 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
   Future<void> _syncRemoteConfiguration() async {
     await InjectionContainer.syncReleaseConfiguration();
     await AuthSessionStore.applyAdminUnlockPolicy();
-    await _enforceLoginPolicyForDisabledQuickUnlock();
   }
 
   Future<void> _enforceLoginPolicyForDisabledQuickUnlock({bool redirectToLogin = true}) async {
