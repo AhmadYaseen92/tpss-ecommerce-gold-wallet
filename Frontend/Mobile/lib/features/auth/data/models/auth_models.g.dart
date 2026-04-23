@@ -30,8 +30,6 @@ RegisterRequestModel _$RegisterRequestModelFromJson(Map<String, dynamic> json) =
       preferredLanguage: json['preferredLanguage'] as String?,
       preferredTheme: json['preferredTheme'] as String?,
       sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
-      refreshToken: json['refreshToken'] as String,
-      refreshTokenExpiresAtUtc: DateTime.parse(json['refreshTokenExpiresAtUtc'] as String),
     );
 
 Map<String, dynamic> _$RegisterRequestModelToJson(
