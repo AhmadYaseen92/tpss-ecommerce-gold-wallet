@@ -48,6 +48,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
   }
 
   Future<void> _initializePage() async {
+    await InjectionContainer.syncReleaseConfiguration();
     await _loadConfig();
     _requiresOtpForAction = AppReleaseConfig.isOtpRequiredForAction(_mapOtpAction(widget.summary.actionType));
     if (!_requiresOtpForAction) {

@@ -386,6 +386,9 @@ public class WalletController(
         var isOtpRequired = await otpService.IsActionProtectedAsync(otpAction, cancellationToken);
         if (isOtpRequired)
         {
+            if (string.IsNullOrWhiteSpace(request.OtpVerificationToken))
+                return BadRequest(ApiResponse<object>.Fail($"OTP is required for action '{otpAction}'.", 400));
+
             await otpService.ConsumeVerificationGrantAsync(
                 request.UserId,
                 otpAction,
