@@ -446,9 +446,6 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
         if (nestedMessage.isNotEmpty) return nestedMessage;
       }
 
-      final directMessage = (map['message'] ?? map['error'] ?? map['title'] ?? '').toString().trim();
-      if (directMessage.isNotEmpty) return directMessage;
-
       final errors = map['errors'];
       if (errors is List && errors.isNotEmpty) {
         final first = errors.first.toString().trim();
@@ -464,6 +461,9 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
           if (plain.isNotEmpty) return plain;
         }
       }
+
+      final directMessage = (map['message'] ?? map['error'] ?? map['title'] ?? '').toString().trim();
+      if (directMessage.isNotEmpty) return directMessage;
       return '';
     }
 
