@@ -26,6 +26,7 @@ const settings = ref<SettingItem[]>([]);
 const sellers = ref<Seller[]>([]);
 const busy = ref(false);
 const areaOptions = ["registration", "reset_password", "checkout", "buy", "sell", "transfer", "gift", "pickup"];
+const otpChannelOptions = ["whatsapp", "email"];
 const initialSnapshots = ref<Record<string, string>>({});
 
 const load = async () => {
@@ -52,18 +53,11 @@ const groupedSettings = computed(() => {
   return Array.from(map.entries()).map(([group, items]) => ({ group, items }));
 });
 
-const valueTypeLabel = (type: number) => {
-  if (type === 1) return "Text";
-  if (type === 2) return "Feature Toggle";
-  if (type === 3) return "Integer";
-  if (type === 4) return "Decimal";
-  return "Unknown";
-};
-
 const supportsAffectedAreas = (item: SettingItem) =>
   item.configKey.toLowerCase().includes("requiredactions");
+const supportsOtpChannelPriority = (item: SettingItem) => item.configKey === "Otp_ChannelPriority";
 const usesSellerDropdown = (item: SettingItem) => item.configKey === "MobileRelease_IndividualSellerName";
-const hasDefaultValueInput = (item: SettingItem) => item.valueType !== 2 && !supportsAffectedAreas(item);
+const hasDefaultValueInput = (item: SettingItem) => item.valueType !== 2 && !supportsAffectedAreas(item) && !supportsOtpChannelPriority(item);
 
 const snapshotOf = (item: SettingItem) => JSON.stringify({
   valueType: item.valueType,
@@ -106,6 +100,34 @@ const toggleArea = (item: SettingItem, area: string, checked: boolean) => {
   else set.delete(area);
   item.valueString = Array.from(set).join(",");
 };
+
+const selectedOtpChannels = (item: SettingItem) => {
+  const raw = item.valueString ?? "";
+  return raw
+    .split(",")
+    .map((x) => x.trim().toLowerCase())
+    .filter(Boolean);
+};
+
+const isOtpChannelChecked = (item: SettingItem, channel: string) => selectedOtpChannels(item).includes(channel);
+const otpDefaultChannel = (item: SettingItem) => selectedOtpChannels(item)[0] ?? "";
+
+const toggleOtpChannel = (item: SettingItem, channel: string, checked: boolean) => {
+  const channels = selectedOtpChannels(item);
+  if (checked && !channels.includes(channel)) channels.push(channel);
+  if (!checked) {
+    item.valueString = channels.filter((x) => x !== channel).join(",");
+    return;
+  }
+  item.valueString = channels.join(",");
+};
+
+const setOtpDefaultChannel = (item: SettingItem, channel: string, enabled: boolean) => {
+  if (!enabled) return;
+  const channels = selectedOtpChannels(item);
+  if (!channels.includes(channel)) channels.push(channel);
+  item.valueString = [channel, ...channels.filter((x) => x !== channel)].join(",");
+};
 </script>
 
 <template>
@@ -127,7 +149,6 @@ const toggleArea = (item: SettingItem, area: string, checked: boolean) => {
                 <p class="setting-key">{{ item.configKey }}</p>
               </div>
               <div class="setting-header-right">
-                <span class="type-badge">{{ valueTypeLabel(item.valueType) }}</span>
                 <label v-if="item.valueType === 2" class="inline-toggle">
                   <SmallToggle v-model="item.valueBool" />
                   <span>Enabled</span>
@@ -171,6 +192,22 @@ const toggleArea = (item: SettingItem, area: string, checked: boolean) => {
                 </label>
               </div>
             </div>
+
+            <div v-if="supportsOtpChannelPriority(item)" class="setting-row">
+              <label>Preferred channels</label>
+              <div class="otp-channels">
+                <label v-for="channel in otpChannelOptions" :key="`${item.configKey}-${channel}`" class="otp-channel-item">
+                  <SmallCheckbox :model-value="isOtpChannelChecked(item, channel)" @update:model-value="toggleOtpChannel(item, channel, $event)" />
+                  <span class="channel-name">{{ channel }}</span>
+                  <SmallToggle
+                    :model-value="otpDefaultChannel(item) === channel"
+                    :disabled="!isOtpChannelChecked(item, channel)"
+                    @update:model-value="setOtpDefaultChannel(item, channel, $event)"
+                  />
+                  <span class="default-label">Default</span>
+                </label>
+              </div>
+            </div>
           </article>
         </div>
       </section>
@@ -207,14 +244,6 @@ const toggleArea = (item: SettingItem, area: string, checked: boolean) => {
 .setting-header-right { display: inline-flex; align-items: center; gap: 10px; }
 .setting-header h4 { margin: 0; font-size: 22px; }
 .setting-key { margin: 4px 0 0; font-size: 12px; color: #8f8573; }
-.type-badge {
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 99px;
-  background: #f7f2e7;
-  color: #6f5a23;
-  border: 1px solid #e4d5ad;
-}
 .setting-description { margin: 0; color: #655d50; font-size: 14px; }
 .setting-row { display: flex; flex-direction: column; gap: 8px; }
 .setting-row input[type="text"],
@@ -235,4 +264,8 @@ const toggleArea = (item: SettingItem, area: string, checked: boolean) => {
 }
 .inline-toggle, .inline-checkbox { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; }
 .checkboxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.otp-channels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.otp-channel-item { display: inline-flex; align-items: center; gap: 8px; }
+.channel-name { text-transform: capitalize; min-width: 80px; }
+.default-label { color: #7f755f; font-size: 13px; }
 </style>
