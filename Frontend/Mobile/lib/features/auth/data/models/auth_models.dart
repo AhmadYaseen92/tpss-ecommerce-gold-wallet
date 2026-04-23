@@ -72,8 +72,23 @@ class LoginResponseModel {
   final String refreshToken;
   final DateTime refreshTokenExpiresAtUtc;
 
-  factory LoginResponseModel.fromJson(Map<String, dynamic> json) =>
-      _$LoginResponseModelFromJson(json);
+  factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
+    final expiresAt = DateTime.tryParse('${json['expiresAtUtc']}') ?? DateTime.now().toUtc();
+    final refreshExpiryRaw = json['refreshTokenExpiresAtUtc'];
+    final refreshExpiresAt = refreshExpiryRaw == null
+        ? expiresAt
+        : (DateTime.tryParse('$refreshExpiryRaw') ?? expiresAt);
+
+    return LoginResponseModel(
+      accessToken: (json['accessToken'] ?? '').toString(),
+      expiresAtUtc: expiresAt,
+      role: (json['role'] ?? '').toString(),
+      userId: (json['userId'] as num?)?.toInt() ?? 0,
+      sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
+      refreshToken: (json['refreshToken'] ?? '').toString(),
+      refreshTokenExpiresAtUtc: refreshExpiresAt,
+    );
+  }
 }
 
 @JsonSerializable()
@@ -104,5 +119,16 @@ class ApiEnvelope<T> {
   factory ApiEnvelope.fromJson(
     Map<String, dynamic> json,
     T Function(Object? json) fromJsonT,
-  ) => _$ApiEnvelopeFromJson(json, fromJsonT);
+  ) {
+    final rawErrors = json['errors'];
+    return ApiEnvelope<T>(
+      success: json['success'] == true,
+      statusCode: (json['statusCode'] as num?)?.toInt() ?? 0,
+      message: (json['message'] ?? '').toString(),
+      data: json['data'] == null ? null : fromJsonT(json['data']),
+      errors: rawErrors is List
+          ? rawErrors.map((e) => e.toString()).toList()
+          : const <String>[],
+    );
+  }
 }
