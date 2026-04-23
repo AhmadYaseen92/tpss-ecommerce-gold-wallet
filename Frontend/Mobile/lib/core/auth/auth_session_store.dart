@@ -137,6 +137,8 @@ class AuthSessionStore {
   }
 
   static Future<void> clearAll() async {
+    final preservedOnboardingSeen = onboardingSeen || (await _secure.read(key: _kOnboardingSeen)) == '1';
+
     accessToken = null;
     refreshToken = null;
     accessTokenExpiresAtUtc = null;
@@ -144,12 +146,13 @@ class AuthSessionStore {
     userId = null;
     sellerId = null;
     autoLockEnabled = true;
-    onboardingSeen = false;
+    onboardingSeen = preservedOnboardingSeen;
     securitySetupDone = false;
     quickUnlockEnabled = false;
     biometricEnabled = false;
     pinSetupComplete = false;
     await _secure.deleteAll();
+    await _secure.write(key: _kOnboardingSeen, value: onboardingSeen ? '1' : '0');
   }
 
   static Future<void> setQuickUnlockEnabled(bool enabled) async {
