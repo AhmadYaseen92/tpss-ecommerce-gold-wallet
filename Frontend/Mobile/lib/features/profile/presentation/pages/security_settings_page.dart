@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_auth/local_auth.dart';
@@ -7,6 +8,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.d
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/presentation/cubit/profile_cubit.dart';
 
 class SecuritySettingsPage extends StatefulWidget {
@@ -24,6 +26,7 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  final Dio _dio = InjectionContainer.dio();
 
   @override
   void initState() {
@@ -213,9 +216,9 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
                 AppButton(
                   cubit: cubit,
                   label: 'Update Password',
-                  onPressed: () {
+                  onPressed: () async {
                     if (_passwordFormKey.currentState?.validate() ?? false) {
-                      cubit.saveSecuritySettings();
+                      await _submitPasswordWithOtpPolicy(cubit);
                     }
                   },
                 ),
@@ -225,5 +228,110 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
         },
       ),
     );
+  }
+
+  Future<void> _submitPasswordWithOtpPolicy(ProfileCubit cubit) async {
+    if (!AppReleaseConfig.isOtpRequiredForAction('change_password')) {
+      await cubit.saveSecuritySettings();
+      return;
+    }
+
+    final userId = AuthSessionStore.userId;
+    if (userId == null) {
+      await AppModalAlert.show(
+        context,
+        title: 'Error',
+        message: 'No logged-in user.',
+        variant: AppModalAlertVariant.failed,
+      );
+      return;
+    }
+
+    try {
+      final actionReferenceId = 'profile:change_password:$userId';
+      final requestResp = await _dio.post(
+        '/otp/request',
+        data: {
+          'userId': userId,
+          'actionType': 'change_password',
+          'actionReferenceId': actionReferenceId,
+        },
+      );
+      final requestData = (requestResp.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      final otpRequestId = (requestData['otpRequestId'] ?? '').toString().trim();
+      if (otpRequestId.isEmpty) {
+        throw StateError('OTP request failed.');
+      }
+
+      final otpCode = await _showOtpInputDialog();
+      if (!mounted || otpCode == null || otpCode.length < 6) return;
+
+      final verifyResp = await _dio.post(
+        '/otp/verify',
+        data: {
+          'userId': userId,
+          'otpRequestId': otpRequestId,
+          'otpCode': otpCode,
+        },
+      );
+      final verifyData = (verifyResp.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      final verificationToken = (verifyData['verificationToken'] ?? '').toString().trim();
+      final verifiedRef = (verifyData['actionReferenceId'] ?? '').toString().trim();
+      if (verificationToken.isEmpty) {
+        throw StateError('OTP verification failed.');
+      }
+
+      await cubit.saveSecuritySettings(
+        otpVerificationToken: verificationToken,
+        otpActionReferenceId: verifiedRef.isEmpty ? actionReferenceId : verifiedRef,
+      );
+    } catch (e) {
+      await AppModalAlert.show(
+        context,
+        title: 'OTP Failed',
+        message: _extractDisplayErrorMessage(e),
+        variant: AppModalAlertVariant.failed,
+      );
+    }
+  }
+
+  Future<String?> _showOtpInputDialog() async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm OTP'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+          decoration: const InputDecoration(labelText: 'OTP Code'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Verify'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _extractDisplayErrorMessage(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final message = (data['message'] ?? data['error'] ?? '').toString().trim();
+        if (message.isNotEmpty) return message;
+        final nested = data['data'];
+        if (nested is Map) {
+          final nestedMessage = (nested['message'] ?? nested['error'] ?? '').toString().trim();
+          if (nestedMessage.isNotEmpty) return nestedMessage;
+        }
+      }
+      if (data is String && data.trim().isNotEmpty) return data.trim();
+    }
+    return 'Something went wrong. Please try again.';
   }
 }

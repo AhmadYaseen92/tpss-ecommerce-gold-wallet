@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
@@ -318,7 +319,10 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  Future<void> saveSecuritySettings() async {
+  Future<void> saveSecuritySettings({
+    String? otpVerificationToken,
+    String? otpActionReferenceId,
+  }) async {
     final currentPassword = securityControllers['Current Password']?.text.trim() ?? '';
     final newPassword = securityControllers['New Password']?.text.trim() ?? '';
     final confirmPassword = securityControllers['Confirm New Password']?.text.trim() ?? '';
@@ -349,6 +353,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       await _remoteDataSource.changePassword(
         currentPassword: currentPassword,
         newPassword: newPassword,
+        otpVerificationToken: otpVerificationToken,
+        otpActionReferenceId: otpActionReferenceId,
       );
       securityControllers['Current Password']?.clear();
       securityControllers['New Password']?.clear();
@@ -356,8 +362,25 @@ class ProfileCubit extends Cubit<ProfileState> {
       isEditing = false;
       emit(ProfilePasswordChangedRequiresRelogin());
     } catch (e) {
-      emit(ProfileError('Failed to update security settings: $e'));
+      emit(ProfileError(_extractErrorMessage(e, fallback: 'Failed to update security settings.')));
     }
+  }
+
+  String _extractErrorMessage(Object error, {required String fallback}) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final message = (data['message'] ?? data['error'] ?? '').toString().trim();
+        if (message.isNotEmpty) return message;
+        final nested = data['data'];
+        if (nested is Map) {
+          final nestedMessage = (nested['message'] ?? nested['error'] ?? '').toString().trim();
+          if (nestedMessage.isNotEmpty) return nestedMessage;
+        }
+      }
+      if (data is String && data.trim().isNotEmpty) return data.trim();
+    }
+    return fallback;
   }
 
   void toggleEdit() {

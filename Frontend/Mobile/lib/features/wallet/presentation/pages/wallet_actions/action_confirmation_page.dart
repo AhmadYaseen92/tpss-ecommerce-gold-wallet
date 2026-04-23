@@ -99,7 +99,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'OTP Verification Required',
+                    _requiresOtpForAction ? 'OTP Verification Required' : 'Confirmation Required',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
