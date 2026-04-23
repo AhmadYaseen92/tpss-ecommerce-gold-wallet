@@ -6,6 +6,8 @@ class AppReleaseConfig {
   static const String allSellersLabel = defaultAllSellersLabel;
 
   static bool showWeightInGrams = true;
+  static bool loginByBiometricEnabled = true;
+  static bool loginByPinEnabled = true;
 
   static bool get showSellerUi => !isIndividualSellerRelease;
 
@@ -26,5 +28,9 @@ class AppReleaseConfig {
         (values['MobileRelease_IndividualSellerName'] as String?) ?? individualSellerName;
     showWeightInGrams =
         (values['MobileRelease_ShowWeightInGrams'] as bool?) ?? showWeightInGrams;
+    loginByBiometricEnabled =
+        (values['MobileSecurity_LoginByBiometric'] as bool?) ?? loginByBiometricEnabled;
+    loginByPinEnabled =
+        (values['MobileSecurity_LoginByPin'] as bool?) ?? loginByPinEnabled;
   }
 }

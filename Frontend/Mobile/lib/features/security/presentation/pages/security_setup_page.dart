@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 
 class SecuritySetupPage extends StatefulWidget {
@@ -32,22 +33,33 @@ class _SecuritySetupPageState extends State<SecuritySetupPage> {
 
   Future<void> _complete() async {
     final pin = _pinController.text.trim();
-    if (pin.isNotEmpty && (pin.length < 4 || pin.length > 6)) {
+    final canUseBiometric = AppReleaseConfig.loginByBiometricEnabled;
+    final canUsePin = AppReleaseConfig.loginByPinEnabled;
+    final wantsBiometric = canUseBiometric && _biometric && _deviceHasBiometric;
+    final hasPin = canUsePin && pin.isNotEmpty;
+    if (canUsePin && pin.isNotEmpty && (pin.length < 4 || pin.length > 6)) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN must be 4-6 digits')));
       return;
     }
 
-    if (!_biometric && pin.isEmpty) {
+    if (!canUseBiometric && !canUsePin) {
+      await _skip();
+      return;
+    }
+
+    if (!wantsBiometric && !hasPin) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enable biometric or set a PIN to use quick unlock.')),
       );
       return;
     }
 
-    if (pin.isNotEmpty) {
+    if (canUsePin && pin.isNotEmpty) {
       await AuthSessionStore.setPin(pin);
+    } else if (!canUsePin && AuthSessionStore.hasPin) {
+      await AuthSessionStore.removePin();
     }
-    await AuthSessionStore.setBiometricEnabled(_biometric && _deviceHasBiometric);
+    await AuthSessionStore.setBiometricEnabled(wantsBiometric);
     await AuthSessionStore.setQuickUnlockEnabled(AuthSessionStore.hasUnlockMethod);
     await AuthSessionStore.setSecuritySetupDone(true);
     await AuthSessionStore.setLocked(false);
@@ -75,19 +87,26 @@ class _SecuritySetupPageState extends State<SecuritySetupPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SwitchListTile(
-              title: const Text('Enable Biometric'),
-              subtitle: Text(_deviceHasBiometric ? 'Use Face ID / Touch ID to unlock.' : 'Biometric not available.'),
-              value: _biometric,
-              onChanged: _deviceHasBiometric ? (v) => setState(() => _biometric = v) : null,
-            ),
-            TextField(
-              controller: _pinController,
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              maxLength: 6,
-              decoration: const InputDecoration(labelText: 'Set PIN (4-6 digits)'),
-            ),
+            if (AppReleaseConfig.loginByBiometricEnabled)
+              SwitchListTile(
+                title: const Text('Enable Biometric'),
+                subtitle: Text(_deviceHasBiometric ? 'Use Face ID / Touch ID to unlock.' : 'Biometric not available.'),
+                value: _biometric,
+                onChanged: _deviceHasBiometric ? (v) => setState(() => _biometric = v) : null,
+              ),
+            if (AppReleaseConfig.loginByPinEnabled)
+              TextField(
+                controller: _pinController,
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                maxLength: 6,
+                decoration: const InputDecoration(labelText: 'Set PIN (4-6 digits)'),
+              ),
+            if (!AppReleaseConfig.loginByBiometricEnabled && !AppReleaseConfig.loginByPinEnabled)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text('Quick unlock is disabled by admin configuration.'),
+              ),
             const SizedBox(height: 12),
             Row(
               children: [

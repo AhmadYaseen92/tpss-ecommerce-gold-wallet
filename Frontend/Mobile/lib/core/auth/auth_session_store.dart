@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 
 class AuthSessionStore {
   AuthSessionStore._();
@@ -58,6 +59,22 @@ class AuthSessionStore {
     refreshTokenExpiresAtUtc = _tryParseDate(await _secure.read(key: _kRefreshTokenExp));
     userId = int.tryParse(await _secure.read(key: _kUserId) ?? '');
     sellerId = int.tryParse(await _secure.read(key: _kSellerId) ?? '');
+
+    await _normalizeSecurityState();
+  }
+
+  static Future<void> applyAdminUnlockPolicy() async {
+    if (!AppReleaseConfig.loginByBiometricEnabled && biometricEnabled) {
+      biometricEnabled = false;
+      await _secure.write(key: _kBiometricEnabled, value: '0');
+    }
+
+    if (!AppReleaseConfig.loginByPinEnabled && pinSetupComplete) {
+      pinSetupComplete = false;
+      await _secure.delete(key: _kPinSalt);
+      await _secure.delete(key: _kPinHash);
+      await _secure.write(key: _kPinSetupComplete, value: '0');
+    }
 
     await _normalizeSecurityState();
   }
@@ -149,12 +166,15 @@ class AuthSessionStore {
   }
 
   static Future<void> setBiometricEnabled(bool enabled) async {
-    biometricEnabled = enabled;
-    await _secure.write(key: _kBiometricEnabled, value: enabled ? '1' : '0');
+    biometricEnabled = AppReleaseConfig.loginByBiometricEnabled && enabled;
+    await _secure.write(key: _kBiometricEnabled, value: biometricEnabled ? '1' : '0');
     await _normalizeSecurityState();
   }
 
   static Future<void> setPin(String pin) async {
+    if (!AppReleaseConfig.loginByPinEnabled) {
+      throw StateError('PIN login is disabled by admin policy.');
+    }
     final salt = DateTime.now().microsecondsSinceEpoch.toString();
     final hash = sha256.convert(utf8.encode('$salt:$pin')).toString();
     await _secure.write(key: _kPinSalt, value: salt);

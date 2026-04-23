@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 
 class AppLockPage extends StatefulWidget {
   const AppLockPage({super.key, required this.onUnlocked, required this.onLoginFallback});
@@ -19,8 +20,12 @@ class _AppLockPageState extends State<AppLockPage> {
   bool _showPin = false;
   int _failedAttempts = 0;
 
-  bool get _canUseBiometric => AuthSessionStore.quickUnlockEnabled && AuthSessionStore.biometricEnabled;
-  bool get _canUsePin => AuthSessionStore.quickUnlockEnabled && AuthSessionStore.hasPin;
+  bool get _canUseBiometric =>
+      AppReleaseConfig.loginByBiometricEnabled &&
+      AuthSessionStore.quickUnlockEnabled &&
+      AuthSessionStore.biometricEnabled;
+  bool get _canUsePin =>
+      AppReleaseConfig.loginByPinEnabled && AuthSessionStore.quickUnlockEnabled && AuthSessionStore.hasPin;
 
   @override
   void initState() {

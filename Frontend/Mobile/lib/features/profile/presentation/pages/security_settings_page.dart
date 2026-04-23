@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/presentation/cubit/profile_cubit.dart';
 
@@ -27,9 +28,19 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
   @override
   void initState() {
     super.initState();
-    _biometric = AuthSessionStore.biometricEnabled;
-    _pinController.text = AuthSessionStore.hasPin ? '••••' : '';
+    _biometric = AppReleaseConfig.loginByBiometricEnabled && AuthSessionStore.biometricEnabled;
+    _pinController.text = (AppReleaseConfig.loginByPinEnabled && AuthSessionStore.hasPin) ? '••••' : '';
+    _hydrateSecurityPolicy();
     _checkBiometricSupport();
+  }
+
+  Future<void> _hydrateSecurityPolicy() async {
+    await AuthSessionStore.applyAdminUnlockPolicy();
+    if (!mounted) return;
+    setState(() {
+      _biometric = AppReleaseConfig.loginByBiometricEnabled && AuthSessionStore.biometricEnabled;
+      _pinController.text = (AppReleaseConfig.loginByPinEnabled && AuthSessionStore.hasPin) ? '••••' : '';
+    });
   }
 
   Future<void> _checkBiometricSupport() async {
@@ -116,32 +127,40 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
               padding: const EdgeInsets.all(16),
               children: [
                 const Text('Local Session Protection', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                SwitchListTile(
-                  title: const Text('Biometric unlock'),
-                  subtitle: Text(_hasBiometricSupport ? 'Use Face ID / Touch ID.' : 'Biometric not available'),
-                  value: _biometric,
-                  onChanged: _toggleBiometric,
-                ),
+                if (AppReleaseConfig.loginByBiometricEnabled)
+                  SwitchListTile(
+                    title: const Text('Biometric unlock'),
+                    subtitle: Text(_hasBiometricSupport ? 'Use Face ID / Touch ID.' : 'Biometric not available'),
+                    value: _biometric,
+                    onChanged: _toggleBiometric,
+                  ),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: _pinController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  obscureText: true,
-                  onTap: () {
-                    if (_pinController.text == '••••') {
-                      _pinController.clear();
-                    }
-                  },
-                  decoration: const InputDecoration(labelText: 'Set / Change PIN (4-6 digits)'),
-                ),
-                Row(
-                  children: [
-                    Expanded(child: ElevatedButton(onPressed: _savePin, child: const Text('Save PIN'))),
-                    const SizedBox(width: 12),
-                    Expanded(child: TextButton(onPressed: AuthSessionStore.hasPin ? _removePin : null, child: const Text('Remove PIN'))),
-                  ],
-                ),
+                if (AppReleaseConfig.loginByPinEnabled) ...[
+                  TextField(
+                    controller: _pinController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    obscureText: true,
+                    onTap: () {
+                      if (_pinController.text == '••••') {
+                        _pinController.clear();
+                      }
+                    },
+                    decoration: const InputDecoration(labelText: 'Set / Change PIN (4-6 digits)'),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(child: ElevatedButton(onPressed: _savePin, child: const Text('Save PIN'))),
+                      const SizedBox(width: 12),
+                      Expanded(child: TextButton(onPressed: AuthSessionStore.hasPin ? _removePin : null, child: const Text('Remove PIN'))),
+                    ],
+                  ),
+                ],
+                if (!AppReleaseConfig.loginByBiometricEnabled && !AppReleaseConfig.loginByPinEnabled)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text('Biometric and PIN quick unlock are disabled by admin.'),
+                  ),
                 const Divider(height: 32),
                 const Text('Change Password', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),

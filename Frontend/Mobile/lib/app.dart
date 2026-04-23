@@ -41,6 +41,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
     }
 
     await AuthSessionStore.hydrate();
+    await AuthSessionStore.applyAdminUnlockPolicy();
 
     if (AuthSessionStore.isLoggedIn && !AuthSessionStore.hasUnlockMethod) {
       await SessionManager.forceLogout(localOnly: true);
