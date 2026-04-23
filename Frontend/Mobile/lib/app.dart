@@ -119,8 +119,13 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
   }
 
   Future<void> _syncRemoteConfiguration() async {
+    final previousRevision = AppReleaseConfig.revisionListenable.value;
     await InjectionContainer.syncReleaseConfiguration();
     await AuthSessionStore.applyAdminUnlockPolicy();
+    await _enforceLoginPolicyForDisabledQuickUnlock();
+    if (mounted && previousRevision != AppReleaseConfig.revisionListenable.value) {
+      setState(() {});
+    }
   }
 
   Future<void> _enforceLoginPolicyForDisabledQuickUnlock({bool redirectToLogin = true}) async {

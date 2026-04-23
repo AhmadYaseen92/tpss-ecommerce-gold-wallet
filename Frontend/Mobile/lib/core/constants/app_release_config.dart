@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
+
 class AppReleaseConfig {
   static final Map<String, dynamic> _allTypedConfig = <String, dynamic>{};
+  static final ValueNotifier<int> revisionListenable = ValueNotifier<int>(0);
 
   static bool isIndividualSellerRelease = false;
   static String individualSellerName = 'Imseeh';
@@ -26,22 +29,40 @@ class AppReleaseConfig {
   }
 
   static void applyFromTypedConfig(Map<String, dynamic> values) {
+    final nextIndividualSellerRelease =
+        (values['MobileRelease_IsIndividualSeller'] as bool?) ?? isIndividualSellerRelease;
+    final nextIndividualSellerName =
+        (values['MobileRelease_IndividualSellerName'] as String?) ?? individualSellerName;
+    final nextShowWeightInGrams =
+        (values['MobileRelease_ShowWeightInGrams'] as bool?) ?? showWeightInGrams;
+    final nextMarketWatchEnabled =
+        (values['MobileRelease_MarketWatchEnabled'] as bool?) ?? marketWatchEnabled;
+    final nextLoginByBiometricEnabled =
+        (values['MobileSecurity_LoginByBiometric'] as bool?) ?? loginByBiometricEnabled;
+    final nextLoginByPinEnabled =
+        (values['MobileSecurity_LoginByPin'] as bool?) ?? loginByPinEnabled;
+
+    final hasChanged = nextIndividualSellerRelease != isIndividualSellerRelease ||
+        nextIndividualSellerName != individualSellerName ||
+        nextShowWeightInGrams != showWeightInGrams ||
+        nextMarketWatchEnabled != marketWatchEnabled ||
+        nextLoginByBiometricEnabled != loginByBiometricEnabled ||
+        nextLoginByPinEnabled != loginByPinEnabled;
+
     _allTypedConfig
       ..clear()
       ..addAll(values);
 
-    isIndividualSellerRelease =
-        (values['MobileRelease_IsIndividualSeller'] as bool?) ?? isIndividualSellerRelease;
-    individualSellerName =
-        (values['MobileRelease_IndividualSellerName'] as String?) ?? individualSellerName;
-    showWeightInGrams =
-        (values['MobileRelease_ShowWeightInGrams'] as bool?) ?? showWeightInGrams;
-    marketWatchEnabled =
-        (values['MobileRelease_MarketWatchEnabled'] as bool?) ?? marketWatchEnabled;
-    loginByBiometricEnabled =
-        (values['MobileSecurity_LoginByBiometric'] as bool?) ?? loginByBiometricEnabled;
-    loginByPinEnabled =
-        (values['MobileSecurity_LoginByPin'] as bool?) ?? loginByPinEnabled;
+    isIndividualSellerRelease = nextIndividualSellerRelease;
+    individualSellerName = nextIndividualSellerName;
+    showWeightInGrams = nextShowWeightInGrams;
+    marketWatchEnabled = nextMarketWatchEnabled;
+    loginByBiometricEnabled = nextLoginByBiometricEnabled;
+    loginByPinEnabled = nextLoginByPinEnabled;
+
+    if (hasChanged) {
+      revisionListenable.value = revisionListenable.value + 1;
+    }
   }
 
   static dynamic getValue(String key) => _allTypedConfig[key];

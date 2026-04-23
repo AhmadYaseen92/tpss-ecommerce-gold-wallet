@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
@@ -34,19 +36,23 @@ class ProductPage extends StatelessWidget {
             length: 2,
             child: Material(
               color: Colors.transparent,
-              child: BlocListener<AppCubit, AppState>(
-                listenWhen: (previous, current) =>
-                    previous.selectedSeller != current.selectedSeller ||
-                    previous.checkoutRefreshTick !=
-                        current.checkoutRefreshTick,
-                listener: (context, state) {
-                  context.read<ProductCubit>().loadProducts(
-                    seller: state.selectedSeller,
-                    categoryId: context.read<ProductCubit>().selectedCategoryId,
-                  );
-                },
-                child: AppReleaseConfig.marketWatchEnabled
-                    ? Column(
+              child: ValueListenableBuilder<int>(
+                valueListenable: AppReleaseConfig.revisionListenable,
+                builder: (context, _, __) {
+                  unawaited(context.read<ProductCubit>().syncMarketWatchWithConfig());
+                  return BlocListener<AppCubit, AppState>(
+                    listenWhen: (previous, current) =>
+                        previous.selectedSeller != current.selectedSeller ||
+                        previous.checkoutRefreshTick !=
+                            current.checkoutRefreshTick,
+                    listener: (context, state) {
+                      context.read<ProductCubit>().loadProducts(
+                        seller: state.selectedSeller,
+                        categoryId: context.read<ProductCubit>().selectedCategoryId,
+                      );
+                    },
+                    child: AppReleaseConfig.marketWatchEnabled
+                        ? Column(
                         children: [
                           TabBar(
                             labelStyle: Theme.of(context).textTheme.titleMedium!
@@ -91,14 +97,16 @@ class ProductPage extends StatelessWidget {
                             ),
                           ),
                         ],
-                      )
-                    : RefreshIndicator(
-                        onRefresh: () => context.read<ProductCubit>().loadProducts(
-                          seller: context.read<ProductCubit>().activeSeller,
-                          categoryId: context.read<ProductCubit>().selectedCategoryId,
-                        ),
-                        child: CatalogTabWidget(),
-                      ),
+                        )
+                        : RefreshIndicator(
+                            onRefresh: () => context.read<ProductCubit>().loadProducts(
+                              seller: context.read<ProductCubit>().activeSeller,
+                              categoryId: context.read<ProductCubit>().selectedCategoryId,
+                            ),
+                            child: CatalogTabWidget(),
+                          ),
+                  );
+                },
               ),
             ),
           );

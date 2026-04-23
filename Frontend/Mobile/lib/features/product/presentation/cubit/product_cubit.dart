@@ -52,6 +52,7 @@ class ProductCubit extends Cubit<ProductState> {
 
   StreamSubscription<List<MarketSymbolEntity>>? _marketSubscription;
   StreamSubscription<String>? _realtimeSubscription;
+  bool _marketWatchRunning = false;
   String? _activeDetailProductId;
   ProductEntity? _currentDetailProduct;
 
@@ -70,14 +71,7 @@ class ProductCubit extends Cubit<ProductState> {
           : seller;
 
       _emitCatalog();
-      if (AppReleaseConfig.marketWatchEnabled) {
-        await _startMarketWatch();
-      } else {
-        await _marketSubscription?.cancel();
-        _marketSubscription = null;
-        marketSymbols = [];
-        visibleMarketSymbols = [];
-      }
+      await syncMarketWatchWithConfig();
       await _startProductAutoRefresh();
     } catch (e) {
       emit(ProductError('Failed to load products: $e'));
@@ -171,10 +165,28 @@ class ProductCubit extends Cubit<ProductState> {
 
   Future<void> _startMarketWatch() async {
     await _marketSubscription?.cancel();
+    _marketWatchRunning = true;
     _marketSubscription = _watchMarketSymbolsUseCase().listen((symbols) {
       marketSymbols = symbols;
       _emitMarketWatch();
     });
+  }
+
+  Future<void> syncMarketWatchWithConfig() async {
+    if (AppReleaseConfig.marketWatchEnabled && !_marketWatchRunning) {
+      await _startMarketWatch();
+      return;
+    }
+    if (!AppReleaseConfig.marketWatchEnabled && _marketWatchRunning) {
+      await _marketSubscription?.cancel();
+      _marketSubscription = null;
+      _marketWatchRunning = false;
+      marketSymbols = [];
+      visibleMarketSymbols = [];
+      if (state is ProductMarketWatchLoaded) {
+        _emitCatalog();
+      }
+    }
   }
 
   void _emitCatalog() {
@@ -210,6 +222,7 @@ class ProductCubit extends Cubit<ProductState> {
   Future<void> close() async {
     await _realtimeSubscription?.cancel();
     await _marketSubscription?.cancel();
+    _marketWatchRunning = false;
     return super.close();
   }
 }
