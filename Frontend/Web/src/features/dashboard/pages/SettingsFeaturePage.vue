@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { getJson, postJson } from "../../../shared/services/httpClient";
+import { postJson } from "../../../shared/services/httpClient";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 import SmallCheckbox from "../../../shared/components/SmallCheckbox.vue";
 import SmallToggle from "../../../shared/components/SmallToggle.vue";
@@ -38,18 +38,6 @@ const load = async () => {
     sellerAccess: !!row.sellerAccess
   }));
   initialSnapshots.value = Object.fromEntries(settings.value.map((item) => [item.configKey, snapshotOf(item)]));
-};
-
-const save = async (item: SettingItem) => {
-  if (!props.marketplace.session.value?.accessToken) return;
-  busy.value = true;
-  try {
-    await postJson<SettingItem, SettingItem>("/api/mobile-app-configurations/upsert", item, props.marketplace.session.value.accessToken);
-    await getJson<string>("/api/web-admin/wallet/sell-configuration", props.marketplace.session.value.accessToken);
-    initialSnapshots.value[item.configKey] = snapshotOf(item);
-  } finally {
-    busy.value = false;
-  }
 };
 
 onMounted(() => { void load(); });
@@ -123,32 +111,33 @@ const toggleArea = (item: SettingItem, area: string, checked: boolean) => {
 <template>
   <SectionCard title="System Settings">
     <div class="settings-toolbar">
-      <span>{{ dirtyCount }} pending change(s)</span>
-      <button :disabled="busy || dirtyCount === 0" @click="saveAll">Save All Changes</button>
+      <span class="pending-counter">{{ dirtyCount }} pending change(s)</span>
+      <button :disabled="busy || dirtyCount === 0" @click="saveAll">
+        {{ busy ? "Saving..." : "Save All Changes" }}
+      </button>
     </div>
     <div class="settings-layout">
       <section v-for="group in groupedSettings" :key="group.group" class="settings-group">
         <h3>{{ group.group }}</h3>
-        <div class="settings-grid">
+        <div class="settings-stack">
           <article v-for="item in group.items" :key="item.configKey" class="setting-card">
             <header class="setting-header">
               <div>
                 <h4>{{ item.name }}</h4>
                 <p class="setting-key">{{ item.configKey }}</p>
               </div>
-              <span class="type-badge">{{ valueTypeLabel(item.valueType) }}</span>
+              <div class="setting-header-right">
+                <span class="type-badge">{{ valueTypeLabel(item.valueType) }}</span>
+                <label v-if="item.valueType === 2" class="inline-toggle">
+                  <SmallToggle v-model="item.valueBool" />
+                  <span>Enabled</span>
+                </label>
+              </div>
             </header>
 
             <p class="setting-description">{{ item.description || "No description provided." }}</p>
 
-            <div class="setting-row" v-if="item.valueType === 2">
-              <label class="inline-toggle">
-                <SmallToggle v-model="item.valueBool" />
-                <span>Feature enabled</span>
-              </label>
-            </div>
-
-            <div class="setting-row" v-else-if="hasDefaultValueInput(item) && item.valueType === 1 && !usesSellerDropdown(item)">
+            <div class="setting-row" v-if="hasDefaultValueInput(item) && item.valueType === 1 && !usesSellerDropdown(item)">
               <label>Default value</label>
               <input v-model="item.valueString" type="text" />
             </div>
@@ -182,12 +171,6 @@ const toggleArea = (item: SettingItem, area: string, checked: boolean) => {
                 </label>
               </div>
             </div>
-
-            <footer class="setting-actions">
-              <button :disabled="busy" @click="save(item)">
-                Save
-              </button>
-            </footer>
           </article>
         </div>
       </section>
@@ -196,28 +179,33 @@ const toggleArea = (item: SettingItem, area: string, checked: boolean) => {
 </template>
 
 <style scoped>
-.settings-layout { display: flex; flex-direction: column; gap: 20px; }
+.settings-layout { display: flex; flex-direction: column; gap: 16px; }
 .settings-toolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 10px;
   align-items: center;
   margin-bottom: 12px;
+}
+.pending-counter {
+  color: #6f5a23;
+  font-weight: 600;
   font-size: 14px;
 }
-.settings-group h3 { margin: 0 0 12px; font-size: 22px; }
-.settings-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.settings-group h3 { margin: 0 0 10px; font-size: 22px; }
+.settings-stack { display: flex; flex-direction: column; gap: 10px; }
 .setting-card {
-  border: 1px solid #ebe3d2;
-  border-radius: 14px;
-  padding: 16px;
-  background: #fff;
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #f7f7f7;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .setting-header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-.setting-header h4 { margin: 0; font-size: 18px; }
+.setting-header-right { display: inline-flex; align-items: center; gap: 10px; }
+.setting-header h4 { margin: 0; font-size: 22px; }
 .setting-key { margin: 4px 0 0; font-size: 12px; color: #8f8573; }
 .type-badge {
   font-size: 12px;
@@ -247,5 +235,4 @@ const toggleArea = (item: SettingItem, area: string, checked: boolean) => {
 }
 .inline-toggle, .inline-checkbox { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; }
 .checkboxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.setting-actions { margin-top: 4px; display: flex; justify-content: flex-end; }
 </style>
