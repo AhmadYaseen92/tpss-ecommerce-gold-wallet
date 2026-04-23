@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/session_manager.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
@@ -31,6 +32,13 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
   }
 
   Future<void> _bootstrap() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isInstalledBefore = prefs.getBool('app_installed_once') ?? false;
+    if (!isInstalledBefore) {
+      await AuthSessionStore.clearAll();
+      await prefs.setBool('app_installed_once', true);
+    }
+
     await AuthSessionStore.hydrate();
 
     if (AuthSessionStore.isLoggedIn) {
@@ -113,23 +121,20 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
 
               if (!_locked) return appChild;
 
-              return Stack(
-                children: [
-                  appChild,
-                  Positioned.fill(
-                    child: AppLockPage(
-                      onUnlocked: () => setState(() => _locked = false),
-                      onLoginFallback: () async {
-                        await AuthSessionStore.removePin();
-                        await AuthSessionStore.setQuickUnlockEnabled(false);
-                        await AuthSessionStore.setSecuritySetupDone(false);
-                        await SessionManager.forceLogout();
-                        if (!context.mounted) return;
-                        Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.loginRoute, (_) => false);
-                      },
-                    ),
+              return Navigator(
+                onGenerateRoute: (_) => MaterialPageRoute(
+                  builder: (_) => AppLockPage(
+                    onUnlocked: () => setState(() => _locked = false),
+                    onLoginFallback: () async {
+                      await AuthSessionStore.removePin();
+                      await AuthSessionStore.setQuickUnlockEnabled(false);
+                      await AuthSessionStore.setSecuritySetupDone(false);
+                      await SessionManager.forceLogout();
+                      if (!context.mounted) return;
+                      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.loginRoute, (_) => false);
+                    },
                   ),
-                ],
+                ),
               );
             },
           );
