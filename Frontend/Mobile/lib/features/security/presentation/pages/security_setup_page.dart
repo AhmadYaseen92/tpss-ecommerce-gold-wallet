@@ -21,6 +21,13 @@ class _SecuritySetupPageState extends State<SecuritySetupPage> {
   @override
   void initState() {
     super.initState();
+    if (!AppReleaseConfig.quickUnlockAllowed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await _skip();
+      });
+      return;
+    }
     _checkBiometric();
   }
 
