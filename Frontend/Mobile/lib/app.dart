@@ -46,6 +46,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
     await AuthSessionStore.hydrate();
     await _syncRemoteConfiguration();
     await AuthSessionStore.applyAdminUnlockPolicy();
+    await _enforceLoginPolicyForDisabledQuickUnlock(redirectToLogin: false);
 
     if (AuthSessionStore.isLoggedIn &&
         AppReleaseConfig.quickUnlockAllowed &&
@@ -120,6 +121,22 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
   Future<void> _syncRemoteConfiguration() async {
     await InjectionContainer.syncReleaseConfiguration();
     await AuthSessionStore.applyAdminUnlockPolicy();
+    await _enforceLoginPolicyForDisabledQuickUnlock();
+  }
+
+  Future<void> _enforceLoginPolicyForDisabledQuickUnlock({bool redirectToLogin = true}) async {
+    if (AppReleaseConfig.quickUnlockAllowed || !AuthSessionStore.isLoggedIn) return;
+
+    await AuthSessionStore.clearSessionOnly();
+    await AuthSessionStore.setLocked(false);
+    if (!mounted) return;
+
+    setState(() => _locked = false);
+    if (!redirectToLogin) return;
+    _rootNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+      AppRoutes.loginRoute,
+      (_) => false,
+    );
   }
 
   @override
