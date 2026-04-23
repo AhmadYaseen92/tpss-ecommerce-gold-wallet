@@ -22,6 +22,13 @@ interface SettingItem {
   sellerAccess: boolean;
 }
 
+interface UpsertSettingItemPayload extends Omit<SettingItem, "valueBool" | "valueInt" | "valueDecimal" | "valueString"> {
+  valueBool: boolean | null;
+  valueInt: number | null;
+  valueDecimal: number | null;
+  valueString: string | null;
+}
+
 const settings = ref<SettingItem[]>([]);
 const sellers = ref<Seller[]>([]);
 const busy = ref(false);
@@ -35,7 +42,7 @@ const load = async () => {
   sellers.value = await fetchSellers(props.marketplace.session.value.accessToken);
   settings.value = rows.map((row) => ({
     ...row,
-    valueBool: row.valueBool ?? false,
+    valueBool: row.valueType === 2 ? (row.valueBool ?? false) : undefined,
     sellerAccess: !!row.sellerAccess
   }));
   initialSnapshots.value = Object.fromEntries(settings.value.map((item) => [item.configKey, snapshotOf(item)]));
@@ -59,12 +66,22 @@ const supportsOtpChannelPriority = (item: SettingItem) => item.configKey === "Ot
 const usesSellerDropdown = (item: SettingItem) => item.configKey === "MobileRelease_IndividualSellerName";
 const hasDefaultValueInput = (item: SettingItem) => item.valueType !== 2 && !supportsAffectedAreas(item) && !supportsOtpChannelPriority(item);
 
+const normalizedValues = (item: SettingItem) => ({
+  valueString: item.valueType === 1 ? (item.valueString ?? null) : null,
+  valueBool: item.valueType === 2 ? (item.valueBool ?? false) : null,
+  valueInt: item.valueType === 3 ? (item.valueInt ?? null) : null,
+  valueDecimal: item.valueType === 4 ? (item.valueDecimal ?? null) : null
+});
+
+const toUpsertPayload = (item: SettingItem): UpsertSettingItemPayload => ({
+  ...item,
+  ...normalizedValues(item),
+  sellerAccess: !!item.sellerAccess
+});
+
 const snapshotOf = (item: SettingItem) => JSON.stringify({
   valueType: item.valueType,
-  valueBool: item.valueBool ?? null,
-  valueInt: item.valueInt ?? null,
-  valueDecimal: item.valueDecimal ?? null,
-  valueString: item.valueString ?? null,
+  ...normalizedValues(item),
   sellerAccess: !!item.sellerAccess
 });
 
@@ -76,7 +93,7 @@ const saveAll = async () => {
   busy.value = true;
   try {
     for (const item of dirtyItems.value) {
-      await postJson<SettingItem, SettingItem>("/api/mobile-app-configurations/upsert", item, props.marketplace.session.value.accessToken);
+      await postJson<SettingItem, UpsertSettingItemPayload>("/api/mobile-app-configurations/upsert", toUpsertPayload(item), props.marketplace.session.value.accessToken);
       initialSnapshots.value[item.configKey] = snapshotOf(item);
     }
   } finally {
