@@ -1,4 +1,6 @@
 class AppReleaseConfig {
+  static final Map<String, dynamic> _allTypedConfig = <String, dynamic>{};
+
   static bool isIndividualSellerRelease = false;
   static String individualSellerName = 'Imseeh';
 
@@ -22,6 +24,10 @@ class AppReleaseConfig {
   }
 
   static void applyFromTypedConfig(Map<String, dynamic> values) {
+    _allTypedConfig
+      ..clear()
+      ..addAll(values);
+
     isIndividualSellerRelease =
         (values['MobileRelease_IsIndividualSeller'] as bool?) ?? isIndividualSellerRelease;
     individualSellerName =
@@ -33,4 +39,6 @@ class AppReleaseConfig {
     loginByPinEnabled =
         (values['MobileSecurity_LoginByPin'] as bool?) ?? loginByPinEnabled;
   }
+
+  static dynamic getValue(String key) => _allTypedConfig[key];
 }

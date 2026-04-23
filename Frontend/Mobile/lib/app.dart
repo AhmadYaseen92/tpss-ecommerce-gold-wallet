@@ -8,6 +8,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/auth/session_manager.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_router.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/security/presentation/pages/app_lock_page.dart';
@@ -24,6 +25,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
   bool _locked = false;
   bool _ready = false;
   Timer? _inactivityTimer;
+  Timer? _configurationSyncTimer;
 
   @override
   void initState() {
@@ -41,6 +43,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
     }
 
     await AuthSessionStore.hydrate();
+    await _syncRemoteConfiguration();
     await AuthSessionStore.applyAdminUnlockPolicy();
 
     if (AuthSessionStore.isLoggedIn && !AuthSessionStore.hasUnlockMethod) {
@@ -72,6 +75,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
     }
     await AuthSessionStore.markInactiveNow();
     _startInactivityWatcher();
+    _startConfigurationSyncWatcher();
   }
 
   @override
@@ -82,6 +86,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
     }
 
     if (state == AppLifecycleState.resumed) {
+      unawaited(_syncRemoteConfiguration());
       AuthSessionStore.shouldLockForInactivity().then((shouldLock) async {
         if (!mounted || !shouldLock || !AuthSessionStore.isLoggedIn) return;
         await AuthSessionStore.setLocked(true);
@@ -100,6 +105,18 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
       if (!mounted) return;
       setState(() => _locked = true);
     });
+  }
+
+  void _startConfigurationSyncWatcher() {
+    _configurationSyncTimer?.cancel();
+    _configurationSyncTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
+      await _syncRemoteConfiguration();
+    });
+  }
+
+  Future<void> _syncRemoteConfiguration() async {
+    await InjectionContainer.syncReleaseConfiguration();
+    await AuthSessionStore.applyAdminUnlockPolicy();
   }
 
   @override
@@ -158,6 +175,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _inactivityTimer?.cancel();
+    _configurationSyncTimer?.cancel();
     super.dispose();
   }
 }
