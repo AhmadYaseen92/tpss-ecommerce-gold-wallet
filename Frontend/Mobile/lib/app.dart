@@ -41,6 +41,11 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
 
     await AuthSessionStore.hydrate();
 
+    if (AuthSessionStore.isLoggedIn && !AuthSessionStore.hasUnlockMethod) {
+      await SessionManager.forceLogout(localOnly: true);
+      await AuthSessionStore.hydrate();
+    }
+
     if (AuthSessionStore.isLoggedIn) {
       final expired = AuthSessionStore.accessTokenExpiresAtUtc != null &&
           AuthSessionStore.accessTokenExpiresAtUtc!.isBefore(DateTime.now().toUtc());

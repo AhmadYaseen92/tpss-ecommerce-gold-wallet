@@ -18,8 +18,6 @@ class SecuritySettingsPage extends StatefulWidget {
 class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
   final _passwordFormKey = GlobalKey<FormState>();
   final _pinController = TextEditingController();
-  bool _quickUnlock = false;
-  bool _autoLock = true;
   bool _biometric = false;
   bool _hasBiometricSupport = false;
   bool _obscureCurrent = true;
@@ -29,8 +27,6 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
   @override
   void initState() {
     super.initState();
-    _quickUnlock = AuthSessionStore.quickUnlockEnabled;
-    _autoLock = AuthSessionStore.autoLockEnabled;
     _biometric = AuthSessionStore.biometricEnabled;
     _pinController.text = AuthSessionStore.hasPin ? '••••' : '';
     _checkBiometricSupport();
@@ -41,21 +37,6 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
     final supported = await auth.canCheckBiometrics || await auth.isDeviceSupported();
     if (!mounted) return;
     setState(() => _hasBiometricSupport = supported);
-  }
-
-  Future<void> _toggleQuickUnlock(bool enabled) async {
-    if (enabled && !AuthSessionStore.hasUnlockMethod) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enable biometric or set a PIN first.')),
-      );
-      return;
-    }
-
-    await AuthSessionStore.setQuickUnlockEnabled(enabled);
-    setState(() {
-      _quickUnlock = AuthSessionStore.quickUnlockEnabled;
-      _biometric = AuthSessionStore.biometricEnabled;
-    });
   }
 
   Future<void> _toggleBiometric(bool enabled) async {
@@ -72,7 +53,6 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
     }
     setState(() {
       _biometric = AuthSessionStore.biometricEnabled;
-      _quickUnlock = AuthSessionStore.quickUnlockEnabled;
     });
   }
 
@@ -84,20 +64,19 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
     }
 
     await AuthSessionStore.setPin(pin);
-    _pinController.clear();
-    setState(() => _quickUnlock = AuthSessionStore.quickUnlockEnabled);
+    _pinController.text = '••••';
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PIN updated.')));
   }
 
   Future<void> _removePin() async {
     await AuthSessionStore.removePin();
-    setState(() => _quickUnlock = AuthSessionStore.quickUnlockEnabled);
+    _pinController.clear();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          AuthSessionStore.quickUnlockEnabled
+          AuthSessionStore.hasUnlockMethod
               ? 'PIN removed. Biometric unlock still active.'
-              : 'PIN removed. Quick unlock is now disabled.',
+              : 'PIN removed. Biometric/PIN unlock is now disabled.',
         ),
       ),
     );
@@ -137,21 +116,6 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
               padding: const EdgeInsets.all(16),
               children: [
                 const Text('Local Session Protection', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                SwitchListTile(
-                  title: const Text('Quick Unlock'),
-                  subtitle: const Text('Protect remembered session with biometric and/or PIN on reopen.'),
-                  value: _quickUnlock,
-                  onChanged: _toggleQuickUnlock,
-                ),
-                SwitchListTile(
-                  title: const Text('Auto-Lock after 5 minutes'),
-                  subtitle: const Text('Lock app after inactivity/background timeout.'),
-                  value: _autoLock,
-                  onChanged: (value) async {
-                    await AuthSessionStore.setAutoLockEnabled(value);
-                    setState(() => _autoLock = value);
-                  },
-                ),
                 SwitchListTile(
                   title: const Text('Biometric unlock'),
                   subtitle: Text(_hasBiometricSupport ? 'Use Face ID / Touch ID.' : 'Biometric not available'),

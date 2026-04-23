@@ -73,7 +73,26 @@ class _AppLockPageState extends State<AppLockPage> {
   void _registerFailure() {
     _failedAttempts++;
     if (_failedAttempts < 3) return;
-    widget.onLoginFallback();
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Too many attempts'),
+        content: const Text(
+          'You have exceeded 3 unlock attempts. For security, please login again. '
+          'Your PIN has been reset and you can set a new one from Security Settings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              widget.onLoginFallback();
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
