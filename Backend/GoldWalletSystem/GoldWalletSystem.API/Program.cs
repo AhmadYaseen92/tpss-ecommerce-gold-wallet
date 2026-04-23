@@ -108,12 +108,6 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseStaticFiles();
 app.UseCors("WebApp");
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await dbContext.Database.MigrateAsync();
-}
-
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
