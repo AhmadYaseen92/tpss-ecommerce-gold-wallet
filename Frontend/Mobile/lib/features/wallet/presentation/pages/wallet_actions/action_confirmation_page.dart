@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/otp_input_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
@@ -35,6 +36,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
   bool _isSubmitting = false;
   bool _isLoadingOtp = false;
   SellExecutionMode _sellExecutionMode = SellExecutionMode.locked30Seconds;
+  bool _requiresOtpForAction = true;
 
   bool get _isSellFlow => widget.summary.actionType == WalletActionType.sell;
   bool get _isExpired => _secondsLeft == 0;
@@ -47,6 +49,11 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
 
   Future<void> _initializePage() async {
     await _loadConfig();
+    _requiresOtpForAction = AppReleaseConfig.isOtpRequiredForAction(_mapOtpAction(widget.summary.actionType));
+    if (!_requiresOtpForAction) {
+      if (mounted) setState(() {});
+      return;
+    }
     await _requestOtp();
   }
 
@@ -144,13 +151,15 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                   ),
                   const SizedBox(height: 12),
                   ActionSectionCard(
-                    title: _isSellFlow && _sellExecutionMode == SellExecutionMode.locked30Seconds
-                        ? 'Locked Quote & OTP'
-                        : 'OTP Verification',
+                    title: _requiresOtpForAction
+                        ? (_isSellFlow && _sellExecutionMode == SellExecutionMode.locked30Seconds
+                            ? 'Locked Quote & OTP'
+                            : 'OTP Verification')
+                        : 'Confirmation',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (_isSellFlow && _sellExecutionMode == SellExecutionMode.locked30Seconds) ...[
+                        if (_requiresOtpForAction && _isSellFlow && _sellExecutionMode == SellExecutionMode.locked30Seconds) ...[
                           ReadonlyInfoRow(
                             label: 'Locked Price',
                             value: ActionSummaryBuilder.formatMoney(
@@ -163,26 +172,38 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                           const Text('This price is locked for 30 seconds.'),
                           const SizedBox(height: 8),
                         ],
-                        const Text('This action will submit automatically after entering a valid OTP.'),
-                        const SizedBox(height: 12),
-                        OtpInputWidget(
-                          value: _otp,
-                          onChanged: (value) => setState(() => _otp = value),
-                          onCompleted: (value) {
-                            setState(() => _otp = value);
-                            if (!_isSubmitting && !_isLoadingOtp) {
-                              unawaited(_completeWithOtp());
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _isLoadingOtp || _isSubmitting ? null : _requestOtp,
-                            child: const Text('Resend OTP'),
+                        if (_requiresOtpForAction) ...[
+                          const Text('This action will submit automatically after entering a valid OTP.'),
+                          const SizedBox(height: 12),
+                          OtpInputWidget(
+                            value: _otp,
+                            onChanged: (value) => setState(() => _otp = value),
+                            onCompleted: (value) {
+                              setState(() => _otp = value);
+                              if (!_isSubmitting && !_isLoadingOtp) {
+                                unawaited(_completeWithOtp());
+                              }
+                            },
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: _isLoadingOtp || _isSubmitting ? null : _requestOtp,
+                              child: const Text('Resend OTP'),
+                            ),
+                          ),
+                        ] else ...[
+                          const Text('OTP is not required for this action by current admin policy.'),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isSubmitting ? null : _completeWithoutOtp,
+                              child: Text(_isSubmitting ? 'Submitting...' : 'Confirm Action'),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -339,8 +360,8 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
   }
 
   Future<void> _submitAction({
-    required String verificationToken,
-    required String actionReferenceId,
+    String? verificationToken,
+    String? actionReferenceId,
   }) async {
     final requestedQuantity = int.tryParse(widget.summary.primaryValue.split(' ').first) ?? 1;
     final safeQuantity = requestedQuantity.clamp(1, widget.summary.asset.quantity).toInt();
@@ -366,6 +387,33 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
     );
 
     _timer?.cancel();
+  }
+
+  Future<void> _completeWithoutOtp() async {
+    if (_isSellFlow && _sellExecutionMode == SellExecutionMode.locked30Seconds && _isExpired) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await _submitAction();
+      if (!mounted) return;
+      await AppModalAlert.show(
+        context,
+        title: 'Success',
+        message: '${widget.summary.title} submitted successfully.',
+        variant: AppModalAlertVariant.success,
+      );
+      if (!mounted) return;
+      Navigator.popUntil(
+        context,
+        (route) => route.settings.name == AppRoutes.walletItemsRoute || route.isFirst,
+      );
+    } catch (e) {
+      _showErrorModal('Action Failed', _extractDisplayErrorMessage(e));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   void _onQuoteExpired() {

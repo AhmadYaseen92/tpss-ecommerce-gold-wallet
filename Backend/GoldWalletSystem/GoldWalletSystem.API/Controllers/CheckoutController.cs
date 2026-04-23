@@ -379,6 +379,10 @@ public class CheckoutController(
 
     private async Task EnsureCheckoutOtpVerifiedAsync(CheckoutConfirmRequest request, CancellationToken cancellationToken)
     {
+        var checkoutOtpRequired = await otpService.IsActionProtectedAsync(OtpActionTypes.Checkout, cancellationToken);
+        var buyOtpRequired = await otpService.IsActionProtectedAsync(OtpActionTypes.Buy, cancellationToken);
+        if (!checkoutOtpRequired && !buyOtpRequired) return;
+
         var actionReference = string.IsNullOrWhiteSpace(request.OtpActionReferenceId)
             ? BuildCheckoutActionReference(request.UserId, request.ProductIds, request.ProductId, request.Quantity)
             : request.OtpActionReferenceId;

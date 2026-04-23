@@ -169,6 +169,13 @@ public class OtpService(
         await LogAsync(userId, "OtpGrantConsumed", $"action={actionType};ref={actionReferenceId};token={verificationToken}", cancellationToken);
     }
 
+    public async Task<bool> IsActionProtectedAsync(string actionType, CancellationToken cancellationToken = default)
+    {
+        var normalizedAction = NormalizeActionType(actionType);
+        var settings = await GetSettingsAsync(cancellationToken);
+        return IsActionProtected(normalizedAction, settings);
+    }
+
     private async Task<User> ResolveUserAsync(int userId, CancellationToken cancellationToken)
         => await userAuthRepository.GetByIdAsync(userId, cancellationToken)
            ?? throw new InvalidOperationException("User not found.");
@@ -238,9 +245,12 @@ public class OtpService(
 
     private static void ValidateActionIsProtected(string actionType, OtpSettings settings)
     {
-        if (!settings.RequiredActions.Any(x => string.Equals(x, actionType, StringComparison.OrdinalIgnoreCase)))
+        if (!IsActionProtected(actionType, settings))
             throw new InvalidOperationException($"Action '{actionType}' is not configured for OTP.");
     }
+
+    private static bool IsActionProtected(string actionType, OtpSettings settings)
+        => settings.RequiredActions.Any(x => string.Equals(x, actionType, StringComparison.OrdinalIgnoreCase));
 
     private static OtpDeliveryChannel ResolveChannel(OtpSettings settings, bool forceEmailFallback)
     {

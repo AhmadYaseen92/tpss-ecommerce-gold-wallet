@@ -15,6 +15,25 @@ class AppReleaseConfig {
   static bool loginByBiometricEnabled = true;
   static bool loginByPinEnabled = true;
   static bool get quickUnlockAllowed => loginByBiometricEnabled || loginByPinEnabled;
+  static const List<String> _defaultOtpRequiredActions = <String>[
+    'registration',
+    'reset_password',
+    'checkout',
+    'buy',
+    'sell',
+    'transfer',
+    'gift',
+    'pickup',
+    'add_bank_account',
+    'edit_bank_account',
+    'remove_bank_account',
+    'add_payment_method',
+    'edit_payment_method',
+    'remove_payment_method',
+    'change_email',
+    'change_password',
+    'change_mobile_number',
+  ];
 
   static bool get showSellerUi => !isIndividualSellerRelease;
 
@@ -26,6 +45,29 @@ class AppReleaseConfig {
       return itemSeller == individualSellerName;
     }
     return activeSeller == allSellersLabel || itemSeller == activeSeller;
+  }
+
+  static bool get otpEnabled =>
+      ((getValue('Otp_EnableWhatsapp') as bool?) ?? true) ||
+      ((getValue('Otp_EnableEmail') as bool?) ?? true);
+
+  static List<String> get otpRequiredActions {
+    final raw = getValue('Otp_RequiredActions');
+    if (raw is String && raw.trim().isNotEmpty) {
+      return raw
+          .split(',')
+          .map((x) => x.trim().toLowerCase())
+          .where((x) => x.isNotEmpty)
+          .toSet()
+          .toList();
+    }
+    return List<String>.from(_defaultOtpRequiredActions);
+  }
+
+  static bool isOtpRequiredForAction(String actionType) {
+    final normalized = actionType.trim().toLowerCase();
+    if (normalized.isEmpty || !otpEnabled) return false;
+    return otpRequiredActions.contains(normalized);
   }
 
   static void applyFromTypedConfig(Map<String, dynamic> values) {

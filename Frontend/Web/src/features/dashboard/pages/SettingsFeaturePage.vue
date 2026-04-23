@@ -32,7 +32,25 @@ interface UpsertSettingItemPayload extends Omit<SettingItem, "valueBool" | "valu
 const settings = ref<SettingItem[]>([]);
 const sellers = ref<Seller[]>([]);
 const busy = ref(false);
-const areaOptions = ["registration", "reset_password", "checkout", "buy", "sell", "transfer", "gift", "pickup"];
+const areaOptions = [
+  "registration",
+  "reset_password",
+  "checkout",
+  "buy",
+  "sell",
+  "transfer",
+  "gift",
+  "pickup",
+  "add_bank_account",
+  "edit_bank_account",
+  "remove_bank_account",
+  "add_payment_method",
+  "edit_payment_method",
+  "remove_payment_method",
+  "change_email",
+  "change_password",
+  "change_mobile_number"
+];
 const otpChannelOptions = ["whatsapp", "email"];
 const initialSnapshots = ref<Record<string, string>>({});
 

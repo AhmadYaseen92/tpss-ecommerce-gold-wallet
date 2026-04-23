@@ -382,12 +382,17 @@ public class WalletController(
     public async Task<IActionResult> ExecuteWalletAction([FromBody] ExecuteWalletActionRequest request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        await otpService.ConsumeVerificationGrantAsync(
-            request.UserId,
-            MapWalletOtpAction(request.ActionType),
-            request.OtpActionReferenceId,
-            request.OtpVerificationToken,
-            cancellationToken);
+        var otpAction = MapWalletOtpAction(request.ActionType);
+        var isOtpRequired = await otpService.IsActionProtectedAsync(otpAction, cancellationToken);
+        if (isOtpRequired)
+        {
+            await otpService.ConsumeVerificationGrantAsync(
+                request.UserId,
+                otpAction,
+                request.OtpActionReferenceId,
+                request.OtpVerificationToken,
+                cancellationToken);
+        }
 
         var actionType = request.ActionType.Trim().ToLowerInvariant();
         var pendingNotifications = new List<CreateNotificationRequestDto>();
