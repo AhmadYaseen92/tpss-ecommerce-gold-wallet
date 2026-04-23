@@ -104,24 +104,32 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
               if (!_ready) {
                 return const Scaffold(body: Center(child: CircularProgressIndicator()));
               }
-              if (_locked) {
-                return AppLockPage(
-                  onUnlocked: () => setState(() => _locked = false),
-                  onLoginFallback: () async {
-                    await AuthSessionStore.removePin();
-                    await AuthSessionStore.setQuickUnlockEnabled(false);
-                    await AuthSessionStore.setSecuritySetupDone(false);
-                    await SessionManager.forceLogout();
-                    if (!context.mounted) return;
-                    Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.loginRoute, (_) => false);
-                  },
-                );
-              }
-              return Listener(
+              final appChild = Listener(
                 behavior: HitTestBehavior.translucent,
                 onPointerDown: (_) => AuthSessionStore.markInactiveNow(),
                 onPointerSignal: (_) => AuthSessionStore.markInactiveNow(),
                 child: child ?? const SizedBox.shrink(),
+              );
+
+              if (!_locked) return appChild;
+
+              return Stack(
+                children: [
+                  appChild,
+                  Positioned.fill(
+                    child: AppLockPage(
+                      onUnlocked: () => setState(() => _locked = false),
+                      onLoginFallback: () async {
+                        await AuthSessionStore.removePin();
+                        await AuthSessionStore.setQuickUnlockEnabled(false);
+                        await AuthSessionStore.setSecuritySetupDone(false);
+                        await SessionManager.forceLogout();
+                        if (!context.mounted) return;
+                        Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.loginRoute, (_) => false);
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           );
