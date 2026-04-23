@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 
 class AppLockPage extends StatefulWidget {
   const AppLockPage({super.key, required this.onUnlocked, required this.onLoginFallback});
@@ -73,26 +74,14 @@ class _AppLockPageState extends State<AppLockPage> {
   void _registerFailure() {
     _failedAttempts++;
     if (_failedAttempts < 3) return;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Too many attempts'),
-        content: const Text(
+    AppModalAlert.show(
+      context,
+      title: 'Too many attempts',
+      message:
           'You have exceeded 3 unlock attempts. For security, please login again. '
           'Your PIN has been reset and you can set a new one from Security Settings.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              widget.onLoginFallback();
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+      variant: AppModalAlertVariant.failed,
+    ).then((_) => widget.onLoginFallback());
   }
 
   @override
@@ -116,7 +105,10 @@ class _AppLockPageState extends State<AppLockPage> {
               ),
               ElevatedButton(onPressed: _unlockWithPin, child: const Text('Unlock with PIN')),
             ],
-            TextButton(onPressed: widget.onLoginFallback, child: const Text('Login instead')),
+            TextButton(
+              onPressed: widget.onLoginFallback,
+              child: const Text('Login Via Username and Password'),
+            ),
             if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
           ]),
         ),

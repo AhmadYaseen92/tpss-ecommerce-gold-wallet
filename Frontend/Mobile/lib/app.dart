@@ -20,6 +20,7 @@ class GoldWalletApp extends StatefulWidget {
 }
 
 class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserver {
+  final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
   bool _locked = false;
   bool _ready = false;
   Timer? _inactivityTimer;
@@ -107,6 +108,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
       child: BlocBuilder<AppCubit, AppState>(
         builder: (context, state) {
           return MaterialApp(
+            navigatorKey: _rootNavigatorKey,
             debugShowCheckedModeBanner: false,
             title: 'ECommerse Gold Wallet APP',
             theme: AppTheme.lightTheme,
@@ -131,12 +133,15 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
                   builder: (_) => AppLockPage(
                     onUnlocked: () => setState(() => _locked = false),
                     onLoginFallback: () async {
+                      await AuthSessionStore.setLocked(false);
                       await AuthSessionStore.removePin();
                       await AuthSessionStore.setQuickUnlockEnabled(false);
                       await AuthSessionStore.setSecuritySetupDone(false);
                       await SessionManager.forceLogout();
-                      if (!context.mounted) return;
-                      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.loginRoute, (_) => false);
+                      if (!mounted) return;
+                      setState(() => _locked = false);
+                      _rootNavigatorKey.currentState
+                          ?.pushNamedAndRemoveUntil(AppRoutes.loginRoute, (_) => false);
                     },
                   ),
                 ),
