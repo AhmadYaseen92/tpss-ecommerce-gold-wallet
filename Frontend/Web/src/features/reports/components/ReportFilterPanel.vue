@@ -20,9 +20,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{ refresh: []; reset: [] }>();
 
-const isInvestorReport = computed(() => props.filters.reportType.includes("investor"));
-const isSalesReport = computed(() => ["sales", "sellerPerformance", "walletTransactions", "invoices"].includes(props.filters.reportType));
-const isRequestOpsReport = computed(() => ["requestsOps", "kycOnboarding"].includes(props.filters.reportType));
+const isInvestorReport = computed(() => props.filters.reportType.includes("investor") || props.filters.reportType === "customers");
+const isSalesReport = computed(() => ["sales", "sellerPerformance", "walletTransactions", "invoices", "sellerSales", "stock"].includes(props.filters.reportType));
+const isRequestOpsReport = computed(() => ["requestsOps", "kycOnboarding", "operations", "requests", "fulfillment"].includes(props.filters.reportType));
 </script>
 
 <template>
@@ -53,3 +53,64 @@ const isRequestOpsReport = computed(() => ["requestsOps", "kycOnboarding"].inclu
     <div class="report-actions"><Button variant="ghost" @click="emit('reset')">Reset Filters</Button><Button @click="emit('refresh')">Apply Filters</Button></div>
   </Card>
 </template>
+
+<style scoped>
+.report-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.report-type-card {
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-muted) 75%, white 25%);
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+  min-height: 92px;
+}
+
+.report-type-card strong {
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.report-type-card small {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.report-type-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.report-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.report-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 1100px) {
+  .report-filters-grid {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .report-filters-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

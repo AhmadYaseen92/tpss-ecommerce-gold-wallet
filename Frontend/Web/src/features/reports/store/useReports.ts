@@ -81,14 +81,46 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
 
   const buildSummary = (rows: Array<Record<string, string | number>>) => {
     const numeric = (key: string) => rows.reduce((acc, row) => acc + (typeof row[key] === "number" ? Number(row[key]) : 0), 0);
-    summaryMetrics.value = [
-      { title: "Total Rows", value: String(rows.length), trend: "Filtered records" },
-      { title: "Total Sales", value: numeric("Amount").toFixed(2), trend: "Revenue value" },
-      { title: "Pending Requests", value: String(rows.filter((r) => String(r.Status ?? "").toLowerCase().includes("pending")).length), trend: "Operational watch" },
-      { title: "Paid Amount", value: numeric("Paid Amount").toFixed(2), trend: "Collections" },
-      { title: "Unpaid Amount", value: numeric("Unpaid Amount").toFixed(2), trend: "Outstanding" },
-      { title: "Low Stock", value: String(rows.filter((r) => typeof r.Stock === "number" && Number(r.Stock) <= 5).length), trend: "Inventory risk" }
-    ];
+    const pendingCount = rows.filter((r) => String(r.Status ?? "").toLowerCase().includes("pending")).length;
+
+    const common = [{ title: "Total Rows", value: String(rows.length), trend: "Filtered records" }];
+
+    switch (reportFilters.reportType) {
+      case "sales":
+      case "sellerSales":
+      case "sellerPerformance":
+        summaryMetrics.value = [
+          ...common,
+          { title: "Total Amount", value: numeric("Amount").toFixed(2), trend: "Revenue" },
+          { title: "Pending", value: String(pendingCount), trend: "Open requests" },
+          { title: "Approved", value: String(rows.filter((r) => String(r.Status ?? "").toLowerCase().includes("approved") || String(r.Completed ?? "0") !== "0").length), trend: "Completed flow" }
+        ];
+        break;
+      case "stock":
+        summaryMetrics.value = [
+          ...common,
+          { title: "Low Stock", value: String(rows.filter((r) => typeof r.Stock === "number" && Number(r.Stock) <= 5).length), trend: "Needs restock" },
+          { title: "Out of Stock", value: String(rows.filter((r) => Number(r.Stock ?? 0) === 0).length), trend: "Critical" },
+          { title: "Inventory Value", value: numeric("Market Price").toFixed(2), trend: "Market tracked" }
+        ];
+        break;
+      case "invoices":
+        summaryMetrics.value = [
+          ...common,
+          { title: "Grand Total", value: numeric("Grand Total").toFixed(2), trend: "Invoice value" },
+          { title: "Paid", value: numeric("Paid Amount").toFixed(2), trend: "Collections" },
+          { title: "Unpaid", value: numeric("Unpaid Amount").toFixed(2), trend: "Outstanding" }
+        ];
+        break;
+      default:
+        summaryMetrics.value = [
+          ...common,
+          { title: "Total Amount", value: numeric("Amount").toFixed(2), trend: "Operational value" },
+          { title: "Pending", value: String(pendingCount), trend: "Open flow" },
+          { title: "Unique Sellers", value: String(new Set(rows.map((r) => String(r.Seller ?? "-"))).size), trend: "Coverage" }
+        ];
+        break;
+    }
   };
 
   const toTable = (rows: Array<Record<string, string | number>>) => {
