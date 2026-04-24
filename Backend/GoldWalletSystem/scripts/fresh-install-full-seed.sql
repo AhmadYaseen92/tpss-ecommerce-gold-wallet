@@ -197,18 +197,39 @@ BEGIN TRY
     ------------------------------------------------------------
     -- WalletAssets portfolio rows
     ------------------------------------------------------------
-    INSERT INTO [WalletAssets] ([WalletId],[AssetType],[Weight],[Unit],[Purity],[Quantity],[AverageBuyPrice],[CurrentMarketPrice],[SellerName],[CreatedAtUtc],[UpdatedAtUtc])
-    SELECT W.[Id], 1, 100.000, N'gram', 24.00, 1, 6200.00, 6400.00, N'Imseeh', @Now, NULL
+    INSERT INTO [WalletAssets] (
+        [WalletId],[ProductName],[ProductSku],[ProductImageUrl],[MaterialType],[FormType],[WeightValue],[WeightUnit],[AssetType],[Category],
+        [Weight],[Unit],[Purity],[Quantity],[AverageBuyPrice],[CurrentMarketPrice],[AcquisitionSubTotalAmount],[AcquisitionFeesAmount],[AcquisitionDiscountAmount],[AcquisitionFinalAmount],
+        [SellerName],[CreatedAtUtc],[UpdatedAtUtc]
+    )
+    SELECT
+        W.[Id], N'Imseeh 5g Gold Bar', N'IMSEEH-PRD-001', N'/images/products/gold-bar.png', N'Gold', N'Bar', 100.000, N'gram', 1, 1,
+        100.000, N'gram', 24.00, 1, 6200.00, 6400.00, 6200.00, 62.00, 0.00, 6262.00,
+        N'Imseeh', @Now, NULL
     FROM [Wallets] W
     WHERE NOT EXISTS (SELECT 1 FROM [WalletAssets] A WHERE A.[WalletId] = W.[Id] AND A.[AssetType] = 1);
 
-    INSERT INTO [WalletAssets] ([WalletId],[AssetType],[Weight],[Unit],[Purity],[Quantity],[AverageBuyPrice],[CurrentMarketPrice],[SellerName],[CreatedAtUtc],[UpdatedAtUtc])
-    SELECT W.[Id], 5, 250.000, N'gram', 99.90, 1, 220.00, 235.00, N'Bullion House', @Now, NULL
+    INSERT INTO [WalletAssets] (
+        [WalletId],[ProductName],[ProductSku],[ProductImageUrl],[MaterialType],[FormType],[WeightValue],[WeightUnit],[AssetType],[Category],
+        [Weight],[Unit],[Purity],[Quantity],[AverageBuyPrice],[CurrentMarketPrice],[AcquisitionSubTotalAmount],[AcquisitionFeesAmount],[AcquisitionDiscountAmount],[AcquisitionFinalAmount],
+        [SellerName],[CreatedAtUtc],[UpdatedAtUtc]
+    )
+    SELECT
+        W.[Id], N'Bullion Silver 10oz Bar', N'BULLION-PRD-003', N'/images/products/silver.png', N'Silver', N'Bar', 250.000, N'gram', 5, 2,
+        250.000, N'gram', 99.90, 1, 220.00, 235.00, 220.00, 2.20, 0.00, 222.20,
+        N'Bullion House', @Now, NULL
     FROM [Wallets] W
     WHERE NOT EXISTS (SELECT 1 FROM [WalletAssets] A WHERE A.[WalletId] = W.[Id] AND A.[AssetType] = 5);
 
-    INSERT INTO [WalletAssets] ([WalletId],[AssetType],[Weight],[Unit],[Purity],[Quantity],[AverageBuyPrice],[CurrentMarketPrice],[SellerName],[CreatedAtUtc],[UpdatedAtUtc])
-    SELECT W.[Id], 6, 30.000, N'gram', 18.00, 2, 1500.00, 1650.00, N'Gold Palace', @Now, NULL
+    INSERT INTO [WalletAssets] (
+        [WalletId],[ProductName],[ProductSku],[ProductImageUrl],[MaterialType],[FormType],[WeightValue],[WeightUnit],[AssetType],[Category],
+        [Weight],[Unit],[Purity],[Quantity],[AverageBuyPrice],[CurrentMarketPrice],[AcquisitionSubTotalAmount],[AcquisitionFeesAmount],[AcquisitionDiscountAmount],[AcquisitionFinalAmount],
+        [SellerName],[CreatedAtUtc],[UpdatedAtUtc]
+    )
+    SELECT
+        W.[Id], N'GoldPal 22K Necklace', N'GOLDPAL-PRD-002', N'/images/products/jewelry.png', N'Gold', N'Necklace', 30.000, N'gram', 6, 4,
+        30.000, N'gram', 18.00, 2, 1500.00, 1650.00, 3000.00, 30.00, 0.00, 3030.00,
+        N'Gold Palace', @Now, NULL
     FROM [Wallets] W
     WHERE NOT EXISTS (SELECT 1 FROM [WalletAssets] A WHERE A.[WalletId] = W.[Id] AND A.[AssetType] = 6);
 
