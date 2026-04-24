@@ -36,18 +36,28 @@ class ProductDetailWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(product.name, style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: palette.textPrimary, height: 1.25)),
-                      const SizedBox(height: 6),
-                      if (AppReleaseConfig.showSellerUi) ...[
-                        Text('Seller: ${product.sellerName}', style: TextStyle(fontSize: 13, color: palette.primary, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                      ],
-                      if (hasOffer)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: palette.primary.withAlpha(24), borderRadius: BorderRadius.circular(8)),
-                          child: Text('Special Offer', style: TextStyle(color: palette.primary, fontWeight: FontWeight.w700)),
-                        ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          if (AppReleaseConfig.showSellerUi)
+                            Expanded(
+                              child: Text(
+                                'Seller: ${product.sellerName}',
+                                style: TextStyle(fontSize: 13, color: palette.primary, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          if (hasOffer)
+                            Container(
+                              margin: const EdgeInsetsDirectional.only(start: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(color: palette.primary.withAlpha(24), borderRadius: BorderRadius.circular(8)),
+                              child: Text('Special Offer', style: TextStyle(color: palette.primary, fontWeight: FontWeight.w700)),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
                       if (hasOffer && inactivePrice != null)
                         Text(
                           '\$${inactivePrice.toStringAsFixed(2)}',
