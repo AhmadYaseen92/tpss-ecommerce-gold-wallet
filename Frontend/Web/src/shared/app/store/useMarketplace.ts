@@ -114,11 +114,30 @@ export function useMarketplace() {
   const realtime = new MarketplaceRealtime();
   const signalRConnected = ref(false);
   let fallbackPollingTimer: ReturnType<typeof setInterval> | null = null;
+  let reconnectAttemptTimer: ReturnType<typeof setInterval> | null = null;
+  let configuringRealtime = false;
 
   const stopFallbackPolling = () => {
     if (!fallbackPollingTimer) return;
     clearInterval(fallbackPollingTimer);
     fallbackPollingTimer = null;
+  };
+
+  const stopReconnectAttempts = () => {
+    if (!reconnectAttemptTimer) return;
+    clearInterval(reconnectAttemptTimer);
+    reconnectAttemptTimer = null;
+  };
+
+  const startReconnectAttempts = () => {
+    if (reconnectAttemptTimer || signalRConnected.value || !session.value?.accessToken) return;
+    reconnectAttemptTimer = setInterval(() => {
+      if (signalRConnected.value || !session.value?.accessToken) {
+        stopReconnectAttempts();
+        return;
+      }
+      void configureRealtime();
+    }, 10000);
   };
 
   const startFallbackPolling = () => {
@@ -129,31 +148,41 @@ export function useMarketplace() {
   };
 
   const configureRealtime = async () => {
-    if (!session.value?.accessToken) {
-      signalRConnected.value = false;
-      stopFallbackPolling();
-      await realtime.stop();
-      return;
-    }
-
-    await realtime.start({
-      accessTokenFactory: () => session.value?.accessToken ?? "",
-      onRefreshRequested: () => {
-        realtimeRefreshTick.value += 1;
-        void refreshMarketplaceState();
-      },
-      onConnectionStateChanged: (connected) => {
-        signalRConnected.value = connected;
-        if (connected) {
-          stopFallbackPolling();
-          return;
-        }
-        startFallbackPolling();
+    if (configuringRealtime) return;
+    configuringRealtime = true;
+    try {
+      if (!session.value?.accessToken) {
+        signalRConnected.value = false;
+        stopFallbackPolling();
+        stopReconnectAttempts();
+        await realtime.stop();
+        return;
       }
-    });
 
-    if (!signalRConnected.value) {
-      startFallbackPolling();
+      await realtime.start({
+        accessTokenFactory: () => session.value?.accessToken ?? "",
+        onRefreshRequested: () => {
+          realtimeRefreshTick.value += 1;
+          void refreshMarketplaceState();
+        },
+        onConnectionStateChanged: (connected) => {
+          signalRConnected.value = connected;
+          if (connected) {
+            stopFallbackPolling();
+            stopReconnectAttempts();
+            return;
+          }
+          startFallbackPolling();
+          startReconnectAttempts();
+        }
+      });
+
+      if (!signalRConnected.value) {
+        startFallbackPolling();
+        startReconnectAttempts();
+      }
+    } finally {
+      configuringRealtime = false;
     }
   };
 
@@ -285,6 +314,7 @@ export function useMarketplace() {
     void realtime.stop();
     signalRConnected.value = false;
     stopFallbackPolling();
+    stopReconnectAttempts();
     session.value = null;
     role.value = "Admin";
     activeMenu.value = "overview";
