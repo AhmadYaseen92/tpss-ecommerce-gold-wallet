@@ -91,9 +91,15 @@ class WalletRepositoryImpl implements IWalletRepository {
   ) {
     final totalWeightInGrams = _toGrams(asset.weight, asset.unit) * asset.quantity;
     final liveMarketTotal = asset.currentMarketPrice * asset.quantity;
-    final buyUnitPriceWithFees = snapshot != null && snapshot.amount > 0 && snapshot.quantity > 0
+    final snapshotBuyUnitPriceWithFees = snapshot != null && snapshot.amount > 0 && snapshot.quantity > 0
         ? snapshot.amount / snapshot.quantity
         : 0.0;
+    final assetBuyUnitPriceWithFees = asset.acquisitionFinalAmount > 0 && asset.quantity > 0
+        ? asset.acquisitionFinalAmount / asset.quantity
+        : 0.0;
+    final buyUnitPriceWithFees = snapshotBuyUnitPriceWithFees > 0
+        ? snapshotBuyUnitPriceWithFees
+        : assetBuyUnitPriceWithFees;
     final totalValue = buyUnitPriceWithFees > 0
         ? buyUnitPriceWithFees * asset.quantity
         : liveMarketTotal;
