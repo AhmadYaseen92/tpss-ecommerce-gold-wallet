@@ -254,9 +254,18 @@ public class WebAdminController(
         var candidates = new List<string>();
         if (!string.IsNullOrWhiteSpace(document.FilePath))
         {
+            var normalized = document.FilePath.Replace('\\', '/');
+            var webRelative = normalized.TrimStart('/');
+
             if (Path.IsPathRooted(document.FilePath))
             {
                 candidates.Add(document.FilePath);
+
+                if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
+                {
+                    candidates.Add(Path.Combine(environment.WebRootPath, webRelative));
+                }
+                candidates.Add(Path.Combine(environment.ContentRootPath, webRelative));
             }
             else
             {
@@ -265,11 +274,6 @@ public class WebAdminController(
                 if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
                 {
                     candidates.Add(Path.Combine(environment.WebRootPath, document.FilePath));
-                }
-                candidates.Add(Path.Combine(environment.ContentRootPath, "uploads", document.FilePath));
-                if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
-                {
-                    candidates.Add(Path.Combine(environment.WebRootPath, "uploads", document.FilePath));
                 }
             }
         }

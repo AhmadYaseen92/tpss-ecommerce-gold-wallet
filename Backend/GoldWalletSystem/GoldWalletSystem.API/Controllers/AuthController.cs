@@ -94,7 +94,10 @@ public partial class AuthController(IAuthService authService, IWebHostEnvironmen
             return;
 
         var segment = BuildStorageSegment(request);
-        var baseDir = Path.Combine(environment.ContentRootPath, "uploads", "kyc", segment);
+        var webRoot = string.IsNullOrWhiteSpace(environment.WebRootPath)
+            ? Path.Combine(environment.ContentRootPath, "wwwroot")
+            : environment.WebRootPath;
+        var baseDir = Path.Combine(webRoot, "kyc", segment);
         Directory.CreateDirectory(baseDir);
 
         foreach (var doc in request.Documents)
@@ -126,7 +129,7 @@ public partial class AuthController(IAuthService authService, IWebHostEnvironmen
             var physicalPath = Path.Combine(baseDir, safeFileName);
             await System.IO.File.WriteAllBytesAsync(physicalPath, bytes, cancellationToken);
 
-            var relativePath = $"uploads/kyc/{segment}/{safeFileName}".Replace("\\", "/");
+            var relativePath = $"/kyc/{segment}/{safeFileName}".Replace("\\", "/");
             doc.FilePath = relativePath;
 
             if (string.IsNullOrWhiteSpace(doc.ContentType) || doc.ContentType == "application/octet-stream")
