@@ -160,8 +160,9 @@ class _SummaryTransactionWidgetState
     }
 
     final items = _transactions.map((tx) {
-      final isBuy =
-          tx.transactionType.toLowerCase() == 'buy';
+      final signedAmount = tx.signedAmount;
+      final isPositive = signedAmount >= 0;
+      final absAmount = signedAmount.abs();
 
       return RecentTransactionViewModel(
         title: tx.productName.trim().isEmpty
@@ -170,8 +171,8 @@ class _SummaryTransactionWidgetState
         subtitle:
             '${tx.transactionType} • ${tx.status}',
         amountText:
-            '${isBuy ? '-' : '+'} \$${tx.amount.toStringAsFixed(2)}',
-        isPositive: !isBuy,
+            '${isPositive ? '+' : '-'} \$${absAmount.toStringAsFixed(2)}',
+        isPositive: isPositive,
         imageUrl: tx.productImageUrl,
         secondaryText: tx.isTransferOrGift
             ? '${tx.transferFromLabel} → ${tx.transferToLabel}'

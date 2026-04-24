@@ -487,6 +487,8 @@ public class WalletController(
         {
             if (request.RecipientInvestorUserId is null || request.RecipientInvestorUserId <= 0)
                 return BadRequest(ApiResponse<object>.Fail("Recipient investor is required for transfer/gift.", 400));
+            if (request.RecipientInvestorUserId == request.UserId)
+                return BadRequest(ApiResponse<object>.Fail("Investor cannot transfer or gift to the same account.", 400));
 
             recipientInvestorName = await dbContext.Users
                 .AsNoTracking()

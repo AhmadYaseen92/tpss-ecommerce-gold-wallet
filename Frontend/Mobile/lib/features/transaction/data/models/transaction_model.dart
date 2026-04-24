@@ -91,6 +91,18 @@ class TransactionModel {
   bool get isIncomingTransferOrGift =>
       isTransferOrGift && (_readNoteValue('direction')?.toLowerCase() == 'received');
 
+  bool get isPositiveCashFlow {
+    final type = transactionType.toLowerCase();
+    if (type == 'buy') return false;
+    if (type == 'sell') return true;
+    if (type == 'transfer' || type == 'gift') {
+      return isIncomingTransferOrGift;
+    }
+    return amount >= 0;
+  }
+
+  double get signedAmount => isPositiveCashFlow ? amount.abs() : -amount.abs();
+
   String? get fromInvestorName => _readNoteValue('from_investor_name');
 
   String? get toInvestorName => _readNoteValue('recipient_investor_name');
