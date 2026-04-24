@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/data/datasources/home_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/data/models/home_carousel_Item_model.dart';
@@ -86,12 +86,15 @@ class _HomeCarouselWidgetState extends State<HomeCarouselWidget> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                CachedNetworkImage(
+                const ColoredBox(color: Color(0x11000000)),
+                AppServerImage(
                   imageUrl: item.imgUrl,
-                  placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
                   fit: BoxFit.cover,
                   width: double.infinity,
+                  height: double.infinity,
+                  placeholderIconSize: 28,
+                  backgroundColor: const Color(0x1A000000),
+                  iconColor: Colors.white70,
                 ),
                 Container(
                   decoration: BoxDecoration(
