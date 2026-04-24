@@ -22,9 +22,10 @@ const toDoc = (documentType: string, fileName: string, isRequired: boolean, rela
   relatedEntityType,
 });
 
-const normalizeOptionalDate = (value?: string) => {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
+const normalizeOptionalDate = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 };
 
 const getSelectedFileName = (value: unknown): string => {
