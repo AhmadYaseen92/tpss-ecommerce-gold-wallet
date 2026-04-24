@@ -47,11 +47,12 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
     final actionType = _resolveActionType();
     final (leftLabel, rightLabel) = _partyLabels(actionType);
 
-    final subTotal = _preview?.subTotalAmount ?? _safeAmount(widget.asset.marketValue);
-    final fees = (_preview?.totalFeesAmount ?? 0) - (_preview?.discountAmount ?? 0);
+    final baseAmount = _grossAmount;
+    final subTotal = _preview?.subTotalAmount ?? baseAmount;
+    final fees = _preview?.totalFeesAmount ?? 0;
     const vat = 0.0;
     final discount = _preview?.discountAmount ?? 0;
-    final grandTotal = subTotal + fees + vat - discount;
+    final grandTotal = _preview?.finalAmount ?? (subTotal + fees + vat - discount);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -254,8 +255,8 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
 
   Future<void> _loadPreview() async {
     try {
-      final unitPrice = widget.asset.marketPricePerGram;
-      final amount = _safeAmount(widget.asset.marketValue);
+      final amount = _grossAmount;
+      final unitPrice = _unitPriceForInvoice;
       final quantity = widget.asset.quantity <= 0 ? 1 : widget.asset.quantity;
       final response = await InjectionContainer.dio().post(
         '/wallet/actions/preview',
@@ -327,13 +328,13 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
               )),
           Padding(
               padding: const EdgeInsets.all(6),
-              child: Text(_currency(widget.asset.marketPricePerGram))),
+              child: Text(_currency(_unitPriceForInvoice))),
           Padding(
               padding: const EdgeInsets.all(6),
               child: Text('${widget.asset.quantity}')),
           Padding(
               padding: const EdgeInsets.all(6),
-              child: Text(_currency(_safeAmount(widget.asset.marketValue)))),
+              child: Text(_currency(_grossAmount))),
         ]),
       ],
     );
@@ -423,6 +424,18 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
 
   double _safeAmount(String? v) =>
       double.tryParse((v ?? '').replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
+
+  double get _grossAmount {
+    if (widget.asset.investmentValue > 0) return widget.asset.investmentValue;
+    final fromDisplay = _safeAmount(widget.asset.displayValue);
+    if (fromDisplay > 0) return fromDisplay;
+    return _safeAmount(widget.asset.marketValue);
+  }
+
+  double get _unitPriceForInvoice {
+    final qty = widget.asset.quantity <= 0 ? 1 : widget.asset.quantity;
+    return _grossAmount / qty;
+  }
 
   String _currency(double v) => '\$${v.toStringAsFixed(2)}';
 

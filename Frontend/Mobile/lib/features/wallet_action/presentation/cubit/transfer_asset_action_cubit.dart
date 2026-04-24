@@ -34,7 +34,10 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
   int? recipientInvestorUserId;
 
   int get maxQuantity => asset.quantity;
-  double get unitPrice => _parseCurrency(asset.marketValue) / maxQuantity;
+  double get _grossBaseAmount => asset.investmentValue > 0
+      ? asset.investmentValue
+      : _parseCurrency(asset.displayValue);
+  double get unitPrice => maxQuantity == 0 ? 0 : _grossBaseAmount / maxQuantity;
 
   int get quantity {
     final parsed = int.tryParse(quantityController.text.trim()) ?? 1;
