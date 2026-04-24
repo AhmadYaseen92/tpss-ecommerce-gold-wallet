@@ -8,7 +8,11 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/grams_hint_label.
 class ProductItemWidget extends StatelessWidget {
   final Object cubit;
   final ProductEntity product;
-  const ProductItemWidget({super.key, required this.cubit, required this.product});
+  const ProductItemWidget({
+    super.key,
+    required this.cubit,
+    required this.product,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,32 +35,58 @@ class ProductItemWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(product.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: palette.textPrimary)),
+                    Text(
+                      product.name,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: palette.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 8,
                       runSpacing: 6,
                       children: [
                         _metaChip(context, product.materialTypeLabel),
-                        if (AppReleaseConfig.showWeightInGrams && product.weight.trim().isNotEmpty)
-                          _metaChip(context, 'W: ${GramsConverter.fromWeightText(product.weight)} g'),
+                        if (AppReleaseConfig.showWeightInGrams &&
+                            product.weight.trim().isNotEmpty)
+                          _metaChip(
+                            context,
+                            'W: ${GramsConverter.fromWeightText(product.weight)} g',
+                          ),
                         if (showPurity && product.purity.trim().isNotEmpty)
                           _metaChip(context, 'P: ${product.purity}'),
                       ],
                     ),
                     const SizedBox(height: 4),
                     if (AppReleaseConfig.showSellerUi)
-                      Text('Seller: ${product.sellerName}', style: TextStyle(fontSize: 12, color: palette.primary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(
+                        'Seller: ${product.sellerName}',
+                        style: TextStyle(fontSize: 12, color: palette.primary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     Row(
                       children: [
-                        Text(product.pricingModeLabel, style: TextStyle(fontSize: 12, color: palette.textSecondary)),
+                        Text(
+                          product.pricingModeLabel,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: palette.textSecondary,
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         if (hasOffer)
                           Text(
                             product.offerType.toLowerCase().contains('percent')
                                 ? '${product.offerPercent.toStringAsFixed(0)}% OFF'
                                 : 'Special Offer',
-                            style: TextStyle(fontSize: 11, color: palette.primary, fontWeight: FontWeight.w700),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: palette.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                       ],
                     ),
@@ -78,9 +108,13 @@ class ProductItemWidget extends StatelessWidget {
                           ),
                         Text(
                           '\$${product.sellPrice.toStringAsFixed(2)}',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: palette.textPrimary),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: palette.textPrimary,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -92,19 +126,26 @@ class ProductItemWidget extends StatelessWidget {
     );
   }
 
-  bool _showPurity(ProductEntity product) => product.materialTypeLabel.toLowerCase() == 'gold';
+  bool _showPurity(ProductEntity product) =>
+      product.materialTypeLabel.toLowerCase() == 'gold';
 
   Widget _metaChip(BuildContext context, String label) {
     final palette = context.appPalette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: palette.surfaceContainerHighest.withAlpha(120),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withAlpha(120),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, color: palette.textSecondary, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 11,
+          color: palette.textSecondary,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
