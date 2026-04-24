@@ -91,7 +91,12 @@ class WalletRepositoryImpl implements IWalletRepository {
   ) {
     final totalWeightInGrams = _toGrams(asset.weight, asset.unit) * asset.quantity;
     final liveMarketTotal = asset.currentMarketPrice * asset.quantity;
-    final totalValue = liveMarketTotal;
+    final buyUnitPriceWithFees = snapshot != null && snapshot.amount > 0 && snapshot.quantity > 0
+        ? snapshot.amount / snapshot.quantity
+        : 0.0;
+    final totalValue = buyUnitPriceWithFees > 0
+        ? buyUnitPriceWithFees * asset.quantity
+        : liveMarketTotal;
     final totalBuy = asset.averageBuyPrice * asset.quantity;
     final changePercent = totalBuy == 0 ? 0 : ((totalValue - totalBuy) / totalBuy) * 100;
     final signed = changePercent >= 0 ? '+' : '';
@@ -103,8 +108,8 @@ class WalletRepositoryImpl implements IWalletRepository {
         : (asset.productSku?.trim().isNotEmpty ?? false)
         ? asset.productSku!.trim()
         : _toDisplayName(asset.assetType);
-    final purchaseValue = snapshot != null && snapshot.amount > 0
-        ? snapshot.amount
+    final purchaseValue = buyUnitPriceWithFees > 0
+        ? buyUnitPriceWithFees * asset.quantity
         : totalBuy;
 
     return wallet_entity.WalletTransactionEntity(

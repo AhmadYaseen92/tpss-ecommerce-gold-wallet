@@ -74,6 +74,7 @@ class WalletRemoteDataSource {
           productName: (item['productName'] ?? '').toString(),
           purity: (item['purity'] as num?)?.toDouble() ?? 0,
           amount: (item['amount'] as num?)?.toDouble() ?? 0,
+          quantity: (item['quantity'] as num?)?.toInt() ?? 0,
           currency: (item['currency'] ?? 'USD').toString(),
         ),
       );
@@ -89,6 +90,7 @@ class WalletPurchaseSnapshot {
     required this.productName,
     required this.purity,
     required this.amount,
+    required this.quantity,
     required this.currency,
   });
 
@@ -96,6 +98,7 @@ class WalletPurchaseSnapshot {
   final String productName;
   final double purity;
   final double amount;
+  final int quantity;
   final String currency;
 }
 
