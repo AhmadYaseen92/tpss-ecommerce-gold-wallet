@@ -13,11 +13,18 @@ export function splitFullName(fullName: string) {
   };
 }
 
-const toDoc = (documentType: string, fileName: string, isRequired: boolean, relatedEntityType?: string) => ({
+const toDoc = (
+  documentType: string,
+  fileName: string,
+  filePath: string,
+  contentType: string,
+  isRequired: boolean,
+  relatedEntityType?: string,
+) => ({
   documentType,
   fileName,
-  filePath: fileName,
-  contentType: "application/octet-stream",
+  filePath,
+  contentType,
   isRequired,
   relatedEntityType,
 });
@@ -32,6 +39,21 @@ const getSelectedFileName = (value: unknown): string => {
   if (!value || typeof value !== "object") return "";
   const withName = value as { name?: unknown };
   return typeof withName.name === "string" ? withName.name : "";
+};
+
+const getSelectedFilePath = (value: unknown): string => {
+  if (!value || typeof value !== "object") return "";
+  const withPath = value as { filePath?: unknown };
+  if (typeof withPath.filePath === "string" && withPath.filePath.trim()) return withPath.filePath;
+  return getSelectedFileName(value);
+};
+
+const getSelectedContentType = (value: unknown): string => {
+  if (!value || typeof value !== "object") return "application/octet-stream";
+  const withType = value as { contentType?: unknown };
+  return typeof withType.contentType === "string" && withType.contentType.trim()
+    ? withType.contentType
+    : "application/octet-stream";
 };
 
 export function buildRegisterSellerPayload(form: RegisterFormModel) {
@@ -96,16 +118,70 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
       isMainAccount: bank.isMain,
     })),
     documents: [
-      toDoc("CommercialRegistrationDocument", getSelectedFileName(form.companyInfo.documents.crDoc?.[0]), true, "Seller"),
-      toDoc("ArticlesOfAssociation", getSelectedFileName(form.companyInfo.documents.articles?.[0]), true, "Seller"),
-      toDoc("ProofOfAddress", getSelectedFileName(form.companyInfo.documents.proofOfAddress?.[0]), true, "Seller"),
-      toDoc("VatCertificate", getSelectedFileName(form.companyInfo.documents.vatCert?.[0]), true, "Seller"),
-      toDoc("AmlDocumentation", getSelectedFileName(form.companyInfo.documents.amlDoc?.[0]), true, "Seller"),
-      toDoc("ManagerIdCopy", getSelectedFileName(form.ownerInfo.idCopy?.[0]), true, "Manager"),
-      toDoc("AuthorizationLetter", getSelectedFileName(form.ownerInfo.authLetter?.[0]), false, "Manager"),
+      toDoc(
+        "CommercialRegistrationDocument",
+        getSelectedFileName(form.companyInfo.documents.crDoc?.[0]),
+        getSelectedFilePath(form.companyInfo.documents.crDoc?.[0]),
+        getSelectedContentType(form.companyInfo.documents.crDoc?.[0]),
+        true,
+        "Seller"),
+      toDoc(
+        "ArticlesOfAssociation",
+        getSelectedFileName(form.companyInfo.documents.articles?.[0]),
+        getSelectedFilePath(form.companyInfo.documents.articles?.[0]),
+        getSelectedContentType(form.companyInfo.documents.articles?.[0]),
+        true,
+        "Seller"),
+      toDoc(
+        "ProofOfAddress",
+        getSelectedFileName(form.companyInfo.documents.proofOfAddress?.[0]),
+        getSelectedFilePath(form.companyInfo.documents.proofOfAddress?.[0]),
+        getSelectedContentType(form.companyInfo.documents.proofOfAddress?.[0]),
+        true,
+        "Seller"),
+      toDoc(
+        "VatCertificate",
+        getSelectedFileName(form.companyInfo.documents.vatCert?.[0]),
+        getSelectedFilePath(form.companyInfo.documents.vatCert?.[0]),
+        getSelectedContentType(form.companyInfo.documents.vatCert?.[0]),
+        true,
+        "Seller"),
+      toDoc(
+        "AmlDocumentation",
+        getSelectedFileName(form.companyInfo.documents.amlDoc?.[0]),
+        getSelectedFilePath(form.companyInfo.documents.amlDoc?.[0]),
+        getSelectedContentType(form.companyInfo.documents.amlDoc?.[0]),
+        true,
+        "Seller"),
+      toDoc(
+        "ManagerIdCopy",
+        getSelectedFileName(form.ownerInfo.idCopy?.[0]),
+        getSelectedFilePath(form.ownerInfo.idCopy?.[0]),
+        getSelectedContentType(form.ownerInfo.idCopy?.[0]),
+        true,
+        "Manager"),
+      toDoc(
+        "AuthorizationLetter",
+        getSelectedFileName(form.ownerInfo.authLetter?.[0]),
+        getSelectedFilePath(form.ownerInfo.authLetter?.[0]),
+        getSelectedContentType(form.ownerInfo.authLetter?.[0]),
+        false,
+        "Manager"),
       ...form.banks.flatMap((bank) => [
-        toDoc("BankConfirmationLetter", getSelectedFileName(bank.bankLetter?.[0]), false, "BankAccount"),
-        toDoc("IbanProofDocument", getSelectedFileName(bank.ibanProof?.[0]), false, "BankAccount"),
+        toDoc(
+          "BankConfirmationLetter",
+          getSelectedFileName(bank.bankLetter?.[0]),
+          getSelectedFilePath(bank.bankLetter?.[0]),
+          getSelectedContentType(bank.bankLetter?.[0]),
+          false,
+          "BankAccount"),
+        toDoc(
+          "IbanProofDocument",
+          getSelectedFileName(bank.ibanProof?.[0]),
+          getSelectedFilePath(bank.ibanProof?.[0]),
+          getSelectedContentType(bank.ibanProof?.[0]),
+          false,
+          "BankAccount"),
       ])
     ].filter((doc) => doc.fileName),
   };

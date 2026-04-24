@@ -34,10 +34,19 @@ const setSingleFile = (listRef: any[], event: Event) => {
   const file = input.files?.[0];
   listRef.splice(0, listRef.length);
   if (file) {
-    listRef.push({
+    const selectedFile = {
       name: file.name,
       file,
-    });
+      contentType: file.type || "application/octet-stream",
+      filePath: "",
+    };
+    listRef.push(selectedFile);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      selectedFile.filePath = typeof reader.result === "string" ? reader.result : "";
+    };
+    reader.readAsDataURL(file);
   }
 };
 
