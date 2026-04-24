@@ -51,9 +51,18 @@ const getSelectedFilePath = (value: unknown): string => {
 const getSelectedContentType = (value: unknown): string => {
   if (!value || typeof value !== "object") return "application/octet-stream";
   const withType = value as { contentType?: unknown };
-  return typeof withType.contentType === "string" && withType.contentType.trim()
-    ? withType.contentType
-    : "application/octet-stream";
+  if (typeof withType.contentType === "string" && withType.contentType.trim()) {
+    return withType.contentType;
+  }
+
+  const fileName = getSelectedFileName(value).toLowerCase();
+  if (fileName.endsWith(".pdf")) return "application/pdf";
+  if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) return "image/jpeg";
+  if (fileName.endsWith(".png")) return "image/png";
+  if (fileName.endsWith(".webp")) return "image/webp";
+  if (fileName.endsWith(".gif")) return "image/gif";
+
+  return "application/octet-stream";
 };
 
 export function buildRegisterSellerPayload(form: RegisterFormModel) {

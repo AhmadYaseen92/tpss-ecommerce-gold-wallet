@@ -246,7 +246,7 @@ input, textarea { padding: 8px; border: 1px solid #cfd6e4; border-radius: 8px; f
 .action-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .danger { background: #fee2e2; border-color: #fca5a5; }
 .viewer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: grid; place-items: center; z-index: 1000; }
-.viewer-modal { width: min(1100px, 96vw); height: min(760px, 90vh); background: #fff; border-radius: 10px; display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+.viewer-modal { width: min(1400px, 99vw); height: min(900px, 96vh); background: #fff; border-radius: 10px; display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
 .viewer-header { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; }
 .viewer-frame { width: 100%; height: 100%; border: 0; }
 @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } .doc-card { grid-template-columns: 1fr; } }

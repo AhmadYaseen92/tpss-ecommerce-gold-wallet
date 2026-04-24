@@ -4,6 +4,7 @@ using GoldWalletSystem.Application.DTOs.Otp;
 using GoldWalletSystem.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 
@@ -13,6 +14,7 @@ namespace GoldWalletSystem.API.Controllers;
 [Route("api/auth")]
 public partial class AuthController(IAuthService authService, IWebHostEnvironment environment) : ControllerBase
 {
+    private static readonly FileExtensionContentTypeProvider ContentTypeProvider = new();
     [HttpGet("ping")]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
     public IActionResult Ping()
@@ -137,6 +139,12 @@ public partial class AuthController(IAuthService authService, IWebHostEnvironmen
                 var contentTypeMatch = Regex.Match(meta, @"^data:(?<type>[^;]+);base64$", RegexOptions.IgnoreCase);
                 if (contentTypeMatch.Success)
                     doc.ContentType = contentTypeMatch.Groups["type"].Value;
+            }
+
+            if (string.IsNullOrWhiteSpace(doc.ContentType) || doc.ContentType == "application/octet-stream")
+            {
+                if (ContentTypeProvider.TryGetContentType(safeFileName, out var inferredContentType))
+                    doc.ContentType = inferredContentType;
             }
         }
     }
