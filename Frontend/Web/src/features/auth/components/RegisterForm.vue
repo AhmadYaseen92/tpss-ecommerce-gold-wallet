@@ -56,6 +56,11 @@ const validateStep = (step: number) => {
     if (!props.model.companyInfo.postalCode?.trim()) missing.push("Postal Code");
     if (!props.model.companyInfo.phone?.trim()) missing.push("Company Phone");
     if (!props.model.companyInfo.email?.trim()) missing.push("Company Email");
+    if (!props.model.companyInfo.documents.crDoc.length) missing.push("Commercial Registration Document");
+    if (!props.model.companyInfo.documents.articles.length) missing.push("Articles of Association");
+    if (!props.model.companyInfo.documents.proofOfAddress.length) missing.push("Proof of Address");
+    if (!props.model.companyInfo.documents.vatCert.length) missing.push("VAT Certificate");
+    if (!props.model.companyInfo.documents.amlDoc.length) missing.push("AML Documentation");
     if (missing.length > 0) return `Company Information missing required fields: ${missing.join(", ")}.`;
   }
   if (step === 1) {
