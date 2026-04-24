@@ -6,26 +6,52 @@ import ReportsPage from "./ReportsPage.vue";
 import SectionCard from "../../../shared/components/SectionCard.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
-const { reportFilters, reportTypeCards, generatedReports, generateReports, downloadReport, downloadPdf } = useReports(props.marketplace);
+const {
+  reportFilters,
+  reportTypeCards,
+  summaryMetrics,
+  tableData,
+  loading,
+  totalPages,
+  categories,
+  generateReports,
+  resetFilters,
+  exportCsv,
+  exportExcel,
+  printReport,
+  setSort,
+  changePage
+} = useReports(props.marketplace);
 
 onMounted(() => {
   if (props.marketplace.role.value === "Admin") {
     void props.marketplace.refreshMarketplaceState();
   }
+  void generateReports();
 });
 </script>
 
 <template>
-  <SectionCard title="Reports Generator">
+  <SectionCard title="Reports Module">
     <ReportsPage
       :role="marketplace.role.value"
       :sellers="marketplace.state.value.sellers"
+      :investors="marketplace.state.value.investors"
+      :products="marketplace.state.value.products"
+      :categories="categories"
       :report-filters="reportFilters"
       :report-type-cards="reportTypeCards"
-      :rows="generatedReports"
+      :summary-metrics="summaryMetrics"
+      :loading="loading"
+      :table-data="tableData"
+      :total-pages="totalPages"
       @generate="generateReports"
-      @excel="downloadReport"
-      @pdf="downloadPdf"
+      @reset="resetFilters"
+      @sort="setSort"
+      @page="changePage"
+      @csv="exportCsv"
+      @excel="exportExcel"
+      @print="printReport"
     />
   </SectionCard>
 </template>
