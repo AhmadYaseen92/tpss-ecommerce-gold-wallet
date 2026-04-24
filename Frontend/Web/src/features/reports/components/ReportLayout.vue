@@ -2,6 +2,9 @@
 import MetricGrid from "../../../shared/components/MetricGrid.vue";
 import type { ReportMetric } from "../../../shared/types/models";
 import type { ReportTableData } from "../types/reportTypes";
+import LoadingState from "../../../shared/components/ui/LoadingState.vue";
+import EmptyState from "../../../shared/components/ui/EmptyState.vue";
+import Pagination from "../../../shared/components/ui/Pagination.vue";
 
 defineProps<{
   title: string;
@@ -21,32 +24,17 @@ const emit = defineEmits<{ sort: [key: string]; page: [delta: number] }>();
     <h3>{{ title }}</h3>
     <MetricGrid :metrics="summaryMetrics" />
 
-    <div v-if="loading" class="report-state">Loading report...</div>
-    <div v-else-if="empty" class="report-state">No records found for the current filters.</div>
+    <LoadingState v-if="loading" />
+    <EmptyState v-else-if="empty" message="No records found for the current filters." />
     <div v-else class="report-table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th v-for="header in table.headers" :key="header">
-              <button class="sort-btn" @click="emit('sort', header)">{{ header }}</button>
-            </th>
-          </tr>
-        </thead>
+        <thead><tr><th v-for="header in table.headers" :key="header"><button class="sort-btn" @click="emit('sort', header)">{{ header }}</button></th></tr></thead>
         <tbody>
-          <tr v-for="(row, rowIndex) in table.rows" :key="rowIndex">
-            <td v-for="header in table.headers" :key="`${rowIndex}-${header}`">{{ row[header] ?? "-" }}</td>
-          </tr>
-          <tr class="totals-row">
-            <td v-for="header in table.headers" :key="`total-${header}`">{{ table.totalsRow[header] ?? "" }}</td>
-          </tr>
+          <tr v-for="(row, rowIndex) in table.rows" :key="rowIndex"><td v-for="header in table.headers" :key="`${rowIndex}-${header}`">{{ row[header] ?? "-" }}</td></tr>
+          <tr class="totals-row"><td v-for="header in table.headers" :key="`total-${header}`">{{ table.totalsRow[header] ?? "" }}</td></tr>
         </tbody>
       </table>
-
-      <div class="report-pagination">
-        <button class="ghost" :disabled="page <= 1" @click="emit('page', -1)">Previous</button>
-        <span>Page {{ page }} / {{ totalPages }}</span>
-        <button class="ghost" :disabled="page >= totalPages" @click="emit('page', 1)">Next</button>
-      </div>
+      <Pagination :page="page" :total-pages="totalPages" :total-items="table.rows.length" :page-size="table.rows.length || 1" @prev="emit('page', -1)" @next="emit('page', 1)" />
     </div>
   </div>
 </template>

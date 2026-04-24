@@ -3,6 +3,12 @@ import { computed, onMounted, ref } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import type { KycStatus, Seller } from "../../../shared/types/models";
 import SectionCard from "../../../shared/components/SectionCard.vue";
+import SearchBar from "../../../shared/components/ui/SearchBar.vue";
+import Select from "../../../shared/components/ui/Select.vue";
+import StatusBadge from "../../../shared/components/ui/StatusBadge.vue";
+import Pagination from "../../../shared/components/ui/Pagination.vue";
+import ActionDropdown from "../../../shared/components/ui/ActionDropdown.vue";
+import FilterBar from "../../../shared/components/ui/FilterBar.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
 const search = ref("");
@@ -51,11 +57,10 @@ const setKyc = async (sellerId: string, action: SellerAction) => {
   if (action === "underreview") await props.marketplace.markKycUnderReview(sellerId);
 };
 
-const runActionFromDropdown = async (sellerId: string, event: Event) => {
-  const nextAction = (event.target as HTMLSelectElement).value as SellerAction | "";
+const runActionFromDropdown = async (sellerId: string, action: string) => {
+  const nextAction = action as SellerAction | "";
   if (!nextAction) return;
   await setKyc(sellerId, nextAction);
-  (event.target as HTMLSelectElement).value = "";
 };
 
 onMounted(() => {
@@ -67,39 +72,30 @@ onMounted(() => {
 
 <template>
   <SectionCard title="Seller Registration Requests">
-    <div class="filters">
-      <input v-model="search" placeholder="Search company, code, login email, phone" />
-      <select v-model="kycFilter"><option value="all">All KYC</option><option value="underreview">Under Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="blocked">Blocked</option><option value="pending">Pending (legacy)</option></select>
-    </div>
+    <FilterBar>
+      <SearchBar v-model="search" placeholder="Search company, code, login email, phone" />
+      <Select v-model="kycFilter"><option value="all">All KYC</option><option value="underreview">Under Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="blocked">Blocked</option><option value="pending">Pending (legacy)</option></Select>
+    </FilterBar>
     <table>
       <thead><tr><th>Company Name</th><th>Company Code</th><th>Login Email</th><th>Contact Phone</th><th>KYC Status</th><th>Is Active</th><th>Created Date</th><th>Reviewed Date</th><th>Actions</th></tr></thead>
       <tbody>
         <tr v-for="seller in pageItems" :key="seller.id" @click="openSellerDetails(seller.id)">
           <td>{{ seller.businessName }}</td><td>{{ seller.companyCode || '-' }}</td><td>{{ seller.loginEmail || seller.email }}</td><td>{{ seller.contactPhone || '-' }}</td>
-          <td>{{ seller.kycStatus }}</td><td>{{ seller.isActive ? 'Yes' : 'No' }}</td><td>{{ seller.submittedAt }}</td><td>{{ seller.reviewedAt || '-' }}</td>
+          <td><StatusBadge :status="seller.kycStatus" /></td><td>{{ seller.isActive ? 'Yes' : 'No' }}</td><td>{{ seller.submittedAt }}</td><td>{{ seller.reviewedAt || '-' }}</td>
           <td class="actions-cell">
-            <select @click.stop @change="runActionFromDropdown(seller.id, $event)">
+            <ActionDropdown @click.stop @update:model-value="runActionFromDropdown(seller.id, $event)">
               <option value="">Select action</option>
-              <option v-for="action in availableActions(seller.kycStatus)" :key="`${seller.id}-${action}`" :value="action">
-                {{ actionLabel[action] }}
-              </option>
-            </select>
+              <option v-for="action in availableActions(seller.kycStatus)" :key="`${seller.id}-${action}`" :value="action">{{ actionLabel[action] }}</option>
+            </ActionDropdown>
           </td>
         </tr>
       </tbody>
     </table>
-    <div class="pager">Results: {{ (pageNumber - 1) * pageSize + 1 }} - {{ Math.min(pageNumber * pageSize, filtered.length) }} of {{ filtered.length }}
-      <button :disabled="pageNumber <= 1" @click="pageNumber--">&lt;</button>
-      <span>{{ pageNumber }} / {{ totalPages }}</span>
-      <button :disabled="pageNumber >= totalPages" @click="pageNumber++">&gt;</button>
-    </div>
-
+    <Pagination :page="pageNumber" :total-pages="totalPages" :total-items="filtered.length" :page-size="pageSize" @prev="pageNumber--" @next="pageNumber++" />
   </SectionCard>
 </template>
 
 <style scoped>
-.filters { display:grid; grid-template-columns:1fr 220px; gap:10px; margin-bottom:12px; }
-.pager { margin-top: 10px; display:flex; gap:8px; align-items:center; justify-content:flex-end; }
 tr { cursor: pointer; }
 .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
 </style>

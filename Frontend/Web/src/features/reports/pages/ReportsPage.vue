@@ -3,6 +3,8 @@ import type { Investor, Product, Seller } from "../../../shared/types/models";
 import type { ReportFilters, ReportTableData, ReportTypeCard } from "../types/reportTypes";
 import ReportFilterPanel from "../components/ReportFilterPanel.vue";
 import ReportLayout from "../components/ReportLayout.vue";
+import Button from "../../../shared/components/ui/Button.vue";
+import Card from "../../../shared/components/ui/Card.vue";
 import type { ReportMetric } from "../../../shared/types/models";
 
 const props = defineProps<{
@@ -44,12 +46,12 @@ const emit = defineEmits<{
       @reset="emit('reset')"
     />
 
-    <div class="report-actions">
-      <button @click="emit('generate')">Refresh Report</button>
-      <button class="ghost" @click="emit('csv')">Export CSV</button>
-      <button class="ghost" @click="emit('excel')">Export Excel</button>
-      <button class="ghost" @click="emit('print')">Print</button>
-    </div>
+    <Card><div class="report-actions">
+      <Button @click="emit('generate')">Refresh Report</Button>
+      <Button variant="ghost" @click="emit('csv')">Export CSV</Button>
+      <Button variant="ghost" @click="emit('excel')">Export Excel</Button>
+      <Button variant="ghost" @click="emit('print')">Print</Button>
+    </div></Card>
 
     <ReportLayout
       title="Report Results"
@@ -67,10 +69,7 @@ const emit = defineEmits<{
 
 <style scoped>
 .reports-page { display: grid; gap: 14px; }
-.report-filters-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.report-type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
-.report-type-card { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 10px; text-align: left; display: grid; gap: 4px; }
-.report-type-card.active { border-color: var(--primary); box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent); }
+.report-filters-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 10px; }
 .report-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .report-layout { display: grid; gap: 10px; }
 .report-table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }

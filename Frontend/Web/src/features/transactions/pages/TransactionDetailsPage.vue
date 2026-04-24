@@ -1,86 +1,50 @@
 <script setup lang="ts">
 import type { TransactionRowView } from "../types/transactionTypes";
-import { statusClass } from "../../../shared/services/statusStyles";
 import { formatCurrency, formatDateTime } from "../../../shared/services/formatters";
+import Card from "../../../shared/components/ui/Card.vue";
+import StatusBadge from "../../../shared/components/ui/StatusBadge.vue";
 
 defineProps<{ item: TransactionRowView | null }>();
-
-const formatStatus = (status: string) => {
-  const normalized = status.trim().toLowerCase();
-  if (normalized === "pending_delivered") return "Pending - Delivered";
-  if (normalized === "delivered") return "Delivered";
-  if (normalized === "cancelled" || normalized === "canceled") return "Canceled";
-  if (normalized === "approved") return "Approved";
-  if (normalized === "rejected") return "Rejected";
-  return "Pending";
-};
 </script>
 
 <template>
-  <section v-if="item" class="tx-details-card">
-    <h3>Transaction Details</h3>
-    <p><strong>ID:</strong> {{ item.id }}</p>
-    <p><strong>Investor ID:</strong> {{ item.investorId }}</p>
-    <p><strong>Investor:</strong> {{ item.investorName }}</p>
-    <p><strong>Type:</strong> {{ item.transactionType }}</p>
-    <p v-if="item.pickupSchedule"><strong>Pickup Date & Time:</strong> {{ item.pickupSchedule }}</p>
-    <p v-if="item.productImageUrl" class="detail-image-row">
-      <strong>Item Image:</strong>
-      <img :src="item.productImageUrl" :alt="item.productName" class="detail-image" />
-    </p>
-    <template v-if="['transfer', 'gift'].includes((item.transactionType || '').toLowerCase())">
-      <p><strong>Transfer From:</strong> {{ item.transferFrom || "—" }}</p>
-      <p><strong>Transfer To:</strong> {{ item.transferTo || "—" }}</p>
-    </template>
-    <p><strong>Product:</strong> {{ item.productName }}</p>
-    <p><strong>Category:</strong> {{ item.category }}</p>
-    <p><strong>Quantity:</strong> {{ item.quantity.toLocaleString() }}</p>
-    <p><strong>Weight:</strong> {{ item.weight.toFixed(3) }} {{ item.unit }}</p>
-    <p><strong>Purity:</strong> {{ item.purity }}%</p>
-    <p><strong>Unit Price:</strong> {{ formatCurrency(item.unitPrice, item.currency) }}</p>
-    <p><strong>Subtotal:</strong> {{ formatCurrency(item.subTotalAmount ?? item.finalAmount, item.currency) }}</p>
-    <p><strong>Fees:</strong> {{ formatCurrency(item.totalFeesAmount ?? 0, item.currency) }}</p>
-    <p><strong>Discount:</strong> {{ formatCurrency(item.discountAmount ?? 0, item.currency) }}</p>
-    <p><strong>Final Amount:</strong> {{ formatCurrency(item.finalAmount, item.currency) }}</p>
-    <p><strong>Currency:</strong> {{ item.currency }}</p>
-    <div v-if="item.feeBreakdowns && item.feeBreakdowns.length">
-      <p><strong>Fee Breakdown:</strong></p>
-      <ul>
-        <li v-for="line in item.feeBreakdowns" :key="`${line.feeCode}-${line.displayOrder}`">
-          {{ line.feeName }} ({{ line.sourceType }}): {{ formatCurrency(line.appliedValue, item.currency) }}
-        </li>
-      </ul>
-    </div>
-    <p><strong>Notes:</strong> {{ item.notes || "—" }}</p>
-    <p><strong>Status:</strong> <span :class="statusClass(item.status)">{{ formatStatus(item.status) }}</span></p>
-    <p><strong>Created At:</strong> {{ formatDateTime(item.createdAt) }}</p>
-    <p><strong>Updated At:</strong> {{ item.updatedAt ? formatDateTime(item.updatedAt) : "—" }}</p>
+  <section v-if="item" class="tx-sections">
+    <Card title="Transaction Summary">
+      <div class="detail-grid">
+        <p><strong>ID:</strong> {{ item.id }}</p>
+        <p><strong>Type:</strong> {{ item.transactionType }}</p>
+        <p><strong>Status:</strong> <StatusBadge :status="item.status" /></p>
+        <p><strong>Created At:</strong> {{ formatDateTime(item.createdAt) }}</p>
+        <p><strong>Updated At:</strong> {{ item.updatedAt ? formatDateTime(item.updatedAt) : '—' }}</p>
+      </div>
+    </Card>
+    <Card title="Parties & Product">
+      <div class="detail-grid">
+        <p><strong>Investor:</strong> {{ item.investorName }}</p>
+        <p><strong>Investor ID:</strong> {{ item.investorId }}</p>
+        <p><strong>Transfer From:</strong> {{ item.transferFrom || '—' }}</p>
+        <p><strong>Transfer To:</strong> {{ item.transferTo || '—' }}</p>
+        <p><strong>Product:</strong> {{ item.productName }}</p>
+        <p><strong>Category:</strong> {{ item.category }}</p>
+        <p><strong>Quantity:</strong> {{ item.quantity.toLocaleString() }}</p>
+        <p><strong>Weight:</strong> {{ item.weight.toFixed(3) }} {{ item.unit }}</p>
+      </div>
+    </Card>
+    <Card title="Amount Breakdown">
+      <div class="detail-grid">
+        <p><strong>Unit Price:</strong> {{ formatCurrency(item.unitPrice, item.currency) }}</p>
+        <p><strong>Subtotal:</strong> {{ formatCurrency(item.subTotalAmount ?? item.finalAmount, item.currency) }}</p>
+        <p><strong>Fees:</strong> {{ formatCurrency(item.totalFeesAmount ?? 0, item.currency) }}</p>
+        <p><strong>Discount:</strong> {{ formatCurrency(item.discountAmount ?? 0, item.currency) }}</p>
+        <p><strong>Final Amount:</strong> {{ formatCurrency(item.finalAmount, item.currency) }}</p>
+      </div>
+    </Card>
   </section>
-  <section v-else>
-    <p>Transaction not found.</p>
-  </section>
+  <section v-else><p>Transaction not found.</p></section>
 </template>
 
 <style scoped>
-.tx-details-card {
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 14px;
-  padding: 20px;
-  background: var(--card-bg, #fff);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-}
-
-.detail-image-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.detail-image {
-  width: 52px;
-  height: 52px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-}
+.tx-sections { display:grid; gap: 12px; }
+.detail-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 12px; }
+.detail-grid p { margin: 0; }
 </style>

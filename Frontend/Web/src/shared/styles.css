@@ -968,3 +968,34 @@ select {
     max-height: calc(100vh - 12px);
   }
 }
+
+.ui-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: 0 8px 24px rgb(32 29 18 / 7%); }
+.ui-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom: 12px; }
+.ui-card-header h3 { margin:0; font-size: 22px; }
+.ui-card-header p { margin:4px 0 0; color: var(--text-muted); }
+.ui-page-header { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.ui-page-header h2 { margin:0; }
+.ui-page-header p { margin:4px 0 0; color: var(--text-muted); }
+.ui-page-header-actions { display:flex; gap:8px; flex-wrap: wrap; }
+.ui-btn { border:0; background: var(--primary); color: #201d12; border-radius: 10px; padding: 8px 12px; cursor:pointer; font-weight: 600; }
+.ui-btn--ghost { background: transparent; border: 1px solid var(--border); color: inherit; }
+.ui-btn--danger { background: var(--danger); color: #fff; }
+.ui-input,.ui-select { width:100%; min-height:42px; border: 1px solid var(--border); border-radius:10px; background: var(--surface); color:inherit; padding: 8px 10px; }
+.ui-search { min-height: 44px; }
+.ui-filter-bar { display:grid; gap:10px; grid-template-columns: repeat(4, minmax(140px, 1fr)); margin-bottom: 12px; }
+.ui-pagination { margin-top: 10px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
+.ui-pagination > div { display:flex; gap:8px; align-items:center; }
+.ui-status { font-weight: 700; padding: 2px 8px; border-radius: 999px; font-size: 12px; text-transform: capitalize; }
+.ui-status--ok { background: #dcfce7; color: #166534; }
+.ui-status--warn { background: #fef3c7; color: #92400e; }
+.ui-status--bad { background: #fee2e2; color: #991b1b; }
+.ui-status--neutral { background: #e5e7eb; color: #374151; }
+.ui-state { border: 1px dashed var(--border); border-radius: 10px; padding: 20px; color: var(--text-muted); text-align:center; }
+.ui-form-field { display:grid; gap:6px; }
+.ui-form-label { font-weight: 600; }
+.ui-form-hint { color: var(--text-muted); }
+.ui-form-error { color: var(--danger); font-weight: 600; }
+.ui-modal-actions { display:flex; justify-content:flex-end; gap:8px; }
+@media (max-width: 900px) { .ui-filter-bar { grid-template-columns: 1fr; } }
+
+.ui-table-wrap { overflow:auto; border:1px solid var(--border); border-radius:12px; background:var(--surface); }
