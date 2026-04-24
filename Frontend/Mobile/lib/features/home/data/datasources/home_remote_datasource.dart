@@ -28,15 +28,20 @@ class HomeRemoteDataSource {
             final offerType = (item['offerType'] ?? '').toString();
             final sellPrice = (item['sellPrice'] as num?)?.toDouble() ?? 0;
             final pricingMode = (item['pricingMode'] ?? '').toString().toLowerCase();
-            final sourcePrice = pricingMode.contains('auto')
-                ? ((item['autoPrice'] as num?)?.toDouble() ?? sellPrice)
-                : ((item['fixedPrice'] as num?)?.toDouble() ?? sellPrice);
+            final sourcePrice = _inactivePrice(
+              sellPrice: sellPrice,
+              baseMarketPrice: (item['baseMarketPrice'] as num?)?.toDouble() ?? 0,
+              autoPrice: (item['autoPrice'] as num?)?.toDouble() ?? 0,
+              fixedPrice: (item['fixedPrice'] as num?)?.toDouble() ?? 0,
+              offerNewPrice: (item['offerNewPrice'] as num?)?.toDouble() ?? 0,
+              offerPercent: offerPercent,
+            );
             return HomeCarsouleItemModel(
               id: (item['id'] ?? '').toString(),
               imgUrl: (item['imageUrl'] ?? '').toString(),
               title: (item['name'] ?? 'Product').toString(),
               sellerName: (item['sellerName'] ?? 'Seller').toString(),
-              materialType: (item['materialType'] ?? 'Gold').toString(),
+              materialType: _materialTypeLabel(item['materialType']),
               pricingModeLabel: pricingMode.contains('auto') ? 'Auto Price' : 'Manual Price',
               sourcePrice: sourcePrice,
               sellPrice: sellPrice,
@@ -87,5 +92,54 @@ class HomeRemoteDataSource {
       return 'Offer • Now ${sellPrice.toStringAsFixed(2)} JOD';
     }
     return null;
+  }
+
+  double _inactivePrice({
+    required double sellPrice,
+    required double baseMarketPrice,
+    required double autoPrice,
+    required double fixedPrice,
+    required double offerNewPrice,
+    required double offerPercent,
+  }) {
+    final candidates = <double>[baseMarketPrice, autoPrice, fixedPrice, offerNewPrice];
+    final direct = candidates.firstWhere(
+      (price) => price > 0 && price > sellPrice,
+      orElse: () => 0,
+    );
+    if (direct > 0) return direct;
+
+    if (offerPercent > 0 && offerPercent < 100 && sellPrice > 0) {
+      final calculated = sellPrice / (1 - (offerPercent / 100));
+      if (calculated > sellPrice) {
+        return calculated;
+      }
+    }
+    return sellPrice;
+  }
+
+  String _materialTypeLabel(dynamic rawMaterialType) {
+    if (rawMaterialType is num) {
+      return switch (rawMaterialType.toInt()) {
+        1 => 'Gold',
+        2 => 'Silver',
+        3 => 'Diamond',
+        _ => 'Gold',
+      };
+    }
+
+    final normalized = (rawMaterialType ?? '').toString().trim();
+    if (normalized.isEmpty) return 'Gold';
+
+    final asInt = int.tryParse(normalized);
+    if (asInt != null) {
+      return _materialTypeLabel(asInt);
+    }
+
+    final lower = normalized.toLowerCase();
+    if (lower == 'gold' || lower == 'silver' || lower == 'diamond') {
+      return '${lower[0].toUpperCase()}${lower.substring(1)}';
+    }
+    return normalized;
   }
 }

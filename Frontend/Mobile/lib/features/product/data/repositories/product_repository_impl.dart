@@ -102,6 +102,7 @@ class ProductRepositoryImpl implements IProductRepository {
       offerType: model.offerType,
       offerPercent: model.offerPercent,
       offerNewPrice: model.offerNewPrice,
+      isHasOffer: model.isHasOffer,
       pricingModeLabel: _pricingModeLabel(model.pricingMode),
     );
   }

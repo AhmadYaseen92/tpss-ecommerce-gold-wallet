@@ -79,6 +79,7 @@ class _HomeCarouselWidgetState extends State<HomeCarouselWidget> {
       itemBuilder: (BuildContext context, int itemIndex, int pageViewIndex) {
         final item = _items[itemIndex];
         final hasOffer = (item.offerLabel ?? '').isNotEmpty;
+        final hasInactivePrice = item.sourcePrice > item.sellPrice;
         return Padding(
           padding: const EdgeInsetsDirectional.only(end: 16.0),
           child: ClipRRect(
@@ -132,9 +133,9 @@ class _HomeCarouselWidgetState extends State<HomeCarouselWidget> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                      Text('${item.materialType} • ${item.pricingModeLabel}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      Text(item.materialType, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
                       Text(item.sellerName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
-                      if (hasOffer)
+                      if (hasOffer && hasInactivePrice)
                         Text('\$${item.sourcePrice.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white70, fontSize: 11, decoration: TextDecoration.lineThrough)),
                       Text('\$${item.sellPrice.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
                     ],

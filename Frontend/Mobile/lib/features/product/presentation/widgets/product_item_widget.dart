@@ -15,7 +15,8 @@ class ProductItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
-    final hasOffer = product.offerType.toLowerCase() != 'none';
+    final hasOffer = product.isHasOffer;
+    final inactivePrice = _inactivePrice(product);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
@@ -44,9 +45,9 @@ class ProductItemWidget extends StatelessWidget {
                     if (AppReleaseConfig.showSellerUi)
                       Text('Seller: ${product.sellerName}', style: TextStyle(fontSize: 12, color: palette.primary)),
                     const SizedBox(height: 6),
-                    if (hasOffer)
+                    if (hasOffer && inactivePrice != null)
                       Text(
-                        '\$${_sourcePrice(product).toStringAsFixed(2)}',
+                        '\$${inactivePrice.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: palette.textSecondary,
@@ -80,9 +81,20 @@ class ProductItemWidget extends StatelessWidget {
     );
   }
 
-  double _sourcePrice(ProductEntity product) {
-    final isAuto = product.pricingModeLabel.toLowerCase().contains('auto');
-    return isAuto ? product.autoPrice : product.fixedPrice;
+  double? _inactivePrice(ProductEntity product) {
+    final candidates = <double>[
+      product.baseMarketPrice,
+      product.offerNewPrice,
+      product.pricingModeLabel.toLowerCase().contains('auto')
+          ? product.autoPrice
+          : product.fixedPrice,
+    ];
+
+    final price = candidates.firstWhere(
+      (value) => value > 0 && value > product.sellPrice,
+      orElse: () => 0,
+    );
+    return price > 0 ? price : null;
   }
 
   Widget _buildProductImage(String imageUrl, dynamic palette) {
