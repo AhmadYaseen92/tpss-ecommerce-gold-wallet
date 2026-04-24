@@ -256,6 +256,9 @@ public class WebAdminController(
         {
             var normalized = document.FilePath.Replace('\\', '/');
             var webRelative = normalized.TrimStart('/');
+            var webRelativeWithoutUploads = webRelative.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase)
+                ? webRelative["uploads/".Length..]
+                : webRelative;
 
             if (Path.IsPathRooted(document.FilePath))
             {
@@ -264,16 +267,20 @@ public class WebAdminController(
                 if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
                 {
                     candidates.Add(Path.Combine(environment.WebRootPath, webRelative));
+                    candidates.Add(Path.Combine(environment.WebRootPath, webRelativeWithoutUploads));
                 }
                 candidates.Add(Path.Combine(environment.ContentRootPath, webRelative));
+                candidates.Add(Path.Combine(environment.ContentRootPath, webRelativeWithoutUploads));
             }
             else
             {
                 candidates.Add(document.FilePath);
                 candidates.Add(Path.Combine(environment.ContentRootPath, document.FilePath));
+                candidates.Add(Path.Combine(environment.ContentRootPath, webRelativeWithoutUploads));
                 if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
                 {
                     candidates.Add(Path.Combine(environment.WebRootPath, document.FilePath));
+                    candidates.Add(Path.Combine(environment.WebRootPath, webRelativeWithoutUploads));
                 }
             }
         }
@@ -283,8 +290,11 @@ public class WebAdminController(
         {
             var normalized = document.FilePath.Replace('\\', '/');
             var webRelative = normalized.TrimStart('/');
-            var fileName = Path.GetFileName(webRelative);
-            var relativeDir = Path.GetDirectoryName(webRelative)?.Replace('\\', '/') ?? string.Empty;
+            var webRelativeWithoutUploads = webRelative.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase)
+                ? webRelative["uploads/".Length..]
+                : webRelative;
+            var fileName = Path.GetFileName(webRelativeWithoutUploads);
+            var relativeDir = Path.GetDirectoryName(webRelativeWithoutUploads)?.Replace('\\', '/') ?? string.Empty;
 
             var searchDirectories = new List<string>();
             if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
