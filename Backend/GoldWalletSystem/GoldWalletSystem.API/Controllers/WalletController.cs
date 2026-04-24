@@ -355,6 +355,7 @@ public class WalletController(
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
         var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset, cancellationToken);
+        // Days-held source: WalletAssets.CreatedAtUtc (the asset acquisition/create timestamp in wallet).
         var daysHeld = CalculateDaysHeld(asset.CreatedAtUtc);
 
         var feeResult = await feeCalculationService.CalculateAsync(
@@ -444,6 +445,7 @@ public class WalletController(
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
         var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset, cancellationToken);
+        // Days-held source: WalletAssets.CreatedAtUtc (the asset acquisition/create timestamp in wallet).
         var daysHeld = CalculateDaysHeld(asset.CreatedAtUtc);
 
         var feeResult = await feeCalculationService.CalculateAsync(
@@ -1447,9 +1449,9 @@ public class WalletController(
         return Encoding.ASCII.GetBytes(pdf.ToString());
     }
 
-    private static int CalculateDaysHeld(DateTime acquiredAtUtc)
+    private static int CalculateDaysHeld(DateTime walletAssetCreatedAtUtc)
     {
-        var heldDays = (DateTime.UtcNow.Date - acquiredAtUtc.Date).Days;
+        var heldDays = (DateTime.UtcNow.Date - walletAssetCreatedAtUtc.Date).Days;
         return Math.Max(0, heldDays);
     }
 
