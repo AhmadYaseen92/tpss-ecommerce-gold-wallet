@@ -10,7 +10,7 @@ const emit = defineEmits<{ submit: []; forgot: []; toRegister: []; }>();
 </script>
 
 <template>
-  <form @submit.prevent="emit('submit')">
+  <form class="login-form" @submit.prevent="emit('submit')">
     <FormField label="Email"><Input v-model="model.email" type="email" placeholder="Email" /></FormField>
     <FormField label="Password"><Input v-model="model.password" type="password" placeholder="Password" /></FormField>
 
@@ -24,3 +24,9 @@ const emit = defineEmits<{ submit: []; forgot: []; toRegister: []; }>();
     <p class="register-text">Don’t have an account? <button type="button" class="link-btn" @click="emit('toRegister')">Go to Sign Up</button></p>
   </form>
 </template>
+
+
+<style scoped>
+.login-form { display:grid; gap: 10px; }
+.remember { display:inline-flex; align-items:center; gap:8px; }
+</style>

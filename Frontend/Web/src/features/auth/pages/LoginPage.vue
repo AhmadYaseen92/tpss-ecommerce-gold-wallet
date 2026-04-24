@@ -45,9 +45,10 @@ const onForgot = () => {
 
 <template>
   <section class="login-page">
-    <div class="auth-card large">
+    <div class="auth-card auth-card--login">
+      <p class="login-kicker">Gold Wallet Admin</p>
       <h1>Welcome Back</h1>
-      <p>Sign in to continue to your dashboard.</p>
+      <p class="login-subtitle">Sign in to continue to your dashboard.</p>
 
       <LoginForm
         :model="model"
