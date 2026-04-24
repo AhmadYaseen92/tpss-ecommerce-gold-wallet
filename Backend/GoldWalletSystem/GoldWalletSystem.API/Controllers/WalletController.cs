@@ -355,6 +355,7 @@ public class WalletController(
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
         var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset, cancellationToken);
+        var daysHeld = CalculateDaysHeld(asset.CreatedAtUtc);
 
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
@@ -364,7 +365,7 @@ public class WalletController(
                 NotionalAmount: grossAmount,
                 Quantity: request.Quantity,
                 ClosePrice: unitPrice,
-                DaysHeldAfterGrace: 0),
+                DaysHeldAfterGrace: daysHeld),
             cancellationToken);
         var resolvedFinalAmount = actionType == "sell"
             ? Math.Max(0, feeResult.SubTotalAmount - Math.Abs(feeResult.TotalFeesAmount) + feeResult.DiscountAmount)
@@ -443,6 +444,7 @@ public class WalletController(
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
         var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset, cancellationToken);
+        var daysHeld = CalculateDaysHeld(asset.CreatedAtUtc);
 
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
@@ -452,7 +454,7 @@ public class WalletController(
                 NotionalAmount: grossAmount,
                 Quantity: request.Quantity,
                 ClosePrice: unitPrice,
-                DaysHeldAfterGrace: 0),
+                DaysHeldAfterGrace: daysHeld),
             cancellationToken);
         var resolvedFinalAmount = actionType == "sell"
             ? Math.Max(0, feeResult.SubTotalAmount - Math.Abs(feeResult.TotalFeesAmount) + feeResult.DiscountAmount)
@@ -1443,6 +1445,12 @@ public class WalletController(
         pdf.Append($"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xrefStart}\n%%EOF");
 
         return Encoding.ASCII.GetBytes(pdf.ToString());
+    }
+
+    private static int CalculateDaysHeld(DateTime acquiredAtUtc)
+    {
+        var heldDays = (DateTime.UtcNow.Date - acquiredAtUtc.Date).Days;
+        return Math.Max(0, heldDays);
     }
 
     private string? ToAbsoluteFileUrl(string? fileUrl)

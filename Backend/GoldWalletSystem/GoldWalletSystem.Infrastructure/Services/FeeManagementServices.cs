@@ -326,7 +326,8 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
                 isDiscount = string.Equals(fee.PremiumDiscountType, "discount", StringComparison.OrdinalIgnoreCase);
                 break;
             case var _ when code == FeeCodes.StorageCustodyFee:
-                amount = request.Quantity * request.ClosePrice * ((fee.FeePercent ?? 0m) / 100m) / 360m * Math.Max(0, request.DaysHeldAfterGrace);
+                var daysHeldAfterGrace = Math.Max(0, request.DaysHeldAfterGrace - (fee.GracePeriodDays ?? 0));
+                amount = request.Quantity * request.ClosePrice * ((fee.FeePercent ?? 0m) / 100m) / 360m * daysHeldAfterGrace;
                 break;
             case var _ when code == FeeCodes.DeliveryFee:
             case var _ when code == FeeCodes.ServiceCharge:
