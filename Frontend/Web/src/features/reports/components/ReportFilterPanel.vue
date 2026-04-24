@@ -18,7 +18,7 @@ const props = defineProps<{
   categories: string[];
 }>();
 
-const emit = defineEmits<{ refresh: []; reset: [] }>();
+const emit = defineEmits<{ refresh: []; reset: []; typeSelected: [type: string] }>();
 
 const isInvestorReport = computed(() => props.filters.reportType.includes("investor") || props.filters.reportType === "customers");
 const isSalesReport = computed(() => ["sales", "sellerPerformance", "walletTransactions", "invoices", "sellerSales", "stock"].includes(props.filters.reportType));
@@ -27,7 +27,7 @@ const isRequestOpsReport = computed(() => ["requestsOps", "kycOnboarding", "oper
 
 <template>
   <div class="report-type-grid">
-    <button v-for="card in reportTypes" :key="card.key" class="report-type-card" :class="{ active: filters.reportType === card.key }" @click="filters.reportType = card.key">
+    <button v-for="card in reportTypes" :key="card.key" class="report-type-card" :class="{ active: filters.reportType === card.key }" @click="emit('typeSelected', card.key)">
       <strong>{{ card.label }}</strong>
       <small>{{ card.description }}</small>
     </button>

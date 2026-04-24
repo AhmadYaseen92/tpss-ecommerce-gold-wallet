@@ -290,7 +290,10 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     void generateReports();
   };
 
-  const resetFilters = () => {
+  
+
+  const resetFiltersForType = (type: string) => {
+    reportFilters.reportType = type;
     reportFilters.datePreset = "today";
     reportFilters.customFrom = "";
     reportFilters.customTo = "";
@@ -308,6 +311,15 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     reportFilters.phone = "";
     reportFilters.email = "";
     reportFilters.page = 1;
+  };
+
+  const resetFilters = () => {
+    resetFiltersForType(reportTypeCards.value[0]?.key ?? "sales");
+    void generateReports();
+  };
+
+  const selectReportType = (type: string) => {
+    resetFiltersForType(type);
     void generateReports();
   };
 
@@ -338,6 +350,7 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     categories,
     generateReports,
     resetFilters,
+    selectReportType,
     exportCsv,
     exportExcel,
     printReport,

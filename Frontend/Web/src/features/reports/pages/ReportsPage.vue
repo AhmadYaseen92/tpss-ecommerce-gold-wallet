@@ -28,6 +28,7 @@ const emit = defineEmits<{
   csv: [];
   excel: [];
   print: [];
+  typeSelected: [type: string];
 }>();
 </script>
 
@@ -53,6 +54,7 @@ const emit = defineEmits<{
       :categories="categories"
       @refresh="emit('generate')"
       @reset="emit('reset')"
+      @type-selected="(type) => emit('typeSelected', type)"
     />
 
     <ReportLayout
