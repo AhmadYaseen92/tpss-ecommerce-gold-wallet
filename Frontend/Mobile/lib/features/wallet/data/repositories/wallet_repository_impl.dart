@@ -91,9 +91,7 @@ class WalletRepositoryImpl implements IWalletRepository {
   ) {
     final totalWeightInGrams = _toGrams(asset.weight, asset.unit) * asset.quantity;
     final liveMarketTotal = asset.currentMarketPrice * asset.quantity;
-    final totalValue = asset.acquisitionFinalAmount > 0
-        ? asset.acquisitionFinalAmount
-        : liveMarketTotal;
+    final totalValue = liveMarketTotal;
     final totalBuy = asset.averageBuyPrice * asset.quantity;
     final changePercent = totalBuy == 0 ? 0 : ((totalValue - totalBuy) / totalBuy) * 100;
     final signed = changePercent >= 0 ? '+' : '';
