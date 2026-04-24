@@ -387,6 +387,12 @@ BEGIN TRY
     INNER JOIN [Users] U ON U.[Id] = W.[UserId]
     WHERE U.[Email] IN (SELECT [Email] FROM @Users);
 
+    DELETE TFB
+    FROM [TransactionFeeBreakdowns] TFB
+    INNER JOIN [TransactionHistories] TH ON TH.[Id] = TFB.[TransactionHistoryId]
+    INNER JOIN [Users] U ON U.[Id] = TH.[UserId]
+    WHERE U.[Email] IN (SELECT [Email] FROM @Users);
+
     DELETE TH
     FROM [TransactionHistories] TH
     INNER JOIN [Users] U ON U.[Id] = TH.[UserId]
@@ -421,7 +427,7 @@ BEGIN TRY
         )
         VALUES
             (@InvestorMain, @SellerImseeh, N'sell', N'pending', N'Gold', 1, 740, 5.000, N'gram', 24, 740, 730, 10, 0, 740, N'USD', N'SKU=IMSEEH-PRD-001|execution_mode=locked_30_seconds|wallet_asset_id=1', DATEADD(HOUR, -6, @Now), NULL),
-            (@InvestorMain, @SellerImseeh, N'pickup', N'pending_delivered', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, 2650, 35, 0, 2685, N'USD', N'SKU=IMSEEH-PRD-005|pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
+            (@InvestorMain, @SellerImseeh, N'pickup', N'pending_delivered', N'Coins', 1, 2685, 31.104, N'gram', 24, 2685, 2650, 35, 0, 2685, N'USD', N'SKU=IMSEEH-PRD-002|pickup_schedule=Mon, 20 Apr 2026 10:00 AM|wallet_asset_id=2', DATEADD(HOUR, -5, @Now), NULL),
             (@InvestorImseeh, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, 720, 10, 0, 730, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=', @InvestorMain, N'|recipient_investor_name=Gold Wallet Investor'), DATEADD(DAY, -2, @Now), NULL),
             (@InvestorMain, @SellerImseeh, N'transfer', N'approved', N'Gold', 1, 730, 5.000, N'gram', 24, 730, 720, 10, 0, 730, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|direction=received|from_investor_user_id=', @InvestorImseeh, N'|from_investor_name=Imseeh Investor 1|wallet_asset_id=2'), DATEADD(DAY, -2, DATEADD(MINUTE, 1, @Now)), NULL),
             (@InvestorImseeh, @SellerImseeh, N'gift', N'approved', N'Gold', 1, 725, 5.000, N'gram', 24, 725, 715, 10, 0, 725, N'USD', CONCAT(N'SKU=IMSEEH-PRD-001|execution_mode=live_price|wallet_asset_id=3|recipient_investor_user_id=', @InvestorMain, N'|recipient_investor_name=Gold Wallet Investor'), DATEADD(DAY, -1, @Now), NULL),
