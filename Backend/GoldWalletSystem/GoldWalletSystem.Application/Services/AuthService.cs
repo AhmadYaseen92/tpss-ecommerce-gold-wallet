@@ -230,10 +230,13 @@ public class AuthService(
     private async Task<User> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken)
     {
         var user = await userAuthRepository.GetByEmailAsync(email.Trim(), cancellationToken)
-            ?? throw new UnauthorizedAccessException("Invalid credentials.");
+            ?? throw new UnauthorizedAccessException("User not found.");
 
-        if (!user.IsActive || !passwordHasher.Verify(password, user.PasswordHash))
-            throw new UnauthorizedAccessException("Invalid credentials.");
+        if (!user.IsActive)
+            throw new UnauthorizedAccessException("User is not active.");
+
+        if (!passwordHasher.Verify(password, user.PasswordHash))
+            throw new UnauthorizedAccessException("Credential error.");
 
         await ValidateSellerAccountAsync(user, cancellationToken);
         return user;
@@ -404,36 +407,61 @@ public class AuthService(
         var company = request.CompanyInfo;
         var manager = request.Manager;
 
-        var requiredFields = new[]
+        var missingFields = new List<string>();
+
+        var requiredFields = new (string Name, string? Value)[]
         {
-            company.CompanyName,
-            company.CommercialRegistrationNumber,
-            company.VatNumber,
-            company.BusinessActivity,
-            company.Country,
-            company.City,
-            company.Street,
-            company.BuildingNumber,
-            company.PostalCode,
-            company.CompanyPhone,
-            company.CompanyEmail,
-            manager.FullName,
-            manager.PositionTitle,
-            manager.Nationality,
-            manager.MobileNumber,
-            manager.EmailAddress,
-            manager.IdType,
-            manager.IdNumber
+            ("CompanyInfo.CompanyName", company.CompanyName),
+            ("CompanyInfo.CommercialRegistrationNumber", company.CommercialRegistrationNumber),
+            ("CompanyInfo.VatNumber", company.VatNumber),
+            ("CompanyInfo.BusinessActivity", company.BusinessActivity),
+            ("CompanyInfo.Country", company.Country),
+            ("CompanyInfo.City", company.City),
+            ("CompanyInfo.Street", company.Street),
+            ("CompanyInfo.BuildingNumber", company.BuildingNumber),
+            ("CompanyInfo.PostalCode", company.PostalCode),
+            ("CompanyInfo.CompanyPhone", company.CompanyPhone),
+            ("CompanyInfo.CompanyEmail", company.CompanyEmail),
+            ("Manager.FullName", manager.FullName),
+            ("Manager.PositionTitle", manager.PositionTitle),
+            ("Manager.Nationality", manager.Nationality),
+            ("Manager.MobileNumber", manager.MobileNumber),
+            ("Manager.EmailAddress", manager.EmailAddress),
+            ("Manager.IdType", manager.IdType),
+            ("Manager.IdNumber", manager.IdNumber)
         };
 
-        if (requiredFields.Any(string.IsNullOrWhiteSpace))
-            throw new InvalidOperationException("All required seller registration fields must be provided.");
+        missingFields.AddRange(requiredFields
+            .Where(x => string.IsNullOrWhiteSpace(x.Value))
+            .Select(x => x.Name));
 
-        if (request.Branches.Count == 0 || request.Branches.Any(x => string.IsNullOrWhiteSpace(x.BranchName)))
-            throw new InvalidOperationException("At least one complete branch is required.");
+        if (request.Branches.Count == 0)
+            missingFields.Add("Branches[0]");
+        else
+        {
+            for (var i = 0; i < request.Branches.Count; i++)
+            {
+                var branch = request.Branches[i];
+                if (string.IsNullOrWhiteSpace(branch.BranchName)) missingFields.Add($"Branches[{i}].BranchName");
+                if (string.IsNullOrWhiteSpace(branch.Country)) missingFields.Add($"Branches[{i}].Country");
+                if (string.IsNullOrWhiteSpace(branch.City)) missingFields.Add($"Branches[{i}].City");
+                if (string.IsNullOrWhiteSpace(branch.FullAddress)) missingFields.Add($"Branches[{i}].FullAddress");
+            }
+        }
 
-        if (request.BankAccounts.Count == 0 || request.BankAccounts.Any(x => string.IsNullOrWhiteSpace(x.BankName) || string.IsNullOrWhiteSpace(x.Iban)))
-            throw new InvalidOperationException("At least one complete bank account is required.");
+        if (request.BankAccounts.Count == 0)
+            missingFields.Add("BankAccounts[0]");
+        else
+        {
+            for (var i = 0; i < request.BankAccounts.Count; i++)
+            {
+                var bank = request.BankAccounts[i];
+                if (string.IsNullOrWhiteSpace(bank.BankName)) missingFields.Add($"BankAccounts[{i}].BankName");
+                if (string.IsNullOrWhiteSpace(bank.AccountHolderName)) missingFields.Add($"BankAccounts[{i}].AccountHolderName");
+                if (string.IsNullOrWhiteSpace(bank.AccountNumber)) missingFields.Add($"BankAccounts[{i}].AccountNumber");
+                if (string.IsNullOrWhiteSpace(bank.Iban)) missingFields.Add($"BankAccounts[{i}].Iban");
+            }
+        }
 
         var requiredDocs = new[]
         {
@@ -450,7 +478,10 @@ public class AuthService(
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        if (requiredDocs.Any(x => !providedDocTypes.Contains(x)))
-            throw new InvalidOperationException("Required seller KYC documents are missing.");
+        var missingDocs = requiredDocs.Where(x => !providedDocTypes.Contains(x)).ToList();
+        missingFields.AddRange(missingDocs.Select(x => $"Documents:{x}"));
+
+        if (missingFields.Count > 0)
+            throw new InvalidOperationException($"All required seller registration fields must be provided. Missing: {string.Join(", ", missingFields)}");
     }
 }

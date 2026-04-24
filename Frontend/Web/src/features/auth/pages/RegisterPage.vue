@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, computed } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessageBox } from "element-plus";
 import RegisterForm from "../components/RegisterForm.vue";
 import {
   createEmptyRegisterForm,
@@ -16,15 +16,17 @@ const model = reactive<RegisterFormModel>(createEmptyRegisterForm());
 const loading = computed(() => marketplace.loading.value);
 
 const isEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
+const showModal = (title: string, message: string) =>
+  ElMessageBox.alert(message, title, { confirmButtonText: "OK", type: "warning" });
 
 const onSubmit = async () => {
   if (model.credentials.password !== model.credentials.confirmPassword) {
-    ElMessage.error("Password and confirm password do not match.");
+    await showModal("Validation Error", "Password and confirm password do not match.");
     return;
   }
 
   if (!isEmail(model.companyInfo.email) || !isEmail(model.ownerInfo.email) || !isEmail(model.credentials.loginEmail)) {
-    ElMessage.error("Please enter valid email addresses.");
+    await showModal("Validation Error", "Please enter valid email addresses.");
     return;
   }
 
@@ -33,14 +35,14 @@ const onSubmit = async () => {
   await marketplace.registerSeller(payload);
 
   if (!marketplace.error.value) {
-    ElMessage.success("Registration submitted successfully. Region: Seller Onboarding");
+    await ElMessageBox.alert("Registration submitted successfully.", "Success", { confirmButtonText: "OK", type: "success" });
     emit("toLogin");
   } else {
     console.error("[SellerRegistration] Submit failed", {
       payload,
       error: marketplace.error.value,
     });
-    ElMessage.error(`Registration failed (Seller Onboarding): ${marketplace.error.value}`);
+    await showModal("Registration Failed", marketplace.error.value || "Something went wrong, please contact system Admin.");
   }
 };
 </script>

@@ -18,7 +18,7 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
             await WriteError(
                 context,
                 HttpStatusCode.Unauthorized,
-                userMessage: "You are not authorized to perform this action.",
+                userMessage: string.IsNullOrWhiteSpace(ex.Message) ? "You are not authorized to perform this action." : ex.Message,
                 errorCode: "AUTH_UNAUTHORIZED",
                 technicalMessage: ex.Message);
         }
