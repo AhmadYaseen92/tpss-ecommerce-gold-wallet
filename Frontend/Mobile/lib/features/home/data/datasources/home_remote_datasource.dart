@@ -43,6 +43,7 @@ class HomeRemoteDataSource {
             );
           })
           .where((item) => item.imgUrl.trim().isNotEmpty)
+          .where((item) => (item.offerLabel ?? '').trim().isNotEmpty)
           .toList();
 
       return mapped;
