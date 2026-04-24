@@ -74,6 +74,14 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
     return null;
   }
 
+  List<WalletActionPreviewFeeLine> get feeBreakdowns {
+    final current = state;
+    if (current is SellAssetActionUpdated) {
+      return current.preview?.feeBreakdowns ?? const <WalletActionPreviewFeeLine>[];
+    }
+    return const <WalletActionPreviewFeeLine>[];
+  }
+
   String formatCurrency(double value) => NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(value);
 
   String? validateQuantity(String? value) {

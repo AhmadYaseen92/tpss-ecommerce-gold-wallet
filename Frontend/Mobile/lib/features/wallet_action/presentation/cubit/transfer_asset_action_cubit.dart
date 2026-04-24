@@ -49,6 +49,8 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
   bool get isGift => transferType == WalletActionType.gift;
   double get grossAmount => unitPrice * quantity;
   WalletActionPreviewResult? _preview;
+  List<WalletActionPreviewFeeLine> get feeBreakdowns =>
+      _preview?.feeBreakdowns ?? const <WalletActionPreviewFeeLine>[];
   double get feeAmount => (_preview?.totalFeesAmount ?? 0) - (_preview?.discountAmount ?? 0);
   double get estimatedValue => _preview?.finalAmount ?? 0;
 

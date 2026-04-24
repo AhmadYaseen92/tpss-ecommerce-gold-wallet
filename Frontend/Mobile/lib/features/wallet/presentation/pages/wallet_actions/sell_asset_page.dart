@@ -139,6 +139,15 @@ class SellAssetPage extends StatelessWidget {
                       grossAmount: cubit.calculatedResult == null
                           ? '-'
                           : cubit.formatCurrency(cubit.calculatedResult!.grossAmount),
+                      detailedFeeLines: cubit.feeBreakdowns
+                          .map(
+                            (line) => FeeSummaryLine(
+                              label: line.feeName,
+                              value:
+                                  '${line.isDiscount ? '-' : ''}${cubit.formatCurrency(line.appliedValue)}',
+                            ),
+                          )
+                          .toList(),
                       feeAmount: cubit.calculatedResult == null
                           ? '-'
                           : cubit.formatCurrency(cubit.calculatedResult!.feeAmount),
