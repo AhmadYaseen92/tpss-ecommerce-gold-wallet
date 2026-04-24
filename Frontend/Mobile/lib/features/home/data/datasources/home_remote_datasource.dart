@@ -23,6 +23,7 @@ class HomeRemoteDataSource {
       final mapped = items
           .whereType<Map<String, dynamic>>()
           .map((item) {
+            final isHasOffer = _asBool(item['isHasOffer'] ?? item['IsHasOffer']);
             final offerPercent = (item['offerPercent'] as num?)?.toDouble() ?? 0;
             final offerType = (item['offerType'] ?? '').toString();
             final sellPrice = (item['sellPrice'] as num?)?.toDouble() ?? 0;
@@ -39,7 +40,12 @@ class HomeRemoteDataSource {
               pricingModeLabel: pricingMode.contains('auto') ? 'Auto Price' : 'Manual Price',
               sourcePrice: sourcePrice,
               sellPrice: sellPrice,
-              offerLabel: _offerLabel(offerPercent: offerPercent, offerType: offerType, sellPrice: sellPrice),
+              offerLabel: _offerLabel(
+                isHasOffer: isHasOffer,
+                offerPercent: offerPercent,
+                offerType: offerType,
+                sellPrice: sellPrice,
+              ),
             );
           })
           .where((item) => item.imgUrl.trim().isNotEmpty)
@@ -52,11 +58,28 @@ class HomeRemoteDataSource {
     }
   }
 
+
+  bool _asBool(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+
+    final normalized = (value ?? '').toString().trim().toLowerCase();
+    return normalized == 'true' || normalized == '1' || normalized == 'yes';
+  }
+
   String? _offerLabel({
+    required bool isHasOffer,
     required double offerPercent,
     required String offerType,
     required double sellPrice,
   }) {
+    if (!isHasOffer) {
+      return null;
+    }
     if (offerType.toLowerCase().contains('percent') && offerPercent > 0) {
       return '${offerPercent.toStringAsFixed(0)}% OFF';
     }
