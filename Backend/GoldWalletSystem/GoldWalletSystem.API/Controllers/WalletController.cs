@@ -366,13 +366,16 @@ public class WalletController(
                 ClosePrice: unitPrice,
                 DaysHeldAfterGrace: 0),
             cancellationToken);
+        var resolvedFinalAmount = actionType == "sell"
+            ? Math.Max(0, feeResult.SubTotalAmount - feeResult.TotalFeesAmount + feeResult.DiscountAmount)
+            : feeResult.FinalAmount;
 
         return Ok(ApiResponse<object>.Ok(new
         {
             subTotalAmount = feeResult.SubTotalAmount,
             totalFeesAmount = feeResult.TotalFeesAmount,
             discountAmount = feeResult.DiscountAmount,
-            finalAmount = feeResult.FinalAmount,
+            finalAmount = resolvedFinalAmount,
             currency = feeResult.Currency,
             feeBreakdowns = feeResult.Lines
         }));
@@ -451,6 +454,9 @@ public class WalletController(
                 ClosePrice: unitPrice,
                 DaysHeldAfterGrace: 0),
             cancellationToken);
+        var resolvedFinalAmount = actionType == "sell"
+            ? Math.Max(0, feeResult.SubTotalAmount - feeResult.TotalFeesAmount + feeResult.DiscountAmount)
+            : feeResult.FinalAmount;
 
         var sellConfig = await ReadSellExecutionConfigurationAsync(cancellationToken);
         var executionMode = sellConfig.Mode;
@@ -528,11 +534,11 @@ public class WalletController(
                 Weight = requestedWeight,
                 Unit = asset.Unit,
                 Purity = asset.Purity,
-                Amount = feeResult.FinalAmount,
+                Amount = resolvedFinalAmount,
                 SubTotalAmount = feeResult.SubTotalAmount,
                 TotalFeesAmount = feeResult.TotalFeesAmount,
                 DiscountAmount = feeResult.DiscountAmount,
-                FinalAmount = feeResult.FinalAmount,
+                FinalAmount = resolvedFinalAmount,
                 Currency = recipientWallet.CurrencyCode,
                 Notes = $"direction=received|from_investor_user_id={request.UserId}|from_investor_name={senderName}|{BuildNotes(request, executionMode)}",
                 CreatedAtUtc = DateTime.UtcNow
@@ -550,7 +556,7 @@ public class WalletController(
 
         if (!shouldRequireSellerApproval && actionType is "sell")
         {
-            wallet.CashBalance += feeResult.FinalAmount;
+            wallet.CashBalance += resolvedFinalAmount;
         }
 
         wallet.UpdatedAtUtc = DateTime.UtcNow;
@@ -568,11 +574,11 @@ public class WalletController(
             Weight = requestedWeight,
             Unit = asset.Unit,
             Purity = asset.Purity,
-            Amount = feeResult.FinalAmount,
+            Amount = resolvedFinalAmount,
             SubTotalAmount = feeResult.SubTotalAmount,
             TotalFeesAmount = feeResult.TotalFeesAmount,
             DiscountAmount = feeResult.DiscountAmount,
-            FinalAmount = feeResult.FinalAmount,
+            FinalAmount = resolvedFinalAmount,
             Currency = wallet.CurrencyCode,
             Notes = BuildNotes(request, executionMode, recipientInvestorName),
             CreatedAtUtc = DateTime.UtcNow
@@ -603,7 +609,7 @@ public class WalletController(
                 FeesAmount = feeResult.TotalFeesAmount,
                 DiscountAmount = feeResult.DiscountAmount,
                 TaxAmount = 0,
-                TotalAmount = feeResult.FinalAmount,
+                TotalAmount = resolvedFinalAmount,
                 Currency = wallet.CurrencyCode,
                 PaymentMethod = actionType is "sell" ? "WalletCredit" : "N/A",
                 PaymentStatus = actionType is "sell" ? "Paid" : "Pending",
@@ -811,7 +817,7 @@ public class WalletController(
             SubTotalAmount = feeResult.SubTotalAmount,
             TotalFeesAmount = feeResult.TotalFeesAmount,
             DiscountAmount = feeResult.DiscountAmount,
-            FinalAmount = feeResult.FinalAmount,
+            FinalAmount = resolvedFinalAmount,
             Currency = feeResult.Currency,
             FeeBreakdowns = feeResult.Lines
         }));
