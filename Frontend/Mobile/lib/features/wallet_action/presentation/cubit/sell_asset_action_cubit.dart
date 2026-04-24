@@ -44,7 +44,13 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
 
   int get maxQuantity => initialAsset.asset.quantity;
 
-  double get unitPrice => _parseCurrency(initialAsset.asset.marketValue) / maxQuantity;
+  double get _grossBaseAmount {
+    if (initialAsset.asset.investmentValue > 0) return initialAsset.asset.investmentValue;
+    final fromDisplay = _parseCurrency(initialAsset.asset.displayValue);
+    if (fromDisplay > 0) return fromDisplay;
+    return _parseCurrency(initialAsset.asset.marketValue);
+  }
+  double get unitPrice => maxQuantity == 0 ? 0 : _grossBaseAmount / maxQuantity;
 
   int get quantity {
     final parsed = int.tryParse(quantityController.text.trim()) ?? 1;
