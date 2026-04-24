@@ -3,7 +3,7 @@
 ## Structure
 - `Frontend/Mobile`: Flutter mobile application (current app code).
 - `Frontend/Web`: Reserved for future web frontend.
-- `Backend`: Reserved for future backend services/APIs.
+- `Backend`: .NET backend services/APIs (`GoldWalletSystem`) with migration and integration docs.
 
 ## Important
 Run Flutter commands from `Frontend/Mobile` (not repository root):
