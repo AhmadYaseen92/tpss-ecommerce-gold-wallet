@@ -122,7 +122,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                         ),
                         ...widget.summary.summary.feeBreakdowns.map(
                           (line) => ReadonlyInfoRow(
-                            label: _displayFeeLabel(line.feeName, isDiscount: line.isDiscount),
+                            label: line.feeName,
                             value:
                                 '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: widget.summary.summary.currency)}',
                           ),
@@ -493,12 +493,6 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
 
   void _showCommonError() {
     _showErrorModal('Action Failed', 'Something went wrong. Please try again.');
-  }
-
-  String _displayFeeLabel(String feeName, {required bool isDiscount}) {
-    if (!isDiscount) return feeName;
-    if (feeName.toLowerCase().contains('premium')) return 'Premium';
-    return 'Discount';
   }
 
   void _showErrorModal(String title, String message) {

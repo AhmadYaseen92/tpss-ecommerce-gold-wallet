@@ -81,7 +81,7 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
                   ),
                   ...widget.summary.summary.feeBreakdowns.map(
                     (line) => ReadonlyInfoRow(
-                      label: _displayFeeLabel(line.feeName, isDiscount: line.isDiscount),
+                      label: line.feeName,
                       value:
                           '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: widget.summary.summary.currency)}',
                     ),
@@ -114,11 +114,5 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
         ),
       ),
     );
-  }
-
-  String _displayFeeLabel(String feeName, {required bool isDiscount}) {
-    if (!isDiscount) return feeName;
-    if (feeName.toLowerCase().contains('premium')) return 'Premium';
-    return 'Discount';
   }
 }

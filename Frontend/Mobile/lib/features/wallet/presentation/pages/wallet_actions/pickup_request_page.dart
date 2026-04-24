@@ -122,7 +122,7 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
               children: [
                 ...?_preview?.feeBreakdowns.map(
                   (line) => _FeeRow(
-                    _displayFeeLabel(line.feeName, isDiscount: line.isDiscount),
+                    line.feeName,
                     '${line.isDiscount ? '-' : ''}\$${line.appliedValue.toStringAsFixed(2)}',
                   ),
                 ),
@@ -225,11 +225,6 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
     );
   }
 
-  String _displayFeeLabel(String feeName, {required bool isDiscount}) {
-    if (!isDiscount) return feeName;
-    if (feeName.toLowerCase().contains('premium')) return 'Premium';
-    return 'Discount';
-  }
 }
 
 class _PickerTile extends StatelessWidget {
