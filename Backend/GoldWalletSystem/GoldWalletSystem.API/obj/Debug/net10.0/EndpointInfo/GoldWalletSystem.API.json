@@ -192,6 +192,75 @@
         }
       }
     },
+    "/api/auth/refresh-token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfLoginResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfLoginResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfLoginResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfObject"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfObject"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseOfObject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/register/verify-otp": {
       "post": {
         "tags": [
@@ -442,6 +511,46 @@
         "tags": [
           "Auth"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LogoutRequestDto"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LogoutRequestDto"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LogoutRequestDto"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -754,6 +863,220 @@
         }
       }
     },
+    "/api/fees/system": {
+      "get": {
+        "tags": [
+          "FeeManagement"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FeeManagement"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertSystemFeeTypeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertSystemFeeTypeRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertSystemFeeTypeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/fees/service-fee": {
+      "get": {
+        "tags": [
+          "FeeManagement"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FeeManagement"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminServiceFeeSettingsDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminServiceFeeSettingsDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminServiceFeeSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/fees/seller/tabs": {
+      "get": {
+        "tags": [
+          "FeeManagement"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/fees/seller/products/{feeCode}": {
+      "get": {
+        "tags": [
+          "FeeManagement"
+        ],
+        "parameters": [
+          {
+            "name": "feeCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/fees/seller/products": {
+      "put": {
+        "tags": [
+          "FeeManagement"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerProductFeeUpsertRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerProductFeeUpsertRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerProductFeeUpsertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/fees/seller/products/bulk": {
+      "put": {
+        "tags": [
+          "FeeManagement"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerProductFeeBulkRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerProductFeeBulkRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SellerProductFeeBulkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/fees/calculate": {
+      "post": {
+        "tags": [
+          "FeeManagement"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeeCalculationRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeeCalculationRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeeCalculationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/invoices/search": {
       "post": {
         "tags": [
@@ -926,7 +1249,51 @@
         }
       }
     },
-    "/api/notifications/read": {
+    "/api/notifications/my/search": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagedRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/my/unread-count": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/my/read": {
       "put": {
         "tags": [
           "Notifications"
@@ -946,6 +1313,82 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/MarkNotificationReadRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/my/read-all": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/my/push-tokens/register": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPushTokenRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPushTokenRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterPushTokenRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/my/push-tokens/unregister": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnregisterPushTokenRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnregisterPushTokenRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnregisterPushTokenRequestDto"
               }
             }
           },
@@ -1153,31 +1596,7 @@
                   "WeightUnit": {
                     "$ref": "#/components/schemas/ProductWeightUnit"
                   },
-                  "ManualSellPrice": {
-                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-                    "type": [
-                      "number",
-                      "string"
-                    ],
-                    "format": "double"
-                  },
-                  "DeliveryFee": {
-                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-                    "type": [
-                      "number",
-                      "string"
-                    ],
-                    "format": "double"
-                  },
-                  "StorageFee": {
-                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-                    "type": [
-                      "number",
-                      "string"
-                    ],
-                    "format": "double"
-                  },
-                  "ServiceCharge": {
+                  "FixedPrice": {
                     "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
                     "type": [
                       "number",
@@ -1327,31 +1746,7 @@
                   "WeightUnit": {
                     "$ref": "#/components/schemas/ProductWeightUnit"
                   },
-                  "ManualSellPrice": {
-                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-                    "type": [
-                      "number",
-                      "string"
-                    ],
-                    "format": "double"
-                  },
-                  "DeliveryFee": {
-                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-                    "type": [
-                      "number",
-                      "string"
-                    ],
-                    "format": "double"
-                  },
-                  "StorageFee": {
-                    "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-                    "type": [
-                      "number",
-                      "string"
-                    ],
-                    "format": "double"
-                  },
-                  "ServiceCharge": {
+                  "FixedPrice": {
                     "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
                     "type": [
                       "number",
@@ -2028,6 +2423,38 @@
         }
       }
     },
+    "/api/wallet/actions/preview": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteWalletActionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteWalletActionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteWalletActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/wallet/actions/execute": {
       "post": {
         "tags": [
@@ -2140,6 +2567,60 @@
       "get": {
         "tags": [
           "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/sellers/{id}": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/sellers/{id}/documents/{documentId}/view": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -2563,6 +3044,18 @@
           }
         }
       }
+    },
+    "/api/web-admin/notifications/read-all": {
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2593,6 +3086,50 @@
               "string"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "AdminServiceFeeSettingsDto": {
+        "type": "object",
+        "properties": {
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "calculationMode": {
+            "type": "string"
+          },
+          "ratePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "fixedAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "appliesToBuy": {
+            "type": "boolean"
+          },
+          "appliesToSell": {
+            "type": "boolean"
+          },
+          "appliesToPickup": {
+            "type": "boolean"
+          },
+          "appliesToTransfer": {
+            "type": "boolean"
+          },
+          "appliesToGift": {
+            "type": "boolean"
           }
         }
       },
@@ -3149,6 +3686,32 @@
             ],
             "format": "int32"
           },
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "productIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "fromCart": {
+            "type": "boolean"
+          },
           "actionType": {
             "type": "string"
           },
@@ -3214,6 +3777,73 @@
           }
         }
       },
+      "FeeCalculationRequest": {
+        "required": [
+          "actionType",
+          "productId",
+          "sellerId",
+          "notionalAmount",
+          "quantity",
+          "closePrice",
+          "daysHeldAfterGrace"
+        ],
+        "type": "object",
+        "properties": {
+          "actionType": {
+            "type": "string"
+          },
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "sellerId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "notionalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "closePrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "daysHeldAfterGrace": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "IFormFile": {
         "type": "string",
         "format": "binary"
@@ -3234,6 +3864,8 @@
         "required": [
           "accessToken",
           "expiresAtUtc",
+          "refreshToken",
+          "refreshTokenExpiresAtUtc",
           "userId",
           "fullName",
           "role"
@@ -3244,6 +3876,13 @@
             "type": "string"
           },
           "expiresAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "refreshTokenExpiresAtUtc": {
             "type": "string",
             "format": "date-time"
           },
@@ -3271,6 +3910,17 @@
             "format": "int32"
           },
           "sellerName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LogoutRequestDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
             "type": [
               "null",
               "string"
@@ -3313,6 +3963,7 @@
           "userId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
+              "null",
               "integer",
               "string"
             ],
@@ -3327,6 +3978,9 @@
             "format": "int32"
           }
         }
+      },
+      "NotificationPlatform": {
+        "type": "integer"
       },
       "OtpDispatchResponseDto": {
         "required": [
@@ -3447,6 +4101,31 @@
       "ProductWeightUnit": {
         "type": "integer"
       },
+      "RefreshTokenRequestDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        }
+      },
+      "RegisterPushTokenRequestDto": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "$ref": "#/components/schemas/NotificationPlatform"
+          },
+          "deviceToken": {
+            "type": "string"
+          },
+          "deviceName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RegisterRequestDto": {
         "type": "object",
         "properties": {
@@ -3499,53 +4178,29 @@
           "role": {
             "type": "string"
           },
-          "sellerCode": {
-            "type": "string"
+          "companyInfo": {
+            "$ref": "#/components/schemas/SellerCompanyInfoDto"
           },
-          "country": {
-            "type": "string"
+          "manager": {
+            "$ref": "#/components/schemas/SellerManagerDto"
           },
-          "city": {
-            "type": "string"
+          "branches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SellerBranchDto"
+            }
           },
-          "street": {
-            "type": "string"
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SellerBankAccountDto"
+            }
           },
-          "buildingNumber": {
-            "type": "string"
-          },
-          "postalCode": {
-            "type": "string"
-          },
-          "companyName": {
-            "type": "string"
-          },
-          "tradeLicenseNumber": {
-            "type": "string"
-          },
-          "vatNumber": {
-            "type": "string"
-          },
-          "nationalIdNumber": {
-            "type": "string"
-          },
-          "bankName": {
-            "type": "string"
-          },
-          "iban": {
-            "type": "string"
-          },
-          "accountHolderName": {
-            "type": "string"
-          },
-          "nationalIdFrontPath": {
-            "type": "string"
-          },
-          "nationalIdBackPath": {
-            "type": "string"
-          },
-          "tradeLicensePath": {
-            "type": "string"
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SellerDocumentUploadDto"
+            }
           }
         }
       },
@@ -3716,6 +4371,332 @@
           }
         }
       },
+      "SellerBankAccountDto": {
+        "type": "object",
+        "properties": {
+          "bankName": {
+            "type": "string"
+          },
+          "accountHolderName": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "iban": {
+            "type": "string"
+          },
+          "swiftCode": {
+            "type": "string"
+          },
+          "bankCountry": {
+            "type": "string"
+          },
+          "bankCity": {
+            "type": "string"
+          },
+          "branchName": {
+            "type": "string"
+          },
+          "branchAddress": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "isMainAccount": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SellerBranchDto": {
+        "type": "object",
+        "properties": {
+          "branchName": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "fullAddress": {
+            "type": "string"
+          },
+          "buildingNumber": {
+            "type": "string"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "isMainBranch": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SellerCompanyInfoDto": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string"
+          },
+          "companyCode": {
+            "type": "string"
+          },
+          "commercialRegistrationNumber": {
+            "type": "string"
+          },
+          "vatNumber": {
+            "type": "string"
+          },
+          "businessActivity": {
+            "type": "string"
+          },
+          "establishedDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "country": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "street": {
+            "type": "string"
+          },
+          "buildingNumber": {
+            "type": "string"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "companyPhone": {
+            "type": "string"
+          },
+          "companyEmail": {
+            "type": "string"
+          },
+          "website": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SellerDocumentUploadDto": {
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "filePath": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "relatedEntityType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "relatedEntityId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "SellerManagerDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "positionTitle": {
+            "type": "string"
+          },
+          "nationality": {
+            "type": "string"
+          },
+          "mobileNumber": {
+            "type": "string"
+          },
+          "emailAddress": {
+            "type": "string"
+          },
+          "idType": {
+            "type": "string"
+          },
+          "idNumber": {
+            "type": "string"
+          },
+          "idExpiryDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "SellerProductFeeBulkRequest": {
+        "type": "object",
+        "properties": {
+          "feeCode": {
+            "type": "string"
+          },
+          "applyToAll": {
+            "type": "boolean"
+          },
+          "productIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "template": {
+            "$ref": "#/components/schemas/SellerProductFeeUpsertRequest"
+          }
+        }
+      },
+      "SellerProductFeeUpsertRequest": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "feeCode": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "calculationMode": {
+            "type": "string"
+          },
+          "ratePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "minimumAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "flatAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "premiumDiscountType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "valuePerUnit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "feePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "gracePeriodDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "fixedAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "feePerUnit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "isOverride": {
+            "type": "boolean"
+          }
+        }
+      },
       "TransactionHistoryFilterRequestDto": {
         "type": "object",
         "properties": {
@@ -3783,6 +4764,17 @@
               "string"
             ],
             "format": "date-time"
+          }
+        }
+      },
+      "UnregisterPushTokenRequestDto": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "$ref": "#/components/schemas/NotificationPlatform"
+          },
+          "deviceToken": {
+            "type": "string"
           }
         }
       },
@@ -4170,6 +5162,55 @@
           }
         }
       },
+      "UpsertSystemFeeTypeRequest": {
+        "type": "object",
+        "properties": {
+          "feeCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "appliesToBuy": {
+            "type": "boolean"
+          },
+          "appliesToSell": {
+            "type": "boolean"
+          },
+          "appliesToPickup": {
+            "type": "boolean"
+          },
+          "appliesToTransfer": {
+            "type": "boolean"
+          },
+          "appliesToGift": {
+            "type": "boolean"
+          },
+          "appliesToInvoice": {
+            "type": "boolean"
+          },
+          "appliesToReports": {
+            "type": "boolean"
+          },
+          "isAdminManaged": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "UserPagedRequestDto": {
         "type": "object",
         "properties": {
@@ -4430,6 +5471,9 @@
     },
     {
       "name": "Dashboard"
+    },
+    {
+      "name": "FeeManagement"
     },
     {
       "name": "Invoices"

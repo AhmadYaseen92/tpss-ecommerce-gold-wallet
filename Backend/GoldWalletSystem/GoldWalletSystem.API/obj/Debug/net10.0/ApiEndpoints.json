@@ -103,7 +103,13 @@
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Auth.LogoutRequestDto",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": [
       {
         "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
@@ -185,6 +191,41 @@
           "text/json"
         ],
         "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.AuthController",
+    "Method": "RefreshToken",
+    "RelativePath": "api/auth/refresh-token",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Auth.RefreshTokenRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[GoldWalletSystem.Application.DTOs.Auth.LoginResponseDto, GoldWalletSystem.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "GoldWalletSystem.Application.DTOs.Common.ApiResponse\u00601[[System.Object, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 401
       }
     ]
   },
@@ -399,6 +440,132 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "GoldWalletSystem.API.Controllers.FeeManagementController",
+    "Method": "Calculate",
+    "RelativePath": "api/fees/calculate",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Fees.FeeCalculationRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.FeeManagementController",
+    "Method": "UpsertSellerProductFee",
+    "RelativePath": "api/fees/seller/products",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Fees.SellerProductFeeUpsertRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.FeeManagementController",
+    "Method": "GetSellerProductFees",
+    "RelativePath": "api/fees/seller/products/{feeCode}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "feeCode",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.FeeManagementController",
+    "Method": "BulkUpsertSellerProductFee",
+    "RelativePath": "api/fees/seller/products/bulk",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Fees.SellerProductFeeBulkRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.FeeManagementController",
+    "Method": "GetSellerTabs",
+    "RelativePath": "api/fees/seller/tabs",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.FeeManagementController",
+    "Method": "GetServiceFee",
+    "RelativePath": "api/fees/service-fee",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.FeeManagementController",
+    "Method": "UpsertServiceFee",
+    "RelativePath": "api/fees/service-fee",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Fees.AdminServiceFeeSettingsDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.FeeManagementController",
+    "Method": "GetSystemFeeTypes",
+    "RelativePath": "api/fees/system",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.FeeManagementController",
+    "Method": "UpsertSystemFeeType",
+    "RelativePath": "api/fees/system",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Fees.UpsertSystemFeeTypeRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "GoldWalletSystem.API.Controllers.InvoicesController",
     "Method": "Create",
     "RelativePath": "api/invoices/create",
@@ -474,8 +641,40 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.NotificationsController",
+    "Method": "RegisterPushToken",
+    "RelativePath": "api/notifications/my/push-tokens/register",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Notifications.RegisterPushTokenRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.NotificationsController",
+    "Method": "UnregisterPushToken",
+    "RelativePath": "api/notifications/my/push-tokens/unregister",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Notifications.UnregisterPushTokenRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.NotificationsController",
     "Method": "MarkAsRead",
-    "RelativePath": "api/notifications/read",
+    "RelativePath": "api/notifications/my/read",
     "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
@@ -490,7 +689,43 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.NotificationsController",
+    "Method": "MarkAllAsRead",
+    "RelativePath": "api/notifications/my/read-all",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.NotificationsController",
     "Method": "Search",
+    "RelativePath": "api/notifications/my/search",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Common.PagedRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.NotificationsController",
+    "Method": "GetUnreadCount",
+    "RelativePath": "api/notifications/my/unread-count",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.NotificationsController",
+    "Method": "SearchLegacy",
     "RelativePath": "api/notifications/search",
     "HttpMethod": "POST",
     "IsController": true,
@@ -651,22 +886,7 @@
         "IsRequired": false
       },
       {
-        "Name": "ManualSellPrice",
-        "Type": "System.Decimal",
-        "IsRequired": false
-      },
-      {
-        "Name": "DeliveryFee",
-        "Type": "System.Decimal",
-        "IsRequired": false
-      },
-      {
-        "Name": "StorageFee",
-        "Type": "System.Decimal",
-        "IsRequired": false
-      },
-      {
-        "Name": "ServiceCharge",
+        "Name": "FixedPrice",
         "Type": "System.Decimal",
         "IsRequired": false
       },
@@ -793,22 +1013,7 @@
         "IsRequired": false
       },
       {
-        "Name": "ManualSellPrice",
-        "Type": "System.Decimal",
-        "IsRequired": false
-      },
-      {
-        "Name": "DeliveryFee",
-        "Type": "System.Decimal",
-        "IsRequired": false
-      },
-      {
-        "Name": "StorageFee",
-        "Type": "System.Decimal",
-        "IsRequired": false
-      },
-      {
-        "Name": "ServiceCharge",
+        "Name": "FixedPrice",
         "Type": "System.Decimal",
         "IsRequired": false
       },
@@ -1173,6 +1378,22 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
+    "Method": "PreviewWalletAction",
+    "RelativePath": "api/wallet/actions/preview",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.API.Controllers.WalletController\u002BExecuteWalletActionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WalletController",
     "Method": "CreateWalletActionRequest",
     "RelativePath": "api/wallet/actions/request",
     "HttpMethod": "POST",
@@ -1425,6 +1646,16 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "MarkAllNotificationsAsRead",
+    "RelativePath": "api/web-admin/notifications/read-all",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
     "Method": "GetRequests",
     "RelativePath": "api/web-admin/requests",
     "HttpMethod": "GET",
@@ -1478,6 +1709,43 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "GetSellerDetails",
+    "RelativePath": "api/web-admin/sellers/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "ViewSellerDocument",
+    "RelativePath": "api/web-admin/sellers/{id}/documents/{documentId}/view",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "documentId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {

@@ -951,6 +951,44 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.ToTable("Products", (string)null);
                 });
 
+            modelBuilder.Entity("GoldWalletSystem.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("RevokedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ExpiresAtUtc");
+
+                    b.ToTable("RefreshTokens", (string)null);
+                });
+
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.Seller", b =>
                 {
                     b.Property<int>("Id")
@@ -1920,9 +1958,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AssetType")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("AcquisitionDiscountAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -1938,6 +1973,9 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<decimal>("AcquisitionSubTotalAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("AssetType")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("AverageBuyPrice")
                         .HasPrecision(18, 2)
@@ -1982,6 +2020,10 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<decimal>("Purity")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<string>("PurityDisplayName")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -1989,10 +2031,6 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                     b.Property<string>("PurityKarat")
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
-
-                    b.Property<decimal>("Purity")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -2271,6 +2309,17 @@ namespace GoldWalletSystem.Infrastructure.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("Seller");
+                });
+
+            modelBuilder.Entity("GoldWalletSystem.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("GoldWalletSystem.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("GoldWalletSystem.Domain.Entities.Seller", b =>
