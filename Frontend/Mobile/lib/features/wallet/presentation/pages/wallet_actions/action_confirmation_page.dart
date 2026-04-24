@@ -366,18 +366,19 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
   }) async {
     final requestedQuantity = int.tryParse(widget.summary.primaryValue.split(' ').first) ?? 1;
     final safeQuantity = requestedQuantity.clamp(1, widget.summary.asset.quantity).toInt();
-    final perUnitWeight =
-        widget.summary.asset.quantity == 0 ? 0.0 : widget.summary.asset.weightInGrams / widget.summary.asset.quantity;
+    final perUnitWeight = widget.summary.asset.quantity == 0
+        ? 0.0
+        : widget.summary.asset.weightInGrams / widget.summary.asset.quantity;
     final requestedWeight = perUnitWeight * safeQuantity.toDouble();
-    final unitPricePerGram = widget.summary.asset.marketPricePerGram;
-    final requestedAmount = unitPricePerGram * requestedWeight;
+    final unitPrice = widget.summary.asset.actionUnitPrice;
+    final requestedAmount = unitPrice * safeQuantity;
 
     await _walletActionRepository.executeWalletAction(
       WalletActionExecutionRequest(
         walletAssetId: widget.summary.asset.id,
         actionType: widget.summary.actionType,
         quantity: safeQuantity,
-        unitPrice: unitPricePerGram,
+        unitPrice: unitPrice,
         weight: requestedWeight,
         amount: requestedAmount,
         recipientInvestorUserId: widget.summary.recipientInvestorUserId,

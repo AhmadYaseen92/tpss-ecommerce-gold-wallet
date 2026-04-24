@@ -143,6 +143,18 @@ class WalletTransactionEntity {
     return marketValueAmount / weightInGrams;
   }
 
+  double get actionBaseAmount {
+    if (investmentValue > 0) return investmentValue;
+    final fromDisplay = _parseCurrency(displayValue);
+    if (fromDisplay > 0) return fromDisplay;
+    return marketValueAmount;
+  }
+
+  double get actionUnitPrice {
+    if (quantity <= 0) return 0;
+    return actionBaseAmount / quantity;
+  }
+
   WalletTransactionEntity copyWith({
     int? id,
     String? name,

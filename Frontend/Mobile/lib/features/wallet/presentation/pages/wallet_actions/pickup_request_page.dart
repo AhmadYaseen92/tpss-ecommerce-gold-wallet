@@ -35,8 +35,8 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
   Future<void> _loadPreview() async {
     try {
       final quantity = 1;
-      final unitPrice = widget.asset.marketPricePerGram;
-      final amount = unitPrice * widget.asset.weightInGrams;
+      final unitPrice = widget.asset.actionUnitPrice;
+      final amount = unitPrice * quantity;
       final response = await _dio.post(
         '/wallet/actions/preview',
         data: {

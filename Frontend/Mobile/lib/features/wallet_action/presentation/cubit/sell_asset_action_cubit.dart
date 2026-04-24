@@ -44,13 +44,7 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
 
   int get maxQuantity => initialAsset.asset.quantity;
 
-  double get _grossBaseAmount {
-    if (initialAsset.asset.investmentValue > 0) return initialAsset.asset.investmentValue;
-    final fromDisplay = _parseCurrency(initialAsset.asset.displayValue);
-    if (fromDisplay > 0) return fromDisplay;
-    return _parseCurrency(initialAsset.asset.marketValue);
-  }
-  double get unitPrice => maxQuantity == 0 ? 0 : _grossBaseAmount / maxQuantity;
+  double get unitPrice => initialAsset.asset.actionUnitPrice;
 
   int get quantity {
     final parsed = int.tryParse(quantityController.text.trim()) ?? 1;
@@ -232,11 +226,6 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
 
   bool _isPlaceholderSelection(PredefinedAccount account) =>
       account.id.endsWith('_none');
-
-  double _parseCurrency(String raw) {
-    final clean = raw.replaceAll(RegExp(r'[^0-9.]'), '');
-    return double.tryParse(clean) ?? 0;
-  }
 
   @override
   Future<void> close() {

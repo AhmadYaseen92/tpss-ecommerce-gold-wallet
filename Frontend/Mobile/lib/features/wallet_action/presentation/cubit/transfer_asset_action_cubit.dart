@@ -34,10 +34,7 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
   int? recipientInvestorUserId;
 
   int get maxQuantity => asset.quantity;
-  double get _grossBaseAmount => asset.investmentValue > 0
-      ? asset.investmentValue
-      : _parseCurrency(asset.displayValue);
-  double get unitPrice => maxQuantity == 0 ? 0 : _grossBaseAmount / maxQuantity;
+  double get unitPrice => asset.actionUnitPrice;
 
   int get quantity {
     final parsed = int.tryParse(quantityController.text.trim()) ?? 1;
@@ -127,11 +124,6 @@ class TransferAssetActionCubit extends Cubit<TransferAssetActionState> {
       createdAt: DateTime.now(),
       isPending: true,
     );
-  }
-
-  double _parseCurrency(String raw) {
-    final clean = raw.replaceAll(RegExp(r'[^0-9.]'), '');
-    return double.tryParse(clean) ?? 0;
   }
 
   Future<void> _emitUpdated() async {

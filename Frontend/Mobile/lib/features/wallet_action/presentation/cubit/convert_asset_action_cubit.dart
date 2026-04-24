@@ -34,7 +34,7 @@ class ConvertAssetActionCubit extends Cubit<ConvertAssetActionState> {
   List<String> cashDestinations = <String>['Wallet Cash', 'Bank Account'];
 
   int get maxQuantity => asset.quantity;
-  double get unitPrice => _parseCurrency(asset.marketValue) / maxQuantity;
+  double get unitPrice => asset.actionUnitPrice;
 
   int get quantity {
     final parsed = int.tryParse(quantityController.text.trim()) ?? 1;
@@ -113,11 +113,6 @@ class ConvertAssetActionCubit extends Cubit<ConvertAssetActionState> {
       createdAt: DateTime.now(),
       isPending: true,
     );
-  }
-
-  double _parseCurrency(String raw) {
-    final clean = raw.replaceAll(RegExp(r'[^0-9.]'), '');
-    return double.tryParse(clean) ?? 0;
   }
 
   Future<void> _loadProfileCashDestinations() async {
