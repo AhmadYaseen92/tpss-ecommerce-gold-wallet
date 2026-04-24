@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/utils/server_url_resolver.dart';
 
 class WalletRemoteDataSource {
   WalletRemoteDataSource(this._dio);
@@ -173,6 +174,7 @@ class WalletAssetRemoteModel {
   final String? statusDetails;
 
   factory WalletAssetRemoteModel.fromJson(Map<String, dynamic> json) {
+    final resolvedProductImageUrl = resolveServerUrl((json['productImageUrl'] ?? '').toString());
     return WalletAssetRemoteModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       assetType: (json['assetType'] ?? '').toString(),
@@ -190,9 +192,9 @@ class WalletAssetRemoteModel {
       averageBuyPrice: (json['averageBuyPrice'] as num?)?.toDouble() ?? 0,
       currentMarketPrice: (json['currentMarketPrice'] as num?)?.toDouble() ?? 0,
       acquisitionFinalAmount: (json['acquisitionFinalAmount'] as num?)?.toDouble() ?? 0,
-      productImageUrl: (json['productImageUrl'] ?? '').toString().trim().isEmpty
+      productImageUrl: resolvedProductImageUrl.trim().isEmpty
           ? null
-          : (json['productImageUrl'] ?? '').toString(),
+          : resolvedProductImageUrl,
       isDelivered: (json['isDelivered'] as bool?) ?? false,
       invoiceId: (json['invoiceId'] as num?)?.toInt(),
       certificateUrl: (json['certificateUrl'] ?? '').toString().isEmpty
