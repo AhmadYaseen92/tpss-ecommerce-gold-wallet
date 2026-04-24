@@ -197,7 +197,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                     children: [
                       ...?_preview?.feeBreakdowns.map(
                         (line) => _metaRow(
-                          line.feeName,
+                          _displayFeeLabel(line.feeName, isDiscount: line.isDiscount),
                           '${line.isDiscount ? '-' : ''}${_currency(line.appliedValue)}',
                         ),
                       ),
@@ -205,7 +205,8 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                       _metaRow('Sub Total', _currency(subTotal)),
                       _metaRow('Fees', _currency(fees)),
                       _metaRow('VAT / Tax', _currency(vat)),
-                      _metaRow('Discount', _currency(discount)),
+                      if (!(_preview?.feeBreakdowns.any((line) => line.isDiscount) ?? false))
+                        _metaRow('Discount', _currency(discount)),
                       const Divider(),
                       _metaRow('Grand Total', _currency(grandTotal),
                           bold: true),
@@ -426,6 +427,12 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
 
   String _leftPartyName(String type) =>
       widget.asset.sellerName.isEmpty ? 'N/A' : widget.asset.sellerName;
+
+  String _displayFeeLabel(String feeName, {required bool isDiscount}) {
+    if (!isDiscount) return feeName;
+    if (feeName.toLowerCase().contains('premium')) return 'Premium';
+    return 'Discount';
+  }
 
   // ---------- DOWNLOAD (UNCHANGED LOGIC IDEA) ----------
 

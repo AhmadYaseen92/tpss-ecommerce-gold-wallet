@@ -142,7 +142,9 @@ class SellAssetPage extends StatelessWidget {
                       detailedFeeLines: cubit.feeBreakdowns
                           .map(
                             (line) => FeeSummaryLine(
-                              label: line.feeName,
+                              label: line.isDiscount
+                                  ? (line.feeName.toLowerCase().contains('premium') ? 'Premium' : 'Discount')
+                                  : line.feeName,
                               value:
                                   '${line.isDiscount ? '-' : ''}${cubit.formatCurrency(line.appliedValue)}',
                             ),

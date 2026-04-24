@@ -81,16 +81,17 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
                   ),
                   ...widget.summary.summary.feeBreakdowns.map(
                     (line) => ReadonlyInfoRow(
-                      label: line.feeName,
+                      label: _displayFeeLabel(line.feeName, isDiscount: line.isDiscount),
                       value:
                           '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: widget.summary.summary.currency)}',
                     ),
                   ),
-                  ReadonlyInfoRow(
-                    label: 'Discount',
-                    value:
-                        '-${ActionSummaryBuilder.formatMoney(widget.summary.summary.discountAmount, currency: widget.summary.summary.currency)}',
-                  ),
+                  if (!widget.summary.summary.feeBreakdowns.any((line) => line.isDiscount))
+                    ReadonlyInfoRow(
+                      label: 'Discount',
+                      value:
+                          '-${ActionSummaryBuilder.formatMoney(widget.summary.summary.discountAmount, currency: widget.summary.summary.currency)}',
+                    ),
                   ReadonlyInfoRow(
                     label: 'Final Amount',
                     value: ActionSummaryBuilder.formatMoney(
@@ -113,5 +114,11 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
         ),
       ),
     );
+  }
+
+  String _displayFeeLabel(String feeName, {required bool isDiscount}) {
+    if (!isDiscount) return feeName;
+    if (feeName.toLowerCase().contains('premium')) return 'Premium';
+    return 'Discount';
   }
 }
