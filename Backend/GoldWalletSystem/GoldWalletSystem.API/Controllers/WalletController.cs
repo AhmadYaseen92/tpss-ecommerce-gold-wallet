@@ -367,7 +367,7 @@ public class WalletController(
                 DaysHeldAfterGrace: 0),
             cancellationToken);
         var resolvedFinalAmount = actionType == "sell"
-            ? Math.Max(0, feeResult.SubTotalAmount - feeResult.TotalFeesAmount + feeResult.DiscountAmount)
+            ? Math.Max(0, feeResult.SubTotalAmount - Math.Abs(feeResult.TotalFeesAmount) + feeResult.DiscountAmount)
             : feeResult.FinalAmount;
 
         return Ok(ApiResponse<object>.Ok(new
@@ -455,7 +455,7 @@ public class WalletController(
                 DaysHeldAfterGrace: 0),
             cancellationToken);
         var resolvedFinalAmount = actionType == "sell"
-            ? Math.Max(0, feeResult.SubTotalAmount - feeResult.TotalFeesAmount + feeResult.DiscountAmount)
+            ? Math.Max(0, feeResult.SubTotalAmount - Math.Abs(feeResult.TotalFeesAmount) + feeResult.DiscountAmount)
             : feeResult.FinalAmount;
 
         var sellConfig = await ReadSellExecutionConfigurationAsync(cancellationToken);

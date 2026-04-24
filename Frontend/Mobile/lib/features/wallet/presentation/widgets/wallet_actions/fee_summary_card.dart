@@ -42,7 +42,8 @@ class FeeSummaryCard extends StatelessWidget {
           ...detailedFeeLines.map(
             (line) => ReadonlyInfoRow(label: line.label, value: line.value),
           ),
-          ReadonlyInfoRow(label: 'Fee', value: feeAmount),
+          if (detailedFeeLines.isEmpty)
+            ReadonlyInfoRow(label: 'Fee', value: feeAmount),
           if (extraFeeLabel != null && extraFeeAmount != null)
             ReadonlyInfoRow(label: extraFeeLabel!, value: extraFeeAmount!),
           const Divider(),
