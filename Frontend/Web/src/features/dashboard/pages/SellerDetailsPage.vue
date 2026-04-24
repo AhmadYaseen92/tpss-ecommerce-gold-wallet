@@ -12,11 +12,9 @@ const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
 const loading = ref(false);
 const details = ref<WebSellerDetailsDto | null>(null);
 const viewerDoc = ref<WebSellerDocumentDto | null>(null);
+const viewerBlobUrl = ref("");
 const activeTab = ref<"company" | "managers" | "branches" | "banks" | "files">("company");
-const viewerUrl = computed(() => {
-  if (!viewerDoc.value || !details.value) return "";
-  return `/api/web-admin/sellers/${details.value.id}/documents/${viewerDoc.value.id}/view`;
-});
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5095";
 
 const sellerIdFromPath = computed(() => {
   const parts = window.location.pathname.split("/").filter(Boolean);
@@ -65,6 +63,46 @@ const runActionFromDropdown = async (event: Event) => {
   if (!nextAction) return;
   await setKyc(nextAction);
   (event.target as HTMLSelectElement).value = "";
+};
+
+const closeViewer = () => {
+  if (viewerBlobUrl.value) URL.revokeObjectURL(viewerBlobUrl.value);
+  viewerBlobUrl.value = "";
+  viewerDoc.value = null;
+};
+
+const openViewer = async (doc: WebSellerDocumentDto) => {
+  if (!details.value || !props.marketplace.session.value?.accessToken) return;
+
+  const requestUrl = `${API_BASE_URL}/api/web-admin/sellers/${details.value.id}/documents/${doc.id}/view`;
+  try {
+    const response = await fetch(requestUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${props.marketplace.session.value.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const raw = await response.text();
+      let message = "Unable to open document.";
+      try {
+        const parsed = JSON.parse(raw) as { message?: string };
+        if (parsed?.message?.trim()) message = parsed.message;
+      } catch {
+        if (raw.trim()) message = raw.trim();
+      }
+      ElMessage.error(message);
+      return;
+    }
+
+    const blob = await response.blob();
+    if (viewerBlobUrl.value) URL.revokeObjectURL(viewerBlobUrl.value);
+    viewerBlobUrl.value = URL.createObjectURL(blob);
+    viewerDoc.value = doc;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "Unable to open document.");
+  }
 };
 
 onMounted(() => {
@@ -160,7 +198,7 @@ onMounted(() => {
           <p>{{ doc.fileName || "-" }}</p>
           <p>{{ doc.contentType || "-" }}</p>
           <p>{{ doc.uploadedAtUtc }}</p>
-          <button type="button" @click="viewerDoc = doc">View File</button>
+          <button type="button" @click="openViewer(doc)">View File</button>
         </article>
       </section>
 
@@ -184,13 +222,13 @@ onMounted(() => {
     </template>
   </SectionCard>
 
-  <div v-if="viewerDoc" class="viewer-overlay" @click.self="viewerDoc = null">
+  <div v-if="viewerDoc" class="viewer-overlay" @click.self="closeViewer">
     <div class="viewer-modal">
       <div class="viewer-header">
         <strong>{{ viewerDoc.fileName || viewerDoc.documentType }}</strong>
-        <button type="button" @click="viewerDoc = null">Close</button>
+        <button type="button" @click="closeViewer">Close</button>
       </div>
-      <iframe :src="viewerUrl" title="Attachment Viewer" class="viewer-frame" />
+      <iframe :src="viewerBlobUrl" title="Attachment Viewer" class="viewer-frame" />
     </div>
   </div>
 </template>
@@ -208,7 +246,7 @@ input, textarea { padding: 8px; border: 1px solid #cfd6e4; border-radius: 8px; f
 .action-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .danger { background: #fee2e2; border-color: #fca5a5; }
 .viewer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: grid; place-items: center; z-index: 1000; }
-.viewer-modal { width: min(1100px, 96vw); height: min(760px, 90vh); background: #fff; border-radius: 10px; display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+.viewer-modal { width: min(1400px, 99vw); height: min(900px, 96vh); background: #fff; border-radius: 10px; display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
 .viewer-header { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; }
 .viewer-frame { width: 100%; height: 100%; border: 0; }
 @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } .doc-card { grid-template-columns: 1fr; } }

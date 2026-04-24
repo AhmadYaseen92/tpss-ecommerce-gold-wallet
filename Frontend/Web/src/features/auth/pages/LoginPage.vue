@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, computed } from "vue";
+import { ElMessageBox } from "element-plus";
 import LoginForm from "../components/LoginForm.vue";
 import type { LoginFormModel } from "../types/authTypes";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
@@ -16,6 +17,11 @@ const model = reactive<LoginFormModel>({
 const loading = computed(() => marketplace.loading.value);
 
 const onSubmit = async () => {
+  if (!model.email?.trim() || !model.password?.trim()) {
+    await ElMessageBox.alert("Email and password are required.", "Validation Error", { confirmButtonText: "OK", type: "warning" });
+    return;
+  }
+
   await marketplace.login({
     email: model.email,
     password: model.password,
@@ -24,6 +30,11 @@ const onSubmit = async () => {
   if (!marketplace.error.value && marketplace.session.value) {
     window.history.replaceState({}, "", "/overview");
     window.dispatchEvent(new PopStateEvent("popstate"));
+    return;
+  }
+
+  if (marketplace.error.value) {
+    await ElMessageBox.alert(marketplace.error.value, "Login Failed", { confirmButtonText: "OK", type: "warning" });
   }
 };
 

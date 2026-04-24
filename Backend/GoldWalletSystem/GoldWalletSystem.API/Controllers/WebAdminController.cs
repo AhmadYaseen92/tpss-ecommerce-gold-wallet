@@ -254,27 +254,67 @@ public class WebAdminController(
         var candidates = new List<string>();
         if (!string.IsNullOrWhiteSpace(document.FilePath))
         {
+            var normalized = document.FilePath.Replace('\\', '/');
+            var webRelative = normalized.TrimStart('/');
+            var webRelativeWithoutUploads = webRelative.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase)
+                ? webRelative["uploads/".Length..]
+                : webRelative;
+
             if (Path.IsPathRooted(document.FilePath))
             {
                 candidates.Add(document.FilePath);
+
+                if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
+                {
+                    candidates.Add(Path.Combine(environment.WebRootPath, webRelative));
+                    candidates.Add(Path.Combine(environment.WebRootPath, webRelativeWithoutUploads));
+                }
+                candidates.Add(Path.Combine(environment.ContentRootPath, webRelative));
+                candidates.Add(Path.Combine(environment.ContentRootPath, webRelativeWithoutUploads));
             }
             else
             {
                 candidates.Add(document.FilePath);
                 candidates.Add(Path.Combine(environment.ContentRootPath, document.FilePath));
+                candidates.Add(Path.Combine(environment.ContentRootPath, webRelativeWithoutUploads));
                 if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
                 {
                     candidates.Add(Path.Combine(environment.WebRootPath, document.FilePath));
-                }
-                candidates.Add(Path.Combine(environment.ContentRootPath, "uploads", document.FilePath));
-                if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
-                {
-                    candidates.Add(Path.Combine(environment.WebRootPath, "uploads", document.FilePath));
+                    candidates.Add(Path.Combine(environment.WebRootPath, webRelativeWithoutUploads));
                 }
             }
         }
 
         var physicalPath = candidates.FirstOrDefault(System.IO.File.Exists);
+        if (physicalPath is null && !string.IsNullOrWhiteSpace(document.FilePath))
+        {
+            var normalized = document.FilePath.Replace('\\', '/');
+            var webRelative = normalized.TrimStart('/');
+            var webRelativeWithoutUploads = webRelative.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase)
+                ? webRelative["uploads/".Length..]
+                : webRelative;
+            var fileName = Path.GetFileName(webRelativeWithoutUploads);
+            var relativeDir = Path.GetDirectoryName(webRelativeWithoutUploads)?.Replace('\\', '/') ?? string.Empty;
+
+            var searchDirectories = new List<string>();
+            if (!string.IsNullOrWhiteSpace(environment.WebRootPath))
+            {
+                searchDirectories.Add(Path.Combine(environment.WebRootPath, relativeDir));
+            }
+            searchDirectories.Add(Path.Combine(environment.ContentRootPath, relativeDir));
+
+            foreach (var directory in searchDirectories.Distinct())
+            {
+                if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory)) continue;
+
+                var matches = Directory.EnumerateFiles(directory, $"{fileName}*", SearchOption.TopDirectoryOnly).ToList();
+                if (matches.Count == 0) continue;
+
+                physicalPath = matches.FirstOrDefault(System.IO.File.Exists);
+                if (physicalPath is not null) break;
+            }
+        }
+
         if (physicalPath is null)
         {
             return NotFound(ApiResponse<object>.Fail("Document file is not available on server.", 404));

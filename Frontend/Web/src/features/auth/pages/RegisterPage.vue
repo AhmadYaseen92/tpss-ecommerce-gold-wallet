@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, computed } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessageBox } from "element-plus";
 import RegisterForm from "../components/RegisterForm.vue";
 import {
   createEmptyRegisterForm,
@@ -16,62 +16,59 @@ const model = reactive<RegisterFormModel>(createEmptyRegisterForm());
 const loading = computed(() => marketplace.loading.value);
 
 const isEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
+const showModal = (title: string, message: string) =>
+  ElMessageBox.alert(message, title, { confirmButtonText: "OK", type: "warning" });
+
+const ensureDataUrl = async (item: any) => {
+  if (!item || typeof item !== "object") return;
+  if (typeof item.filePath === "string" && item.filePath.startsWith("data:")) return;
+  if (!item.file) return;
+
+  item.filePath = await new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(item.file as File);
+  });
+  if (!item.contentType) item.contentType = (item.file as File).type || "application/octet-stream";
+};
+
+const hydrateDocumentsBeforeSubmit = async () => {
+  const files = [
+    model.companyInfo.documents.crDoc?.[0],
+    model.companyInfo.documents.articles?.[0],
+    model.companyInfo.documents.proofOfAddress?.[0],
+    model.companyInfo.documents.vatCert?.[0],
+    model.companyInfo.documents.amlDoc?.[0],
+    model.ownerInfo.idCopy?.[0],
+    model.ownerInfo.authLetter?.[0],
+    ...model.banks.flatMap((bank) => [bank.bankLetter?.[0], bank.ibanProof?.[0]]),
+  ];
+
+  await Promise.all(files.map((item) => ensureDataUrl(item)));
+};
 
 const onSubmit = async () => {
   if (model.credentials.password !== model.credentials.confirmPassword) {
-    ElMessage.error("Password and confirm password do not match.");
-    return;
-  }
-
-  const required = [
-    model.companyInfo.companyName,
-    model.companyInfo.companyCode,
-    model.companyInfo.crNumber,
-    model.companyInfo.vatNumber,
-    model.companyInfo.businessActivity,
-    model.companyInfo.country,
-    model.companyInfo.city,
-    model.companyInfo.street,
-    model.companyInfo.buildingNumber,
-    model.companyInfo.postalCode,
-    model.companyInfo.phone,
-    model.companyInfo.email,
-    model.ownerInfo.name,
-    model.ownerInfo.position,
-    model.ownerInfo.nationality,
-    model.ownerInfo.mobile,
-    model.ownerInfo.email,
-    model.ownerInfo.idType,
-    model.ownerInfo.idNumber,
-    model.credentials.loginEmail,
-    model.credentials.password,
-  ];
-
-  if (required.some((x) => !x?.trim())) {
-    ElMessage.error("Please fill all required fields.");
+    await showModal("Validation Error", "Password and confirm password do not match.");
     return;
   }
 
   if (!isEmail(model.companyInfo.email) || !isEmail(model.ownerInfo.email) || !isEmail(model.credentials.loginEmail)) {
-    ElMessage.error("Please enter valid email addresses.");
+    await showModal("Validation Error", "Please enter valid email addresses.");
     return;
   }
 
-  if (!model.companyInfo.documents.crDoc.length || !model.companyInfo.documents.articles.length ||
-      !model.companyInfo.documents.proofOfAddress.length || !model.companyInfo.documents.vatCert.length ||
-      !model.companyInfo.documents.amlDoc.length || !model.ownerInfo.idCopy.length) {
-    ElMessage.error("Please upload all required KYC documents.");
-    return;
-  }
+  await hydrateDocumentsBeforeSubmit();
 
   const payload = buildRegisterSellerPayload(model);
   await marketplace.registerSeller(payload);
 
   if (!marketplace.error.value) {
-    ElMessage.success("Registration submitted successfully. Region: Seller Onboarding");
+    await ElMessageBox.alert("Registration submitted successfully.", "Success", { confirmButtonText: "OK", type: "success" });
     emit("toLogin");
   } else {
-    ElMessage.error(`Registration failed (Seller Onboarding): ${marketplace.error.value}`);
+    await showModal("Registration Failed", marketplace.error.value || "Something went wrong, please contact system Admin.");
   }
 };
 </script>

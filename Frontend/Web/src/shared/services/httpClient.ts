@@ -17,7 +17,24 @@ function buildHeaders(accessToken?: string, isJson = true): HeadersInit {
 }
 
 function isWrappedApiResponse<T>(value: unknown): value is ApiResponse<T> {
-  return typeof value === "object" && value !== null && "success" in value;
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return "success" in record || "Success" in record;
+}
+
+function getStringValueCaseInsensitive(record: Record<string, unknown>, key: string): string | undefined {
+  const direct = record[key];
+  if (typeof direct === "string" && direct.trim()) return direct.trim();
+  const foundEntry = Object.entries(record).find(([k]) => k.toLowerCase() === key.toLowerCase());
+  const foundValue = foundEntry?.[1];
+  if (typeof foundValue === "string" && foundValue.trim()) return foundValue.trim();
+  return undefined;
+}
+
+function getCaseInsensitiveValue(record: Record<string, unknown>, key: string): unknown {
+  if (key in record) return record[key];
+  const foundEntry = Object.entries(record).find(([k]) => k.toLowerCase() === key.toLowerCase());
+  return foundEntry?.[1];
 }
 
 function extractMessageFromUnknown(value: unknown): string | undefined {
@@ -25,21 +42,30 @@ function extractMessageFromUnknown(value: unknown): string | undefined {
 
   const asRecord = value as Record<string, unknown>;
 
-  if (typeof asRecord.message === "string" && asRecord.message.trim()) return asRecord.message.trim();
-  if (typeof asRecord.title === "string" && asRecord.title.trim()) return asRecord.title.trim();
-  if (typeof asRecord.detail === "string" && asRecord.detail.trim()) return asRecord.detail.trim();
+  const message = getStringValueCaseInsensitive(asRecord, "message");
+  if (message) return message;
+  const title = getStringValueCaseInsensitive(asRecord, "title");
+  if (title) return title;
+  const detail = getStringValueCaseInsensitive(asRecord, "detail");
+  if (detail) return detail;
 
-  if (Array.isArray(asRecord.errors) && asRecord.errors.length > 0) {
-    const firstError = asRecord.errors.find((item) => typeof item === "string" && item.trim());
-    if (typeof firstError === "string") return firstError.trim();
+  const errors = getCaseInsensitiveValue(asRecord, "errors");
+  if (Array.isArray(errors) && errors.length > 0) {
+    const allErrors = errors
+      .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+      .map((item) => item.trim());
+    if (allErrors.length > 0) return allErrors.join(" | ");
   }
 
-  if (asRecord.errors && typeof asRecord.errors === "object") {
-    const firstErrorsEntry = Object.values(asRecord.errors as Record<string, unknown>).find((entry) => Array.isArray(entry));
-    if (Array.isArray(firstErrorsEntry)) {
-      const firstError = firstErrorsEntry.find((item) => typeof item === "string" && item.trim());
-      if (typeof firstError === "string") return firstError.trim();
-    }
+  if (errors && typeof errors === "object") {
+    const collectedErrors = Object.entries(errors as Record<string, unknown>)
+      .flatMap(([field, entry]) => {
+        if (!Array.isArray(entry)) return [];
+        return entry
+          .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+          .map((item) => `${field}: ${item.trim()}`);
+      });
+    if (collectedErrors.length > 0) return collectedErrors.join(" | ");
   }
 
   return undefined;
@@ -69,11 +95,15 @@ async function parseApiResponse<T>(response: Response): Promise<T> {
   }
 
   if (isWrappedApiResponse<T>(parsed)) {
-    if (!response.ok || !parsed.success) {
-      throw new HttpError(parsed.message || GLOBAL_ERROR_MESSAGE, response.status);
+    const wrappedRecord = parsed as unknown as Record<string, unknown>;
+    const wrappedSuccess = getCaseInsensitiveValue(wrappedRecord, "success");
+    const wrappedMessage = getStringValueCaseInsensitive(wrappedRecord, "message");
+    const isSuccess = typeof wrappedSuccess === "boolean" ? wrappedSuccess : false;
+    if (!response.ok || !isSuccess) {
+      throw new HttpError(wrappedMessage || GLOBAL_ERROR_MESSAGE, response.status);
     }
 
-    return parsed.data as T;
+    return getCaseInsensitiveValue(wrappedRecord, "data") as T;
   }
 
   if (!response.ok) {

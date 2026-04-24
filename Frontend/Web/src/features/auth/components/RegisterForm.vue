@@ -33,30 +33,65 @@ const setSingleFile = (listRef: any[], event: Event) => {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   listRef.splice(0, listRef.length);
-  if (file) listRef.push({ name: file.name });
+  if (file) {
+    const selectedFile = {
+      name: file.name,
+      file,
+      contentType: file.type || "application/octet-stream",
+      filePath: "",
+    };
+    listRef.push(selectedFile);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      selectedFile.filePath = typeof reader.result === "string" ? reader.result : "";
+    };
+    reader.readAsDataURL(file);
+  }
 };
 
 const validateStep = (step: number) => {
   if (step === 0) {
-    const required = [
-      props.model.companyInfo.companyName,
-      props.model.companyInfo.companyCode,
-      props.model.companyInfo.crNumber,
-      props.model.companyInfo.vatNumber,
-      props.model.companyInfo.country,
-      props.model.companyInfo.city,
-      props.model.companyInfo.street,
-      props.model.companyInfo.phone,
-      props.model.companyInfo.email
-    ];
-    if (required.some((x) => !x?.trim())) return "Please complete all required Company Information fields.";
+    const missing: string[] = [];
+    if (!props.model.companyInfo.companyName?.trim()) missing.push("Company Name");
+    if (!props.model.companyInfo.companyCode?.trim()) missing.push("Company Code");
+    if (!props.model.companyInfo.crNumber?.trim()) missing.push("CR Number");
+    if (!props.model.companyInfo.vatNumber?.trim()) missing.push("VAT Number");
+    if (!props.model.companyInfo.businessActivity?.trim()) missing.push("Business Activity");
+    if (!props.model.companyInfo.country?.trim()) missing.push("Country");
+    if (!props.model.companyInfo.city?.trim()) missing.push("City");
+    if (!props.model.companyInfo.street?.trim()) missing.push("Street");
+    if (!props.model.companyInfo.buildingNumber?.trim()) missing.push("Building Number");
+    if (!props.model.companyInfo.postalCode?.trim()) missing.push("Postal Code");
+    if (!props.model.companyInfo.phone?.trim()) missing.push("Company Phone");
+    if (!props.model.companyInfo.email?.trim()) missing.push("Company Email");
+    if (!props.model.companyInfo.documents.crDoc.length) missing.push("Commercial Registration Document");
+    if (!props.model.companyInfo.documents.articles.length) missing.push("Articles of Association");
+    if (!props.model.companyInfo.documents.proofOfAddress.length) missing.push("Proof of Address");
+    if (!props.model.companyInfo.documents.vatCert.length) missing.push("VAT Certificate");
+    if (!props.model.companyInfo.documents.amlDoc.length) missing.push("AML Documentation");
+    if (missing.length > 0) return `Company Information missing required fields: ${missing.join(", ")}.`;
   }
   if (step === 1) {
-    const required = [props.model.ownerInfo.name, props.model.ownerInfo.position, props.model.ownerInfo.mobile, props.model.ownerInfo.email, props.model.ownerInfo.idType, props.model.ownerInfo.idNumber];
-    if (required.some((x) => !x?.trim())) return "Please complete all required Owner / Manager fields.";
+    const missing: string[] = [];
+    if (!props.model.ownerInfo.name?.trim()) missing.push("Manager / Owner Name");
+    if (!props.model.ownerInfo.position?.trim()) missing.push("Position / Job Title");
+    if (!props.model.ownerInfo.nationality?.trim()) missing.push("Nationality");
+    if (!props.model.ownerInfo.mobile?.trim()) missing.push("Mobile Number");
+    if (!props.model.ownerInfo.email?.trim()) missing.push("Email Address");
+    if (!props.model.ownerInfo.idType?.trim()) missing.push("ID Type");
+    if (!props.model.ownerInfo.idNumber?.trim()) missing.push("ID Number");
+    if (!props.model.ownerInfo.idCopy.length) missing.push("Owner / Manager ID Copy");
+    if (missing.length > 0) return `Owner / Manager tab is missing: ${missing.join(", ")}.`;
   }
-  if (step === 2 && props.model.branches.some((x) => !x.branchName || !x.country || !x.city || !x.address)) return "Please complete branch details before continuing.";
-  if (step === 3 && props.model.banks.some((x) => !x.bankName || !x.accountHolder || !x.accountNumber || !x.iban)) return "Please complete bank account details before continuing.";
+  if (step === 2) {
+    const invalidBranch = props.model.branches.findIndex((x) => !x.branchName || !x.country || !x.city || !x.address);
+    if (invalidBranch >= 0) return `Branch #${invalidBranch + 1} is missing required fields: Branch Name, Country, City, or Full Address.`;
+  }
+  if (step === 3) {
+    const invalidBank = props.model.banks.findIndex((x) => !x.bankName || !x.accountHolder || !x.accountNumber || !x.iban);
+    if (invalidBank >= 0) return `Bank Account #${invalidBank + 1} is missing required fields: Bank Name, Account Holder, Account Number, or IBAN.`;
+  }
   if (step === 4) {
     const required = [props.model.credentials.loginEmail, props.model.credentials.password, props.model.credentials.confirmPassword];
     if (required.some((x) => !x?.trim())) return "Please complete login credentials before continuing.";

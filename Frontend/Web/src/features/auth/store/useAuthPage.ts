@@ -13,14 +13,57 @@ export function splitFullName(fullName: string) {
   };
 }
 
-const toDoc = (documentType: string, fileName: string, isRequired: boolean, relatedEntityType?: string) => ({
+const toDoc = (
+  documentType: string,
+  fileName: string,
+  filePath: string,
+  contentType: string,
+  isRequired: boolean,
+  relatedEntityType?: string,
+) => ({
   documentType,
   fileName,
-  filePath: fileName,
-  contentType: "application/octet-stream",
+  filePath,
+  contentType,
   isRequired,
   relatedEntityType,
 });
+
+const normalizeOptionalDate = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const getSelectedFileName = (value: unknown): string => {
+  if (!value || typeof value !== "object") return "";
+  const withName = value as { name?: unknown };
+  return typeof withName.name === "string" ? withName.name : "";
+};
+
+const getSelectedFilePath = (value: unknown): string => {
+  if (!value || typeof value !== "object") return "";
+  const withPath = value as { filePath?: unknown };
+  if (typeof withPath.filePath === "string" && withPath.filePath.trim()) return withPath.filePath;
+  return getSelectedFileName(value);
+};
+
+const getSelectedContentType = (value: unknown): string => {
+  if (!value || typeof value !== "object") return "application/octet-stream";
+  const withType = value as { contentType?: unknown };
+  if (typeof withType.contentType === "string" && withType.contentType.trim()) {
+    return withType.contentType;
+  }
+
+  const fileName = getSelectedFileName(value).toLowerCase();
+  if (fileName.endsWith(".pdf")) return "application/pdf";
+  if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) return "image/jpeg";
+  if (fileName.endsWith(".png")) return "image/png";
+  if (fileName.endsWith(".webp")) return "image/webp";
+  if (fileName.endsWith(".gif")) return "image/gif";
+
+  return "application/octet-stream";
+};
 
 export function buildRegisterSellerPayload(form: RegisterFormModel) {
   const nameParts = splitFullName(form.ownerInfo.name);
@@ -38,7 +81,7 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
       commercialRegistrationNumber: form.companyInfo.crNumber,
       vatNumber: form.companyInfo.vatNumber,
       businessActivity: form.companyInfo.businessActivity,
-      establishedDate: form.companyInfo.establishedDate,
+      establishedDate: normalizeOptionalDate(form.companyInfo.establishedDate),
       country: form.companyInfo.country,
       city: form.companyInfo.city,
       street: form.companyInfo.street,
@@ -57,7 +100,7 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
       emailAddress: form.ownerInfo.email,
       idType: form.ownerInfo.idType,
       idNumber: form.ownerInfo.idNumber,
-      idExpiryDate: form.ownerInfo.idExpiry,
+      idExpiryDate: normalizeOptionalDate(form.ownerInfo.idExpiry),
     },
     branches: form.branches.map((branch) => ({
       branchName: branch.branchName,
@@ -84,16 +127,70 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
       isMainAccount: bank.isMain,
     })),
     documents: [
-      toDoc("CommercialRegistrationDocument", form.companyInfo.documents.crDoc?.[0]?.name ?? "", true, "Seller"),
-      toDoc("ArticlesOfAssociation", form.companyInfo.documents.articles?.[0]?.name ?? "", true, "Seller"),
-      toDoc("ProofOfAddress", form.companyInfo.documents.proofOfAddress?.[0]?.name ?? "", true, "Seller"),
-      toDoc("VatCertificate", form.companyInfo.documents.vatCert?.[0]?.name ?? "", true, "Seller"),
-      toDoc("AmlDocumentation", form.companyInfo.documents.amlDoc?.[0]?.name ?? "", true, "Seller"),
-      toDoc("ManagerIdCopy", form.ownerInfo.idCopy?.[0]?.name ?? "", true, "Manager"),
-      toDoc("AuthorizationLetter", form.ownerInfo.authLetter?.[0]?.name ?? "", false, "Manager"),
+      toDoc(
+        "CommercialRegistrationDocument",
+        getSelectedFileName(form.companyInfo.documents.crDoc?.[0]),
+        getSelectedFilePath(form.companyInfo.documents.crDoc?.[0]),
+        getSelectedContentType(form.companyInfo.documents.crDoc?.[0]),
+        true,
+        "Seller"),
+      toDoc(
+        "ArticlesOfAssociation",
+        getSelectedFileName(form.companyInfo.documents.articles?.[0]),
+        getSelectedFilePath(form.companyInfo.documents.articles?.[0]),
+        getSelectedContentType(form.companyInfo.documents.articles?.[0]),
+        true,
+        "Seller"),
+      toDoc(
+        "ProofOfAddress",
+        getSelectedFileName(form.companyInfo.documents.proofOfAddress?.[0]),
+        getSelectedFilePath(form.companyInfo.documents.proofOfAddress?.[0]),
+        getSelectedContentType(form.companyInfo.documents.proofOfAddress?.[0]),
+        true,
+        "Seller"),
+      toDoc(
+        "VatCertificate",
+        getSelectedFileName(form.companyInfo.documents.vatCert?.[0]),
+        getSelectedFilePath(form.companyInfo.documents.vatCert?.[0]),
+        getSelectedContentType(form.companyInfo.documents.vatCert?.[0]),
+        true,
+        "Seller"),
+      toDoc(
+        "AmlDocumentation",
+        getSelectedFileName(form.companyInfo.documents.amlDoc?.[0]),
+        getSelectedFilePath(form.companyInfo.documents.amlDoc?.[0]),
+        getSelectedContentType(form.companyInfo.documents.amlDoc?.[0]),
+        true,
+        "Seller"),
+      toDoc(
+        "ManagerIdCopy",
+        getSelectedFileName(form.ownerInfo.idCopy?.[0]),
+        getSelectedFilePath(form.ownerInfo.idCopy?.[0]),
+        getSelectedContentType(form.ownerInfo.idCopy?.[0]),
+        true,
+        "Manager"),
+      toDoc(
+        "AuthorizationLetter",
+        getSelectedFileName(form.ownerInfo.authLetter?.[0]),
+        getSelectedFilePath(form.ownerInfo.authLetter?.[0]),
+        getSelectedContentType(form.ownerInfo.authLetter?.[0]),
+        false,
+        "Manager"),
       ...form.banks.flatMap((bank) => [
-        toDoc("BankConfirmationLetter", bank.bankLetter?.[0]?.name ?? "", false, "BankAccount"),
-        toDoc("IbanProofDocument", bank.ibanProof?.[0]?.name ?? "", false, "BankAccount"),
+        toDoc(
+          "BankConfirmationLetter",
+          getSelectedFileName(bank.bankLetter?.[0]),
+          getSelectedFilePath(bank.bankLetter?.[0]),
+          getSelectedContentType(bank.bankLetter?.[0]),
+          false,
+          "BankAccount"),
+        toDoc(
+          "IbanProofDocument",
+          getSelectedFileName(bank.ibanProof?.[0]),
+          getSelectedFilePath(bank.ibanProof?.[0]),
+          getSelectedContentType(bank.ibanProof?.[0]),
+          false,
+          "BankAccount"),
       ])
     ].filter((doc) => doc.fileName),
   };
