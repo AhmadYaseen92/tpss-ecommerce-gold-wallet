@@ -13,9 +13,13 @@ class SummaryTransactionWidget extends StatefulWidget {
   const SummaryTransactionWidget({
     super.key,
     required this.onViewAllHistory,
+    this.title = 'Recent Transactions',
+    this.maxItems = 3,
   });
 
   final VoidCallback onViewAllHistory;
+  final String title;
+  final int maxItems;
 
   @override
   State<SummaryTransactionWidget> createState() =>
@@ -88,7 +92,7 @@ class _SummaryTransactionWidgetState
               e as Map<String, dynamic>,
             ),
           )
-          .take(3)
+          .take(widget.maxItems)
           .toList();
 
       if (!mounted) return;
@@ -181,10 +185,10 @@ class _SummaryTransactionWidgetState
     }).toList();
 
     return RecentTransactionsCommonWidget(
-      title: 'Recent Transactions',
+      title: widget.title,
       transactions: items,
       onViewAllHistory: widget.onViewAllHistory,
-      maxItems: 3,
+      maxItems: widget.maxItems,
     );
   }
 }

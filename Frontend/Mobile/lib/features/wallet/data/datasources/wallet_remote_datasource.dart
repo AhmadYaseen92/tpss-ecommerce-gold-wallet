@@ -140,6 +140,8 @@ class WalletAssetRemoteModel {
     required this.sellerName,
     required this.averageBuyPrice,
     required this.currentMarketPrice,
+    required this.acquisitionFinalAmount,
+    required this.productImageUrl,
     required this.isDelivered,
     required this.invoiceId,
     required this.certificateUrl,
@@ -161,6 +163,8 @@ class WalletAssetRemoteModel {
   final String sellerName;
   final double averageBuyPrice;
   final double currentMarketPrice;
+  final double acquisitionFinalAmount;
+  final String? productImageUrl;
   final bool isDelivered;
   final int? invoiceId;
   final String? certificateUrl;
@@ -185,6 +189,10 @@ class WalletAssetRemoteModel {
       sellerName: (json['sellerName'] ?? '').toString(),
       averageBuyPrice: (json['averageBuyPrice'] as num?)?.toDouble() ?? 0,
       currentMarketPrice: (json['currentMarketPrice'] as num?)?.toDouble() ?? 0,
+      acquisitionFinalAmount: (json['acquisitionFinalAmount'] as num?)?.toDouble() ?? 0,
+      productImageUrl: (json['productImageUrl'] ?? '').toString().trim().isEmpty
+          ? null
+          : (json['productImageUrl'] ?? '').toString(),
       isDelivered: (json['isDelivered'] as bool?) ?? false,
       invoiceId: (json['invoiceId'] as num?)?.toInt(),
       certificateUrl: (json['certificateUrl'] ?? '').toString().isEmpty

@@ -90,7 +90,10 @@ class WalletRepositoryImpl implements IWalletRepository {
     WalletPurchaseSnapshot? snapshot,
   ) {
     final totalWeightInGrams = _toGrams(asset.weight, asset.unit) * asset.quantity;
-    final totalValue = asset.currentMarketPrice * asset.quantity;
+    final liveMarketTotal = asset.currentMarketPrice * asset.quantity;
+    final totalValue = asset.acquisitionFinalAmount > 0
+        ? asset.acquisitionFinalAmount
+        : liveMarketTotal;
     final totalBuy = asset.averageBuyPrice * asset.quantity;
     final changePercent = totalBuy == 0 ? 0 : ((totalValue - totalBuy) / totalBuy) * 100;
     final signed = changePercent >= 0 ? '+' : '';
@@ -123,7 +126,9 @@ class WalletRepositoryImpl implements IWalletRepository {
       change: '$signed${changePercent.toStringAsFixed(2)}%',
       investmentValue: purchaseValue,
       profitOrLossValue: profitOrLossValue,
-      imageUrl: _imageByAssetMeta(assetType: asset.assetType, category: asset.category, productName: resolvedName),
+      imageUrl: asset.productImageUrl?.trim().isNotEmpty == true
+          ? asset.productImageUrl!.trim()
+          : _imageByAssetMeta(assetType: asset.assetType, category: asset.category, productName: resolvedName),
       sellerName: asset.sellerName.isEmpty ? 'Unknown Seller' : asset.sellerName,
       certificateUrl: asset.certificateUrl,
       isDelivered: asset.isDelivered,

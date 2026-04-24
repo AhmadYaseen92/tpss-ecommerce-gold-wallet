@@ -10,8 +10,8 @@ import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_c
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/cubit/wallet_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/presentation/widgets/PortfolioCardWidget.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/home/presentation/widgets/summary_transaction_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_card_widget.dart';
-import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_transactions_widget.dart';
 
 class GoldWalletPage extends StatelessWidget {
   const GoldWalletPage({super.key, required this.onViewAllHistory});
@@ -73,8 +73,8 @@ class GoldWalletPage extends StatelessWidget {
                       PortfolioCardWidget(
                         title: 'Total Portfolio Value',
                         value: '\$${totalPortfolioValue.toStringAsFixed(2)}',
-                        change: '${wallet.change} live',
-                        availableCash: '\$2,000.00',
+                        change: '',
+                        availableCash: wallet.cashBalance,
                       ),
                       const SizedBox(height: 12),
                       SingleChildScrollView(
@@ -112,9 +112,8 @@ class GoldWalletPage extends StatelessWidget {
 
                       const SizedBox(height: 20.0),
                       if (wallet.transactions.isNotEmpty)
-                        WalletTransactionsWidget(
-                          transactions: wallet.transactions,
-                          accentColor: context.appPalette.primary,
+                        SummaryTransactionWidget(
+                          title: 'My Transactions',
                           onViewAllHistory: onViewAllHistory,
                         )
                       else

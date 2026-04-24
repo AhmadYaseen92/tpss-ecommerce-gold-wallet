@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
@@ -33,8 +32,6 @@ class WalletCardWidget extends StatelessWidget {
     required this.category,
     this.note,
   });
-
-  bool get _isPositive => change.startsWith('+');
 
   @override
   Widget build(BuildContext context) {
@@ -121,31 +118,9 @@ class WalletCardWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          _infoRow(context, 'Total Market Value', totalMarketValue),
+          _infoRow(context, 'Total Price Value', totalMarketValue),
           const SizedBox(height: 10),
           _infoRow(context, 'Total Holdings', '$totalHoldings Assets'),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Text('24h Change', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: palette.textSecondary)),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                decoration: BoxDecoration(
-                  color: (_isPositive ? AppColors.green : AppColors.red).withAlpha(20),
-                  borderRadius: BorderRadius.circular(8.0),
-                  border: Border.all(color: (_isPositive ? AppColors.green : AppColors.red).withAlpha(70)),
-                ),
-                child: Text(
-                  change,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: _isPositive ? AppColors.green : AppColors.red,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
           if (note != null && note!.trim().isNotEmpty) ...[
             const SizedBox(height: 14.0),
             Container(
