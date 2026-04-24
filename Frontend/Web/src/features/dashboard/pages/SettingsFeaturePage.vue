@@ -105,6 +105,13 @@ const snapshotOf = (item: SettingItem) => JSON.stringify({
 
 const dirtyItems = computed(() => settings.value.filter((item) => initialSnapshots.value[item.configKey] !== snapshotOf(item)));
 const dirtyCount = computed(() => dirtyItems.value.length);
+const singleSellerModeEnabled = computed(() => {
+  const match = settings.value.find((item) => item.configKey === "MobileRelease_IsIndividualSeller");
+  return !!match?.valueBool;
+});
+
+const isDependentDisabled = (item: SettingItem) => item.configKey === "MobileRelease_IndividualSellerName" && !singleSellerModeEnabled.value;
+
 
 const saveAll = async () => {
   if (dirtyItems.value.length === 0 || !props.marketplace.session.value?.accessToken) return;
@@ -209,8 +216,9 @@ const setOtpDefaultChannel = (item: SettingItem, channel: string, enabled: boole
             </div>
 
             <div v-if="usesSellerDropdown(item)" class="setting-row">
+              <p v-if="isDependentDisabled(item)" class="dependency-note">Enable Single Seller Mode to edit this field.</p>
               <label>Default value</label>
-              <select v-model="item.valueString">
+              <select v-model="item.valueString" :disabled="isDependentDisabled(item)">
                 <option value="">Select seller</option>
                 <option v-for="seller in sellers" :key="seller.id" :value="seller.name">
                   {{ seller.name }}
@@ -259,6 +267,7 @@ const setOtpDefaultChannel = (item: SettingItem, channel: string, enabled: boole
   align-items: center;
   margin-bottom: 12px;
 }
+.dependency-note { margin: 0; color: #8a6b1f; font-size: 12px; }
 .pending-counter {
   color: #6f5a23;
   font-weight: 600;

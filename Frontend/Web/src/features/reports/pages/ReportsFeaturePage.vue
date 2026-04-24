@@ -20,14 +20,16 @@ const {
   exportExcel,
   printReport,
   setSort,
-  changePage
+  changePage,
+  selectReportType
 } = useReports(props.marketplace);
 
 onMounted(() => {
   if (props.marketplace.role.value === "Admin") {
     void props.marketplace.refreshMarketplaceState();
   }
-  void generateReports();
+  const initialType = reportTypeCards.value[0]?.key ?? "sales";
+  selectReportType(initialType);
 });
 </script>
 
@@ -52,6 +54,7 @@ onMounted(() => {
       @csv="exportCsv"
       @excel="exportExcel"
       @print="printReport"
+      @type-selected="selectReportType"
     />
   </SectionCard>
 </template>

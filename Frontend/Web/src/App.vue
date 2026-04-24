@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import type { NavigationKey } from "./shared/types/models";
-import AppShell from "./shared/layouts/AppShell.vue";
+import AppLayout from "./shared/components/ui/AppLayout.vue";
 import AuthPage from "./features/auth/pages/AuthPage.vue";
 import DashboardFeaturePage from "./features/dashboard/pages/DashboardFeaturePage.vue";
 import ProductFeaturePage from "./features/products/pages/ProductFeaturePage.vue";
@@ -136,7 +136,7 @@ const handleLogout = () => {
 <template>
   <AuthPage v-if="!marketplace.session.value" :marketplace="marketplace" />
 
-  <AppShell
+  <AppLayout
     v-else
     :role="marketplace.role.value"
     :active-menu="activeMenu"
@@ -151,5 +151,5 @@ const handleLogout = () => {
     @notifications-read-all="marketplace.readAllNotifications"
   >
     <component :is="activeComponent" :marketplace="marketplace" />
-  </AppShell>
+  </AppLayout>
 </template>
