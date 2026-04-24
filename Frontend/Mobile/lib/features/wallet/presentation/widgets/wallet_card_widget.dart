@@ -34,8 +34,6 @@ class WalletCardWidget extends StatelessWidget {
     this.note,
   });
 
-  bool get _isPositive => change.startsWith('+');
-
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
@@ -77,13 +75,23 @@ class WalletCardWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(walletName, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: palette.textPrimary)),
+                    Text(
+                      walletName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: palette.textPrimary,
+                      ),
+                    ),
                     if (isVerified)
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
                           'Verified',
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.green, fontWeight: FontWeight.w600),
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: AppColors.green,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                       ),
                   ],
@@ -99,16 +107,30 @@ class WalletCardWidget extends StatelessWidget {
                     },
                   );
                 },
-                child: Text('View Details', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: palette.primary, fontWeight: FontWeight.w600)),
+                child: Text(
+                  'View Details',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: palette.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16.0),
-          Text('Total Weight', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: palette.textSecondary)),
+          Text(
+            'Total Weight',
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: palette.textSecondary),
+          ),
           const SizedBox(height: 6),
           Text(
             '${totalWeightInGrams.toStringAsFixed(2)} g',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: palette.primary),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: palette.primary,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -121,31 +143,9 @@ class WalletCardWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          _infoRow(context, 'Total Market Value', totalMarketValue),
+          _infoRow(context, 'Total Price Value', totalMarketValue),
           const SizedBox(height: 10),
           _infoRow(context, 'Total Holdings', '$totalHoldings Assets'),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Text('24h Change', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: palette.textSecondary)),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                decoration: BoxDecoration(
-                  color: (_isPositive ? AppColors.green : AppColors.red).withAlpha(20),
-                  borderRadius: BorderRadius.circular(8.0),
-                  border: Border.all(color: (_isPositive ? AppColors.green : AppColors.red).withAlpha(70)),
-                ),
-                child: Text(
-                  change,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: _isPositive ? AppColors.green : AppColors.red,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
           if (note != null && note!.trim().isNotEmpty) ...[
             const SizedBox(height: 14.0),
             Container(
@@ -156,7 +156,13 @@ class WalletCardWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.0),
                 border: Border.all(color: palette.primary.withAlpha(40)),
               ),
-              child: Text(note!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.textSecondary, height: 1.4)),
+              child: Text(
+                note!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: palette.textSecondary,
+                  height: 1.4,
+                ),
+              ),
             ),
           ],
         ],
@@ -177,8 +183,19 @@ class WalletCardWidget extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: palette.textPrimary)),
-            Text(unit, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: palette.textSecondary)),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: palette.textPrimary,
+              ),
+            ),
+            Text(
+              unit,
+              style: Theme.of(
+                context,
+              ).textTheme.labelMedium?.copyWith(color: palette.textSecondary),
+            ),
           ],
         ),
       ),
@@ -191,9 +208,20 @@ class WalletCardWidget extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: palette.textSecondary)),
+          child: Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: palette.textSecondary),
+          ),
         ),
-        Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: palette.textPrimary)),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: palette.textPrimary,
+          ),
+        ),
       ],
     );
   }

@@ -90,7 +90,19 @@ class WalletRepositoryImpl implements IWalletRepository {
     WalletPurchaseSnapshot? snapshot,
   ) {
     final totalWeightInGrams = _toGrams(asset.weight, asset.unit) * asset.quantity;
-    final totalValue = asset.currentMarketPrice * asset.quantity;
+    final liveMarketTotal = asset.currentMarketPrice * asset.quantity;
+    final snapshotBuyUnitPriceWithFees = snapshot != null && snapshot.amount > 0 && snapshot.quantity > 0
+        ? snapshot.amount / snapshot.quantity
+        : 0.0;
+    final assetBuyUnitPriceWithFees = asset.acquisitionFinalAmount > 0 && asset.quantity > 0
+        ? asset.acquisitionFinalAmount / asset.quantity
+        : 0.0;
+    final buyUnitPriceWithFees = snapshotBuyUnitPriceWithFees > 0
+        ? snapshotBuyUnitPriceWithFees
+        : assetBuyUnitPriceWithFees;
+    final totalValue = buyUnitPriceWithFees > 0
+        ? buyUnitPriceWithFees * asset.quantity
+        : liveMarketTotal;
     final totalBuy = asset.averageBuyPrice * asset.quantity;
     final changePercent = totalBuy == 0 ? 0 : ((totalValue - totalBuy) / totalBuy) * 100;
     final signed = changePercent >= 0 ? '+' : '';
@@ -102,8 +114,8 @@ class WalletRepositoryImpl implements IWalletRepository {
         : (asset.productSku?.trim().isNotEmpty ?? false)
         ? asset.productSku!.trim()
         : _toDisplayName(asset.assetType);
-    final purchaseValue = snapshot != null && snapshot.amount > 0
-        ? snapshot.amount
+    final purchaseValue = buyUnitPriceWithFees > 0
+        ? buyUnitPriceWithFees * asset.quantity
         : totalBuy;
 
     return wallet_entity.WalletTransactionEntity(
@@ -123,7 +135,9 @@ class WalletRepositoryImpl implements IWalletRepository {
       change: '$signed${changePercent.toStringAsFixed(2)}%',
       investmentValue: purchaseValue,
       profitOrLossValue: profitOrLossValue,
-      imageUrl: _imageByAssetMeta(assetType: asset.assetType, category: asset.category, productName: resolvedName),
+      imageUrl: asset.productImageUrl?.trim().isNotEmpty == true
+          ? asset.productImageUrl!.trim()
+          : _imageByAssetMeta(assetType: asset.assetType, category: asset.category, productName: resolvedName),
       sellerName: asset.sellerName.isEmpty ? 'Unknown Seller' : asset.sellerName,
       certificateUrl: asset.certificateUrl,
       isDelivered: asset.isDelivered,

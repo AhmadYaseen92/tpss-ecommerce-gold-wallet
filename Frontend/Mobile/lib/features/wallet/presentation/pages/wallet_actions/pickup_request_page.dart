@@ -35,8 +35,8 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
   Future<void> _loadPreview() async {
     try {
       final quantity = 1;
-      final unitPrice = widget.asset.marketPricePerGram;
-      final amount = unitPrice * widget.asset.weightInGrams;
+      final unitPrice = widget.asset.actionUnitPrice;
+      final amount = unitPrice * quantity;
       final response = await _dio.post(
         '/wallet/actions/preview',
         data: {
@@ -120,7 +120,12 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
             title: 'Fees Summary',
             child: Column(
               children: [
-                ...?_preview?.feeBreakdowns.map((line) => _FeeRow(line.feeName, '${line.isDiscount ? '-' : ''}\$${line.appliedValue.toStringAsFixed(2)}')),
+                ...?_preview?.feeBreakdowns.map(
+                  (line) => _FeeRow(
+                    line.feeName,
+                    '${line.isDiscount ? '-' : ''}\$${line.appliedValue.toStringAsFixed(2)}',
+                  ),
+                ),
                 const Divider(height: 20),
                 _FeeRow('Total Fees', '\$${((_preview?.totalFeesAmount ?? 0) - (_preview?.discountAmount ?? 0)).toStringAsFixed(2)}', bold: true),
               ],
@@ -131,7 +136,8 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
             child: Column(
               children: [
                 _FeeRow('Subtotal', '\$${(_preview?.subTotalAmount ?? 0).toStringAsFixed(2)}'),
-                _FeeRow('Discount', '-\$${(_preview?.discountAmount ?? 0).toStringAsFixed(2)}'),
+                if (!(_preview?.feeBreakdowns.any((line) => line.isDiscount) ?? false))
+                  _FeeRow('Discount', '-\$${(_preview?.discountAmount ?? 0).toStringAsFixed(2)}'),
                 _FeeRow('Final Amount', '\$${(_preview?.finalAmount ?? 0).toStringAsFixed(2)}', bold: true),
               ],
             ),
@@ -167,6 +173,16 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
                 return;
               }
 
+              final pickupAt = _selectedDateTime();
+              if (pickupAt == null || pickupAt.isBefore(DateTime.now())) {
+                AppModalAlert.show(
+                  context,
+                  title: 'Invalid Schedule',
+                  message: 'Pickup date/time must be in the future.',
+                );
+                return;
+              }
+
               _goToReview(dateText, timeText);
             },
             child: const Text('Review Pickup'),
@@ -197,6 +213,18 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
       MaterialPageRoute(builder: (_) => ActionReviewPage(summary: summary)),
     );
   }
+
+  DateTime? _selectedDateTime() {
+    if (selectedDate == null || selectedTime == null) return null;
+    return DateTime(
+      selectedDate!.year,
+      selectedDate!.month,
+      selectedDate!.day,
+      selectedTime!.hour,
+      selectedTime!.minute,
+    );
+  }
+
 }
 
 class _PickerTile extends StatelessWidget {

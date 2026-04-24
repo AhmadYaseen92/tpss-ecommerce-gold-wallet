@@ -51,7 +51,7 @@ class WalletAssetSummaryCard extends StatelessWidget {
             ReadonlyInfoRow(label: 'Status', value: asset.status),
           ReadonlyInfoRow(label: 'Quantity', value: '${asset.quantity}'),
           ReadonlyInfoRow(label: 'Weight', value: '${asset.weightInGrams.toStringAsFixed(2)} g'),
-          ReadonlyInfoRow(label: 'Market Value', value: asset.marketValue),
+          ReadonlyInfoRow(label: 'Gross Amount', value: asset.displayValue),
         ],
       ),
     );

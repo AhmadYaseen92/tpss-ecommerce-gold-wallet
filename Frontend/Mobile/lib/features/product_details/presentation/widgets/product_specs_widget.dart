@@ -9,21 +9,24 @@ class ProductSpecsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final specs = <Widget>[
-      _productSpecsCard(context, label: 'Material', value: materialType),
-      _productSpecsCard(context, label: 'Weight', value: weight),
-    ];
-
-    if (materialType.toLowerCase() != 'diamond' && purity.trim().isNotEmpty) {
-      specs.add(_productSpecsCard(context, label: 'Purity', value: purity));
-    }
-
-    return Wrap(spacing: 10, runSpacing: 10, children: specs);
+    final showPurity = materialType.trim().toLowerCase() == 'gold' && purity.trim().isNotEmpty;
+    return Row(
+      children: [
+        Expanded(child: _productSpecsCard(context, label: 'Material', value: materialType)),
+        const SizedBox(width: 10),
+        Expanded(child: _productSpecsCard(context, label: 'Weight', value: weight)),
+        if (showPurity) ...[
+          const SizedBox(width: 10),
+          Expanded(child: _productSpecsCard(context, label: 'Purity', value: purity)),
+        ],
+      ],
+    );
   }
 
   Widget _productSpecsCard(BuildContext context, {required String label, required String value}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      constraints: const BoxConstraints(minHeight: 96),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         color: Theme.of(context).colorScheme.surface,
@@ -32,9 +35,9 @@ class ProductSpecsWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 4),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+          Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 8),
+          Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/utils/server_url_resolver.dart';
 
 class AppServerImage extends StatelessWidget {
   const AppServerImage({
@@ -25,8 +26,8 @@ class AppServerImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final trimmed = imageUrl.trim();
-    final parsed = Uri.tryParse(trimmed);
+    final resolved = resolveServerUrl(imageUrl);
+    final parsed = Uri.tryParse(resolved);
     final validNetworkUrl = parsed != null &&
         (parsed.scheme == 'http' || parsed.scheme == 'https') &&
         parsed.host.isNotEmpty;
@@ -37,7 +38,7 @@ class AppServerImage extends StatelessWidget {
     }
 
     Widget image = CachedNetworkImage(
-      imageUrl: trimmed,
+      imageUrl: resolved,
       width: width,
       height: height,
       fit: fit,

@@ -1,3 +1,5 @@
+import 'package:tpss_ecommerce_gold_wallet/core/utils/server_url_resolver.dart';
+
 class TransactionModel {
   final int id;
   final int userId;
@@ -56,7 +58,7 @@ class TransactionModel {
       transactionType: (json['transactionType'] ?? '') as String,
       status: (json['status'] ?? '') as String,
       productName: (json['productName'] ?? json['category'] ?? '') as String,
-      productImageUrl: (json['productImageUrl'] ?? '') as String,
+      productImageUrl: resolveServerUrl((json['productImageUrl'] ?? '').toString()),
       category: (json['category'] ?? '') as String,
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0,
@@ -90,6 +92,18 @@ class TransactionModel {
 
   bool get isIncomingTransferOrGift =>
       isTransferOrGift && (_readNoteValue('direction')?.toLowerCase() == 'received');
+
+  bool get isPositiveCashFlow {
+    final type = transactionType.toLowerCase();
+    if (type == 'buy') return false;
+    if (type == 'sell') return true;
+    if (type == 'transfer' || type == 'gift') {
+      return isIncomingTransferOrGift;
+    }
+    return amount >= 0;
+  }
+
+  double get signedAmount => isPositiveCashFlow ? amount.abs() : -amount.abs();
 
   String? get fromInvestorName => _readNoteValue('from_investor_name');
 

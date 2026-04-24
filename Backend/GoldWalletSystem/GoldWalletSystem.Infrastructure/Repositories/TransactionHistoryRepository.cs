@@ -101,9 +101,45 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
                 .ToDictionary(g => g.Key, g => g.Select(v => v.Item).ToList());
         }
 
+        var walletItemIds = rows
+            .Where(x => x.history.WalletItemId.HasValue)
+            .Select(x => x.history.WalletItemId!.Value)
+            .Distinct()
+            .ToList();
+
+        var walletAssetLookup = walletItemIds.Count == 0
+            ? new Dictionary<int, WalletAssetProjection>()
+            : await dbContext.WalletAssets
+                .AsNoTracking()
+                .Where(x => walletItemIds.Contains(x.Id))
+                .Select(x => new WalletAssetProjection(
+                    x.Id,
+                    x.SellerId,
+                    x.ProductId,
+                    x.ProductName,
+                    x.ProductImageUrl,
+                    x.ProductSku))
+                .ToDictionaryAsync(x => x.Id, cancellationToken);
+
+        var productIds = rows
+            .Where(x => x.history.ProductId.HasValue)
+            .Select(x => x.history.ProductId!.Value)
+            .Concat(walletAssetLookup.Values.Where(x => x.ProductId.HasValue).Select(x => x.ProductId!.Value))
+            .Distinct()
+            .ToList();
+
+        var productsById = productIds.Count == 0
+            ? new Dictionary<int, ProductProjection>()
+            : await dbContext.Products
+                .AsNoTracking()
+                .Where(x => productIds.Contains(x.Id))
+                .Select(x => new ProductProjection(x.Id, x.SellerId, x.Sku, x.Name, x.ImageUrl))
+                .ToDictionaryAsync(x => x.Id, cancellationToken);
+
         var sellerIds = rows
             .Where(x => x.history.SellerId.HasValue)
             .Select(x => x.history.SellerId!.Value)
+            .Concat(walletAssetLookup.Values.Where(x => x.SellerId.HasValue).Select(x => x.SellerId!.Value))
             .Distinct()
             .ToList();
 
@@ -122,9 +158,13 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
             .Select(row =>
             {
                 var (productName, productImageUrl) = ResolveProductInfo(
+                    row.history.ProductId,
                     row.history.SellerId,
+                    row.history.WalletItemId,
                     row.history.Notes,
                     row.history.Category,
+                    walletAssetLookup,
+                    productsById,
                     productLookup);
                 return new TransactionHistoryDto(
                     row.history.Id,
@@ -161,11 +201,41 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
     }
 
     private static (string ProductName, string ProductImageUrl) ResolveProductInfo(
+        int? productId,
         int? sellerId,
+        int? walletItemId,
         string? notes,
         string fallback,
+        IReadOnlyDictionary<int, WalletAssetProjection> walletAssetsById,
+        IReadOnlyDictionary<int, ProductProjection> productsById,
         IReadOnlyDictionary<(int SellerId, string Sku), (string Name, string ImageUrl)> productLookup)
     {
+        if (productId.HasValue && productsById.TryGetValue(productId.Value, out var explicitProduct))
+        {
+            return (explicitProduct.Name, explicitProduct.ImageUrl ?? string.Empty);
+        }
+
+        if (walletItemId.HasValue && walletAssetsById.TryGetValue(walletItemId.Value, out var walletAsset))
+        {
+            if (walletAsset.ProductId.HasValue && productsById.TryGetValue(walletAsset.ProductId.Value, out var walletProduct))
+            {
+                return (walletProduct.Name, walletProduct.ImageUrl ?? string.Empty);
+            }
+
+            if (!string.IsNullOrWhiteSpace(walletAsset.ProductName) || !string.IsNullOrWhiteSpace(walletAsset.ProductImageUrl))
+            {
+                return (
+                    string.IsNullOrWhiteSpace(walletAsset.ProductName) ? fallback : walletAsset.ProductName!,
+                    walletAsset.ProductImageUrl ?? string.Empty);
+            }
+
+            if (walletAsset.SellerId.HasValue && !string.IsNullOrWhiteSpace(walletAsset.ProductSku) &&
+                productLookup.TryGetValue((walletAsset.SellerId.Value, walletAsset.ProductSku), out var walletSkuProduct))
+            {
+                return (walletSkuProduct.Name, walletSkuProduct.ImageUrl ?? string.Empty);
+            }
+        }
+
         if (!sellerId.HasValue) return (fallback, string.Empty);
         var sku = TryExtractSku(notes);
         if (string.IsNullOrWhiteSpace(sku)) return (fallback, string.Empty);
@@ -173,6 +243,21 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
             ? (product.Name, product.ImageUrl)
             : (fallback, string.Empty);
     }
+
+    private sealed record WalletAssetProjection(
+        int Id,
+        int? SellerId,
+        int? ProductId,
+        string? ProductName,
+        string? ProductImageUrl,
+        string? ProductSku);
+
+    private sealed record ProductProjection(
+        int Id,
+        int SellerId,
+        string? Sku,
+        string Name,
+        string? ImageUrl);
 
     private static string? TryExtractSku(string? notes)
     {

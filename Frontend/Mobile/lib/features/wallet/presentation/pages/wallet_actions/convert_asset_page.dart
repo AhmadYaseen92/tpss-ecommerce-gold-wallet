@@ -131,11 +131,20 @@ class ConvertAssetPage extends StatelessWidget {
                     ),
                     FeeSummaryCard(
                       grossAmount: cubit.formatCurrency(cubit.grossAmount),
-                      feeAmount: cubit.formatCurrency(cubit.serviceFee),
-                      extraFeeLabel: cubit.isCrypto ? 'Network Fee' : null,
-                      extraFeeAmount: cubit.isCrypto
-                          ? cubit.formatCurrency(cubit.networkFee)
-                          : null,
+                      detailedFeeLines: [
+                        FeeSummaryLine(
+                          label: 'Service Fee',
+                          value: cubit.formatCurrency(cubit.serviceFee),
+                        ),
+                        if (cubit.isCrypto)
+                          FeeSummaryLine(
+                            label: 'Network Fee',
+                            value: cubit.formatCurrency(cubit.networkFee),
+                          ),
+                      ],
+                      feeAmount: cubit.formatCurrency(cubit.totalFee),
+                      extraFeeLabel: null,
+                      extraFeeAmount: null,
                       totalAmount: cubit.isCrypto
                           ? '${cubit.cryptoReceived.toStringAsFixed(6)} ${cubit.cryptoType}'
                           : cubit.formatCurrency(cubit.cashReceived),

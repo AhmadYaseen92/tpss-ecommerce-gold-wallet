@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/data/datasources/home_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/data/models/home_carousel_Item_model.dart';
@@ -79,6 +79,7 @@ class _HomeCarouselWidgetState extends State<HomeCarouselWidget> {
       itemBuilder: (BuildContext context, int itemIndex, int pageViewIndex) {
         final item = _items[itemIndex];
         final hasOffer = (item.offerLabel ?? '').isNotEmpty;
+        final hasInactivePrice = item.sourcePrice > item.sellPrice;
         return Padding(
           padding: const EdgeInsetsDirectional.only(end: 16.0),
           child: ClipRRect(
@@ -86,12 +87,15 @@ class _HomeCarouselWidgetState extends State<HomeCarouselWidget> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                CachedNetworkImage(
+                const ColoredBox(color: Color(0x11000000)),
+                AppServerImage(
                   imageUrl: item.imgUrl,
-                  placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
                   fit: BoxFit.cover,
                   width: double.infinity,
+                  height: double.infinity,
+                  placeholderIconSize: 28,
+                  backgroundColor: const Color(0x1A000000),
+                  iconColor: Colors.white70,
                 ),
                 Container(
                   decoration: BoxDecoration(
@@ -129,9 +133,9 @@ class _HomeCarouselWidgetState extends State<HomeCarouselWidget> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                      Text('${item.materialType} • ${item.pricingModeLabel}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      Text(item.materialType, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
                       Text(item.sellerName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
-                      if (hasOffer)
+                      if (hasOffer && hasInactivePrice)
                         Text('\$${item.sourcePrice.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white70, fontSize: 11, decoration: TextDecoration.lineThrough)),
                       Text('\$${item.sellPrice.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
                     ],

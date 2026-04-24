@@ -44,7 +44,7 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
 
   int get maxQuantity => initialAsset.asset.quantity;
 
-  double get unitPrice => _parseCurrency(initialAsset.asset.marketValue) / maxQuantity;
+  double get unitPrice => initialAsset.asset.actionUnitPrice;
 
   int get quantity {
     final parsed = int.tryParse(quantityController.text.trim()) ?? 1;
@@ -66,6 +66,14 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
     final current = state;
     if (current is SellAssetActionUpdated) return current.errorMessage;
     return null;
+  }
+
+  List<WalletActionPreviewFeeLine> get feeBreakdowns {
+    final current = state;
+    if (current is SellAssetActionUpdated) {
+      return current.preview?.feeBreakdowns ?? const <WalletActionPreviewFeeLine>[];
+    }
+    return const <WalletActionPreviewFeeLine>[];
   }
 
   String formatCurrency(double value) => NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(value);
@@ -218,11 +226,6 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
 
   bool _isPlaceholderSelection(PredefinedAccount account) =>
       account.id.endsWith('_none');
-
-  double _parseCurrency(String raw) {
-    final clean = raw.replaceAll(RegExp(r'[^0-9.]'), '');
-    return double.tryParse(clean) ?? 0;
-  }
 
   @override
   Future<void> close() {

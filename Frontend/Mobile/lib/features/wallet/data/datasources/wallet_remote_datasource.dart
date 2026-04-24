@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/utils/server_url_resolver.dart';
 
 class WalletRemoteDataSource {
   WalletRemoteDataSource(this._dio);
@@ -73,6 +74,7 @@ class WalletRemoteDataSource {
           productName: (item['productName'] ?? '').toString(),
           purity: (item['purity'] as num?)?.toDouble() ?? 0,
           amount: (item['amount'] as num?)?.toDouble() ?? 0,
+          quantity: (item['quantity'] as num?)?.toInt() ?? 0,
           currency: (item['currency'] ?? 'USD').toString(),
         ),
       );
@@ -88,6 +90,7 @@ class WalletPurchaseSnapshot {
     required this.productName,
     required this.purity,
     required this.amount,
+    required this.quantity,
     required this.currency,
   });
 
@@ -95,6 +98,7 @@ class WalletPurchaseSnapshot {
   final String productName;
   final double purity;
   final double amount;
+  final int quantity;
   final String currency;
 }
 
@@ -140,6 +144,8 @@ class WalletAssetRemoteModel {
     required this.sellerName,
     required this.averageBuyPrice,
     required this.currentMarketPrice,
+    required this.acquisitionFinalAmount,
+    required this.productImageUrl,
     required this.isDelivered,
     required this.invoiceId,
     required this.certificateUrl,
@@ -161,6 +167,8 @@ class WalletAssetRemoteModel {
   final String sellerName;
   final double averageBuyPrice;
   final double currentMarketPrice;
+  final double acquisitionFinalAmount;
+  final String? productImageUrl;
   final bool isDelivered;
   final int? invoiceId;
   final String? certificateUrl;
@@ -169,6 +177,7 @@ class WalletAssetRemoteModel {
   final String? statusDetails;
 
   factory WalletAssetRemoteModel.fromJson(Map<String, dynamic> json) {
+    final resolvedProductImageUrl = resolveServerUrl((json['productImageUrl'] ?? '').toString());
     return WalletAssetRemoteModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       assetType: (json['assetType'] ?? '').toString(),
@@ -185,6 +194,10 @@ class WalletAssetRemoteModel {
       sellerName: (json['sellerName'] ?? '').toString(),
       averageBuyPrice: (json['averageBuyPrice'] as num?)?.toDouble() ?? 0,
       currentMarketPrice: (json['currentMarketPrice'] as num?)?.toDouble() ?? 0,
+      acquisitionFinalAmount: (json['acquisitionFinalAmount'] as num?)?.toDouble() ?? 0,
+      productImageUrl: resolvedProductImageUrl.trim().isEmpty
+          ? null
+          : resolvedProductImageUrl,
       isDelivered: (json['isDelivered'] as bool?) ?? false,
       invoiceId: (json['invoiceId'] as num?)?.toInt(),
       certificateUrl: (json['certificateUrl'] ?? '').toString().isEmpty

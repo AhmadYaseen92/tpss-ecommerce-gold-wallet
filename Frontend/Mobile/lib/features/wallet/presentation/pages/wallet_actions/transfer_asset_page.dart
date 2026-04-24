@@ -167,6 +167,15 @@ class TransferAssetPage extends StatelessWidget {
                     ),
                     FeeSummaryCard(
                       grossAmount: cubit.formatCurrency(cubit.grossAmount),
+                      detailedFeeLines: cubit.feeBreakdowns
+                          .map(
+                            (line) => FeeSummaryLine(
+                              label: line.feeName,
+                              value:
+                                  '${line.isDiscount ? '-' : ''}${cubit.formatCurrency(line.appliedValue)}',
+                            ),
+                          )
+                          .toList(),
                       feeAmount: cubit.formatCurrency(cubit.feeAmount),
                       totalAmount: cubit.formatCurrency(cubit.estimatedValue),
                       totalLabel: 'Estimated Value',

@@ -86,11 +86,12 @@ class _ActionReviewPageState extends State<ActionReviewPage> {
                           '${line.isDiscount ? '-' : ''}${ActionSummaryBuilder.formatMoney(line.appliedValue, currency: widget.summary.summary.currency)}',
                     ),
                   ),
-                  ReadonlyInfoRow(
-                    label: 'Discount',
-                    value:
-                        '-${ActionSummaryBuilder.formatMoney(widget.summary.summary.discountAmount, currency: widget.summary.summary.currency)}',
-                  ),
+                  if (!widget.summary.summary.feeBreakdowns.any((line) => line.isDiscount))
+                    ReadonlyInfoRow(
+                      label: 'Discount',
+                      value:
+                          '-${ActionSummaryBuilder.formatMoney(widget.summary.summary.discountAmount, currency: widget.summary.summary.currency)}',
+                    ),
                   ReadonlyInfoRow(
                     label: 'Final Amount',
                     value: ActionSummaryBuilder.formatMoney(

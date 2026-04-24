@@ -114,10 +114,17 @@ class ProductRemoteModel {
       offerNewPrice: (json['offerNewPrice'] as num?)?.toDouble() ?? 0,
       pricingMode: (json['pricingMode'] ?? '').toString(),
       materialType: (json['materialType'] ?? '').toString(),
-      isHasOffer: (json['isHasOffer'] as bool?) ?? false,
+      isHasOffer: _asBool(json['isHasOffer'] ?? json['IsHasOffer']),
       purityKarat: (json['purityKarat'] ?? '').toString(),
       purityFactor: (json['purityFactor'] as num?)?.toDouble() ?? 0,
     );
+  }
+
+  static bool _asBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    final normalized = (value ?? '').toString().trim().toLowerCase();
+    return normalized == 'true' || normalized == '1' || normalized == 'yes';
   }
 
   static int _parseCategoryId(dynamic categoryValue) {

@@ -19,6 +19,8 @@ class ProductDetailWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
+    final hasOffer = product.isHasOffer;
+    final inactivePrice = _inactivePrice(product);
 
     return Column(
       children: [
@@ -34,25 +36,35 @@ class ProductDetailWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(product.name, style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: palette.textPrimary, height: 1.25)),
-                      const SizedBox(height: 6),
-                      if (AppReleaseConfig.showSellerUi) ...[
-                        Text('Seller: ${product.sellerName}', style: TextStyle(fontSize: 13, color: palette.primary, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                      ],
-                      if (product.offerType.toLowerCase() != 'none')
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: palette.primary.withAlpha(24), borderRadius: BorderRadius.circular(8)),
-                          child: Text('Special Offer', style: TextStyle(color: palette.primary, fontWeight: FontWeight.w700)),
-                        ),
-                      const SizedBox(height: 6),
-                      if (product.offerType.toLowerCase() != 'none')
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          if (AppReleaseConfig.showSellerUi)
+                            Expanded(
+                              child: Text(
+                                'Seller: ${product.sellerName}',
+                                style: TextStyle(fontSize: 13, color: palette.primary, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          if (hasOffer)
+                            Container(
+                              margin: const EdgeInsetsDirectional.only(start: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(color: palette.primary.withAlpha(24), borderRadius: BorderRadius.circular(8)),
+                              child: Text('Special Offer', style: TextStyle(color: palette.primary, fontWeight: FontWeight.w700)),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (hasOffer && inactivePrice != null)
                         Text(
-                          '\$${_sourcePrice(product).toStringAsFixed(2)}',
+                          '\$${inactivePrice.toStringAsFixed(2)}',
                           style: TextStyle(fontSize: 14, color: palette.textSecondary, decoration: TextDecoration.lineThrough),
                         ),
                       Text('\$${product.sellPrice.toStringAsFixed(2)}', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: palette.primary)),
-                      if (product.offerType.toLowerCase() != 'none')
+                      if (hasOffer)
                         Text(
                           product.offerType.toLowerCase().contains('percent')
                               ? '${product.offerPercent.toStringAsFixed(0)}% OFF'
@@ -119,9 +131,19 @@ class ProductDetailWidget extends StatelessWidget {
       ],
     );
   }
-  double _sourcePrice(ProductEntity product) {
-    final isAuto = product.pricingModeLabel.toLowerCase().contains('auto');
-    return isAuto ? product.autoPrice : product.fixedPrice;
+  double? _inactivePrice(ProductEntity product) {
+    final candidates = <double>[
+      product.baseMarketPrice,
+      product.offerNewPrice,
+      product.pricingModeLabel.toLowerCase().contains('auto')
+          ? product.autoPrice
+          : product.fixedPrice,
+    ];
+    final price = candidates.firstWhere(
+      (value) => value > 0 && value > product.sellPrice,
+      orElse: () => 0,
+    );
+    return price > 0 ? price : null;
   }
 
 }

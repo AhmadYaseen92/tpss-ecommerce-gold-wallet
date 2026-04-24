@@ -1,34 +1,40 @@
 import 'package:signalr_core/signalr_core.dart';
 
 typedef SignalREventHandler = void Function(String event, dynamic payload);
+typedef SignalRConnectionStateHandler = void Function(bool isConnected);
 
 class SignalRService {
   final String baseUrl;
   final String accessToken;
   final SignalREventHandler onEvent;
+  final SignalRConnectionStateHandler? onConnectionStateChanged;
   HubConnection? _connection;
 
   SignalRService({
     required this.baseUrl,
     required this.accessToken,
     required this.onEvent,
+    this.onConnectionStateChanged,
   });
 
   Future<void> connect() async {
     _connection = HubConnectionBuilder()
-        .withUrl('$baseUrl/hubs/updates',
+        .withUrl('$baseUrl/hubs/marketplace',
             HttpConnectionOptions(
               accessTokenFactory: () async => accessToken,
             ))
         .withAutomaticReconnect()
         .build();
 
-    _connection?.on('ProductUpdated', (args) => onEvent('product', args));
-    _connection?.on('DashboardUpdated', (args) => onEvent('dashboard', args));
-    _connection?.on('TransactionUpdated', (args) => onEvent('transaction', args));
-    _connection?.on('WalletUpdated', (args) => onEvent('wallet', args));
+    _connection?.on('MarketplaceRefreshRequested', (args) => onEvent('marketplace-refresh', args));
+    _connection?.on('WalletRefreshSignal', (args) => onEvent('wallet-refresh', args));
+
+    _connection?.onreconnected((_) => onConnectionStateChanged?.call(true));
+    _connection?.onreconnecting((_) => onConnectionStateChanged?.call(false));
+    _connection?.onclose((_) => onConnectionStateChanged?.call(false));
 
     await _connection?.start();
+    onConnectionStateChanged?.call(true);
   }
 
   Future<void> disconnect() async {

@@ -3,13 +3,13 @@ using GoldWalletSystem.Application.DTOs.Notifications;
 using GoldWalletSystem.Application.DTOs.Wallet;
 using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.API.Helpers;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text;
 
 namespace GoldWalletSystem.API.Controllers;
 
@@ -355,6 +355,8 @@ public class WalletController(
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
         var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset, cancellationToken);
+        // Days-held source: WalletAssets.CreatedAtUtc (the asset acquisition/create timestamp in wallet).
+        var daysHeld = CalculateDaysHeld(asset.CreatedAtUtc);
 
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
@@ -364,15 +366,18 @@ public class WalletController(
                 NotionalAmount: grossAmount,
                 Quantity: request.Quantity,
                 ClosePrice: unitPrice,
-                DaysHeldAfterGrace: 0),
+                DaysHeldAfterGrace: daysHeld),
             cancellationToken);
+        var resolvedFinalAmount = actionType == "sell"
+            ? Math.Max(0, feeResult.SubTotalAmount - Math.Abs(feeResult.TotalFeesAmount) + feeResult.DiscountAmount)
+            : feeResult.FinalAmount;
 
         return Ok(ApiResponse<object>.Ok(new
         {
             subTotalAmount = feeResult.SubTotalAmount,
             totalFeesAmount = feeResult.TotalFeesAmount,
             discountAmount = feeResult.DiscountAmount,
-            finalAmount = feeResult.FinalAmount,
+            finalAmount = resolvedFinalAmount,
             currency = feeResult.Currency,
             feeBreakdowns = feeResult.Lines
         }));
@@ -440,6 +445,8 @@ public class WalletController(
         var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
         var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset, cancellationToken);
+        // Days-held source: WalletAssets.CreatedAtUtc (the asset acquisition/create timestamp in wallet).
+        var daysHeld = CalculateDaysHeld(asset.CreatedAtUtc);
 
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
@@ -449,8 +456,11 @@ public class WalletController(
                 NotionalAmount: grossAmount,
                 Quantity: request.Quantity,
                 ClosePrice: unitPrice,
-                DaysHeldAfterGrace: 0),
+                DaysHeldAfterGrace: daysHeld),
             cancellationToken);
+        var resolvedFinalAmount = actionType == "sell"
+            ? Math.Max(0, feeResult.SubTotalAmount - Math.Abs(feeResult.TotalFeesAmount) + feeResult.DiscountAmount)
+            : feeResult.FinalAmount;
 
         var sellConfig = await ReadSellExecutionConfigurationAsync(cancellationToken);
         var executionMode = sellConfig.Mode;
@@ -477,6 +487,8 @@ public class WalletController(
         {
             if (request.RecipientInvestorUserId is null || request.RecipientInvestorUserId <= 0)
                 return BadRequest(ApiResponse<object>.Fail("Recipient investor is required for transfer/gift.", 400));
+            if (request.RecipientInvestorUserId == request.UserId)
+                return BadRequest(ApiResponse<object>.Fail("Investor cannot transfer or gift to the same account.", 400));
 
             recipientInvestorName = await dbContext.Users
                 .AsNoTracking()
@@ -528,11 +540,11 @@ public class WalletController(
                 Weight = requestedWeight,
                 Unit = asset.Unit,
                 Purity = asset.Purity,
-                Amount = feeResult.FinalAmount,
+                Amount = resolvedFinalAmount,
                 SubTotalAmount = feeResult.SubTotalAmount,
                 TotalFeesAmount = feeResult.TotalFeesAmount,
                 DiscountAmount = feeResult.DiscountAmount,
-                FinalAmount = feeResult.FinalAmount,
+                FinalAmount = resolvedFinalAmount,
                 Currency = recipientWallet.CurrencyCode,
                 Notes = $"direction=received|from_investor_user_id={request.UserId}|from_investor_name={senderName}|{BuildNotes(request, executionMode)}",
                 CreatedAtUtc = DateTime.UtcNow
@@ -550,7 +562,7 @@ public class WalletController(
 
         if (!shouldRequireSellerApproval && actionType is "sell")
         {
-            wallet.CashBalance += feeResult.FinalAmount;
+            wallet.CashBalance += resolvedFinalAmount;
         }
 
         wallet.UpdatedAtUtc = DateTime.UtcNow;
@@ -568,11 +580,11 @@ public class WalletController(
             Weight = requestedWeight,
             Unit = asset.Unit,
             Purity = asset.Purity,
-            Amount = feeResult.FinalAmount,
+            Amount = resolvedFinalAmount,
             SubTotalAmount = feeResult.SubTotalAmount,
             TotalFeesAmount = feeResult.TotalFeesAmount,
             DiscountAmount = feeResult.DiscountAmount,
-            FinalAmount = feeResult.FinalAmount,
+            FinalAmount = resolvedFinalAmount,
             Currency = wallet.CurrencyCode,
             Notes = BuildNotes(request, executionMode, recipientInvestorName),
             CreatedAtUtc = DateTime.UtcNow
@@ -603,7 +615,7 @@ public class WalletController(
                 FeesAmount = feeResult.TotalFeesAmount,
                 DiscountAmount = feeResult.DiscountAmount,
                 TaxAmount = 0,
-                TotalAmount = feeResult.FinalAmount,
+                TotalAmount = resolvedFinalAmount,
                 Currency = wallet.CurrencyCode,
                 PaymentMethod = actionType is "sell" ? "WalletCredit" : "N/A",
                 PaymentStatus = actionType is "sell" ? "Paid" : "Pending",
@@ -811,7 +823,7 @@ public class WalletController(
             SubTotalAmount = feeResult.SubTotalAmount,
             TotalFeesAmount = feeResult.TotalFeesAmount,
             DiscountAmount = feeResult.DiscountAmount,
-            FinalAmount = feeResult.FinalAmount,
+            FinalAmount = resolvedFinalAmount,
             Currency = feeResult.Currency,
             FeeBreakdowns = feeResult.Lines
         }));
@@ -1366,77 +1378,28 @@ public class WalletController(
 
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
-        var lines = new[]
+        var lines = new (string Label, string Value)[]
         {
-            "Gold Wallet Invoice",
-            $"Date (UTC): {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}",
-            $"Action: {actionType}",
-            $"Investor User Id: {investorUserId}",
-            $"Asset Id: {asset.Id}",
-            $"Asset Type: {asset.AssetType}",
-            $"Category: {asset.Category}",
-            $"Quantity: {quantity}",
-            $"Weight: {asset.Weight} {asset.Unit}",
-            $"Purity: {asset.Purity}",
-            $"Amount: {amount}"
+            ("Date (UTC)", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")),
+            ("Action", actionType),
+            ("Investor User Id", investorUserId.ToString()),
+            ("Asset Id", asset.Id.ToString()),
+            ("Asset Type", asset.AssetType.ToString()),
+            ("Category", asset.Category.ToString()),
+            ("Quantity", quantity.ToString()),
+            ("Weight", $"{asset.Weight} {asset.Unit}"),
+            ("Purity", asset.Purity.ToString()),
+            ("Amount", amount.ToString())
         };
-        var pdfBytes = BuildSimplePdf(lines);
+        var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
         await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
         return $"/Certificats/{investorUserId}/{fileName}";
     }
 
-    private static byte[] BuildSimplePdf(IEnumerable<string> lines)
+    private static int CalculateDaysHeld(DateTime walletAssetCreatedAtUtc)
     {
-        static string EscapePdf(string value) => value
-            .Replace("\\", "\\\\")
-            .Replace("(", "\\(")
-            .Replace(")", "\\)");
-
-        var contentBuilder = new StringBuilder();
-        contentBuilder.AppendLine("BT");
-        contentBuilder.AppendLine("/F1 12 Tf");
-        contentBuilder.AppendLine("50 780 Td");
-        var first = true;
-        foreach (var line in lines)
-        {
-            if (!first)
-            {
-                contentBuilder.AppendLine("0 -16 Td");
-            }
-            contentBuilder.AppendLine($"({EscapePdf(line)}) Tj");
-            first = false;
-        }
-        contentBuilder.AppendLine("ET");
-
-        var streamContent = contentBuilder.ToString();
-        var objects = new List<string>
-        {
-            "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
-            "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
-            "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
-            $"4 0 obj\n<< /Length {Encoding.ASCII.GetByteCount(streamContent)} >>\nstream\n{streamContent}endstream\nendobj\n",
-            "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
-        };
-
-        var pdf = new StringBuilder();
-        pdf.Append("%PDF-1.4\n");
-        var offsets = new List<int> { 0 };
-        foreach (var obj in objects)
-        {
-            offsets.Add(Encoding.ASCII.GetByteCount(pdf.ToString()));
-            pdf.Append(obj);
-        }
-
-        var xrefStart = Encoding.ASCII.GetByteCount(pdf.ToString());
-        pdf.Append($"xref\n0 {objects.Count + 1}\n");
-        pdf.Append("0000000000 65535 f \n");
-        foreach (var offset in offsets.Skip(1))
-        {
-            pdf.Append($"{offset:D10} 00000 n \n");
-        }
-        pdf.Append($"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xrefStart}\n%%EOF");
-
-        return Encoding.ASCII.GetBytes(pdf.ToString());
+        var heldDays = (DateTime.UtcNow.Date - walletAssetCreatedAtUtc.Date).Days;
+        return Math.Max(0, heldDays);
     }
 
     private string? ToAbsoluteFileUrl(string? fileUrl)

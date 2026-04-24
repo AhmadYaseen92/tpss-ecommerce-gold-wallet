@@ -88,6 +88,10 @@ export class MarketplaceRealtime {
       return;
     }
 
+    if (this.connection && isConnectionDisconnected(this.connection, signalR)) {
+      await this.stop();
+    }
+
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5055"}/hubs/marketplace`, {
         accessTokenFactory: options.accessTokenFactory
@@ -101,6 +105,10 @@ export class MarketplaceRealtime {
     connection.off("MarketplaceRefreshRequested");
     connection.on("MarketplaceRefreshRequested", (payload: { reason?: string }) => {
       options.onRefreshRequested(payload?.reason ?? "signalr");
+    });
+    connection.off("WalletRefreshSignal");
+    connection.on("WalletRefreshSignal", (payload: { reason?: string }) => {
+      options.onRefreshRequested(payload?.reason ?? "wallet-signal");
     });
 
     connection.onreconnected(() => {

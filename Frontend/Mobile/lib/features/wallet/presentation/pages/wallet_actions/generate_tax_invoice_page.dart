@@ -9,10 +9,12 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 
 class GenerateTaxInvoicePage extends StatefulWidget {
   final WalletTransactionEntity asset;
@@ -28,9 +30,16 @@ class GenerateTaxInvoicePage extends StatefulWidget {
 
 class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
   bool _downloading = false;
+  WalletActionPreviewResult? _preview;
 
   String get _reference =>
       'INV-${widget.asset.name.replaceAll(' ', '').toUpperCase()}-${DateTime.now().millisecondsSinceEpoch}';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreview();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,11 +47,12 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
     final actionType = _resolveActionType();
     final (leftLabel, rightLabel) = _partyLabels(actionType);
 
-    final subTotal = _safeAmount(widget.asset.marketValue);
-    const fees = 0.0;
+    final baseAmount = widget.asset.actionBaseAmount;
+    final subTotal = _preview?.subTotalAmount ?? baseAmount;
+    final fees = _preview?.totalFeesAmount ?? 0;
     const vat = 0.0;
-    const discount = 0.0;
-    final grandTotal = subTotal + fees + vat - discount;
+    final discount = _preview?.discountAmount ?? 0;
+    final grandTotal = _preview?.finalAmount ?? (subTotal + fees + vat - discount);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -94,32 +104,45 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          widget.asset.name.isEmpty
-                              ? 'Unnamed Product'
-                              : widget.asset.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.asset.name.isEmpty
+                                  ? 'Unnamed Product'
+                                  : widget.asset.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Ref: $_reference',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
                         ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('Type: $actionType',
-                              style: const TextStyle(fontSize: 12)),
-                          Text('Ref: $_reference',
-                              style: const TextStyle(fontSize: 12)),
-                        ],
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 90,
+                        child: Text(
+                          'Type: $actionType',
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(fontSize: 12),
+                        ),
                       )
                     ],
                   ),
 
                   const Divider(height: 20),
 
-                  _metaRow('Tax Invoice #', _reference,
-                      selectable: true),
+                  _metaRow('Tax Invoice #', _reference, selectable: true),
                   _metaRow('Action Type', actionType),
                   _metaRow('Issue Date', _fmt(issueDate)),
                   _metaRow('Status', widget.asset.status),
@@ -172,10 +195,18 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                   _buildBox(
                     title: 'Amount Summary',
                     children: [
+                      ...?_preview?.feeBreakdowns.map(
+                        (line) => _metaRow(
+                          line.feeName,
+                          '${line.isDiscount ? '-' : ''}${_currency(line.appliedValue)}',
+                        ),
+                      ),
+                      if ((_preview?.feeBreakdowns.length ?? 0) > 0) const Divider(),
                       _metaRow('Sub Total', _currency(subTotal)),
                       _metaRow('Fees', _currency(fees)),
                       _metaRow('VAT / Tax', _currency(vat)),
-                      _metaRow('Discount', _currency(discount)),
+                      if (!(_preview?.feeBreakdowns.any((line) => line.isDiscount) ?? false))
+                        _metaRow('Discount', _currency(discount)),
                       const Divider(),
                       _metaRow('Grand Total', _currency(grandTotal),
                           bold: true),
@@ -223,6 +254,47 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
     );
   }
 
+  Future<void> _loadPreview() async {
+    try {
+      final amount = widget.asset.actionBaseAmount;
+      final unitPrice = widget.asset.actionUnitPrice;
+      final quantity = widget.asset.quantity <= 0 ? 1 : widget.asset.quantity;
+      final response = await InjectionContainer.dio().post(
+        '/wallet/actions/preview',
+        data: {
+          'userId': AuthSessionStore.userId,
+          'walletAssetId': widget.asset.id,
+          'actionType': _resolveActionType().toLowerCase(),
+          'quantity': quantity,
+          'unitPrice': unitPrice,
+          'weight': widget.asset.weightInGrams,
+          'amount': amount,
+        },
+      );
+      final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      final feeBreakdowns = (data['feeBreakdowns'] as List<dynamic>? ?? [])
+          .whereType<Map<String, dynamic>>()
+          .map((line) => WalletActionPreviewFeeLine(
+                feeName: (line['feeName'] ?? '').toString(),
+                appliedValue: (line['appliedValue'] as num?)?.toDouble() ?? 0,
+                isDiscount: (line['isDiscount'] as bool?) ?? false,
+              ))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        _preview = WalletActionPreviewResult(
+          subTotalAmount: (data['subTotalAmount'] as num?)?.toDouble() ?? amount,
+          totalFeesAmount: (data['totalFeesAmount'] as num?)?.toDouble() ?? 0,
+          discountAmount: (data['discountAmount'] as num?)?.toDouble() ?? 0,
+          finalAmount: (data['finalAmount'] as num?)?.toDouble() ?? amount,
+          currency: (data['currency'] ?? 'USD').toString(),
+          feeBreakdowns: feeBreakdowns,
+        );
+      });
+    } catch (_) {}
+  }
+
   // ---------- UI HELPERS ----------
 
   Widget _buildTable() {
@@ -250,16 +322,20 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
           const Padding(padding: EdgeInsets.all(6), child: Text('1')),
           Padding(
               padding: const EdgeInsets.all(6),
-              child: Text(widget.asset.name)),
+              child: Text(
+                widget.asset.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              )),
           Padding(
               padding: const EdgeInsets.all(6),
-              child: Text('\$${widget.asset.marketPricePerGram}')),
+              child: Text(_currency(widget.asset.actionUnitPrice))),
           Padding(
               padding: const EdgeInsets.all(6),
               child: Text('${widget.asset.quantity}')),
           Padding(
               padding: const EdgeInsets.all(6),
-              child: Text(widget.asset.marketValue)),
+              child: Text(_currency(widget.asset.actionBaseAmount))),
         ]),
       ],
     );
@@ -347,9 +423,6 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
   String _fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  double _safeAmount(String? v) =>
-      double.tryParse((v ?? '').replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
-
   String _currency(double v) => '\$${v.toStringAsFixed(2)}';
 
   String _leftPartyName(String type) =>
@@ -360,7 +433,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
   Future<void> _downloadInvoice(BuildContext context) async {
     setState(() => _downloading = true);
     try {
-      final url = _resolveDownloadUrl(widget.asset.certificateUrl);
+      final url = await _resolveDownloadUrl();
       if (url == null) throw Exception('No certificate URL');
 
       final bytes = await _downloadBytes(url);
@@ -410,8 +483,18 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
     return Uint8List.fromList(res.data ?? []);
   }
 
-  String? _resolveDownloadUrl(String? url) {
-    if (url == null || url.isEmpty) return null;
-    return url;
+  Future<String?> _resolveDownloadUrl() async {
+    try {
+      final response = await InjectionContainer.dio().get(
+        '/wallet/wallet-items/${widget.asset.id}/certificate',
+      );
+      final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      final ensuredUrl = (data['pdfUrl'] ?? '').toString();
+      if (ensuredUrl.isNotEmpty) return ensuredUrl;
+    } catch (_) {}
+
+    final fallback = widget.asset.certificateUrl;
+    if (fallback == null || fallback.isEmpty) return null;
+    return fallback;
   }
 }
