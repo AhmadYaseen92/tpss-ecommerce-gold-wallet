@@ -31,6 +31,15 @@ import type {
 } from "../types/apiTypes";
 
 const toRole = (role: string): "Admin" | "Seller" => (role === "Admin" ? "Admin" : "Seller");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
+const toAbsoluteImageUrl = (value: unknown): string => {
+  const path = String(value ?? "").trim();
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  if (!API_BASE_URL) return path;
+  return path.startsWith("/") ? `${API_BASE_URL}${path}` : `${API_BASE_URL}/${path}`;
+};
 
 const fallbackCategories: EnumItemDto[] = [
   { value: 1, name: "Gold" },
@@ -425,7 +434,7 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
       name: String(row.name ?? row.Name ?? ""),
       sku: String(row.sku ?? row.Sku ?? ""),
       description: String(row.description ?? row.Description ?? ""),
-      imageUrl: String(row.imageUrl ?? row.ImageUrl ?? ""),
+      imageUrl: toAbsoluteImageUrl(row.imageUrl ?? row.ImageUrl ?? ""),
       category,
       materialType: String(row.materialType ?? row.MaterialType ?? ""),
       formType: String(row.formType ?? row.FormType ?? ""),
