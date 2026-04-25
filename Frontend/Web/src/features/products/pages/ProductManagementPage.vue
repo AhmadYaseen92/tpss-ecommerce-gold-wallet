@@ -2,6 +2,7 @@
 import { computed, ref, watch } from "vue";
 import ProductForm from "../components/ProductForm.vue";
 import ProductDetails from "../components/ProductDetails.vue";
+import ProductFeePanel from "../components/ProductFeePanel.vue";
 
 import type {
   ProductManagementDto,
@@ -24,6 +25,7 @@ import ResultModal from "../../../shared/components/ui/ResultModal.vue";
 
 const props = defineProps<{
   role: "Admin" | "Seller";
+  accessToken: string;
   productError: string;
   productPage: "list" | "add" | "edit" | "details";
   productRouteId: number | null;
@@ -307,6 +309,11 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
 
       <template v-else>
         <ProductDetails :product="selectedProduct" />
+        <ProductFeePanel
+          :access-token="accessToken"
+          :product-id="selectedProduct.id"
+          :seller-id="selectedProduct.sellerId"
+        />
 
         <div class="ui-row-actions">
           <Button @click="emit('edit', selectedProduct)">Edit Product</Button>
@@ -324,6 +331,11 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
         :market-prices="marketPrices"
         @save="emit('save')"
         @image="emit('image', $event)"
+      />
+      <ProductFeePanel
+        :access-token="accessToken"
+        :product-id="productForm.id ?? null"
+        :seller-id="productForm.sellerId"
       />
 
       <div class="ui-row-actions">

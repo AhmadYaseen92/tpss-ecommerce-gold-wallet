@@ -18,6 +18,7 @@ const openManageFees = () => {
 <template>
   <ProductManagementPage
     :role="marketplace.role.value"
+    :access-token="marketplace.session.value?.accessToken ?? ''"
     :product-error="pm.productError.value"
     :product-page="pm.productPage.value"
     :product-route-id="pm.productRouteId.value"
