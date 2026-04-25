@@ -148,9 +148,9 @@ const finalPrice = computed(() => {
 
         <FormField v-if="isGold" label="Purity / Karat" :error="errors.purityKarat">
           <Select v-model="model.purityKarat">
-            <option :value="3">21K</option>
             <option :value="1">24K</option>
             <option :value="2">22K</option>
+            <option :value="3">21K</option>
             <option :value="4">18K</option>
             <option :value="5">14K</option>
           </Select>
@@ -168,6 +168,10 @@ const finalPrice = computed(() => {
 
         <FormField v-if="!isDiamond" label="Purity Factor">
           <Input :model-value="model.purityFactor" readonly />
+        </FormField>
+
+        <FormField v-else label="Purity Factor">
+          <Input :model-value="1" readonly />
         </FormField>
 
         <FormField label="Pricing Mode">
