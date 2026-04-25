@@ -54,6 +54,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.OfferType,
                 x.IsHasOffer,
                 x.AvailableStock,
+                x.IsActive,
                 x.SellerId,
                 SellerName = x.Seller.CompanyName
             })
@@ -85,6 +86,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.OfferType,
                 x.IsHasOffer,
                 x.AvailableStock,
+                x.IsActive,
                 x.SellerId,
                 x.SellerName);
         }).ToList();

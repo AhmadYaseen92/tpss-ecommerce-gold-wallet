@@ -59,7 +59,7 @@ const formatMoney = (value: number) => Number(value || 0).toFixed(2);
         <p><strong>Offer Type:</strong> {{ product.offerType || "None" }}</p>
         <p><strong>Offer Percent:</strong> {{ product.offerPercent }}%</p>
         <p><strong>Offer New Price:</strong> {{ formatMoney(product.offerNewPrice) }}</p>
-        <p><strong>Final Sell Price:</strong> {{ formatMoney(product.finalPrice) }}</p>
+        <p><strong>Final Sell Price:</strong> {{ formatMoney(product.sellPrice) }}</p>
         <p><strong>Image URL:</strong> <span class="url-value">{{ product.imageUrl || "—" }}</span></p>
       </section>
     </div>

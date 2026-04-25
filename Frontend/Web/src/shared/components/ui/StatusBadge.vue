@@ -1,11 +1,33 @@
 <script setup lang="ts">
-const props = defineProps<{ status: string }>();
-const cls = () => {
-  const value = props.status.toLowerCase();
-  if (["approved", "active", "delivered"].includes(value)) return "ok";
-  if (["pending", "underreview", "pending_delivered"].includes(value)) return "warn";
-  if (["rejected", "blocked", "cancelled", "canceled", "inactive"].includes(value)) return "bad";
+import { computed } from "vue";
+
+const props = defineProps<{
+  status?: string | null;
+}>();
+
+const label = computed(() => props.status || "Unknown");
+
+const statusClass = computed(() => {
+  const value = label.value.toLowerCase().replace(/\s|-/g, "");
+
+  if (["approved", "active", "delivered", "completed", "paid", "success"].includes(value)) {
+    return "ok";
+  }
+
+  if (["pending", "underreview", "pendingdelivered", "processing", "draft"].includes(value)) {
+    return "warn";
+  }
+
+  if (["rejected", "blocked", "cancelled", "canceled", "inactive", "failed", "expired"].includes(value)) {
+    return "bad";
+  }
+
   return "neutral";
-};
+});
 </script>
-<template><span :class="['ui-status', `ui-status--${cls()}`]">{{ status }}</span></template>
+
+<template>
+  <span :class="['ui-status', `ui-status--${statusClass}`]">
+    {{ label }}
+  </span>
+</template>

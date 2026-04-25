@@ -1,11 +1,32 @@
 <script setup lang="ts">
-defineProps<{ label: string; hint?: string; error?: string }>();
+withDefaults(
+  defineProps<{
+    label?: string;
+    hint?: string;
+    error?: string;
+    required?: boolean;
+  }>(),
+  {
+    required: false,
+  }
+);
 </script>
+
 <template>
   <label class="ui-form-field">
-    <span class="ui-form-label">{{ label }}</span>
+    <span v-if="label" class="ui-form-label">
+      {{ label }}
+      <span v-if="required" class="ui-required">*</span>
+    </span>
+
     <slot />
-    <small v-if="hint && !error" class="ui-form-hint">{{ hint }}</small>
-    <small v-if="error" class="ui-form-error">{{ error }}</small>
+
+    <small v-if="error" class="ui-form-error">
+      {{ error }}
+    </small>
+
+    <small v-else-if="hint" class="ui-form-hint">
+      {{ hint }}
+    </small>
   </label>
 </template>

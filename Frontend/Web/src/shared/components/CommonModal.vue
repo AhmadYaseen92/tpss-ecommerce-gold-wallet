@@ -1,19 +1,47 @@
 <script setup lang="ts">
-defineProps<{
-  open: boolean;
-  title?: string;
-  message: string;
-}>();
+withDefaults(
+  defineProps<{
+    open: boolean;
+    title?: string;
+    message: string;
+    type?: "info" | "success" | "warning" | "danger";
+    buttonText?: string;
+  }>(),
+  {
+    title: "Notice",
+    type: "info",
+    buttonText: "OK",
+  }
+);
 
-const emit = defineEmits<{ (e: "close"): void }>();
+const emit = defineEmits<{
+  close: [];
+}>();
 </script>
 
 <template>
-  <div v-if="open" class="common-modal-overlay" role="dialog" aria-modal="true">
+  <div v-if="open" class="common-modal-overlay" @click.self="emit('close')">
     <div class="common-modal">
-      <h3>{{ title || "Notice" }}</h3>
-      <p>{{ message }}</p>
-      <button type="button" class="full-btn" @click="emit('close')">OK</button>
+
+      <div class="ui-modal-header">
+        <h3 :class="`ui-modal-title ui-modal-title--${type}`">
+          {{ title }}
+        </h3>
+      </div>
+
+      <p class="ui-modal-message">
+        {{ message }}
+      </p>
+
+      <div class="ui-modal-actions">
+        <button
+          class="ui-btn ui-btn--primary ui-btn--full"
+          @click="emit('close')"
+        >
+          {{ buttonText }}
+        </button>
+      </div>
+
     </div>
   </div>
 </template>

@@ -243,7 +243,7 @@ export interface WebInvestorDto {
 
 
 export interface ProductManagementDto {
-  id: number;
+ id: number;
   name: string;
   sku: string;
   description: string;
@@ -251,23 +251,27 @@ export interface ProductManagementDto {
   category: string;
   materialType: string;
   formType: string;
-  displayCategoryLabel: string;
   pricingMode: string;
   purityKarat: string;
   purityFactor: number;
   weightValue: number;
   weightUnit: string;
   baseMarketPrice: number;
-  manualSellPrice: number;
-  offerType: string;
-  isHasOffer: boolean;
+
+  autoPrice: number;
+  fixedPrice: number;
+  sellPrice: number;
+
   offerPercent: number;
   offerNewPrice: number;
-  finalPrice: number;
+  offerType: string;
+  isHasOffer: boolean;
+  isActive : boolean;
+
   availableStock: number;
-  isActive: boolean;
   sellerId: number;
-  sellerName?: string;
+  sellerName: string;
+  displayCategoryLabel: string;
 }
 
 export interface EnumItemDto {

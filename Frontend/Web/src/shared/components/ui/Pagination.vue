@@ -1,14 +1,48 @@
 <script setup lang="ts">
-defineProps<{ page: number; totalPages: number; totalItems: number; pageSize: number }>();
-const emit = defineEmits<{ prev: []; next: [] }>();
+import { computed } from "vue";
+
+const props = withDefaults(
+  defineProps<{
+    page: number;
+    totalPages: number;
+    totalItems: number;
+    pageSize: number;
+  }>(),
+  {
+    page: 1,
+    totalPages: 1,
+    totalItems: 0,
+    pageSize: 10,
+  }
+);
+
+const emit = defineEmits<{
+  prev: [];
+  next: [];
+}>();
+
+const start = computed(() => {
+  if (props.totalItems === 0) return 0;
+  return (props.page - 1) * props.pageSize + 1;
+});
+
+const end = computed(() => Math.min(props.page * props.pageSize, props.totalItems));
 </script>
+
 <template>
   <div class="ui-pagination">
-    <span>Results: {{ (page - 1) * pageSize + 1 }} - {{ Math.min(page * pageSize, totalItems) }} of {{ totalItems }}</span>
+    <span>Results: {{ start }} - {{ end }} of {{ totalItems }}</span>
+
     <div>
-      <button class="ui-btn ui-btn--ghost" :disabled="page <= 1" @click="emit('prev')">&lt;</button>
+      <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button" :disabled="page <= 1" @click="emit('prev')">
+        Previous
+      </button>
+
       <span>{{ page }} / {{ totalPages }}</span>
-      <button class="ui-btn ui-btn--ghost" :disabled="page >= totalPages" @click="emit('next')">&gt;</button>
+
+      <button class="ui-btn ui-btn--ghost ui-btn--sm" type="button" :disabled="page >= totalPages" @click="emit('next')">
+        Next
+      </button>
     </div>
   </div>
 </template>

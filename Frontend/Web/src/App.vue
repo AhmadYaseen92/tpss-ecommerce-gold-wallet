@@ -15,8 +15,9 @@ import FeeManagementFeaturePage from "./features/fees/pages/FeeManagementFeature
 import { useMarketplace } from "./shared/app/store/useMarketplace";
 
 const marketplace = useMarketplace();
-const isDark = ref(false);
+
 const THEME_KEY = "goldwallet.web.theme";
+const isDark = ref(window.localStorage.getItem(THEME_KEY) === "dark");
 
 const ROUTE_BY_MENU: Partial<Record<NavigationKey, string>> = {
   overview: "/overview",
@@ -26,23 +27,35 @@ const ROUTE_BY_MENU: Partial<Record<NavigationKey, string>> = {
   settings: "/settings",
   requests: "/transactions",
   reports: "/reports",
-  fees: "/fees"
+  fees: "/fees",
 };
+
+const applyTheme = (dark: boolean) => {
+  document.documentElement.classList.toggle("dark-mode", dark);
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  window.localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
+};
+
+applyTheme(isDark.value);
 
 const readPath = () => {
   const value = window.location.pathname;
-  if (!value || value === "/" || value === "/Login" || value === "/Register") return "/overview";
+
+  if (!value || value === "/" || value === "/Login" || value === "/Register") {
+    return "/overview";
+  }
+
   return value.startsWith("/") ? value : "/overview";
 };
 
 const currentPath = ref("/overview");
+
 const syncPath = () => {
   currentPath.value = readPath();
 };
 
 onMounted(() => {
   void marketplace.restoreSession();
-  isDark.value = window.localStorage.getItem(THEME_KEY) === "dark";
   syncPath();
   window.addEventListener("popstate", syncPath);
 });
@@ -52,8 +65,7 @@ onUnmounted(() => {
 });
 
 watch(isDark, (value) => {
-  document.documentElement.classList.toggle("dark-mode", value);
-  window.localStorage.setItem(THEME_KEY, value ? "dark" : "light");
+  applyTheme(value);
 });
 
 const menuItems = computed<Array<{ key: NavigationKey; label: string }>>(() => {
@@ -63,12 +75,24 @@ const menuItems = computed<Array<{ key: NavigationKey; label: string }>>(() => {
     { key: "fees" as NavigationKey, label: "Fees" },
     { key: "requests", label: "Transactions" },
     { key: "reports", label: "Reports" },
-    { key: "logout", label: "Logout" }
+    { key: "logout", label: "Logout" },
   ];
 
-  return marketplace.role.value === "Admin"
-    ? [common[0], common[1], { key: "investors" as NavigationKey, label: "Investors" }, { key: "sellers" as NavigationKey, label: "Sellers" }, { key: "settings" as NavigationKey, label: "System Settings" }, common[2], common[3], common[4]]
-    : common;
+  if (marketplace.role.value === "Admin") {
+    return [
+      common[0],
+      common[1],
+      { key: "investors" as NavigationKey, label: "Investors" },
+      { key: "sellers" as NavigationKey, label: "Sellers" },
+      { key: "settings" as NavigationKey, label: "System Settings" },
+      common[2],
+      common[3],
+      common[4],
+      common[5],
+    ];
+  }
+
+  return common;
 });
 
 const activeMenu = computed<NavigationKey>(() => {
@@ -82,12 +106,19 @@ const activeMenu = computed<NavigationKey>(() => {
   return "overview";
 });
 
-watch(activeMenu, (menu) => {
-  marketplace.activeMenu.value = menu;
-}, { immediate: true });
+watch(
+  activeMenu,
+  (menu) => {
+    marketplace.activeMenu.value = menu;
+  },
+  { immediate: true }
+);
 
 const activeComponent = computed(() => {
-  if (currentPath.value.startsWith("/sellers/")) return marketplace.role.value === "Admin" ? SellerDetailsPage : DashboardFeaturePage;
+  if (currentPath.value.startsWith("/sellers/")) {
+    return marketplace.role.value === "Admin" ? SellerDetailsPage : DashboardFeaturePage;
+  }
+
   if (currentPath.value.startsWith("/products")) return ProductFeaturePage;
   if (currentPath.value.startsWith("/investors")) return marketplace.role.value === "Admin" ? InvestorsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/sellers")) return marketplace.role.value === "Admin" ? SellersFeaturePage : DashboardFeaturePage;
@@ -95,22 +126,35 @@ const activeComponent = computed(() => {
   if (currentPath.value.startsWith("/transactions")) return TransactionsFeaturePage;
   if (currentPath.value.startsWith("/fees")) return FeeManagementFeaturePage;
   if (currentPath.value.startsWith("/reports")) return ReportsFeaturePage;
+
   return DashboardFeaturePage;
 });
 
 const welcomeText = computed(() => {
   if (!marketplace.session.value) return "Welcome";
-  const fullName = marketplace.state.value.currentUserName ?? (marketplace.role.value === "Admin" ? "Admin User" : "Seller User");
+
+  const fullName =
+    marketplace.state.value.currentUserName ??
+    (marketplace.role.value === "Admin" ? "Admin User" : "Seller User");
+
   return `Welcome back, ${fullName}`;
 });
 
+watch(
+  () => marketplace.session.value,
+  (session) => {
+    const authPath =
+      window.location.pathname === "/Login" ||
+      window.location.pathname === "/Register" ||
+      window.location.pathname === "/";
 
-watch(() => marketplace.session.value, (session) => {
-  if (session && (window.location.pathname === "/Login" || window.location.pathname === "/Register" || window.location.pathname === "/")) {
-    window.history.replaceState({}, "", "/overview");
-    syncPath();
+    if (session && authPath) {
+      window.history.replaceState({}, "", "/overview");
+      syncPath();
+    }
   }
-});
+);
+
 const handleMenuChange = (menu: NavigationKey) => {
   if (menu === "logout") {
     marketplace.logout();
@@ -119,7 +163,8 @@ const handleMenuChange = (menu: NavigationKey) => {
     return;
   }
 
-  const target = ROUTE_BY_MENU[menu as keyof typeof ROUTE_BY_MENU];
+  const target = ROUTE_BY_MENU[menu];
+
   if (target) {
     window.history.pushState({}, "", target);
     syncPath();
