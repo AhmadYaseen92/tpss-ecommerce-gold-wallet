@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import FormField from "../../../shared/components/ui/FormField.vue";
 import Input from "../../../shared/components/ui/Input.vue";
 import Select from "../../../shared/components/ui/Select.vue";
@@ -34,6 +34,7 @@ const emit = defineEmits<{
 const tab = ref<"basics" | "pricing" | "offer" | "stock">("basics");
 const lastGoldKarat = ref(3);
 const lastSilverPurity = ref(0.999);
+const imagePreviewUrl = ref("");
 
 const isAuto = computed(() => props.model.pricingMode === 1);
 const isGold = computed(() => props.model.materialType === 1);
@@ -79,6 +80,33 @@ watch(
     }
   },
   { immediate: true }
+);
+
+watch(
+  () => props.model.materialType,
+  (next, prev) => {
+    if (next === prev || prev == null) return;
+
+    props.model.formType = 1;
+    props.model.weightValue = 0;
+    props.model.pricingMode = 1;
+    props.model.manualSellPrice = 0;
+    props.model.offerType = 0;
+    props.model.offerPercent = 0;
+    props.model.offerNewPrice = 0;
+    props.model.availableStock = 0;
+
+    if (next === 1) {
+      props.model.purityKarat = lastGoldKarat.value || 3;
+      props.model.purityFactor = karatFactorMap[props.model.purityKarat] ?? 0.875;
+    } else if (next === 2) {
+      props.model.purityKarat = 0;
+      props.model.purityFactor = lastSilverPurity.value;
+    } else {
+      props.model.purityKarat = 0;
+      props.model.purityFactor = 1;
+    }
+  }
 );
 
 watch(
@@ -154,6 +182,23 @@ watch(
   },
   { immediate: true }
 );
+
+watch(
+  () => props.model.imageFile,
+  (file) => {
+    if (imagePreviewUrl.value.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreviewUrl.value);
+    }
+    imagePreviewUrl.value = file ? URL.createObjectURL(file) : "";
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(() => {
+  if (imagePreviewUrl.value.startsWith("blob:")) {
+    URL.revokeObjectURL(imagePreviewUrl.value);
+  }
+});
 </script>
 
 <template>
@@ -242,6 +287,16 @@ watch(
     </div>
 
     <Card v-if="tab === 'basics'" title="Product Basics">
+      <div class="ui-row-inline">
+        <img
+          v-if="imagePreviewUrl || model.existingImageUrl"
+          :src="imagePreviewUrl || model.existingImageUrl"
+          alt="Product preview"
+          class="product-thumb product-thumb--lg"
+        />
+        <span v-else class="product-thumb-placeholder product-thumb-placeholder--lg">No image</span>
+      </div>
+
       <FormField label="Name" required :error="errors.name">
         <Input v-model="model.name" />
       </FormField>

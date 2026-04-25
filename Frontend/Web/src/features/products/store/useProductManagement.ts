@@ -172,7 +172,14 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
 
   const loadProductManagementData = async () => {
     if (!marketplace.session.value?.accessToken) return;
-    managedProducts.value = await fetchManagedProducts(marketplace.session.value.accessToken);
+    const items = await fetchManagedProducts(marketplace.session.value.accessToken);
+    managedProducts.value = items.map((item) => {
+      const seller = marketplace.state.value.sellers.find((x: Seller) => x.sellerId === item.sellerId);
+      return {
+        ...item,
+        sellerName: item.sellerName || seller?.name || `Seller #${item.sellerId}`
+      };
+    });
     categories.value = await fetchProductCategories(marketplace.session.value.accessToken);
     weightUnits.value = await fetchWeightUnits(marketplace.session.value.accessToken);
 

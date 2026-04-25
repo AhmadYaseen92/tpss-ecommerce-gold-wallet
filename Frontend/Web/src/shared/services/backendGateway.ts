@@ -414,41 +414,39 @@ export interface ProductFormPayload {
 }
 
 export async function fetchManagedProducts(accessToken: string): Promise<ProductManagementDto[]> {
-  const searchResult = await postJson<PagedResult<ProductDto>, { pageNumber: number; pageSize: number; category: null }>(
-    "/api/products/search",
-    { pageNumber: 1, pageSize: 100, category: null },
-    accessToken
-  );
+  const items = await getJson<Array<Record<string, unknown>>>("/api/products/management", accessToken);
 
-  return searchResult.items.map((item) => {
-    const row = item as ProductDto & { IsActive?: boolean; isActive?: boolean };
+  return items.map((item) => {
+    const row = item as Record<string, unknown>;
+    const id = Number(row.id ?? row.Id ?? 0);
+    const category = String(row.displayCategoryLabel ?? row.DisplayCategoryLabel ?? row.category ?? row.Category ?? "");
     return {
-      id: item.id,
-      name: item.name,
-      sku: item.sku,
-      description: item.description,
-      imageUrl: item.imageUrl,
-      category: item.displayCategoryLabel,
-      materialType: item.materialType,
-      formType: item.formType,
-      displayCategoryLabel: item.displayCategoryLabel,
-      pricingMode: item.pricingMode,
-      purityKarat: item.purityKarat,
-      purityFactor: item.purityFactor,
-      weightValue: item.weightValue,
-      weightUnit: item.weightUnit,
-      baseMarketPrice: Number(item.baseMarketPrice ?? 0),
-      autoPrice: Number(item.autoPrice ?? 0),
-      fixedPrice: Number(item.fixedPrice ?? item.finalPrice ?? 0),
-      sellPrice: Number(item.sellPrice ?? item.finalPrice ?? 0),
-      offerType: item.offerType,
-      isHasOffer: Boolean(item.isHasOffer),
-      offerPercent: Number(item.offerPercent ?? 0),
-      offerNewPrice: Number(item.offerNewPrice ?? 0),
-      availableStock: item.availableStock,
+      id,
+      name: String(row.name ?? row.Name ?? ""),
+      sku: String(row.sku ?? row.Sku ?? ""),
+      description: String(row.description ?? row.Description ?? ""),
+      imageUrl: String(row.imageUrl ?? row.ImageUrl ?? ""),
+      category,
+      materialType: String(row.materialType ?? row.MaterialType ?? ""),
+      formType: String(row.formType ?? row.FormType ?? ""),
+      displayCategoryLabel: category,
+      pricingMode: String(row.pricingMode ?? row.PricingMode ?? ""),
+      purityKarat: String(row.purityKarat ?? row.PurityKarat ?? ""),
+      purityFactor: Number(row.purityFactor ?? row.PurityFactor ?? 0),
+      weightValue: Number(row.weightValue ?? row.WeightValue ?? 0),
+      weightUnit: String(row.weightUnit ?? row.WeightUnit ?? "Gram"),
+      baseMarketPrice: Number(row.baseMarketPrice ?? row.BaseMarketPrice ?? 0),
+      autoPrice: Number(row.autoPrice ?? row.AutoPrice ?? 0),
+      fixedPrice: Number(row.fixedPrice ?? row.FixedPrice ?? 0),
+      sellPrice: Number(row.sellPrice ?? row.SellPrice ?? 0),
+      offerType: String(row.offerType ?? row.OfferType ?? "0"),
+      isHasOffer: Boolean(row.isHasOffer ?? row.IsHasOffer ?? false),
+      offerPercent: Number(row.offerPercent ?? row.OfferPercent ?? 0),
+      offerNewPrice: Number(row.offerNewPrice ?? row.OfferNewPrice ?? 0),
+      availableStock: Number(row.availableStock ?? row.AvailableStock ?? 0),
       isActive: Boolean(row.isActive ?? row.IsActive ?? false),
-      sellerId: item.sellerId,
-      sellerName: item.sellerName
+      sellerId: Number(row.sellerId ?? row.SellerId ?? 0),
+      sellerName: String(row.sellerName ?? row.SellerName ?? "")
     };
   });
 }
