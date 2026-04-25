@@ -35,7 +35,8 @@ const props = defineProps<{
   validationErrors: Record<string, string>;
   searchTerm: string;
   activeFilter: "all" | "active" | "inactive";
-  categoryFilter: string;
+  materialTypeFilter: string;
+  formTypeFilter: string;
   sellerFilter: string;
   sellers: Seller[];
   marketPrices: MarketPriceConfigDto;
@@ -52,7 +53,8 @@ const emit = defineEmits<{
   image: [event: Event];
   "update:search-term": [value: string];
   "update:active-filter": [value: "all" | "active" | "inactive"];
-  "update:category-filter": [value: string];
+  "update:material-type-filter": [value: string];
+  "update:form-type-filter": [value: string];
   "update:seller-filter": [value: string];
   "save-market-prices": [];
   "update-market-price": [
@@ -75,7 +77,7 @@ const pagedProducts = computed(() => {
 });
 
 watch(
-  () => [props.searchTerm, props.activeFilter, props.categoryFilter, props.sellerFilter],
+  () => [props.searchTerm, props.activeFilter, props.materialTypeFilter, props.formTypeFilter, props.sellerFilter],
   () => {
     pageNumber.value = 1;
   }
@@ -192,13 +194,24 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
           </Select>
 
           <Select
-            :model-value="categoryFilter"
-            @update:model-value="emit('update:category-filter', $event)"
+            :model-value="materialTypeFilter"
+            @update:model-value="emit('update:material-type-filter', $event)"
           >
-            <option value="all">All categories</option>
-            <option v-for="category in categories" :key="category.value" :value="category.name">
-              {{ category.name }}
-            </option>
+            <option value="all">All material types</option>
+            <option value="gold">Gold</option>
+            <option value="silver">Silver</option>
+            <option value="diamond">Diamond</option>
+          </Select>
+
+          <Select
+            :model-value="formTypeFilter"
+            @update:model-value="emit('update:form-type-filter', $event)"
+          >
+            <option value="all">All product forms</option>
+            <option value="jewelry">Jewelry</option>
+            <option value="coin">Coin</option>
+            <option value="bar">Bar</option>
+            <option value="other">Other</option>
           </Select>
 
           <Button v-if="role === 'Seller'" @click="emit('add')">

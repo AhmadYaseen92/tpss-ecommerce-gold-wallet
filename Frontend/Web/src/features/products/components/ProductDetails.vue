@@ -39,6 +39,21 @@ const pricingModeLabelMap: Record<string, string> = {
   auto: "Auto",
   manual: "Manual"
 };
+
+const purityLabelMap: Record<string, string> = {
+  "1": "24K",
+  "2": "22K",
+  "3": "21K",
+  "4": "18K",
+  "5": "14K",
+  "0": "N/A"
+};
+
+const offerTypeLabelMap: Record<string, string> = {
+  "0": "None",
+  "1": "Percent Based",
+  "2": "Fixed Price"
+};
 </script>
 
 <template>
@@ -72,7 +87,7 @@ const pricingModeLabelMap: Record<string, string> = {
         <div class="product-detail-grid">
           <FormField label="Material Type"><div>{{ enumLabel(product.materialType, materialLabelMap) }}</div></FormField>
           <FormField label="Product Form"><div>{{ enumLabel(product.formType, formLabelMap) }}</div></FormField>
-          <FormField label="Purity / Karat"><div>{{ product.purityKarat || '—' }}</div></FormField>
+          <FormField label="Purity / Karat"><div>{{ enumLabel(product.purityKarat, purityLabelMap) }}</div></FormField>
           <FormField label="Purity Factor"><div>{{ product.purityFactor }}</div></FormField>
           <FormField label="Weight (grams)"><div>{{ product.weightValue }} g</div></FormField>
         </div>
@@ -90,7 +105,7 @@ const pricingModeLabelMap: Record<string, string> = {
 
       <Card title="Offer">
         <div class="product-detail-grid">
-          <FormField label="Offer Type"><div>{{ product.offerType || 'None' }}</div></FormField>
+          <FormField label="Offer Type"><div>{{ enumLabel(product.offerType, offerTypeLabelMap) }}</div></FormField>
           <FormField label="Offer Percent"><div>{{ product.offerPercent }}%</div></FormField>
           <FormField label="Offer New Price"><div>{{ formatMoney(product.offerNewPrice) }}</div></FormField>
           <FormField label="Has Offer"><div>{{ product.isHasOffer ? 'Yes' : 'No' }}</div></FormField>

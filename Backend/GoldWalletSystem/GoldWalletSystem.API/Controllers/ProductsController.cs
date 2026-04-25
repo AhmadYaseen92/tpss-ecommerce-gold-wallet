@@ -55,7 +55,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 Name = x.Name,
                 Sku = x.Sku,
                 Description = x.Description,
-                ImageUrl = NormalizeRelativeImagePath(x.ImageUrl),
+                ImageUrl = x.ImageUrl,
                 Category = x.Category,
                 MaterialType = x.MaterialType,
                 FormType = x.FormType,
@@ -79,6 +79,10 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             })
             .ToListAsync(cancellationToken);
 
+        foreach (var item in items)
+        {
+            item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
+        }
         return Ok(ApiResponse<List<ProductManagementDto>>.Ok(items));
     }
 
@@ -102,7 +106,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             Name = x.Name,
             Sku = x.Sku,
             Description = x.Description,
-            ImageUrl = NormalizeRelativeImagePath(x.ImageUrl),
+            ImageUrl = x.ImageUrl,
             Category = x.Category,
             MaterialType = x.MaterialType,
             FormType = x.FormType,
@@ -124,6 +128,11 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             IsActive = x.IsActive,
             SellerId = x.SellerId
         }).FirstOrDefaultAsync(cancellationToken);
+
+        if (item is not null)
+        {
+            item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
+        }
 
         return item is null
             ? NotFound(ApiResponse<object>.Fail("Product not found", 404))

@@ -28,6 +28,13 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     if (key === "3" || key.includes("diamond")) return 3;
     return 1;
   };
+  const toMaterialTypeKey = (name: unknown) => {
+    const key = enumText(name);
+    if (key === "1" || key.includes("gold")) return "gold";
+    if (key === "2" || key.includes("silver")) return "silver";
+    if (key === "3" || key.includes("diamond")) return "diamond";
+    return "";
+  };
 
   const toFormTypeValue = (name: unknown) => {
     const key = enumText(name);
@@ -35,6 +42,14 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     if (key === "3" || key.includes("bar")) return 3;
     if (key === "4" || key.includes("other")) return 4;
     return 1;
+  };
+  const toFormTypeKey = (name: unknown) => {
+    const key = enumText(name);
+    if (key === "1" || key.includes("jewelry")) return "jewelry";
+    if (key === "2" || key.includes("coin")) return "coin";
+    if (key === "3" || key.includes("bar")) return "bar";
+    if (key === "4" || key.includes("other")) return "other";
+    return "";
   };
 
   const toPricingModeValue = (name: unknown) => {
@@ -90,7 +105,8 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const validationErrors = reactive<Record<string, string>>({});
   const productSearchTerm = ref("");
   const activeFilter = ref<"all" | "active" | "inactive">("all");
-  const categoryFilter = ref("all");
+  const materialTypeFilter = ref("all");
+  const formTypeFilter = ref("all");
   const sellerFilter = ref("all");
   const marketPrices = reactive<MarketPriceConfigDto>({ goldPerOunce: 0, silverPerOunce: 0, diamondPerCarat: 0 });
   const marketPricesDirty = ref(false);
@@ -221,7 +237,10 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     managedProducts.value.filter((product) => {
       if (activeFilter.value === "active" && !product.isActive) return false;
       if (activeFilter.value === "inactive" && product.isActive) return false;
-      if (categoryFilter.value !== "all" && product.category !== categoryFilter.value) return false;
+      const materialLabel = toMaterialTypeKey(product.materialType);
+      const formLabel = toFormTypeKey(product.formType);
+      if (materialTypeFilter.value !== "all" && materialLabel !== materialTypeFilter.value) return false;
+      if (formTypeFilter.value !== "all" && formLabel !== formTypeFilter.value) return false;
       if (sellerFilter.value !== "all" && String(product.sellerId) !== sellerFilter.value) return false;
       if (!productSearchTerm.value.trim()) return true;
 
@@ -410,7 +429,8 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     validationErrors,
     productSearchTerm,
     activeFilter,
-    categoryFilter,
+    materialTypeFilter,
+    formTypeFilter,
     sellerFilter,
     marketPrices,
     resetProductForm,
