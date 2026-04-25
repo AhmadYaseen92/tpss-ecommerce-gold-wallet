@@ -8,12 +8,14 @@ import {
   fetchGlobalMarketPrices,
   updateGlobalMarketPrices,
   updateManagedProduct,
+  upsertSellerProductFee,
   type ProductFormPayload
 } from "../../../shared/services/backendGateway";
 import type { EnumItemDto, ProductManagementDto, MarketPriceConfigDto } from "../../../shared/types/apiTypes";
 import { goToProductRoute, syncProductRoute } from "../services/productRoute";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import type { Seller } from "../../../shared/types/models";
+import type { SellerProductFeePayload } from "../../../shared/services/backendGateway";
 
 export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const enumText = (value: unknown) => {
@@ -110,6 +112,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const sellerFilter = ref("all");
   const marketPrices = reactive<MarketPriceConfigDto>({ goldPerOunce: 0, silverPerOunce: 0, diamondPerCarat: 0 });
   const marketPricesDirty = ref(false);
+  const productFeeDraft = ref<SellerProductFeePayload | null>(null);
 
   const isAdmin = computed(() => marketplace.role.value === "Admin");
 
@@ -157,6 +160,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
       productForm.sellerId = Number(sellerFilter.value);
     }
     productError.value = "";
+    productFeeDraft.value = null;
     Object.keys(validationErrors).forEach((k) => delete validationErrors[k]);
   };
 
@@ -289,6 +293,23 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
         await updateManagedProduct(marketplace.session.value.accessToken, productForm.id, productForm);
       else await createManagedProduct(marketplace.session.value.accessToken, productForm);
       await loadProductManagementData();
+
+      if (productFeeDraft.value) {
+        const targetProductId = productPage.value === "edit" && productForm.id
+          ? productForm.id
+          : managedProducts.value.find((x) => x.sku === productForm.sku)?.id;
+
+        if (targetProductId) {
+          await upsertSellerProductFee(marketplace.session.value.accessToken, {
+            ...productFeeDraft.value,
+            productId: targetProductId,
+            sellerId: productForm.sellerId,
+            isOverride: true
+          });
+          productFeeDraft.value = null;
+        }
+      }
+
       navigate("#/products");
     } catch (error) {
       productError.value = error instanceof Error ? error.message : "Failed to save product.";
@@ -433,6 +454,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     formTypeFilter,
     sellerFilter,
     marketPrices,
+    productFeeDraft,
     resetProductForm,
     loadProductManagementData,
     fillProductForm,

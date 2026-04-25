@@ -19,7 +19,12 @@ const props = defineProps<{
   accessToken: string;
   productId: number | null;
   sellerId?: number;
+  draftFee?: SellerProductFeePayload | null;
   readonly?: boolean;
+  embedded?: boolean;
+}>();
+const emit = defineEmits<{
+  "update:draft-fee": [value: SellerProductFeePayload | null];
 }>();
 
 const feeTabs = ref<SystemFeeTypePayload[]>([]);
@@ -94,7 +99,17 @@ const loadRow = async () => {
 };
 
 const save = async () => {
-  if (!props.accessToken || !props.productId || !activeTab.value) return;
+  if (!props.productId) {
+    emit("update:draft-fee", {
+      ...feeRow,
+      productId: 0,
+      sellerId: props.sellerId,
+      feeCode: activeTab.value,
+      isOverride: true
+    });
+    return;
+  }
+  if (!props.accessToken || !activeTab.value) return;
   saving.value = true;
   error.value = "";
   try {
@@ -114,15 +129,22 @@ const save = async () => {
 
 watch(() => props.accessToken, () => void loadFeeTabs(), { immediate: true });
 watch(() => [props.productId, activeTab.value], () => void loadRow(), { immediate: true });
+watch(
+  () => props.draftFee,
+  (draft) => {
+    if (!draft || props.productId) return;
+    if (draft.feeCode && activeTab.value !== draft.feeCode) {
+      activeTab.value = draft.feeCode;
+    }
+    applyRow(draft);
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
-  <Card title="Product Fee">
-    <div v-if="!productId" class="ui-state">
-      Save this product first, then configure product-level fees.
-    </div>
-
-    <template v-else>
+  <Card v-if="!embedded" title="Product Fee">
+    <template>
       <p v-if="error" class="error-text">{{ error }}</p>
 
       <div class="ui-filter-bar">
@@ -184,8 +206,83 @@ watch(() => [props.productId, activeTab.value], () => void loadRow(), { immediat
       </div>
 
       <div class="ui-row-actions" v-if="!readonly">
-        <Button :disabled="saving" @click="save">Save Product Fee</Button>
+        <Button :disabled="saving" @click="save">
+          {{ productId ? "Save Product Fee" : "Use This Fee On Product Save" }}
+        </Button>
       </div>
+      <p v-if="!productId" class="hint-text">
+        This fee configuration will be saved automatically when you save the new product.
+      </p>
     </template>
   </Card>
+  <template v-else>
+    <p v-if="error" class="error-text">{{ error }}</p>
+
+    <div class="ui-filter-bar">
+      <FormField label="Fee Type">
+        <Select v-model="activeTab" :disabled="readonly || feeTabs.length === 0">
+          <option v-for="tab in feeTabs" :key="tab.feeCode" :value="tab.feeCode">
+            {{ tab.name }}
+          </option>
+        </Select>
+      </FormField>
+
+      <FormField label="Calculation Mode">
+        <Select v-model="feeRow.calculationMode" :disabled="readonly">
+          <option v-for="mode in modeOptions" :key="mode" :value="mode">{{ mode }}</option>
+        </Select>
+      </FormField>
+
+      <FormField label="Enabled">
+        <Checkbox v-model="feeRow.isEnabled" :disabled="readonly" label="Product fee active" />
+      </FormField>
+    </div>
+
+    <LoadingState v-if="loading" text="Loading product fee..." />
+
+    <div v-else class="product-fee-grid">
+      <FormField v-if="activeTab === 'commission_per_transaction' && feeRow.calculationMode !== 'flat'" label="Rate Percent">
+        <Input type="number" min="0" step="0.01" v-model="feeRow.ratePercent" :disabled="readonly" />
+      </FormField>
+      <FormField v-if="activeTab === 'commission_per_transaction' && feeRow.calculationMode !== 'flat'" label="Minimum Amount">
+        <Input type="number" min="0" step="0.01" v-model="feeRow.minimumAmount" :disabled="readonly" />
+      </FormField>
+      <FormField v-if="activeTab === 'commission_per_transaction' && feeRow.calculationMode === 'flat'" label="Flat Amount">
+        <Input type="number" min="0" step="0.01" v-model="feeRow.flatAmount" :disabled="readonly" />
+      </FormField>
+
+      <FormField v-if="activeTab === 'premium_discount'" label="Discount Type">
+        <Select v-model="feeRow.premiumDiscountType" :disabled="readonly">
+          <option value="premium">Premium</option>
+          <option value="discount">Discount</option>
+        </Select>
+      </FormField>
+      <FormField v-if="activeTab === 'premium_discount'" label="Value Per Unit">
+        <Input type="number" min="0" step="0.01" v-model="feeRow.valuePerUnit" :disabled="readonly" />
+      </FormField>
+
+      <FormField v-if="activeTab === 'storage_custody_fee'" label="Fee Percent">
+        <Input type="number" min="0" step="0.01" v-model="feeRow.feePercent" :disabled="readonly" />
+      </FormField>
+      <FormField v-if="activeTab === 'storage_custody_fee'" label="Grace Period Days">
+        <Input type="number" min="0" step="1" v-model="feeRow.gracePeriodDays" :disabled="readonly" />
+      </FormField>
+
+      <FormField v-if="activeTab !== 'commission_per_transaction' && activeTab !== 'premium_discount' && activeTab !== 'storage_custody_fee' && feeRow.calculationMode === 'fixed'" label="Fixed Amount">
+        <Input type="number" min="0" step="0.01" v-model="feeRow.fixedAmount" :disabled="readonly" />
+      </FormField>
+      <FormField v-if="activeTab !== 'commission_per_transaction' && activeTab !== 'premium_discount' && activeTab !== 'storage_custody_fee' && feeRow.calculationMode === 'per_unit'" label="Fee Per Unit">
+        <Input type="number" min="0" step="0.01" v-model="feeRow.feePerUnit" :disabled="readonly" />
+      </FormField>
+    </div>
+
+    <div class="ui-row-actions" v-if="!readonly">
+      <Button :disabled="saving" @click="save">
+        {{ productId ? "Save Product Fee" : "Use This Fee On Product Save" }}
+      </Button>
+    </div>
+    <p v-if="!productId" class="hint-text">
+      This fee configuration will be saved automatically when you save the new product.
+    </p>
+  </template>
 </template>

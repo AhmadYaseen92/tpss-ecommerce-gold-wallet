@@ -31,7 +31,7 @@ const emit = defineEmits<{
   image: [event: Event];
 }>();
 
-const tab = ref<"basics" | "pricing" | "offer" | "stock">("basics");
+const tab = ref<"basics" | "pricing" | "offer" | "stock" | "fees">("basics");
 const lastGoldKarat = ref(3);
 const lastSilverPurity = ref(0.999);
 const imagePreviewUrl = ref("");
@@ -284,6 +284,9 @@ onBeforeUnmount(() => {
       <button type="button" class="ui-tab" :class="{ active: tab === 'stock' }" @click="tab = 'stock'">
         Stock
       </button>
+      <button type="button" class="ui-tab" :class="{ active: tab === 'fees' }" @click="tab = 'fees'">
+        Product Fee
+      </button>
     </div>
 
     <Card v-if="tab === 'basics'" title="Product Basics">
@@ -355,6 +358,12 @@ onBeforeUnmount(() => {
       </FormField>
 
       <Checkbox v-model="model.isActive" label="Active Product" />
+    </Card>
+
+    <Card v-if="tab === 'fees'" title="Product Fee">
+      <slot name="fees">
+        <div class="ui-state">Fee settings unavailable.</div>
+      </slot>
     </Card>
 
     <div class="ui-row-actions">

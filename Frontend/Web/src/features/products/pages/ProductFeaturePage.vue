@@ -35,6 +35,7 @@ const openManageFees = () => {
     :seller-filter="pm.sellerFilter.value"
     :sellers="marketplace.state.value.sellers"
     :market-prices="pm.marketPrices"
+    :product-fee-draft="pm.productFeeDraft.value"
     @add="pm.openAddProduct"
     @details="pm.openProductDetails"
     @edit="pm.openEditProduct"
@@ -52,5 +53,6 @@ const openManageFees = () => {
     @update:seller-filter="pm.sellerFilter.value = $event"
     @manage-fees="openManageFees"
     @clear-error="pm.productError.value = ''"
+    @update:product-fee-draft="pm.productFeeDraft.value = $event"
   />
 </template>

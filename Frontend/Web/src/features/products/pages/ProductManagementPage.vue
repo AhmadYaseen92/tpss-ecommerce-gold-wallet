@@ -10,6 +10,7 @@ import type {
   MarketPriceConfigDto,
 } from "../../../shared/types/apiTypes";
 import type { ProductFormPayload } from "../../../shared/services/backendGateway";
+import type { SellerProductFeePayload } from "../../../shared/services/backendGateway";
 import type { Seller } from "../../../shared/types/models";
 
 import Card from "../../../shared/components/ui/Card.vue";
@@ -42,6 +43,7 @@ const props = defineProps<{
   sellerFilter: string;
   sellers: Seller[];
   marketPrices: MarketPriceConfigDto;
+  productFeeDraft: SellerProductFeePayload | null;
 }>();
 
 const emit = defineEmits<{
@@ -65,6 +67,7 @@ const emit = defineEmits<{
   ];
   "manage-fees": [];
   "clear-error": [];
+  "update:product-fee-draft": [value: SellerProductFeePayload | null];
 }>();
 
 const pageNumber = ref(1);
@@ -313,6 +316,8 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
           :access-token="accessToken"
           :product-id="selectedProduct.id"
           :seller-id="selectedProduct.sellerId"
+          :draft-fee="productFeeDraft"
+          @update:draft-fee="emit('update:product-fee-draft', $event)"
         />
 
         <div class="ui-row-actions">
@@ -331,12 +336,18 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
         :market-prices="marketPrices"
         @save="emit('save')"
         @image="emit('image', $event)"
-      />
-      <ProductFeePanel
-        :access-token="accessToken"
-        :product-id="productForm.id ?? null"
-        :seller-id="productForm.sellerId"
-      />
+      >
+        <template #fees>
+          <ProductFeePanel
+            :access-token="accessToken"
+            :product-id="productForm.id ?? null"
+            :seller-id="productForm.sellerId"
+            :draft-fee="productFeeDraft"
+            embedded
+            @update:draft-fee="emit('update:product-fee-draft', $event)"
+          />
+        </template>
+      </ProductForm>
 
       <div class="ui-row-actions">
         <Button variant="ghost" @click="emit('back')">Cancel</Button>
