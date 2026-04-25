@@ -32,6 +32,8 @@ const emit = defineEmits<{
 }>();
 
 const tab = ref<"basics" | "pricing" | "offer" | "stock">("basics");
+const lastGoldKarat = ref(3);
+const lastSilverPurity = ref(0.999);
 
 const isAuto = computed(() => props.model.pricingMode === 1);
 const isGold = computed(() => props.model.materialType === 1);
@@ -51,25 +53,50 @@ watch(
   () => [props.model.materialType, props.model.purityKarat],
   () => {
     if (isDiamond.value) {
+      if (props.model.purityKarat > 0) {
+        lastGoldKarat.value = props.model.purityKarat;
+      }
       props.model.purityKarat = 0;
       props.model.purityFactor = 1;
       return;
     }
 
     if (isGold.value) {
-      if (props.model.purityKarat === 0) props.model.purityKarat = 3;
+      if (props.model.purityKarat === 0) props.model.purityKarat = lastGoldKarat.value || 3;
+      lastGoldKarat.value = props.model.purityKarat;
       props.model.purityFactor = karatFactorMap[props.model.purityKarat] ?? 1;
       return;
     }
 
     if (isSilver.value) {
+      if (props.model.purityFactor > 0) {
+        lastSilverPurity.value = Number(props.model.purityFactor);
+      }
       if (![0.999, 0.925].includes(Number(props.model.purityFactor))) {
-        props.model.purityFactor = 0.999;
+        props.model.purityFactor = lastSilverPurity.value;
       }
       props.model.purityKarat = 0;
     }
   },
   { immediate: true }
+);
+
+watch(
+  () => props.model.purityKarat,
+  (next) => {
+    if (isGold.value && next > 0) {
+      lastGoldKarat.value = next;
+    }
+  }
+);
+
+watch(
+  () => props.model.purityFactor,
+  (next) => {
+    if (isSilver.value && [0.999, 0.925].includes(Number(next))) {
+      lastSilverPurity.value = Number(next);
+    }
+  }
 );
 
 const offerEnabled = computed({
@@ -85,9 +112,9 @@ const offerEnabled = computed({
 });
 
 const selectedMarketPrice = computed(() => {
-  if (isGold.value) return Number(props.marketPrices.goldPerOunce || 0);
-  if (isSilver.value) return Number(props.marketPrices.silverPerOunce || 0);
-  return Number(props.marketPrices.diamondPerCarat || 0);
+  if (isGold.value) return Number(props.marketPrices.goldPerOunce || props.model.baseMarketPrice || 0);
+  if (isSilver.value) return Number(props.marketPrices.silverPerOunce || props.model.baseMarketPrice || 0);
+  return Number(props.marketPrices.diamondPerCarat || props.model.baseMarketPrice || 0);
 });
 
 const autoCalculatedPrice = computed(() => {
@@ -119,6 +146,14 @@ const finalPrice = computed(() => {
 
   return Number.isFinite(base) ? base : 0;
 });
+
+watch(
+  selectedMarketPrice,
+  (next) => {
+    props.model.baseMarketPrice = Number(next || 0);
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -181,12 +216,12 @@ const finalPrice = computed(() => {
           </Select>
         </FormField>
 
-        <FormField label="Final Sell Price">
-          <Input :model-value="finalPrice.toFixed(2)" readonly />
-        </FormField>
-
         <FormField label="Available Stock" required :error="errors.availableStock">
           <Input type="number" min="0" v-model="model.availableStock" />
+        </FormField>
+
+        <FormField label="Final Sell Price" class="field-full">
+          <Input :model-value="finalPrice.toFixed(2)" readonly />
         </FormField>
       </div>
     </Card>

@@ -420,34 +420,37 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
     accessToken
   );
 
-  return searchResult.items.map((item) => ({
-    id: item.id,
-    name: item.name,
-    sku: item.sku,
-    description: item.description,
-    imageUrl: item.imageUrl,
-    category: item.displayCategoryLabel,
-    materialType: item.materialType,
-    formType: item.formType,
-    displayCategoryLabel: item.displayCategoryLabel,
-    pricingMode: item.pricingMode,
-    purityKarat: item.purityKarat,
-    purityFactor: item.purityFactor,
-    weightValue: item.weightValue,
-    weightUnit: item.weightUnit,
-    baseMarketPrice: Number(item.baseMarketPrice ?? 0),
-    autoPrice: Number(item.autoPrice ?? 0),
-    fixedPrice: Number(item.fixedPrice ?? item.finalPrice ?? 0),
-    sellPrice: Number(item.sellPrice ?? item.finalPrice ?? 0),
-    offerType: item.offerType,
-    isHasOffer: Boolean(item.isHasOffer),
-    offerPercent: Number(item.offerPercent ?? 0),
-    offerNewPrice: Number(item.offerNewPrice ?? 0),
-    availableStock: item.availableStock,
-    isActive: Boolean((item as unknown as { isActive?: boolean }).isActive ?? true),
-    sellerId: item.sellerId,
-    sellerName: item.sellerName
-  }));
+  return searchResult.items.map((item) => {
+    const row = item as ProductDto & { IsActive?: boolean; isActive?: boolean };
+    return {
+      id: item.id,
+      name: item.name,
+      sku: item.sku,
+      description: item.description,
+      imageUrl: item.imageUrl,
+      category: item.displayCategoryLabel,
+      materialType: item.materialType,
+      formType: item.formType,
+      displayCategoryLabel: item.displayCategoryLabel,
+      pricingMode: item.pricingMode,
+      purityKarat: item.purityKarat,
+      purityFactor: item.purityFactor,
+      weightValue: item.weightValue,
+      weightUnit: item.weightUnit,
+      baseMarketPrice: Number(item.baseMarketPrice ?? 0),
+      autoPrice: Number(item.autoPrice ?? 0),
+      fixedPrice: Number(item.fixedPrice ?? item.finalPrice ?? 0),
+      sellPrice: Number(item.sellPrice ?? item.finalPrice ?? 0),
+      offerType: item.offerType,
+      isHasOffer: Boolean(item.isHasOffer),
+      offerPercent: Number(item.offerPercent ?? 0),
+      offerNewPrice: Number(item.offerNewPrice ?? 0),
+      availableStock: item.availableStock,
+      isActive: Boolean(row.isActive ?? row.IsActive ?? false),
+      sellerId: item.sellerId,
+      sellerName: item.sellerName
+    };
+  });
 }
 
 export async function fetchProductCategories(accessToken: string): Promise<EnumItemDto[]> {

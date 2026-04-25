@@ -7,6 +7,38 @@ import type { ProductManagementDto } from "../../../shared/types/apiTypes";
 defineProps<{ product: ProductManagementDto | null }>();
 
 const formatMoney = (value: number) => Number(value || 0).toFixed(2);
+const enumLabel = (value: string | number | null | undefined, map: Record<string, string>) => {
+  if (value == null) return "—";
+  const text = String(value);
+  return map[text] ?? map[text.toLowerCase()] ?? text;
+};
+
+const materialLabelMap: Record<string, string> = {
+  "1": "Gold",
+  "2": "Silver",
+  "3": "Diamond",
+  gold: "Gold",
+  silver: "Silver",
+  diamond: "Diamond"
+};
+
+const formLabelMap: Record<string, string> = {
+  "1": "Jewelry",
+  "2": "Coin",
+  "3": "Bar",
+  "4": "Other",
+  jewelry: "Jewelry",
+  coin: "Coin",
+  bar: "Bar",
+  other: "Other"
+};
+
+const pricingModeLabelMap: Record<string, string> = {
+  "1": "Auto",
+  "2": "Manual",
+  auto: "Auto",
+  manual: "Manual"
+};
 </script>
 
 <template>
@@ -38,8 +70,8 @@ const formatMoney = (value: number) => Number(value || 0).toFixed(2);
 
       <Card title="Material & Weight">
         <div class="product-detail-grid">
-          <FormField label="Material Type"><div>{{ product.materialType || '—' }}</div></FormField>
-          <FormField label="Product Form"><div>{{ product.formType || '—' }}</div></FormField>
+          <FormField label="Material Type"><div>{{ enumLabel(product.materialType, materialLabelMap) }}</div></FormField>
+          <FormField label="Product Form"><div>{{ enumLabel(product.formType, formLabelMap) }}</div></FormField>
           <FormField label="Purity / Karat"><div>{{ product.purityKarat || '—' }}</div></FormField>
           <FormField label="Purity Factor"><div>{{ product.purityFactor }}</div></FormField>
           <FormField label="Weight (grams)"><div>{{ product.weightValue }} g</div></FormField>
@@ -48,7 +80,7 @@ const formatMoney = (value: number) => Number(value || 0).toFixed(2);
 
       <Card title="Pricing">
         <div class="product-detail-grid">
-          <FormField label="Pricing Mode"><div>{{ product.pricingMode || '—' }}</div></FormField>
+          <FormField label="Pricing Mode"><div>{{ enumLabel(product.pricingMode, pricingModeLabelMap) }}</div></FormField>
           <FormField label="Base Market Price"><div>{{ formatMoney(product.baseMarketPrice) }}</div></FormField>
           <FormField label="Auto Price"><div>{{ formatMoney(product.autoPrice) }}</div></FormField>
           <FormField label="Fixed Price"><div>{{ formatMoney(product.fixedPrice) }}</div></FormField>
