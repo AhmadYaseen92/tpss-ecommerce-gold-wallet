@@ -21,6 +21,10 @@ defineProps<{ item: TransactionRowView | null }>();
     </Card>
 
     <Card title="Parties & Product">
+      <div class="ui-row-inline" style="margin-bottom: 12px;">
+        <img v-if="item.productImageUrl" :src="item.productImageUrl" :alt="item.productName" class="product-thumb product-thumb--lg" />
+        <span v-else class="product-thumb-placeholder">No image</span>
+      </div>
       <div class="form-grid-three">
         <FormField label="Investor"><div>{{ item.investorName }}</div></FormField>
         <FormField label="Investor ID"><div>{{ item.investorId }}</div></FormField>

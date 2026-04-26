@@ -258,8 +258,6 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     if (!productForm.name.trim()) validationErrors.name = "Name is required";
     if (!productForm.sku.trim()) validationErrors.sku = "SKU is required";
     if (!productForm.description.trim()) validationErrors.description = "Description is required";
-    else if (productForm.description.trim().length < 20)
-      validationErrors.description = "Description should be at least 20 characters";
     if (!productForm.materialType) validationErrors.materialType = "Material type is required";
     if (!productForm.formType) validationErrors.formType = "Product form is required";
     if (!productForm.weightValue || productForm.weightValue <= 0)

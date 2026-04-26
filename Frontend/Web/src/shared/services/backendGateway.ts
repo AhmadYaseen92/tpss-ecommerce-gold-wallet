@@ -431,12 +431,21 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
     const row = item as Record<string, unknown>;
     const id = Number(row.id ?? row.Id ?? 0);
     const category = String(row.displayCategoryLabel ?? row.DisplayCategoryLabel ?? row.category ?? row.Category ?? "");
+    const imageCandidate = row.imageUrl
+      ?? row.ImageUrl
+      ?? row.productImageUrl
+      ?? row.ProductImageUrl
+      ?? row.imagePath
+      ?? row.ImagePath
+      ?? row.productImage
+      ?? row.ProductImage
+      ?? "";
     return {
       id,
       name: String(row.name ?? row.Name ?? ""),
       sku: String(row.sku ?? row.Sku ?? ""),
       description: String(row.description ?? row.Description ?? ""),
-      imageUrl: toAbsoluteImageUrl(row.imageUrl ?? row.ImageUrl ?? ""),
+      imageUrl: toAbsoluteImageUrl(imageCandidate),
       category,
       materialType: String(row.materialType ?? row.MaterialType ?? ""),
       formType: String(row.formType ?? row.FormType ?? ""),
