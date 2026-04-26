@@ -1,5 +1,7 @@
 import { computed, ref } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
+import type { InvestorRequest } from "../../../shared/types/models";
+import type { TransactionRowView } from "../types/transactionTypes";
 
 function readNoteValue(notes: string | undefined, key: string): string | null {
   if (!notes) return null;
@@ -33,7 +35,7 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
 
   const transactionsView = computed(() =>
     marketplace.state.value.requests
-      .map((request) => ({
+      .map((request: InvestorRequest) => ({
         ...request,
         investorName: request.investorName,
         transactionType: request.type,
@@ -60,7 +62,7 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
         })(),
         pickupSchedule: readNoteValue(request.notes, "pickup_schedule") || undefined
       }))
-      .filter((request) => {
+      .filter((request: TransactionRowView) => {
         if (statusFilter.value !== "all" && request.status !== statusFilter.value) return false;
         if (typeFilter.value !== "all" && request.transactionType !== typeFilter.value) return false;
         if (sellerFilter.value !== "all" && request.sellerId !== sellerFilter.value) return false;
@@ -81,16 +83,20 @@ export function useTransactions(marketplace: ReturnTypeUseMarketplace) {
       })
   );
 
-  const selectedTransaction = computed(() => transactionsView.value.find((x) => x.id === selectedTransactionId.value) ?? null);
+  const selectedTransaction = computed(
+    () => transactionsView.value.find((x: TransactionRowView) => x.id === selectedTransactionId.value) ?? null
+  );
 
   const viewTransaction = (id: string) => {
     selectedTransactionId.value = id;
-    transactionStatusDraft.value = (transactionsView.value.find((x) => x.id === id)?.status ?? "pending") as "pending" | "approved" | "rejected" | "pending_delivered" | "delivered" | "cancelled";
+    transactionStatusDraft.value = (
+      transactionsView.value.find((x: TransactionRowView) => x.id === id)?.status ?? "pending"
+    ) as "pending" | "approved" | "rejected" | "pending_delivered" | "delivered" | "cancelled";
   };
 
   const saveTransactionStatus = async () => {
     if (!selectedTransactionId.value) return;
-    const selected = transactionsView.value.find((x) => x.id === selectedTransactionId.value);
+    const selected = transactionsView.value.find((x: TransactionRowView) => x.id === selectedTransactionId.value);
     if (selected && selected.status !== "pending") {
       window.alert("Only pending requests can be updated.");
       return;

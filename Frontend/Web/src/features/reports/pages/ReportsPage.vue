@@ -33,10 +33,10 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="reports-page">
-    <div class="report-toolbar">
+  <div class="dashboard-screen">
+    <div class="ui-row-actions">
       <h3>Report Results</h3>
-      <div class="report-actions">
+      <div class="ui-row-actions">
         <Button @click="emit('generate')">Refresh Report</Button>
         <Button variant="ghost" @click="emit('csv')">Export CSV</Button>
         <Button variant="ghost" @click="emit('excel')">Export Excel</Button>
@@ -70,15 +70,3 @@ const emit = defineEmits<{
     />
   </div>
 </template>
-
-<style scoped>
-.reports-page { display: grid; gap: 14px; }
-.report-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.report-toolbar h3 { margin: 0; font-size: 22px; }
-.report-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
-@media print {
-  .report-actions,
-  .side-nav,
-  .top-bar { display: none !important; }
-}
-</style>
