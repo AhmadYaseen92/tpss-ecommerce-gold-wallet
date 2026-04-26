@@ -11,7 +11,8 @@ const props = defineProps<{
   sellers: Seller[];
   investors: Investor[];
   products: Product[];
-  categories: string[];
+  materialTypes: string[];
+  productForms: string[];
   reportFilters: ReportFilters;
   reportTypeCards: ReportTypeCard[];
   summaryMetrics: ReportMetric[];
@@ -51,7 +52,8 @@ const emit = defineEmits<{
       :sellers="sellers"
       :investors="investors"
       :products="products"
-      :categories="categories"
+      :material-types="materialTypes"
+      :product-forms="productForms"
       @refresh="emit('generate')"
       @reset="emit('reset')"
       @type-selected="(type) => emit('typeSelected', type)"

@@ -1470,6 +1470,11 @@ tr:last-child td {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
+.report-filters-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: end;
+}
+
 .product-details,
 .modal-form,
 .notification-list li {

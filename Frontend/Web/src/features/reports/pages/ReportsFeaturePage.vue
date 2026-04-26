@@ -15,7 +15,8 @@ const {
   tableData,
   loading,
   totalPages,
-  categories,
+  materialTypes,
+  productForms,
   generateReports,
   resetFilters,
   exportCsv,
@@ -47,7 +48,8 @@ onMounted(() => {
         :sellers="marketplace.state.value.sellers"
         :investors="marketplace.state.value.investors"
         :products="marketplace.state.value.products"
-        :categories="categories"
+        :material-types="materialTypes"
+        :product-forms="productForms"
         :report-filters="reportFilters"
         :report-type-cards="reportTypeCards"
         :summary-metrics="summaryMetrics"

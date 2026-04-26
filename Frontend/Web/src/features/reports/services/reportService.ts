@@ -17,6 +17,22 @@ function includesCase(haystack: string | undefined, needle: string) {
   return (haystack ?? "").toLowerCase().includes(needle.toLowerCase());
 }
 
+function normalizeMaterialType(value: string | undefined) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (raw === "1" || raw === "gold") return "gold";
+  if (raw === "2" || raw === "silver") return "silver";
+  if (raw === "3" || raw === "diamond") return "diamond";
+  return "other";
+}
+
+function normalizeFormType(value: string | undefined) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (raw === "1" || raw === "jewelry") return "jewelry";
+  if (raw === "2" || raw === "coin") return "coin";
+  if (raw === "3" || raw === "bar") return "bar";
+  return "other";
+}
+
 export const reportService = {
   makeCriteria(filters: ReportFilters): ReportCriteria {
     const now = new Date();
@@ -57,7 +73,8 @@ export const reportService = {
     return inDateRange(request.createdAt, criteria.start, criteria.end)
       && (criteria.investorId === "all" || request.investorId === criteria.investorId)
       && (criteria.productId === "all" || includesCase(request.productName, criteria.productId))
-      && (criteria.category === "all" || request.category === criteria.category)
+      && (criteria.materialType === "all" || normalizeMaterialType(request.category) === criteria.materialType)
+      && (criteria.formType === "all" || includesCase(request.productName, criteria.formType))
       && (criteria.requestType === "all" || request.type === criteria.requestType)
       && (criteria.transactionStatus === "all" || request.status === criteria.transactionStatus)
       && (criteria.walletActionType === "all" || request.type === criteria.walletActionType)
@@ -68,9 +85,10 @@ export const reportService = {
   },
 
   matchProduct(product: Product, criteria: ReportCriteria) {
-    return inDateRange(product.updatedAt, criteria.start, criteria.end)
+      return inDateRange(product.updatedAt, criteria.start, criteria.end)
       && (criteria.productId === "all" || product.id === criteria.productId)
-      && (criteria.category === "all" || product.category === criteria.category);
+      && (criteria.materialType === "all" || normalizeMaterialType(product.materialType || product.category) === criteria.materialType)
+      && (criteria.formType === "all" || normalizeFormType(product.formType) === criteria.formType);
   },
 
   matchInvoice(invoice: Invoice, criteria: ReportCriteria) {

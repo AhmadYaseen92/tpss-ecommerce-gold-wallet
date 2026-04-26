@@ -89,6 +89,8 @@ const mapProduct = (dto: ProductDto): Product => ({
   sellerId: `s-${dto.sellerId}`,
   name: dto.name,
   category: dto.category,
+  materialType: dto.materialType,
+  formType: dto.formType,
   unitPrice: Number(dto.sellPrice ?? dto.finalPrice ?? 0),
   marketPrice: Number(dto.sellPrice ?? dto.finalPrice ?? 0),
   stock: dto.availableStock,
