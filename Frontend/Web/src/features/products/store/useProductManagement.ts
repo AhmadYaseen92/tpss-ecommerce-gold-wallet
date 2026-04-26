@@ -274,9 +274,14 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
       validationErrors.offerPercent = "Offer percent must be between 0 and 100";
     if (productForm.offerType === 2 && productForm.offerNewPrice <= 0)
       validationErrors.offerNewPrice = "Offer new price must be greater than 0";
-    if (productForm.availableStock == null || productForm.availableStock < 0)
-      validationErrors.availableStock = "Stock cannot be negative";
-    if (!Number.isInteger(productForm.availableStock)) validationErrors.availableStock = "Stock must be a whole number";
+    const stockValue = Number(productForm.availableStock);
+    if (!Number.isFinite(stockValue)) {
+      validationErrors.availableStock = "Stock must be a valid whole number";
+    } else {
+      if (stockValue < 0) validationErrors.availableStock = "Stock cannot be negative";
+      if (!Number.isInteger(stockValue)) validationErrors.availableStock = "Stock must be a whole number";
+      productForm.availableStock = Math.trunc(stockValue);
+    }
     return Object.keys(validationErrors).length === 0;
   };
 
@@ -286,7 +291,27 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
       productError.value = "Please select one seller before adding or editing products.";
       return;
     }
-    if (!validateProductForm()) return;
+    if (!validateProductForm()) {
+      const fieldLabels: Record<string, string> = {
+        name: "Name",
+        sku: "SKU",
+        description: "Description",
+        materialType: "Material Type",
+        formType: "Product Form",
+        weightValue: "Weight",
+        purityKarat: "Purity / Karat",
+        purityFactor: "Purity Factor",
+        manualSellPrice: "Manual Price",
+        offerPercent: "Offer Percent",
+        offerNewPrice: "Offer New Price",
+        availableStock: "Available Stock"
+      };
+      const details = Object.entries(validationErrors)
+        .map(([field, message]) => `• ${fieldLabels[field] ?? field}: ${message}`)
+        .join("\n");
+      productError.value = `Please fix the following fields before saving:\n${details}`;
+      return;
+    }
 
     try {
       if (productPage.value === "edit" && productForm.id)
