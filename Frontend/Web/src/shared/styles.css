@@ -1463,16 +1463,19 @@ tr:last-child td {
   padding: 18px;
   display: grid;
   gap: 8px;
+  min-height: 110px;
 }
 
 .report-type-card strong {
-  font-size: 19px;
+  font-size: 16px;
   line-height: 1.2;
 }
 
 .report-type-card small {
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .report-type-card.active {

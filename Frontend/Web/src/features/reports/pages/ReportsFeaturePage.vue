@@ -27,9 +27,9 @@ const {
   selectReportType
 } = useReports(props.marketplace);
 
-onMounted(() => {
+onMounted(async () => {
   if (props.marketplace.role.value === "Admin") {
-    void props.marketplace.refreshMarketplaceState();
+    await props.marketplace.refreshMarketplaceState();
   }
   const initialType = reportTypeCards.value[0]?.key ?? "sales";
   selectReportType(initialType);
