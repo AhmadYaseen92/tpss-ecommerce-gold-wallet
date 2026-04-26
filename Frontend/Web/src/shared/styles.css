@@ -1447,14 +1447,33 @@ tr:last-child td {
   gap: 18px;
 }
 
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 16px;
+}
+
 .settings-compact-row {
   max-width: 760px;
 }
 
+.settings-grid > .ui-card {
+  padding: 16px;
+}
+
+.setting-header {
+  display: grid;
+  gap: 10px;
+}
+
 .settings-checklist {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 12px 18px;
+}
+
+.settings-checklist .ui-checkbox-label {
+  font-size: 14px;
 }
 
 .product-fee-grid {
@@ -1558,6 +1577,10 @@ tr:last-child td {
   }
 
   .settings-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-grid {
     grid-template-columns: 1fr;
   }
 
