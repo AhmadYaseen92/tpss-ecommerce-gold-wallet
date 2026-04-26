@@ -1,5 +1,6 @@
 import type { Invoice, Investor, InvestorRequest, Product } from "../../../shared/types/models";
 import type { ReportFilters } from "../types/reportTypes";
+import { normalizeMaterialTypeKey, normalizeProductFormKey } from "../../../shared/constants/productTaxonomy";
 
 export interface ReportCriteria extends ReportFilters {
   start: Date;
@@ -15,22 +16,6 @@ function inDateRange(value: string | undefined, start: Date, end: Date) {
 function includesCase(haystack: string | undefined, needle: string) {
   if (!needle) return true;
   return (haystack ?? "").toLowerCase().includes(needle.toLowerCase());
-}
-
-function normalizeMaterialType(value: string | undefined) {
-  const raw = String(value ?? "").trim().toLowerCase();
-  if (raw === "1" || raw === "gold") return "gold";
-  if (raw === "2" || raw === "silver") return "silver";
-  if (raw === "3" || raw === "diamond") return "diamond";
-  return "other";
-}
-
-function normalizeFormType(value: string | undefined) {
-  const raw = String(value ?? "").trim().toLowerCase();
-  if (raw === "1" || raw === "jewelry") return "jewelry";
-  if (raw === "2" || raw === "coin") return "coin";
-  if (raw === "3" || raw === "bar") return "bar";
-  return "other";
 }
 
 export const reportService = {
@@ -73,7 +58,7 @@ export const reportService = {
     return inDateRange(request.createdAt, criteria.start, criteria.end)
       && (criteria.investorId === "all" || request.investorId === criteria.investorId)
       && (criteria.productId === "all" || includesCase(request.productName, criteria.productId))
-      && (criteria.materialType === "all" || normalizeMaterialType(request.category) === criteria.materialType)
+      && (criteria.materialType === "all" || normalizeMaterialTypeKey(request.category) === criteria.materialType)
       && (criteria.formType === "all" || includesCase(request.productName, criteria.formType))
       && (criteria.requestType === "all" || request.type === criteria.requestType)
       && (criteria.transactionStatus === "all" || request.status === criteria.transactionStatus)
@@ -87,8 +72,8 @@ export const reportService = {
   matchProduct(product: Product, criteria: ReportCriteria) {
       return inDateRange(product.updatedAt, criteria.start, criteria.end)
       && (criteria.productId === "all" || product.id === criteria.productId)
-      && (criteria.materialType === "all" || normalizeMaterialType(product.materialType || product.category) === criteria.materialType)
-      && (criteria.formType === "all" || normalizeFormType(product.formType) === criteria.formType);
+      && (criteria.materialType === "all" || normalizeMaterialTypeKey(product.materialType || product.category) === criteria.materialType)
+      && (criteria.formType === "all" || normalizeProductFormKey(product.formType) === criteria.formType);
   },
 
   matchInvoice(invoice: Invoice, criteria: ReportCriteria) {

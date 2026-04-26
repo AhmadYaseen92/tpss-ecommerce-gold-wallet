@@ -4,6 +4,12 @@ import { downloadBlob } from "../../../shared/services/fileDownload";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { reportService } from "../services/reportService";
 import type { ReportFilters, ReportTableData, ReportTypeCard } from "../types/reportTypes";
+import {
+  MATERIAL_TYPE_OPTIONS,
+  PRODUCT_FORM_OPTIONS,
+  normalizeMaterialTypeKey,
+  normalizeProductFormKey
+} from "../../../shared/constants/productTaxonomy";
 
 const ADMIN_REPORTS: ReportTypeCard[] = [
   { key: "sales", label: "Sales Report", description: "Sales, orders, quantity and seller/product/category/date splits", audience: "Admin" },
@@ -26,22 +32,6 @@ const SELLER_REPORTS: ReportTypeCard[] = [
 ];
 
 export function useReports(marketplace: ReturnTypeUseMarketplace) {
-  const normalizeMaterialType = (value: string | undefined) => {
-    const raw = String(value ?? "").trim().toLowerCase();
-    if (raw === "1" || raw === "gold") return "gold";
-    if (raw === "2" || raw === "silver") return "silver";
-    if (raw === "3" || raw === "diamond") return "diamond";
-    return "other";
-  };
-
-  const normalizeFormType = (value: string | undefined) => {
-    const raw = String(value ?? "").trim().toLowerCase();
-    if (raw === "1" || raw === "jewelry") return "jewelry";
-    if (raw === "2" || raw === "coin") return "coin";
-    if (raw === "3" || raw === "bar") return "bar";
-    return "other";
-  };
-
   const reportFilters = reactive<ReportFilters>({
     reportType: "sales",
     datePreset: "thisMonth",
@@ -94,12 +84,8 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     stateSnapshot.value.invoices.filter((i) => effectiveSellerId.value === "all" || !effectiveSellerId.value || i.sellerId === effectiveSellerId.value)
   );
 
-  const materialTypes = computed(() =>
-    Array.from(new Set(visibleProducts.value.map((p) => normalizeMaterialType(p.materialType || p.category)))).sort()
-  );
-  const productForms = computed(() =>
-    Array.from(new Set(visibleProducts.value.map((p) => normalizeFormType(p.formType)))).sort()
-  );
+  const materialTypes = computed(() => MATERIAL_TYPE_OPTIONS);
+  const productForms = computed(() => PRODUCT_FORM_OPTIONS);
 
   const buildSummary = (rows: Array<Record<string, string | number>>) => {
     const numeric = (key: string) => rows.reduce((acc, row) => acc + (typeof row[key] === "number" ? Number(row[key]) : 0), 0);
@@ -168,8 +154,8 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
       const investorsMap = new Map(stateSnapshot.value.investors.map((i) => [i.id, i]));
 
       const passesProductShapeFilters = (product: { materialType?: string; formType?: string; category?: string }) =>
-        (criteria.materialType === "all" || normalizeMaterialType(product.materialType || product.category) === criteria.materialType)
-        && (criteria.formType === "all" || normalizeFormType(product.formType) === criteria.formType);
+        (criteria.materialType === "all" || normalizeMaterialTypeKey(product.materialType || product.category) === criteria.materialType)
+        && (criteria.formType === "all" || normalizeProductFormKey(product.formType) === criteria.formType);
 
       let rows: Array<Record<string, string | number>> = [];
       switch (reportFilters.reportType) {

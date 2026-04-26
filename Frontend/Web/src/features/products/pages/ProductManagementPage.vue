@@ -23,6 +23,7 @@ import StatusBadge from "../../../shared/components/ui/StatusBadge.vue";
 import FormField from "../../../shared/components/ui/FormField.vue";
 import PageHeader from "../../../shared/components/ui/PageHeader.vue";
 import ResultModal from "../../../shared/components/ui/ResultModal.vue";
+import { MATERIAL_TYPE_OPTIONS, PRODUCT_FORM_OPTIONS } from "../../../shared/constants/productTaxonomy";
 
 const props = defineProps<{
   role: "Admin" | "Seller";
@@ -203,9 +204,7 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
             @update:model-value="emit('update:material-type-filter', $event)"
           >
             <option value="all">All material types</option>
-            <option value="gold">Gold</option>
-            <option value="silver">Silver</option>
-            <option value="diamond">Diamond</option>
+            <option v-for="option in MATERIAL_TYPE_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
           </Select>
 
           <Select
@@ -213,10 +212,7 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
             @update:model-value="emit('update:form-type-filter', $event)"
           >
             <option value="all">All product forms</option>
-            <option value="jewelry">Jewelry</option>
-            <option value="coin">Coin</option>
-            <option value="bar">Bar</option>
-            <option value="other">Other</option>
+            <option v-for="option in PRODUCT_FORM_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
           </Select>
 
           <Button v-if="role === 'Seller'" @click="emit('add')">

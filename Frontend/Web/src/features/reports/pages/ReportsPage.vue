@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Investor, Product, Seller } from "../../../shared/types/models";
 import type { ReportFilters, ReportTableData, ReportTypeCard } from "../types/reportTypes";
+import type { ProductOption } from "../../../shared/constants/productTaxonomy";
 import ReportFilterPanel from "../components/ReportFilterPanel.vue";
 import ReportLayout from "../components/ReportLayout.vue";
 import Button from "../../../shared/components/ui/Button.vue";
@@ -11,8 +12,8 @@ const props = defineProps<{
   sellers: Seller[];
   investors: Investor[];
   products: Product[];
-  materialTypes: string[];
-  productForms: string[];
+  materialTypes: ProductOption[];
+  productForms: ProductOption[];
   reportFilters: ReportFilters;
   reportTypeCards: ReportTypeCard[];
   summaryMetrics: ReportMetric[];

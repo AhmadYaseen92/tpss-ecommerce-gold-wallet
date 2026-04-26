@@ -1460,9 +1460,19 @@ tr:last-child td {
   border-radius: var(--radius-md);
   background: var(--surface-muted);
   color: var(--text);
-  padding: 14px;
+  padding: 18px;
   display: grid;
-  gap: 5px;
+  gap: 8px;
+}
+
+.report-type-card strong {
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+.report-type-card small {
+  font-size: 15px;
+  line-height: 1.35;
 }
 
 .report-type-card.active {
@@ -1471,8 +1481,18 @@ tr:last-child td {
 }
 
 .report-filters-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   align-items: end;
+}
+
+.report-filters-grid .ui-input,
+.report-filters-grid .ui-select {
+  min-height: 50px;
+  font-size: 16px;
+}
+
+.report-filters-grid .ui-form-label {
+  font-size: 14px;
 }
 
 .product-details,

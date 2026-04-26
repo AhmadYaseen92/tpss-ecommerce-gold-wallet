@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import type { Investor, Product, Seller } from "../../../shared/types/models";
 import type { ReportFilters, ReportTypeCard } from "../types/reportTypes";
+import type { ProductOption } from "../../../shared/constants/productTaxonomy";
 import Card from "../../../shared/components/ui/Card.vue";
 import Select from "../../../shared/components/ui/Select.vue";
 import Input from "../../../shared/components/ui/Input.vue";
@@ -15,8 +16,8 @@ const props = defineProps<{
   sellers: Seller[];
   investors: Investor[];
   products: Product[];
-  materialTypes: string[];
-  productForms: string[];
+  materialTypes: ProductOption[];
+  productForms: ProductOption[];
 }>();
 
 const emit = defineEmits<{ refresh: []; reset: []; typeSelected: [type: string] }>();
@@ -43,8 +44,8 @@ const isRequestOpsReport = computed(() => ["requestsOps", "kycOnboarding", "oper
       <FormField v-if="role === 'Admin'" label="Seller"><Select v-model="filters.sellerId"><option value="all">All Sellers</option><option v-for="seller in sellers" :key="seller.id" :value="seller.id">{{ seller.name }} ({{ seller.sellerId }})</option></Select></FormField>
       <FormField v-if="isInvestorReport || isSalesReport" label="Investor"><Select v-model="filters.investorId"><option value="all">All Investors</option><option v-for="investor in investors" :key="investor.id" :value="investor.id">{{ investor.fullName }}</option></Select></FormField>
       <FormField v-if="isSalesReport" label="Product"><Select v-model="filters.productId"><option value="all">All Products</option><option v-for="product in products" :key="product.id" :value="product.id">{{ product.name }}</option></Select></FormField>
-      <FormField v-if="isSalesReport" label="Material Type"><Select v-model="filters.materialType"><option value="all">All Material Types</option><option v-for="material in materialTypes" :key="material" :value="material">{{ material.charAt(0).toUpperCase() + material.slice(1) }}</option></Select></FormField>
-      <FormField v-if="isSalesReport" label="Product Form"><Select v-model="filters.formType"><option value="all">All Product Forms</option><option v-for="form in productForms" :key="form" :value="form">{{ form.charAt(0).toUpperCase() + form.slice(1) }}</option></Select></FormField>
+      <FormField v-if="isSalesReport" label="Material Type"><Select v-model="filters.materialType"><option value="all">All Material Types</option><option v-for="material in materialTypes" :key="material.value" :value="material.value">{{ material.label }}</option></Select></FormField>
+      <FormField v-if="isSalesReport" label="Product Form"><Select v-model="filters.formType"><option value="all">All Product Forms</option><option v-for="form in productForms" :key="form.value" :value="form.value">{{ form.label }}</option></Select></FormField>
       <FormField v-if="isRequestOpsReport" label="Request Type"><Select v-model="filters.requestType"><option value="all">All Request Types</option><option value="buy">Buy</option><option value="sell">Sell</option><option value="pickup">Pickup</option><option value="gift">Gift</option><option value="transfer">Transfer</option><option value="withdrawal">Withdrawal</option></Select></FormField>
       <FormField v-if="isSalesReport || isRequestOpsReport" label="Status"><Select v-model="filters.transactionStatus"><option value="all">All Transaction Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="pending_delivered">Pending Delivered</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></Select></FormField>
       <FormField v-if="filters.reportType === 'invoices'" label="Payment Status"><Select v-model="filters.paymentStatus"><option value="all">All Payment Status</option><option value="Pending">Pending</option><option value="Paid">Paid</option><option value="Failed">Failed</option><option value="Cancelled">Cancelled</option></Select></FormField>
