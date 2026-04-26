@@ -232,9 +232,9 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th v-if="role === 'Admin'">Seller Name / ID</th>
                   <th>Image</th>
                   <th>Name</th>
+                  <th v-if="role === 'Admin'">Seller Name / ID</th>
                   <th>SKU</th>
                   <th>Category</th>
                   <th>Weight</th>
@@ -254,11 +254,6 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                 >
                   <td>{{ product.id }}</td>
 
-                  <td v-if="role === 'Admin'">
-                    <strong>{{ product.sellerName || '-' }}</strong>
-                    <div class="hint-text">ID: {{ product.sellerId }}</div>
-                  </td>
-
                   <td>
                     <img
                       v-if="product.imageUrl"
@@ -270,6 +265,10 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                   </td>
 
                   <td><strong>{{ product.name }}</strong></td>
+                  <td v-if="role === 'Admin'">
+                    <strong>{{ product.sellerName || '-' }}</strong>
+                    <div class="hint-text">ID: {{ product.sellerId }}</div>
+                  </td>
                   <td>{{ product.sku }}</td>
                   <td>{{ product.category }}</td>
                   <td>{{ product.weightValue }} g</td>

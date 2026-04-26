@@ -2,7 +2,6 @@
 import type { TransactionRowView } from "../types/transactionTypes";
 import { formatCurrency, formatDateTime } from "../../../shared/services/formatters";
 import StatusBadge from "../../../shared/components/ui/StatusBadge.vue";
-import Button from "../../../shared/components/ui/Button.vue";
 import Select from "../../../shared/components/ui/Select.vue";
 
 withDefaults(
@@ -17,7 +16,6 @@ withDefaults(
 const emit = defineEmits<{
   (e: "view", id: string): void;
   (e: "quickStatus", id: string, status: "pending" | "approved" | "rejected" | "delivered" | "cancelled"): void;
-  (e: "cancelRequest", id: string): void;
 }>();
 
 const formatAmount = (amount: number, currency: string) => formatCurrency(amount, currency);
@@ -50,20 +48,19 @@ const statusOptions = (trx: TransactionRowView) => {
     <table>
       <thead>
         <tr>
-          <th>Transaction ID</th><th>Investor</th><th>Seller</th><th>Product</th><th>Type</th><th>Qty</th><th>Weight</th><th>Amount</th><th>Status</th><th>Created</th><th>Updated</th><th class="text-right">Actions</th>
+          <th>Transaction ID</th><th>Image</th><th>Item Name</th><th>Investor</th><th>Seller</th><th>Type</th><th>Qty</th><th>Weight</th><th>Amount</th><th>Status</th><th>Created</th><th>Updated</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="trx in items" :key="trx.id">
+        <tr v-for="trx in items" :key="trx.id" class="clickable-row" @click="emit('view', trx.id)">
           <td>{{ trx.id }}</td>
+          <td>
+            <img v-if="trx.productImageUrl" :src="trx.productImageUrl" :alt="trx.productName" class="product-thumb" />
+            <span v-else class="product-thumb-placeholder">No image</span>
+          </td>
+          <td>{{ trx.productName }}</td>
           <td>{{ trx.investorName }}</td>
           <td>{{ trx.sellerName || trx.sellerId || '-' }}</td>
-          <td>
-            <div class="ui-row-inline">
-              <img v-if="trx.productImageUrl" :src="trx.productImageUrl" :alt="trx.productName" class="product-thumb" />
-              <span>{{ trx.productName }}</span>
-            </div>
-          </td>
           <td>
             <div>{{ trx.transactionType }}</div>
             <small v-if="trx.pickupSchedule">Pickup: {{ trx.pickupSchedule }}</small>
@@ -71,7 +68,7 @@ const statusOptions = (trx: TransactionRowView) => {
           <td>{{ formatQty(trx.quantity) }}</td>
           <td>{{ formatWeight(trx.weight, trx.unit) }}</td>
           <td>{{ formatAmount(trx.finalAmount, trx.currency) }}</td>
-          <td>
+          <td @click.stop>
             <Select
               v-if="canEditStatus(trx)"
               :model-value="trx.status"
@@ -83,12 +80,6 @@ const statusOptions = (trx: TransactionRowView) => {
           </td>
           <td>{{ formatDateTime(trx.createdAt) }}</td>
           <td>{{ trx.updatedAt ? formatDateTime(trx.updatedAt) : "—" }}</td>
-          <td class="text-right">
-            <div class="ui-row-actions">
-              <Button size="sm" @click="emit('view', trx.id)">View</Button>
-              <Button v-if="canEditStatus(trx)" size="sm" variant="ghost" @click="emit('cancelRequest', trx.id)">Cancel</Button>
-            </div>
-          </td>
         </tr>
       </tbody>
     </table>

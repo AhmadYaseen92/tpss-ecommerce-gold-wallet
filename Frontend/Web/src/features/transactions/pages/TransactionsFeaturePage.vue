@@ -60,12 +60,6 @@ const goDetails = (id: string) => {
 const goList = () => {
   window.location.hash = "#/transactions";
 };
-const cancelRequest = async (id: string) => {
-  const current = transactionsView.value.find((x: TransactionRowView) => x.id === id);
-  const canCancel = current?.status === "pending" || (current?.status === "pending_delivered" && current.transactionType?.toLowerCase() === "pickup");
-  if (!canCancel) return;
-  await props.marketplace.updateRequestStatus(id, "cancelled");
-};
 </script>
 
 <template>
@@ -108,7 +102,7 @@ const cancelRequest = async (id: string) => {
         </Select>
       </FilterBar>
 
-      <TransactionsPage :items="pagedItems" @view="goDetails" @quick-status="quickStatus" @cancel-request="cancelRequest" />
+      <TransactionsPage :items="pagedItems" @view="goDetails" @quick-status="quickStatus" />
 
       <Pagination
         :page="pageNumber"
