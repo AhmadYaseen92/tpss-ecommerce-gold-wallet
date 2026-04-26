@@ -67,6 +67,7 @@ const isAdmin = computed(() => marketplace.role.value === "Admin");
 const successModalOpen = ref(false);
 const successMessage = ref("Saved successfully");
 const adminSnapshot = ref("");
+const adminSystemFees = computed(() => systemFees.value.filter((fee) => fee.feeCode !== "service_charge"));
 
 const feeMetadata: Record<string, { modes: string[] }> = {
   commission_per_transaction: { modes: ["percent_with_minimum", "flat"] },
@@ -358,7 +359,7 @@ const saveAllChanges = async () => {
       </div>
 
       <div class="admin-fee-cards">
-        <article v-for="fee in systemFees" :key="fee.feeCode" class="fee-card">
+        <article v-for="fee in adminSystemFees" :key="fee.feeCode" class="fee-card">
           <header class="fee-card-header">
             <h4>{{ fee.name }}</h4>
             <label class="inline-toggle"><SmallToggle v-model="fee.isEnabled" /> Enabled</label>
