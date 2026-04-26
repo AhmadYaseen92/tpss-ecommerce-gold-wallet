@@ -48,12 +48,13 @@ const META: SettingMeta[] = [
   { key: "MobileRelease_IsIndividualSeller", section: "Mobile App", label: "Single Seller Mode", description: "Enable this to show only one seller in the mobile app instead of the marketplace.", type: "toggle" },
   { key: "MobileRelease_IndividualSellerName", section: "Mobile App", label: "Single Seller Name", description: "The seller name displayed when Single Seller Mode is enabled.", type: "select" },
   { key: "MobileRelease_MarketWatchEnabled", section: "Mobile App", label: "Show Market Watch", description: "Show or hide the Market Watch tab in the mobile app.", type: "toggle" },
+  { key: "MobileRelease_ShowWeightInGrams", section: "Mobile App", label: "Show Weights in Grams", description: "Display all product weights in grams in the mobile app.", type: "toggle" },
   { key: "MobileSecurity_LoginByPin", section: "Mobile Security", label: "Enable PIN Login", description: "Allow users to unlock the app using a PIN code.", type: "toggle" },
   { key: "MobileSecurity_LoginByBiometric", section: "Mobile Security", label: "Enable Biometric Login", description: "Allow users to unlock the app using fingerprint or Face ID.", type: "toggle" },
-  { key: "Otp_RequiredActions", section: "OTP Settings", label: "Actions Requiring OTP", description: "Select which actions require OTP verification.", type: "checklist", options: [{ value: "buy", label: "Buy" }, { value: "sell", label: "Sell" }, { value: "transfer", label: "Transfer" }, { value: "gift", label: "Gift" }, { value: "pickup", label: "Pickup" }, { value: "withdrawal", label: "Withdrawal" }] },
+  { key: "Otp_RequiredActions", section: "OTP Settings", label: "Actions Requiring OTP", description: "Select which actions require OTP verification.", type: "checklist", options: [{ value: "registration", label: "Registration" }, { value: "reset_password", label: "Reset Password" }, { value: "pickup", label: "Pickup" }, { value: "add_bank_account", label: "Add Bank Account" }, { value: "edit_bank_account", label: "Edit Bank Account" }, { value: "remove_bank_account", label: "Remove Bank Account" }, { value: "add_payment_method", label: "Add Payment Method" }, { value: "edit_payment_method", label: "Edit Payment Method" }, { value: "remove_payment_method", label: "Remove Payment Method" }, { value: "change_email", label: "Change Email" }, { value: "change_password", label: "Change Password" }, { value: "change_mobile_number", label: "Change Mobile Number" }] },
   { key: "Otp_EnableWhatsapp", section: "OTP Settings", label: "Enable WhatsApp OTP", description: "Allow sending OTP via WhatsApp.", type: "toggle" },
   { key: "Otp_EnableEmail", section: "OTP Settings", label: "Enable Email OTP", description: "Allow sending OTP via Email.", type: "toggle" },
-  { key: "Otp_ChannelPriority", section: "OTP Settings", label: "OTP Channel Priority", description: "Use the default OTP channel priority.", type: "priority", options: [{ value: "whatsapp", label: "WhatsApp" }, { value: "email", label: "Email" }] },
+  { key: "Otp_ChannelPriority", section: "OTP Settings", label: "OTP Channel Priority", description: "Select the preferred first OTP channel.", type: "select", options: [{ value: "whatsapp", label: "WhatsApp First" }, { value: "email", label: "Email First" }] },
   { key: "Otp_ExpirySeconds", section: "OTP Settings", label: "OTP Expiry Time", description: "Time before OTP expires (in seconds).", type: "number" },
   { key: "Otp_ResendCooldownSeconds", section: "OTP Settings", label: "OTP Resend Cooldown", description: "Time before user can request another OTP.", type: "number" },
   { key: "Otp_MaxResendCount", section: "OTP Settings", label: "Max Resend Attempts", description: "Maximum number of OTP resend attempts.", type: "number" },
@@ -69,11 +70,18 @@ const getInt = (key: string) => Number(findSetting(key)?.valueInt ?? 0);
 
 const isSingleSellerMode = computed(() => getBool("MobileRelease_IsIndividualSeller"));
 const hasOtpChannel = computed(() => getBool("Otp_EnableWhatsapp") || getBool("Otp_EnableEmail"));
-const isOtpPriorityDefault = computed(() => getString("Otp_ChannelPriority").toLowerCase() === "default");
 const otpPriorityMethods = computed(() => {
   const raw = getString("Otp_ChannelPriority").toLowerCase();
-  if (!raw || raw === "default") return ["whatsapp", "email"];
+  if (!raw) return ["whatsapp", "email"];
   return parseList(raw);
+});
+const otpPriorityFirst = computed({
+  get: () => otpPriorityMethods.value[0] === "email" ? "email" : "whatsapp",
+  set: (value: string) => {
+    const item = findSetting("Otp_ChannelPriority");
+    if (!item) return;
+    item.valueString = value === "email" ? "email,whatsapp" : "whatsapp,email";
+  }
 });
 
 const load = async () => {
@@ -114,21 +122,6 @@ const toggleChecklist = (item: SettingItem, value: string, checked: boolean) => 
   if (checked) current.add(value);
   else current.delete(value);
   item.valueString = Array.from(current).join(",");
-};
-
-const setOtpPriorityDefault = (checked: boolean) => {
-  const item = findSetting("Otp_ChannelPriority");
-  if (item) item.valueString = checked ? "default" : "whatsapp,email";
-};
-
-const togglePriorityMethod = (value: string, checked: boolean) => {
-  const item = findSetting("Otp_ChannelPriority");
-  if (!item) return;
-  const current = new Set(otpPriorityMethods.value);
-  if (checked) current.add(value);
-  else current.delete(value);
-  const ordered = ["whatsapp", "email"].filter((method) => current.has(method));
-  item.valueString = ordered.join(",");
 };
 
 const isDisabled = (key: string) => {
@@ -238,19 +231,9 @@ const saveAll = async () => {
             </div>
 
             <Input v-if="meta.type === 'number'" v-model="item!.valueInt" type="number" min="1" step="1" :disabled="isDisabled(meta.key)" />
-            <template v-if="meta.type === 'priority'">
-              <Checkbox :model-value="isOtpPriorityDefault" label="Use Default Priority" :disabled="isDisabled(meta.key)" @update:model-value="setOtpPriorityDefault" />
-              <div class="settings-checklist">
-                <Checkbox
-                  v-for="option in meta.options"
-                  :key="option.value"
-                  :model-value="otpPriorityMethods.includes(option.value)"
-                  :label="option.label"
-                  :disabled="isDisabled(meta.key) || isOtpPriorityDefault"
-                  @update:model-value="togglePriorityMethod(option.value, $event)"
-                />
-              </div>
-            </template>
+            <Select v-if="meta.key === 'Otp_ChannelPriority'" v-model="otpPriorityFirst" :disabled="isDisabled(meta.key)">
+              <option v-for="option in meta.options" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </Select>
             <div v-if="meta.type === 'checklist'" class="settings-checklist">
               <Checkbox
                 v-for="option in meta.options"
