@@ -96,6 +96,7 @@ class ProductRepositoryImpl implements IProductRepository {
       purity: _resolvePurity(model),
       weight: _weightText(model.weightValue, model.weightUnit),
       materialTypeLabel: _materialTypeLabel(model.materialType, model.categoryId),
+      productFormLabel: _productFormLabel(model.formType, model.categoryId),
       isInCart: false,
       quantity: 1,
       sellerName: model.sellerName,
@@ -140,6 +141,21 @@ class ProductRepositoryImpl implements IProductRepository {
       2 => 'Silver',
       3 => 'Diamond',
       _ => 'Gold',
+    };
+  }
+
+
+
+  String _productFormLabel(String formType, int categoryId) {
+    final normalized = formType.trim();
+    if (normalized.isNotEmpty && normalized.toLowerCase() != 'other') {
+      return normalized[0].toUpperCase() + normalized.substring(1);
+    }
+
+    return switch (categoryId) {
+      5 => 'Coin',
+      4 => 'Jewelry',
+      _ => 'Bar',
     };
   }
 

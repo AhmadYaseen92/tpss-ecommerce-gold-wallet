@@ -26,11 +26,9 @@ const formLabelMap: Record<string, string> = {
   "1": "Jewelry",
   "2": "Coin",
   "3": "Bar",
-  "4": "Other",
   jewelry: "Jewelry",
   coin: "Coin",
   bar: "Bar",
-  other: "Other"
 };
 
 const pricingModeLabelMap: Record<string, string> = {

@@ -16,6 +16,7 @@ class ProductEntity {
     required this.purity,
     required this.weight,
     required this.materialTypeLabel,
+    required this.productFormLabel,
     required this.isInCart,
     required this.quantity,
     required this.sellerName,
@@ -42,6 +43,7 @@ class ProductEntity {
   final String purity;
   final String weight;
   final String materialTypeLabel;
+  final String productFormLabel;
   final bool isInCart;
   final int quantity;
   final String sellerName;
@@ -68,6 +70,7 @@ class ProductEntity {
     String? purity,
     String? weight,
     String? materialTypeLabel,
+    String? productFormLabel,
     bool? isInCart,
     int? quantity,
     String? sellerName,
@@ -94,6 +97,7 @@ class ProductEntity {
       purity: purity ?? this.purity,
       weight: weight ?? this.weight,
       materialTypeLabel: materialTypeLabel ?? this.materialTypeLabel,
+      productFormLabel: productFormLabel ?? this.productFormLabel,
       isInCart: isInCart ?? this.isInCart,
       quantity: quantity ?? this.quantity,
       sellerName: sellerName ?? this.sellerName,

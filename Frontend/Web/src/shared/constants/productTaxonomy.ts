@@ -14,7 +14,6 @@ export const PRODUCT_FORM_OPTIONS: ProductOption[] = [
   { value: "jewelry", label: "Jewelry", aliases: ["jewelry", "1"] },
   { value: "coin", label: "Coin", aliases: ["coin", "2"] },
   { value: "bar", label: "Bar", aliases: ["bar", "3"] },
-  { value: "other", label: "Other", aliases: ["other", "0", "4", ""] },
 ];
 
 export const normalizeMaterialTypeKey = (value: string | undefined) => {

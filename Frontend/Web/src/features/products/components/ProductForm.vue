@@ -218,8 +218,7 @@ onBeforeUnmount(() => {
             <option :value="1">Jewelry</option>
             <option :value="2">Coin</option>
             <option :value="3">Bar</option>
-            <option :value="4">Other</option>
-          </Select>
+                      </Select>
         </FormField>
 
         <FormField label="Weight (grams)" required hint="Weight is always entered in grams." :error="errors.weightValue">
