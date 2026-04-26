@@ -2,7 +2,7 @@
 import type { TransactionRowView } from "../types/transactionTypes";
 import { formatCurrency, formatDateTime } from "../../../shared/services/formatters";
 import StatusBadge from "../../../shared/components/ui/StatusBadge.vue";
-import Button from "../../../shared/components/ui/Button.vue";
+import Select from "../../../shared/components/ui/Select.vue";
 
 withDefaults(
   defineProps<{
@@ -16,7 +16,6 @@ withDefaults(
 const emit = defineEmits<{
   (e: "view", id: string): void;
   (e: "quickStatus", id: string, status: "pending" | "approved" | "rejected" | "delivered" | "cancelled"): void;
-  (e: "cancelRequest", id: string): void;
 }>();
 
 const formatAmount = (amount: number, currency: string) => formatCurrency(amount, currency);
@@ -45,38 +44,44 @@ const statusOptions = (trx: TransactionRowView) => {
 </script>
 
 <template>
-  <table>
-    <thead>
-      <tr>
-        <th>Transaction ID</th><th>Investor</th><th>Seller ID</th><th>Seller</th><th>Product</th><th>Category</th><th>Type</th><th>Qty</th><th>Weight</th><th>Amount</th><th>Status</th><th>Created</th><th>Updated</th><th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="trx in items" :key="trx.id">
-        <td>{{ trx.id }}</td><td>{{ trx.investorName }}</td><td>{{ trx.sellerId || '-' }}</td><td>{{ trx.sellerName || '-' }}</td>
-        <td><div class="product-cell"><img v-if="trx.productImageUrl" :src="trx.productImageUrl" :alt="trx.productName" class="product-thumb" /><span>{{ trx.productName }}</span></div></td>
-        <td>{{ trx.category }}</td><td><div>{{ trx.transactionType }}</div><small v-if="trx.pickupSchedule">Pickup: {{ trx.pickupSchedule }}</small></td>
-        <td>{{ formatQty(trx.quantity) }}</td><td>{{ formatWeight(trx.weight, trx.unit) }}</td><td>{{ formatAmount(trx.finalAmount, trx.currency) }}</td>
-        <td>
-          <select
-            v-if="canEditStatus(trx)"
-            class="ui-select"
-            :value="trx.status"
-            @change="emit('quickStatus', trx.id, ($event.target as HTMLSelectElement).value as 'pending' | 'approved' | 'rejected' | 'delivered' | 'cancelled')"
-          >
-            <option v-for="option in statusOptions(trx)" :key="option.value" :value="option.value">{{ option.label }}</option>
-          </select>
-          <StatusBadge v-else :status="trx.status" />
-        </td>
-        <td>{{ formatDateTime(trx.createdAt) }}</td>
-        <td>{{ trx.updatedAt ? formatDateTime(trx.updatedAt) : "—" }}</td>
-        <td><Button @click="emit('view', trx.id)">View</Button><Button v-if="canEditStatus(trx)" variant="ghost" @click="emit('cancelRequest', trx.id)">Cancel</Button></td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="ui-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Transaction ID</th><th>Image</th><th>Item Name</th><th>Investor</th><th>Seller</th><th>Type</th><th>Qty</th><th>Weight</th><th>Amount</th><th>Status</th><th>Created</th><th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="trx in items" :key="trx.id" class="clickable-row" @click="emit('view', trx.id)">
+          <td>{{ trx.id }}</td>
+          <td>
+            <img v-if="trx.productImageUrl" :src="trx.productImageUrl" :alt="trx.productName" class="product-thumb" />
+            <span v-else class="product-thumb-placeholder">No image</span>
+          </td>
+          <td>{{ trx.productName }}</td>
+          <td>{{ trx.investorName }}</td>
+          <td>{{ trx.sellerName || trx.sellerId || '-' }}</td>
+          <td>
+            <div>{{ trx.transactionType }}</div>
+            <small v-if="trx.pickupSchedule">Pickup: {{ trx.pickupSchedule }}</small>
+          </td>
+          <td>{{ formatQty(trx.quantity) }}</td>
+          <td>{{ formatWeight(trx.weight, trx.unit) }}</td>
+          <td>{{ formatAmount(trx.finalAmount, trx.currency) }}</td>
+          <td @click.stop>
+            <Select
+              v-if="canEditStatus(trx)"
+              :model-value="trx.status"
+              @update:model-value="emit('quickStatus', trx.id, $event as 'pending' | 'approved' | 'rejected' | 'delivered' | 'cancelled')"
+            >
+              <option v-for="option in statusOptions(trx)" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </Select>
+            <StatusBadge v-else :status="trx.status" />
+          </td>
+          <td>{{ formatDateTime(trx.createdAt) }}</td>
+          <td>{{ trx.updatedAt ? formatDateTime(trx.updatedAt) : "—" }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </template>
-
-<style scoped>
-.product-cell { display: flex; align-items: center; gap: 8px; }
-.product-thumb { width: 28px; height: 28px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
-</style>

@@ -1,5 +1,6 @@
 import type { Invoice, Investor, InvestorRequest, Product } from "../../../shared/types/models";
 import type { ReportFilters } from "../types/reportTypes";
+import { normalizeMaterialTypeKey, normalizeProductFormKey } from "../../../shared/constants/productTaxonomy";
 
 export interface ReportCriteria extends ReportFilters {
   start: Date;
@@ -57,7 +58,8 @@ export const reportService = {
     return inDateRange(request.createdAt, criteria.start, criteria.end)
       && (criteria.investorId === "all" || request.investorId === criteria.investorId)
       && (criteria.productId === "all" || includesCase(request.productName, criteria.productId))
-      && (criteria.category === "all" || request.category === criteria.category)
+      && (criteria.materialType === "all" || normalizeMaterialTypeKey(request.category) === criteria.materialType)
+      && (criteria.formType === "all" || includesCase(request.productName, criteria.formType))
       && (criteria.requestType === "all" || request.type === criteria.requestType)
       && (criteria.transactionStatus === "all" || request.status === criteria.transactionStatus)
       && (criteria.walletActionType === "all" || request.type === criteria.walletActionType)
@@ -68,9 +70,10 @@ export const reportService = {
   },
 
   matchProduct(product: Product, criteria: ReportCriteria) {
-    return inDateRange(product.updatedAt, criteria.start, criteria.end)
+      return inDateRange(product.updatedAt, criteria.start, criteria.end)
       && (criteria.productId === "all" || product.id === criteria.productId)
-      && (criteria.category === "all" || product.category === criteria.category);
+      && (criteria.materialType === "all" || normalizeMaterialTypeKey(product.materialType || product.category) === criteria.materialType)
+      && (criteria.formType === "all" || normalizeProductFormKey(product.formType) === criteria.formType);
   },
 
   matchInvoice(invoice: Invoice, criteria: ReportCriteria) {

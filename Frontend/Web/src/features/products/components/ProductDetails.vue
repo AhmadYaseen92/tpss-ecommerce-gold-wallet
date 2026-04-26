@@ -1,163 +1,122 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import type { ProductListItem } from "../types/productTypes";
+import Card from "../../../shared/components/ui/Card.vue";
+import FormField from "../../../shared/components/ui/FormField.vue";
+import StatusBadge from "../../../shared/components/ui/StatusBadge.vue";
+import type { ProductManagementDto } from "../../../shared/types/apiTypes";
 
-const props = defineProps<{ product: ProductListItem | null }>();
-
-const pricingSummary = computed(() => {
-  if (!props.product) return "—";
-  const mode = props.product.pricingMode || "Unknown";
-  return `${mode} pricing • ${props.product.materialType || "Material"} • ${props.product.formType || "Form"}`;
-});
+defineProps<{ product: ProductManagementDto | null }>();
 
 const formatMoney = (value: number) => Number(value || 0).toFixed(2);
+const enumLabel = (value: string | number | null | undefined, map: Record<string, string>) => {
+  if (value == null) return "—";
+  const text = String(value);
+  return map[text] ?? map[text.toLowerCase()] ?? text;
+};
+
+const materialLabelMap: Record<string, string> = {
+  "1": "Gold",
+  "2": "Silver",
+  "3": "Diamond",
+  gold: "Gold",
+  silver: "Silver",
+  diamond: "Diamond"
+};
+
+const formLabelMap: Record<string, string> = {
+  "1": "Jewelry",
+  "2": "Coin",
+  "3": "Bar",
+  "4": "Other",
+  jewelry: "Jewelry",
+  coin: "Coin",
+  bar: "Bar",
+  other: "Other"
+};
+
+const pricingModeLabelMap: Record<string, string> = {
+  "1": "Auto",
+  "2": "Manual",
+  auto: "Auto",
+  manual: "Manual"
+};
+
+const purityLabelMap: Record<string, string> = {
+  "1": "24K",
+  "2": "22K",
+  "3": "21K",
+  "4": "18K",
+  "5": "14K",
+  "0": "N/A"
+};
+
+const offerTypeLabelMap: Record<string, string> = {
+  "0": "None",
+  "1": "Percent Based",
+  "2": "Fixed Price"
+};
 </script>
 
 <template>
-  <div class="product-details" v-if="product">
-    <div class="hero-card">
-      <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="detail-image" />
-      <div v-else class="detail-image placeholder">No image</div>
-      <div class="hero-content">
-        <h3>{{ product.name }}</h3>
-        <p class="muted">{{ pricingSummary }}</p>
-        <div class="chips">
-          <span class="chip">SKU: {{ product.sku }}</span>
-          <span class="chip">{{ product.isActive ? 'Active' : 'Inactive' }}</span>
-          <span class="chip">Stock: {{ product.availableStock }}</span>
+  <div v-if="product" class="dashboard-screen">
+    <Card title="Basic Info">
+      <div class="product-detail-hero">
+        <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-detail-image" />
+        <div v-else class="product-detail-image product-detail-placeholder">No image available</div>
+
+        <div class="product-detail-grid">
+          <FormField label="Name"><div>{{ product.name }}</div></FormField>
+          <FormField label="SKU"><div>{{ product.sku }}</div></FormField>
+          <FormField label="Category"><div>{{ product.category || '—' }}</div></FormField>
+          <FormField label="Status"><StatusBadge :status="product.isActive ? 'Active' : 'Inactive'" /></FormField>
+          <FormField label="Description" class="field-full">
+            <div>{{ product.description || '—' }}</div>
+          </FormField>
         </div>
       </div>
-    </div>
+    </Card>
 
-    <div class="detail-grid">
-      <section class="detail-card">
-        <h4>Basics</h4>
-        <p><strong>Description:</strong> {{ product.description || "—" }}</p>
-        <p><strong>Category:</strong> {{ product.category || "—" }}</p>
-        <p><strong>Display Label:</strong> {{ product.displayCategoryLabel || "—" }}</p>
-        <p><strong>Seller ID:</strong> {{ product.sellerId }}</p>
-      </section>
+    <div class="dashboard-bottom-grid">
+      <Card title="Seller Info">
+        <div class="product-detail-grid">
+          <FormField label="Seller Name"><div>{{ product.sellerName || '—' }}</div></FormField>
+          <FormField label="Seller ID"><div>{{ product.sellerId }}</div></FormField>
+        </div>
+      </Card>
 
-      <section class="detail-card">
-        <h4>Material & Weight</h4>
-        <p><strong>Material Type:</strong> {{ product.materialType || "—" }}</p>
-        <p><strong>Form Type:</strong> {{ product.formType || "—" }}</p>
-        <p><strong>Purity Karat:</strong> {{ product.purityKarat || "—" }}</p>
-        <p><strong>Purity Factor:</strong> {{ product.purityFactor }}</p>
-        <p><strong>Weight:</strong> {{ product.weightValue }} {{ product.weightUnit }}</p>
-      </section>
+      <Card title="Material & Weight">
+        <div class="product-detail-grid">
+          <FormField label="Material Type"><div>{{ enumLabel(product.materialType, materialLabelMap) }}</div></FormField>
+          <FormField label="Product Form"><div>{{ enumLabel(product.formType, formLabelMap) }}</div></FormField>
+          <FormField label="Purity / Karat"><div>{{ enumLabel(product.purityKarat, purityLabelMap) }}</div></FormField>
+          <FormField label="Purity Factor"><div>{{ product.purityFactor }}</div></FormField>
+          <FormField label="Weight (grams)"><div>{{ product.weightValue }} g</div></FormField>
+        </div>
+      </Card>
 
-      <section class="detail-card">
-        <h4>Pricing</h4>
-        <p><strong>Pricing Mode:</strong> {{ product.pricingMode || "—" }}</p>
-        <p><strong>Base Market Price:</strong> {{ formatMoney(product.baseMarketPrice) }}</p>
-        <p><strong>Manual Sell Price:</strong> {{ formatMoney(product.manualSellPrice) }}</p>
-      </section>
+      <Card title="Pricing">
+        <div class="product-detail-grid">
+          <FormField label="Pricing Mode"><div>{{ enumLabel(product.pricingMode, pricingModeLabelMap) }}</div></FormField>
+          <FormField label="Base Market Price"><div>{{ formatMoney(product.baseMarketPrice) }}</div></FormField>
+          <FormField label="Auto Price"><div>{{ formatMoney(product.autoPrice) }}</div></FormField>
+          <FormField label="Fixed Price"><div>{{ formatMoney(product.fixedPrice) }}</div></FormField>
+          <FormField label="Sell Price"><div>{{ formatMoney(product.sellPrice) }}</div></FormField>
+        </div>
+      </Card>
 
-      <section class="detail-card">
-        <h4>Offer & Final</h4>
-        <p><strong>Offer Type:</strong> {{ product.offerType || "None" }}</p>
-        <p><strong>Offer Percent:</strong> {{ product.offerPercent }}%</p>
-        <p><strong>Offer New Price:</strong> {{ formatMoney(product.offerNewPrice) }}</p>
-        <p><strong>Final Sell Price:</strong> {{ formatMoney(product.sellPrice) }}</p>
-        <p><strong>Image URL:</strong> <span class="url-value">{{ product.imageUrl || "—" }}</span></p>
-      </section>
+      <Card title="Offer">
+        <div class="product-detail-grid">
+          <FormField label="Offer Type"><div>{{ enumLabel(product.offerType, offerTypeLabelMap) }}</div></FormField>
+          <FormField label="Offer Percent"><div>{{ product.offerPercent }}%</div></FormField>
+          <FormField label="Offer New Price"><div>{{ formatMoney(product.offerNewPrice) }}</div></FormField>
+          <FormField label="Has Offer"><div>{{ product.isHasOffer ? 'Yes' : 'No' }}</div></FormField>
+        </div>
+      </Card>
+
+      <Card title="Inventory">
+        <div class="product-detail-grid">
+          <FormField label="Available Stock"><div>{{ product.availableStock }}</div></FormField>
+        </div>
+      </Card>
     </div>
   </div>
 </template>
-
-<style scoped>
-.product-details {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.hero-card {
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 12px;
-  border: 1px solid #e4e4e7;
-  border-radius: 12px;
-  padding: 12px;
-  background: #fff;
-}
-
-.detail-image {
-  width: 180px;
-  height: 180px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid #d4d4d8;
-}
-
-.placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #71717a;
-}
-
-.hero-content h3 {
-  margin: 0 0 6px;
-}
-
-.muted {
-  color: #64748b;
-  margin: 0 0 8px;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  border: 1px solid #d4d4d8;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  background: #fafafa;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(240px, 1fr));
-  gap: 12px;
-}
-
-.detail-card {
-  border: 1px solid #e4e4e7;
-  border-radius: 12px;
-  padding: 12px;
-  background: #fff;
-}
-
-.detail-card h4 {
-  margin: 0 0 8px;
-}
-
-.detail-card p {
-  margin: 6px 0;
-}
-
-.url-value {
-  word-break: break-all;
-}
-
-@media (max-width: 900px) {
-  .hero-card {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-image {
-    width: 100%;
-    max-width: 260px;
-  }
-
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

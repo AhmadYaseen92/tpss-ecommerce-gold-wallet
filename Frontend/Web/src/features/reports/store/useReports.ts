@@ -4,6 +4,12 @@ import { downloadBlob } from "../../../shared/services/fileDownload";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { reportService } from "../services/reportService";
 import type { ReportFilters, ReportTableData, ReportTypeCard } from "../types/reportTypes";
+import {
+  MATERIAL_TYPE_OPTIONS,
+  PRODUCT_FORM_OPTIONS,
+  normalizeMaterialTypeKey,
+  normalizeProductFormKey
+} from "../../../shared/constants/productTaxonomy";
 
 const ADMIN_REPORTS: ReportTypeCard[] = [
   { key: "sales", label: "Sales Report", description: "Sales, orders, quantity and seller/product/category/date splits", audience: "Admin" },
@@ -28,13 +34,14 @@ const SELLER_REPORTS: ReportTypeCard[] = [
 export function useReports(marketplace: ReturnTypeUseMarketplace) {
   const reportFilters = reactive<ReportFilters>({
     reportType: "sales",
-    datePreset: "today",
+    datePreset: "thisMonth",
     customFrom: "",
     customTo: "",
     sellerId: "all",
     investorId: "all",
     productId: "all",
-    category: "all",
+    materialType: "all",
+    formType: "all",
     requestType: "all",
     transactionStatus: "all",
     paymentStatus: "all",
@@ -77,7 +84,8 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     stateSnapshot.value.invoices.filter((i) => effectiveSellerId.value === "all" || !effectiveSellerId.value || i.sellerId === effectiveSellerId.value)
   );
 
-  const categories = computed(() => Array.from(new Set(stateSnapshot.value.products.map((p) => p.category))).sort());
+  const materialTypes = computed(() => MATERIAL_TYPE_OPTIONS);
+  const productForms = computed(() => PRODUCT_FORM_OPTIONS);
 
   const buildSummary = (rows: Array<Record<string, string | number>>) => {
     const numeric = (key: string) => rows.reduce((acc, row) => acc + (typeof row[key] === "number" ? Number(row[key]) : 0), 0);
@@ -145,6 +153,10 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
       const sellersMap = new Map(stateSnapshot.value.sellers.map((s) => [s.id, s]));
       const investorsMap = new Map(stateSnapshot.value.investors.map((i) => [i.id, i]));
 
+      const passesProductShapeFilters = (product: { materialType?: string; formType?: string; category?: string }) =>
+        (criteria.materialType === "all" || normalizeMaterialTypeKey(product.materialType || product.category) === criteria.materialType)
+        && (criteria.formType === "all" || normalizeProductFormKey(product.formType) === criteria.formType);
+
       let rows: Array<Record<string, string | number>> = [];
       switch (reportFilters.reportType) {
         case "sales":
@@ -152,6 +164,10 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
           rows = visibleRequests.value
             .filter((r) => r.type === "buy")
             .filter((r) => reportService.matchRequest(r, criteria, investorsMap))
+            .filter((r) => {
+              const matchedProduct = visibleProducts.value.find((p) => p.name === r.productName);
+              return matchedProduct ? passesProductShapeFilters(matchedProduct) : criteria.materialType === "all";
+            })
             .map((r) => ({
               Date: reportService.dateLabel(r.createdAt),
               "Order #": r.id,
@@ -182,6 +198,7 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
         case "stock":
           rows = visibleProducts.value
             .filter((product) => reportService.matchProduct(product, criteria))
+            .filter((product) => passesProductShapeFilters(product))
             .map((product) => ({
               Product: product.name,
               Category: product.category,
@@ -217,6 +234,10 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
         case "fulfillment":
           rows = visibleRequests.value
             .filter((request) => reportService.matchRequest(request, criteria, investorsMap))
+            .filter((request) => {
+              const matchedProduct = visibleProducts.value.find((p) => p.name === request.productName);
+              return matchedProduct ? passesProductShapeFilters(matchedProduct) : criteria.materialType === "all";
+            })
             .map((request) => ({
               Date: reportService.dateLabel(request.createdAt),
               "Request #": request.id,
@@ -294,13 +315,14 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
 
   const resetFiltersForType = (type: string) => {
     reportFilters.reportType = type;
-    reportFilters.datePreset = "today";
+    reportFilters.datePreset = "thisMonth";
     reportFilters.customFrom = "";
     reportFilters.customTo = "";
     reportFilters.sellerId = "all";
     reportFilters.investorId = "all";
     reportFilters.productId = "all";
-    reportFilters.category = "all";
+    reportFilters.materialType = "all";
+    reportFilters.formType = "all";
     reportFilters.requestType = "all";
     reportFilters.transactionStatus = "all";
     reportFilters.paymentStatus = "all";
@@ -347,7 +369,8 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     tableData,
     loading,
     totalPages,
-    categories,
+    materialTypes,
+    productForms,
     generateReports,
     resetFilters,
     selectReportType,

@@ -17,7 +17,8 @@ export interface ReportFilters {
   sellerId: string;
   investorId: string;
   productId: string;
-  category: string;
+  materialType: string;
+  formType: string;
   requestType: string;
   transactionStatus: string;
   paymentStatus: string;

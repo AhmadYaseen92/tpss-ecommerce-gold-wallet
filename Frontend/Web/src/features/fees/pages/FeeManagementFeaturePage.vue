@@ -4,6 +4,7 @@ import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMark
 import SmallCheckbox from "../../../shared/components/SmallCheckbox.vue";
 import SmallToggle from "../../../shared/components/SmallToggle.vue";
 import CommonModal from "../../../shared/components/CommonModal.vue";
+import PageHeader from "../../../shared/components/ui/PageHeader.vue";
 import {
   fetchAdminServiceFee,
   fetchManagedProducts,
@@ -346,13 +347,12 @@ const saveAllChanges = async () => {
 </script>
 
 <template>
-  <section>
-    <h2>Fees Management</h2>
+  <section class="dashboard-screen">
+    <PageHeader title="Fees Management" subtitle="System Fee Types" />
     <p v-if="loading">Loading...</p>
     <p v-if="error" class="error-text">{{ error }}</p>
 
     <template v-if="isAdmin">
-      <h3>System Fee Types</h3>
       <div class="table-toolbar">
         <button v-if="adminDirty" @click="saveAdminAllChanges">Save All Changes</button>
       </div>
