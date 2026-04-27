@@ -17,12 +17,12 @@ const emit = defineEmits<{
 }>();
 
 const steps = [
-  "Company Information",
-  "Company Owner / Manager",
-  "Company Branches / Locations",
+  "Company Info",
+  "Owner",
+  "Branches",
   "Bank Details",
-  "Login Credentials",
-  "Order Summary",
+  "Login",
+  "Summary",
 ];
 
 const activeStep = ref(0);
@@ -306,8 +306,8 @@ function goToStep(idx: number) {
 <style scoped>
 .register-wizard { display: grid; gap: 14px; }
 .subtitle { color: #5f6b7a; margin: 0; }
-.stepper { display: flex; gap: 8px; flex-wrap: wrap; }
-.step-btn { border: 1px solid #d7dbe3; background: #fff; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.stepper { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.step-btn { border: 1px solid #d7dbe3; background: #fff; border-radius: 8px; padding: 6px 10px; cursor: pointer; white-space: nowrap; font-size: 13px; text-align: center; }
 .step-btn.active { background: #1f2937; color: #fff; }
 .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
 .form-grid h2, .full, .title-row { grid-column: 1 / -1; }
@@ -318,5 +318,7 @@ input, textarea, select { padding: 8px; border: 1px solid #cfd6e4; border-radius
 .wizard-actions { display:flex; justify-content: space-between; margin-top: 8px; }
 .ghost { margin-right: 8px; }
 .error-banner { margin: 0; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; border-radius: 8px; padding: 8px 10px; }
+@media (max-width: 1100px) { .stepper { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .stepper { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>

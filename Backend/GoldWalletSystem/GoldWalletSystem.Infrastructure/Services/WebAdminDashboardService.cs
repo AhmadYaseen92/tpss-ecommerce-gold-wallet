@@ -44,8 +44,11 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
 
         var cartItems = await cartItemsQuery.ToListAsync(cancellationToken);
 
-        var totalSales = products.Sum(p => p.SellPrice * p.AvailableStock);
-        var goldAvg = products.Where(p => p.Category == ProductCategory.Gold).Select(p => p.SellPrice).DefaultIfEmpty(0).Average();
+        var totalTransactions = requests.Count;
+        var totalSales = requests
+            .Where(x => string.Equals(x.TransactionType, "Purchase", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(x.TransactionType, "Buy", StringComparison.OrdinalIgnoreCase))
+            .Sum(x => x.Amount);
 
         var statusCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
@@ -117,12 +120,11 @@ public class WebAdminDashboardService(AppDbContext dbContext) : IWebAdminDashboa
         {
             Cards =
             [
-                new WebDashboardCardDto { Title = "Total Transactions", Value = requests.Count.ToString(), Trend = "This month" },
                 new WebDashboardCardDto { Title = "Total Sales", Value = totalSales.ToString("0.00"), Trend = "This month" },
                 new WebDashboardCardDto { Title = "Total Products", Value = products.Count.ToString(), Trend = "All" },
                 new WebDashboardCardDto { Title = "Active Products", Value = products.Count(p => p.IsActive).ToString(), Trend = "Active" },
                 new WebDashboardCardDto { Title = "Out of Stock Products", Value = products.Count(p => p.AvailableStock == 0).ToString(), Trend = "AvailableStock=0" },
-                new WebDashboardCardDto { Title = "Gold Market Price", Value = goldAvg.ToString("0.00"), Trend = "Current" }
+                new WebDashboardCardDto { Title = "Total Transactions", Value = totalTransactions.ToString(), Trend = "This month" }
             ],
             StatusSegments =
             [
