@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/profile_remote_datasource.dart';
@@ -18,7 +21,8 @@ class MainProfileWidget extends StatefulWidget {
 }
 
 class _MainProfileWidgetState extends State<MainProfileWidget> {
-  final ProfileRemoteDataSource _remoteDataSource = ProfileRemoteDataSource(InjectionContainer.dio());
+  final Dio _dio = InjectionContainer.dio();
+  late final ProfileRemoteDataSource _remoteDataSource = ProfileRemoteDataSource(_dio);
   final ImagePicker _imagePicker = ImagePicker();
 
   late Future<ProfileRemoteModel> _profileFuture;
@@ -285,7 +289,7 @@ class _MainProfileWidgetState extends State<MainProfileWidget> {
       final encoded = base64Encode(bytes);
       final dataUrl = 'data:$mimeType;base64,$encoded';
 
-      await _remoteDataSource.updateProfilePhoto(profile: profile, profilePhotoUrl: dataUrl);
+      await _uploadProfilePhotoWithOtpPolicy(profile: profile, dataUrl: dataUrl);
 
       if (!mounted) return;
       setState(() {
@@ -308,6 +312,135 @@ class _MainProfileWidgetState extends State<MainProfileWidget> {
     }
   }
 
+
+  Future<void> _uploadProfilePhotoWithOtpPolicy({
+    required ProfileRemoteModel profile,
+    required String dataUrl,
+  }) async {
+    try {
+      await _remoteDataSource.updateProfilePhoto(profile: profile, profilePhotoUrl: dataUrl);
+    } on DioException catch (error) {
+      if (!_requiresOtpToken(error)) rethrow;
+
+      final otpGrant = await _requestOtpGrantForProfilePhoto();
+      if (otpGrant == null) {
+        throw StateError('OTP verification is required to update your profile photo.');
+      }
+
+      await _remoteDataSource.updateProfilePhoto(
+        profile: profile,
+        profilePhotoUrl: dataUrl,
+        otpVerificationToken: otpGrant.verificationToken,
+        otpActionReferenceId: otpGrant.actionReferenceId,
+      );
+    }
+  }
+
+  Future<_OtpGrant?> _requestOtpGrantForProfilePhoto() async {
+    if (!AppReleaseConfig.isOtpRequiredForAction('change_mobile_number')) {
+      return null;
+    }
+
+    final userId = AuthSessionStore.userId;
+    if (userId == null) {
+      _showError('No logged-in user found. Please login again.');
+      return null;
+    }
+
+    final actionReferenceId = 'profile:change_mobile_number:$userId';
+
+    try {
+      final requestResp = await _dio.post(
+        '/otp/request',
+        data: {
+          'userId': userId,
+          'actionType': 'change_mobile_number',
+          'actionReferenceId': actionReferenceId,
+        },
+      );
+
+      final requestData = (requestResp.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      final otpRequestId = (requestData['otpRequestId'] ?? '').toString().trim();
+      if (otpRequestId.isEmpty) {
+        throw StateError('OTP request failed.');
+      }
+
+      final otpCode = await _showOtpInputDialog();
+      if (!mounted || otpCode == null || otpCode.length < 6) return null;
+
+      final verifyResp = await _dio.post(
+        '/otp/verify',
+        data: {
+          'userId': userId,
+          'otpRequestId': otpRequestId,
+          'otpCode': otpCode,
+        },
+      );
+
+      final verifyData = (verifyResp.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      final verificationToken = (verifyData['verificationToken'] ?? '').toString().trim();
+      final verifiedRef = (verifyData['actionReferenceId'] ?? '').toString().trim();
+
+      if (verificationToken.isEmpty) {
+        throw StateError('OTP verification failed.');
+      }
+
+      return _OtpGrant(
+        verificationToken: verificationToken,
+        actionReferenceId: verifiedRef.isEmpty ? actionReferenceId : verifiedRef,
+      );
+    } catch (error) {
+      _showError(_extractDisplayErrorMessage(error));
+      return null;
+    }
+  }
+
+  Future<String?> _showOtpInputDialog() async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm OTP'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+          decoration: const InputDecoration(labelText: 'OTP Code'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Verify'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _requiresOtpToken(DioException error) {
+    final message = _extractDisplayErrorMessage(error).toLowerCase();
+    return message.contains('otp verification token is required');
+  }
+
+  String _extractDisplayErrorMessage(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final message = (data['message'] ?? data['error'] ?? '').toString().trim();
+        if (message.isNotEmpty) return message;
+        final nested = data['data'];
+        if (nested is Map) {
+          final nestedMessage = (nested['message'] ?? nested['error'] ?? '').toString().trim();
+          if (nestedMessage.isNotEmpty) return nestedMessage;
+        }
+      }
+      if (data is String && data.trim().isNotEmpty) return data.trim();
+      if ((error.message ?? '').trim().isNotEmpty) return error.message!.trim();
+    }
+    return 'Something went wrong. Please try again.';
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
@@ -322,3 +455,11 @@ class _MainProfileWidgetState extends State<MainProfileWidget> {
 }
 
 enum _ProfileImageSource { camera, gallery, files }
+
+
+class _OtpGrant {
+  const _OtpGrant({required this.verificationToken, required this.actionReferenceId});
+
+  final String verificationToken;
+  final String actionReferenceId;
+}

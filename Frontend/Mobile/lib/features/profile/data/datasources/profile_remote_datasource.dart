@@ -23,6 +23,8 @@ class ProfileRemoteDataSource {
     required String documentType,
     required String idNumber,
     required String profilePhotoUrl,
+    String? otpVerificationToken,
+    String? otpActionReferenceId,
   }) async {
     final userId = _requireUserId();
     await _dio.put(
@@ -37,6 +39,8 @@ class ProfileRemoteDataSource {
         'documentType': documentType,
         'idNumber': idNumber,
         'profilePhotoUrl': profilePhotoUrl,
+        'otpVerificationToken': otpVerificationToken ?? '',
+        'otpActionReferenceId': otpActionReferenceId ?? '',
       },
     );
   }
@@ -45,6 +49,8 @@ class ProfileRemoteDataSource {
   Future<void> updateProfilePhoto({
     required ProfileRemoteModel profile,
     required String profilePhotoUrl,
+    String? otpVerificationToken,
+    String? otpActionReferenceId,
   }) async {
     await updatePersonal(
       fullName: profile.fullName,
@@ -55,6 +61,8 @@ class ProfileRemoteDataSource {
       documentType: profile.documentType,
       idNumber: profile.idNumber,
       profilePhotoUrl: profilePhotoUrl,
+      otpVerificationToken: otpVerificationToken,
+      otpActionReferenceId: otpActionReferenceId,
     );
   }
 
