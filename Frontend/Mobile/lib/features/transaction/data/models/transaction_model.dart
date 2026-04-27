@@ -95,7 +95,7 @@ class TransactionModel {
 
   bool get isPositiveCashFlow {
     final type = transactionType.toLowerCase();
-    if (type == 'buy') return false;
+    if (type == 'buy') return true;
     if (type == 'sell') return true;
     if (type == 'transfer' || type == 'gift') {
       return isIncomingTransferOrGift;
