@@ -37,10 +37,10 @@ const lastGoldKarat = ref(3);
 const lastSilverPurity = ref(0.999);
 const imagePreviewUrl = ref("");
 
-const isAuto = computed(() => props.model.pricingMode === 1);
-const isGold = computed(() => props.model.materialType === 1);
-const isSilver = computed(() => props.model.materialType === 2);
-const isDiamond = computed(() => props.model.materialType === 3);
+const isAuto = computed(() => Number(props.model.pricingMode) === 1);
+const isGold = computed(() => Number(props.model.materialType) === 1);
+const isSilver = computed(() => Number(props.model.materialType) === 2);
+const isDiamond = computed(() => Number(props.model.materialType) === 3);
 const availableFormOptions = computed(() => {
   const materialKey = isGold.value ? "gold" : isSilver.value ? "silver" : "diamond";
   const allowed = new Set(PRODUCT_FORMS_BY_MATERIAL[materialKey] ?? PRODUCT_FORMS_BY_MATERIAL.all);
@@ -79,7 +79,7 @@ const resetCoreProductInfoByMaterial = (nextMaterial: number) => {
 };
 
 watch(
-  () => props.model.materialType,
+  () => Number(props.model.materialType),
   () => {
     if (isDiamond.value && [2, 3].includes(Number(props.model.formType))) {
       props.model.formType = 1;
@@ -98,7 +98,7 @@ const karatFactorMap: Record<number, number> = {
 };
 
 watch(
-  () => [props.model.materialType, props.model.purityKarat],
+  () => [Number(props.model.materialType), Number(props.model.purityKarat)],
   () => {
     if (isDiamond.value) {
       if (props.model.purityKarat > 0) {
@@ -130,7 +130,7 @@ watch(
 );
 
 watch(
-  () => props.model.materialType,
+  () => Number(props.model.materialType),
   (next, prev) => {
     if (next === prev || prev == null) return;
     resetCoreProductInfoByMaterial(next);
@@ -234,7 +234,10 @@ onBeforeUnmount(() => {
     <Card title="Core Product Info">
       <div class="form-grid-two">
         <FormField label="Material Type" required :error="errors.materialType">
-          <Select v-model="model.materialType">
+          <Select
+            :model-value="model.materialType"
+            @update:model-value="model.materialType = Number($event)"
+          >
             <option :value="1">Gold</option>
             <option :value="2">Silver</option>
             <option :value="3">Diamond</option>
@@ -242,7 +245,10 @@ onBeforeUnmount(() => {
         </FormField>
 
         <FormField label="Product Form" required :error="errors.formType">
-          <Select v-model="model.formType">
+          <Select
+            :model-value="model.formType"
+            @update:model-value="model.formType = Number($event)"
+          >
             <option
               v-for="option in availableFormOptions"
               :key="option.value"
@@ -286,7 +292,10 @@ onBeforeUnmount(() => {
         </FormField>
 
         <FormField label="Pricing Mode">
-          <Select v-model="model.pricingMode">
+          <Select
+            :model-value="model.pricingMode"
+            @update:model-value="model.pricingMode = Number($event)"
+          >
             <option :value="1">Auto</option>
             <option :value="2">Manual</option>
           </Select>
