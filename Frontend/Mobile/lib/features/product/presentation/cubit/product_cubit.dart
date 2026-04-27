@@ -90,7 +90,7 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   void applyCategoryFilter({required int? categoryId}) {
-    selectedFormLabel = ProductFormFilter.all;
+    selectedFormLabel = ProductFormFilter.defaultForCategory(categoryId);
     unawaited(
       loadProducts(
         seller: activeSeller,

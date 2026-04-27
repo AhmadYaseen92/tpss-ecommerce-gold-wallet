@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_filter_chip.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart'
-    show WalletCategory, WalletTransactionEntity;
+    show AssetType, WalletCategory, WalletTransactionEntity;
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_holding_item_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
@@ -27,6 +28,7 @@ class WalletItemsPage extends StatefulWidget {
 
 class _WalletItemsPageState extends State<WalletItemsPage> {
   late List<WalletTransactionEntity> _transactions;
+  String _selectedFormFilter = 'All';
   bool _isRefreshing = false;
   StreamSubscription<void>? _realtimeSubscription;
   final IWalletActionRepository _walletActionRepository = InjectionContainer.walletActionRepository();
@@ -74,6 +76,7 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
             List<WalletTransactionEntity>.from(
           refreshedWallet.transactions,
         );
+        _selectedFormFilter = 'All';
       });
     } catch (_) {
       // ignore
@@ -111,6 +114,8 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
+    final formOptions = _buildFormOptions(_transactions);
+    final filteredTransactions = _applyFormFilter(_transactions, _selectedFormFilter);
 
     return Scaffold(
       appBar: AppBar(
@@ -143,78 +148,98 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
               message:
                   'Your wallet is empty. Start by adding your first gold item to view it here.',
             )
-          : ListView.builder(
-              itemCount:
-                  _transactions.length,
-              itemBuilder:
-                  (context, index) {
-                final item =
-                    _transactions[index];
+          : Column(
+              children: [
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 40,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    children: formOptions
+                        .map((formLabel) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: AppFilterChip(
+                                label: formLabel,
+                                selected: _selectedFormFilter == formLabel,
+                                onTap: () => setState(() => _selectedFormFilter = formLabel),
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Expanded(
+                  child: filteredTransactions.isEmpty
+                      ? const EmptyStateWidget(
+                          icon: Icons.inventory_2_outlined,
+                          title: 'No Items for Selected Form',
+                          message: 'Try changing the product form filter to see wallet items.',
+                        )
+                      : ListView.builder(
+                          itemCount: filteredTransactions.length,
+                          itemBuilder: (context, index) {
+                            final item = filteredTransactions[index];
 
-                return WalletHoldingItemWidget(
-                  item: item,
-                  onSell: () {
-                    final summary =
-                        WalletActionSummary(
-                      asset: item,
-                      actionType:
-                          WalletActionType
-                              .sell,
-                      title:
-                          'Sell Gold',
-                      primaryValue:
-                          '${item.quantity} Units',
-                      summary: ActionSummaryBuilder.fromBackendData({
-                        'subTotalAmount': 0,
-                        'totalFeesAmount': 0,
-                        'discountAmount': 0,
-                        'finalAmount': 0,
-                        'currency': 'USD',
-                        'feeBreakdowns': const [],
-                      }),
-                      destinationLabel:
-                          'Payout',
-                      destinationValue:
-                          'Wallet Cash',
-                      note: '',
-                      referenceNumber:
-                          '',
-                      createdAt:
-                          DateTime.now(),
-                    );
+                            return WalletHoldingItemWidget(
+                              item: item,
+                              onSell: () {
+                                final summary = WalletActionSummary(
+                                  asset: item,
+                                  actionType: WalletActionType.sell,
+                                  title: 'Sell Gold',
+                                  primaryValue: '${item.quantity} Units',
+                                  summary: ActionSummaryBuilder.fromBackendData({
+                                    'subTotalAmount': 0,
+                                    'totalFeesAmount': 0,
+                                    'discountAmount': 0,
+                                    'finalAmount': 0,
+                                    'currency': 'USD',
+                                    'feeBreakdowns': const [],
+                                  }),
+                                  destinationLabel: 'Payout',
+                                  destinationValue: 'Wallet Cash',
+                                  note: '',
+                                  referenceNumber: '',
+                                  createdAt: DateTime.now(),
+                                );
 
-                    _navigateAndRefresh(
-                      AppRoutes
-                          .walletAssetSellRoute,
-                      summary,
-                    );
-                  },
-                  onGiftTransfer: () {
-                    _navigateAndRefresh(
-                      AppRoutes
-                          .walletAssetTransferRoute,
-                      item,
-                    );
-                  },
-                  onGenerateTaxInvoice:
-                      () {
-                    _navigateAndRefresh(
-                      AppRoutes
-                          .walletTaxInvoiceRoute,
-                      item,
-                    );
-                  },
-                  onPickup: () {
-                    _navigateAndRefresh(
-                      AppRoutes
-                          .walletPickupRoute,
-                      item,
-                    );
-                  },
-                  onCancelRequest: () => _cancelPendingRequest(item),
-                );
-              },
+                                _navigateAndRefresh(AppRoutes.walletAssetSellRoute, summary);
+                              },
+                              onGiftTransfer: () {
+                                _navigateAndRefresh(AppRoutes.walletAssetTransferRoute, item);
+                              },
+                              onGenerateTaxInvoice: () {
+                                _navigateAndRefresh(AppRoutes.walletTaxInvoiceRoute, item);
+                              },
+                              onPickup: () {
+                                _navigateAndRefresh(AppRoutes.walletPickupRoute, item);
+                              },
+                              onCancelRequest: () => _cancelPendingRequest(item),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
     );
+  }
+
+  List<String> _buildFormOptions(List<WalletTransactionEntity> items) {
+    final forms = items.map(_resolveFormLabel).toSet().toList()..sort();
+    return ['All', ...forms];
+  }
+
+  List<WalletTransactionEntity> _applyFormFilter(List<WalletTransactionEntity> items, String selectedForm) {
+    if (selectedForm == 'All') return items;
+    return items.where((item) => _resolveFormLabel(item) == selectedForm).toList();
+  }
+
+  String _resolveFormLabel(WalletTransactionEntity item) {
+    return switch (item.assetType) {
+      AssetType.coin => 'Coin',
+      AssetType.necklace || AssetType.ring || AssetType.bracelet => 'Jewelry',
+      _ => 'Bar',
+    };
   }
 }

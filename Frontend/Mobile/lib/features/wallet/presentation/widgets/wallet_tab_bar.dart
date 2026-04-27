@@ -17,7 +17,9 @@ class WalletTabBar extends StatelessWidget {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: ProductCategoryFilter.options.map((category) {
+        children: ProductCategoryFilter.options
+            .where((category) => category.categoryId != null)
+            .map((category) {
           final isSelected = category.categoryId == selectedCategoryId;
           return Padding(
             padding: const EdgeInsets.only(right: 8.0),

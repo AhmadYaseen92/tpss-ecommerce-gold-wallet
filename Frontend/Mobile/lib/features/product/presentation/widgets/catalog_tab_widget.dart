@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/product_filter_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/product_item_widget.dart';
@@ -25,20 +26,26 @@ class CatalogTabWidget extends StatelessWidget {
               const SellerFilterBarWidget(),
               ProductFilterBar(productCubit: BlocProvider.of<ProductCubit>(context)),
               Expanded(
-                child: ListView.builder(
-                  itemCount: products.length,
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      child: ProductItemWidget(cubit: BlocProvider.of<ProductCubit>(context), product: products[index]),
-                      onTap: () {
-                        Navigator.of(context, rootNavigator: true).pushNamed(
-                          AppRoutes.productDetailsRoute,
-                          arguments: products[index],
-                        );
-                      },
-                    );
-                  },
-                ),
+                child: products.isEmpty
+                    ? const EmptyStateWidget(
+                        icon: Icons.shopping_bag_outlined,
+                        title: 'No Products Found',
+                        message: 'No products match the selected filters. Try changing material type or product form.',
+                      )
+                    : ListView.builder(
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            child: ProductItemWidget(cubit: BlocProvider.of<ProductCubit>(context), product: products[index]),
+                            onTap: () {
+                              Navigator.of(context, rootNavigator: true).pushNamed(
+                                AppRoutes.productDetailsRoute,
+                                arguments: products[index],
+                              );
+                            },
+                          );
+                        },
+                      ),
               ),
             ],
           );
