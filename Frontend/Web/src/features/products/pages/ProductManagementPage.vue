@@ -56,6 +56,7 @@ const emit = defineEmits<{
   back: [];
   save: [];
   image: [event: Event];
+  video: [event: Event];
   "update:search-term": [value: string];
   "update:active-filter": [value: "all" | "active" | "inactive"];
   "update:material-type-filter": [value: string];
@@ -256,6 +257,12 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                       :alt="product.name"
                       class="product-thumb"
                     />
+                    <video
+                      v-else-if="product.videoUrl"
+                      :src="product.videoUrl"
+                      class="product-thumb"
+                      muted
+                    />
                     <span v-else class="product-thumb-placeholder">No image</span>
                   </td>
 
@@ -331,6 +338,7 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
         :market-prices="marketPrices"
         @save="emit('save')"
         @image="emit('image', $event)"
+        @video="emit('video', $event)"
       >
         <template #fees>
           <ProductFeePanel

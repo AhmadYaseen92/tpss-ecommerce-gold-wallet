@@ -150,6 +150,7 @@ export interface ProductDto {
   sku: string;
   description: string;
   imageUrl: string;
+  videoUrl: string;
   category: string;
   materialType: string;
   formType: string;
@@ -252,6 +253,7 @@ export interface ProductManagementDto {
   sku: string;
   description: string;
   imageUrl: string;
+  videoUrl: string;
   category: string;
   materialType: string;
   formType: string;

@@ -10,6 +10,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product_details/presentation
 import 'package:tpss_ecommerce_gold_wallet/features/product_details/presentation/widgets/description_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product_details/presentation/widgets/product_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product_details/presentation/widgets/product_specs_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/product_details/presentation/widgets/product_video.dart';
 
 class ProductDetailWidget extends StatelessWidget {
   final ProductEntity product;
@@ -91,6 +92,10 @@ class ProductDetailWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       DescriptionWidget(product: product),
+                      if (product.videoUrl.trim().isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        ProductVideo(videoUrl: product.videoUrl),
+                      ],
                       const SizedBox(height: 6),
                     ],
                   ),

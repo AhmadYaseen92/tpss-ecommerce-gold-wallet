@@ -103,7 +103,10 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     availableStock: 0,
     isActive: true,
     imageFile: null,
-    existingImageUrl: ""
+    existingImageUrl: "",
+    videoFile: null,
+    existingVideoUrl: "",
+    videoDurationSeconds: 0
   });
   const validationErrors = reactive<Record<string, string>>({});
   const productSearchTerm = ref("");
@@ -155,7 +158,10 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
       availableStock: 0,
       isActive: true,
       imageFile: null,
-      existingImageUrl: ""
+      existingImageUrl: "",
+      videoFile: null,
+      existingVideoUrl: "",
+      videoDurationSeconds: 0
     });
     if (isAdmin.value && sellerFilter.value !== "all") {
       productForm.sellerId = Number(sellerFilter.value);
@@ -187,7 +193,10 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
       isActive: product.isActive,
       sellerId: product.sellerId,
       existingImageUrl: product.imageUrl,
-      imageFile: null
+      imageFile: null,
+      existingVideoUrl: product.videoUrl,
+      videoFile: null,
+      videoDurationSeconds: 0
     });
   };
 
@@ -236,6 +245,30 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const onProductImageChange = (event: Event) => {
     const input = event.target as HTMLInputElement;
     productForm.imageFile = input.files?.[0] ?? null;
+  };
+
+  const onProductVideoChange = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    productForm.videoFile = file;
+    productForm.videoDurationSeconds = 0;
+    if (!file) return;
+
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const duration = await new Promise<number>((resolve, reject) => {
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.onloadedmetadata = () => {
+          resolve(Number(video.duration || 0));
+        };
+        video.onerror = () => reject(new Error("Unable to read video metadata."));
+        video.src = objectUrl;
+      });
+      productForm.videoDurationSeconds = Math.ceil(duration);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
   };
 
   const filteredManagedProducts = computed(() =>
@@ -424,7 +457,8 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
         availableStock: product.availableStock,
         isActive: !product.isActive,
         sellerId: product.sellerId,
-        existingImageUrl: product.imageUrl
+        existingImageUrl: product.imageUrl,
+        existingVideoUrl: product.videoUrl
       });
       await loadProductManagementData();
     } catch (error) {
@@ -498,6 +532,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     openEditProduct,
     openProductDetails,
     onProductImageChange,
+    onProductVideoChange,
     saveProduct,
     saveMarketPrices,
     updateMarketPriceField,

@@ -246,6 +246,7 @@ BEGIN TRY
             (N'MobileRelease_MarketWatchEnabled', N'Mobile Release Market Watch Enabled', N'Mobile release flag to enable Market Watch tab in Product screen', 2, CAST(0 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'MobileRelease_MyAccountSummaryEnabled', N'Mobile Release My Account Summary Enabled', N'Mobile release flag to show My Account Summary entry in top bar', 2, CAST(0 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'MobileSecurity_LoginByBiometric', N'Mobile Security Login By Biometric', N'Allow biometric quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'Product_VideoMaxDurationSeconds', N'Product Video Max Duration Seconds', N'Max allowed uploaded product video duration in seconds', 3, NULL, 30, NULL, NULL, CAST(0 AS bit)),
             (N'MobileSecurity_LoginByPin', N'Mobile Security Login By PIN', N'Allow PIN quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'Otp_EnableWhatsapp', N'OTP Enable WhatsApp', N'Enable OTP delivery over WhatsApp channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'Otp_EnableEmail', N'OTP Enable Email', N'Enable OTP delivery over Email channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),

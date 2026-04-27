@@ -23,6 +23,7 @@ public static class MobileAppConfigurationKeys
     public const string MobileReleaseShowWeightInGrams = "MobileRelease_ShowWeightInGrams";
     public const string MobileReleaseMarketWatchEnabled = "MobileRelease_MarketWatchEnabled";
     public const string MobileReleaseMyAccountSummaryEnabled = "MobileRelease_MyAccountSummaryEnabled";
+    public const string ProductVideoMaxDurationSeconds = "Product_VideoMaxDurationSeconds";
     public const string LoginByBiometricEnabled = "MobileSecurity_LoginByBiometric";
     public const string LoginByPinEnabled = "MobileSecurity_LoginByPin";
 }

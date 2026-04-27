@@ -60,6 +60,7 @@ const offerTypeLabelMap: Record<string, string> = {
       <div class="product-detail-hero">
         <img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name" class="product-detail-image" />
         <div v-else class="product-detail-image product-detail-placeholder">No image available</div>
+        <video v-if="product.videoUrl" :src="product.videoUrl" controls class="product-detail-image" />
 
         <div class="product-detail-grid">
           <FormField label="Name"><div>{{ product.name }}</div></FormField>

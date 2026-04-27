@@ -48,6 +48,7 @@ class ProductRemoteModel {
     required this.sku,
     required this.description,
     required this.imageUrl,
+    required this.videoUrl,
     required this.baseMarketPrice,
     required this.autoPrice,
     required this.fixedPrice,
@@ -74,6 +75,7 @@ class ProductRemoteModel {
   final String sku;
   final String description;
   final String imageUrl;
+  final String videoUrl;
   final double baseMarketPrice;
   final double autoPrice;
   final double fixedPrice;
@@ -101,6 +103,7 @@ class ProductRemoteModel {
       sku: (json['sku'] ?? '') as String,
       description: (json['description'] ?? '') as String,
       imageUrl: (json['imageUrl'] ?? '') as String,
+      videoUrl: (json['videoUrl'] ?? '') as String,
       baseMarketPrice: (json['baseMarketPrice'] as num?)?.toDouble() ?? 0,
       autoPrice: (json['autoPrice'] as num?)?.toDouble() ?? 0,
       fixedPrice: (json['fixedPrice'] as num?)?.toDouble() ?? 0,

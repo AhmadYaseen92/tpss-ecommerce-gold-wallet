@@ -421,7 +421,10 @@ export interface ProductFormPayload {
   isActive: boolean;
   sellerId?: number;
   existingImageUrl?: string;
+  existingVideoUrl?: string;
   imageFile?: File | null;
+  videoFile?: File | null;
+  videoDurationSeconds?: number;
 }
 
 export async function fetchManagedProducts(accessToken: string): Promise<ProductManagementDto[]> {
@@ -440,12 +443,18 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
       ?? row.productImage
       ?? row.ProductImage
       ?? "";
+    const videoCandidate = row.videoUrl
+      ?? row.VideoUrl
+      ?? row.productVideoUrl
+      ?? row.ProductVideoUrl
+      ?? "";
     return {
       id,
       name: String(row.name ?? row.Name ?? ""),
       sku: String(row.sku ?? row.Sku ?? ""),
       description: String(row.description ?? row.Description ?? ""),
       imageUrl: toAbsoluteImageUrl(imageCandidate),
+      videoUrl: toAbsoluteImageUrl(videoCandidate),
       category,
       materialType: String(row.materialType ?? row.MaterialType ?? ""),
       formType: String(row.formType ?? row.FormType ?? ""),
@@ -531,7 +540,10 @@ function buildProductForm(payload: ProductFormPayload): FormData {
   form.append("IsActive", String(payload.isActive));
   if (payload.sellerId) form.append("SellerId", String(payload.sellerId));
   if (payload.existingImageUrl) form.append("ExistingImageUrl", payload.existingImageUrl);
+  if (payload.existingVideoUrl) form.append("ExistingVideoUrl", payload.existingVideoUrl);
   if (payload.imageFile) form.append("Image", payload.imageFile);
+  if (payload.videoFile) form.append("Video", payload.videoFile);
+  if (payload.videoDurationSeconds) form.append("VideoDurationSeconds", String(payload.videoDurationSeconds));
   return form;
 }
 
