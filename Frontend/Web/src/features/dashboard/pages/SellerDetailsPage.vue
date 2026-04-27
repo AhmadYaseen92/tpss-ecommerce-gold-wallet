@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { fetchSellerDetailsByAdmin } from "../../../shared/services/backendGateway";
-import type { WebSellerDetailsDto } from "../../../shared/types/apiTypes";
+import type { WebSellerDetailsDto, WebSellerDocumentDto } from "../../../shared/types/apiTypes";
 
 import Card from "../../../shared/components/ui/Card.vue";
 import Button from "../../../shared/components/ui/Button.vue";
@@ -69,18 +69,35 @@ const tabLabel: Record<SellerDetailsTab, string> = {
 
 const activeTab = ref<SellerDetailsTab>("company");
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5095").replace(/\/$/, "");
 
-const toDocumentUrl = (filePath: string) => {
-  const path = String(filePath ?? "").trim();
-  if (!path) return "#";
-  if (/^(https?:\/\/|data:|blob:)/i.test(path)) return path;
+const buildDocumentViewUrl = (documentId: number) => {
+  if (!details.value?.id) return "#";
+  return `${API_BASE_URL}/api/web-admin/sellers/${encodeURIComponent(details.value.id)}/documents/${documentId}/view`;
+};
 
-  if (API_BASE_URL) {
-    return path.startsWith("/") ? `${API_BASE_URL}${path}` : `${API_BASE_URL}/${path}`;
+const openDocument = async (doc: WebSellerDocumentDto) => {
+  const accessToken = props.marketplace.session.value?.accessToken;
+  const url = buildDocumentViewUrl(doc.id);
+  if (!accessToken || url === "#") return;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to open document.");
+    }
+
+    const fileBlob = await response.blob();
+    const blobUrl = URL.createObjectURL(fileBlob);
+    window.open(blobUrl, "_blank", "noopener,noreferrer");
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : "Failed to open document.";
   }
-
-  return path.startsWith("/") ? path : `/${path}`;
 };
 
 onMounted(() => {
@@ -197,7 +214,14 @@ onMounted(() => {
                 <td>{{ doc.fileName }}</td>
                 <td>{{ doc.uploadedAtUtc }}</td>
                 <td>
-                  <a :href="toDocumentUrl(doc.filePath)" target="_blank" rel="noopener noreferrer">Open</a>
+                  <a
+                    :href="buildDocumentViewUrl(doc.id)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    @click.prevent="openDocument(doc)"
+                  >
+                    Open
+                  </a>
                 </td>
               </tr>
             </tbody>
