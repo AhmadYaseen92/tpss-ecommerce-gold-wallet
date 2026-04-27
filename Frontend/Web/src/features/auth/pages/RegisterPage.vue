@@ -95,6 +95,8 @@ const onSubmit = async () => {
 <style scoped>
 .auth-card-register {
   width: min(1080px, 96vw);
+  background: color-mix(in srgb, var(--surface-solid) 86%, transparent);
+  border-color: var(--border-strong);
 }
 
 .theme-toggle-btn {
@@ -112,6 +114,11 @@ const onSubmit = async () => {
   text-transform: uppercase;
   padding: 8px 14px;
   cursor: pointer;
+}
+
+:global(:root.dark-mode) .auth-card-register {
+  background: linear-gradient(180deg, rgba(36, 30, 20, 0.95), rgba(17, 14, 9, 0.95));
+  border-color: rgba(214, 168, 45, 0.46);
 }
 
 @media (max-width: 900px) {

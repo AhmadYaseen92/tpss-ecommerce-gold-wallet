@@ -305,19 +305,56 @@ function goToStep(idx: number) {
 
 <style scoped>
 .register-wizard { display: grid; gap: 14px; }
-.subtitle { color: #5f6b7a; margin: 0; }
+.register-wizard h1,
+.register-wizard h2,
+.register-wizard strong,
+.register-wizard label {
+  color: var(--text);
+}
+.register-wizard p {
+  color: var(--text-soft);
+}
+.subtitle { color: var(--text-muted); margin: 0; }
 .stepper { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
-.step-btn { border: 1px solid #d7dbe3; background: #fff; border-radius: 8px; padding: 6px 10px; cursor: pointer; white-space: nowrap; font-size: 13px; text-align: center; }
-.step-btn.active { background: #1f2937; color: #fff; }
+.step-btn {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--surface-elevated);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  text-align: center;
+  font-weight: 700;
+}
+.step-btn.active {
+  background: var(--primary-gradient);
+  border-color: var(--border-strong);
+  color: #1b1408;
+}
 .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
 .form-grid h2, .full, .title-row { grid-column: 1 / -1; }
 label { display: grid; gap: 6px; font-weight: 600; }
-input, textarea, select { padding: 8px; border: 1px solid #cfd6e4; border-radius: 8px; font: inherit; }
-.card { border: 1px solid #e4e7ee; border-radius: 10px; padding: 10px; display:grid; gap: 8px; }
+input, textarea, select {
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-solid);
+  color: var(--text);
+  border-radius: 8px;
+  font: inherit;
+}
+.card { border: 1px solid var(--border); border-radius: 10px; padding: 10px; display:grid; gap: 8px; background: var(--surface-elevated); }
 .title-row { display:flex; justify-content: space-between; align-items: center; }
 .wizard-actions { display:flex; justify-content: space-between; margin-top: 8px; }
 .ghost { margin-right: 8px; }
 .error-banner { margin: 0; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; border-radius: 8px; padding: 8px 10px; }
+:global(:root.dark-mode) input,
+:global(:root.dark-mode) textarea,
+:global(:root.dark-mode) select {
+  background: rgba(30, 25, 16, 0.95);
+  color: #fff8e6;
+}
 @media (max-width: 1100px) { .stepper { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .stepper { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
