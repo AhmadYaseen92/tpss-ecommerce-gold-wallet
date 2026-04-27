@@ -12,6 +12,7 @@ class AppReleaseConfig {
 
   static bool showWeightInGrams = true;
   static bool marketWatchEnabled = true;
+  static bool myAccountSummaryEnabled = true;
   static bool loginByBiometricEnabled = true;
   static bool loginByPinEnabled = true;
   static bool get quickUnlockAllowed => loginByBiometricEnabled || loginByPinEnabled;
@@ -79,6 +80,8 @@ class AppReleaseConfig {
         (values['MobileRelease_ShowWeightInGrams'] as bool?) ?? showWeightInGrams;
     final nextMarketWatchEnabled =
         (values['MobileRelease_MarketWatchEnabled'] as bool?) ?? marketWatchEnabled;
+    final nextMyAccountSummaryEnabled =
+        (values['MobileRelease_MyAccountSummaryEnabled'] as bool?) ?? myAccountSummaryEnabled;
     final nextLoginByBiometricEnabled =
         (values['MobileSecurity_LoginByBiometric'] as bool?) ?? loginByBiometricEnabled;
     final nextLoginByPinEnabled =
@@ -88,6 +91,7 @@ class AppReleaseConfig {
         nextIndividualSellerName != individualSellerName ||
         nextShowWeightInGrams != showWeightInGrams ||
         nextMarketWatchEnabled != marketWatchEnabled ||
+        nextMyAccountSummaryEnabled != myAccountSummaryEnabled ||
         nextLoginByBiometricEnabled != loginByBiometricEnabled ||
         nextLoginByPinEnabled != loginByPinEnabled;
 
@@ -99,6 +103,7 @@ class AppReleaseConfig {
     individualSellerName = nextIndividualSellerName;
     showWeightInGrams = nextShowWeightInGrams;
     marketWatchEnabled = nextMarketWatchEnabled;
+    myAccountSummaryEnabled = nextMyAccountSummaryEnabled;
     loginByBiometricEnabled = nextLoginByBiometricEnabled;
     loginByPinEnabled = nextLoginByPinEnabled;
 
