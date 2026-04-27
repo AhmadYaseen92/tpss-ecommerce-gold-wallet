@@ -15,7 +15,7 @@ BEGIN TRY
     BEGIN TRAN;
 
     DECLARE @Now datetime2 = SYSUTCDATETIME();
-    DECLARE @DefaultHash nvarchar(500) = N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000';
+    DECLARE @DefaultHash nvarchar(500) = N'PPJjw8OG+mRgfuQq0PwjBg==.I6aFJ1YwnTWLF8rajLp/30yOAXuGukxV5lx0zFoVuBo=.100000';
 
     ------------------------------------------------------------
     -- Users: admin + sellers + investor

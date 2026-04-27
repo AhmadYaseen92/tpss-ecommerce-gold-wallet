@@ -201,7 +201,7 @@ export function useAuthPage(marketplace: ReturnTypeUseMarketplace) {
 
   const loginForm = reactive<LoginFormModel>({
     email: "admin@goldwallet.com",
-    password: "P@ssw0rd",
+    password: "AdminGW@2026",
     rememberMe: true,
   });
 

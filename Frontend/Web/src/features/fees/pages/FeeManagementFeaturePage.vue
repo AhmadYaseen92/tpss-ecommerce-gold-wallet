@@ -67,14 +67,13 @@ const isAdmin = computed(() => marketplace.role.value === "Admin");
 const successModalOpen = ref(false);
 const successMessage = ref("Saved successfully");
 const adminSnapshot = ref("");
-const adminSystemFees = computed(() => systemFees.value.filter((fee) => fee.feeCode !== "service_charge"));
+const adminSystemFees = computed(() => systemFees.value);
 
 const feeMetadata: Record<string, { modes: string[] }> = {
   commission_per_transaction: { modes: ["percent_with_minimum", "flat"] },
   premium_discount: { modes: ["per_unit"] },
   storage_custody_fee: { modes: ["percentage_by_held_days_after_grace_period"] },
-  delivery_fee: { modes: ["fixed", "per_unit"] },
-  service_charge: { modes: ["fixed", "per_unit"] }
+  delivery_fee: { modes: ["fixed", "per_unit"] }
 };
 
 const actionLabels: Array<keyof Pick<SystemFeeTypePayload, "appliesToBuy" | "appliesToSell" | "appliesToPickup" | "appliesToTransfer" | "appliesToGift">> = [
@@ -185,7 +184,6 @@ const formulaByMode = (feeCode: string, mode: string) => {
   if (feeCode === "premium_discount") return "Quantity × ValuePerUnit";
   if (feeCode === "storage_custody_fee") return "Quantity × ClosePrice × (FeePercent / 100) / 360 × DaysHeldAfterGrace";
   if (feeCode === "delivery_fee") return mode === "per_unit" ? "Quantity × FeePerUnit" : "Fixed Fee";
-  if (feeCode === "service_charge") return mode === "per_unit" ? "Quantity × FeePerUnit" : "Fixed Fee";
   return "-";
 };
 
