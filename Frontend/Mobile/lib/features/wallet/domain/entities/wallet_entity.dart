@@ -79,6 +79,7 @@ class WalletTransactionEntity {
     this.productSku,
     required this.category,
     required this.assetType,
+    required this.productFormLabel,
     required this.subtitle,
     required this.weightInGrams,
     required this.purity,
@@ -103,6 +104,7 @@ class WalletTransactionEntity {
   final String? productSku;
   final WalletCategory category;
   final AssetType assetType;
+  final String productFormLabel;
   final String subtitle;
   final double weightInGrams;
   final String purity;
@@ -161,6 +163,7 @@ class WalletTransactionEntity {
     String? productSku,
     WalletCategory? category,
     AssetType? assetType,
+    String? productFormLabel,
     String? subtitle,
     double? weightInGrams,
     String? purity,
@@ -185,6 +188,7 @@ class WalletTransactionEntity {
       productSku: productSku ?? this.productSku,
       category: category ?? this.category,
       assetType: assetType ?? this.assetType,
+      productFormLabel: productFormLabel ?? this.productFormLabel,
       subtitle: subtitle ?? this.subtitle,
       weightInGrams: weightInGrams ?? this.weightInGrams,
       purity: purity ?? this.purity,

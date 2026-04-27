@@ -7,7 +7,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart'
-    show AssetType, WalletCategory, WalletTransactionEntity;
+    show WalletCategory, WalletTransactionEntity;
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_holding_item_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
@@ -226,20 +226,12 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
   }
 
   List<String> _buildFormOptions(List<WalletTransactionEntity> items) {
-    final forms = items.map(_resolveFormLabel).toSet().toList()..sort();
+    final forms = items.map((item) => item.productFormLabel).toSet().toList()..sort();
     return ['All', ...forms];
   }
 
   List<WalletTransactionEntity> _applyFormFilter(List<WalletTransactionEntity> items, String selectedForm) {
     if (selectedForm == 'All') return items;
-    return items.where((item) => _resolveFormLabel(item) == selectedForm).toList();
-  }
-
-  String _resolveFormLabel(WalletTransactionEntity item) {
-    return switch (item.assetType) {
-      AssetType.coin => 'Coin',
-      AssetType.necklace || AssetType.ring || AssetType.bracelet => 'Jewelry',
-      _ => 'Bar',
-    };
+    return items.where((item) => item.productFormLabel == selectedForm).toList();
   }
 }

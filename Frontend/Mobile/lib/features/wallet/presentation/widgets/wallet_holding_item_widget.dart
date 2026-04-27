@@ -94,7 +94,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
                           spacing: 8,
                           runSpacing: 6,
                           children: [
-                            _miniTag(context, 'Form: ${_formLabel(item.assetType)}'),
+                            _miniTag(context, 'Form: ${item.productFormLabel}'),
                             _miniTag(context, 'Qty: ${item.quantity}'),
                             _miniTag(context, 'Purity: ${item.purity}'),
                             _miniTag(context, '${item.weightInGrams.toStringAsFixed(2)} g'),
@@ -194,12 +194,6 @@ class WalletHoldingItemWidget extends StatelessWidget {
     final value = tx.status.toLowerCase();
     return value.contains('gift') || value.contains('transfer');
   }
-
-  String _formLabel(AssetType type) => switch (type) {
-        AssetType.coin => 'Coin',
-        AssetType.necklace || AssetType.ring || AssetType.bracelet => 'Jewelry',
-        _ => 'Bar',
-      };
 
   Widget _miniTag(BuildContext context, String text) {
     final palette = context.appPalette;
