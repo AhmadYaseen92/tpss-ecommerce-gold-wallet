@@ -189,11 +189,12 @@ BEGIN TRY
             T.[BaseMarketPrice] = S.[Price],
             T.[ManualSellPrice] = S.[Price],
             T.[ImageUrl] = S.[ImageUrl],
+            T.[VideoUrl] = N'',
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([SellerId],[Name],[Sku],[Description],[AvailableStock],[Category],[MaterialType],[FormType],[PricingMode],[PurityKarat],[PurityFactor],[WeightValue],[WeightUnit],[BaseMarketPrice],[ManualSellPrice],[OfferPercent],[OfferNewPrice],[OfferType],[IsHasOffer],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[AvailableStock],S.[Category],CASE WHEN S.[Category] IN (2,6) THEN 2 WHEN S.[Category] = 9 THEN 3 ELSE 1 END,CASE WHEN S.[Category] IN (8,9) THEN 1 WHEN S.[Category] IN (5,6) THEN 2 ELSE 3 END,1,1,1.0,S.[WeightValue],S.[WeightUnit],S.[Price],S.[Price],0,0,0,0,S.[ImageUrl],1,@Now,NULL);
+        INSERT ([SellerId],[Name],[Sku],[Description],[AvailableStock],[Category],[MaterialType],[FormType],[PricingMode],[PurityKarat],[PurityFactor],[WeightValue],[WeightUnit],[BaseMarketPrice],[ManualSellPrice],[OfferPercent],[OfferNewPrice],[OfferType],[IsHasOffer],[ImageUrl],[VideoUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[AvailableStock],S.[Category],CASE WHEN S.[Category] IN (2,6) THEN 2 WHEN S.[Category] = 9 THEN 3 ELSE 1 END,CASE WHEN S.[Category] IN (8,9) THEN 1 WHEN S.[Category] IN (5,6) THEN 2 ELSE 3 END,1,1,1.0,S.[WeightValue],S.[WeightUnit],S.[Price],S.[Price],0,0,0,0,S.[ImageUrl],N'',1,@Now,NULL);
 
     ------------------------------------------------------------
     -- WalletAssets portfolio rows

@@ -286,10 +286,11 @@ BEGIN TRY
                 WHEN S.[Name] LIKE N'%Gift Card%' THEN N'/images/products/gift-card.png'
                 ELSE N'/images/products/gold-bar.png'
             END,
+            T.[VideoUrl] = N'',
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[Category],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        INSERT ([SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[Category],[ImageUrl],[VideoUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
         VALUES (
             S.[SellerId],
             S.[Name],
@@ -314,6 +315,7 @@ BEGIN TRY
                 WHEN S.[Name] LIKE N'%Gift Card%' THEN N'/images/products/gift-card.png'
                 ELSE N'/images/products/gold-bar.png'
             END,
+            N'',
             1,
             @Now,
             NULL

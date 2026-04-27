@@ -191,13 +191,14 @@ WHEN MATCHED THEN
         END,
         T.[Category] = S.[Category],
         T.[ImageUrl] = S.[ImageUrl],
+        T.[VideoUrl] = N'',
         T.[IsActive] = 1,
         T.[UpdatedAtUtc] = @Now
 WHEN NOT MATCHED THEN
     INSERT (
         [SellerId],[Name],[Sku],[Description],[Price],[AvailableStock],[WeightValue],[WeightUnit],[MaterialType],[FormType],
         [PricingMode],[PurityKarat],[PurityFactor],[BaseMarketPrice],[ManualSellPrice],[DeliveryFee],[StorageFee],[ServiceCharge],
-        [OfferPercent],[OfferNewPrice],[OfferType],[IsHasOffer],[Category],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc]
+        [OfferPercent],[OfferNewPrice],[OfferType],[IsHasOffer],[Category],[ImageUrl],[VideoUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc]
     )
     VALUES (
         S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[Price],S.[AvailableStock],S.[WeightValue],1,S.[MaterialType],S.[FormType],
@@ -220,7 +221,7 @@ WHEN NOT MATCHED THEN
             WHEN S.[Sku] IN (N'SA-GLD-10G', N'SB-CIN-10G', N'SA-JWL-RNG', N'SB-SPT-MR') THEN 1
             ELSE 0
         END,
-        S.[Category],S.[ImageUrl],1,@Now,NULL
+        S.[Category],S.[ImageUrl],N'',1,@Now,NULL
     );
 
 SELECT TOP 2 [Id], [FullName], [Email], [Role], [IsActive]

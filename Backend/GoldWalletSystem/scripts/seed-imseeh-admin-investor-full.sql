@@ -227,7 +227,7 @@ BEGIN TRY
     ON T.[Sku] = S.[Sku]
     WHEN MATCHED THEN
         UPDATE SET
-            T.[SellerId] = S.[SellerId], T.[Name] = S.[Name], T.[Description] = S.[Description], T.[ImageUrl] = S.[ImageUrl],
+            T.[SellerId] = S.[SellerId], T.[Name] = S.[Name], T.[Description] = S.[Description], T.[ImageUrl] = S.[ImageUrl], T.[VideoUrl] = N'',
             T.[Category] = S.[Category], T.[MaterialType] = S.[MaterialType], T.[FormType] = S.[FormType],
             T.[PricingMode] = 1, T.[PurityKarat] = S.[PurityKarat], T.[PurityFactor] = S.[PurityFactor],
             T.[WeightValue] = S.[WeightValue], T.[WeightUnit] = S.[WeightUnit], T.[BaseMarketPrice] = S.[BaseMarketPrice],
@@ -235,8 +235,8 @@ BEGIN TRY
             T.[OfferPercent] = S.[OfferPercent], T.[OfferNewPrice] = S.[OfferNewPrice], T.[OfferType] = S.[OfferType],
             T.[IsHasOffer] = S.[IsHasOffer], T.[AvailableStock] = S.[AvailableStock], T.[IsActive] = 1, T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([Name],[Sku],[Description],[ImageUrl],[Category],[MaterialType],[FormType],[PricingMode],[PurityKarat],[PurityFactor],[WeightValue],[WeightUnit],[BaseMarketPrice],[AutoPrice],[FixedPrice],[SellPrice],[OfferPercent],[OfferNewPrice],[OfferType],[IsHasOffer],[AvailableStock],[IsActive],[SellerId],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[Name],S.[Sku],S.[Description],S.[ImageUrl],S.[Category],S.[MaterialType],S.[FormType],1,S.[PurityKarat],S.[PurityFactor],S.[WeightValue],S.[WeightUnit],S.[BaseMarketPrice],S.[AutoPrice],S.[FixedPrice],S.[SellPrice],S.[OfferPercent],S.[OfferNewPrice],S.[OfferType],S.[IsHasOffer],S.[AvailableStock],1,S.[SellerId],@Now,NULL);
+        INSERT ([Name],[Sku],[Description],[ImageUrl],[VideoUrl],[Category],[MaterialType],[FormType],[PricingMode],[PurityKarat],[PurityFactor],[WeightValue],[WeightUnit],[BaseMarketPrice],[AutoPrice],[FixedPrice],[SellPrice],[OfferPercent],[OfferNewPrice],[OfferType],[IsHasOffer],[AvailableStock],[IsActive],[SellerId],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[Name],S.[Sku],S.[Description],S.[ImageUrl],N'',S.[Category],S.[MaterialType],S.[FormType],1,S.[PurityKarat],S.[PurityFactor],S.[WeightValue],S.[WeightUnit],S.[BaseMarketPrice],S.[AutoPrice],S.[FixedPrice],S.[SellPrice],S.[OfferPercent],S.[OfferNewPrice],S.[OfferType],S.[IsHasOffer],S.[AvailableStock],1,S.[SellerId],@Now,NULL);
 
     ------------------------------------------------------------
     -- System settings

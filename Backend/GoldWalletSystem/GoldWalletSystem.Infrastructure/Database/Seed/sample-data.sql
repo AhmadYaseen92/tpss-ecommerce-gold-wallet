@@ -525,6 +525,7 @@ WHEN MATCHED THEN
         END,
         T.[Category] = S.[Category],
         T.[ImageUrl] = S.[ImageUrl],
+        T.[VideoUrl] = N'',
         T.[IsActive] = 1,
         T.[UpdatedAtUtc] = @Now
 WHEN NOT MATCHED THEN
@@ -551,6 +552,7 @@ WHEN NOT MATCHED THEN
         [IsHasOffer],
         [Category],
         [ImageUrl],
+        [VideoUrl],
         [IsActive],
         [CreatedAtUtc],
         [UpdatedAtUtc]
@@ -596,6 +598,7 @@ WHEN NOT MATCHED THEN
         END,
         S.[Category],
         S.[ImageUrl],
+        N'',
         1,
         @Now,
         NULL
