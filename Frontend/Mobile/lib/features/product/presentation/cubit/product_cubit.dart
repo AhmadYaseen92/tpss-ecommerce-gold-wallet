@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_form_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/market_symbol_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
@@ -47,6 +48,7 @@ class ProductCubit extends Cubit<ProductState> {
   List<MarketSymbolEntity> visibleMarketSymbols = [];
 
   int? selectedCategoryId;
+  String selectedFormLabel = ProductFormFilter.all;
   String activeSeller = AppReleaseConfig.defaultSeller;
   int quantity = 1;
 
@@ -88,12 +90,18 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   void applyCategoryFilter({required int? categoryId}) {
+    selectedFormLabel = ProductFormFilter.all;
     unawaited(
       loadProducts(
         seller: activeSeller,
         categoryId: categoryId,
       ),
     );
+  }
+
+  void applyFormFilter(String formLabel) {
+    selectedFormLabel = formLabel;
+    _emitCatalog();
   }
 
   Future<void> toggleFavorite(String productId) async {
@@ -194,6 +202,7 @@ class ProductCubit extends Cubit<ProductState> {
       products: allProducts,
       categoryId: selectedCategoryId,
       seller: activeSeller,
+      formLabel: selectedFormLabel,
     );
 
     emit(
