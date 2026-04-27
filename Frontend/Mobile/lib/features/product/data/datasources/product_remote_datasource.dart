@@ -63,6 +63,7 @@ class ProductRemoteModel {
     required this.offerNewPrice,
     required this.pricingMode,
     required this.materialType,
+    required this.formType,
     required this.isHasOffer,
     required this.purityKarat,
     required this.purityFactor,
@@ -88,6 +89,7 @@ class ProductRemoteModel {
   final double offerNewPrice;
   final String pricingMode;
   final String materialType;
+  final String formType;
   final bool isHasOffer;
   final String purityKarat;
   final double purityFactor;
@@ -114,6 +116,7 @@ class ProductRemoteModel {
       offerNewPrice: (json['offerNewPrice'] as num?)?.toDouble() ?? 0,
       pricingMode: (json['pricingMode'] ?? '').toString(),
       materialType: (json['materialType'] ?? '').toString(),
+      formType: (json['formType'] ?? json['productForm'] ?? '').toString(),
       isHasOffer: _asBool(json['isHasOffer'] ?? json['IsHasOffer']),
       purityKarat: (json['purityKarat'] ?? '').toString(),
       purityFactor: (json['purityFactor'] as num?)?.toDouble() ?? 0,

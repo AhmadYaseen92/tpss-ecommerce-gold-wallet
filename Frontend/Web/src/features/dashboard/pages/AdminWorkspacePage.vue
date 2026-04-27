@@ -57,7 +57,7 @@ const metrics = computed(() => {
     {
       label: "System Settings",
       value: workspace.value.systemSettingsCount,
-      hint: "Configured app settings",
+      hint: "Manage all application configurations and behavior.",
     },
   ];
 });

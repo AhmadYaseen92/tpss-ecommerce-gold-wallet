@@ -2,6 +2,7 @@
 import { computed, ref, watch } from "vue";
 import ProductForm from "../components/ProductForm.vue";
 import ProductDetails from "../components/ProductDetails.vue";
+import ProductFeePanel from "../components/ProductFeePanel.vue";
 
 import type {
   ProductManagementDto,
@@ -9,6 +10,7 @@ import type {
   MarketPriceConfigDto,
 } from "../../../shared/types/apiTypes";
 import type { ProductFormPayload } from "../../../shared/services/backendGateway";
+import type { SellerProductFeePayload } from "../../../shared/services/backendGateway";
 import type { Seller } from "../../../shared/types/models";
 
 import Card from "../../../shared/components/ui/Card.vue";
@@ -19,9 +21,13 @@ import SearchBar from "../../../shared/components/ui/SearchBar.vue";
 import Pagination from "../../../shared/components/ui/Pagination.vue";
 import StatusBadge from "../../../shared/components/ui/StatusBadge.vue";
 import FormField from "../../../shared/components/ui/FormField.vue";
+import PageHeader from "../../../shared/components/ui/PageHeader.vue";
+import ResultModal from "../../../shared/components/ui/ResultModal.vue";
+import { MATERIAL_TYPE_OPTIONS, PRODUCT_FORM_OPTIONS } from "../../../shared/constants/productTaxonomy";
 
 const props = defineProps<{
   role: "Admin" | "Seller";
+  accessToken: string;
   productError: string;
   productPage: "list" | "add" | "edit" | "details";
   productRouteId: number | null;
@@ -33,10 +39,12 @@ const props = defineProps<{
   validationErrors: Record<string, string>;
   searchTerm: string;
   activeFilter: "all" | "active" | "inactive";
-  categoryFilter: string;
+  materialTypeFilter: string;
+  formTypeFilter: string;
   sellerFilter: string;
   sellers: Seller[];
   marketPrices: MarketPriceConfigDto;
+  productFeeDraft: SellerProductFeePayload | null;
 }>();
 
 const emit = defineEmits<{
@@ -50,7 +58,8 @@ const emit = defineEmits<{
   image: [event: Event];
   "update:search-term": [value: string];
   "update:active-filter": [value: "all" | "active" | "inactive"];
-  "update:category-filter": [value: string];
+  "update:material-type-filter": [value: string];
+  "update:form-type-filter": [value: string];
   "update:seller-filter": [value: string];
   "save-market-prices": [];
   "update-market-price": [
@@ -58,18 +67,15 @@ const emit = defineEmits<{
     value: number
   ];
   "manage-fees": [];
+  "clear-error": [];
+  "update:product-fee-draft": [value: SellerProductFeePayload | null];
 }>();
 
 const pageNumber = ref(1);
 const pageSize = 20;
 
-const isSingleSellerSelected = computed(() => {
-  return props.role === "Seller" || props.sellerFilter !== "all";
-});
-
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(props.managedProducts.length / pageSize))
-);
+const isSingleSellerSelected = computed(() => props.role === "Seller" || props.sellerFilter !== "all");
+const totalPages = computed(() => Math.max(1, Math.ceil(props.managedProducts.length / pageSize)));
 
 const pagedProducts = computed(() => {
   const start = (pageNumber.value - 1) * pageSize;
@@ -77,7 +83,7 @@ const pagedProducts = computed(() => {
 });
 
 watch(
-  () => [props.searchTerm, props.activeFilter, props.categoryFilter, props.sellerFilter],
+  () => [props.searchTerm, props.activeFilter, props.materialTypeFilter, props.formTypeFilter, props.sellerFilter],
   () => {
     pageNumber.value = 1;
   }
@@ -90,27 +96,26 @@ const updateMarketPrice = (
   emit("update-market-price", field, Number(value || 0));
 };
 
-const formatMoney = (value: number | string | null | undefined) => {
-  return Number(value ?? 0).toFixed(2);
-};
-
-const getSellPrice = (product: ProductManagementDto) => {
-  const row = product as ProductManagementDto & {
-    sellPrice?: number;
-    SellPrice?: number;
-    manualSellPrice?: number;
-  };
-
-  return row.sellPrice ?? row.SellPrice ?? product.autoPrice ?? row.fixedPrice ?? 0;
-};
+const formatMoney = (value: number | string | null | undefined) => Number(value ?? 0).toFixed(2);
 </script>
 
 <template>
   <section class="dashboard-screen">
-    <p v-if="productError" class="error-text">{{ productError }}</p>
+    <PageHeader
+      title="Product Management"
+      subtitle="Manage product catalog, seller market prices, and inventory in one place."
+    />
+
+    <ResultModal
+      :open="Boolean(productError)"
+      title="Unable to complete action"
+      :message="productError"
+      tone="error"
+      @close="emit('clear-error')"
+    />
 
     <template v-if="productPage === 'list'">
-      <Card title="Market Prices">
+      <Card title="Market Price Configuration">
         <div class="ui-filter-bar">
           <FormField v-if="role === 'Admin'" label="Seller">
             <Select
@@ -133,7 +138,6 @@ const getSellPrice = (product: ProductManagementDto) => {
               type="number"
               min="0"
               step="0.01"
-              placeholder="Gold / ounce"
               :model-value="marketPrices.goldPerOunce"
               :disabled="role === 'Admin' && !isSingleSellerSelected"
               @update:model-value="updateMarketPrice('goldPerOunce', $event)"
@@ -145,7 +149,6 @@ const getSellPrice = (product: ProductManagementDto) => {
               type="number"
               min="0"
               step="0.01"
-              placeholder="Silver / ounce"
               :model-value="marketPrices.silverPerOunce"
               :disabled="role === 'Admin' && !isSingleSellerSelected"
               @update:model-value="updateMarketPrice('silverPerOunce', $event)"
@@ -157,7 +160,6 @@ const getSellPrice = (product: ProductManagementDto) => {
               type="number"
               min="0"
               step="0.01"
-              placeholder="Diamond / carat"
               :model-value="marketPrices.diamondPerCarat"
               :disabled="role === 'Admin' && !isSingleSellerSelected"
               @update:model-value="updateMarketPrice('diamondPerCarat', $event)"
@@ -167,7 +169,7 @@ const getSellPrice = (product: ProductManagementDto) => {
 
         <div class="ui-row-actions">
           <p v-if="role === 'Admin' && !isSingleSellerSelected" class="hint-text">
-            Select one seller to edit seller-specific market prices. Products for all sellers are still visible.
+            Select one seller to edit seller-specific market prices.
           </p>
 
           <Button
@@ -198,13 +200,19 @@ const getSellPrice = (product: ProductManagementDto) => {
           </Select>
 
           <Select
-            :model-value="categoryFilter"
-            @update:model-value="emit('update:category-filter', $event)"
+            :model-value="materialTypeFilter"
+            @update:model-value="emit('update:material-type-filter', $event)"
           >
-            <option value="all">All categories</option>
-            <option v-for="category in categories" :key="category.value" :value="category.name">
-              {{ category.name }}
-            </option>
+            <option value="all">All material types</option>
+            <option v-for="option in MATERIAL_TYPE_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </Select>
+
+          <Select
+            :model-value="formTypeFilter"
+            @update:model-value="emit('update:form-type-filter', $event)"
+          >
+            <option value="all">All product forms</option>
+            <option v-for="option in PRODUCT_FORM_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
           </Select>
 
           <Button v-if="role === 'Seller'" @click="emit('add')">
@@ -212,9 +220,7 @@ const getSellPrice = (product: ProductManagementDto) => {
           </Button>
         </div>
 
-        <div v-if="managedProducts.length === 0" class="ui-state">
-          No products found.
-        </div>
+        <div v-if="managedProducts.length === 0" class="ui-state">No products found.</div>
 
         <template v-else>
           <div class="ui-table-wrap">
@@ -222,9 +228,9 @@ const getSellPrice = (product: ProductManagementDto) => {
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th v-if="role === 'Admin'">Seller</th>
                   <th>Image</th>
                   <th>Name</th>
+                  <th v-if="role === 'Admin'">Seller Name / ID</th>
                   <th>SKU</th>
                   <th>Category</th>
                   <th>Weight</th>
@@ -244,11 +250,6 @@ const getSellPrice = (product: ProductManagementDto) => {
                 >
                   <td>{{ product.id }}</td>
 
-                  <td v-if="role === 'Admin'">
-                    <strong>{{ product.sellerName || "-" }}</strong>
-                    <div class="hint-text">ID: {{ product.sellerId }}</div>
-                  </td>
-
                   <td>
                     <img
                       v-if="product.imageUrl"
@@ -260,10 +261,14 @@ const getSellPrice = (product: ProductManagementDto) => {
                   </td>
 
                   <td><strong>{{ product.name }}</strong></td>
+                  <td v-if="role === 'Admin'">
+                    <strong>{{ product.sellerName || '-' }}</strong>
+                    <div class="hint-text">ID: {{ product.sellerId }}</div>
+                  </td>
                   <td>{{ product.sku }}</td>
                   <td>{{ product.category }}</td>
                   <td>{{ product.weightValue }} g</td>
-                  <td>{{ formatMoney(getSellPrice(product)) }}</td>
+                  <td>{{ formatMoney(product.sellPrice) }}</td>
                   <td>{{ product.availableStock }}</td>
                   <td>
                     <StatusBadge :status="product.isActive ? 'Active' : 'Inactive'" />
@@ -273,7 +278,7 @@ const getSellPrice = (product: ProductManagementDto) => {
                     <div class="ui-row-actions">
                       <Button size="sm" @click="emit('edit', product)">Edit</Button>
                       <Button size="sm" variant="ghost" @click="emit('toggle', product)">
-                        {{ product.isActive ? "Deactivate" : "Activate" }}
+                        {{ product.isActive ? 'Deactivate' : 'Activate' }}
                       </Button>
                       <Button size="sm" variant="danger" @click="emit('delete', product.id)">
                         Delete
@@ -298,12 +303,17 @@ const getSellPrice = (product: ProductManagementDto) => {
     </template>
 
     <Card v-else-if="productPage === 'details'" title="Product Details">
-      <div v-if="!selectedProduct" class="ui-state">
-        Unable to load this product.
-      </div>
+      <div v-if="!selectedProduct" class="ui-state">Unable to load this product.</div>
 
       <template v-else>
         <ProductDetails :product="selectedProduct" />
+        <ProductFeePanel
+          :access-token="accessToken"
+          :product-id="selectedProduct.id"
+          :seller-id="selectedProduct.sellerId"
+          :draft-fee="productFeeDraft"
+          @update:draft-fee="emit('update:product-fee-draft', $event)"
+        />
 
         <div class="ui-row-actions">
           <Button @click="emit('edit', selectedProduct)">Edit Product</Button>
@@ -321,7 +331,18 @@ const getSellPrice = (product: ProductManagementDto) => {
         :market-prices="marketPrices"
         @save="emit('save')"
         @image="emit('image', $event)"
-      />
+      >
+        <template #fees>
+          <ProductFeePanel
+            :access-token="accessToken"
+            :product-id="productForm.id ?? null"
+            :seller-id="productForm.sellerId"
+            :draft-fee="productFeeDraft"
+            embedded
+            @update:draft-fee="emit('update:product-fee-draft', $event)"
+          />
+        </template>
+      </ProductForm>
 
       <div class="ui-row-actions">
         <Button variant="ghost" @click="emit('back')">Cancel</Button>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import FormField from "../../../shared/components/ui/FormField.vue";
 import Input from "../../../shared/components/ui/Input.vue";
 import Select from "../../../shared/components/ui/Select.vue";
@@ -31,7 +31,10 @@ const emit = defineEmits<{
   image: [event: Event];
 }>();
 
-const tab = ref<"basics" | "pricing" | "offer" | "stock">("basics");
+const tab = ref<"basics" | "pricing" | "offer" | "stock" | "fees">("basics");
+const lastGoldKarat = ref(3);
+const lastSilverPurity = ref(0.999);
+const imagePreviewUrl = ref("");
 
 const isAuto = computed(() => props.model.pricingMode === 1);
 const isGold = computed(() => props.model.materialType === 1);
@@ -51,25 +54,77 @@ watch(
   () => [props.model.materialType, props.model.purityKarat],
   () => {
     if (isDiamond.value) {
+      if (props.model.purityKarat > 0) {
+        lastGoldKarat.value = props.model.purityKarat;
+      }
       props.model.purityKarat = 0;
       props.model.purityFactor = 1;
       return;
     }
 
     if (isGold.value) {
-      if (props.model.purityKarat === 0) props.model.purityKarat = 3;
+      if (props.model.purityKarat === 0) props.model.purityKarat = lastGoldKarat.value || 3;
+      lastGoldKarat.value = props.model.purityKarat;
       props.model.purityFactor = karatFactorMap[props.model.purityKarat] ?? 1;
       return;
     }
 
     if (isSilver.value) {
+      if (props.model.purityFactor > 0) {
+        lastSilverPurity.value = Number(props.model.purityFactor);
+      }
       if (![0.999, 0.925].includes(Number(props.model.purityFactor))) {
-        props.model.purityFactor = 0.999;
+        props.model.purityFactor = lastSilverPurity.value;
       }
       props.model.purityKarat = 0;
     }
   },
   { immediate: true }
+);
+
+watch(
+  () => props.model.materialType,
+  (next, prev) => {
+    if (next === prev || prev == null) return;
+
+    props.model.formType = 1;
+    props.model.weightValue = 0;
+    props.model.pricingMode = 1;
+    props.model.manualSellPrice = 0;
+    props.model.offerType = 0;
+    props.model.offerPercent = 0;
+    props.model.offerNewPrice = 0;
+    props.model.availableStock = 0;
+
+    if (next === 1) {
+      props.model.purityKarat = lastGoldKarat.value || 3;
+      props.model.purityFactor = karatFactorMap[props.model.purityKarat] ?? 0.875;
+    } else if (next === 2) {
+      props.model.purityKarat = 0;
+      props.model.purityFactor = lastSilverPurity.value;
+    } else {
+      props.model.purityKarat = 0;
+      props.model.purityFactor = 1;
+    }
+  }
+);
+
+watch(
+  () => props.model.purityKarat,
+  (next) => {
+    if (isGold.value && next > 0) {
+      lastGoldKarat.value = next;
+    }
+  }
+);
+
+watch(
+  () => props.model.purityFactor,
+  (next) => {
+    if (isSilver.value && [0.999, 0.925].includes(Number(next))) {
+      lastSilverPurity.value = Number(next);
+    }
+  }
 );
 
 const offerEnabled = computed({
@@ -85,9 +140,9 @@ const offerEnabled = computed({
 });
 
 const selectedMarketPrice = computed(() => {
-  if (isGold.value) return Number(props.marketPrices.goldPerOunce || 0);
-  if (isSilver.value) return Number(props.marketPrices.silverPerOunce || 0);
-  return Number(props.marketPrices.diamondPerCarat || 0);
+  if (isGold.value) return Number(props.marketPrices.goldPerOunce || props.model.baseMarketPrice || 0);
+  if (isSilver.value) return Number(props.marketPrices.silverPerOunce || props.model.baseMarketPrice || 0);
+  return Number(props.marketPrices.diamondPerCarat || props.model.baseMarketPrice || 0);
 });
 
 const autoCalculatedPrice = computed(() => {
@@ -119,6 +174,31 @@ const finalPrice = computed(() => {
 
   return Number.isFinite(base) ? base : 0;
 });
+
+watch(
+  selectedMarketPrice,
+  (next) => {
+    props.model.baseMarketPrice = Number(next || 0);
+  },
+  { immediate: true }
+);
+
+watch(
+  () => props.model.imageFile,
+  (file) => {
+    if (imagePreviewUrl.value.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreviewUrl.value);
+    }
+    imagePreviewUrl.value = file ? URL.createObjectURL(file) : "";
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(() => {
+  if (imagePreviewUrl.value.startsWith("blob:")) {
+    URL.revokeObjectURL(imagePreviewUrl.value);
+  }
+});
 </script>
 
 <template>
@@ -138,8 +218,7 @@ const finalPrice = computed(() => {
             <option :value="1">Jewelry</option>
             <option :value="2">Coin</option>
             <option :value="3">Bar</option>
-            <option :value="4">Other</option>
-          </Select>
+                      </Select>
         </FormField>
 
         <FormField label="Weight (grams)" required hint="Weight is always entered in grams." :error="errors.weightValue">
@@ -148,9 +227,9 @@ const finalPrice = computed(() => {
 
         <FormField v-if="isGold" label="Purity / Karat" :error="errors.purityKarat">
           <Select v-model="model.purityKarat">
-            <option :value="3">21K</option>
             <option :value="1">24K</option>
             <option :value="2">22K</option>
+            <option :value="3">21K</option>
             <option :value="4">18K</option>
             <option :value="5">14K</option>
           </Select>
@@ -170,6 +249,10 @@ const finalPrice = computed(() => {
           <Input :model-value="model.purityFactor" readonly />
         </FormField>
 
+        <FormField v-else label="Purity Factor">
+          <Input :model-value="1" readonly />
+        </FormField>
+
         <FormField label="Pricing Mode">
           <Select v-model="model.pricingMode">
             <option :value="1">Auto</option>
@@ -177,12 +260,12 @@ const finalPrice = computed(() => {
           </Select>
         </FormField>
 
-        <FormField label="Final Sell Price">
-          <Input :model-value="finalPrice.toFixed(2)" readonly />
-        </FormField>
-
         <FormField label="Available Stock" required :error="errors.availableStock">
           <Input type="number" min="0" v-model="model.availableStock" />
+        </FormField>
+
+        <FormField label="Final Sell Price" class="field-full">
+          <Input :model-value="finalPrice.toFixed(2)" readonly />
         </FormField>
       </div>
     </Card>
@@ -200,9 +283,22 @@ const finalPrice = computed(() => {
       <button type="button" class="ui-tab" :class="{ active: tab === 'stock' }" @click="tab = 'stock'">
         Stock
       </button>
+      <button type="button" class="ui-tab" :class="{ active: tab === 'fees' }" @click="tab = 'fees'">
+        Product Fee
+      </button>
     </div>
 
     <Card v-if="tab === 'basics'" title="Product Basics">
+      <div class="ui-row-inline">
+        <img
+          v-if="imagePreviewUrl || model.existingImageUrl"
+          :src="imagePreviewUrl || model.existingImageUrl"
+          alt="Product preview"
+          class="product-thumb product-thumb--lg"
+        />
+        <span v-else class="product-thumb-placeholder product-thumb-placeholder--lg">No image</span>
+      </div>
+
       <FormField label="Name" required :error="errors.name">
         <Input v-model="model.name" />
       </FormField>
@@ -261,6 +357,12 @@ const finalPrice = computed(() => {
       </FormField>
 
       <Checkbox v-model="model.isActive" label="Active Product" />
+    </Card>
+
+    <Card v-if="tab === 'fees'" title="Product Fee">
+      <slot name="fees">
+        <div class="ui-state">Fee settings unavailable.</div>
+      </slot>
     </Card>
 
     <div class="ui-row-actions">

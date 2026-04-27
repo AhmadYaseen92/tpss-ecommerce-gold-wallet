@@ -4,14 +4,22 @@ class ProductSpecsWidget extends StatelessWidget {
   final String purity;
   final String weight;
   final String materialType;
+  final String productForm;
 
-  const ProductSpecsWidget({super.key, required this.purity, required this.weight, required this.materialType});
+  const ProductSpecsWidget({
+    super.key,
+    required this.purity,
+    required this.weight,
+    required this.materialType,
+    required this.productForm,
+  });
 
   @override
   Widget build(BuildContext context) {
     final showPurity = materialType.trim().toLowerCase() == 'gold' && purity.trim().isNotEmpty;
     return Row(
       children: [
+        Expanded(child: _productSpecsCard(context, label: 'Product Form', value: productForm)),
         Expanded(child: _productSpecsCard(context, label: 'Material', value: materialType)),
         const SizedBox(width: 10),
         Expanded(child: _productSpecsCard(context, label: 'Weight', value: weight)),

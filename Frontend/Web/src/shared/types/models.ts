@@ -98,6 +98,8 @@ export interface Product {
   sellerId: string;
   name: string;
   category: string;
+  materialType?: string;
+  formType?: string;
   unitPrice: number;
   stock: number;
   marketPrice: number;

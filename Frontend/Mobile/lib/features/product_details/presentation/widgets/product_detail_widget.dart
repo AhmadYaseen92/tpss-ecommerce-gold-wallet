@@ -72,7 +72,12 @@ class ProductDetailWidget extends StatelessWidget {
                           style: TextStyle(fontSize: 12, color: palette.primary, fontWeight: FontWeight.w600),
                         ),
                       const SizedBox(height: 12),
-                      ProductSpecsWidget(purity: product.purity, weight: product.weight, materialType: product.materialTypeLabel),
+                      ProductSpecsWidget(
+                        purity: product.purity,
+                        weight: product.weight,
+                        materialType: product.materialTypeLabel,
+                        productForm: product.productFormLabel,
+                      ),
                       const SizedBox(height: 12),
                       DescriptionWidget(product: product),
                       const SizedBox(height: 6),

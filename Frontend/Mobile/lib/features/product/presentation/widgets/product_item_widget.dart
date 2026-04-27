@@ -48,7 +48,7 @@ class ProductItemWidget extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 6,
                       children: [
-                        _metaChip(context, product.materialTypeLabel),
+                        _metaChip(context, product.productFormLabel),
                         if (AppReleaseConfig.showWeightInGrams &&
                             product.weight.trim().isNotEmpty)
                           _metaChip(

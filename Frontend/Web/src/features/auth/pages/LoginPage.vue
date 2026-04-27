@@ -10,7 +10,7 @@ const marketplace = useMarketplace();
 
 const model = reactive<LoginFormModel>({
   email: "admin@goldwallet.com",
-  password: "P@ssw0rd",
+  password: "AdminGW@2026",
   rememberMe: true,
 });
 

@@ -3,8 +3,6 @@ class ProductCategoryFilter {
     (label: 'Gold', categoryId: 1),
     (label: 'Silver', categoryId: 2),
     (label: 'Diamond', categoryId: 3),
-    (label: 'Jewelry', categoryId: 4),
-    (label: 'Coins', categoryId: 5),
   ];
 
   static int inferCategoryId({

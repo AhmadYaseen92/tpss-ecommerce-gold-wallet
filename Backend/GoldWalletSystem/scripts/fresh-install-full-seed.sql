@@ -35,6 +35,7 @@ BEGIN TRY
 
     INSERT INTO @SellerUsers (FullName, Email, PasswordHash, Role, PhoneNumber)
     VALUES
+        (N'Gold Wallet Admin', N'admin@goldwallet.com', N'PPJjw8OG+mRgfuQq0PwjBg==.I6aFJ1YwnTWLF8rajLp/30yOAXuGukxV5lx0zFoVuBo=.100000', N'Admin', N'+15551010001'),
         (N'Imseeh Seller', N'contact@imseeh.com', N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+962700000001'),
         (N'Gold Palace Seller', N'contact@goldpalace.com', N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+15550000002'),
         (N'Bullion House Seller', N'contact@bullionhouse.com', N'mC80KKdQIwUFXvdjaAEpcg==.zleByP5/d6gSWrKMe44R5bkV4vdJGsZHStS2ZB6b6do=.100000', N'Seller', N'+15550000003');
@@ -242,9 +243,19 @@ BEGIN TRY
             (N'MobileRelease_IsIndividualSeller', N'Mobile Release Is Individual Seller', N'Mobile release: show single seller mode', 2, CAST(0 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'MobileRelease_IndividualSellerName', N'Mobile Release Individual Seller Name', N'Mobile release seller name when single seller mode is enabled', 1, NULL, NULL, NULL, N'Imseeh', CAST(0 AS bit)),
             (N'MobileRelease_ShowWeightInGrams', N'Mobile Release Show Weight In Grams', N'Mobile release flag to show weight in grams', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
-            (N'MobileRelease_MarketWatchEnabled', N'Mobile Release Market Watch Enabled', N'Mobile release flag to enable Market Watch tab in Product screen', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'MobileRelease_MarketWatchEnabled', N'Mobile Release Market Watch Enabled', N'Mobile release flag to enable Market Watch tab in Product screen', 2, CAST(0 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'MobileSecurity_LoginByBiometric', N'Mobile Security Login By Biometric', N'Allow biometric quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
-            (N'MobileSecurity_LoginByPin', N'Mobile Security Login By PIN', N'Allow PIN quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit))
+            (N'MobileSecurity_LoginByPin', N'Mobile Security Login By PIN', N'Allow PIN quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_EnableWhatsapp', N'OTP Enable WhatsApp', N'Enable OTP delivery over WhatsApp channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_EnableEmail', N'OTP Enable Email', N'Enable OTP delivery over Email channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_ExpirySeconds', N'OTP Expiry Seconds', N'Number of seconds before OTP expires', 3, NULL, 300, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_ResendCooldownSeconds', N'OTP Resend Cooldown Seconds', N'Cooldown between OTP resend attempts', 3, NULL, 60, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_MaxResendCount', N'OTP Max Resend Count', N'Maximum resend attempts per OTP request', 3, NULL, 3, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_MaxVerificationAttempts', N'OTP Max Verification Attempts', N'Maximum verification attempts per OTP', 3, NULL, 5, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_RequiredActions', N'OTP Required Actions', N'Actions that require OTP verification', 1, NULL, NULL, NULL, N'registration,reset_password,checkout,sell,transfer,gift,pickup,add_bank_account,edit_bank_account,remove_bank_account,add_payment_method,edit_payment_method,remove_payment_method,change_email,change_password,change_mobile_number', CAST(0 AS bit)),
+            (N'Otp_ChannelPriority', N'OTP Channel Priority', N'Preferred OTP channel priority list', 1, NULL, NULL, NULL, N'whatsapp,email', CAST(0 AS bit)),
+            (N'WalletSell_Mode', N'Wallet Sell Mode', N'Wallet sell execution behavior for mobile and web', 1, NULL, NULL, NULL, N'locked_30_seconds', CAST(0 AS bit)),
+            (N'WalletSell_LockSeconds', N'Wallet Sell Lock Seconds', N'Wallet sell lock duration in seconds', 3, NULL, 30, NULL, NULL, CAST(0 AS bit))
     ) AS S([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess])
     ON T.[ConfigKey] = S.[ConfigKey]
     WHEN MATCHED THEN
@@ -265,6 +276,16 @@ BEGIN TRY
     ------------------------------------------------------------
     -- Fee-management tables
     ------------------------------------------------------------
+    IF OBJECT_ID(N'[SellerProductFees]', N'U') IS NOT NULL
+    BEGIN
+        DELETE FROM [SellerProductFees] WHERE [FeeCode] = N'service_charge';
+    END
+
+    IF OBJECT_ID(N'[SystemFees]', N'U') IS NOT NULL
+    BEGIN
+        DELETE FROM [SystemFees] WHERE [FeeCode] = N'service_charge';
+    END
+
     IF OBJECT_ID(N'[SystemFeeTypes]', N'U') IS NOT NULL
     BEGIN
         MERGE [SystemFeeTypes] AS T
@@ -274,7 +295,6 @@ BEGIN TRY
             (N'premium_discount', N'Premium / Discount', N'Seller managed premium or discount fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 2),
             (N'storage_custody_fee', N'Storage / Custody Fee', N'Seller managed custody fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 3),
             (N'delivery_fee', N'Delivery Fee', N'Seller managed delivery fee', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 4),
-            (N'service_charge', N'Service Charge', N'Seller managed service charge', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(0 AS bit), 5),
             (N'service_fee', N'Service Fee', N'Admin managed service fee', CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), CAST(1 AS bit), 6)
         ) AS S([FeeCode],[Name],[Description],[IsEnabled],[AppliesToBuy],[AppliesToSell],[AppliesToPickup],[AppliesToTransfer],[AppliesToGift],[AppliesToInvoice],[AppliesToReports],[IsAdminManaged],[SortOrder])
         ON T.[FeeCode] = S.[FeeCode]
@@ -326,10 +346,6 @@ BEGIN TRY
         MERGE [SellerProductFees] AS T
         USING (
             SELECT P.[SellerId] AS SellerId, P.[Id] AS ProductId, N'commission_per_transaction' AS FeeCode, CAST(1 AS bit) AS IsEnabled, N'percent_with_minimum' AS CalculationMode, CAST(1.50 AS decimal(18,6)) AS RatePercent, CAST(5.00 AS decimal(18,2)) AS MinimumAmount, NULL AS FlatAmount, NULL AS PremiumDiscountType, NULL AS ValuePerUnit, NULL AS FeePercent, NULL AS GracePeriodDays, NULL AS FixedAmount, NULL AS FeePerUnit, CAST(0 AS bit) AS IsOverride
-            FROM [Products] P
-            WHERE P.[SellerId] IN (@SellerImseeh, @SellerGoldPal, @SellerBullion)
-            UNION ALL
-            SELECT P.[SellerId], P.[Id], N'service_charge', CAST(1 AS bit), N'fixed', NULL, NULL, NULL, NULL, NULL, NULL, NULL, CAST(2.50 AS decimal(18,2)), NULL, CAST(0 AS bit)
             FROM [Products] P
             WHERE P.[SellerId] IN (@SellerImseeh, @SellerGoldPal, @SellerBullion)
             UNION ALL

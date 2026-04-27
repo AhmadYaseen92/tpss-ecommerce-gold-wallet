@@ -160,14 +160,18 @@ export interface ProductDto {
   weightValue: number;
   weightUnit: string;
   baseMarketPrice: number;
+  autoPrice: number;
+  fixedPrice: number;
+  sellPrice: number;
   offerPercent: number;
   offerNewPrice: number;
   offerType: string;
-  finalPrice: number;
   isHasOffer: boolean;
+  isActive?: boolean;
   availableStock: number;
   sellerId: number;
   sellerName: string;
+  finalPrice?: number;
 }
 
 export interface AuditLogDto {

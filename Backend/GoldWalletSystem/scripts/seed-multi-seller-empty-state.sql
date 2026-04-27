@@ -117,15 +117,15 @@ BEGIN TRY
 
     INSERT INTO @Users (FullName, Email, PasswordHash, Role, PhoneNumber)
     VALUES
-        (N'Imseeh Admin',         N'imseeh.admin@example.com',        N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Admin', N'+15551010001'),
+        (N'Imseeh Admin',         N'imseeh.admin@example.com',        N'PPJjw8OG+mRgfuQq0PwjBg==.I6aFJ1YwnTWLF8rajLp/30yOAXuGukxV5lx0zFoVuBo=.100000', N'Admin', N'+15551010001'),
         (N'Imseeh Investor 1',    N'imseeh.investor1@example.com',    N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', N'+15551010002'),
         (N'Imseeh Investor 2',    N'imseeh.investor2@example.com',    N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', N'+15551010003'),
 
-        (N'GoldPal Admin',        N'goldpal.admin@example.com',       N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Admin', N'+15551020001'),
+        (N'GoldPal Admin',        N'goldpal.admin@example.com',       N'PPJjw8OG+mRgfuQq0PwjBg==.I6aFJ1YwnTWLF8rajLp/30yOAXuGukxV5lx0zFoVuBo=.100000', N'Admin', N'+15551020001'),
         (N'GoldPal Investor1',    N'goldpal.investor1@example.com',   N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', N'+15551020002'),
         (N'GoldPal Investor2',    N'goldpal.investor2@example.com',   N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', N'+15551020003'),
 
-        (N'Bullion Admin',        N'bullion.admin@example.com',       N'oZeUFZdNlzg+6Ra4C4EmlA==.maYFfxklpEO8qX1HBhaRZUT3JCfbgmd8cmZJo/Q6xcE=.100000', N'Admin', N'+15551030001'),
+        (N'Bullion Admin',        N'bullion.admin@example.com',       N'PPJjw8OG+mRgfuQq0PwjBg==.I6aFJ1YwnTWLF8rajLp/30yOAXuGukxV5lx0zFoVuBo=.100000', N'Admin', N'+15551030001'),
         (N'Bullion Investor1',    N'bullion.investor1@example.com',   N'E4AJcY7MeKmJOoaxRXzfXg==.Yd4IWfYBZUqs83ho+2xLhTrveNqLL+Vojtvn3jjsMN8=.100000', N'Investor', N'+15551030002'),
         (N'Bullion Investor2',    N'bullion.investor2@example.com',   N'ypOP7c/XCKhyT+WKcMam6w==.TT+y6q2s43OZ+sUjxKP73qeko4RlY2bzF0vNo9yPSgk=.100000', N'Investor', N'+15551030003'),
 

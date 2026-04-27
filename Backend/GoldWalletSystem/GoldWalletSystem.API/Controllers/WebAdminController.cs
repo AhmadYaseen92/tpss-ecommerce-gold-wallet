@@ -1225,7 +1225,7 @@ public class WebAdminController(
                 ProductSku = sourceProduct?.Sku,
                 ProductImageUrl = sourceProduct?.ImageUrl,
                 MaterialType = sourceProduct?.MaterialType.ToString() ?? request.Category,
-                FormType = sourceProduct?.FormType.ToString() ?? "Other",
+                FormType = sourceProduct?.FormType.ToString() ?? "Jewelry",
                 PurityKarat = purityKarat,
                 PurityDisplayName = purityDisplayName,
                 WeightValue = sourceProduct?.WeightValue ?? request.Weight,

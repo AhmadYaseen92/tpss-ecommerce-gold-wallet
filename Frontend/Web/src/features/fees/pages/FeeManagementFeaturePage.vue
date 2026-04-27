@@ -4,6 +4,7 @@ import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMark
 import SmallCheckbox from "../../../shared/components/SmallCheckbox.vue";
 import SmallToggle from "../../../shared/components/SmallToggle.vue";
 import CommonModal from "../../../shared/components/CommonModal.vue";
+import PageHeader from "../../../shared/components/ui/PageHeader.vue";
 import {
   fetchAdminServiceFee,
   fetchManagedProducts,
@@ -66,13 +67,13 @@ const isAdmin = computed(() => marketplace.role.value === "Admin");
 const successModalOpen = ref(false);
 const successMessage = ref("Saved successfully");
 const adminSnapshot = ref("");
+const adminSystemFees = computed(() => systemFees.value);
 
 const feeMetadata: Record<string, { modes: string[] }> = {
   commission_per_transaction: { modes: ["percent_with_minimum", "flat"] },
   premium_discount: { modes: ["per_unit"] },
   storage_custody_fee: { modes: ["percentage_by_held_days_after_grace_period"] },
-  delivery_fee: { modes: ["fixed", "per_unit"] },
-  service_charge: { modes: ["fixed", "per_unit"] }
+  delivery_fee: { modes: ["fixed", "per_unit"] }
 };
 
 const actionLabels: Array<keyof Pick<SystemFeeTypePayload, "appliesToBuy" | "appliesToSell" | "appliesToPickup" | "appliesToTransfer" | "appliesToGift">> = [
@@ -183,7 +184,6 @@ const formulaByMode = (feeCode: string, mode: string) => {
   if (feeCode === "premium_discount") return "Quantity × ValuePerUnit";
   if (feeCode === "storage_custody_fee") return "Quantity × ClosePrice × (FeePercent / 100) / 360 × DaysHeldAfterGrace";
   if (feeCode === "delivery_fee") return mode === "per_unit" ? "Quantity × FeePerUnit" : "Fixed Fee";
-  if (feeCode === "service_charge") return mode === "per_unit" ? "Quantity × FeePerUnit" : "Fixed Fee";
   return "-";
 };
 
@@ -346,19 +346,18 @@ const saveAllChanges = async () => {
 </script>
 
 <template>
-  <section>
-    <h2>Fees Management</h2>
+  <section class="dashboard-screen">
+    <PageHeader title="Fees Management" subtitle="System Fee Types" />
     <p v-if="loading">Loading...</p>
     <p v-if="error" class="error-text">{{ error }}</p>
 
     <template v-if="isAdmin">
-      <h3>System Fee Types</h3>
       <div class="table-toolbar">
         <button v-if="adminDirty" @click="saveAdminAllChanges">Save All Changes</button>
       </div>
 
       <div class="admin-fee-cards">
-        <article v-for="fee in systemFees" :key="fee.feeCode" class="fee-card">
+        <article v-for="fee in adminSystemFees" :key="fee.feeCode" class="fee-card">
           <header class="fee-card-header">
             <h4>{{ fee.name }}</h4>
             <label class="inline-toggle"><SmallToggle v-model="fee.isEnabled" /> Enabled</label>
