@@ -58,5 +58,12 @@
 	<true/>
 	<key>NSFaceIDUsageDescription</key>
     <string>Log in</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need camera access so you can take a profile photo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need photo library access so you can choose a profile picture.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need access to save and update your selected profile photo.</string>
+
 </dict>
 </plist>

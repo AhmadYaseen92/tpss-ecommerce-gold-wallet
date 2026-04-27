@@ -41,6 +41,23 @@ class ProfileRemoteDataSource {
     );
   }
 
+
+  Future<void> updateProfilePhoto({
+    required ProfileRemoteModel profile,
+    required String profilePhotoUrl,
+  }) async {
+    await updatePersonal(
+      fullName: profile.fullName,
+      email: profile.email,
+      phoneNumber: profile.phoneNumber,
+      dateOfBirthIso: profile.dateOfBirth,
+      nationality: profile.nationality,
+      documentType: profile.documentType,
+      idNumber: profile.idNumber,
+      profilePhotoUrl: profilePhotoUrl,
+    );
+  }
+
   Future<void> updateSettings({required String preferredLanguage, required String preferredTheme}) async {
     final userId = _requireUserId();
     await _dio.put(
