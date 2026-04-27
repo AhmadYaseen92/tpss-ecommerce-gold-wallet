@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { fetchSellerDetailsByAdmin } from "../../../shared/services/backendGateway";
 import type { WebSellerDetailsDto, WebSellerDocumentDto } from "../../../shared/types/apiTypes";
@@ -17,6 +17,9 @@ const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
 const loading = ref(false);
 const details = ref<WebSellerDetailsDto | null>(null);
 const error = ref("");
+const selectedDocumentUrl = ref("");
+const selectedDocumentName = ref("");
+const selectedDocumentType = ref("");
 
 const sellerIdFromPath = computed(() => {
   const parts = window.location.pathname.split("/").filter(Boolean);
@@ -92,13 +95,32 @@ const openDocument = async (doc: WebSellerDocumentDto) => {
     }
 
     const fileBlob = await response.blob();
-    const blobUrl = URL.createObjectURL(fileBlob);
-    window.open(blobUrl, "_blank", "noopener,noreferrer");
-    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+    if (selectedDocumentUrl.value) {
+      URL.revokeObjectURL(selectedDocumentUrl.value);
+    }
+
+    selectedDocumentUrl.value = URL.createObjectURL(fileBlob);
+    selectedDocumentName.value = doc.fileName || `document-${doc.id}`;
+    selectedDocumentType.value = doc.contentType || fileBlob.type || "";
   } catch (e) {
     error.value = e instanceof Error ? e.message : "Failed to open document.";
   }
 };
+
+const closeViewer = () => {
+  if (selectedDocumentUrl.value) {
+    URL.revokeObjectURL(selectedDocumentUrl.value);
+  }
+  selectedDocumentUrl.value = "";
+  selectedDocumentName.value = "";
+  selectedDocumentType.value = "";
+};
+
+const isImageDocument = computed(() => selectedDocumentType.value.startsWith("image/"));
+
+onBeforeUnmount(() => {
+  closeViewer();
+});
 
 onMounted(() => {
   void loadDetails();
@@ -229,6 +251,30 @@ onMounted(() => {
         </div>
       </Card>
 
+      <Card v-if="selectedDocumentUrl" title="Document Viewer">
+        <div class="ui-row-actions">
+          <a :href="selectedDocumentUrl" :download="selectedDocumentName">
+            <Button variant="warning">Download</Button>
+          </a>
+          <Button variant="ghost" @click="closeViewer">Close Viewer</Button>
+        </div>
+
+        <div class="viewer-wrap">
+          <img
+            v-if="isImageDocument"
+            :src="selectedDocumentUrl"
+            :alt="selectedDocumentName"
+            class="viewer-image"
+          />
+          <iframe
+            v-else
+            :src="selectedDocumentUrl"
+            title="Seller document viewer"
+            class="viewer-frame"
+          />
+        </div>
+      </Card>
+
       <Card title="KYC Actions">
         <div class="ui-row-actions">
           <Button variant="success" @click="setKyc('approve')">Approve</Button>
@@ -239,3 +285,27 @@ onMounted(() => {
     </template>
   </section>
 </template>
+
+<style scoped>
+.viewer-wrap {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.viewer-frame {
+  width: 100%;
+  min-height: 70vh;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.viewer-image {
+  max-width: 100%;
+  max-height: 70vh;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  background: #fff;
+  object-fit: contain;
+}
+</style>
