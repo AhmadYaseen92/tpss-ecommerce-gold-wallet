@@ -69,6 +69,20 @@ const tabLabel: Record<SellerDetailsTab, string> = {
 
 const activeTab = ref<SellerDetailsTab>("company");
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
+const toDocumentUrl = (filePath: string) => {
+  const path = String(filePath ?? "").trim();
+  if (!path) return "#";
+  if (/^(https?:\/\/|data:|blob:)/i.test(path)) return path;
+
+  if (API_BASE_URL) {
+    return path.startsWith("/") ? `${API_BASE_URL}${path}` : `${API_BASE_URL}/${path}`;
+  }
+
+  return path.startsWith("/") ? path : `/${path}`;
+};
+
 onMounted(() => {
   void loadDetails();
 });
@@ -183,7 +197,7 @@ onMounted(() => {
                 <td>{{ doc.fileName }}</td>
                 <td>{{ doc.uploadedAtUtc }}</td>
                 <td>
-                  <a :href="doc.filePath" target="_blank" rel="noreferrer">Open</a>
+                  <a :href="toDocumentUrl(doc.filePath)" target="_blank" rel="noopener noreferrer">Open</a>
                 </td>
               </tr>
             </tbody>
