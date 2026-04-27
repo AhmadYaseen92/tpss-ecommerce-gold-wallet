@@ -2,6 +2,7 @@ import { computed, ref, watch } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { fetchWebAdminDashboard } from "../../../shared/services/backendGateway";
 import type { WebDashboardDto } from "../../../shared/types/apiTypes";
+import type { Investor, InvestorRequest, Product } from "../../../shared/types/models";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "#f59e0b",
@@ -44,28 +45,34 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
       return serverDashboard.value.cards;
     }
 
-    const products = marketplace.state.value.products;
-    const totalTransactions = marketplace.state.value.requests.length;
-    const totalSales = products.reduce((sum, p) => sum + Number(p.unitPrice) * Math.max(p.stock, 0), 0);
+    const products = marketplace.state.value.products as Product[];
+    const requests = marketplace.state.value.requests as InvestorRequest[];
+    const totalTransactions = requests.length;
+    const totalSales = requests
+      .filter((request: InvestorRequest) => {
+        const type = String(request.type ?? "").toLowerCase();
+        return type === "purchase" || type === "buy";
+      })
+      .reduce((sum: number, request: InvestorRequest) => sum + Number(request.amount ?? 0), 0);
+
     return [
-      { title: "Total Transactions", value: String(totalTransactions), trend: `${dashboardPeriod.value} period` },
       { title: "Total Sales", value: `${totalSales.toFixed(2)}`, trend: `${dashboardPeriod.value} period` },
       { title: "Total Products", value: String(products.length), trend: "All" },
-      { title: "Active Products", value: String(products.filter((p) => p.stock > 0).length), trend: "Active" },
-      { title: "Out of Stock Products", value: String(products.filter((p) => p.stock === 0).length), trend: "AvailableStock=0" },
-      { title: "Gold Market Price", value: `${products.find((p) => String(p.category).toLowerCase().includes("gold"))?.marketPrice ?? 0}`, trend: "Current" }
+      { title: "Active Products", value: String(products.filter((p: Product) => p.stock > 0).length), trend: "Active" },
+      { title: "Out of Stock Products", value: String(products.filter((p: Product) => p.stock === 0).length), trend: "AvailableStock=0" },
+      { title: "Total Transactions", value: String(totalTransactions), trend: `${dashboardPeriod.value} period` }
     ];
   });
 
   const statusSummary = computed(() => ({
-    pending: marketplace.state.value.requests.filter((x) => x.status === "pending").length,
-    approved: marketplace.state.value.requests.filter((x) => x.status === "approved").length,
-    rejected: marketplace.state.value.requests.filter((x) => x.status === "rejected").length
+    pending: marketplace.state.value.requests.filter((x: InvestorRequest) => x.status === "pending").length,
+    approved: marketplace.state.value.requests.filter((x: InvestorRequest) => x.status === "approved").length,
+    rejected: marketplace.state.value.requests.filter((x: InvestorRequest) => x.status === "rejected").length
   }));
 
   const categorySummary = computed(() => {
     const map = new Map<string, number>();
-    marketplace.state.value.products.forEach((p) => {
+    marketplace.state.value.products.forEach((p: Product) => {
       const categoryName = normalizeCategoryLabel(String(p.category));
       if (!isVisibleCategory(categoryName)) return;
       map.set(categoryName, (map.get(categoryName) ?? 0) + 1);
@@ -138,14 +145,14 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
     return marketplace.state.value.requests
       .slice(-6)
       .reverse()
-      .map((request, idx) => ({
+      .map((request: InvestorRequest, idx: number) => ({
         id: request.id,
         sellerName: request.sellerName,
         createdAt: request.createdAt,
         status: request.status,
         type: request.type,
         amount: request.amount,
-        investorName: marketplace.state.value.investors.find((inv) => inv.id === request.investorId)?.fullName ?? request.investorId,
+        investorName: (marketplace.state.value.investors as Investor[]).find((inv: Investor) => inv.id === request.investorId)?.fullName ?? request.investorId,
         productName: marketplace.state.value.products[idx % Math.max(marketplace.state.value.products.length, 1)]?.name ?? "N/A"
       }));
   });

@@ -85,3 +85,15 @@ const onSubmit = async () => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.auth-card-register {
+  width: min(1080px, 96vw);
+}
+
+@media (max-width: 900px) {
+  .auth-card-register {
+    width: min(760px, 96vw);
+  }
+}
+</style>
