@@ -30,15 +30,30 @@ public class ProfileController(IProfileService profileService, IOtpService otpSe
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
         var current = await profileService.GetByUserIdAsync(request.UserId, cancellationToken)
             ?? throw new InvalidOperationException("Profile not found.");
-        var otpAction = !string.Equals(current.Email, request.Email, StringComparison.OrdinalIgnoreCase)
-            ? OtpActionTypes.ChangeEmail
-            : OtpActionTypes.ChangeMobileNumber;
-        await ConsumeOtpIfRequiredAsync(
-            request.UserId,
-            otpAction,
-            request.OtpActionReferenceId,
-            request.OtpVerificationToken,
-            cancellationToken);
+
+        var emailChanged = !string.Equals(
+            current.Email?.Trim(),
+            request.Email?.Trim(),
+            StringComparison.OrdinalIgnoreCase);
+        var mobileChanged = !string.Equals(
+            current.PhoneNumber?.Trim(),
+            request.PhoneNumber?.Trim(),
+            StringComparison.Ordinal);
+
+        if (emailChanged || mobileChanged)
+        {
+            var otpAction = emailChanged
+                ? OtpActionTypes.ChangeEmail
+                : OtpActionTypes.ChangeMobileNumber;
+
+            await ConsumeOtpIfRequiredAsync(
+                request.UserId,
+                otpAction,
+                request.OtpActionReferenceId,
+                request.OtpVerificationToken,
+                cancellationToken);
+        }
+
         var data = await profileService.UpdatePersonalInfoAsync(request, cancellationToken);
         return Ok(ApiResponse<ProfileDto>.Ok(data, "Profile personal information updated"));
     }
