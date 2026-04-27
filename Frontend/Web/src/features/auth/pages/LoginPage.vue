@@ -5,7 +5,10 @@ import LoginForm from "../components/LoginForm.vue";
 import type { LoginFormModel } from "../types/authTypes";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 
-const emit = defineEmits<{ toRegister: [] }>();
+const emit = defineEmits<{ toRegister: []; themeToggle: [] }>();
+const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
+  isDark: false,
+});
 const marketplace = useMarketplace();
 
 const model = reactive<LoginFormModel>({
@@ -54,6 +57,14 @@ const onForgot = () => {
     <div class="login-overlay"></div>
 
     <div class="login-shell">
+      <button
+        class="theme-toggle-btn"
+        type="button"
+        @click="emit('themeToggle')"
+      >
+        {{ props.isDark ? "Light Theme" : "Dark Theme" }}
+      </button>
+
       <div class="brand-panel">
         <p class="brand-kicker">Secure Trading Platform</p>
         <h2>Gold Wallet Control Center</h2>
@@ -112,6 +123,22 @@ const onForgot = () => {
   grid-template-columns: 1fr 420px;
   align-items: center;
   gap: 56px;
+}
+
+.theme-toggle-btn {
+  position: absolute;
+  right: 0;
+  top: -40px;
+  border: 1px solid rgba(241, 195, 75, 0.45);
+  background: rgba(8, 8, 8, 0.35);
+  color: #fff8e6;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
 }
 
 .brand-panel {
@@ -189,6 +216,11 @@ const onForgot = () => {
   .login-shell {
     grid-template-columns: 1fr;
     justify-items: center;
+  }
+
+  .theme-toggle-btn {
+    top: -10px;
+    right: 8px;
   }
 
   .brand-panel {

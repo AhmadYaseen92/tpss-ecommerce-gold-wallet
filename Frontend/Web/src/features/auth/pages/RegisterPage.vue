@@ -9,7 +9,10 @@ import {
 import { buildRegisterSellerPayload } from "../store/useAuthPage";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 
-const emit = defineEmits<{ toLogin: [] }>();
+const emit = defineEmits<{ toLogin: []; themeToggle: [] }>();
+const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
+  isDark: false,
+});
 const marketplace = useMarketplace();
 
 const model = reactive<RegisterFormModel>(createEmptyRegisterForm());
@@ -75,6 +78,9 @@ const onSubmit = async () => {
 
 <template>
   <section class="login-page">
+    <button class="theme-toggle-btn" type="button" @click="emit('themeToggle')">
+      {{ props.isDark ? "Light Theme" : "Dark Theme" }}
+    </button>
     <div class="auth-card auth-card-register">
       <RegisterForm
         :model="model"
@@ -89,6 +95,23 @@ const onSubmit = async () => {
 <style scoped>
 .auth-card-register {
   width: min(1080px, 96vw);
+}
+
+.theme-toggle-btn {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 3;
+  border: 1px solid rgba(241, 195, 75, 0.45);
+  background: rgba(8, 8, 8, 0.45);
+  color: #fff8e6;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
 }
 
 @media (max-width: 900px) {

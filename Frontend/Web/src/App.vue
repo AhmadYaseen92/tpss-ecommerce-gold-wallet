@@ -158,6 +158,9 @@ watch(
 const handleMenuChange = (menu: NavigationKey) => {
   if (menu === "logout") {
     marketplace.logout();
+    if (window.location.hash) {
+      window.history.replaceState({}, "", window.location.pathname + window.location.search);
+    }
     window.history.pushState({}, "", "/overview");
     syncPath();
     return;
@@ -166,6 +169,9 @@ const handleMenuChange = (menu: NavigationKey) => {
   const target = ROUTE_BY_MENU[menu];
 
   if (target) {
+    if (window.location.hash) {
+      window.history.replaceState({}, "", window.location.pathname + window.location.search);
+    }
     window.history.pushState({}, "", target);
     syncPath();
   }
@@ -173,13 +179,21 @@ const handleMenuChange = (menu: NavigationKey) => {
 
 const handleLogout = () => {
   marketplace.logout();
+  if (window.location.hash) {
+    window.history.replaceState({}, "", window.location.pathname + window.location.search);
+  }
   window.history.pushState({}, "", "/overview");
   syncPath();
 };
 </script>
 
 <template>
-  <AuthPage v-if="!marketplace.session.value" :marketplace="marketplace" />
+  <AuthPage
+    v-if="!marketplace.session.value"
+    :marketplace="marketplace"
+    :is-dark="isDark"
+    @theme-toggle="isDark = !isDark"
+  />
 
   <AppLayout
     v-else
