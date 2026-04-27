@@ -35,25 +35,18 @@ class ProductDetailWidget extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(product.name, style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: palette.textPrimary, height: 1.25)),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: palette.surfaceMuted,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: palette.primary.withAlpha(50)),
-                            ),
-                            child: Text(
-                              product.productFormLabel,
-                              style: TextStyle(fontSize: 13, color: palette.primary, fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        product.name,
+                        style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: palette.textPrimary, height: 1.25),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${product.materialTypeLabel} - ${product.productFormLabel}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: palette.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -95,7 +88,6 @@ class ProductDetailWidget extends StatelessWidget {
                         purity: product.purity,
                         weight: product.weight,
                         materialType: product.materialTypeLabel,
-                        productForm: product.productFormLabel,
                       ),
                       const SizedBox(height: 12),
                       DescriptionWidget(product: product),

@@ -4,14 +4,12 @@ class ProductSpecsWidget extends StatelessWidget {
   final String purity;
   final String weight;
   final String materialType;
-  final String productForm;
 
   const ProductSpecsWidget({
     super.key,
     required this.purity,
     required this.weight,
     required this.materialType,
-    required this.productForm,
   });
 
   @override
@@ -19,7 +17,6 @@ class ProductSpecsWidget extends StatelessWidget {
     final showPurity = materialType.trim().toLowerCase() == 'gold' && purity.trim().isNotEmpty;
     return Row(
       children: [
-        Expanded(child: _productSpecsCard(context, label: 'Product Form', value: productForm)),
         Expanded(child: _productSpecsCard(context, label: 'Material', value: materialType)),
         const SizedBox(width: 10),
         Expanded(child: _productSpecsCard(context, label: 'Weight', value: weight)),
@@ -41,11 +38,16 @@ class ProductSpecsWidget extends StatelessWidget {
         border: Border.all(color: Theme.of(context).dividerColor.withAlpha(80)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          Text(label, style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center),
           const SizedBox(height: 8),
-          Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
