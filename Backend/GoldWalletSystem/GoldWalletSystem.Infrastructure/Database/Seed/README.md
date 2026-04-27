@@ -39,6 +39,9 @@ sqlcmd -S <server> -d GoldWalletSystemDb -i scripts/seed-full-data.sql
 # Option 2: 2 sellers + 1 investor + 1 admin
 sqlcmd -S <server> -d GoldWalletSystemDb -i scripts/seed-2-sellers-1-investor-1-admin.sql
 
-# Option 3: clear all data
+# Option 3: system settings + fees + 1 admin + Imseeh seller + investor@goldwallet.com
+sqlcmd -S <server> -d GoldWalletSystemDb -i scripts/seed-imseeh-admin-investor-full.sql
+
+# Option 4: clear all data
 sqlcmd -S <server> -d GoldWalletSystemDb -i scripts/clear-all-data.sql
 ```

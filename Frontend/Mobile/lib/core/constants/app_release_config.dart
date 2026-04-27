@@ -12,7 +12,7 @@ class AppReleaseConfig {
 
   static bool showWeightInGrams = true;
   static bool marketWatchEnabled = true;
-  static bool myAccountSummaryEnabled = true;
+  static bool myAccountSummaryEnabled = false;
   static bool loginByBiometricEnabled = true;
   static bool loginByPinEnabled = true;
   static bool get quickUnlockAllowed => loginByBiometricEnabled || loginByPinEnabled;
