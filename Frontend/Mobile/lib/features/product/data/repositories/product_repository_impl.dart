@@ -147,12 +147,16 @@ class ProductRepositoryImpl implements IProductRepository {
 
 
   String _productFormLabel(String formType, int categoryId) {
-    final normalized = formType.trim();
-    if (normalized.isNotEmpty && normalized.toLowerCase() != 'other') {
+    final normalized = formType.trim().toLowerCase();
+    if (normalized == '1' || normalized == 'jewelry') return 'Jewelry';
+    if (normalized == '2' || normalized == 'coin') return 'Coin';
+    if (normalized == '3' || normalized == 'bar') return 'Bar';
+    if (normalized.isNotEmpty && normalized != 'other') {
       return normalized[0].toUpperCase() + normalized.substring(1);
     }
 
     return switch (categoryId) {
+      3 => 'Jewelry',
       5 => 'Coin',
       4 => 'Jewelry',
       _ => 'Bar',

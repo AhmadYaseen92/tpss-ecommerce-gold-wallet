@@ -8,6 +8,7 @@ import Button from "../../../shared/components/ui/Button.vue";
 import Card from "../../../shared/components/ui/Card.vue";
 import type { ProductFormPayload } from "../../../shared/services/backendGateway";
 import type { MarketPriceConfigDto, EnumItemDto } from "../../../shared/types/apiTypes";
+import { PRODUCT_FORMS_BY_MATERIAL, PRODUCT_FORM_OPTIONS } from "../../../shared/constants/productTaxonomy";
 
 const props = withDefaults(
   defineProps<{
@@ -36,10 +37,56 @@ const lastGoldKarat = ref(3);
 const lastSilverPurity = ref(0.999);
 const imagePreviewUrl = ref("");
 
-const isAuto = computed(() => props.model.pricingMode === 1);
-const isGold = computed(() => props.model.materialType === 1);
-const isSilver = computed(() => props.model.materialType === 2);
-const isDiamond = computed(() => props.model.materialType === 3);
+const isAuto = computed(() => Number(props.model.pricingMode) === 1);
+const isGold = computed(() => Number(props.model.materialType) === 1);
+const isSilver = computed(() => Number(props.model.materialType) === 2);
+const isDiamond = computed(() => Number(props.model.materialType) === 3);
+const availableFormOptions = computed(() => {
+  const materialKey = isGold.value ? "gold" : isSilver.value ? "silver" : "diamond";
+  const allowed = new Set(PRODUCT_FORMS_BY_MATERIAL[materialKey] ?? PRODUCT_FORMS_BY_MATERIAL.all);
+  return PRODUCT_FORM_OPTIONS.filter((option) => option.value !== "all" && allowed.has(option.value));
+});
+
+const resetCoreProductInfoByMaterial = (nextMaterial: number) => {
+  // Reset Core Product Info fields whenever material type changes.
+  props.model.formType = 1;
+  props.model.weightValue = 0;
+  props.model.pricingMode = 1;
+  props.model.availableStock = 0;
+
+  // Reset pricing / offer values tied to core info.
+  props.model.manualSellPrice = 0;
+  props.model.offerType = 0;
+  props.model.offerPercent = 0;
+  props.model.offerNewPrice = 0;
+
+  if (nextMaterial === 1) {
+    props.model.purityKarat = lastGoldKarat.value || 3;
+    props.model.purityFactor = karatFactorMap[props.model.purityKarat] ?? 0.875;
+    return;
+  }
+
+  if (nextMaterial === 2) {
+    props.model.purityKarat = 0;
+    props.model.purityFactor = lastSilverPurity.value;
+    return;
+  }
+
+  // Diamond
+  props.model.formType = 1; // Jewelry only
+  props.model.purityKarat = 0;
+  props.model.purityFactor = 1;
+};
+
+watch(
+  () => Number(props.model.materialType),
+  () => {
+    if (isDiamond.value && [2, 3].includes(Number(props.model.formType))) {
+      props.model.formType = 1;
+    }
+  },
+  { immediate: true }
+);
 
 const karatFactorMap: Record<number, number> = {
   0: 1,
@@ -51,7 +98,7 @@ const karatFactorMap: Record<number, number> = {
 };
 
 watch(
-  () => [props.model.materialType, props.model.purityKarat],
+  () => [Number(props.model.materialType), Number(props.model.purityKarat)],
   () => {
     if (isDiamond.value) {
       if (props.model.purityKarat > 0) {
@@ -83,29 +130,10 @@ watch(
 );
 
 watch(
-  () => props.model.materialType,
+  () => Number(props.model.materialType),
   (next, prev) => {
     if (next === prev || prev == null) return;
-
-    props.model.formType = 1;
-    props.model.weightValue = 0;
-    props.model.pricingMode = 1;
-    props.model.manualSellPrice = 0;
-    props.model.offerType = 0;
-    props.model.offerPercent = 0;
-    props.model.offerNewPrice = 0;
-    props.model.availableStock = 0;
-
-    if (next === 1) {
-      props.model.purityKarat = lastGoldKarat.value || 3;
-      props.model.purityFactor = karatFactorMap[props.model.purityKarat] ?? 0.875;
-    } else if (next === 2) {
-      props.model.purityKarat = 0;
-      props.model.purityFactor = lastSilverPurity.value;
-    } else {
-      props.model.purityKarat = 0;
-      props.model.purityFactor = 1;
-    }
+    resetCoreProductInfoByMaterial(next);
   }
 );
 
@@ -206,7 +234,10 @@ onBeforeUnmount(() => {
     <Card title="Core Product Info">
       <div class="form-grid-two">
         <FormField label="Material Type" required :error="errors.materialType">
-          <Select v-model="model.materialType">
+          <Select
+            :model-value="model.materialType"
+            @update:model-value="model.materialType = Number($event)"
+          >
             <option :value="1">Gold</option>
             <option :value="2">Silver</option>
             <option :value="3">Diamond</option>
@@ -214,11 +245,18 @@ onBeforeUnmount(() => {
         </FormField>
 
         <FormField label="Product Form" required :error="errors.formType">
-          <Select v-model="model.formType">
-            <option :value="1">Jewelry</option>
-            <option :value="2">Coin</option>
-            <option :value="3">Bar</option>
-                      </Select>
+          <Select
+            :model-value="model.formType"
+            @update:model-value="model.formType = Number($event)"
+          >
+            <option
+              v-for="option in availableFormOptions"
+              :key="option.value"
+              :value="option.value === 'jewelry' ? 1 : option.value === 'coin' ? 2 : 3"
+            >
+              {{ option.label }}
+            </option>
+          </Select>
         </FormField>
 
         <FormField label="Weight (grams)" required hint="Weight is always entered in grams." :error="errors.weightValue">
@@ -254,7 +292,10 @@ onBeforeUnmount(() => {
         </FormField>
 
         <FormField label="Pricing Mode">
-          <Select v-model="model.pricingMode">
+          <Select
+            :model-value="model.pricingMode"
+            @update:model-value="model.pricingMode = Number($event)"
+          >
             <option :value="1">Auto</option>
             <option :value="2">Manual</option>
           </Select>

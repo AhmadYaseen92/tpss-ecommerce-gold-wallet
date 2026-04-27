@@ -94,6 +94,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
                           spacing: 8,
                           runSpacing: 6,
                           children: [
+                            _miniTag(context, 'Form: ${item.productFormLabel}'),
                             _miniTag(context, 'Qty: ${item.quantity}'),
                             _miniTag(context, 'Purity: ${item.purity}'),
                             _miniTag(context, '${item.weightInGrams.toStringAsFixed(2)} g'),

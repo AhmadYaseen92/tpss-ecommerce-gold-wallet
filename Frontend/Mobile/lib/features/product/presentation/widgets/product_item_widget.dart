@@ -67,30 +67,19 @@ class ProductItemWidget extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    Row(
-                      children: [
-                        Text(
-                          product.pricingModeLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: palette.textSecondary,
-                          ),
+                    if (hasOffer) ...[
+                      Text(
+                        product.offerType.toLowerCase().contains('percent')
+                            ? '${product.offerPercent.toStringAsFixed(0)}% OFF'
+                            : 'Special Offer',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: palette.primary,
+                          fontWeight: FontWeight.w700,
                         ),
-                        const SizedBox(width: 8),
-                        if (hasOffer)
-                          Text(
-                            product.offerType.toLowerCase().contains('percent')
-                                ? '${product.offerPercent.toStringAsFixed(0)}% OFF'
-                                : 'Special Offer',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: palette.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [

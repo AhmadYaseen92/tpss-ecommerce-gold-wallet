@@ -203,7 +203,6 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
             :model-value="materialTypeFilter"
             @update:model-value="emit('update:material-type-filter', $event)"
           >
-            <option value="all">All material types</option>
             <option v-for="option in MATERIAL_TYPE_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
           </Select>
 
@@ -211,7 +210,6 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
             :model-value="formTypeFilter"
             @update:model-value="emit('update:form-type-filter', $event)"
           >
-            <option value="all">All product forms</option>
             <option v-for="option in PRODUCT_FORM_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
           </Select>
 
@@ -233,6 +231,7 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                   <th v-if="role === 'Admin'">Seller Name / ID</th>
                   <th>SKU</th>
                   <th>Category</th>
+                  <th>Form</th>
                   <th>Weight</th>
                   <th>Sell Price</th>
                   <th>Stock</th>
@@ -267,6 +266,7 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                   </td>
                   <td>{{ product.sku }}</td>
                   <td>{{ product.category }}</td>
+                  <td>{{ product.formType }}</td>
                   <td>{{ product.weightValue }} g</td>
                   <td>{{ formatMoney(product.sellPrice) }}</td>
                   <td>{{ product.availableStock }}</td>

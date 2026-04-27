@@ -58,7 +58,7 @@ class WalletRepositoryImpl implements IWalletRepository {
       final transactions = assets
           .map((asset) => _toTransactionEntity(category, asset, snapshots[asset.id]))
           .toList();
-      final totalWeightInGrams = transactions.fold<double>(0, (sum, tx) => sum + tx.weightInGrams * tx.quantity);
+      final totalWeightInGrams = transactions.fold<double>(0, (sum, tx) => sum + tx.weightInGrams);
       final totalMarket = transactions.fold<double>(0, (sum, tx) => sum + tx.marketValueAmount);
       final totalBuy = assets.fold<double>(0, (sum, asset) => sum + (asset.averageBuyPrice * asset.quantity));
       final changePercent = totalBuy == 0 ? 0 : ((totalMarket - totalBuy) / totalBuy) * 100;
@@ -89,7 +89,7 @@ class WalletRepositoryImpl implements IWalletRepository {
     WalletAssetRemoteModel asset,
     WalletPurchaseSnapshot? snapshot,
   ) {
-    final totalWeightInGrams = _toGrams(asset.weight, asset.unit) * asset.quantity;
+    final totalWeightInGrams = _toGrams(asset.weight, asset.unit);
     final liveMarketTotal = asset.currentMarketPrice * asset.quantity;
     final snapshotBuyUnitPriceWithFees = snapshot != null && snapshot.amount > 0 && snapshot.quantity > 0
         ? snapshot.amount / snapshot.quantity
@@ -117,13 +117,20 @@ class WalletRepositoryImpl implements IWalletRepository {
     final purchaseValue = buyUnitPriceWithFees > 0
         ? buyUnitPriceWithFees * asset.quantity
         : totalBuy;
+    final resolvedAssetType = _toAssetType(asset.assetType);
+    final productFormLabel = _resolveProductFormLabel(
+      assetType: resolvedAssetType,
+      category: category,
+      productName: resolvedName,
+    );
 
     return wallet_entity.WalletTransactionEntity(
       id: asset.id,
       name: resolvedName,
       productSku: asset.productSku,
       category: category,
-      assetType: _toAssetType(asset.assetType),
+      assetType: resolvedAssetType,
+      productFormLabel: productFormLabel,
       subtitle: asset.productSku?.trim().isNotEmpty == true ? 'SKU: ${asset.productSku!.trim()}' : _toDisplayName(asset.assetType),
       weightInGrams: totalWeightInGrams,
       purity: _formatPurity(
@@ -190,6 +197,28 @@ class WalletRepositoryImpl implements IWalletRepository {
     if (value.contains('ring')) return wallet_entity.AssetType.ring;
     if (value.contains('bracelet')) return wallet_entity.AssetType.bracelet;
     return wallet_entity.AssetType.bar;
+  }
+
+  String _resolveProductFormLabel({
+    required wallet_entity.AssetType assetType,
+    required wallet_entity.WalletCategory category,
+    required String productName,
+  }) {
+    final normalizedName = productName.toLowerCase();
+    if (normalizedName.contains('coin') || category == wallet_entity.WalletCategory.coins || assetType == wallet_entity.AssetType.coin) {
+      return 'Coin';
+    }
+    if (normalizedName.contains('jewel') ||
+        normalizedName.contains('ring') ||
+        normalizedName.contains('necklace') ||
+        normalizedName.contains('bracelet') ||
+        category == wallet_entity.WalletCategory.jewelry ||
+        assetType == wallet_entity.AssetType.necklace ||
+        assetType == wallet_entity.AssetType.ring ||
+        assetType == wallet_entity.AssetType.bracelet) {
+      return 'Jewelry';
+    }
+    return 'Bar';
   }
 
   String _formatPurity(double value) {

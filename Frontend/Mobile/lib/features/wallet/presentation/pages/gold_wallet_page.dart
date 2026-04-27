@@ -80,7 +80,9 @@ class GoldWalletPage extends StatelessWidget {
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
-                          children: ProductCategoryFilter.options.map((category) {
+                          children: ProductCategoryFilter.options
+                              .where((category) => category.categoryId != null)
+                              .map((category) {
                             final isSelected = state.selectedCategoryId == category.categoryId;
                             return Padding(
                               padding: const EdgeInsets.only(right: 8),

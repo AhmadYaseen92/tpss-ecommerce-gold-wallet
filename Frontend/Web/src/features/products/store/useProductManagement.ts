@@ -13,6 +13,7 @@ import {
 } from "../../../shared/services/backendGateway";
 import type { EnumItemDto, ProductManagementDto, MarketPriceConfigDto } from "../../../shared/types/apiTypes";
 import { goToProductRoute, syncProductRoute } from "../services/productRoute";
+import { PRODUCT_FORMS_BY_MATERIAL } from "../../../shared/constants/productTaxonomy";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import type { Seller } from "../../../shared/types/models";
 import type { SellerProductFeePayload } from "../../../shared/services/backendGateway";
@@ -243,6 +244,9 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
       if (activeFilter.value === "inactive" && product.isActive) return false;
       const materialLabel = toMaterialTypeKey(product.materialType);
       const formLabel = toFormTypeKey(product.formType);
+      const allowedFormsForMaterial = (PRODUCT_FORMS_BY_MATERIAL[materialLabel] ?? PRODUCT_FORMS_BY_MATERIAL.all)
+        .filter((value) => value !== "all");
+      if (allowedFormsForMaterial.length > 0 && !allowedFormsForMaterial.includes(formLabel)) return false;
       if (materialTypeFilter.value !== "all" && materialLabel !== materialTypeFilter.value) return false;
       if (formTypeFilter.value !== "all" && formLabel !== formTypeFilter.value) return false;
       if (sellerFilter.value !== "all" && String(product.sellerId) !== sellerFilter.value) return false;
@@ -252,6 +256,13 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
       return [product.name, product.sku, product.description, product.category].join(" ").toLowerCase().includes(term);
     })
   );
+
+  watch(materialTypeFilter, (nextMaterial) => {
+    const allowedForms = PRODUCT_FORMS_BY_MATERIAL[nextMaterial] ?? PRODUCT_FORMS_BY_MATERIAL.all;
+    if (formTypeFilter.value !== "all" && !allowedForms.includes(formTypeFilter.value)) {
+      formTypeFilter.value = "all";
+    }
+  });
 
   const validateProductForm = () => {
     Object.keys(validationErrors).forEach((k) => delete validationErrors[k]);

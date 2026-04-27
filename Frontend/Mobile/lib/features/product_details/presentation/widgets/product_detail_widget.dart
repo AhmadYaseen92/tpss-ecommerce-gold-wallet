@@ -35,7 +35,19 @@ class ProductDetailWidget extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(product.name, style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: palette.textPrimary, height: 1.25)),
+                      Text(
+                        product.name,
+                        style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: palette.textPrimary, height: 1.25),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${product.materialTypeLabel} - ${product.productFormLabel}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: palette.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -76,7 +88,6 @@ class ProductDetailWidget extends StatelessWidget {
                         purity: product.purity,
                         weight: product.weight,
                         materialType: product.materialTypeLabel,
-                        productForm: product.productFormLabel,
                       ),
                       const SizedBox(height: 12),
                       DescriptionWidget(product: product),

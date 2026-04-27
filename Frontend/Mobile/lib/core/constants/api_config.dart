@@ -1,7 +1,7 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String serverIp = '192.168.1.2';
+  static const String serverIp = '192.168.1.7';
   static const String serverPort = '5095';
   static const String apiPrefix = '/api';
 
