@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 
@@ -112,12 +113,12 @@ class AuthSessionStore {
     userId = uid;
     sellerId = sid;
 
-    await _secure.write(key: _kAccessToken, value: token);
-    await _secure.write(key: _kRefreshToken, value: newRefreshToken);
-    await _secure.write(key: _kAccessTokenExp, value: tokenExpiresAtUtc.toUtc().toIso8601String());
-    await _secure.write(key: _kRefreshTokenExp, value: newRefreshTokenExpiresAtUtc.toUtc().toIso8601String());
-    await _secure.write(key: _kUserId, value: '$uid');
-    await _secure.write(key: _kSellerId, value: '$sid');
+    await _safeWrite(_kAccessToken, token);
+    await _safeWrite(_kRefreshToken, newRefreshToken);
+    await _safeWrite(_kAccessTokenExp, tokenExpiresAtUtc.toUtc().toIso8601String());
+    await _safeWrite(_kRefreshTokenExp, newRefreshTokenExpiresAtUtc.toUtc().toIso8601String());
+    await _safeWrite(_kUserId, '$uid');
+    await _safeWrite(_kSellerId, '$sid');
   }
 
   static Future<void> clearSessionOnly() async {
@@ -152,7 +153,7 @@ class AuthSessionStore {
     biometricEnabled = false;
     pinSetupComplete = false;
     await _secure.deleteAll();
-    await _secure.write(key: _kOnboardingSeen, value: onboardingSeen ? '1' : '0');
+    await _safeWrite(_kOnboardingSeen, onboardingSeen ? '1' : '0');
   }
 
   static Future<void> setQuickUnlockEnabled(bool enabled) async {
@@ -160,17 +161,17 @@ class AuthSessionStore {
       throw StateError('Set PIN or biometric before enabling quick unlock.');
     }
     quickUnlockEnabled = enabled;
-    await _secure.write(key: _kQuickUnlockEnabled, value: enabled ? '1' : '0');
+    await _safeWrite(_kQuickUnlockEnabled, enabled ? '1' : '0');
     if (!enabled) {
       biometricEnabled = false;
-      await _secure.write(key: _kBiometricEnabled, value: '0');
+      await _safeWrite(_kBiometricEnabled, '0');
       await setLocked(false);
     }
   }
 
   static Future<void> setBiometricEnabled(bool enabled) async {
     biometricEnabled = AppReleaseConfig.loginByBiometricEnabled && enabled;
-    await _secure.write(key: _kBiometricEnabled, value: biometricEnabled ? '1' : '0');
+    await _safeWrite(_kBiometricEnabled, biometricEnabled ? '1' : '0');
     await _normalizeSecurityState();
   }
 
@@ -180,10 +181,10 @@ class AuthSessionStore {
     }
     final salt = DateTime.now().microsecondsSinceEpoch.toString();
     final hash = sha256.convert(utf8.encode('$salt:$pin')).toString();
-    await _secure.write(key: _kPinSalt, value: salt);
-    await _secure.write(key: _kPinHash, value: hash);
+    await _safeWrite(_kPinSalt, salt);
+    await _safeWrite(_kPinHash, hash);
     pinSetupComplete = true;
-    await _secure.write(key: _kPinSetupComplete, value: '1');
+    await _safeWrite(_kPinSetupComplete, '1');
     await _normalizeSecurityState(enableQuickUnlockWhenPossible: true);
   }
 
@@ -191,7 +192,7 @@ class AuthSessionStore {
     pinSetupComplete = false;
     await _secure.delete(key: _kPinSalt);
     await _secure.delete(key: _kPinHash);
-    await _secure.write(key: _kPinSetupComplete, value: '0');
+    await _safeWrite(_kPinSetupComplete, '0');
     await _normalizeSecurityState();
   }
 
@@ -204,7 +205,7 @@ class AuthSessionStore {
   }
 
   static Future<void> markInactiveNow() async {
-    await _secure.write(key: _kLastInactiveAt, value: DateTime.now().toUtc().toIso8601String());
+    await _safeWrite(_kLastInactiveAt, DateTime.now().toUtc().toIso8601String());
   }
 
   static Future<bool> shouldLockForInactivity({Duration timeout = const Duration(minutes: 5)}) async {
@@ -216,7 +217,7 @@ class AuthSessionStore {
   }
 
   static Future<void> setLocked(bool locked) async {
-    await _secure.write(key: _kLocked, value: locked ? '1' : '0');
+    await _safeWrite(_kLocked, locked ? '1' : '0');
   }
 
   static Future<bool> isLocked() async => (await _secure.read(key: _kLocked)) == '1';
@@ -224,14 +225,28 @@ class AuthSessionStore {
   static Future<void> _normalizeSecurityState({bool enableQuickUnlockWhenPossible = false}) async {
     if (!hasUnlockMethod) {
       quickUnlockEnabled = false;
-      await _secure.write(key: _kQuickUnlockEnabled, value: '0');
+      await _safeWrite(_kQuickUnlockEnabled, '0');
       await setLocked(false);
       return;
     }
 
     if (enableQuickUnlockWhenPossible && !quickUnlockEnabled) {
       quickUnlockEnabled = true;
-      await _secure.write(key: _kQuickUnlockEnabled, value: '1');
+      await _safeWrite(_kQuickUnlockEnabled, '1');
+    }
+  }
+
+  static Future<void> _safeWrite(String key, String value) async {
+    try {
+      await _secure.write(key: key, value: value);
+    } on PlatformException catch (e) {
+      final isDuplicateItem = e.code == '-25299' ||
+          (e.message ?? '').toLowerCase().contains('already exists') ||
+          e.toString().contains('-25299');
+      if (!isDuplicateItem) rethrow;
+
+      await _secure.delete(key: key);
+      await _secure.write(key: key, value: value);
     }
   }
 

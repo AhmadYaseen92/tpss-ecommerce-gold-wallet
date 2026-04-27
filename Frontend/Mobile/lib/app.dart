@@ -27,11 +27,13 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
   bool _ready = false;
   Timer? _inactivityTimer;
   Timer? _configurationSyncTimer;
+  StreamSubscription<SessionLogoutEvent>? _logoutSubscription;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _logoutSubscription = SessionManager.logoutEvents.listen(_handleLogoutEvent);
     _bootstrap();
   }
 
@@ -127,6 +129,43 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
     }
   }
 
+  Future<void> _handleLogoutEvent(SessionLogoutEvent event) async {
+    if (!mounted) return;
+
+    if (event.reason == SessionLogoutReason.sessionExpired ||
+        event.reason == SessionLogoutReason.unauthorized) {
+      final shouldRequireUnlock =
+          AppReleaseConfig.quickUnlockAllowed &&
+          AuthSessionStore.quickUnlockEnabled &&
+          AuthSessionStore.hasUnlockMethod;
+
+      if (shouldRequireUnlock) {
+        await AuthSessionStore.setLocked(true);
+      } else {
+        await AuthSessionStore.setLocked(false);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _locked = shouldRequireUnlock;
+      });
+
+      _rootNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+        AppRoutes.loginRoute,
+        (_) => false,
+      );
+      return;
+    }
+
+    await AuthSessionStore.setLocked(false);
+    if (!mounted) return;
+    setState(() => _locked = false);
+    _rootNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+      AppRoutes.loginRoute,
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -157,7 +196,16 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
               return Navigator(
                 onGenerateRoute: (_) => MaterialPageRoute(
                   builder: (_) => AppLockPage(
-                    onUnlocked: () => setState(() => _locked = false),
+                    onUnlocked: () {
+                      if (!mounted) return;
+                      setState(() => _locked = false);
+                      if (!AuthSessionStore.isLoggedIn) {
+                        _rootNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+                          AppRoutes.loginRoute,
+                          (_) => false,
+                        );
+                      }
+                    },
                     onLoginFallback: () async {
                       await AuthSessionStore.setLocked(false);
                       await AuthSessionStore.removePin();
@@ -184,6 +232,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
     WidgetsBinding.instance.removeObserver(this);
     _inactivityTimer?.cancel();
     _configurationSyncTimer?.cancel();
+    _logoutSubscription?.cancel();
     super.dispose();
   }
 }

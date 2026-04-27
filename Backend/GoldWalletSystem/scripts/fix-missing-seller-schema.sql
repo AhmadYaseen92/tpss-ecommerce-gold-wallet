@@ -37,6 +37,19 @@ IF COL_LENGTH('UserProfiles', 'IdNumber') IS NULL
 IF COL_LENGTH('UserProfiles', 'ProfilePhotoUrl') IS NULL
     ALTER TABLE [UserProfiles] ADD [ProfilePhotoUrl] nvarchar(500) NOT NULL CONSTRAINT [DF_UserProfiles_ProfilePhotoUrl] DEFAULT N'';
 
+IF EXISTS (
+    SELECT 1
+    FROM sys.columns c
+    INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
+    WHERE c.object_id = OBJECT_ID(N'[UserProfiles]')
+      AND c.name = N'ProfilePhotoUrl'
+      AND t.name = N'nvarchar'
+      AND c.max_length <> -1
+)
+BEGIN
+    ALTER TABLE [UserProfiles] ALTER COLUMN [ProfilePhotoUrl] nvarchar(max) NOT NULL;
+END;
+
 IF COL_LENGTH('Users', 'SellerId') IS NULL
     ALTER TABLE [Users] ADD [SellerId] int NULL;
 

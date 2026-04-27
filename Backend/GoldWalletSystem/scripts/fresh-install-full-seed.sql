@@ -25,6 +25,20 @@ BEGIN TRY
     IF OBJECT_ID(N'[Sellers]') IS NULL
         THROW 50000, 'Tables were not found. Run migrations first.', 1;
 
+    -- Ensure profile image payloads can store long data URLs (camera/gallery uploads).
+    IF EXISTS (
+        SELECT 1
+        FROM sys.columns c
+        INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
+        WHERE c.object_id = OBJECT_ID(N'[UserProfiles]')
+          AND c.name = N'ProfilePhotoUrl'
+          AND t.name = N'nvarchar'
+          AND c.max_length <> -1
+    )
+    BEGIN
+        ALTER TABLE [UserProfiles] ALTER COLUMN [ProfilePhotoUrl] nvarchar(max) NOT NULL;
+    END;
+
     DECLARE @SellerUsers TABLE (
         FullName nvarchar(150),
         Email nvarchar(200),
