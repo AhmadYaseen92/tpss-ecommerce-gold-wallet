@@ -244,7 +244,17 @@ BEGIN TRY
             (N'MobileRelease_ShowWeightInGrams', N'Mobile Release Show Weight In Grams', N'Mobile release flag to show weight in grams', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'MobileRelease_MarketWatchEnabled', N'Mobile Release Market Watch Enabled', N'Mobile release flag to enable Market Watch tab in Product screen', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'MobileSecurity_LoginByBiometric', N'Mobile Security Login By Biometric', N'Allow biometric quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
-            (N'MobileSecurity_LoginByPin', N'Mobile Security Login By PIN', N'Allow PIN quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit))
+            (N'MobileSecurity_LoginByPin', N'Mobile Security Login By PIN', N'Allow PIN quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_EnableWhatsapp', N'OTP Enable WhatsApp', N'Enable OTP delivery over WhatsApp channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_EnableEmail', N'OTP Enable Email', N'Enable OTP delivery over Email channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_ExpirySeconds', N'OTP Expiry Seconds', N'Number of seconds before OTP expires', 3, NULL, 300, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_ResendCooldownSeconds', N'OTP Resend Cooldown Seconds', N'Cooldown between OTP resend attempts', 3, NULL, 60, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_MaxResendCount', N'OTP Max Resend Count', N'Maximum resend attempts per OTP request', 3, NULL, 3, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_MaxVerificationAttempts', N'OTP Max Verification Attempts', N'Maximum verification attempts per OTP', 3, NULL, 5, NULL, NULL, CAST(0 AS bit)),
+            (N'Otp_RequiredActions', N'OTP Required Actions', N'Actions that require OTP verification', 1, NULL, NULL, NULL, N'registration,reset_password,checkout,buy,sell,transfer,gift,pickup,add_bank_account,edit_bank_account,remove_bank_account,add_payment_method,edit_payment_method,remove_payment_method,change_email,change_password,change_mobile_number', CAST(0 AS bit)),
+            (N'Otp_ChannelPriority', N'OTP Channel Priority', N'Preferred OTP channel priority list', 1, NULL, NULL, NULL, N'whatsapp,email', CAST(0 AS bit)),
+            (N'WalletSell_Mode', N'Wallet Sell Mode', N'Wallet sell execution behavior for mobile and web', 1, NULL, NULL, NULL, N'locked_30_seconds', CAST(0 AS bit)),
+            (N'WalletSell_LockSeconds', N'Wallet Sell Lock Seconds', N'Wallet sell lock duration in seconds', 3, NULL, 30, NULL, NULL, CAST(0 AS bit))
     ) AS S([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess])
     ON T.[ConfigKey] = S.[ConfigKey]
     WHEN MATCHED THEN
