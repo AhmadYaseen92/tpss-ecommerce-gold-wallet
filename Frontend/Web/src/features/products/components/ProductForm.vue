@@ -47,6 +47,37 @@ const availableFormOptions = computed(() => {
   return PRODUCT_FORM_OPTIONS.filter((option) => option.value !== "all" && allowed.has(option.value));
 });
 
+const resetCoreProductInfoByMaterial = (nextMaterial: number) => {
+  // Reset Core Product Info fields whenever material type changes.
+  props.model.formType = 1;
+  props.model.weightValue = 0;
+  props.model.pricingMode = 1;
+  props.model.availableStock = 0;
+
+  // Reset pricing / offer values tied to core info.
+  props.model.manualSellPrice = 0;
+  props.model.offerType = 0;
+  props.model.offerPercent = 0;
+  props.model.offerNewPrice = 0;
+
+  if (nextMaterial === 1) {
+    props.model.purityKarat = lastGoldKarat.value || 3;
+    props.model.purityFactor = karatFactorMap[props.model.purityKarat] ?? 0.875;
+    return;
+  }
+
+  if (nextMaterial === 2) {
+    props.model.purityKarat = 0;
+    props.model.purityFactor = lastSilverPurity.value;
+    return;
+  }
+
+  // Diamond
+  props.model.formType = 1; // Jewelry only
+  props.model.purityKarat = 0;
+  props.model.purityFactor = 1;
+};
+
 watch(
   () => props.model.materialType,
   () => {
@@ -102,26 +133,7 @@ watch(
   () => props.model.materialType,
   (next, prev) => {
     if (next === prev || prev == null) return;
-
-    props.model.formType = 1;
-    props.model.weightValue = 0;
-    props.model.pricingMode = 1;
-    props.model.manualSellPrice = 0;
-    props.model.offerType = 0;
-    props.model.offerPercent = 0;
-    props.model.offerNewPrice = 0;
-    props.model.availableStock = 0;
-
-    if (next === 1) {
-      props.model.purityKarat = lastGoldKarat.value || 3;
-      props.model.purityFactor = karatFactorMap[props.model.purityKarat] ?? 0.875;
-    } else if (next === 2) {
-      props.model.purityKarat = 0;
-      props.model.purityFactor = lastSilverPurity.value;
-    } else {
-      props.model.purityKarat = 0;
-      props.model.purityFactor = 1;
-    }
+    resetCoreProductInfoByMaterial(next);
   }
 );
 
