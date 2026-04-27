@@ -63,7 +63,10 @@ class DioFactory {
               );
               return handler.resolve(response);
             } catch (_) {
-              await SessionManager.forceLogout(localOnly: true);
+              await SessionManager.forceLogout(
+                localOnly: true,
+                reason: SessionLogoutReason.unauthorized,
+              );
             }
           }
 
