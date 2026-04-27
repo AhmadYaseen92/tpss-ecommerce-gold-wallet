@@ -10,6 +10,9 @@ public sealed class ProductUpsertRequest
     public string Description { get; set; } = string.Empty;
     public IFormFile? Image { get; set; }
     public string? ExistingImageUrl { get; set; }
+    public IFormFile? Video { get; set; }
+    public string? ExistingVideoUrl { get; set; }
+    public int? VideoDurationSeconds { get; set; }
     public ProductMaterialType MaterialType { get; set; } = ProductMaterialType.Gold;
     public ProductFormType FormType { get; set; } = ProductFormType.Jewelry;
     public ProductPricingMode PricingMode { get; set; } = ProductPricingMode.Auto;

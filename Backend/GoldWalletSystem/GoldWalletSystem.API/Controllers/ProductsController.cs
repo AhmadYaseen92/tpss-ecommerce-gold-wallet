@@ -1,5 +1,6 @@
 using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.API.Models;
+using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.DTOs.Products;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Application.Services;
@@ -25,7 +26,11 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     {
         var data = await productService.GetProductsAsync(request.PageNumber, request.PageSize, request.Category, cancellationToken);
         var normalizedItems = data.Items
-            .Select(product => product with { ImageUrl = NormalizeRelativeImagePath(product.ImageUrl) })
+            .Select(product => product with
+            {
+                ImageUrl = NormalizeRelativeImagePath(product.ImageUrl),
+                VideoUrl = NormalizeRelativeVideoPath(product.VideoUrl)
+            })
             .ToList();
 
         var normalizedData = data with { Items = normalizedItems };
@@ -56,6 +61,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 Sku = x.Sku,
                 Description = x.Description,
                 ImageUrl = x.ImageUrl,
+                VideoUrl = x.VideoUrl,
                 Category = x.Category,
                 MaterialType = x.MaterialType,
                 FormType = x.FormType,
@@ -82,6 +88,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         foreach (var item in items)
         {
             item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
+            item.VideoUrl = NormalizeRelativeVideoPath(item.VideoUrl);
         }
         return Ok(ApiResponse<List<ProductManagementDto>>.Ok(items));
     }
@@ -107,6 +114,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             Sku = x.Sku,
             Description = x.Description,
             ImageUrl = x.ImageUrl,
+            VideoUrl = x.VideoUrl,
             Category = x.Category,
             MaterialType = x.MaterialType,
             FormType = x.FormType,
@@ -132,6 +140,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         if (item is not null)
         {
             item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
+            item.VideoUrl = NormalizeRelativeVideoPath(item.VideoUrl);
         }
 
         return item is null
@@ -156,6 +165,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             Sku = request.Sku,
             Description = request.Description,
             ImageUrl = await SaveImageAsync(request.Image, request.ExistingImageUrl, cancellationToken),
+            VideoUrl = await SaveVideoAsync(request.Video, request.ExistingVideoUrl, request.VideoDurationSeconds, cancellationToken),
             Category = ToLegacyCategory(request.MaterialType),
             MaterialType = request.MaterialType,
             FormType = request.FormType,
@@ -215,6 +225,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.Sku = request.Sku;
         product.Description = request.Description;
         product.ImageUrl = await SaveImageAsync(request.Image, request.ExistingImageUrl ?? product.ImageUrl, cancellationToken);
+        product.VideoUrl = await SaveVideoAsync(request.Video, request.ExistingVideoUrl ?? product.VideoUrl, request.VideoDurationSeconds, cancellationToken);
         product.Category = ToLegacyCategory(request.MaterialType);
         product.MaterialType = request.MaterialType;
         product.FormType = request.FormType;
@@ -514,7 +525,79 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         return NormalizeRelativeImagePath($"/images/products/{fileName}");
     }
 
+    private async Task<string> SaveVideoAsync(IFormFile? video, string? existingVideoUrl, int? durationSeconds, CancellationToken cancellationToken)
+    {
+        if (video is null || video.Length == 0)
+        {
+            return NormalizeRelativeVideoPath(existingVideoUrl);
+        }
+
+        var maxDuration = await ReadProductVideoMaxDurationSecondsAsync(cancellationToken);
+        if (durationSeconds is null || durationSeconds <= 0)
+        {
+            throw new InvalidOperationException("Video duration is required when uploading a product video.");
+        }
+
+        if (durationSeconds.Value > maxDuration)
+        {
+            throw new InvalidOperationException($"Product video exceeds max duration of {maxDuration} seconds.");
+        }
+
+        var root = environment.WebRootPath;
+        if (string.IsNullOrWhiteSpace(root))
+        {
+            root = Path.Combine(environment.ContentRootPath, "wwwroot");
+        }
+
+        var targetDirectory = Path.Combine(root, "videos", "products");
+        Directory.CreateDirectory(targetDirectory);
+
+        var extension = Path.GetExtension(video.FileName);
+        var fileName = $"product-video-{Guid.NewGuid():N}{extension}";
+        var fullPath = Path.Combine(targetDirectory, fileName);
+
+        await using var stream = System.IO.File.Create(fullPath);
+        await video.CopyToAsync(stream, cancellationToken);
+
+        return NormalizeRelativeVideoPath($"/videos/products/{fileName}");
+    }
+
+    private async Task<int> ReadProductVideoMaxDurationSecondsAsync(CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ConfigKey == MobileAppConfigurationKeys.ProductVideoMaxDurationSeconds, cancellationToken);
+
+        var value = config?.ValueInt ?? 30;
+        return value <= 0 ? 30 : value;
+    }
+
     private string NormalizeRelativeImagePath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = path.Trim();
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var absoluteUri))
+        {
+            var isCurrentHost = string.Equals(absoluteUri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase);
+            var isLocalHost = string.Equals(absoluteUri.Host, "localhost", StringComparison.OrdinalIgnoreCase)
+                              || string.Equals(absoluteUri.Host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
+                              || string.Equals(absoluteUri.Host, "::1", StringComparison.OrdinalIgnoreCase);
+
+            if (isCurrentHost || isLocalHost)
+            {
+                return $"{absoluteUri.AbsolutePath}{absoluteUri.Query}";
+            }
+
+            return trimmed;
+        }
+
+        return trimmed.StartsWith('/') ? trimmed : $"/{trimmed}";
+    }
+
+    private string NormalizeRelativeVideoPath(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))
         {

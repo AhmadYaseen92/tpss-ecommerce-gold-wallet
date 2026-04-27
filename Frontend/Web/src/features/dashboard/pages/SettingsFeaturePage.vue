@@ -49,6 +49,7 @@ const META: SettingMeta[] = [
   { key: "MobileRelease_IndividualSellerName", section: "Mobile App", label: "Single Seller Name", description: "The seller name displayed when Single Seller Mode is enabled.", type: "select" },
   { key: "MobileRelease_MarketWatchEnabled", section: "Mobile App", label: "Show Market Watch", description: "Show or hide the Market Watch tab in the mobile app.", type: "toggle" },
   { key: "MobileRelease_MyAccountSummaryEnabled", section: "Mobile App", label: "Show My Account Summary", description: "Show or hide My Account Summary screen entry in the mobile top bar.", type: "toggle" },
+  { key: "Product_VideoMaxDurationSeconds", section: "Mobile App", label: "Product Video Max Duration (Seconds)", description: "Maximum product video duration sellers can upload.", type: "number" },
   { key: "MobileSecurity_LoginByPin", section: "Mobile Security", label: "Enable PIN Login", description: "Allow users to unlock the app using a PIN code.", type: "toggle" },
   { key: "MobileSecurity_LoginByBiometric", section: "Mobile Security", label: "Enable Biometric Login", description: "Allow users to unlock the app using fingerprint or Face ID.", type: "toggle" },
   { key: "Otp_RequiredActions", section: "OTP Settings", label: "Actions Requiring OTP", description: "Select which actions require OTP verification.", type: "checklist", options: [{ value: "registration", label: "Registration" }, { value: "reset_password", label: "Reset Password" }, { value: "checkout", label: "Checkout" }, { value: "sell", label: "Wallet Sell" }, { value: "transfer", label: "Wallet Transfer" }, { value: "gift", label: "Wallet Gift" }, { value: "pickup", label: "Wallet Pickup" }, { value: "add_bank_account", label: "Add Bank Account" }, { value: "edit_bank_account", label: "Edit Bank Account" }, { value: "remove_bank_account", label: "Remove Bank Account" }, { value: "add_payment_method", label: "Add Payment Method" }, { value: "edit_payment_method", label: "Edit Payment Method" }, { value: "remove_payment_method", label: "Remove Payment Method" }, { value: "change_email", label: "Change Email" }, { value: "change_password", label: "Change Password" }, { value: "change_mobile_number", label: "Change Mobile Number" }] },
@@ -141,7 +142,7 @@ const validate = () => {
     inlineErrors.Otp_EnableWhatsapp = "At least one OTP delivery channel must be enabled.";
     inlineErrors.Otp_EnableEmail = "At least one OTP delivery channel must be enabled.";
   }
-  for (const key of ["Otp_ExpirySeconds", "Otp_ResendCooldownSeconds", "Otp_MaxResendCount", "Otp_MaxVerificationAttempts", "WalletSell_LockSeconds"]) {
+  for (const key of ["Otp_ExpirySeconds", "Otp_ResendCooldownSeconds", "Otp_MaxResendCount", "Otp_MaxVerificationAttempts", "WalletSell_LockSeconds", "Product_VideoMaxDurationSeconds"]) {
     const value = getInt(key);
     if (!Number.isInteger(value) || value <= 0) inlineErrors[key] = "Value must be greater than 0.";
   }
@@ -198,6 +199,7 @@ const saveAll = async () => {
                 <option value="">Select seller</option>
                 <option v-for="seller in sellers" :key="seller.id" :value="seller.name">{{ seller.name }}</option>
               </Select>
+              <Input v-if="meta.type === 'number'" v-model="item!.valueInt" type="number" min="1" step="1" :disabled="isDisabled(meta.key)" />
               <small v-if="inlineErrors[meta.key]" class="ui-form-error">{{ inlineErrors[meta.key] }}</small>
             </div>
           </div>

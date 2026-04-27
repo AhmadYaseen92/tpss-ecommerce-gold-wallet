@@ -341,6 +341,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Sku).IsRequired().HasMaxLength(100);
             entity.Property(x => x.Description).HasMaxLength(1000);
             entity.Property(x => x.ImageUrl).HasMaxLength(1000);
+            entity.Property(x => x.VideoUrl).HasMaxLength(1000);
             entity.Property(x => x.Category).HasConversion<int>();
             entity.Property(x => x.MaterialType).HasConversion<int>();
             entity.Property(x => x.FormType).HasConversion<int>();

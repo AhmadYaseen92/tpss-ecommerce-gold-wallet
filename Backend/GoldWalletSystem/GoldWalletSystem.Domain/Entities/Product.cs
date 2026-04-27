@@ -8,6 +8,7 @@ public class Product : BaseEntity
     public string Sku { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
+    public string VideoUrl { get; set; } = string.Empty;
     public ProductCategory Category { get; set; } = ProductCategory.Gold;
     public ProductMaterialType MaterialType { get; set; } = ProductMaterialType.Gold;
     public ProductFormType FormType { get; set; } = ProductFormType.Jewelry;

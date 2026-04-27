@@ -78,6 +78,7 @@ class ProductRepositoryImpl implements IProductRepository {
 
   ProductEntity _toEntity(ProductRemoteModel model) {
     final normalizedImageUrl = _normalizeImageUrl(model.imageUrl);
+    final normalizedVideoUrl = _normalizeImageUrl(model.videoUrl);
 
     return ProductEntity(
       id: model.id.toString(),
@@ -90,6 +91,7 @@ class ProductRepositoryImpl implements IProductRepository {
       sellPrice: model.sellPrice,
       availableStock: model.availableStock,
       imageUrl: normalizedImageUrl,
+      videoUrl: normalizedVideoUrl,
       category: _categoryLabelById(model.categoryId),
       categoryId: model.categoryId,
       isFavorite: _favoriteProductIds.contains(model.id.toString()),

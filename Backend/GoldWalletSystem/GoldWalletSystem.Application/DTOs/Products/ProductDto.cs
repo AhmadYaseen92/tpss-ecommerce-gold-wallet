@@ -8,6 +8,7 @@ public sealed record ProductDto(
     string Sku,
     string Description,
     string ImageUrl,
+    string VideoUrl,
     ProductCategory Category,
     ProductMaterialType MaterialType,
     ProductFormType FormType,

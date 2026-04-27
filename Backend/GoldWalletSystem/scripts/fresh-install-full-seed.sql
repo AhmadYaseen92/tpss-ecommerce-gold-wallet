@@ -189,11 +189,12 @@ BEGIN TRY
             T.[BaseMarketPrice] = S.[Price],
             T.[ManualSellPrice] = S.[Price],
             T.[ImageUrl] = S.[ImageUrl],
+            T.[VideoUrl] = N'',
             T.[IsActive] = 1,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([SellerId],[Name],[Sku],[Description],[AvailableStock],[Category],[MaterialType],[FormType],[PricingMode],[PurityKarat],[PurityFactor],[WeightValue],[WeightUnit],[BaseMarketPrice],[ManualSellPrice],[OfferPercent],[OfferNewPrice],[OfferType],[IsHasOffer],[ImageUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[AvailableStock],S.[Category],CASE WHEN S.[Category] IN (2,6) THEN 2 WHEN S.[Category] = 9 THEN 3 ELSE 1 END,CASE WHEN S.[Category] IN (8,9) THEN 1 WHEN S.[Category] IN (5,6) THEN 2 ELSE 3 END,1,1,1.0,S.[WeightValue],S.[WeightUnit],S.[Price],S.[Price],0,0,0,0,S.[ImageUrl],1,@Now,NULL);
+        INSERT ([SellerId],[Name],[Sku],[Description],[AvailableStock],[Category],[MaterialType],[FormType],[PricingMode],[PurityKarat],[PurityFactor],[WeightValue],[WeightUnit],[BaseMarketPrice],[ManualSellPrice],[OfferPercent],[OfferNewPrice],[OfferType],[IsHasOffer],[ImageUrl],[VideoUrl],[IsActive],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[SellerId],S.[Name],S.[Sku],S.[Description],S.[AvailableStock],S.[Category],CASE WHEN S.[Category] IN (2,6) THEN 2 WHEN S.[Category] = 9 THEN 3 ELSE 1 END,CASE WHEN S.[Category] IN (8,9) THEN 1 WHEN S.[Category] IN (5,6) THEN 2 ELSE 3 END,1,1,1.0,S.[WeightValue],S.[WeightUnit],S.[Price],S.[Price],0,0,0,0,S.[ImageUrl],N'',1,@Now,NULL);
 
     ------------------------------------------------------------
     -- WalletAssets portfolio rows
@@ -246,6 +247,7 @@ BEGIN TRY
             (N'MobileRelease_MarketWatchEnabled', N'Mobile Release Market Watch Enabled', N'Mobile release flag to enable Market Watch tab in Product screen', 2, CAST(0 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'MobileRelease_MyAccountSummaryEnabled', N'Mobile Release My Account Summary Enabled', N'Mobile release flag to show My Account Summary entry in top bar', 2, CAST(0 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'MobileSecurity_LoginByBiometric', N'Mobile Security Login By Biometric', N'Allow biometric quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
+            (N'Product_VideoMaxDurationSeconds', N'Product Video Max Duration Seconds', N'Max allowed uploaded product video duration in seconds', 3, NULL, 30, NULL, NULL, CAST(0 AS bit)),
             (N'MobileSecurity_LoginByPin', N'Mobile Security Login By PIN', N'Allow PIN quick unlock on mobile', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'Otp_EnableWhatsapp', N'OTP Enable WhatsApp', N'Enable OTP delivery over WhatsApp channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),
             (N'Otp_EnableEmail', N'OTP Enable Email', N'Enable OTP delivery over Email channel', 2, CAST(1 AS bit), NULL, NULL, NULL, CAST(0 AS bit)),

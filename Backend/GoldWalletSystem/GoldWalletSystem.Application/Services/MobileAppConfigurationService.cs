@@ -97,7 +97,8 @@ public class MobileAppConfigurationService(IMobileAppConfigurationRepository rep
                      MobileAppConfigurationKeys.OtpResendCooldownSeconds,
                      MobileAppConfigurationKeys.OtpMaxResendCount,
                      MobileAppConfigurationKeys.OtpMaxVerificationAttempts,
-                     MobileAppConfigurationKeys.WalletSellLockSeconds
+                     MobileAppConfigurationKeys.WalletSellLockSeconds,
+                     MobileAppConfigurationKeys.ProductVideoMaxDurationSeconds
                  })
         {
             if (!map.ContainsKey(key)) continue;

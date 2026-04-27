@@ -11,6 +11,7 @@ public sealed class ProductManagementDto
     public string Sku { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
+    public string VideoUrl { get; set; } = string.Empty;
     public ProductCategory Category { get; set; }
     public ProductMaterialType MaterialType { get; set; }
     public ProductFormType FormType { get; set; }

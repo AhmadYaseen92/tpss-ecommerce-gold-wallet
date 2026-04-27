@@ -46,6 +46,7 @@ const openManageFees = () => {
     @save-market-prices="pm.saveMarketPrices"
     @update-market-price="pm.updateMarketPriceField"
     @image="pm.onProductImageChange"
+    @video="pm.onProductVideoChange"
     @update:search-term="pm.productSearchTerm.value = $event"
     @update:active-filter="pm.activeFilter.value = $event"
     @update:material-type-filter="pm.materialTypeFilter.value = $event"

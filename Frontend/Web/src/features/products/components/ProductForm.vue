@@ -30,12 +30,14 @@ const props = withDefaults(
 const emit = defineEmits<{
   save: [];
   image: [event: Event];
+  video: [event: Event];
 }>();
 
 const tab = ref<"basics" | "pricing" | "offer" | "stock" | "fees">("basics");
 const lastGoldKarat = ref(3);
 const lastSilverPurity = ref(0.999);
 const imagePreviewUrl = ref("");
+const videoPreviewUrl = ref("");
 
 const isAuto = computed(() => Number(props.model.pricingMode) === 1);
 const isGold = computed(() => Number(props.model.materialType) === 1);
@@ -222,9 +224,23 @@ watch(
   { immediate: true }
 );
 
+watch(
+  () => props.model.videoFile,
+  (file) => {
+    if (videoPreviewUrl.value.startsWith("blob:")) {
+      URL.revokeObjectURL(videoPreviewUrl.value);
+    }
+    videoPreviewUrl.value = file ? URL.createObjectURL(file) : "";
+  },
+  { immediate: true }
+);
+
 onBeforeUnmount(() => {
   if (imagePreviewUrl.value.startsWith("blob:")) {
     URL.revokeObjectURL(imagePreviewUrl.value);
+  }
+  if (videoPreviewUrl.value.startsWith("blob:")) {
+    URL.revokeObjectURL(videoPreviewUrl.value);
   }
 });
 </script>
@@ -355,6 +371,14 @@ onBeforeUnmount(() => {
       <FormField label="Image">
         <input type="file" accept="image/*" @change="emit('image', $event)" />
       </FormField>
+
+      <FormField label="Video (optional)" hint="MP4/WebM up to configured max duration.">
+        <input type="file" accept="video/*" @change="emit('video', $event)" />
+      </FormField>
+
+      <div v-if="model.videoFile || model.existingVideoUrl" class="ui-row-inline">
+        <video :src="model.videoFile ? videoPreviewUrl : model.existingVideoUrl" controls style="max-width: 240px; border-radius: 8px;" />
+      </div>
     </Card>
 
     <Card v-if="tab === 'pricing'" title="Pricing">

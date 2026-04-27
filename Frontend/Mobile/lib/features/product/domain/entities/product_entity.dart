@@ -10,6 +10,7 @@ class ProductEntity {
     required this.sellPrice,
     required this.availableStock,
     required this.imageUrl,
+    required this.videoUrl,
     required this.category,
     required this.categoryId,
     required this.isFavorite,
@@ -37,6 +38,7 @@ class ProductEntity {
   final double sellPrice;
   final int availableStock;
   final String imageUrl;
+  final String videoUrl;
   final String category;
   final int categoryId;
   final bool isFavorite;
@@ -64,6 +66,7 @@ class ProductEntity {
     double? sellPrice,
     int? availableStock,
     String? imageUrl,
+    String? videoUrl,
     String? category,
     int? categoryId,
     bool? isFavorite,
@@ -91,6 +94,7 @@ class ProductEntity {
       sellPrice: sellPrice ?? this.sellPrice,
       availableStock: availableStock ?? this.availableStock,
       imageUrl: imageUrl ?? this.imageUrl,
+      videoUrl: videoUrl ?? this.videoUrl,
       category: category ?? this.category,
       categoryId: categoryId ?? this.categoryId,
       isFavorite: isFavorite ?? this.isFavorite,
