@@ -31,7 +31,7 @@ import type {
 } from "../types/apiTypes";
 
 const toRole = (role: string): "Admin" | "Seller" => (role === "Admin" ? "Admin" : "Seller");
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5095").replace(/\/$/, "");
 
 const toAbsoluteImageUrl = (value: unknown): string => {
   const path = String(value ?? "").trim();
