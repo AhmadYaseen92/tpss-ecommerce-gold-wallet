@@ -251,12 +251,25 @@ onMounted(() => {
         </div>
       </Card>
 
-      <Card v-if="selectedDocumentUrl" title="Document Viewer">
+      <Card title="KYC Actions">
         <div class="ui-row-actions">
-          <a :href="selectedDocumentUrl" :download="selectedDocumentName">
-            <Button variant="warning">Download</Button>
-          </a>
-          <Button variant="ghost" @click="closeViewer">Close Viewer</Button>
+          <Button variant="success" @click="setKyc('approve')">Approve</Button>
+          <Button variant="danger" @click="setKyc('reject')">Reject</Button>
+          <Button variant="warning" @click="setKyc('block')">Block</Button>
+        </div>
+      </Card>
+    </template>
+
+    <div v-if="selectedDocumentUrl" class="common-modal-overlay" @click.self="closeViewer">
+      <div class="common-modal document-modal">
+        <div class="document-modal-header">
+          <h3>{{ selectedDocumentName || "Document Viewer" }}</h3>
+          <div class="ui-row-actions">
+            <a :href="selectedDocumentUrl" :download="selectedDocumentName">
+              <Button variant="warning">Download</Button>
+            </a>
+            <Button variant="ghost" @click="closeViewer">Close</Button>
+          </div>
         </div>
 
         <div class="viewer-wrap">
@@ -273,28 +286,36 @@ onMounted(() => {
             class="viewer-frame"
           />
         </div>
-      </Card>
-
-      <Card title="KYC Actions">
-        <div class="ui-row-actions">
-          <Button variant="success" @click="setKyc('approve')">Approve</Button>
-          <Button variant="danger" @click="setKyc('reject')">Reject</Button>
-          <Button variant="warning" @click="setKyc('block')">Block</Button>
-        </div>
-      </Card>
-    </template>
+      </div>
+    </div>
   </section>
 </template>
 
 <style scoped>
+.document-modal {
+  width: min(1200px, 95vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.document-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .viewer-wrap {
-  margin-top: 1rem;
   width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .viewer-frame {
   width: 100%;
-  min-height: 70vh;
+  height: 75vh;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 0.5rem;
   background: #fff;
@@ -302,7 +323,7 @@ onMounted(() => {
 
 .viewer-image {
   max-width: 100%;
-  max-height: 70vh;
+  max-height: 75vh;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 0.5rem;
   background: #fff;
