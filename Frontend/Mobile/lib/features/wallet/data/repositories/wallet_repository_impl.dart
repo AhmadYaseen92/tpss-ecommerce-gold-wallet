@@ -58,7 +58,7 @@ class WalletRepositoryImpl implements IWalletRepository {
       final transactions = assets
           .map((asset) => _toTransactionEntity(category, asset, snapshots[asset.id]))
           .toList();
-      final totalWeightInGrams = transactions.fold<double>(0, (sum, tx) => sum + tx.weightInGrams * tx.quantity);
+      final totalWeightInGrams = transactions.fold<double>(0, (sum, tx) => sum + tx.weightInGrams);
       final totalMarket = transactions.fold<double>(0, (sum, tx) => sum + tx.marketValueAmount);
       final totalBuy = assets.fold<double>(0, (sum, asset) => sum + (asset.averageBuyPrice * asset.quantity));
       final changePercent = totalBuy == 0 ? 0 : ((totalMarket - totalBuy) / totalBuy) * 100;
