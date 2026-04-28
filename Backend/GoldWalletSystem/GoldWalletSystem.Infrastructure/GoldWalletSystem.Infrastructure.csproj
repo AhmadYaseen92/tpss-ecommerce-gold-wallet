@@ -35,4 +35,11 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Database\Seed\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Database\Seed\%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
 </Project>

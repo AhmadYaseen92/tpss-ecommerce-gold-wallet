@@ -3,6 +3,7 @@ using GoldWalletSystem.API.Hubs;
 using GoldWalletSystem.API.Middleware;
 using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
+using GoldWalletSystem.Infrastructure.Database.Seed;
 using GoldWalletSystem.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
@@ -98,6 +99,8 @@ builder.Services.AddScoped<IMarketplaceRealtimeNotifier, MarketplaceRealtimeNoti
 builder.Services.AddScoped<GoldWalletSystem.Application.Interfaces.Services.INotificationRealtimePublisher, SignalRNotificationRealtimePublisher>();
 
 var app = builder.Build();
+
+await app.Services.EnsureDatabaseSeededSafeAsync();
 
 if (app.Environment.IsDevelopment())
 {
