@@ -838,21 +838,22 @@ public class WebAdminController(
 
         var query = dbContext.TransactionFeeBreakdowns
             .AsNoTracking()
-            .Where(x => x.TransactionHistoryId.HasValue);
+            .Where(x => x.TransactionHistoryId.HasValue)
+            .Join(
+                dbContext.TransactionHistories.AsNoTracking(),
+                fee => fee.TransactionHistoryId!.Value,
+                history => history.Id,
+                (fee, history) => new { Fee = fee, History = history });
 
         if (sellerScope.HasValue)
         {
-            query = query.Where(x => x.SellerId == sellerScope.Value);
+            query = query.Where(x => x.Fee.SellerId == sellerScope.Value);
         }
 
         if (fromUtc.HasValue || toUtc.HasValue)
         {
-            var historyQuery = dbContext.TransactionHistories.AsNoTracking().AsQueryable();
-            if (fromUtc.HasValue) historyQuery = historyQuery.Where(x => x.CreatedAtUtc >= fromUtc.Value);
-            if (toUtc.HasValue) historyQuery = historyQuery.Where(x => x.CreatedAtUtc <= toUtc.Value);
-
-            var historyIds = await historyQuery.Select(x => x.Id).ToListAsync(cancellationToken);
-            query = query.Where(x => x.TransactionHistoryId.HasValue && historyIds.Contains(x.TransactionHistoryId.Value));
+            if (fromUtc.HasValue) query = query.Where(x => x.History.CreatedAtUtc >= fromUtc.Value);
+            if (toUtc.HasValue) query = query.Where(x => x.History.CreatedAtUtc <= toUtc.Value);
         }
 
         if (normalizedGroup != "all")
@@ -870,7 +871,7 @@ public class WebAdminController(
             if (tokens.Length > 0)
             {
                 query = query.Where(x => tokens.Any(token =>
-                    x.FeeCode.ToLower().Contains(token) || x.FeeName.ToLower().Contains(token)));
+                    x.Fee.FeeCode.ToLower().Contains(token) || x.Fee.FeeName.ToLower().Contains(token)));
             }
         }
 
@@ -880,15 +881,24 @@ public class WebAdminController(
             .ToListAsync(cancellationToken);
         var sellerLookup = sellers.ToDictionary(x => x.Id, x => x.Name);
 
-        var rows = await query
-            .GroupBy(x => new
+        var rawRows = await query
+            .Select(x => new
             {
-                SellerId = x.SellerId ?? 0,
-                x.FeeCode,
-                x.FeeName,
-                x.CalculationMode,
-                x.Currency
+                SellerId = x.Fee.SellerId ?? 0,
+                x.Fee.FeeCode,
+                x.Fee.FeeName,
+                x.Fee.CalculationMode,
+                x.Fee.Currency,
+                x.Fee.AppliedRate,
+                x.Fee.AppliedValue,
+                x.History.TransactionType,
+                x.History.CreatedAtUtc,
+                TransactionHistoryId = x.History.Id
             })
+            .ToListAsync(cancellationToken);
+
+        var rows = rawRows
+            .GroupBy(x => new { x.SellerId, x.FeeCode, x.FeeName, x.CalculationMode, x.Currency })
             .Select(g => new WebFeeBreakdownReportRowDto
             {
                 SellerId = $"s-{g.Key.SellerId}",
@@ -896,13 +906,15 @@ public class WebAdminController(
                 FeeCode = g.Key.FeeCode,
                 FeeName = g.Key.FeeName,
                 CalculationMode = g.Key.CalculationMode,
-                AppliedRate = g.Average(x => x.AppliedRate),
+                AppliedRate = g.Any(x => x.AppliedRate.HasValue) ? g.Where(x => x.AppliedRate.HasValue).Average(x => x.AppliedRate) : null,
                 TransactionsCount = g.Select(x => x.TransactionHistoryId).Distinct().Count(),
                 CollectedAmount = g.Sum(x => x.AppliedValue),
-                Currency = g.Key.Currency
+                Currency = g.Key.Currency,
+                TransactionTypes = string.Join(", ", g.Select(x => x.TransactionType).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase)),
+                LatestTransactionAt = g.Max(x => (DateTime?)x.CreatedAtUtc)
             })
             .OrderByDescending(x => x.CollectedAmount)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         foreach (var row in rows)
         {

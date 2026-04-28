@@ -195,6 +195,8 @@ public class WebFeeBreakdownReportRowDto
     public int TransactionsCount { get; set; }
     public decimal CollectedAmount { get; set; }
     public string Currency { get; set; } = "USD";
+    public string TransactionTypes { get; set; } = string.Empty;
+    public DateTime? LatestTransactionAt { get; set; }
 }
 
 public class WebNotificationDto

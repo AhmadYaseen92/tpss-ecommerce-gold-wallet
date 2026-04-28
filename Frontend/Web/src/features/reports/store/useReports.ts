@@ -203,8 +203,13 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
           .map((row) => ({
             Seller: row.sellerName,
             "Fee Type": selected.label,
+            "Fee Code": row.feeCode,
+            "Calculation Mode": row.calculationMode,
             "Configured Rate": row.appliedRate ?? selected.config,
             Unit: selected.unit,
+            Currency: row.currency,
+            "Transaction Types": row.transactionTypes || "-",
+            "Latest Transaction": row.latestTransactionAt ? reportService.dateLabel(row.latestTransactionAt) : "-",
             Transactions: row.transactionsCount,
             "Collected Amount": Number(row.collectedAmount ?? 0)
           }));

@@ -261,6 +261,8 @@ export interface WebFeeBreakdownReportRowDto {
   transactionsCount: number;
   collectedAmount: number;
   currency: string;
+  transactionTypes: string;
+  latestTransactionAt?: string | null;
 }
 
 export interface WebInvestorDto {
