@@ -62,7 +62,7 @@ const emit = defineEmits<{
 }
 
 .form-group label {
-  color: #5f4a12;
+  color: #f8e7b0;
   font-size: 13px;
   font-weight: 700;
 }
@@ -70,10 +70,10 @@ const emit = defineEmits<{
 .form-group input {
   width: 100%;
   height: 46px;
-  border: 1px solid rgba(128, 95, 22, 0.35);
+  border: 1px solid rgba(214, 168, 45, 0.3);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #2a2113;
+  background: rgba(18, 16, 10, 0.82);
+  color: #fff8e6;
   padding: 0 14px;
   font-size: 14px;
   outline: none;
@@ -81,12 +81,12 @@ const emit = defineEmits<{
 }
 
 .input-hint {
-  color: rgba(74, 58, 26, 0.82);
+  color: rgba(255, 248, 230, 0.62);
   font-size: 12px;
 }
 
 .form-group input::placeholder {
-  color: rgba(78, 60, 24, 0.58);
+  color: rgba(255, 248, 230, 0.45);
 }
 
 .form-group input:focus {
@@ -105,7 +105,7 @@ const emit = defineEmits<{
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: rgba(74, 58, 26, 0.9);
+  color: rgba(255, 248, 230, 0.82);
   font-size: 13px;
   cursor: pointer;
 }
@@ -119,7 +119,7 @@ const emit = defineEmits<{
 .link-btn {
   border: 0;
   background: transparent;
-  color: #b18212;
+  color: #f0c34a;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -127,7 +127,7 @@ const emit = defineEmits<{
 }
 
 .link-btn:hover {
-  color: #8e6508;
+  color: #ffe08a;
   text-decoration: underline;
 }
 
@@ -157,43 +157,9 @@ const emit = defineEmits<{
 
 .register-text {
   margin: 4px 0 0;
-  color: rgba(74, 58, 26, 0.82);
+  color: rgba(255, 248, 230, 0.78);
   font-size: 13px;
   text-align: center;
-}
-
-:global(:root.dark-mode) .form-group label {
-  color: #f8e7b0;
-}
-
-:global(:root.dark-mode) .form-group input {
-  border: 1px solid rgba(214, 168, 45, 0.3);
-  background: rgba(18, 16, 10, 0.82);
-  color: #fff8e6;
-}
-
-:global(:root.dark-mode) .input-hint {
-  color: rgba(255, 248, 230, 0.62);
-}
-
-:global(:root.dark-mode) .form-group input::placeholder {
-  color: rgba(255, 248, 230, 0.45);
-}
-
-:global(:root.dark-mode) .remember {
-  color: rgba(255, 248, 230, 0.82);
-}
-
-:global(:root.dark-mode) .link-btn {
-  color: #f0c34a;
-}
-
-:global(:root.dark-mode) .link-btn:hover {
-  color: #ffe08a;
-}
-
-:global(:root.dark-mode) .register-text {
-  color: rgba(255, 248, 230, 0.78);
 }
 
 @media (max-width: 520px) {
