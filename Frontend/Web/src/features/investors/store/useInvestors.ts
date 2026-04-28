@@ -24,7 +24,7 @@ export function useInvestors(marketplace: ReturnTypeUseMarketplace) {
 
     return {
       ...inv,
-      investorNumericId: Number(String(inv.id).replace("i-", "")) || 0,
+      investorNumericId: Number(String(inv.id).replace(/\D/g, "")) || 0,
       phoneNumber: inv.phoneNumber ?? "-",
       walletBalance: Number(inv.walletBalance ?? 0),
       riskLevel: inv.riskLevel ?? "medium",

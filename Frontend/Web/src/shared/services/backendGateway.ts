@@ -59,15 +59,15 @@ const mapSession = (dto: LoginResponseDto): UserSession => ({
 const normalizeSellerId = (value: unknown): string | undefined => {
   const raw = String(value ?? "").trim();
   if (!raw) return undefined;
-  if (raw.startsWith("s-")) return raw;
+  if (/^S\d{3,}$/i.test(raw)) return raw.toUpperCase();
   const parsed = Number(raw);
-  if (Number.isFinite(parsed) && parsed > 0) return `s-${Math.trunc(parsed)}`;
+  if (Number.isFinite(parsed) && parsed > 0) return `S${String(Math.trunc(parsed)).padStart(3, "0")}`;
   return raw;
 };
 
 const mapSeller = (dto: WebSellerDto): Seller => ({
   id: dto.id,
-  sellerId: Number(dto.id.replace("s-", "")) || 0,
+  sellerId: Number(String(dto.id).replace(/\D/g, "")) || 0,
   name: dto.name,
   email: dto.email,
   businessName: dto.businessName,
