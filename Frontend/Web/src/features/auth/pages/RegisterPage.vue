@@ -144,7 +144,7 @@ const openPrivacyModal = async () => {
 </script>
 
 <template>
-  <section class="login-page">
+  <section class="login-page" :class="{ 'dark-auth': props.isDark }">
     <button class="theme-toggle-btn" type="button" @click="emit('themeToggle')">
       {{ props.isDark ? "Light Theme" : "Dark Theme" }}
     </button>
@@ -162,6 +162,27 @@ const openPrivacyModal = async () => {
 </template>
 
 <style scoped>
+.login-page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.68), rgba(246, 242, 232, 0.92) 58%, rgba(240, 234, 222, 0.98)),
+    url("/images/gold-wallet-login.png");
+  background-size: cover;
+  background-position: left center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+}
+
+.login-page.dark-auth {
+  background:
+    linear-gradient(90deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.9) 58%, rgba(7, 7, 6, 0.98)),
+    url("/images/gold-wallet-login.png");
+}
+
 .auth-card-register {
   width: min(1080px, 96vw);
   background: color-mix(in srgb, var(--surface-solid) 86%, transparent);

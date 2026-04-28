@@ -53,7 +53,7 @@ const onForgot = () => {
 </script>
 
 <template>
-  <section class="login-page">
+  <section class="login-page" :class="{ 'dark-auth': props.isDark }">
     <div class="login-overlay"></div>
 
     <div class="login-shell">
@@ -206,6 +206,12 @@ const onForgot = () => {
 }
 
 :global(:root.dark-mode) .login-page {
+  background:
+    linear-gradient(90deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.9) 58%, rgba(7, 7, 6, 0.98)),
+    url("/images/gold-wallet-login.png");
+}
+
+.login-page.dark-auth {
   background:
     linear-gradient(90deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.9) 58%, rgba(7, 7, 6, 0.98)),
     url("/images/gold-wallet-login.png");
