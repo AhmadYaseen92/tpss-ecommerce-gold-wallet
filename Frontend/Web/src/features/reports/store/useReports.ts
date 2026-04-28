@@ -46,6 +46,7 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     transactionStatus: "all",
     paymentStatus: "all",
     walletActionType: "all",
+    feeType: "all",
     invoiceNumber: "",
     orderNumber: "",
     userName: "",
@@ -118,6 +119,14 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
           { title: "Grand Total", value: numeric("Grand Total").toFixed(2), trend: "Invoice value" },
           { title: "Paid", value: numeric("Paid Amount").toFixed(2), trend: "Collections" },
           { title: "Unpaid", value: numeric("Unpaid Amount").toFixed(2), trend: "Outstanding" }
+        ];
+        break;
+      case "fees":
+        summaryMetrics.value = [
+          ...common,
+          { title: "Total Collected", value: numeric("Collected Amount").toFixed(2), trend: "All fee types" },
+          { title: "Configured Types", value: String(rows.length), trend: "Fee categories" },
+          { title: "Billed Transactions", value: String(numeric("Transactions")), trend: "With fee usage" }
         ];
         break;
       default:
@@ -281,12 +290,63 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
           }));
           break;
         case "fees":
-          rows = [{
-            "Delivery Fees": stateSnapshot.value.fees.deliveryFee,
-            "Storage Fees": stateSnapshot.value.fees.storageFee,
-            "Service Fees %": stateSnapshot.value.fees.serviceChargePercent,
-            "Collected (Estimated)": visibleInvoices.value.reduce((sum, invoice) => sum + (invoice.totalAmount * stateSnapshot.value.fees.serviceChargePercent) / 100, 0)
-          }];
+          {
+            const feeRows = [
+              {
+                key: "delivery",
+                "Fee Type": "Delivery Fee",
+                Configuration: stateSnapshot.value.fees.deliveryFee,
+                Unit: "fixed",
+                Transactions: 0,
+                "Collected Amount": 0
+              },
+              {
+                key: "storage",
+                "Fee Type": "Storage Fee",
+                Configuration: stateSnapshot.value.fees.storageFee,
+                Unit: "fixed",
+                Transactions: 0,
+                "Collected Amount": 0
+              },
+              {
+                key: "service",
+                "Fee Type": "Service Fee",
+                Configuration: stateSnapshot.value.fees.serviceChargePercent,
+                Unit: "percent",
+                Transactions: 0,
+                "Collected Amount": 0
+              }
+            ];
+
+            visibleRequests.value.forEach((request) => {
+              (request.feeBreakdowns ?? []).forEach((fee) => {
+                const code = `${fee.feeCode} ${fee.feeName}`.toLowerCase();
+                const amount = Number(fee.appliedValue ?? 0);
+                if (code.includes("delivery")) {
+                  feeRows[0].Transactions += 1;
+                  feeRows[0]["Collected Amount"] += amount;
+                } else if (code.includes("storage")) {
+                  feeRows[1].Transactions += 1;
+                  feeRows[1]["Collected Amount"] += amount;
+                } else if (code.includes("service")) {
+                  feeRows[2].Transactions += 1;
+                  feeRows[2]["Collected Amount"] += amount;
+                }
+              });
+            });
+
+            if (feeRows[2].Transactions === 0 && feeRows[2]["Collected Amount"] === 0) {
+              feeRows[2]["Collected Amount"] = visibleInvoices.value.reduce(
+                (sum, invoice) => sum + (invoice.totalAmount * stateSnapshot.value.fees.serviceChargePercent) / 100,
+                0
+              );
+              feeRows[2].Transactions = visibleInvoices.value.length;
+            }
+
+            rows = feeRows
+              .filter((row) => reportFilters.feeType === "all" || row.key === reportFilters.feeType)
+              .map(({ key, ...row }) => row);
+          }
           break;
         default:
           rows = [];
@@ -327,6 +387,7 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     reportFilters.transactionStatus = "all";
     reportFilters.paymentStatus = "all";
     reportFilters.walletActionType = "all";
+    reportFilters.feeType = "all";
     reportFilters.invoiceNumber = "";
     reportFilters.orderNumber = "";
     reportFilters.userName = "";
