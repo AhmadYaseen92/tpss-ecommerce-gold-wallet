@@ -498,25 +498,25 @@ const saveAllChanges = async () => {
 
 <style scoped>
 .tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-.tabs button.active { background: #f59e0b; color: #fff; }
+.tabs button.active { background: var(--primary); color: var(--text-inverse); }
 .grid { display:grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 8px; margin-bottom: 8px; }
 .actions-grid { display:flex; gap: 12px; margin: 10px 0; }
-.bulk-setup { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.bulk-setup { border: 1px solid var(--border-strong); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: var(--surface-elevated); }
 .bulk-grid { display:grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 8px; margin-bottom: 8px; }
 .admin-fee-cards { display: grid; gap: 10px; margin-bottom: 16px; }
-.fee-card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; background: #fff; }
+.fee-card { border: 1px solid var(--border-strong); border-radius: 10px; padding: 12px; background: var(--surface-elevated); color: var(--text); }
 .fee-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .fee-card-header h4 { margin: 0; }
 .fee-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .inline-toggle { display: inline-flex; align-items: center; gap: 6px; }
-.row-inherited { background: #fafafa; }
-.row-custom { background: #fff7e6; }
-.row-disabled { opacity: 0.65; background: #f5f5f5; }
-.muted { color: #8b8b8b; }
+.row-inherited { background: color-mix(in srgb, var(--surface-solid) 88%, var(--bg)); }
+.row-custom { background: color-mix(in srgb, var(--warning-soft) 35%, var(--surface-elevated)); }
+.row-disabled { opacity: 0.7; background: color-mix(in srgb, var(--surface-solid) 70%, var(--bg-soft)); }
+.muted { color: var(--text-muted); }
 .value-editor { display: grid; grid-template-columns: repeat(2, minmax(100px, 1fr)); gap: 6px; align-items: center; }
 .badge { margin-left: 6px; font-size: 11px; padding: 1px 6px; border-radius: 8px; }
-.badge.inherited { background: #edf2f7; color: #4a5568; }
-.badge.custom { background: #fef3c7; color: #92400e; }
+.badge.inherited { background: color-mix(in srgb, var(--info-soft) 70%, transparent); color: var(--text-soft); }
+.badge.custom { background: color-mix(in srgb, var(--warning-soft) 70%, transparent); color: #92400e; }
 .table-toolbar { margin-bottom: 8px; display: flex; justify-content: flex-end; }
 .pager { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
 </style>

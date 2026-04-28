@@ -96,7 +96,7 @@ const onForgot = () => {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.9) 58%, rgba(7, 7, 6, 0.98)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.68), rgba(246, 242, 232, 0.92) 58%, rgba(240, 234, 222, 0.98)),
     url("/images/gold-wallet-login.png");
   background-size: cover;
   background-position: left center;
@@ -130,8 +130,8 @@ const onForgot = () => {
   right: 0;
   top: -40px;
   border: 1px solid rgba(241, 195, 75, 0.45);
-  background: rgba(8, 8, 8, 0.35);
-  color: #fff8e6;
+  background: var(--surface-elevated);
+  color: var(--text);
   border-radius: 999px;
   font-size: 12px;
   font-weight: 800;
@@ -143,7 +143,7 @@ const onForgot = () => {
 
 .brand-panel {
   max-width: 520px;
-  color: #fff4d0;
+  color: var(--text);
   margin-top: 260px;
 }
 
@@ -166,7 +166,7 @@ const onForgot = () => {
 .brand-panel p:not(.brand-kicker) {
   margin: 18px 0 0;
   max-width: 460px;
-  color: rgba(255, 244, 208, 0.74);
+  color: var(--text-soft);
   font-size: 16px;
   line-height: 1.7;
 }
@@ -175,10 +175,8 @@ const onForgot = () => {
   width: 100%;
   border: 1px solid rgba(214, 168, 45, 0.35);
   border-radius: 26px;
-  background: linear-gradient(180deg, rgba(32, 28, 18, 0.88), rgba(12, 11, 8, 0.9));
-  box-shadow:
-    0 28px 80px rgba(0, 0, 0, 0.55),
-    0 0 45px rgba(214, 168, 45, 0.12);
+  background: color-mix(in srgb, var(--surface-solid) 94%, transparent);
+  box-shadow: var(--shadow-lg);
   backdrop-filter: blur(16px);
   padding: 34px;
 }
@@ -194,7 +192,7 @@ const onForgot = () => {
 
 .auth-card h1 {
   margin: 0;
-  color: #fff8e6;
+  color: var(--text);
   font-size: 34px;
   line-height: 1.1;
   font-weight: 900;
@@ -202,9 +200,43 @@ const onForgot = () => {
 
 .login-subtitle {
   margin: 10px 0 28px;
-  color: rgba(255, 248, 230, 0.72);
+  color: var(--text-muted);
   font-size: 14px;
   line-height: 1.6;
+}
+
+:global(:root.dark-mode) .login-page {
+  background:
+    linear-gradient(90deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.9) 58%, rgba(7, 7, 6, 0.98)),
+    url("/images/gold-wallet-login.png");
+}
+
+:global(:root.dark-mode) .theme-toggle-btn {
+  background: rgba(8, 8, 8, 0.35);
+  color: #fff8e6;
+}
+
+:global(:root.dark-mode) .brand-panel {
+  color: #fff4d0;
+}
+
+:global(:root.dark-mode) .brand-panel p:not(.brand-kicker) {
+  color: rgba(255, 244, 208, 0.74);
+}
+
+:global(:root.dark-mode) .auth-card {
+  background: linear-gradient(180deg, rgba(32, 28, 18, 0.88), rgba(12, 11, 8, 0.9));
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.55),
+    0 0 45px rgba(214, 168, 45, 0.12);
+}
+
+:global(:root.dark-mode) .auth-card h1 {
+  color: #fff8e6;
+}
+
+:global(:root.dark-mode) .login-subtitle {
+  color: rgba(255, 248, 230, 0.72);
 }
 
 @media (max-width: 900px) {

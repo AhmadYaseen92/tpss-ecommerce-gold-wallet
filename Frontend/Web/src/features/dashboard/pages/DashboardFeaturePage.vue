@@ -5,7 +5,7 @@ import { useDashboard } from "../store/useDashboard";
 import DashboardOverviewPage from "./DashboardOverviewPage.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
-const { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions, categoryTransactionSeries, categoryCartSeries } = useDashboard(props.marketplace);
+const { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions, categoryTransactionSeries, categoryCartSeries, pendingKycRequests } = useDashboard(props.marketplace);
 
 onMounted(() => {
   void props.marketplace.refreshMarketplaceState();
@@ -23,5 +23,6 @@ onMounted(() => {
     :category-transaction-series="categoryTransactionSeries"
     :category-cart-series="categoryCartSeries"
     :recent-transactions="recentTransactions"
+    :pending-kyc-requests="pendingKycRequests"
   />
 </template>
