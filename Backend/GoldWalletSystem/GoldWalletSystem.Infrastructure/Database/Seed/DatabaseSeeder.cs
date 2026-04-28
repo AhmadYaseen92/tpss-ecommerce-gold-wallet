@@ -1,6 +1,5 @@
 using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace GoldWalletSystem.Infrastructure.Database.Seed;
@@ -12,7 +11,6 @@ public interface IDatabaseSeeder
 
 public sealed class DatabaseSeeder(
     AppDbContext dbContext,
-    IHostEnvironment hostEnvironment,
     ILogger<DatabaseSeeder> logger) : IDatabaseSeeder
 {
     public async Task SeedIfNeededAsync(CancellationToken cancellationToken = default)
@@ -29,7 +27,7 @@ public sealed class DatabaseSeeder(
             return;
         }
 
-        var scriptPath = ResolveSeedScriptPath(hostEnvironment.ContentRootPath);
+        var scriptPath = ResolveSeedScriptPath();
         if (!File.Exists(scriptPath))
         {
             logger.LogWarning("Database seed script not found at: {ScriptPath}", scriptPath);
@@ -48,14 +46,15 @@ public sealed class DatabaseSeeder(
         logger.LogInformation("Database seed completed successfully.");
     }
 
-    private static string ResolveSeedScriptPath(string contentRootPath)
+    private static string ResolveSeedScriptPath()
     {
-        var candidate1 = Path.Combine(contentRootPath, "Database", "Seed", "sample-data.sql");
-        if (File.Exists(candidate1)) return candidate1;
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "Database", "Seed", "sample-data.sql"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Database", "Seed", "sample-data.sql"),
+            Path.Combine(Directory.GetCurrentDirectory(), "GoldWalletSystem.Infrastructure", "Database", "Seed", "sample-data.sql")
+        };
 
-        var candidate2 = Path.Combine(contentRootPath, "GoldWalletSystem.Infrastructure", "Database", "Seed", "sample-data.sql");
-        if (File.Exists(candidate2)) return candidate2;
-
-        return Path.Combine(AppContext.BaseDirectory, "Database", "Seed", "sample-data.sql");
+        return candidates.FirstOrDefault(File.Exists) ?? candidates[0];
     }
 }

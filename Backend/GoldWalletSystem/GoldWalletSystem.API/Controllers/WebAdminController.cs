@@ -472,7 +472,7 @@ public class WebAdminController(
             .AsNoTracking()
             .Include(x => x.LinkedBankAccounts)
             .Include(x => x.PaymentMethods)
-            .FirstOrDefaultAsync(x => x.UserId == userId.Value, cancellationToken);
+            .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
 
         var details = new WebInvestorProfileDto
         {
@@ -1735,7 +1735,7 @@ public class WebAdminController(
     {
         var wallet = await dbContext.Wallets
             .Include(x => x.Assets)
-            .FirstOrDefaultAsync(x => x.UserId == userId.Value, cancellationToken);
+            .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
 
         if (wallet is not null) return wallet;
 
