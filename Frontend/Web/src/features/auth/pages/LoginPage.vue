@@ -21,7 +21,7 @@ const loading = computed(() => marketplace.loading.value);
 
 const onSubmit = async () => {
   if (!model.email?.trim() || !model.password?.trim()) {
-    await ElMessageBox.alert("Email and password are required.", "Validation Error", {
+    await ElMessageBox.alert("Email or phone and password are required.", "Validation Error", {
       confirmButtonText: "OK",
       type: "warning",
     });

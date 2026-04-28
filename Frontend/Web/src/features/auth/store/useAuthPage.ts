@@ -72,9 +72,10 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
     firstName: nameParts.firstName,
     middleName: nameParts.middleName,
     lastName: nameParts.lastName,
-    email: form.credentials.loginPhone,
+    email: form.credentials.loginEmail || form.ownerInfo.email,
     password: form.credentials.password,
     role: "Seller" as const,
+    phoneNumber: form.credentials.loginPhone || form.ownerInfo.mobile || form.companyInfo.phone,
     companyInfo: {
       companyName: form.companyInfo.companyName,
       companyCode: form.companyInfo.companyCode,
@@ -100,6 +101,7 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
       mobileNumber: form.ownerInfo.mobile,
       emailAddress: form.ownerInfo.email,
       idType: form.ownerInfo.idType,
+      idNumber: form.ownerInfo.idNumber,
       idExpiryDate: normalizeOptionalDate(form.ownerInfo.idExpiry),
     },
     branches: form.branches.map((branch) => ({

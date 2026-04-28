@@ -87,8 +87,18 @@ const onSubmit = async () => {
     return;
   }
 
-  if (!/^\+?[0-9]{8,15}$/.test(model.credentials.loginPhone.trim())) {
-    await showModal("Validation Error", "Login phone number must contain 8 to 15 digits.");
+  if (!model.credentials.loginEmail.trim() && !model.credentials.loginPhone.trim()) {
+    await showModal("Validation Error", "Please provide at least one login identifier (email or phone).");
+    return;
+  }
+
+  if (model.credentials.loginEmail.trim() && !isEmail(model.credentials.loginEmail.trim())) {
+    await showModal("Validation Error", "Login email is invalid.");
+    return;
+  }
+
+  if (model.credentials.loginPhone.trim() && !/^(\+971|0)?5[0-9]{8}$/.test(model.credentials.loginPhone.trim())) {
+    await showModal("Validation Error", "Login phone number must match UAE format (for example: +971501234567).");
     return;
   }
 

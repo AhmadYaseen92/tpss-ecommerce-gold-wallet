@@ -96,6 +96,7 @@ const validateStep = (step: number) => {
     if (!props.model.ownerInfo.mobile?.trim()) missing.push("Mobile Number");
     if (!props.model.ownerInfo.email?.trim()) missing.push("Email Address");
     if (!props.model.ownerInfo.idType?.trim()) missing.push("ID Type");
+    if (!props.model.ownerInfo.idNumber?.trim()) missing.push("ID Number");
     if (!props.model.ownerInfo.idCopy.length) missing.push("Manager ID Copy");
     if (missing.length > 0) return `Manager tab is missing: ${missing.join(", ")}.`;
   }
@@ -108,8 +109,11 @@ const validateStep = (step: number) => {
     if (invalidBank >= 0) return `Bank Account #${invalidBank + 1} is missing required fields: Bank Name, Account Holder, Account Number, or IBAN.`;
   }
   if (step === 4) {
-    const required = [props.model.credentials.loginPhone, props.model.credentials.password, props.model.credentials.confirmPassword];
+    const required = [props.model.credentials.password, props.model.credentials.confirmPassword];
     if (required.some((x) => !x?.trim())) return "Please complete login credentials before continuing.";
+    if (!props.model.credentials.loginEmail?.trim() && !props.model.credentials.loginPhone?.trim()) {
+      return "Please provide at least one login identifier (Email or Phone).";
+    }
     if (props.model.credentials.password !== props.model.credentials.confirmPassword) return "Password and Confirm Password do not match.";
   }
   if (step === 5) {
@@ -262,6 +266,7 @@ function goToStep(idx: number) {
           <option>Passport</option>
         </select>
       </label>
+      <label>ID Number <input v-model="model.ownerInfo.idNumber" required /></label>
       <label>ID Expiry Date <input v-model="model.ownerInfo.idExpiry" type="date" /></label>
       <label>Manager ID Copy <input type="file" @change="setSingleFile(model.ownerInfo.idCopy, $event)" /></label>
       <label>Authorization Letter (if applicable) <input type="file" @change="setSingleFile(model.ownerInfo.authLetter, $event)" /></label>
@@ -330,8 +335,10 @@ function goToStep(idx: number) {
 
     <div v-if="activeStep === 4" :ref="(el) => (stepRefs[4] = el as HTMLElement)" class="form-grid login-step">
       <h2>Login Credentials</h2>
-      <label>Login Phone Number <input v-model="model.credentials.loginPhone" type="tel" required placeholder="Example: +962790000000" /></label>
-      <p class="full login-hint">Use country code and digits only, for example +962790000000.</p>
+      <label>Login Email <input v-model="model.credentials.loginEmail" type="email" placeholder="Example: seller@example.com" /></label>
+      <p class="full login-hint">Use a valid email address if you want to login by email.</p>
+      <label>Login Phone Number <input v-model="model.credentials.loginPhone" type="tel" placeholder="UAE example: +971501234567" /></label>
+      <p class="full login-hint">Use UAE format (+9715XXXXXXXX) if you want to login by phone.</p>
       <label>Password <input v-model="model.credentials.password" type="password" required /></label>
       <label>Confirm Password <input v-model="model.credentials.confirmPassword" type="password" required /></label>
     </div>
@@ -342,6 +349,7 @@ function goToStep(idx: number) {
       <p><strong>Owner/Manager:</strong> {{ model.ownerInfo.name || '-' }}</p>
       <p><strong>Branches:</strong> {{ model.branches.length }}</p>
       <p><strong>Bank Accounts:</strong> {{ model.banks.length }}</p>
+      <p><strong>Login Email:</strong> {{ model.credentials.loginEmail || '-' }}</p>
       <p><strong>Login Phone:</strong> {{ model.credentials.loginPhone || '-' }}</p>
       <label class="inline-check full terms-check">
         <input v-model="model.agreements.termsAccepted" type="checkbox" />

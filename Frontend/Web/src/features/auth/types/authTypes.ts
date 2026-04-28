@@ -40,6 +40,7 @@ export interface OwnerInfoModel {
   mobile: string;
   email: string;
   idType: string;
+  idNumber: string;
   idExpiry: string;
   idCopy: UploadFileList;
   authLetter: UploadFileList;
@@ -74,6 +75,7 @@ export interface BankModel {
 }
 
 export interface CredentialsModel {
+  loginEmail: string;
   loginPhone: string;
   password: string;
   confirmPassword: string;
@@ -155,6 +157,7 @@ export function createEmptyRegisterForm(): RegisterFormModel {
       mobile: "",
       email: "",
       idType: "",
+      idNumber: "",
       idExpiry: "",
       idCopy: [],
       authLetter: [],
@@ -162,6 +165,7 @@ export function createEmptyRegisterForm(): RegisterFormModel {
     branches: [createEmptyBranch()],
     banks: [createEmptyBank()],
     credentials: {
+      loginEmail: "",
       loginPhone: "",
       password: "",
       confirmPassword: "",

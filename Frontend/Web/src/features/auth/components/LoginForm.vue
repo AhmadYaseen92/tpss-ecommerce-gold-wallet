@@ -16,8 +16,9 @@ const emit = defineEmits<{
 <template>
   <form class="login-form" @submit.prevent="emit('submit')">
     <div class="form-group">
-      <label>Email</label>
-      <input v-model="model.email" type="email" placeholder="admin@goldwallet.com" autocomplete="email" />
+      <label>Email or Phone</label>
+      <input v-model="model.email" type="text" placeholder="Email or UAE phone (e.g. +971501234567)" autocomplete="username" />
+      <small class="input-hint">You can sign in using either your email address or phone number.</small>
     </div>
 
     <div class="form-group">
@@ -77,6 +78,11 @@ const emit = defineEmits<{
   font-size: 14px;
   outline: none;
   transition: 0.2s ease;
+}
+
+.input-hint {
+  color: rgba(255, 248, 230, 0.62);
+  font-size: 12px;
 }
 
 .form-group input::placeholder {

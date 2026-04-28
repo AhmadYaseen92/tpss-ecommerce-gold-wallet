@@ -227,9 +227,11 @@ public class AuthService(
         };
     }
 
-    private async Task<User> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken)
+    private async Task<User> ValidateCredentialsAsync(string emailOrPhone, string password, CancellationToken cancellationToken)
     {
-        var user = await userAuthRepository.GetByEmailAsync(email.Trim(), cancellationToken)
+        var loginIdentifier = emailOrPhone.Trim();
+        var user = await userAuthRepository.GetByEmailAsync(loginIdentifier, cancellationToken)
+            ?? await userAuthRepository.GetByPhoneAsync(loginIdentifier, cancellationToken)
             ?? throw new UnauthorizedAccessException("User not found.");
 
         if (!user.IsActive)
@@ -466,9 +468,7 @@ public class AuthService(
         var requiredDocs = new[]
         {
             "CommercialRegistrationDocument",
-            "ArticlesOfAssociation",
             "ProofOfAddress",
-            "VatCertificate",
             "AmlDocumentation",
             "ManagerIdCopy"
         };
