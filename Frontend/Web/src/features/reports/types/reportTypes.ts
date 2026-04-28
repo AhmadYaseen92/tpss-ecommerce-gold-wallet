@@ -23,7 +23,6 @@ export interface ReportFilters {
   transactionStatus: string;
   paymentStatus: string;
   walletActionType: string;
-  feeType: string;
   invoiceNumber: string;
   orderNumber: string;
   userName: string;

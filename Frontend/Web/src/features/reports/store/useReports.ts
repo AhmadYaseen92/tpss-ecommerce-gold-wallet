@@ -19,7 +19,11 @@ const ADMIN_REPORTS: ReportTypeCard[] = [
   { key: "invoices", label: "Invoices", description: "Invoices, payment and status details", audience: "Both" },
   { key: "operations", label: "Requests / Operations", description: "System request flow and trends", audience: "Admin" },
   { key: "kyc", label: "KYC / Onboarding", description: "Seller onboarding decisions", audience: "Admin" },
-  { key: "fees", label: "Fees", description: "Delivery/storage/service fee aggregates", audience: "Admin" }
+  { key: "feeCommission", label: "Commission Per Transaction", description: "Commission fee by seller", audience: "Admin" },
+  { key: "feePremium", label: "Premium / Discount", description: "Premium and discount fee by seller", audience: "Admin" },
+  { key: "feeStorage", label: "Storage / Custody Fee", description: "Storage/custody fee by seller", audience: "Admin" },
+  { key: "feeDelivery", label: "Delivery Fee", description: "Delivery fee by seller", audience: "Admin" },
+  { key: "feeService", label: "Service Fee (Admin)", description: "Platform service fee by seller", audience: "Admin" }
 ];
 
 const SELLER_REPORTS: ReportTypeCard[] = [
@@ -28,7 +32,11 @@ const SELLER_REPORTS: ReportTypeCard[] = [
   { key: "requests", label: "Requests", description: "Own investor requests by status/type", audience: "Seller" },
   { key: "invoices", label: "Invoices", description: "Own invoices and payment state", audience: "Both" },
   { key: "fulfillment", label: "Wallet Pickup / Fulfillment", description: "Pickups, delivery, completion times", audience: "Seller" },
-  { key: "customers", label: "Customer / Investor", description: "Investor interactions and value", audience: "Seller" }
+  { key: "customers", label: "Customer / Investor", description: "Investor interactions and value", audience: "Seller" },
+  { key: "feeCommission", label: "Commission Per Transaction", description: "Your commission fee activity", audience: "Seller" },
+  { key: "feePremium", label: "Premium / Discount", description: "Your premium/discount fee activity", audience: "Seller" },
+  { key: "feeStorage", label: "Storage / Custody Fee", description: "Your storage/custody fee activity", audience: "Seller" },
+  { key: "feeDelivery", label: "Delivery Fee", description: "Your delivery fee activity", audience: "Seller" }
 ];
 
 export function useReports(marketplace: ReturnTypeUseMarketplace) {
@@ -46,7 +54,6 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     transactionStatus: "all",
     paymentStatus: "all",
     walletActionType: "all",
-    feeType: "all",
     invoiceNumber: "",
     orderNumber: "",
     userName: "",
@@ -121,11 +128,15 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
           { title: "Unpaid", value: numeric("Unpaid Amount").toFixed(2), trend: "Outstanding" }
         ];
         break;
-      case "fees":
+      case "feeCommission":
+      case "feePremium":
+      case "feeStorage":
+      case "feeDelivery":
+      case "feeService":
         summaryMetrics.value = [
           ...common,
           { title: "Total Collected", value: numeric("Collected Amount").toFixed(2), trend: "All fee types" },
-          { title: "Configured Types", value: String(rows.length), trend: "Fee categories" },
+          { title: "Sellers", value: String(new Set(rows.map((r) => String(r.Seller ?? "-"))).size), trend: "Coverage" },
           { title: "Billed Transactions", value: String(numeric("Transactions")), trend: "With fee usage" }
         ];
         break;
@@ -167,6 +178,54 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
         && (criteria.formType === "all" || normalizeProductFormKey(product.formType) === criteria.formType);
 
       let rows: Array<Record<string, string | number>> = [];
+      const feeConfig = {
+        feeCommission: { label: "Commission Per Transaction", keywords: ["commission"], unit: "percent", config: "-" as string | number },
+        feePremium: { label: "Premium / Discount", keywords: ["premium", "discount"], unit: "value", config: "-" as string | number },
+        feeStorage: { label: "Storage / Custody Fee", keywords: ["storage", "custody"], unit: "fixed", config: stateSnapshot.value.fees.storageFee },
+        feeDelivery: { label: "Delivery Fee", keywords: ["delivery"], unit: "fixed", config: stateSnapshot.value.fees.deliveryFee },
+        feeService: { label: "Service Fee", keywords: ["service"], unit: "percent", config: stateSnapshot.value.fees.serviceChargePercent }
+      } as const;
+
+      const buildFeeRowsBySeller = (typeKey: keyof typeof feeConfig) => {
+        const selected = feeConfig[typeKey];
+        const sellers = stateSnapshot.value.sellers.filter(
+          (seller) => effectiveSellerId.value === "all" || !effectiveSellerId.value || seller.id === effectiveSellerId.value
+        );
+        return sellers.map((seller) => {
+          const sellerRequests = visibleRequests.value.filter((r) => r.sellerId === seller.id);
+          let transactions = 0;
+          let collected = 0;
+
+          sellerRequests.forEach((request) => {
+            (request.feeBreakdowns ?? []).forEach((fee) => {
+              const search = `${fee.feeCode} ${fee.feeName}`.toLowerCase();
+              if (selected.keywords.some((k) => search.includes(k))) {
+                transactions += 1;
+                collected += Number(fee.appliedValue ?? 0);
+              }
+            });
+          });
+
+          if (typeKey === "feeService" && transactions === 0 && collected === 0) {
+            const sellerInvoices = visibleInvoices.value.filter((invoice) => invoice.sellerId === seller.id);
+            transactions = sellerInvoices.length;
+            collected = sellerInvoices.reduce(
+              (sum, invoice) => sum + (invoice.totalAmount * stateSnapshot.value.fees.serviceChargePercent) / 100,
+              0
+            );
+          }
+
+          return {
+            Seller: seller.name,
+            "Fee Type": selected.label,
+            "Configured Rate": selected.config,
+            Unit: selected.unit,
+            Transactions: transactions,
+            "Collected Amount": Number(collected.toFixed(2))
+          };
+        });
+      };
+
       switch (reportFilters.reportType) {
         case "sales":
         case "sellerSales":
@@ -289,64 +348,20 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
             Notes: seller.reviewNotes ?? "-"
           }));
           break;
-        case "fees":
-          {
-            const feeRows = [
-              {
-                key: "delivery",
-                "Fee Type": "Delivery Fee",
-                Configuration: stateSnapshot.value.fees.deliveryFee,
-                Unit: "fixed",
-                Transactions: 0,
-                "Collected Amount": 0
-              },
-              {
-                key: "storage",
-                "Fee Type": "Storage Fee",
-                Configuration: stateSnapshot.value.fees.storageFee,
-                Unit: "fixed",
-                Transactions: 0,
-                "Collected Amount": 0
-              },
-              {
-                key: "service",
-                "Fee Type": "Service Fee",
-                Configuration: stateSnapshot.value.fees.serviceChargePercent,
-                Unit: "percent",
-                Transactions: 0,
-                "Collected Amount": 0
-              }
-            ];
-
-            visibleRequests.value.forEach((request) => {
-              (request.feeBreakdowns ?? []).forEach((fee) => {
-                const code = `${fee.feeCode} ${fee.feeName}`.toLowerCase();
-                const amount = Number(fee.appliedValue ?? 0);
-                if (code.includes("delivery")) {
-                  feeRows[0].Transactions += 1;
-                  feeRows[0]["Collected Amount"] += amount;
-                } else if (code.includes("storage")) {
-                  feeRows[1].Transactions += 1;
-                  feeRows[1]["Collected Amount"] += amount;
-                } else if (code.includes("service")) {
-                  feeRows[2].Transactions += 1;
-                  feeRows[2]["Collected Amount"] += amount;
-                }
-              });
-            });
-
-            if (feeRows[2].Transactions === 0 && feeRows[2]["Collected Amount"] === 0) {
-              feeRows[2]["Collected Amount"] = visibleInvoices.value.reduce(
-                (sum, invoice) => sum + (invoice.totalAmount * stateSnapshot.value.fees.serviceChargePercent) / 100,
-                0
-              );
-              feeRows[2].Transactions = visibleInvoices.value.length;
-            }
-
-            rows = feeRows
-              .filter((row) => reportFilters.feeType === "all" || row.key === reportFilters.feeType)
-              .map(({ key, ...row }) => row);
-          }
+        case "feeCommission":
+          rows = buildFeeRowsBySeller("feeCommission");
+          break;
+        case "feePremium":
+          rows = buildFeeRowsBySeller("feePremium");
+          break;
+        case "feeStorage":
+          rows = buildFeeRowsBySeller("feeStorage");
+          break;
+        case "feeDelivery":
+          rows = buildFeeRowsBySeller("feeDelivery");
+          break;
+        case "feeService":
+          rows = marketplace.role.value === "Admin" ? buildFeeRowsBySeller("feeService") : [];
           break;
         default:
           rows = [];
@@ -387,7 +402,6 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     reportFilters.transactionStatus = "all";
     reportFilters.paymentStatus = "all";
     reportFilters.walletActionType = "all";
-    reportFilters.feeType = "all";
     reportFilters.invoiceNumber = "";
     reportFilters.orderNumber = "";
     reportFilters.userName = "";
