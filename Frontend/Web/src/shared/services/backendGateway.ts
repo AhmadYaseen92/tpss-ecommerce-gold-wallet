@@ -25,6 +25,8 @@ import type {
   WebInvestorDto,
   WebNotificationDto,
   WebRequestDto,
+  WebInvoiceDto,
+  WebFeesDto,
   WebSellerDetailsDto,
   WebSellerDto,
   WalletDto
@@ -65,6 +67,15 @@ const mapSession = (dto: LoginResponseDto): UserSession => ({
   expiresAtUtc: dto.expiresAtUtc,
   displayName: dto.fullName ?? dto.sellerName ?? null
 });
+
+const normalizeSellerId = (value: unknown): string | undefined => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return undefined;
+  if (raw.startsWith("s-")) return raw;
+  const parsed = Number(raw);
+  if (Number.isFinite(parsed) && parsed > 0) return `s-${Math.trunc(parsed)}`;
+  return raw;
+};
 
 const mapSeller = (dto: WebSellerDto): Seller => ({
   id: dto.id,
@@ -120,7 +131,7 @@ const mapInvestors = (items: WebInvestorDto[]): Investor[] =>
 const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
   items.map((item) => ({
     id: item.id,
-    sellerId: item.sellerId,
+    sellerId: normalizeSellerId(item.sellerId),
     sellerName: item.sellerName,
     investorId: item.investorId,
     investorName: item.investorName,
@@ -148,6 +159,18 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
     notes: item.notes,
     updatedAt: item.updatedAt,
     createdAt: item.createdAt
+  }));
+
+const mapWebInvoices = (items: WebInvoiceDto[]) =>
+  items.map((item) => ({
+    id: item.id,
+    sellerId: normalizeSellerId(item.sellerId) ?? item.sellerId,
+    investorName: item.investorName,
+    totalAmount: Number(item.totalAmount ?? 0),
+    issuedAt: item.issuedAt,
+    status: item.status,
+    paymentStatus: item.paymentStatus,
+    pdfUrl: item.pdfUrl
   }));
 
 const mapWalletAssets = (wallet: WalletDto): WalletAssetItem[] =>
@@ -305,6 +328,8 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     .catch(() => [] as WebNotificationDto[]);
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
+  const webInvoices = await getJson<WebInvoiceDto[]>("/api/web-admin/invoices", session.accessToken).catch(() => [] as WebInvoiceDto[]);
+  const webFees = await getJson<WebFeesDto>("/api/web-admin/fees", session.accessToken).catch(() => null as WebFeesDto | null);
   const webInvestors = session.role === "Admin" && allowWebAdminInvestorsEndpoint
     ? await getJson<WebInvestorDto[]>("/api/web-admin/investors", session.accessToken).catch((error) => {
         if (error instanceof HttpError && error.statusCode === 403) {
@@ -354,20 +379,11 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     requests,
     products,
     walletAssets: wallet ? mapWalletAssets(wallet) : [],
-    invoices: products.slice(0, 5).map((product, index) => ({
-      id: `inv-${index + 1}`,
-      sellerId: product.sellerId,
-      investorName: `Investor ${index + 1}`,
-      totalAmount: product.unitPrice,
-      issuedAt: new Date().toISOString().split("T")[0],
-      status: index % 2 === 0 ? "Issued" : "Completed",
-      paymentStatus: index % 2 === 0 ? "Pending" : "Paid",
-      pdfUrl: undefined
-    })),
+    invoices: mapWebInvoices(webInvoices),
     fees: {
-      deliveryFee: 12,
-      storageFee: 4,
-      serviceChargePercent: 2.5
+      deliveryFee: Number(webFees?.deliveryFee ?? 12),
+      storageFee: Number(webFees?.storageFee ?? 4),
+      serviceChargePercent: Number(webFees?.serviceChargePercent ?? 2.5)
     },
     notifications: mapNotifications(notificationsResult),
     reports: dashboard ? mapReports(dashboard, requests.length) : [],

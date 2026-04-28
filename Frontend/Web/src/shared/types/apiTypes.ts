@@ -234,6 +234,23 @@ export interface WebRequestDto {
   createdAt: string;
 }
 
+export interface WebInvoiceDto {
+  id: string;
+  sellerId: string;
+  investorName: string;
+  totalAmount: number;
+  issuedAt: string;
+  status: "Draft" | "Issued" | "Completed" | "Cancelled";
+  paymentStatus: "Pending" | "Paid" | "Failed" | "Cancelled";
+  pdfUrl?: string;
+}
+
+export interface WebFeesDto {
+  deliveryFee: number;
+  storageFee: number;
+  serviceChargePercent: number;
+}
+
 export interface WebInvestorDto {
   id: string;
   fullName: string;
