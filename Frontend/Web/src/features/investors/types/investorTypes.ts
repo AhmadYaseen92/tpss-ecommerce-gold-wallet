@@ -1,5 +1,6 @@
 export interface InvestorRowView {
   id: string;
+  investorNumericId: number;
   fullName: string;
   email: string;
   phoneNumber: string;
@@ -10,4 +11,11 @@ export interface InvestorRowView {
   createdDate: string;
   totalPurchases: number;
   lastTransactionDate: string;
+  firstTransactionDate: string;
+  approvedTransactions: number;
+  pendingTransactions: number;
+  rejectedTransactions: number;
+  totalVolume: number;
+  lastActivityDate: string;
+  walletAssetsCount: number;
 }

@@ -30,6 +30,8 @@ const filtered = computed(() =>
     if (!term) return true;
 
     return [
+      seller.id,
+      String(seller.sellerId ?? ""),
       seller.name,
       seller.businessName,
       seller.email,
@@ -129,7 +131,7 @@ onMounted(() => {
       <FilterBar>
         <SearchBar
           v-model="search"
-          placeholder="Search company, code, login email, phone"
+          placeholder="Search seller ID, company, code, login email, phone"
         />
 
         <Select v-model="kycFilter">
@@ -152,6 +154,7 @@ onMounted(() => {
             <thead>
               <tr>
                 <th>Company Name</th>
+                <th>Seller ID</th>
                 <th>Company Code</th>
                 <th>Login Email</th>
                 <th>Contact Phone</th>
@@ -173,6 +176,7 @@ onMounted(() => {
                 <td>
                   <strong>{{ seller.businessName || seller.name || "-" }}</strong>
                 </td>
+                <td>{{ seller.id }}</td>
                 <td>{{ seller.companyCode || "-" }}</td>
                 <td>{{ seller.loginEmail || seller.email || "-" }}</td>
                 <td>{{ seller.contactPhone || "-" }}</td>

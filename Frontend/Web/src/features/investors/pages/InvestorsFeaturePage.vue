@@ -23,7 +23,7 @@ const filteredRows = computed(() =>
   investorRows.value.filter((item) => {
     if (status.value !== "all" && item.status !== status.value) return false;
     if (!search.value.trim()) return true;
-    return `${item.fullName} ${item.email} ${item.phoneNumber}`
+    return `${item.id} ${item.investorNumericId} ${item.fullName} ${item.email} ${item.phoneNumber} ${item.status} ${item.riskLevel} ${item.createdDate}`
       .toLowerCase()
       .includes(search.value.toLowerCase());
   })
@@ -61,7 +61,7 @@ onMounted(() => {
 
     <Card>
       <FilterBar>
-        <SearchBar v-model="search" placeholder="Search investor name, email, or phone" />
+        <SearchBar v-model="search" placeholder="Search investor ID, name, email, phone, status, risk, joined date" />
         <Select v-model="status">
           <option value="all">All status</option>
           <option value="active">Active</option>
