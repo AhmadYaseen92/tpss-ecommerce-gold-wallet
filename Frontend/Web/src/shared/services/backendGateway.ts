@@ -43,20 +43,6 @@ const toAbsoluteImageUrl = (value: unknown): string => {
   return path.startsWith("/") ? `${API_BASE_URL}${path}` : `${API_BASE_URL}/${path}`;
 };
 
-const fallbackCategories: EnumItemDto[] = [
-  { value: 1, name: "Gold" },
-  { value: 2, name: "Silver" },
-  { value: 3, name: "Diamond" },
-  { value: 4, name: "Jewelry" },
-  { value: 5, name: "Coins" }
-];
-
-const fallbackWeightUnits: EnumItemDto[] = [
-  { value: 1, name: "Gram" },
-  { value: 2, name: "Kilogram" },
-  { value: 3, name: "Ounce" }
-];
-
 let allowWebAdminInvestorsEndpoint = true;
 
 const mapSession = (dto: LoginResponseDto): UserSession => ({
@@ -351,27 +337,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
 
   const products = productsResult.items.map(mapProduct);
 
-  let sellers: Seller[] = [];
-  try {
-    sellers = await fetchSellers(session.accessToken);
-  } catch {
-    sellers = Array.from(
-      new Map(
-        productsResult.items.map((item) => [
-          item.sellerId,
-          {
-            id: `s-${item.sellerId}`,
-            sellerId: item.sellerId,
-            name: item.sellerName,
-            email: `${item.sellerName.toLowerCase().replace(/\s+/g, ".")}@goldwallet.local`,
-            businessName: item.sellerName,
-            kycStatus: "approved" as const,
-            submittedAt: new Date().toISOString().split("T")[0]
-          }
-        ])
-      ).values()
-    );
-  }
+  const sellers = await fetchSellers(session.accessToken).catch(() => [] as Seller[]);
 
   return {
     sellers,
@@ -381,9 +347,9 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     walletAssets: wallet ? mapWalletAssets(wallet) : [],
     invoices: mapWebInvoices(webInvoices),
     fees: {
-      deliveryFee: Number(webFees?.deliveryFee ?? 12),
-      storageFee: Number(webFees?.storageFee ?? 4),
-      serviceChargePercent: Number(webFees?.serviceChargePercent ?? 2.5)
+      deliveryFee: Number(webFees?.deliveryFee ?? 0),
+      storageFee: Number(webFees?.storageFee ?? 0),
+      serviceChargePercent: Number(webFees?.serviceChargePercent ?? 0)
     },
     notifications: mapNotifications(notificationsResult),
     reports: dashboard ? mapReports(dashboard, requests.length) : [],
@@ -501,7 +467,7 @@ export async function fetchProductCategories(accessToken: string): Promise<EnumI
     const categories = await getJson<EnumItemDto[]>("/api/products/categories", accessToken);
     return categories.filter((item) => item.name.toLowerCase() !== "spotmr" && item.value !== 6);
   } catch {
-    return fallbackCategories;
+    return [];
   }
 }
 
@@ -509,7 +475,7 @@ export async function fetchWeightUnits(accessToken: string): Promise<EnumItemDto
   try {
     return await getJson<EnumItemDto[]>("/api/products/weight-units", accessToken);
   } catch {
-    return fallbackWeightUnits;
+    return [];
   }
 }
 

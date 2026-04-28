@@ -12,9 +12,9 @@ const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
 const marketplace = useMarketplace();
 
 const model = reactive<LoginFormModel>({
-  email: "admin@goldwallet.com",
-  password: "AdminGW@2026",
-  rememberMe: true,
+  email: "",
+  password: "",
+  rememberMe: false,
 });
 
 const loading = computed(() => marketplace.loading.value);
