@@ -4,6 +4,7 @@ import { downloadBlob } from "../../../shared/services/fileDownload";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { reportService } from "../services/reportService";
 import type { ReportFilters, ReportTableData, ReportTypeCard } from "../types/reportTypes";
+import { fetchWebFeeBreakdownReport } from "../../../shared/services/backendGateway";
 import {
   MATERIAL_TYPE_OPTIONS,
   PRODUCT_FORM_OPTIONS,
@@ -179,51 +180,34 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
 
       let rows: Array<Record<string, string | number>> = [];
       const feeConfig = {
-        feeCommission: { label: "Commission Per Transaction", keywords: ["commission"], unit: "percent", config: "-" as string | number },
-        feePremium: { label: "Premium / Discount", keywords: ["premium", "discount"], unit: "value", config: "-" as string | number },
-        feeStorage: { label: "Storage / Custody Fee", keywords: ["storage", "custody"], unit: "fixed", config: stateSnapshot.value.fees.storageFee },
-        feeDelivery: { label: "Delivery Fee", keywords: ["delivery"], unit: "fixed", config: stateSnapshot.value.fees.deliveryFee },
-        feeService: { label: "Service Fee", keywords: ["service"], unit: "percent", config: stateSnapshot.value.fees.serviceChargePercent }
+        feeCommission: { label: "Commission Per Transaction", unit: "percent", group: "commission" as const, config: "-" as string | number },
+        feePremium: { label: "Premium / Discount", unit: "value", group: "premium" as const, config: "-" as string | number },
+        feeStorage: { label: "Storage / Custody Fee", unit: "fixed", group: "storage" as const, config: stateSnapshot.value.fees.storageFee },
+        feeDelivery: { label: "Delivery Fee", unit: "fixed", group: "delivery" as const, config: stateSnapshot.value.fees.deliveryFee },
+        feeService: { label: "Service Fee", unit: "percent", group: "service" as const, config: stateSnapshot.value.fees.serviceChargePercent }
       } as const;
 
-      const buildFeeRowsBySeller = (typeKey: keyof typeof feeConfig) => {
+      const buildFeeRowsBySeller = async (typeKey: keyof typeof feeConfig) => {
+        if (!marketplace.session.value?.accessToken) return [];
+
         const selected = feeConfig[typeKey];
-        const sellers = stateSnapshot.value.sellers.filter(
-          (seller) => effectiveSellerId.value === "all" || !effectiveSellerId.value || seller.id === effectiveSellerId.value
-        );
-        return sellers.map((seller) => {
-          const sellerRequests = visibleRequests.value.filter((r) => r.sellerId === seller.id);
-          let transactions = 0;
-          let collected = 0;
+        const criteriaDate = reportService.makeCriteria(reportFilters);
+        const from = reportFilters.datePreset === "custom" ? reportFilters.customFrom : criteriaDate.start.toISOString().slice(0, 10);
+        const to = reportFilters.datePreset === "custom" ? reportFilters.customTo : criteriaDate.end.toISOString().slice(0, 10);
 
-          sellerRequests.forEach((request) => {
-            (request.feeBreakdowns ?? []).forEach((fee) => {
-              const search = `${fee.feeCode} ${fee.feeName}`.toLowerCase();
-              if (selected.keywords.some((k) => search.includes(k))) {
-                transactions += 1;
-                collected += Number(fee.appliedValue ?? 0);
-              }
-            });
-          });
+        const feeRows = await fetchWebFeeBreakdownReport(marketplace.session.value.accessToken, selected.group, from, to)
+          .catch(() => []);
 
-          if (typeKey === "feeService" && transactions === 0 && collected === 0) {
-            const sellerInvoices = visibleInvoices.value.filter((invoice) => invoice.sellerId === seller.id);
-            transactions = sellerInvoices.length;
-            collected = sellerInvoices.reduce(
-              (sum, invoice) => sum + (invoice.totalAmount * stateSnapshot.value.fees.serviceChargePercent) / 100,
-              0
-            );
-          }
-
-          return {
-            Seller: seller.name,
+        return feeRows
+          .filter((row) => effectiveSellerId.value === "all" || !effectiveSellerId.value || row.sellerId === effectiveSellerId.value)
+          .map((row) => ({
+            Seller: row.sellerName,
             "Fee Type": selected.label,
-            "Configured Rate": selected.config,
+            "Configured Rate": row.appliedRate ?? selected.config,
             Unit: selected.unit,
-            Transactions: transactions,
-            "Collected Amount": Number(collected.toFixed(2))
-          };
-        });
+            Transactions: row.transactionsCount,
+            "Collected Amount": Number(row.collectedAmount ?? 0)
+          }));
       };
 
       switch (reportFilters.reportType) {
@@ -349,19 +333,19 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
           }));
           break;
         case "feeCommission":
-          rows = buildFeeRowsBySeller("feeCommission");
+          rows = await buildFeeRowsBySeller("feeCommission");
           break;
         case "feePremium":
-          rows = buildFeeRowsBySeller("feePremium");
+          rows = await buildFeeRowsBySeller("feePremium");
           break;
         case "feeStorage":
-          rows = buildFeeRowsBySeller("feeStorage");
+          rows = await buildFeeRowsBySeller("feeStorage");
           break;
         case "feeDelivery":
-          rows = buildFeeRowsBySeller("feeDelivery");
+          rows = await buildFeeRowsBySeller("feeDelivery");
           break;
         case "feeService":
-          rows = marketplace.role.value === "Admin" ? buildFeeRowsBySeller("feeService") : [];
+          rows = marketplace.role.value === "Admin" ? await buildFeeRowsBySeller("feeService") : [];
           break;
         default:
           rows = [];

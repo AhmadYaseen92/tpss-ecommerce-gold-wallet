@@ -184,6 +184,19 @@ public class WebFeesDto
     public decimal ServiceChargePercent { get; set; }
 }
 
+public class WebFeeBreakdownReportRowDto
+{
+    public string SellerId { get; set; } = string.Empty;
+    public string SellerName { get; set; } = string.Empty;
+    public string FeeCode { get; set; } = string.Empty;
+    public string FeeName { get; set; } = string.Empty;
+    public string CalculationMode { get; set; } = string.Empty;
+    public decimal? AppliedRate { get; set; }
+    public int TransactionsCount { get; set; }
+    public decimal CollectedAmount { get; set; }
+    public string Currency { get; set; } = "USD";
+}
+
 public class WebNotificationDto
 {
     public string Id { get; set; } = string.Empty;

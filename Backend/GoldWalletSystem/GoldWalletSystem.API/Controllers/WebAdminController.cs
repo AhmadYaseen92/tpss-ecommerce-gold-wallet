@@ -824,6 +824,95 @@ public class WebAdminController(
         return Ok(ApiResponse<WebFeesDto>.Ok(fees));
     }
 
+    [HttpGet("reports/fee-breakdowns")]
+    public async Task<IActionResult> GetFeeBreakdownReport(
+        [FromQuery] string feeGroup = "all",
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        var sellerScope = ResolveSellerScope();
+        var normalizedGroup = (feeGroup ?? "all").Trim().ToLowerInvariant();
+        var fromUtc = from?.Date;
+        var toUtc = to?.Date.AddDays(1).AddTicks(-1);
+
+        var query = dbContext.TransactionFeeBreakdowns
+            .AsNoTracking()
+            .Where(x => x.TransactionHistoryId.HasValue);
+
+        if (sellerScope.HasValue)
+        {
+            query = query.Where(x => x.SellerId == sellerScope.Value);
+        }
+
+        if (fromUtc.HasValue || toUtc.HasValue)
+        {
+            var historyQuery = dbContext.TransactionHistories.AsNoTracking().AsQueryable();
+            if (fromUtc.HasValue) historyQuery = historyQuery.Where(x => x.CreatedAtUtc >= fromUtc.Value);
+            if (toUtc.HasValue) historyQuery = historyQuery.Where(x => x.CreatedAtUtc <= toUtc.Value);
+
+            var historyIds = await historyQuery.Select(x => x.Id).ToListAsync(cancellationToken);
+            query = query.Where(x => x.TransactionHistoryId.HasValue && historyIds.Contains(x.TransactionHistoryId.Value));
+        }
+
+        if (normalizedGroup != "all")
+        {
+            var tokens = normalizedGroup switch
+            {
+                "commission" => new[] { "commission_per_transaction", "commission" },
+                "premium" => new[] { "premium", "discount" },
+                "storage" => new[] { "storage", "custody" },
+                "delivery" => new[] { "delivery" },
+                "service" => new[] { "service" },
+                _ => Array.Empty<string>()
+            };
+
+            if (tokens.Length > 0)
+            {
+                query = query.Where(x => tokens.Any(token =>
+                    x.FeeCode.ToLower().Contains(token) || x.FeeName.ToLower().Contains(token)));
+            }
+        }
+
+        var sellers = await dbContext.Sellers
+            .AsNoTracking()
+            .Select(x => new { x.Id, Name = x.BusinessName ?? x.Name ?? $"Seller {x.Id}" })
+            .ToListAsync(cancellationToken);
+        var sellerLookup = sellers.ToDictionary(x => x.Id, x => x.Name);
+
+        var rows = await query
+            .GroupBy(x => new
+            {
+                SellerId = x.SellerId ?? 0,
+                x.FeeCode,
+                x.FeeName,
+                x.CalculationMode,
+                x.Currency
+            })
+            .Select(g => new WebFeeBreakdownReportRowDto
+            {
+                SellerId = $"s-{g.Key.SellerId}",
+                SellerName = string.Empty,
+                FeeCode = g.Key.FeeCode,
+                FeeName = g.Key.FeeName,
+                CalculationMode = g.Key.CalculationMode,
+                AppliedRate = g.Average(x => x.AppliedRate),
+                TransactionsCount = g.Select(x => x.TransactionHistoryId).Distinct().Count(),
+                CollectedAmount = g.Sum(x => x.AppliedValue),
+                Currency = g.Key.Currency
+            })
+            .OrderByDescending(x => x.CollectedAmount)
+            .ToListAsync(cancellationToken);
+
+        foreach (var row in rows)
+        {
+            var sellerId = TryParsePrefixedId(row.SellerId, "s-") ?? 0;
+            row.SellerName = sellerLookup.TryGetValue(sellerId, out var name) ? name : $"Seller {sellerId}";
+        }
+
+        return Ok(ApiResponse<List<WebFeeBreakdownReportRowDto>>.Ok(rows));
+    }
+
     [HttpPut("fees")]
     public async Task<IActionResult> UpdateFees([FromBody] WebFeesDto request, CancellationToken cancellationToken)
     {

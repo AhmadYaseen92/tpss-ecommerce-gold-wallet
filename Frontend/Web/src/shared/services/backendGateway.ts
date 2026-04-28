@@ -27,6 +27,7 @@ import type {
   WebRequestDto,
   WebInvoiceDto,
   WebFeesDto,
+  WebFeeBreakdownReportRowDto,
   WebSellerDetailsDto,
   WebSellerDto,
   WalletDto
@@ -359,6 +360,18 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
 
 export async function fetchWebAdminDashboard(accessToken: string, period: "today" | "week" | "month"): Promise<WebDashboardDto> {
   return getJson<WebDashboardDto>(`/api/web-admin/dashboard?period=${period}`, accessToken);
+}
+
+export async function fetchWebFeeBreakdownReport(
+  accessToken: string,
+  feeGroup: "commission" | "premium" | "storage" | "delivery" | "service",
+  from?: string,
+  to?: string
+): Promise<WebFeeBreakdownReportRowDto[]> {
+  const params = new URLSearchParams({ feeGroup });
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  return getJson<WebFeeBreakdownReportRowDto[]>(`/api/web-admin/reports/fee-breakdowns?${params.toString()}`, accessToken);
 }
 
 export async function updateWebRequestStatus(

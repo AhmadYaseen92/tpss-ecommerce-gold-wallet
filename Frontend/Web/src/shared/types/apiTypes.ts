@@ -251,6 +251,18 @@ export interface WebFeesDto {
   serviceChargePercent: number;
 }
 
+export interface WebFeeBreakdownReportRowDto {
+  sellerId: string;
+  sellerName: string;
+  feeCode: string;
+  feeName: string;
+  calculationMode: string;
+  appliedRate?: number | null;
+  transactionsCount: number;
+  collectedAmount: number;
+  currency: string;
+}
+
 export interface WebInvestorDto {
   id: string;
   fullName: string;
