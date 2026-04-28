@@ -161,8 +161,8 @@ const onSubmit = async () => {
   right: 18px;
   z-index: 3;
   border: 1px solid rgba(241, 195, 75, 0.45);
-  background: rgba(8, 8, 8, 0.45);
-  color: #fff8e6;
+  background: var(--surface-elevated);
+  color: var(--text);
   border-radius: 999px;
   font-size: 12px;
   font-weight: 800;
@@ -175,6 +175,11 @@ const onSubmit = async () => {
 :global(:root.dark-mode) .auth-card-register {
   background: linear-gradient(180deg, rgba(36, 30, 20, 0.95), rgba(17, 14, 9, 0.95));
   border-color: rgba(214, 168, 45, 0.46);
+}
+
+:global(:root.dark-mode) .theme-toggle-btn {
+  background: rgba(8, 8, 8, 0.45);
+  color: #fff8e6;
 }
 
 @media (max-width: 900px) {

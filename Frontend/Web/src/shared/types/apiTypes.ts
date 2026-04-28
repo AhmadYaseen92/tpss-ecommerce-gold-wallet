@@ -277,6 +277,48 @@ export interface WebInvestorDto {
   status: string;
 }
 
+export interface WebLinkedBankAccountDto {
+  bankName: string;
+  accountHolderName: string;
+  accountNumber: string;
+  ibanMasked: string;
+  swiftCode: string;
+  branchName: string;
+  branchAddress: string;
+  country: string;
+  city: string;
+  currency: string;
+  isVerified: boolean;
+  isDefault: boolean;
+}
+
+export interface WebPaymentMethodDto {
+  type: string;
+  maskedNumber: string;
+  isDefault: boolean;
+}
+
+export interface WebInvestorProfileDto {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  walletBalance: number;
+  totalTransactions: number;
+  createdAt: string;
+  updatedAt?: string | null;
+  status: string;
+  dateOfBirth?: string | null;
+  nationality: string;
+  documentType: string;
+  idNumber: string;
+  profilePhotoUrl: string;
+  preferredLanguage: string;
+  preferredTheme: string;
+  bankAccounts: WebLinkedBankAccountDto[];
+  paymentMethods: WebPaymentMethodDto[];
+}
+
 
 export interface ProductManagementDto {
  id: number;

@@ -12,7 +12,7 @@ import Pagination from "../../../shared/components/ui/Pagination.vue";
 import Button from "../../../shared/components/ui/Button.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
-const { selectedInvestorId, investorRows, selectedInvestor, toggleInvestorStatus } = useInvestors(props.marketplace);
+const { investorRows, toggleInvestorStatus } = useInvestors(props.marketplace);
 
 const search = ref("");
 const status = ref("all");
@@ -23,7 +23,7 @@ const filteredRows = computed(() =>
   investorRows.value.filter((item) => {
     if (status.value !== "all" && item.status !== status.value) return false;
     if (!search.value.trim()) return true;
-    return `${item.id} ${item.investorNumericId} ${item.fullName} ${item.email} ${item.phoneNumber} ${item.status} ${item.riskLevel} ${item.createdDate}`
+    return `${item.id} ${item.investorNumericId} ${item.fullName} ${item.email} ${item.phoneNumber} ${item.status} ${item.createdDate}`
       .toLowerCase()
       .includes(search.value.toLowerCase());
   })
@@ -39,8 +39,9 @@ watch([search, status], () => {
   pageNumber.value = 1;
 });
 
-const viewInvestor = (id: string) => {
-  selectedInvestorId.value = id;
+const openInvestorDetails = (id: string) => {
+  window.history.pushState({}, "", `/investors/${id}`);
+  window.dispatchEvent(new PopStateEvent("popstate"));
 };
 
 onMounted(() => {
@@ -61,7 +62,7 @@ onMounted(() => {
 
     <Card>
       <FilterBar>
-        <SearchBar v-model="search" placeholder="Search investor ID, name, email, phone, status, risk, joined date" />
+        <SearchBar v-model="search" placeholder="Search investor ID, name, email, phone, status, joined date" />
         <Select v-model="status">
           <option value="all">All status</option>
           <option value="active">Active</option>
@@ -74,8 +75,7 @@ onMounted(() => {
       <template v-else>
         <InvestorsPage
           :investors="pagedRows"
-          :selected="selectedInvestor"
-          @view="viewInvestor"
+          @open="openInvestorDetails"
           @toggle="toggleInvestorStatus"
         />
 

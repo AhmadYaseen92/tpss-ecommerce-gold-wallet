@@ -448,6 +448,76 @@ public class WebAdminController(
     }
 
     [Authorize(Roles = SystemRoles.Admin)]
+    [HttpGet("investors/{id}")]
+    public async Task<IActionResult> GetInvestorDetails(string id, CancellationToken cancellationToken)
+    {
+        if (!int.TryParse(id.Replace("i-", string.Empty), out var userId))
+            return NotFound(ApiResponse<object>.Fail("Investor not found", 404));
+
+        var investor = await dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.Id == userId && x.Role == SystemRoles.Investor)
+            .Select(x => new
+            {
+                User = x,
+                WalletBalance = dbContext.Wallets.Where(w => w.UserId == x.Id).Select(w => w.CashBalance).FirstOrDefault(),
+                TotalTransactions = dbContext.TransactionHistories.Count(th => th.UserId == x.Id)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (investor is null) return NotFound(ApiResponse<object>.Fail("Investor not found", 404));
+
+        var profile = await dbContext.UserProfiles
+            .AsNoTracking()
+            .Include(x => x.LinkedBankAccounts)
+            .Include(x => x.PaymentMethods)
+            .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
+        var details = new WebInvestorProfileDto
+        {
+            Id = $"i-{investor.User.Id}",
+            FullName = investor.User.FullName,
+            Email = investor.User.Email,
+            PhoneNumber = investor.User.PhoneNumber ?? string.Empty,
+            WalletBalance = investor.WalletBalance,
+            TotalTransactions = investor.TotalTransactions,
+            CreatedAt = investor.User.CreatedAtUtc,
+            UpdatedAt = investor.User.UpdatedAtUtc,
+            Status = investor.User.IsActive ? "active" : "blocked",
+            DateOfBirth = profile?.DateOfBirth,
+            Nationality = profile?.Nationality ?? string.Empty,
+            DocumentType = profile?.DocumentType ?? string.Empty,
+            IdNumber = profile?.IdNumber ?? string.Empty,
+            ProfilePhotoUrl = profile?.ProfilePhotoUrl ?? string.Empty,
+            PreferredLanguage = profile?.PreferredLanguage ?? "en",
+            PreferredTheme = profile?.PreferredTheme ?? "light",
+            BankAccounts = profile?.LinkedBankAccounts.Select(b => new WebLinkedBankAccountDto
+            {
+                BankName = b.BankName,
+                AccountHolderName = b.AccountHolderName,
+                AccountNumber = b.AccountNumber,
+                IbanMasked = b.IbanMasked,
+                SwiftCode = b.SwiftCode,
+                BranchName = b.BranchName,
+                BranchAddress = b.BranchAddress,
+                Country = b.Country,
+                City = b.City,
+                Currency = b.Currency,
+                IsVerified = b.IsVerified,
+                IsDefault = b.IsDefault
+            }).ToList() ?? new List<WebLinkedBankAccountDto>(),
+            PaymentMethods = profile?.PaymentMethods.Select(pm => new WebPaymentMethodDto
+            {
+                Type = pm.Type,
+                MaskedNumber = pm.MaskedNumber,
+                IsDefault = pm.IsDefault
+            }).ToList() ?? new List<WebPaymentMethodDto>()
+        };
+
+        return Ok(ApiResponse<WebInvestorProfileDto>.Ok(details));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
     [HttpPut("investors/{id}/status")]
     public async Task<IActionResult> UpdateInvestorStatus(string id, [FromBody] UpdateStatusRequest request, CancellationToken cancellationToken)
     {

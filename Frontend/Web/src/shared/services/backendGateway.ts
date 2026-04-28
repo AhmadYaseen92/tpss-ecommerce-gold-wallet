@@ -23,6 +23,7 @@ import type {
   EnumItemDto,
   WebDashboardDto,
   WebInvestorDto,
+  WebInvestorProfileDto,
   WebNotificationDto,
   WebRequestDto,
   WebInvoiceDto,
@@ -285,6 +286,10 @@ export async function fetchSellers(accessToken: string): Promise<Seller[]> {
 
 export async function fetchSellerDetailsByAdmin(accessToken: string, sellerId: string): Promise<WebSellerDetailsDto> {
   return getJson<WebSellerDetailsDto>(`/api/web-admin/sellers/${sellerId}`, accessToken);
+}
+
+export async function fetchInvestorDetailsByAdmin(accessToken: string, investorId: string): Promise<WebInvestorProfileDto> {
+  return getJson<WebInvestorProfileDto>(`/api/web-admin/investors/${investorId}`, accessToken);
 }
 
 export async function updateSellerKycStatusByAdmin(

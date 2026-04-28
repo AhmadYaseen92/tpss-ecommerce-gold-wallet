@@ -1,11 +1,10 @@
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { updateInvestorStatusByAdmin } from "../../../shared/services/backendGateway";
 import type { Investor, InvestorRequest } from "../../../shared/types/models";
 import type { InvestorRowView } from "../types/investorTypes";
 
 export function useInvestors(marketplace: ReturnTypeUseMarketplace) {
-  const selectedInvestorId = ref<string | null>(null);
   const investorRows = computed<InvestorRowView[]>(() => marketplace.state.value.investors.map((inv: Investor) => {
     const investorRequests = marketplace.state.value.requests.filter((r: InvestorRequest) => r.investorId === inv.id);
     const totalTransactions = inv.totalTransactions ?? investorRequests.length;
@@ -43,7 +42,6 @@ export function useInvestors(marketplace: ReturnTypeUseMarketplace) {
       walletAssetsCount
     };
   }));
-  const selectedInvestor = computed(() => investorRows.value.find((x: InvestorRowView) => x.id === selectedInvestorId.value) ?? null);
   const toggleInvestorStatus = async (id: string) => {
     const investor = marketplace.state.value.investors.find((x: Investor) => x.id === id);
     if (!investor || !marketplace.session.value?.accessToken) return;
@@ -51,5 +49,5 @@ export function useInvestors(marketplace: ReturnTypeUseMarketplace) {
     await updateInvestorStatusByAdmin(marketplace.session.value.accessToken, id, nextStatus);
     await marketplace.refreshMarketplaceState();
   };
-  return { selectedInvestorId, investorRows, selectedInvestor, toggleInvestorStatus };
+  return { investorRows, toggleInvestorStatus };
 }

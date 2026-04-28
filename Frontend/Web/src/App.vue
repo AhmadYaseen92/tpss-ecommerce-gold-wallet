@@ -6,6 +6,7 @@ import AuthPage from "./features/auth/pages/AuthPage.vue";
 import DashboardFeaturePage from "./features/dashboard/pages/DashboardFeaturePage.vue";
 import ProductFeaturePage from "./features/products/pages/ProductFeaturePage.vue";
 import InvestorsFeaturePage from "./features/investors/pages/InvestorsFeaturePage.vue";
+import InvestorDetailsPage from "./features/investors/pages/InvestorDetailsPage.vue";
 import SellersFeaturePage from "./features/dashboard/pages/SellersFeaturePage.vue";
 import SellerDetailsPage from "./features/dashboard/pages/SellerDetailsPage.vue";
 import SettingsFeaturePage from "./features/dashboard/pages/SettingsFeaturePage.vue";
@@ -120,6 +121,7 @@ const activeComponent = computed(() => {
   }
 
   if (currentPath.value.startsWith("/products")) return ProductFeaturePage;
+  if (currentPath.value.startsWith("/investors/")) return marketplace.role.value === "Admin" ? InvestorDetailsPage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/investors")) return marketplace.role.value === "Admin" ? InvestorsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/sellers")) return marketplace.role.value === "Admin" ? SellersFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/settings")) return marketplace.role.value === "Admin" ? SettingsFeaturePage : DashboardFeaturePage;

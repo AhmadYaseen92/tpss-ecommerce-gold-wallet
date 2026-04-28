@@ -141,6 +141,51 @@ public class WebInvestorDto
     public string Status { get; set; } = "active";
 }
 
+public class WebInvestorProfileDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public decimal WalletBalance { get; set; }
+    public int TotalTransactions { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string Status { get; set; } = "active";
+    public DateOnly? DateOfBirth { get; set; }
+    public string Nationality { get; set; } = string.Empty;
+    public string DocumentType { get; set; } = string.Empty;
+    public string IdNumber { get; set; } = string.Empty;
+    public string ProfilePhotoUrl { get; set; } = string.Empty;
+    public string PreferredLanguage { get; set; } = "en";
+    public string PreferredTheme { get; set; } = "light";
+    public List<WebLinkedBankAccountDto> BankAccounts { get; set; } = new();
+    public List<WebPaymentMethodDto> PaymentMethods { get; set; } = new();
+}
+
+public class WebLinkedBankAccountDto
+{
+    public string BankName { get; set; } = string.Empty;
+    public string AccountHolderName { get; set; } = string.Empty;
+    public string AccountNumber { get; set; } = string.Empty;
+    public string IbanMasked { get; set; } = string.Empty;
+    public string SwiftCode { get; set; } = string.Empty;
+    public string BranchName { get; set; } = string.Empty;
+    public string BranchAddress { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public bool IsVerified { get; set; }
+    public bool IsDefault { get; set; }
+}
+
+public class WebPaymentMethodDto
+{
+    public string Type { get; set; } = string.Empty;
+    public string MaskedNumber { get; set; } = string.Empty;
+    public bool IsDefault { get; set; }
+}
+
 public class WebRequestDto
 {
     public string Id { get; set; } = string.Empty;
