@@ -356,10 +356,10 @@ public class WebAdminController(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var sellerUser = await dbContext.Users.FirstOrDefaultAsync(x => x.Id == seller.UserId, cancellationToken);
-        if (sellerUser is not null)
+        var sellerAccount = await dbContext.Users.FirstOrDefaultAsync(x => x.Id == seller.UserId, cancellationToken);
+        if (sellerAccount is not null)
         {
-            await SendKycDecisionMessagesAsync(seller, sellerUser, request.ReviewNotes, cancellationToken);
+            await SendKycDecisionMessagesAsync(seller, sellerAccount, request.ReviewNotes, cancellationToken);
         }
 
         return Ok(ApiResponse<string>.Ok("updated"));
@@ -943,7 +943,7 @@ public class WebAdminController(
 
         var sellers = await dbContext.Sellers
             .AsNoTracking()
-            .Select(x => new { x.Id, Name = x.BusinessName ?? x.Name ?? $"Seller {x.Id}" })
+            .Select(x => new { x.Id, Name = string.IsNullOrWhiteSpace(x.CompanyName) ? $"Seller {x.Id}" : x.CompanyName })
             .ToListAsync(cancellationToken);
         var sellerLookup = sellers.ToDictionary(x => x.Id, x => x.Name);
 
