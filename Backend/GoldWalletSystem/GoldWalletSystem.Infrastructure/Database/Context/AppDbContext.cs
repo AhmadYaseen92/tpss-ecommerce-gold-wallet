@@ -1,6 +1,7 @@
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
+using GoldWalletSystem.Application.Constants;
 using Microsoft.EntityFrameworkCore;
 
 namespace GoldWalletSystem.Infrastructure.Database.Context;
@@ -76,6 +77,64 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureAdminTransactionFee(modelBuilder);
         ConfigureTransactionFeeBreakdown(modelBuilder);
         ConfigureRefreshToken(modelBuilder);
+        SeedBaselineData(modelBuilder);
+    }
+
+    private static void SeedBaselineData(ModelBuilder modelBuilder)
+    {
+        var seededAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        modelBuilder.Entity<User>().HasData(
+            new User
+            {
+                Id = 100,
+                FullName = "Gold Wallet Admin",
+                Email = "admin@goldwallet.com",
+                PasswordHash = "PPJjw8OG+mRgfuQq0PwjBg==.I6aFJ1YwnTWLF8rajLp/30yOAXuGukxV5lx0zFoVuBo=.100000",
+                Role = SystemRoles.Admin,
+                PhoneNumber = "+15551010001",
+                IsActive = true,
+                CreatedAtUtc = seededAt
+            });
+
+        modelBuilder.Entity<MobileAppConfiguration>().HasData(
+            new MobileAppConfiguration { Id = 1, ConfigKey = MobileAppConfigurationKeys.WalletSellMode, Name = "Wallet Sell Mode", Description = "Wallet sell execution behavior for mobile and web", ValueType = ConfigurationValueType.String, ValueString = "locked_30_seconds", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 2, ConfigKey = MobileAppConfigurationKeys.WalletSellLockSeconds, Name = "Wallet Sell Lock Seconds", Description = "Wallet sell lock duration in seconds", ValueType = ConfigurationValueType.Int, ValueInt = 30, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 3, ConfigKey = MobileAppConfigurationKeys.MobileReleaseIsIndividualSeller, Name = "Mobile Release Is Individual Seller", Description = "Mobile release: show single seller mode", ValueType = ConfigurationValueType.Bool, ValueBool = false, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 4, ConfigKey = MobileAppConfigurationKeys.MobileReleaseIndividualSellerName, Name = "Mobile Release Individual Seller Name", Description = "Mobile release seller name when single seller mode is enabled", ValueType = ConfigurationValueType.String, ValueString = "Imseeh", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 5, ConfigKey = MobileAppConfigurationKeys.MobileReleaseShowWeightInGrams, Name = "Mobile Release Show Weight In Grams", Description = "Mobile release flag to show weight in grams", ValueType = ConfigurationValueType.Bool, ValueBool = true, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 6, ConfigKey = MobileAppConfigurationKeys.MobileReleaseMarketWatchEnabled, Name = "Mobile Release Market Watch Enabled", Description = "Mobile release flag to enable Market Watch tab in Product screen", ValueType = ConfigurationValueType.Bool, ValueBool = false, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 7, ConfigKey = MobileAppConfigurationKeys.MobileReleaseMyAccountSummaryEnabled, Name = "Mobile Release My Account Summary Enabled", Description = "Mobile release flag to show My Account Summary entry in top bar", ValueType = ConfigurationValueType.Bool, ValueBool = false, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 8, ConfigKey = MobileAppConfigurationKeys.LoginByBiometricEnabled, Name = "Mobile Security Login By Biometric", Description = "Allow biometric quick unlock on mobile", ValueType = ConfigurationValueType.Bool, ValueBool = true, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 9, ConfigKey = MobileAppConfigurationKeys.ProductVideoMaxDurationSeconds, Name = "Product Video Max Duration Seconds", Description = "Max allowed uploaded product video duration in seconds", ValueType = ConfigurationValueType.Int, ValueInt = 30, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 10, ConfigKey = MobileAppConfigurationKeys.LoginByPinEnabled, Name = "Mobile Security Login By PIN", Description = "Allow PIN quick unlock on mobile", ValueType = ConfigurationValueType.Bool, ValueBool = true, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 11, ConfigKey = MobileAppConfigurationKeys.OtpEnableWhatsapp, Name = "OTP Enable WhatsApp", Description = "Enable WhatsApp OTP delivery channel", ValueType = ConfigurationValueType.Bool, ValueBool = true, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 12, ConfigKey = MobileAppConfigurationKeys.OtpEnableEmail, Name = "OTP Enable Email", Description = "Enable Email OTP delivery channel", ValueType = ConfigurationValueType.Bool, ValueBool = true, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 13, ConfigKey = MobileAppConfigurationKeys.OtpExpirySeconds, Name = "OTP Expiry Seconds", Description = "OTP code expiry duration in seconds", ValueType = ConfigurationValueType.Int, ValueInt = 300, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 14, ConfigKey = MobileAppConfigurationKeys.OtpResendCooldownSeconds, Name = "OTP Resend Cooldown Seconds", Description = "OTP resend cooldown in seconds", ValueType = ConfigurationValueType.Int, ValueInt = 30, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 15, ConfigKey = MobileAppConfigurationKeys.OtpMaxResendCount, Name = "OTP Max Resend Count", Description = "Maximum number of OTP resend attempts", ValueType = ConfigurationValueType.Int, ValueInt = 3, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 16, ConfigKey = MobileAppConfigurationKeys.OtpMaxVerificationAttempts, Name = "OTP Max Verification Attempts", Description = "Maximum OTP verification attempts before lock", ValueType = ConfigurationValueType.Int, ValueInt = 5, SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 17, ConfigKey = MobileAppConfigurationKeys.OtpChannelPriority, Name = "OTP Channel Priority", Description = "Preferred OTP channels in order", ValueType = ConfigurationValueType.String, ValueString = "whatsapp,email", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 18, ConfigKey = MobileAppConfigurationKeys.OtpRequiredActions, Name = "OTP Required Actions", Description = "Actions that require OTP verification", ValueType = ConfigurationValueType.String, ValueString = "registration,reset_password,checkout,sell,transfer,gift,pickup,add_bank_account,edit_bank_account,remove_bank_account,add_payment_method,edit_payment_method,remove_payment_method,change_email,change_password,change_mobile_number", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 19, ConfigKey = MobileAppConfigurationKeys.SellerKycApproveEmailTemplate, Name = "Seller KYC Approve Email Template", Description = "Email template used when seller KYC is approved", ValueType = ConfigurationValueType.String, ValueString = "Hello {SellerName}, your KYC request was approved.", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 20, ConfigKey = MobileAppConfigurationKeys.SellerKycApproveWhatsappTemplate, Name = "Seller KYC Approve WhatsApp Template", Description = "WhatsApp template used when seller KYC is approved", ValueType = ConfigurationValueType.String, ValueString = "KYC approved for {SellerName}.", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 21, ConfigKey = MobileAppConfigurationKeys.SellerKycRejectEmailTemplate, Name = "Seller KYC Reject Email Template", Description = "Email template used when seller KYC is rejected", ValueType = ConfigurationValueType.String, ValueString = "Hello {SellerName}, your KYC request was rejected. Note: {ReviewNote}", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 22, ConfigKey = MobileAppConfigurationKeys.SellerKycRejectWhatsappTemplate, Name = "Seller KYC Reject WhatsApp Template", Description = "WhatsApp template used when seller KYC is rejected", ValueType = ConfigurationValueType.String, ValueString = "KYC rejected for {SellerName}. Note: {ReviewNote}", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 23, ConfigKey = MobileAppConfigurationKeys.EmailSenderName, Name = "Email Sender Name", Description = "Display name for outbound system email notifications", ValueType = ConfigurationValueType.String, ValueString = "Gold Wallet", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 24, ConfigKey = MobileAppConfigurationKeys.EmailSenderAddress, Name = "Email Sender Address", Description = "Sender email address for outbound notifications", ValueType = ConfigurationValueType.String, ValueString = "no-reply@goldwallet.local", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 25, ConfigKey = MobileAppConfigurationKeys.WhatsappSenderNumber, Name = "WhatsApp Sender Number", Description = "Configured sender number for outbound WhatsApp notifications", ValueType = ConfigurationValueType.String, ValueString = "+14155238886", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 26, ConfigKey = MobileAppConfigurationKeys.WhatsappSenderBusinessName, Name = "WhatsApp Sender Business Name", Description = "Configured sender business name for outbound WhatsApp notifications", ValueType = ConfigurationValueType.String, ValueString = "Gold Wallet", SellerAccess = false, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 27, ConfigKey = MobileAppConfigurationKeys.SellerTermsAndConditions, Name = "Seller Terms and Conditions", Description = "Seller terms shown during seller registration", ValueType = ConfigurationValueType.String, ValueString = "Seller terms placeholder.", SellerAccess = true, CreatedAtUtc = seededAt },
+            new MobileAppConfiguration { Id = 28, ConfigKey = MobileAppConfigurationKeys.InvestorTermsAndConditions, Name = "Investor Terms and Conditions", Description = "Investor terms shown during investor registration", ValueType = ConfigurationValueType.String, ValueString = "Investor terms placeholder.", SellerAccess = true, CreatedAtUtc = seededAt }
+        );
+
+        modelBuilder.Entity<SystemFeeType>().HasData(
+            new SystemFeeType { Id = 1, FeeCode = "commission_per_transaction", Name = "Commission Per Transaction", Description = "Seller managed commission fee", IsEnabled = true, AppliesToBuy = true, AppliesToSell = true, AppliesToPickup = false, AppliesToTransfer = false, AppliesToGift = false, AppliesToInvoice = true, AppliesToReports = true, IsAdminManaged = false, SortOrder = 1, CreatedAtUtc = seededAt },
+            new SystemFeeType { Id = 2, FeeCode = "premium_discount", Name = "Premium / Discount", Description = "Seller managed premium or discount fee", IsEnabled = true, AppliesToBuy = false, AppliesToSell = false, AppliesToPickup = true, AppliesToTransfer = false, AppliesToGift = false, AppliesToInvoice = true, AppliesToReports = true, IsAdminManaged = false, SortOrder = 2, CreatedAtUtc = seededAt },
+            new SystemFeeType { Id = 3, FeeCode = "storage_custody_fee", Name = "Storage / Custody Fee", Description = "Seller managed custody fee", IsEnabled = true, AppliesToBuy = false, AppliesToSell = false, AppliesToPickup = true, AppliesToTransfer = false, AppliesToGift = false, AppliesToInvoice = true, AppliesToReports = true, IsAdminManaged = false, SortOrder = 3, CreatedAtUtc = seededAt },
+            new SystemFeeType { Id = 4, FeeCode = "delivery_fee", Name = "Delivery Fee", Description = "Seller managed delivery fee", IsEnabled = true, AppliesToBuy = false, AppliesToSell = false, AppliesToPickup = true, AppliesToTransfer = false, AppliesToGift = false, AppliesToInvoice = true, AppliesToReports = true, IsAdminManaged = false, SortOrder = 4, CreatedAtUtc = seededAt },
+            new SystemFeeType { Id = 5, FeeCode = "service_fee", Name = "Service Fee", Description = "Admin managed service fee", IsEnabled = true, AppliesToBuy = true, AppliesToSell = true, AppliesToPickup = true, AppliesToTransfer = true, AppliesToGift = true, AppliesToInvoice = true, AppliesToReports = true, IsAdminManaged = true, SortOrder = 6, CreatedAtUtc = seededAt }
+        );
     }
 
     private static void ConfigureSeller(ModelBuilder modelBuilder)
