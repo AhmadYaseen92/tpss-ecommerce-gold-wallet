@@ -17,6 +17,18 @@ const marketplace = useMarketplace();
 
 const model = reactive<RegisterFormModel>(createEmptyRegisterForm());
 const loading = computed(() => marketplace.loading.value);
+const COMPANY_CODE_COUNTER_KEY = "goldwallet.companyCode.counter";
+
+const nextCompanyCode = () => {
+  const saved = Number(window.localStorage.getItem(COMPANY_CODE_COUNTER_KEY) ?? "99");
+  const next = Number.isFinite(saved) && saved >= 99 ? saved + 1 : 100;
+  window.localStorage.setItem(COMPANY_CODE_COUNTER_KEY, String(next));
+  return String(next);
+};
+
+if (!model.companyInfo.companyCode.trim()) {
+  model.companyInfo.companyCode = nextCompanyCode();
+}
 
 const isEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
 const showModal = (title: string, message: string) =>
@@ -39,7 +51,6 @@ const ensureDataUrl = async (item: any) => {
 const hydrateDocumentsBeforeSubmit = async () => {
   const files = [
     model.companyInfo.documents.crDoc?.[0],
-    model.companyInfo.documents.articles?.[0],
     model.companyInfo.documents.proofOfAddress?.[0],
     model.companyInfo.documents.vatCert?.[0],
     model.companyInfo.documents.amlDoc?.[0],
@@ -57,8 +68,26 @@ const onSubmit = async () => {
     return;
   }
 
-  if (!isEmail(model.companyInfo.email) || !isEmail(model.ownerInfo.email) || !isEmail(model.credentials.loginEmail)) {
+  if (!isEmail(model.companyInfo.email) || !isEmail(model.ownerInfo.email)) {
     await showModal("Validation Error", "Please enter valid email addresses.");
+    return;
+  }
+
+  if (!/^\+?[0-9]{8,15}$/.test(model.credentials.loginPhone.trim())) {
+    await showModal("Validation Error", "Login phone number must contain 8 to 15 digits.");
+    return;
+  }
+
+  if (model.companyInfo.tradeLicenseExpiryDate) {
+    const expiry = new Date(model.companyInfo.tradeLicenseExpiryDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (Number.isNaN(expiry.getTime()) || expiry <= today) {
+      await showModal("Validation Error", "Trade license expiration date must be in the future.");
+      return;
+    }
+  } else {
+    await showModal("Validation Error", "Trade license expiration date is required.");
     return;
   }
 

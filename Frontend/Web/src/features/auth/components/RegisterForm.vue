@@ -24,6 +24,20 @@ const steps = [
   "Login",
   "Summary",
 ];
+const bankCountryCityMap: Record<string, string[]> = {
+  Jordan: ["Amman", "Zarqa", "Irbid", "Aqaba"],
+  "Saudi Arabia": ["Riyadh", "Jeddah", "Dammam", "Mecca"],
+  UAE: ["Dubai", "Abu Dhabi", "Sharjah", "Ajman"],
+  Egypt: ["Cairo", "Alexandria", "Giza", "Luxor"],
+  "United States": ["New York", "Los Angeles", "Chicago", "Houston"],
+  "United Kingdom": ["London", "Manchester", "Birmingham", "Leeds"],
+  Germany: ["Berlin", "Munich", "Hamburg", "Frankfurt"],
+  France: ["Paris", "Lyon", "Marseille", "Toulouse"],
+  India: ["Mumbai", "Delhi", "Bengaluru", "Hyderabad"],
+  Pakistan: ["Karachi", "Lahore", "Islamabad", "Peshawar"],
+};
+const bankCountries = Object.keys(bankCountryCityMap);
+const currencyOptions = ["USD", "EUR", "GBP", "JOD", "SAR", "AED", "EGP", "INR", "PKR"];
 
 const activeStep = ref(0);
 const stepError = ref("");
@@ -55,7 +69,8 @@ const validateStep = (step: number) => {
     const missing: string[] = [];
     if (!props.model.companyInfo.companyName?.trim()) missing.push("Company Name");
     if (!props.model.companyInfo.companyCode?.trim()) missing.push("Company Code");
-    if (!props.model.companyInfo.crNumber?.trim()) missing.push("CR Number");
+    if (!props.model.companyInfo.crNumber?.trim()) missing.push("Trade License Number");
+    if (!props.model.companyInfo.tradeLicenseExpiryDate?.trim()) missing.push("Trade License Expiration Date");
     if (!props.model.companyInfo.vatNumber?.trim()) missing.push("VAT Number");
     if (!props.model.companyInfo.businessActivity?.trim()) missing.push("Business Activity");
     if (!props.model.companyInfo.country?.trim()) missing.push("Country");
@@ -65,35 +80,32 @@ const validateStep = (step: number) => {
     if (!props.model.companyInfo.postalCode?.trim()) missing.push("Postal Code");
     if (!props.model.companyInfo.phone?.trim()) missing.push("Company Phone");
     if (!props.model.companyInfo.email?.trim()) missing.push("Company Email");
-    if (!props.model.companyInfo.documents.crDoc.length) missing.push("Commercial Registration Document");
-    if (!props.model.companyInfo.documents.articles.length) missing.push("Articles of Association");
+    if (!props.model.companyInfo.documents.crDoc.length) missing.push("Trade License Number Document");
     if (!props.model.companyInfo.documents.proofOfAddress.length) missing.push("Proof of Address");
-    if (!props.model.companyInfo.documents.vatCert.length) missing.push("VAT Certificate");
     if (!props.model.companyInfo.documents.amlDoc.length) missing.push("AML Documentation");
     if (missing.length > 0) return `Company Information missing required fields: ${missing.join(", ")}.`;
   }
   if (step === 1) {
     const missing: string[] = [];
-    if (!props.model.ownerInfo.name?.trim()) missing.push("Manager / Owner Name");
+    if (!props.model.ownerInfo.name?.trim()) missing.push("Manager Name");
     if (!props.model.ownerInfo.position?.trim()) missing.push("Position / Job Title");
     if (!props.model.ownerInfo.nationality?.trim()) missing.push("Nationality");
     if (!props.model.ownerInfo.mobile?.trim()) missing.push("Mobile Number");
     if (!props.model.ownerInfo.email?.trim()) missing.push("Email Address");
     if (!props.model.ownerInfo.idType?.trim()) missing.push("ID Type");
-    if (!props.model.ownerInfo.idNumber?.trim()) missing.push("ID Number");
-    if (!props.model.ownerInfo.idCopy.length) missing.push("Owner / Manager ID Copy");
-    if (missing.length > 0) return `Owner / Manager tab is missing: ${missing.join(", ")}.`;
+    if (!props.model.ownerInfo.idCopy.length) missing.push("Manager ID Copy");
+    if (missing.length > 0) return `Manager tab is missing: ${missing.join(", ")}.`;
   }
   if (step === 2) {
     const invalidBranch = props.model.branches.findIndex((x) => !x.branchName || !x.country || !x.city || !x.address);
     if (invalidBranch >= 0) return `Branch #${invalidBranch + 1} is missing required fields: Branch Name, Country, City, or Full Address.`;
   }
   if (step === 3) {
-    const invalidBank = props.model.banks.findIndex((x) => !x.bankName || !x.accountHolder || !x.accountNumber || !x.iban);
+    const invalidBank = props.model.banks.findIndex((x) => !x.bankName || !x.accountHolder || !x.accountNumber || !x.iban || !x.country || !x.city || !x.currency);
     if (invalidBank >= 0) return `Bank Account #${invalidBank + 1} is missing required fields: Bank Name, Account Holder, Account Number, or IBAN.`;
   }
   if (step === 4) {
-    const required = [props.model.credentials.loginEmail, props.model.credentials.password, props.model.credentials.confirmPassword];
+    const required = [props.model.credentials.loginPhone, props.model.credentials.password, props.model.credentials.confirmPassword];
     if (required.some((x) => !x?.trim())) return "Please complete login credentials before continuing.";
     if (props.model.credentials.password !== props.model.credentials.confirmPassword) return "Password and Confirm Password do not match.";
   }
@@ -198,8 +210,9 @@ function goToStep(idx: number) {
     <div v-if="activeStep === 0" :ref="(el) => (stepRefs[0] = el as HTMLElement)" class="form-grid">
       <h2>Company Information</h2>
       <label>Company Name <input v-model="model.companyInfo.companyName" required /></label>
-      <label>Company Code <input v-model="model.companyInfo.companyCode" required /></label>
-      <label>Commercial Registration Number (CR) <input v-model="model.companyInfo.crNumber" required /></label>
+      <label>Company Code <input v-model="model.companyInfo.companyCode" required readonly /></label>
+      <label>Trade License Number <input v-model="model.companyInfo.crNumber" required /></label>
+      <label>Company trade license expiration date <input v-model="model.companyInfo.tradeLicenseExpiryDate" type="date" required /></label>
       <label>Tax / VAT Number <input v-model="model.companyInfo.vatNumber" required /></label>
       <label>Business Activity / Industry Type <input v-model="model.companyInfo.businessActivity" /></label>
       <label>Established Date <input v-model="model.companyInfo.establishedDate" type="date" /></label>
@@ -213,16 +226,15 @@ function goToStep(idx: number) {
       <label>Website (optional) <input v-model="model.companyInfo.website" /></label>
       <label class="full">Description (optional) <textarea v-model="model.companyInfo.description" rows="3" /></label>
 
-      <label>Commercial Registration Document <input type="file" @change="setSingleFile(model.companyInfo.documents.crDoc, $event)" /></label>
-      <label>Articles of Association <input type="file" @change="setSingleFile(model.companyInfo.documents.articles, $event)" /></label>
+      <label>Trade License Number Document <input type="file" @change="setSingleFile(model.companyInfo.documents.crDoc, $event)" /></label>
       <label>Proof of Address <input type="file" @change="setSingleFile(model.companyInfo.documents.proofOfAddress, $event)" /></label>
-      <label>VAT Certificate <input type="file" @change="setSingleFile(model.companyInfo.documents.vatCert, $event)" /></label>
+      <label>VAT Certificate (optional) <input type="file" @change="setSingleFile(model.companyInfo.documents.vatCert, $event)" /></label>
       <label>AML Documentation <input type="file" @change="setSingleFile(model.companyInfo.documents.amlDoc, $event)" /></label>
     </div>
 
     <div v-if="activeStep === 1" :ref="(el) => (stepRefs[1] = el as HTMLElement)" class="form-grid">
-      <h2>Company Owner / Manager</h2>
-      <label>Manager / Owner Name <input v-model="model.ownerInfo.name" required /></label>
+      <h2>Company Manager</h2>
+      <label>Manager Name <input v-model="model.ownerInfo.name" required /></label>
       <label>Position / Job Title <input v-model="model.ownerInfo.position" required /></label>
       <label>Nationality <input v-model="model.ownerInfo.nationality" /></label>
       <label>Mobile Number <input v-model="model.ownerInfo.mobile" required /></label>
@@ -234,9 +246,8 @@ function goToStep(idx: number) {
           <option>Passport</option>
         </select>
       </label>
-      <label>ID Number <input v-model="model.ownerInfo.idNumber" required /></label>
       <label>ID Expiry Date <input v-model="model.ownerInfo.idExpiry" type="date" /></label>
-      <label>Owner / Manager ID Copy <input type="file" @change="setSingleFile(model.ownerInfo.idCopy, $event)" /></label>
+      <label>Manager ID Copy <input type="file" @change="setSingleFile(model.ownerInfo.idCopy, $event)" /></label>
       <label>Authorization Letter (if applicable) <input type="file" @change="setSingleFile(model.ownerInfo.authLetter, $event)" /></label>
     </div>
 
@@ -248,11 +259,11 @@ function goToStep(idx: number) {
         <label>Country <input v-model="branch.country" required /></label>
         <label>City <input v-model="branch.city" required /></label>
         <label>Full Address <input v-model="branch.address" required /></label>
-        <label>Building Number <input v-model="branch.buildingNumber" /></label>
+        <label>Building Name & Number <input v-model="branch.buildingNumber" /></label>
         <label>Postal Code <input v-model="branch.postalCode" /></label>
         <label>Phone Number <input v-model="branch.phone" /></label>
         <label>Email <input v-model="branch.email" type="email" /></label>
-        <label><input type="radio" name="mainBranch" :checked="branch.isMain" @change="setMainBranch(idx)" /> Is Main Branch</label>
+        <label class="inline-check"><input type="checkbox" :checked="branch.isMain" @change="setMainBranch(idx)" /> Is Main Branch</label>
       </div>
     </div>
 
@@ -265,20 +276,36 @@ function goToStep(idx: number) {
         <label>Account Number <input v-model="bank.accountNumber" required /></label>
         <label>IBAN <input v-model="bank.iban" required /></label>
         <label>SWIFT Code <input v-model="bank.swift" /></label>
-        <label>Bank Country <input v-model="bank.country" /></label>
-        <label>Bank City <input v-model="bank.city" /></label>
+        <label>Bank Country
+          <select v-model="bank.country">
+            <option value="">Select country</option>
+            <option v-for="country in bankCountries" :key="country" :value="country">{{ country }}</option>
+          </select>
+        </label>
+        <label>Bank City
+          <select v-model="bank.city">
+            <option value="">Select city</option>
+            <option v-for="city in (bankCountryCityMap[bank.country] || [])" :key="`${bank.country}-${city}`" :value="city">{{ city }}</option>
+          </select>
+        </label>
         <label>Branch Name <input v-model="bank.branchName" /></label>
         <label>Branch Address <input v-model="bank.branchAddress" /></label>
-        <label>Currency <input v-model="bank.currency" /></label>
-        <label><input type="radio" name="mainBank" :checked="bank.isMain" @change="setMainBank(idx)" /> Is Main Account</label>
-        <label>Bank Confirmation Letter <input type="file" @change="setSingleFile(bank.bankLetter, $event)" /></label>
-        <label>IBAN Proof Document <input type="file" @change="setSingleFile(bank.ibanProof, $event)" /></label>
+        <label>Currency
+          <select v-model="bank.currency">
+            <option value="">Select currency</option>
+            <option v-for="currency in currencyOptions" :key="currency" :value="currency">{{ currency }}</option>
+          </select>
+        </label>
+        <label class="inline-check"><input type="checkbox" :checked="bank.isMain" @change="setMainBank(idx)" /> Is Main Account</label>
+        <label>Bank Confirmation Letter (optional) <input type="file" @change="setSingleFile(bank.bankLetter, $event)" /></label>
+        <label>IBAN Proof Document (optional) <input type="file" @change="setSingleFile(bank.ibanProof, $event)" /></label>
       </div>
     </div>
 
-    <div v-if="activeStep === 4" :ref="(el) => (stepRefs[4] = el as HTMLElement)" class="form-grid">
+    <div v-if="activeStep === 4" :ref="(el) => (stepRefs[4] = el as HTMLElement)" class="form-grid login-step">
       <h2>Login Credentials</h2>
-      <label>Login Email <input v-model="model.credentials.loginEmail" type="email" required /></label>
+      <label>Login Phone Number <input v-model="model.credentials.loginPhone" type="tel" required placeholder="Example: +962790000000" /></label>
+      <p class="full login-hint">Use country code and digits only, for example +962790000000.</p>
       <label>Password <input v-model="model.credentials.password" type="password" required /></label>
       <label>Confirm Password <input v-model="model.credentials.confirmPassword" type="password" required /></label>
     </div>
@@ -289,7 +316,7 @@ function goToStep(idx: number) {
       <p><strong>Owner/Manager:</strong> {{ model.ownerInfo.name || '-' }}</p>
       <p><strong>Branches:</strong> {{ model.branches.length }}</p>
       <p><strong>Bank Accounts:</strong> {{ model.banks.length }}</p>
-      <p><strong>Login Email:</strong> {{ model.credentials.loginEmail || '-' }}</p>
+      <p><strong>Login Phone:</strong> {{ model.credentials.loginPhone || '-' }}</p>
     </div>
 
     <div class="wizard-actions">
@@ -336,6 +363,10 @@ function goToStep(idx: number) {
 .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
 .form-grid h2, .full, .title-row { grid-column: 1 / -1; }
 label { display: grid; gap: 6px; font-weight: 600; }
+.inline-check { display: inline-flex; align-items: center; gap: 8px; }
+.inline-check input[type="checkbox"] { width: 14px; height: 14px; }
+.login-step { grid-template-columns: 1fr; max-width: 420px; }
+.login-hint { margin: -4px 0 2px; font-size: 12px; }
 input, textarea, select {
   padding: 8px;
   border: 1px solid var(--border-strong);
