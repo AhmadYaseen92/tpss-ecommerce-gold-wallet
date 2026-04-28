@@ -428,6 +428,27 @@ input, textarea, select {
   border-radius: 8px;
   font: inherit;
 }
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+select option {
+  background: var(--surface-solid);
+  color: var(--text);
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  box-shadow: 0 0 0 1000px var(--surface-solid) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
 .card { border: 1px solid var(--border); border-radius: 10px; padding: 10px; display:grid; gap: 8px; background: var(--surface-elevated); }
 .title-row { display:flex; justify-content: space-between; align-items: center; }
 .wizard-actions { display:flex; justify-content: space-between; margin-top: 8px; }
@@ -438,6 +459,30 @@ input, textarea, select {
 :global(:root.dark-mode) select {
   background: rgba(30, 25, 16, 0.95);
   color: #fff8e6;
+  border-color: rgba(214, 168, 45, 0.35);
+}
+:global(:root.dark-mode) input::placeholder,
+:global(:root.dark-mode) textarea::placeholder {
+  color: rgba(255, 248, 230, 0.58);
+}
+:global(:root.dark-mode) select option {
+  background: #21180d;
+  color: #fff8e6;
+}
+:global(:root.dark-mode) input:-webkit-autofill,
+:global(:root.dark-mode) input:-webkit-autofill:hover,
+:global(:root.dark-mode) input:-webkit-autofill:focus,
+:global(:root.dark-mode) textarea:-webkit-autofill,
+:global(:root.dark-mode) textarea:-webkit-autofill:hover,
+:global(:root.dark-mode) textarea:-webkit-autofill:focus,
+:global(:root.dark-mode) select:-webkit-autofill,
+:global(:root.dark-mode) select:-webkit-autofill:hover,
+:global(:root.dark-mode) select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff8e6;
+  box-shadow: 0 0 0 1000px rgba(30, 25, 16, 0.95) inset;
+}
+:global(:root.dark-mode) input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) sepia(0.3) saturate(1.4);
 }
 @media (max-width: 1100px) { .stepper { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } }
