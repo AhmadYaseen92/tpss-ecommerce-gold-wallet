@@ -45,6 +45,7 @@ public class WebSellerDetailsDto
     public string? Website { get; set; }
     public string? Description { get; set; }
     public string LoginEmail { get; set; } = string.Empty;
+    public string LoginPhone { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public string KycStatus { get; set; } = "pending";
     public string? ReviewNotes { get; set; }
@@ -58,6 +59,21 @@ public class WebSellerDetailsDto
     public List<WebSellerBranchDto> Branches { get; set; } = [];
     public List<WebSellerBankAccountDto> BankAccounts { get; set; } = [];
     public List<WebSellerDocumentDto> Documents { get; set; } = [];
+}
+
+public class UpdateWebUserCredentialsRequest
+{
+    public string? LoginEmail { get; set; }
+    public string? LoginPhone { get; set; }
+    public string? NewPassword { get; set; }
+}
+
+public class WebUserCredentialsDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string LoginEmail { get; set; } = string.Empty;
+    public string LoginPhone { get; set; } = string.Empty;
+    public DateTime? UpdatedAt { get; set; }
 }
 
 public class WebSellerAddressDto

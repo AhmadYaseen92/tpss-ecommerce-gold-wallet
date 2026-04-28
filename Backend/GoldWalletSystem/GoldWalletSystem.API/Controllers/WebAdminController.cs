@@ -22,6 +22,7 @@ public class WebAdminController(
     AppDbContext dbContext,
     IWebAdminDashboardService dashboardService,
     INotificationService notificationService,
+    IPasswordHasher passwordHasher,
     IMarketplaceRealtimeNotifier realtimeNotifier,
     IWebHostEnvironment environment,
     IMobileAppConfigurationService mobileAppConfigurationService) : ControllerBase
@@ -139,6 +140,7 @@ public class WebAdminController(
             Website = seller.Website,
             Description = seller.Description,
             LoginEmail = loginEmail,
+            LoginPhone = await dbContext.Users.Where(x => x.Id == seller.UserId).Select(x => x.PhoneNumber).FirstOrDefaultAsync(cancellationToken) ?? string.Empty,
             IsActive = seller.IsActive,
             KycStatus = seller.KycStatus.ToString().ToLowerInvariant(),
             ReviewNotes = seller.ReviewNotes,
@@ -225,6 +227,24 @@ public class WebAdminController(
         };
 
         return Ok(ApiResponse<WebSellerDetailsDto>.Ok(details));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpPut("sellers/{id}/login-credentials")]
+    public async Task<IActionResult> UpdateSellerLoginCredentials(string id, [FromBody] UpdateWebUserCredentialsRequest request, CancellationToken cancellationToken)
+    {
+        var sellerId = TryParsePrefixedId(id, "S");
+        if (sellerId is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
+
+        var user = await dbContext.Sellers
+            .Where(x => x.Id == sellerId.Value)
+            .Select(x => x.User)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (user is null) return NotFound(ApiResponse<object>.Fail("Seller user not found", 404));
+
+        var dto = await UpdateUserCredentialsAsync(FormatSellerId(sellerId.Value), user, request, cancellationToken);
+        return Ok(ApiResponse<WebUserCredentialsDto>.Ok(dto));
     }
 
     [HttpGet("sellers/{id}/documents/{documentId:int}/view")]
@@ -516,6 +536,23 @@ public class WebAdminController(
         };
 
         return Ok(ApiResponse<WebInvestorProfileDto>.Ok(details));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpPut("investors/{id}/login-credentials")]
+    public async Task<IActionResult> UpdateInvestorLoginCredentials(string id, [FromBody] UpdateWebUserCredentialsRequest request, CancellationToken cancellationToken)
+    {
+        var userId = TryParsePrefixedId(id, "I");
+        if (userId is null) return NotFound(ApiResponse<object>.Fail("Investor not found", 404));
+
+        var user = await dbContext.Users.FirstOrDefaultAsync(
+            x => x.Id == userId.Value && x.Role == SystemRoles.Investor,
+            cancellationToken);
+
+        if (user is null) return NotFound(ApiResponse<object>.Fail("Investor not found", 404));
+
+        var dto = await UpdateUserCredentialsAsync(FormatInvestorId(user.Id), user, request, cancellationToken);
+        return Ok(ApiResponse<WebUserCredentialsDto>.Ok(dto));
     }
 
     [Authorize(Roles = SystemRoles.Admin)]
@@ -1913,5 +1950,53 @@ public class WebAdminController(
         var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
         await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
         return $"/Certificats/{request.UserId}/{fileName}";
+    }
+
+    private async Task<WebUserCredentialsDto> UpdateUserCredentialsAsync(
+        string formattedUserId,
+        Domain.Entities.User user,
+        UpdateWebUserCredentialsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var hasEmailUpdate = !string.IsNullOrWhiteSpace(request.LoginEmail);
+        var hasPhoneUpdate = !string.IsNullOrWhiteSpace(request.LoginPhone);
+        var hasPasswordUpdate = !string.IsNullOrWhiteSpace(request.NewPassword);
+
+        if (!hasEmailUpdate && !hasPhoneUpdate && !hasPasswordUpdate)
+        {
+            throw new InvalidOperationException("At least one credential field must be provided.");
+        }
+
+        if (hasEmailUpdate)
+        {
+            var email = request.LoginEmail!.Trim();
+            var exists = await dbContext.Users.AnyAsync(x => x.Id != user.Id && x.Email == email, cancellationToken);
+            if (exists) throw new InvalidOperationException("Login email is already used by another user.");
+            user.Email = email;
+        }
+
+        if (hasPhoneUpdate)
+        {
+            var phone = request.LoginPhone!.Trim();
+            var exists = await dbContext.Users.AnyAsync(x => x.Id != user.Id && x.PhoneNumber == phone, cancellationToken);
+            if (exists) throw new InvalidOperationException("Login phone is already used by another user.");
+            user.PhoneNumber = phone;
+        }
+
+        if (hasPasswordUpdate)
+        {
+            user.PasswordHash = passwordHasher.Hash(request.NewPassword!.Trim());
+        }
+
+        user.UpdatedAtUtc = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new WebUserCredentialsDto
+        {
+            UserId = formattedUserId,
+            LoginEmail = user.Email,
+            LoginPhone = user.PhoneNumber ?? string.Empty,
+            UpdatedAt = user.UpdatedAtUtc
+        };
     }
 }

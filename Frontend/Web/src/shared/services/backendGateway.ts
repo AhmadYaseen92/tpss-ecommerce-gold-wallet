@@ -24,6 +24,7 @@ import type {
   WebDashboardDto,
   WebInvestorDto,
   WebInvestorProfileDto,
+  WebUserCredentialsDto,
   WebNotificationDto,
   WebRequestDto,
   WebInvoiceDto,
@@ -288,8 +289,32 @@ export async function fetchSellerDetailsByAdmin(accessToken: string, sellerId: s
   return getJson<WebSellerDetailsDto>(`/api/web-admin/sellers/${sellerId}`, accessToken);
 }
 
+export async function updateSellerLoginCredentialsByAdmin(
+  accessToken: string,
+  sellerId: string,
+  payload: { loginEmail?: string; loginPhone?: string; newPassword?: string }
+): Promise<WebUserCredentialsDto> {
+  return putJson<WebUserCredentialsDto, typeof payload>(
+    `/api/web-admin/sellers/${sellerId}/login-credentials`,
+    payload,
+    accessToken
+  );
+}
+
 export async function fetchInvestorDetailsByAdmin(accessToken: string, investorId: string): Promise<WebInvestorProfileDto> {
   return getJson<WebInvestorProfileDto>(`/api/web-admin/investors/${investorId}`, accessToken);
+}
+
+export async function updateInvestorLoginCredentialsByAdmin(
+  accessToken: string,
+  investorId: string,
+  payload: { loginEmail?: string; loginPhone?: string; newPassword?: string }
+): Promise<WebUserCredentialsDto> {
+  return putJson<WebUserCredentialsDto, typeof payload>(
+    `/api/web-admin/investors/${investorId}/login-credentials`,
+    payload,
+    accessToken
+  );
 }
 
 export async function updateSellerKycStatusByAdmin(

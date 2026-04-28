@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
-import { fetchInvestorDetailsByAdmin } from "../../../shared/services/backendGateway";
+import { fetchInvestorDetailsByAdmin, updateInvestorLoginCredentialsByAdmin } from "../../../shared/services/backendGateway";
 import type { WebInvestorProfileDto } from "../../../shared/types/apiTypes";
 import Card from "../../../shared/components/ui/Card.vue";
 import Button from "../../../shared/components/ui/Button.vue";
@@ -16,6 +16,7 @@ const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
 const loading = ref(false);
 const details = ref<WebInvestorProfileDto | null>(null);
 const error = ref("");
+const updatingCredentials = ref(false);
 
 const investorIdFromPath = computed(() => {
   const parts = window.location.pathname.split("/").filter(Boolean);
@@ -46,6 +47,67 @@ const loadDetails = async () => {
 onMounted(() => {
   void loadDetails();
 });
+
+const updateLoginEmail = async () => {
+  if (!details.value || !props.marketplace.session.value?.accessToken) return;
+  const next = window.prompt("Enter new login email:", details.value.email || "") ?? "";
+  const value = next.trim();
+  if (!value || value === details.value.email) return;
+  updatingCredentials.value = true;
+  try {
+    const updated = await updateInvestorLoginCredentialsByAdmin(
+      props.marketplace.session.value.accessToken,
+      details.value.id,
+      { loginEmail: value }
+    );
+    details.value.email = updated.loginEmail;
+    details.value.phoneNumber = updated.loginPhone;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : "Failed to update login email.";
+  } finally {
+    updatingCredentials.value = false;
+  }
+};
+
+const updateLoginPhone = async () => {
+  if (!details.value || !props.marketplace.session.value?.accessToken) return;
+  const next = window.prompt("Enter new login phone:", details.value.phoneNumber || "") ?? "";
+  const value = next.trim();
+  if (!value || value === details.value.phoneNumber) return;
+  updatingCredentials.value = true;
+  try {
+    const updated = await updateInvestorLoginCredentialsByAdmin(
+      props.marketplace.session.value.accessToken,
+      details.value.id,
+      { loginPhone: value }
+    );
+    details.value.email = updated.loginEmail;
+    details.value.phoneNumber = updated.loginPhone;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : "Failed to update login phone.";
+  } finally {
+    updatingCredentials.value = false;
+  }
+};
+
+const resetPassword = async () => {
+  if (!details.value || !props.marketplace.session.value?.accessToken) return;
+  const next = window.prompt("Enter new password for this investor:", "") ?? "";
+  const value = next.trim();
+  if (!value) return;
+  updatingCredentials.value = true;
+  try {
+    await updateInvestorLoginCredentialsByAdmin(
+      props.marketplace.session.value.accessToken,
+      details.value.id,
+      { newPassword: value }
+    );
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : "Failed to reset password.";
+  } finally {
+    updatingCredentials.value = false;
+  }
+};
 </script>
 
 <template>
@@ -147,6 +209,18 @@ onMounted(() => {
               </tr>
             </tbody>
           </table>
+        </div>
+      </Card>
+
+      <Card title="Login Credentials">
+        <div class="form-grid-two">
+          <FormField label="Current Login Email"><div>{{ details.email || '-' }}</div></FormField>
+          <FormField label="Current Login Phone"><div>{{ details.phoneNumber || '-' }}</div></FormField>
+        </div>
+        <div class="ui-row-actions">
+          <Button :disabled="updatingCredentials" variant="ghost" @click="updateLoginEmail">Update Email</Button>
+          <Button :disabled="updatingCredentials" variant="ghost" @click="updateLoginPhone">Update Phone</Button>
+          <Button :disabled="updatingCredentials" variant="warning" @click="resetPassword">Reset Password</Button>
         </div>
       </Card>
     </template>

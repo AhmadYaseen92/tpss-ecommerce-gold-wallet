@@ -120,6 +120,7 @@ export interface WebSellerDetailsDto {
   website?: string;
   description?: string;
   loginEmail: string;
+  loginPhone: string;
   isActive: boolean;
   kycStatus: string;
   reviewNotes?: string;
@@ -317,6 +318,13 @@ export interface WebInvestorProfileDto {
   preferredTheme: string;
   bankAccounts: WebLinkedBankAccountDto[];
   paymentMethods: WebPaymentMethodDto[];
+}
+
+export interface WebUserCredentialsDto {
+  userId: string;
+  loginEmail: string;
+  loginPhone: string;
+  updatedAt?: string | null;
 }
 
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
-import { fetchSellerDetailsByAdmin } from "../../../shared/services/backendGateway";
+import { fetchSellerDetailsByAdmin, updateSellerLoginCredentialsByAdmin } from "../../../shared/services/backendGateway";
 import type { WebSellerDetailsDto, WebSellerDocumentDto } from "../../../shared/types/apiTypes";
 
 import Card from "../../../shared/components/ui/Card.vue";
@@ -20,6 +20,7 @@ const error = ref("");
 const selectedDocumentUrl = ref("");
 const selectedDocumentName = ref("");
 const selectedDocumentType = ref("");
+const updatingCredentials = ref(false);
 
 const sellerIdFromPath = computed(() => {
   const parts = window.location.pathname.split("/").filter(Boolean);
@@ -63,6 +64,67 @@ const setKyc = async (action: SellerAction) => {
   if (action === "block") await props.marketplace.blockKyc(details.value.id);
 
   await loadDetails();
+};
+
+const updateLoginEmail = async () => {
+  if (!details.value || !props.marketplace.session.value?.accessToken) return;
+  const next = window.prompt("Enter new login email:", details.value.loginEmail) ?? "";
+  const value = next.trim();
+  if (!value || value === details.value.loginEmail) return;
+  updatingCredentials.value = true;
+  try {
+    const updated = await updateSellerLoginCredentialsByAdmin(
+      props.marketplace.session.value.accessToken,
+      details.value.id,
+      { loginEmail: value }
+    );
+    details.value.loginEmail = updated.loginEmail;
+    details.value.loginPhone = updated.loginPhone;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : "Failed to update login email.";
+  } finally {
+    updatingCredentials.value = false;
+  }
+};
+
+const updateLoginPhone = async () => {
+  if (!details.value || !props.marketplace.session.value?.accessToken) return;
+  const next = window.prompt("Enter new login phone:", details.value.loginPhone || "") ?? "";
+  const value = next.trim();
+  if (!value || value === details.value.loginPhone) return;
+  updatingCredentials.value = true;
+  try {
+    const updated = await updateSellerLoginCredentialsByAdmin(
+      props.marketplace.session.value.accessToken,
+      details.value.id,
+      { loginPhone: value }
+    );
+    details.value.loginEmail = updated.loginEmail;
+    details.value.loginPhone = updated.loginPhone;
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : "Failed to update login phone.";
+  } finally {
+    updatingCredentials.value = false;
+  }
+};
+
+const resetPassword = async () => {
+  if (!details.value || !props.marketplace.session.value?.accessToken) return;
+  const next = window.prompt("Enter new password for this seller:", "") ?? "";
+  const value = next.trim();
+  if (!value) return;
+  updatingCredentials.value = true;
+  try {
+    await updateSellerLoginCredentialsByAdmin(
+      props.marketplace.session.value.accessToken,
+      details.value.id,
+      { newPassword: value }
+    );
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : "Failed to reset password.";
+  } finally {
+    updatingCredentials.value = false;
+  }
 };
 
 const tabs = ["company", "managers", "branches", "banks", "files"] as const;
@@ -262,6 +324,18 @@ onMounted(() => {
           <Button variant="success" @click="setKyc('approve')">Approve</Button>
           <Button variant="danger" @click="setKyc('reject')">Reject</Button>
           <Button variant="warning" @click="setKyc('block')">Block</Button>
+        </div>
+      </Card>
+
+      <Card title="Login Credentials">
+        <div class="form-grid-two">
+          <FormField label="Current Login Email"><div>{{ details.loginEmail || "-" }}</div></FormField>
+          <FormField label="Current Login Phone"><div>{{ details.loginPhone || "-" }}</div></FormField>
+        </div>
+        <div class="ui-row-actions">
+          <Button :disabled="updatingCredentials" variant="ghost" @click="updateLoginEmail">Update Email</Button>
+          <Button :disabled="updatingCredentials" variant="ghost" @click="updateLoginPhone">Update Phone</Button>
+          <Button :disabled="updatingCredentials" variant="warning" @click="resetPassword">Reset Password</Button>
         </div>
       </Card>
     </template>
