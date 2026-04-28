@@ -29,7 +29,7 @@ const onSubmit = async () => {
   }
 
   await marketplace.login({
-    email: model.email,
+    emailOrPhone: model.email,
     password: model.password,
   });
 

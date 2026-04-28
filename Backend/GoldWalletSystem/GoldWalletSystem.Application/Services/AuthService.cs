@@ -18,10 +18,11 @@ public class AuthService(
 {
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        var loginIdentifier = request.ResolveLoginIdentifier();
+        if (string.IsNullOrWhiteSpace(loginIdentifier) || string.IsNullOrWhiteSpace(request.Password))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
-        var user = await ValidateCredentialsAsync(request.Email, request.Password, cancellationToken);
+        var user = await ValidateCredentialsAsync(loginIdentifier, request.Password, cancellationToken);
         return await BuildLoginResponseAsync(user, cancellationToken);
     }
 

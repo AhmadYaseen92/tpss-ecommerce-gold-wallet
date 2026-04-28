@@ -188,7 +188,13 @@ const mapNotifications = (items: WebNotificationDto[]): NotificationItem[] =>
   }));
 
 export async function loginWithBackend(credentials: AuthCredentials): Promise<UserSession> {
-  const data = await postJson<LoginResponseDto, AuthCredentials>("/api/auth/login", credentials);
+  const payload = {
+    emailOrPhone: credentials.emailOrPhone,
+    email: credentials.emailOrPhone,
+    phoneNumber: credentials.emailOrPhone,
+    password: credentials.password
+  };
+  const data = await postJson<LoginResponseDto, typeof payload>("/api/auth/login", payload);
   allowWebAdminInvestorsEndpoint = true;
   return mapSession(data);
 }
