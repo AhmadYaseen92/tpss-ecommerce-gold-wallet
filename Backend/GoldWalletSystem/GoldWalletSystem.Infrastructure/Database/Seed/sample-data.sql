@@ -1,5 +1,6 @@
 /*
-Sample seed data for a fresh GoldWallet installation.
+Sample seed data for testing/demo environments.
+Not applied by default on fresh installation unless GW_SEED_SAMPLE_DATA=true.
 Keeps data small, clear, and safe to run multiple times.
 */
 

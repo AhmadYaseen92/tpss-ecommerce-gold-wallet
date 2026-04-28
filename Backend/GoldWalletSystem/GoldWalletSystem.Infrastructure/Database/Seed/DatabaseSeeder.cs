@@ -13,6 +13,9 @@ public sealed class DatabaseSeeder(
     AppDbContext dbContext,
     ILogger<DatabaseSeeder> logger) : IDatabaseSeeder
 {
+    private const string BaselineSeedFileName = "baseline-data.sql";
+    private const string SampleSeedFileName = "sample-data.sql";
+
     public async Task SeedIfNeededAsync(CancellationToken cancellationToken = default)
     {
         await dbContext.Database.MigrateAsync(cancellationToken);
@@ -21,38 +24,64 @@ public sealed class DatabaseSeeder(
         var hasSystemFeeTypes = await dbContext.SystemFeeTypes.AnyAsync(cancellationToken);
         var hasSystemSettings = await dbContext.MobileAppConfigurations.AnyAsync(cancellationToken);
 
-        if (hasAdmin && hasSystemFeeTypes && hasSystemSettings)
+        if (!hasAdmin || !hasSystemFeeTypes || !hasSystemSettings)
         {
-            logger.LogInformation("Database seed skipped (baseline records already present).");
-            return;
+            await ExecuteSeedScriptIfExistsAsync(BaselineSeedFileName, "baseline", cancellationToken);
+        }
+        else
+        {
+            logger.LogInformation("Baseline database seed skipped (admin/system configuration/system fee types already present).");
         }
 
-        var scriptPath = ResolveSeedScriptPath();
+        if (ShouldApplySampleSeed())
+        {
+            await ExecuteSeedScriptIfExistsAsync(SampleSeedFileName, "sample", cancellationToken);
+        }
+        else
+        {
+            logger.LogInformation("Sample database seed skipped. Set GW_SEED_SAMPLE_DATA=true to enable test data seeding.");
+        }
+    }
+
+    private async Task ExecuteSeedScriptIfExistsAsync(string fileName, string seedType, CancellationToken cancellationToken)
+    {
+        var scriptPath = ResolveSeedScriptPath(fileName);
         if (!File.Exists(scriptPath))
         {
-            logger.LogWarning("Database seed script not found at: {ScriptPath}", scriptPath);
+            logger.LogWarning("{SeedType} seed script not found at: {ScriptPath}", seedType, scriptPath);
             return;
         }
 
         var sql = await File.ReadAllTextAsync(scriptPath, cancellationToken);
         if (string.IsNullOrWhiteSpace(sql))
         {
-            logger.LogWarning("Database seed script is empty: {ScriptPath}", scriptPath);
+            logger.LogWarning("{SeedType} seed script is empty: {ScriptPath}", seedType, scriptPath);
             return;
         }
 
-        logger.LogInformation("Running database seed script from {ScriptPath}", scriptPath);
+        logger.LogInformation("Running {SeedType} database seed script from {ScriptPath}", seedType, scriptPath);
         await dbContext.Database.ExecuteSqlRawAsync(sql, cancellationToken);
-        logger.LogInformation("Database seed completed successfully.");
+        logger.LogInformation("{SeedType} database seed completed successfully.", seedType);
     }
 
-    private static string ResolveSeedScriptPath()
+    private static bool ShouldApplySampleSeed()
+    {
+        var rawValue = Environment.GetEnvironmentVariable("GW_SEED_SAMPLE_DATA")
+            ?? Environment.GetEnvironmentVariable("GOLDWALLET_SEED_SAMPLE_DATA");
+
+        return rawValue is not null
+            && (rawValue.Equals("1", StringComparison.OrdinalIgnoreCase)
+                || rawValue.Equals("true", StringComparison.OrdinalIgnoreCase)
+                || rawValue.Equals("yes", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string ResolveSeedScriptPath(string fileName)
     {
         var candidates = new[]
         {
-            Path.Combine(AppContext.BaseDirectory, "Database", "Seed", "sample-data.sql"),
-            Path.Combine(Directory.GetCurrentDirectory(), "Database", "Seed", "sample-data.sql"),
-            Path.Combine(Directory.GetCurrentDirectory(), "GoldWalletSystem.Infrastructure", "Database", "Seed", "sample-data.sql")
+            Path.Combine(AppContext.BaseDirectory, "Database", "Seed", fileName),
+            Path.Combine(Directory.GetCurrentDirectory(), "Database", "Seed", fileName),
+            Path.Combine(Directory.GetCurrentDirectory(), "GoldWalletSystem.Infrastructure", "Database", "Seed", fileName)
         };
 
         return candidates.FirstOrDefault(File.Exists) ?? candidates[0];
