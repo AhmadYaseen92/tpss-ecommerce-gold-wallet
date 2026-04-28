@@ -18,7 +18,8 @@ import { useMarketplace } from "./shared/app/store/useMarketplace";
 const marketplace = useMarketplace();
 
 const THEME_KEY = "goldwallet.web.theme";
-const isDark = ref(window.localStorage.getItem(THEME_KEY) === "dark");
+const savedTheme = window.localStorage.getItem(THEME_KEY);
+const isDark = ref(savedTheme !== "light");
 
 const ROUTE_BY_MENU: Partial<Record<NavigationKey, string>> = {
   overview: "/overview",
