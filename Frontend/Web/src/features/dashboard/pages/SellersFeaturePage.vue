@@ -45,6 +45,12 @@ const filtered = computed(() =>
 );
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)));
+const pendingKycCount = computed(() =>
+  props.marketplace.state.value.sellers.filter((seller: Seller) => {
+    const status = String(seller.kycStatus ?? "").toLowerCase();
+    return status === "pending" || status === "underreview";
+  }).length
+);
 
 const pageItems = computed(() => {
   const start = (pageNumber.value - 1) * pageSize;
@@ -76,8 +82,14 @@ const actionLabel: Record<SellerAction, string> = {
 };
 
 const setKyc = async (sellerId: string, action: SellerAction) => {
-  if (action === "approve") await props.marketplace.approveKyc(sellerId);
-  if (action === "reject") await props.marketplace.rejectKyc(sellerId);
+  if (action === "approve") {
+    const note = window.prompt("Optional approval note (will be included in email/WhatsApp template):", "") ?? "";
+    await props.marketplace.approveKyc(sellerId, note.trim() || undefined);
+  }
+  if (action === "reject") {
+    const note = window.prompt("Optional rejection note (will be included in email/WhatsApp template):", "") ?? "";
+    await props.marketplace.rejectKyc(sellerId, note.trim() || undefined);
+  }
   if (action === "block") await props.marketplace.blockKyc(sellerId);
   if (action === "underreview") await props.marketplace.markKycUnderReview(sellerId);
 };
@@ -102,6 +114,12 @@ onMounted(() => {
       title="Seller Registration Requests"
       subtitle="Review seller accounts, KYC status, contact details, and approval actions."
     >
+      <div class="ui-row-actions">
+        <span class="kyc-pending-widget">
+          KYC Pending
+          <strong class="kyc-pending-badge">{{ pendingKycCount }}</strong>
+        </span>
+      </div>
       <Button variant="secondary" size="sm" @click="marketplace.refreshMarketplaceState">
         Refresh
       </Button>
@@ -200,3 +218,27 @@ onMounted(() => {
     </Card>
   </section>
 </template>
+
+<style scoped>
+.kyc-pending-widget {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  background: var(--surface-elevated);
+  font-weight: 600;
+}
+
+.kyc-pending-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: #f59e0b;
+  color: #111827;
+  padding: 0 0.3rem;
+}
+</style>

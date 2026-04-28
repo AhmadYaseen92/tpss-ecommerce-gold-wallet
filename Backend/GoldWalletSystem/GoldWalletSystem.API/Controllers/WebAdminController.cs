@@ -23,7 +23,8 @@ public class WebAdminController(
     IWebAdminDashboardService dashboardService,
     INotificationService notificationService,
     IMarketplaceRealtimeNotifier realtimeNotifier,
-    IWebHostEnvironment environment) : ControllerBase
+    IWebHostEnvironment environment,
+    IMobileAppConfigurationService mobileAppConfigurationService) : ControllerBase
 {
 
     [HttpGet("summary")]
@@ -354,7 +355,72 @@ public class WebAdminController(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var sellerUser = await dbContext.Users.FirstOrDefaultAsync(x => x.Id == seller.UserId, cancellationToken);
+        if (sellerUser is not null)
+        {
+            await SendKycDecisionMessagesAsync(seller, sellerUser, request.ReviewNotes, cancellationToken);
+        }
+
         return Ok(ApiResponse<string>.Ok("updated"));
+    }
+
+    private async Task SendKycDecisionMessagesAsync(Domain.Entities.Seller seller, Domain.Entities.User sellerUser, string? reviewNotes, CancellationToken cancellationToken)
+    {
+        var isApproved = seller.KycStatus == KycStatus.Approved;
+        var emailTemplateKey = isApproved
+            ? MobileAppConfigurationKeys.SellerKycApproveEmailTemplate
+            : MobileAppConfigurationKeys.SellerKycRejectEmailTemplate;
+        var whatsappTemplateKey = isApproved
+            ? MobileAppConfigurationKeys.SellerKycApproveWhatsappTemplate
+            : MobileAppConfigurationKeys.SellerKycRejectWhatsappTemplate;
+
+        var emailTemplate = await mobileAppConfigurationService.GetStringAsync(emailTemplateKey, cancellationToken)
+            ?? (isApproved
+                ? "Hello {SellerName}, your KYC request was approved. Thank you for joining Gold Wallet."
+                : "Hello {SellerName}, your KYC request was rejected. Note: {ReviewNote}");
+        var whatsappTemplate = await mobileAppConfigurationService.GetStringAsync(whatsappTemplateKey, cancellationToken)
+            ?? (isApproved
+                ? "KYC approved for {SellerName}. You can now access seller services."
+                : "KYC rejected for {SellerName}. Note: {ReviewNote}");
+
+        var emailSenderName = await mobileAppConfigurationService.GetStringAsync(MobileAppConfigurationKeys.EmailSenderName, cancellationToken) ?? "Gold Wallet";
+        var emailSenderAddress = await mobileAppConfigurationService.GetStringAsync(MobileAppConfigurationKeys.EmailSenderAddress, cancellationToken) ?? "no-reply@goldwallet.local";
+        var whatsappSenderNumber = await mobileAppConfigurationService.GetStringAsync(MobileAppConfigurationKeys.WhatsappSenderNumber, cancellationToken) ?? "N/A";
+        var whatsappSenderBusinessName = await mobileAppConfigurationService.GetStringAsync(MobileAppConfigurationKeys.WhatsappSenderBusinessName, cancellationToken) ?? "Gold Wallet";
+
+        var placeholders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["SellerName"] = seller.CompanyName,
+            ["CompanyName"] = seller.CompanyName,
+            ["SellerCode"] = seller.CompanyCode,
+            ["ReviewNote"] = string.IsNullOrWhiteSpace(reviewNotes) ? "-" : reviewNotes.Trim(),
+            ["Status"] = seller.KycStatus.ToString()
+        };
+
+        var emailBody = ApplyTemplate(emailTemplate, placeholders);
+        var whatsappBody = ApplyTemplate(whatsappTemplate, placeholders);
+
+        dbContext.AppNotifications.Add(new Domain.Entities.AppNotification
+        {
+            UserId = sellerUser.Id,
+            Title = isApproved ? "KYC Approved" : "KYC Rejected",
+            Body = $"Email via {emailSenderName} <{emailSenderAddress}>: {emailBody}\nWhatsApp via {whatsappSenderBusinessName} ({whatsappSenderNumber}): {whatsappBody}",
+            Type = NotificationType.RequestUpdated
+        });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string ApplyTemplate(string template, IReadOnlyDictionary<string, string> tokens)
+    {
+        var result = template;
+        foreach (var token in tokens)
+        {
+            result = result.Replace($"{{{token.Key}}}", token.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return result;
     }
 
     [Authorize(Roles = SystemRoles.Admin)]

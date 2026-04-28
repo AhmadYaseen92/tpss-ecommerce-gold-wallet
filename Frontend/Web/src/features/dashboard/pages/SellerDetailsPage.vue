@@ -52,8 +52,14 @@ type SellerAction = "approve" | "reject" | "block";
 const setKyc = async (action: SellerAction) => {
   if (!details.value) return;
 
-  if (action === "approve") await props.marketplace.approveKyc(details.value.id);
-  if (action === "reject") await props.marketplace.rejectKyc(details.value.id);
+  if (action === "approve") {
+    const note = window.prompt("Optional approval note (used in template messages):", "") ?? "";
+    await props.marketplace.approveKyc(details.value.id, note.trim() || undefined);
+  }
+  if (action === "reject") {
+    const note = window.prompt("Optional rejection note (used in template messages):", "") ?? "";
+    await props.marketplace.rejectKyc(details.value.id, note.trim() || undefined);
+  }
   if (action === "block") await props.marketplace.blockKyc(details.value.id);
 
   await loadDetails();

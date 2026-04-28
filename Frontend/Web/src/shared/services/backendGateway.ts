@@ -243,6 +243,18 @@ export async function fetchAdminWorkspace(accessToken: string): Promise<AdminWor
   return getJson<AdminWorkspaceDto>("/api/admin/workspace", accessToken);
 }
 
+export interface PublicConfigurationDto {
+  configKey: string;
+  valueString?: string | null;
+  valueBool?: boolean | null;
+  valueInt?: number | null;
+}
+
+export async function fetchPublicConfigurations(keys: string[]): Promise<PublicConfigurationDto[]> {
+  const query = keys.map((key) => `keys=${encodeURIComponent(key)}`).join("&");
+  return getJson<PublicConfigurationDto[]>(`/api/mobile-app-configurations/public?${query}`);
+}
+
 export interface WalletSellConfigurationDto {
   mode: "locked_30_seconds" | "live_price";
   lockSeconds: number;

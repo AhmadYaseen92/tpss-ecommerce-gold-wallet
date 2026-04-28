@@ -8,6 +8,7 @@ import {
 } from "../types/authTypes";
 import { buildRegisterSellerPayload } from "../store/useAuthPage";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
+import { fetchPublicConfigurations } from "../../../shared/services/backendGateway";
 
 const emit = defineEmits<{ toLogin: []; themeToggle: [] }>();
 const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
@@ -17,6 +18,9 @@ const marketplace = useMarketplace();
 
 const model = reactive<RegisterFormModel>(createEmptyRegisterForm());
 const loading = computed(() => marketplace.loading.value);
+const sellerTerms = computed(() => marketTerms.seller || defaultSellerTerms);
+const marketTerms = reactive<{ seller: string; investor: string }>({ seller: "", investor: "" });
+const defaultSellerTerms = "By registering as a seller, you agree to the platform terms and compliance requirements.";
 const COMPANY_CODE_COUNTER_KEY = "goldwallet.companyCode.counter";
 
 const nextCompanyCode = () => {
@@ -29,6 +33,14 @@ const nextCompanyCode = () => {
 if (!model.companyInfo.companyCode.trim()) {
   model.companyInfo.companyCode = nextCompanyCode();
 }
+
+void fetchPublicConfigurations(["Terms_Seller_TermsAndConditions", "Terms_Investor_TermsAndConditions"])
+  .then((items) => {
+    const byKey = new Map(items.map((x) => [x.configKey, x.valueString ?? ""]));
+    marketTerms.seller = byKey.get("Terms_Seller_TermsAndConditions") ?? "";
+    marketTerms.investor = byKey.get("Terms_Investor_TermsAndConditions") ?? "";
+  })
+  .catch(() => undefined);
 
 const isEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
 const showModal = (title: string, message: string) =>
@@ -92,6 +104,21 @@ const onSubmit = async () => {
   }
 
   await hydrateDocumentsBeforeSubmit();
+
+  try {
+    await ElMessageBox.confirm(
+      sellerTerms.value,
+      "Seller Terms & Conditions",
+      {
+        confirmButtonText: "I Agree",
+        cancelButtonText: "Cancel",
+        type: "info",
+        distinguishCancelAndClose: true
+      }
+    );
+  } catch {
+    return;
+  }
 
   const payload = buildRegisterSellerPayload(model);
   await marketplace.registerSeller(payload);

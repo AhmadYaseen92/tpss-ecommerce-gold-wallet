@@ -239,17 +239,17 @@ export function useMarketplace() {
     }
   };
 
-  const approveKyc = async (sellerId: string) => {
+  const approveKyc = async (sellerId: string, reviewNotes?: string) => {
     state.value.sellers = updateSellerKycStatus(state.value.sellers, sellerId, "approved");
     if (session.value?.accessToken) {
-      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "approved");
+      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "approved", reviewNotes);
     }
   };
 
-  const rejectKyc = async (sellerId: string) => {
+  const rejectKyc = async (sellerId: string, reviewNotes?: string) => {
     state.value.sellers = updateSellerKycStatus(state.value.sellers, sellerId, "rejected");
     if (session.value?.accessToken) {
-      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "rejected");
+      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "rejected", reviewNotes);
     }
   };
 

@@ -29,7 +29,7 @@ interface SettingItem {
 
 interface SettingMeta {
   key: string;
-  section: "Mobile App" | "Mobile Security" | "OTP Settings" | "Wallet Sell Settings";
+  section: "Mobile App" | "Mobile Security" | "OTP Settings" | "Wallet Sell Settings" | "Notification Templates" | "Sender Settings" | "Terms & Conditions";
   label: string;
   description: string;
   type: "toggle" | "number" | "select" | "checklist" | "priority";
@@ -61,7 +61,17 @@ const META: SettingMeta[] = [
   { key: "Otp_MaxResendCount", section: "OTP Settings", label: "Max Resend Attempts", description: "Maximum number of OTP resend attempts.", type: "number" },
   { key: "Otp_MaxVerificationAttempts", section: "OTP Settings", label: "Max Verification Attempts", description: "Maximum wrong OTP attempts allowed.", type: "number" },
   { key: "WalletSell_Mode", section: "Wallet Sell Settings", label: "Sell Execution Mode", description: "Defines how sell price is executed (instant or locked).", type: "select", options: [{ value: "live_price", label: "Instant (Live Price)" }, { value: "locked_30_seconds", label: "Locked Price" }] },
-  { key: "WalletSell_LockSeconds", section: "Wallet Sell Settings", label: "Price Lock Duration", description: "Time the sell price remains fixed before confirmation expires.", type: "number" }
+  { key: "WalletSell_LockSeconds", section: "Wallet Sell Settings", label: "Price Lock Duration", description: "Time the sell price remains fixed before confirmation expires.", type: "number" },
+  { key: "Notifications_SellerKycApprove_EmailTemplate", section: "Notification Templates", label: "KYC Approve Email Template", description: "Template placeholders: {SellerName}, {CompanyName}, {SellerCode}, {Status}, {ReviewNote}.", type: "priority" },
+  { key: "Notifications_SellerKycApprove_WhatsappTemplate", section: "Notification Templates", label: "KYC Approve WhatsApp Template", description: "Template placeholders: {SellerName}, {CompanyName}, {SellerCode}, {Status}, {ReviewNote}.", type: "priority" },
+  { key: "Notifications_SellerKycReject_EmailTemplate", section: "Notification Templates", label: "KYC Reject Email Template", description: "Template placeholders: {SellerName}, {CompanyName}, {SellerCode}, {Status}, {ReviewNote}.", type: "priority" },
+  { key: "Notifications_SellerKycReject_WhatsappTemplate", section: "Notification Templates", label: "KYC Reject WhatsApp Template", description: "Template placeholders: {SellerName}, {CompanyName}, {SellerCode}, {Status}, {ReviewNote}.", type: "priority" },
+  { key: "Notifications_EmailSender_Name", section: "Sender Settings", label: "Email Sender Name", description: "Display name used for outbound KYC email notifications.", type: "priority" },
+  { key: "Notifications_EmailSender_Address", section: "Sender Settings", label: "Email Sender Address", description: "Sender email address used for outbound KYC email notifications.", type: "priority" },
+  { key: "Notifications_WhatsappSender_Number", section: "Sender Settings", label: "WhatsApp Sender Number", description: "Sender number shown in outbound WhatsApp notifications.", type: "priority" },
+  { key: "Notifications_WhatsappSender_BusinessName", section: "Sender Settings", label: "WhatsApp Sender Business Name", description: "Business name shown for outbound WhatsApp notifications.", type: "priority" },
+  { key: "Terms_Seller_TermsAndConditions", section: "Terms & Conditions", label: "Seller Terms & Conditions", description: "Displayed in seller registration modal on web.", type: "priority" },
+  { key: "Terms_Investor_TermsAndConditions", section: "Terms & Conditions", label: "Investor Terms & Conditions", description: "Displayed in investor registration modal on mobile.", type: "priority" }
 ];
 
 const findSetting = (key: string) => settings.value.find((item) => item.configKey === key);
@@ -270,6 +280,48 @@ const saveAll = async () => {
           </div>
         </Card>
       </div>
+
+      <Card title="Notification Templates">
+        <div class="settings-grid">
+          <div v-for="{ meta, item } in sectionItems('Notification Templates')" :key="meta.key" class="ui-card">
+            <div class="setting-header">
+              <div>
+                <strong>{{ meta.label }}</strong>
+                <p class="hint-text">{{ meta.description }}</p>
+              </div>
+            </div>
+            <textarea v-model="item!.valueString" rows="4" />
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Sender Settings">
+        <div class="settings-grid">
+          <div v-for="{ meta, item } in sectionItems('Sender Settings')" :key="meta.key" class="ui-card">
+            <div class="setting-header">
+              <div>
+                <strong>{{ meta.label }}</strong>
+                <p class="hint-text">{{ meta.description }}</p>
+              </div>
+            </div>
+            <Input v-model="item!.valueString" />
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Terms & Conditions">
+        <div class="settings-grid">
+          <div v-for="{ meta, item } in sectionItems('Terms & Conditions')" :key="meta.key" class="ui-card">
+            <div class="setting-header">
+              <div>
+                <strong>{{ meta.label }}</strong>
+                <p class="hint-text">{{ meta.description }}</p>
+              </div>
+            </div>
+            <textarea v-model="item!.valueString" rows="6" />
+          </div>
+        </div>
+      </Card>
     </template>
   </section>
 </template>
