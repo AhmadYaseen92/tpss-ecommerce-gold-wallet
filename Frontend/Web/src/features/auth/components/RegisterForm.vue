@@ -14,6 +14,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   submit: [];
   toLogin: [];
+  openTerms: [];
+  openPrivacy: [];
 }>();
 
 const steps = [
@@ -108,6 +110,9 @@ const validateStep = (step: number) => {
     const required = [props.model.credentials.loginPhone, props.model.credentials.password, props.model.credentials.confirmPassword];
     if (required.some((x) => !x?.trim())) return "Please complete login credentials before continuing.";
     if (props.model.credentials.password !== props.model.credentials.confirmPassword) return "Password and Confirm Password do not match.";
+  }
+  if (step === 5) {
+    if (!props.model.agreements.termsAccepted) return "You must accept Terms & Conditions and Privacy Policy to continue.";
   }
   return "";
 };
@@ -317,6 +322,15 @@ function goToStep(idx: number) {
       <p><strong>Branches:</strong> {{ model.branches.length }}</p>
       <p><strong>Bank Accounts:</strong> {{ model.banks.length }}</p>
       <p><strong>Login Phone:</strong> {{ model.credentials.loginPhone || '-' }}</p>
+      <label class="inline-check full terms-check">
+        <input v-model="model.agreements.termsAccepted" type="checkbox" />
+        <span>
+          I have read and agree to the
+          <button type="button" class="link-btn" @click="emit('openTerms')">Terms &amp; Conditions</button>
+          and
+          <button type="button" class="link-btn" @click="emit('openPrivacy')">Privacy Policy</button>.
+        </span>
+      </label>
     </div>
 
     <div class="wizard-actions">
@@ -365,6 +379,16 @@ function goToStep(idx: number) {
 label { display: grid; gap: 6px; font-weight: 600; }
 .inline-check { display: inline-flex; align-items: center; gap: 8px; }
 .inline-check input[type="checkbox"] { width: 14px; height: 14px; }
+.terms-check { align-items: flex-start; line-height: 1.45; }
+.link-btn {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
 .login-step { grid-template-columns: 1fr; max-width: 420px; }
 .login-hint { margin: -4px 0 2px; font-size: 12px; }
 input, textarea, select {

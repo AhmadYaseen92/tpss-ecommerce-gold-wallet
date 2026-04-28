@@ -85,6 +85,9 @@ export interface RegisterFormModel {
   branches: BranchModel[];
   banks: BankModel[];
   credentials: CredentialsModel;
+  agreements: {
+    termsAccepted: boolean;
+  };
 }
 
 export function createEmptyBranch(): BranchModel {
@@ -162,6 +165,9 @@ export function createEmptyRegisterForm(): RegisterFormModel {
       loginPhone: "",
       password: "",
       confirmPassword: "",
+    },
+    agreements: {
+      termsAccepted: false,
     },
   };
 }

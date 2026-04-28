@@ -45,6 +45,8 @@ void fetchPublicConfigurations(["Terms_Seller_TermsAndConditions", "Terms_Invest
 const isEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
 const showModal = (title: string, message: string) =>
   ElMessageBox.alert(message, title, { confirmButtonText: "OK", type: "warning" });
+const showInfoModal = (title: string, message: string) =>
+  ElMessageBox.alert(message, title, { confirmButtonText: "Close", type: "info" });
 
 const ensureDataUrl = async (item: any) => {
   if (!item || typeof item !== "object") return;
@@ -105,18 +107,8 @@ const onSubmit = async () => {
 
   await hydrateDocumentsBeforeSubmit();
 
-  try {
-    await ElMessageBox.confirm(
-      sellerTerms.value,
-      "Seller Terms & Conditions",
-      {
-        confirmButtonText: "I Agree",
-        cancelButtonText: "Cancel",
-        type: "info",
-        distinguishCancelAndClose: true
-      }
-    );
-  } catch {
+  if (!model.agreements.termsAccepted) {
+    await showModal("Validation Error", "You must accept Terms & Conditions and Privacy Policy to register.");
     return;
   }
 
@@ -129,6 +121,15 @@ const onSubmit = async () => {
   } else {
     await showModal("Registration Failed", marketplace.error.value || "Something went wrong, please contact system Admin.");
   }
+};
+
+const openTermsModal = async () => {
+  await showInfoModal("Terms & Conditions", sellerTerms.value);
+};
+
+const openPrivacyModal = async () => {
+  const message = marketTerms.investor || sellerTerms.value;
+  await showInfoModal("Privacy Policy", message);
 };
 </script>
 
@@ -143,6 +144,8 @@ const onSubmit = async () => {
         :loading="loading"
         @submit="onSubmit"
         @to-login="emit('toLogin')"
+        @open-terms="openTermsModal"
+        @open-privacy="openPrivacyModal"
       />
     </div>
   </section>
