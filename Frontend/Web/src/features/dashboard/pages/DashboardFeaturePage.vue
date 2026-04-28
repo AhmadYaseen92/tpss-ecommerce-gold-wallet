@@ -14,6 +14,7 @@ onMounted(() => {
 
 <template>
   <DashboardOverviewPage
+    :is-admin="marketplace.role.value === 'Admin'"
     :dashboard-period="dashboardPeriod"
     :dashboard-cards="dashboardCards"
     :status-summary="statusSummary"

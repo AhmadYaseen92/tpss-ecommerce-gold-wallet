@@ -3,6 +3,7 @@ import Card from "../../../shared/components/ui/Card.vue";
 import StatusBadge from "../../../shared/components/ui/StatusBadge.vue";
 
 defineProps<{
+  isAdmin: boolean;
   dashboardPeriod: "month";
   dashboardCards: Array<{ title: string; value: string; trend: string }>;
   statusRing: Array<{ key: string; label: string; value: number; color: string; percent: number }>;
@@ -39,20 +40,17 @@ const barHeight = (value: number, max: number) => {
 
 <template>
   <section class="dashboard-screen">
-    <Card
-      title="KYC Seller Requests"
-      :subtitle="pendingKycRequests > 0 ? 'Action required: pending seller KYC requests.' : 'No pending seller KYC requests.'"
-      class="kyc-widget"
-      :class="{ alert: pendingKycRequests > 0 }"
-    >
-      <div class="kyc-widget-content">
-        <strong>{{ pendingKycRequests }}</strong>
-        <span>{{ pendingKycRequests === 1 ? "Pending request" : "Pending requests" }}</span>
-      </div>
-    </Card>
-
     <!-- Metrics -->
     <div class="interactive-metrics">
+      <div
+        v-if="isAdmin"
+        class="metric-interactive-card kyc-widget"
+        :class="{ alert: pendingKycRequests > 0 }"
+      >
+        <p>KYC Seller Requests</p>
+        <strong>{{ pendingKycRequests }}</strong>
+        <small>{{ pendingKycRequests > 0 ? "Action required" : "No pending requests" }}</small>
+      </div>
       <div v-for="card in dashboardCards" :key="card.title" class="metric-interactive-card">
         <p>{{ card.title }}</p>
         <strong>{{ card.value }}</strong>
@@ -155,23 +153,11 @@ const barHeight = (value: number, max: number) => {
 
 <style scoped>
 .kyc-widget {
-  margin-bottom: 12px;
-  border-color: var(--border-strong);
+  border: 1px solid var(--border-strong);
 }
 
 .kyc-widget.alert {
   border-color: color-mix(in srgb, var(--warning) 60%, var(--border-strong));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--warning) 40%, transparent);
-}
-
-.kyc-widget-content {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.kyc-widget-content strong {
-  font-size: 28px;
-  line-height: 1;
 }
 </style>
