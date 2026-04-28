@@ -26,20 +26,21 @@ const steps = [
   "Login",
   "Summary",
 ];
-const bankCountryCityMap: Record<string, string[]> = {
-  Jordan: ["Amman", "Zarqa", "Irbid", "Aqaba"],
-  "Saudi Arabia": ["Riyadh", "Jeddah", "Dammam", "Mecca"],
-  UAE: ["Dubai", "Abu Dhabi", "Sharjah", "Ajman"],
-  Egypt: ["Cairo", "Alexandria", "Giza", "Luxor"],
-  "United States": ["New York", "Los Angeles", "Chicago", "Houston"],
-  "United Kingdom": ["London", "Manchester", "Birmingham", "Leeds"],
-  Germany: ["Berlin", "Munich", "Hamburg", "Frankfurt"],
-  France: ["Paris", "Lyon", "Marseille", "Toulouse"],
-  India: ["Mumbai", "Delhi", "Bengaluru", "Hyderabad"],
-  Pakistan: ["Karachi", "Lahore", "Islamabad", "Peshawar"],
+const countryCityMap: Record<string, string[]> = {
+  Jordan: ["Amman", "Zarqa", "Irbid", "Aqaba", "Mafraq", "Salt", "Madaba", "Jerash", "Ajloun", "Karak", "Tafilah", "Ma'an"],
+  "Saudi Arabia": ["Riyadh", "Jeddah", "Mecca", "Medina", "Dammam", "Khobar", "Tabuk", "Abha", "Buraidah", "Hail", "Jizan", "Najran"],
+  UAE: ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Fujairah", "Umm Al Quwain", "Al Ain"],
+  Egypt: ["Cairo", "Alexandria", "Giza", "Luxor", "Aswan", "Mansoura", "Tanta", "Suez", "Port Said", "Ismailia", "Faiyum", "Minya"],
+  "United States": ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose"],
+  "United Kingdom": ["London", "Manchester", "Birmingham", "Leeds", "Liverpool", "Bristol", "Sheffield", "Newcastle", "Nottingham", "Leicester"],
+  Germany: ["Berlin", "Munich", "Hamburg", "Frankfurt", "Cologne", "Stuttgart", "Dusseldorf", "Dortmund", "Essen", "Leipzig"],
+  France: ["Paris", "Lyon", "Marseille", "Toulouse", "Nice", "Nantes", "Strasbourg", "Montpellier", "Bordeaux", "Lille"],
+  India: ["Mumbai", "Delhi", "Bengaluru", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Lucknow"],
+  Pakistan: ["Karachi", "Lahore", "Islamabad", "Peshawar", "Rawalpindi", "Faisalabad", "Multan", "Sialkot", "Hyderabad", "Quetta"],
 };
-const bankCountries = Object.keys(bankCountryCityMap);
+const countryOptions = Object.keys(countryCityMap);
 const currencyOptions = ["USD", "EUR", "GBP", "JOD", "SAR", "AED", "EGP", "INR", "PKR"];
+const getCityOptions = (country: string) => countryCityMap[country] || [];
 
 const activeStep = ref(0);
 const stepError = ref("");
@@ -221,8 +222,18 @@ function goToStep(idx: number) {
       <label>Tax / VAT Number <input v-model="model.companyInfo.vatNumber" required /></label>
       <label>Business Activity / Industry Type <input v-model="model.companyInfo.businessActivity" /></label>
       <label>Established Date <input v-model="model.companyInfo.establishedDate" type="date" /></label>
-      <label>Country <input v-model="model.companyInfo.country" required /></label>
-      <label>City <input v-model="model.companyInfo.city" required /></label>
+      <label>Country
+        <select v-model="model.companyInfo.country" required @change="() => { if (!getCityOptions(model.companyInfo.country).includes(model.companyInfo.city)) model.companyInfo.city = ''; }">
+          <option value="">Select country</option>
+          <option v-for="country in countryOptions" :key="country" :value="country">{{ country }}</option>
+        </select>
+      </label>
+      <label>City
+        <select v-model="model.companyInfo.city" required>
+          <option value="">Select city</option>
+          <option v-for="city in getCityOptions(model.companyInfo.country)" :key="`company-${model.companyInfo.country}-${city}`" :value="city">{{ city }}</option>
+        </select>
+      </label>
       <label>Street <input v-model="model.companyInfo.street" required /></label>
       <label>Building Number <input v-model="model.companyInfo.buildingNumber" /></label>
       <label>Postal Code <input v-model="model.companyInfo.postalCode" /></label>
@@ -261,8 +272,18 @@ function goToStep(idx: number) {
       <div v-for="(branch, idx) in model.branches" :key="idx" class="card full">
         <div class="title-row"><strong>Branch {{ idx + 1 }}</strong><button type="button" @click="removeBranch(idx)">Remove</button></div>
         <label>Branch Name <input v-model="branch.branchName" required /></label>
-        <label>Country <input v-model="branch.country" required /></label>
-        <label>City <input v-model="branch.city" required /></label>
+        <label>Country
+          <select v-model="branch.country" required @change="() => { if (!getCityOptions(branch.country).includes(branch.city)) branch.city = ''; }">
+            <option value="">Select country</option>
+            <option v-for="country in countryOptions" :key="`branch-country-${country}`" :value="country">{{ country }}</option>
+          </select>
+        </label>
+        <label>City
+          <select v-model="branch.city" required>
+            <option value="">Select city</option>
+            <option v-for="city in getCityOptions(branch.country)" :key="`branch-city-${branch.country}-${city}`" :value="city">{{ city }}</option>
+          </select>
+        </label>
         <label>Full Address <input v-model="branch.address" required /></label>
         <label>Building Name & Number <input v-model="branch.buildingNumber" /></label>
         <label>Postal Code <input v-model="branch.postalCode" /></label>
@@ -284,13 +305,13 @@ function goToStep(idx: number) {
         <label>Bank Country
           <select v-model="bank.country">
             <option value="">Select country</option>
-            <option v-for="country in bankCountries" :key="country" :value="country">{{ country }}</option>
+            <option v-for="country in countryOptions" :key="country" :value="country">{{ country }}</option>
           </select>
         </label>
         <label>Bank City
           <select v-model="bank.city">
             <option value="">Select city</option>
-            <option v-for="city in (bankCountryCityMap[bank.country] || [])" :key="`${bank.country}-${city}`" :value="city">{{ city }}</option>
+            <option v-for="city in getCityOptions(bank.country)" :key="`${bank.country}-${city}`" :value="city">{{ city }}</option>
           </select>
         </label>
         <label>Branch Name <input v-model="bank.branchName" /></label>
