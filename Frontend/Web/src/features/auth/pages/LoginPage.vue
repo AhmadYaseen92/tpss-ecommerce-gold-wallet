@@ -6,27 +6,32 @@ import type { LoginFormModel } from "../types/authTypes";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 
 const emit = defineEmits<{ toRegister: []; themeToggle: [] }>();
-const props = withDefaults(defineProps<{ isDark?: boolean }>(), { isDark: false });
+const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
+  isDark: false,
+});
 const marketplace = useMarketplace();
 
 const model = reactive<LoginFormModel>({
-  email: "admin@goldwallet.com",
-  password: "P@ssw0rd",
-  rememberMe: true,
+  email: "",
+  password: "",
+  rememberMe: false,
 });
 
 const loading = computed(() => marketplace.loading.value);
 
 const onSubmit = async () => {
   if (!model.email?.trim() || !model.password?.trim()) {
-    await ElMessageBox.alert("Email and password are required.", "Validation Error", {
+    await ElMessageBox.alert("Email or phone and password are required.", "Validation Error", {
       confirmButtonText: "OK",
       type: "warning",
     });
     return;
   }
 
-  await marketplace.login({ emailOrPhone: model.email, password: model.password });
+  await marketplace.login({
+    emailOrPhone: model.email,
+    password: model.password,
+  });
 
   if (!marketplace.error.value && marketplace.session.value) {
     window.history.replaceState({}, "", "/overview");
@@ -52,6 +57,14 @@ const onForgot = () => {
     <div class="login-overlay"></div>
 
     <div class="login-shell">
+      <button
+        class="theme-toggle-btn"
+        type="button"
+        @click="emit('themeToggle')"
+      >
+        {{ props.isDark ? "Light Theme" : "Dark Theme" }}
+      </button>
+
       <div class="brand-panel">
         <p class="brand-kicker">Secure Trading Platform</p>
         <h2>Gold Wallet Control Center</h2>
@@ -61,9 +74,6 @@ const onForgot = () => {
       </div>
 
       <div class="auth-card auth-card--login">
-        <button class="theme-toggle-btn" type="button" @click="emit('themeToggle')">
-          {{ props.isDark ? "Light Theme" : "Dark Theme" }}
-        </button>
         <p class="login-kicker">Gold Wallet Admin</p>
         <h1>Welcome Back</h1>
         <p class="login-subtitle">Sign in to continue to your dashboard.</p>
@@ -86,7 +96,7 @@ const onForgot = () => {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.9) 58%, rgba(7, 7, 6, 0.98)),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-bg) 35%, transparent), color-mix(in srgb, var(--color-bg) 85%, transparent) 58%, color-mix(in srgb, var(--color-bg) 95%, transparent)),
     url("/images/gold-wallet-login.png");
   background-size: cover;
   background-position: left center;
@@ -115,9 +125,25 @@ const onForgot = () => {
   gap: 56px;
 }
 
+.theme-toggle-btn {
+  position: absolute;
+  right: 0;
+  top: -40px;
+  border: 1px solid rgba(241, 195, 75, 0.45);
+  background: var(--surface-elevated);
+  color: var(--text);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
 .brand-panel {
   max-width: 520px;
-  color: #fff4d0;
+  color: var(--text);
   margin-top: 260px;
 }
 
@@ -140,35 +166,20 @@ const onForgot = () => {
 .brand-panel p:not(.brand-kicker) {
   margin: 18px 0 0;
   max-width: 460px;
-  color: rgba(255, 244, 208, 0.74);
+  color: var(--text-soft);
   font-size: 16px;
   line-height: 1.7;
 }
 
 .auth-card {
-  position: relative;
   width: 100%;
   border: 1px solid rgba(214, 168, 45, 0.35);
   border-radius: 26px;
-  background: linear-gradient(180deg, rgba(32, 28, 18, 0.88), rgba(12, 11, 8, 0.9));
-  box-shadow:
-    0 28px 80px rgba(0, 0, 0, 0.55),
-    0 0 45px rgba(214, 168, 45, 0.12);
+  background: var(--surface-elevated);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
   backdrop-filter: blur(16px);
   padding: 34px;
-}
-
-.theme-toggle-btn {
-  position: absolute;
-  right: 16px;
-  top: 14px;
-  border: 1px solid rgba(214, 168, 45, 0.4);
-  background: rgba(0, 0, 0, 0.2);
-  color: #fff8e6;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 6px 10px;
 }
 
 .login-kicker {
@@ -182,7 +193,7 @@ const onForgot = () => {
 
 .auth-card h1 {
   margin: 0;
-  color: #fff8e6;
+  color: var(--text);
   font-size: 34px;
   line-height: 1.1;
   font-weight: 900;
@@ -190,10 +201,12 @@ const onForgot = () => {
 
 .login-subtitle {
   margin: 10px 0 28px;
-  color: rgba(255, 248, 230, 0.72);
+  color: var(--text-muted);
   font-size: 14px;
   line-height: 1.6;
 }
+
+:global(:root.dark-mode) .login-page { background-position: left center; }
 
 @media (max-width: 900px) {
   .login-page {
@@ -204,6 +217,11 @@ const onForgot = () => {
   .login-shell {
     grid-template-columns: 1fr;
     justify-items: center;
+  }
+
+  .theme-toggle-btn {
+    top: -10px;
+    right: 8px;
   }
 
   .brand-panel {

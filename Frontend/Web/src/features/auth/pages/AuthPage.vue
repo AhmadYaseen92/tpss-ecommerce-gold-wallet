@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import LoginPage from "./LoginPage.vue";
 import RegisterPage from "./RegisterPage.vue";
 
-defineProps<{ marketplace: unknown; isDark?: boolean }>();
+const props = defineProps<{ marketplace: unknown; isDark: boolean }>();
 const emit = defineEmits<{ themeToggle: [] }>();
 
 const route = useRoute();
@@ -22,13 +22,13 @@ watch(mode, (value) => {
 <template>
   <LoginPage
     v-if="mode === 'login'"
-    :is-dark="isDark"
+    :is-dark="props.isDark"
     @to-register="mode = 'register'"
     @theme-toggle="emit('themeToggle')"
   />
   <RegisterPage
     v-else
-    :is-dark="isDark"
+    :is-dark="props.isDark"
     @to-login="mode = 'login'"
     @theme-toggle="emit('themeToggle')"
   />

@@ -8,17 +8,45 @@ import {
 } from "../types/authTypes";
 import { buildRegisterSellerPayload } from "../store/useAuthPage";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
+import { fetchPublicConfigurations } from "../../../shared/services/backendGateway";
 
 const emit = defineEmits<{ toLogin: []; themeToggle: [] }>();
-const props = withDefaults(defineProps<{ isDark?: boolean }>(), { isDark: false });
+const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
+  isDark: false,
+});
 const marketplace = useMarketplace();
 
 const model = reactive<RegisterFormModel>(createEmptyRegisterForm());
 const loading = computed(() => marketplace.loading.value);
+const sellerTerms = computed(() => marketTerms.seller || defaultSellerTerms);
+const marketTerms = reactive<{ seller: string; investor: string }>({ seller: "", investor: "" });
+const defaultSellerTerms = "By registering as a seller, you agree to the platform terms and compliance requirements.";
+const COMPANY_CODE_COUNTER_KEY = "goldwallet.companyCode.counter";
+
+const nextCompanyCode = () => {
+  const saved = Number(window.localStorage.getItem(COMPANY_CODE_COUNTER_KEY) ?? "99");
+  const next = Number.isFinite(saved) && saved >= 99 ? saved + 1 : 100;
+  window.localStorage.setItem(COMPANY_CODE_COUNTER_KEY, String(next));
+  return String(next);
+};
+
+if (!model.companyInfo.companyCode.trim()) {
+  model.companyInfo.companyCode = nextCompanyCode();
+}
+
+void fetchPublicConfigurations(["Terms_Seller_TermsAndConditions", "Terms_Investor_TermsAndConditions"])
+  .then((items) => {
+    const byKey = new Map(items.map((x) => [x.configKey, x.valueString ?? ""]));
+    marketTerms.seller = byKey.get("Terms_Seller_TermsAndConditions") ?? "";
+    marketTerms.investor = byKey.get("Terms_Investor_TermsAndConditions") ?? "";
+  })
+  .catch(() => undefined);
 
 const isEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
 const showModal = (title: string, message: string) =>
   ElMessageBox.alert(message, title, { confirmButtonText: "OK", type: "warning" });
+const showInfoModal = (title: string, message: string) =>
+  ElMessageBox.alert(message, title, { confirmButtonText: "Close", type: "info" });
 
 const ensureDataUrl = async (item: any) => {
   if (!item || typeof item !== "object") return;
@@ -54,12 +82,45 @@ const onSubmit = async () => {
     return;
   }
 
-  if (!isEmail(model.companyInfo.email) || !isEmail(model.ownerInfo.email) || !isEmail(model.credentials.loginEmail)) {
+  if (!isEmail(model.companyInfo.email) || !isEmail(model.ownerInfo.email)) {
     await showModal("Validation Error", "Please enter valid email addresses.");
     return;
   }
 
+  if (!model.credentials.loginEmail.trim() && !model.credentials.loginPhone.trim()) {
+    await showModal("Validation Error", "Please provide at least one login identifier (email or phone).");
+    return;
+  }
+
+  if (model.credentials.loginEmail.trim() && !isEmail(model.credentials.loginEmail.trim())) {
+    await showModal("Validation Error", "Login email is invalid.");
+    return;
+  }
+
+  if (model.credentials.loginPhone.trim() && !/^(\+971|0)?5[0-9]{8}$/.test(model.credentials.loginPhone.trim())) {
+    await showModal("Validation Error", "Login phone number must match UAE format (for example: +971501234567).");
+    return;
+  }
+
+  if (model.companyInfo.tradeLicenseExpiryDate) {
+    const expiry = new Date(model.companyInfo.tradeLicenseExpiryDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (Number.isNaN(expiry.getTime()) || expiry <= today) {
+      await showModal("Validation Error", "Trade license expiration date must be in the future.");
+      return;
+    }
+  } else {
+    await showModal("Validation Error", "Trade license expiration date is required.");
+    return;
+  }
+
   await hydrateDocumentsBeforeSubmit();
+
+  if (!model.agreements.termsAccepted) {
+    await showModal("Validation Error", "You must accept Terms & Conditions and Privacy Policy to register.");
+    return;
+  }
 
   const payload = buildRegisterSellerPayload(model);
   await marketplace.registerSeller(payload);
@@ -70,6 +131,15 @@ const onSubmit = async () => {
   } else {
     await showModal("Registration Failed", marketplace.error.value || "Something went wrong, please contact system Admin.");
   }
+};
+
+const openTermsModal = async () => {
+  await showInfoModal("Terms & Conditions", sellerTerms.value);
+};
+
+const openPrivacyModal = async () => {
+  const message = marketTerms.investor || sellerTerms.value;
+  await showInfoModal("Privacy Policy", message);
 };
 </script>
 
@@ -84,15 +154,33 @@ const onSubmit = async () => {
         :loading="loading"
         @submit="onSubmit"
         @to-login="emit('toLogin')"
+        @open-terms="openTermsModal"
+        @open-privacy="openPrivacyModal"
       />
     </div>
   </section>
 </template>
 
 <style scoped>
+.login-page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--color-bg) 35%, transparent), color-mix(in srgb, var(--color-bg) 85%, transparent) 58%, color-mix(in srgb, var(--color-bg) 95%, transparent)),
+    url("/images/gold-wallet-login.png");
+  background-size: cover;
+  background-position: left center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+}
+
 .auth-card-register {
-  background: var(--surface);
-  color: var(--text);
+  width: min(1080px, 96vw);
+  background: color-mix(in srgb, var(--surface-solid) 86%, transparent);
+  border-color: var(--border-strong);
 }
 
 .theme-toggle-btn {
@@ -100,17 +188,23 @@ const onSubmit = async () => {
   top: 18px;
   right: 18px;
   z-index: 3;
-  border: 1px solid rgba(214, 168, 45, 0.4);
-  background: var(--surface);
+  border: 1px solid rgba(241, 195, 75, 0.45);
+  background: var(--surface-elevated);
   color: var(--text);
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
 }
 
-:global(:root.dark-mode) .auth-card-register {
-  background: var(--surface);
-  color: var(--text);
+.login-page.dark-auth { background-position: left center; }
+
+@media (max-width: 900px) {
+  .auth-card-register {
+    width: min(760px, 96vw);
+  }
 }
 </style>
