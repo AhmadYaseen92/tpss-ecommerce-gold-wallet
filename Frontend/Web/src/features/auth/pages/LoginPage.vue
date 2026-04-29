@@ -53,7 +53,7 @@ const onForgot = () => {
 </script>
 
 <template>
-  <section class="login-page" :class="{ 'dark-auth': props.isDark }">
+  <section class="login-page">
     <div class="login-overlay"></div>
 
     <div class="login-shell">
@@ -175,7 +175,8 @@ const onForgot = () => {
   width: 100%;
   border: 1px solid rgba(214, 168, 45, 0.35);
   border-radius: 26px;
-  background: color-mix(in srgb, var(--surface-solid) 94%, transparent);
+  background: var(--surface-elevated);
+  color: var(--text);
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(16px);
   padding: 34px;
@@ -205,7 +206,7 @@ const onForgot = () => {
   line-height: 1.6;
 }
 
-.login-page.dark-auth { background-position: left center; }
+:global(:root.dark-mode) .login-page { background-position: left center; }
 
 @media (max-width: 900px) {
   .login-page {

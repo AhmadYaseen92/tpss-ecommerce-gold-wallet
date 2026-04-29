@@ -62,7 +62,7 @@ const emit = defineEmits<{
 }
 
 .form-group label {
-  color: #f8e7b0;
+  color: var(--text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -70,10 +70,10 @@ const emit = defineEmits<{
 .form-group input {
   width: 100%;
   height: 46px;
-  border: 1px solid rgba(214, 168, 45, 0.3);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  background: rgba(18, 16, 10, 0.82);
-  color: #fff8e6;
+  background: var(--surface-solid);
+  color: var(--text);
   padding: 0 14px;
   font-size: 14px;
   outline: none;
@@ -81,16 +81,16 @@ const emit = defineEmits<{
 }
 
 .input-hint {
-  color: rgba(255, 248, 230, 0.62);
+  color: var(--text-muted);
   font-size: 12px;
 }
 
 .form-group input::placeholder {
-  color: rgba(255, 248, 230, 0.45);
+  color: var(--text-muted);
 }
 
 .form-group input:focus {
-  border-color: #d6a82d;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(214, 168, 45, 0.18);
 }
 
@@ -105,7 +105,7 @@ const emit = defineEmits<{
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: rgba(255, 248, 230, 0.82);
+  color: var(--text-muted);
   font-size: 13px;
   cursor: pointer;
 }
@@ -113,13 +113,13 @@ const emit = defineEmits<{
 .remember input {
   width: 16px;
   height: 16px;
-  accent-color: #d6a82d;
+  accent-color: var(--primary);
 }
 
 .link-btn {
   border: 0;
   background: transparent;
-  color: #f0c34a;
+  color: var(--primary);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -127,7 +127,7 @@ const emit = defineEmits<{
 }
 
 .link-btn:hover {
-  color: #ffe08a;
+  color: var(--primary-strong);
   text-decoration: underline;
 }
 
@@ -157,7 +157,7 @@ const emit = defineEmits<{
 
 .register-text {
   margin: 4px 0 0;
-  color: rgba(255, 248, 230, 0.78);
+  color: var(--text-muted);
   font-size: 13px;
   text-align: center;
 }
