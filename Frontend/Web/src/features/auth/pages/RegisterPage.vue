@@ -9,7 +9,8 @@ import {
 import { buildRegisterSellerPayload } from "../store/useAuthPage";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 
-const emit = defineEmits<{ toLogin: [] }>();
+const emit = defineEmits<{ toLogin: []; themeToggle: [] }>();
+const props = withDefaults(defineProps<{ isDark?: boolean }>(), { isDark: false });
 const marketplace = useMarketplace();
 
 const model = reactive<RegisterFormModel>(createEmptyRegisterForm());
@@ -73,7 +74,10 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <section class="login-page">
+  <section class="login-page" :class="{ 'dark-auth': props.isDark }">
+    <button class="theme-toggle-btn" type="button" @click="emit('themeToggle')">
+      {{ props.isDark ? "Light Theme" : "Dark Theme" }}
+    </button>
     <div class="auth-card auth-card-register">
       <RegisterForm
         :model="model"
@@ -84,3 +88,29 @@ const onSubmit = async () => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.auth-card-register {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.theme-toggle-btn {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 3;
+  border: 1px solid rgba(214, 168, 45, 0.4);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+:global(:root.dark-mode) .auth-card-register {
+  background: var(--surface);
+  color: var(--text);
+}
+</style>

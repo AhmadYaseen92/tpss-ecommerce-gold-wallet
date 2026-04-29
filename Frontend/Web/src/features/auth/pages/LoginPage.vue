@@ -5,7 +5,8 @@ import LoginForm from "../components/LoginForm.vue";
 import type { LoginFormModel } from "../types/authTypes";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 
-const emit = defineEmits<{ toRegister: [] }>();
+const emit = defineEmits<{ toRegister: []; themeToggle: [] }>();
+const props = withDefaults(defineProps<{ isDark?: boolean }>(), { isDark: false });
 const marketplace = useMarketplace();
 
 const model = reactive<LoginFormModel>({
@@ -25,10 +26,7 @@ const onSubmit = async () => {
     return;
   }
 
-  await marketplace.login({
-    email: model.email,
-    password: model.password,
-  });
+  await marketplace.login({ emailOrPhone: model.email, password: model.password });
 
   if (!marketplace.error.value && marketplace.session.value) {
     window.history.replaceState({}, "", "/overview");
@@ -63,6 +61,9 @@ const onForgot = () => {
       </div>
 
       <div class="auth-card auth-card--login">
+        <button class="theme-toggle-btn" type="button" @click="emit('themeToggle')">
+          {{ props.isDark ? "Light Theme" : "Dark Theme" }}
+        </button>
         <p class="login-kicker">Gold Wallet Admin</p>
         <h1>Welcome Back</h1>
         <p class="login-subtitle">Sign in to continue to your dashboard.</p>
@@ -145,6 +146,7 @@ const onForgot = () => {
 }
 
 .auth-card {
+  position: relative;
   width: 100%;
   border: 1px solid rgba(214, 168, 45, 0.35);
   border-radius: 26px;
@@ -154,6 +156,19 @@ const onForgot = () => {
     0 0 45px rgba(214, 168, 45, 0.12);
   backdrop-filter: blur(16px);
   padding: 34px;
+}
+
+.theme-toggle-btn {
+  position: absolute;
+  right: 16px;
+  top: 14px;
+  border: 1px solid rgba(214, 168, 45, 0.4);
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff8e6;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 10px;
 }
 
 .login-kicker {
