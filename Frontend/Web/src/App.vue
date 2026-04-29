@@ -19,7 +19,9 @@ const marketplace = useMarketplace();
 
 const THEME_KEY = "goldwallet.web.theme";
 const savedTheme = window.localStorage.getItem(THEME_KEY);
-const isDark = ref(savedTheme !== "light");
+const DEFAULT_THEME: "dark" | "light" = "dark";
+const initialTheme = savedTheme === "dark" || savedTheme === "light" ? savedTheme : DEFAULT_THEME;
+const isDark = ref(initialTheme === "dark");
 
 const ROUTE_BY_MENU: Partial<Record<NavigationKey, string>> = {
   overview: "/overview",
