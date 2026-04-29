@@ -96,10 +96,10 @@ const onForgot = () => {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-bg) 35%, transparent), color-mix(in srgb, var(--color-bg) 85%, transparent) 58%, color-mix(in srgb, var(--color-bg) 95%, transparent)),
+    var(--auth-bg-overlay),
     url("/images/gold-wallet-login.png");
   background-size: cover;
-  background-position: left center;
+  background-position: var(--auth-bg-position);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -205,8 +205,6 @@ const onForgot = () => {
   font-size: 14px;
   line-height: 1.6;
 }
-
-:global(:root.dark-mode) .login-page { background-position: left center; }
 
 @media (max-width: 900px) {
   .login-page {
