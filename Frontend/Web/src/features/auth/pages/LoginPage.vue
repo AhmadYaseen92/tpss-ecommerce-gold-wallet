@@ -5,23 +5,20 @@ import LoginForm from "../components/LoginForm.vue";
 import type { LoginFormModel } from "../types/authTypes";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 
-const emit = defineEmits<{ toRegister: []; themeToggle: [] }>();
-const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
-  isDark: false,
-});
+const emit = defineEmits<{ toRegister: [] }>();
 const marketplace = useMarketplace();
 
 const model = reactive<LoginFormModel>({
-  email: "",
-  password: "",
-  rememberMe: false,
+  email: "admin@goldwallet.com",
+  password: "P@ssw0rd",
+  rememberMe: true,
 });
 
 const loading = computed(() => marketplace.loading.value);
 
 const onSubmit = async () => {
   if (!model.email?.trim() || !model.password?.trim()) {
-    await ElMessageBox.alert("Email or phone and password are required.", "Validation Error", {
+    await ElMessageBox.alert("Email and password are required.", "Validation Error", {
       confirmButtonText: "OK",
       type: "warning",
     });
@@ -29,7 +26,7 @@ const onSubmit = async () => {
   }
 
   await marketplace.login({
-    emailOrPhone: model.email,
+    email: model.email,
     password: model.password,
   });
 
@@ -57,14 +54,6 @@ const onForgot = () => {
     <div class="login-overlay"></div>
 
     <div class="login-shell">
-      <button
-        class="theme-toggle-btn"
-        type="button"
-        @click="emit('themeToggle')"
-      >
-        {{ props.isDark ? "Light Theme" : "Dark Theme" }}
-      </button>
-
       <div class="brand-panel">
         <p class="brand-kicker">Secure Trading Platform</p>
         <h2>Gold Wallet Control Center</h2>
@@ -96,7 +85,7 @@ const onForgot = () => {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--color-bg) 35%, transparent), color-mix(in srgb, var(--color-bg) 85%, transparent) 58%, color-mix(in srgb, var(--color-bg) 95%, transparent)),
+    linear-gradient(90deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.9) 58%, rgba(7, 7, 6, 0.98)),
     url("/images/gold-wallet-login.png");
   background-size: cover;
   background-position: left center;
@@ -125,25 +114,9 @@ const onForgot = () => {
   gap: 56px;
 }
 
-.theme-toggle-btn {
-  position: absolute;
-  right: 0;
-  top: -40px;
-  border: 1px solid rgba(241, 195, 75, 0.45);
-  background: var(--surface-elevated);
-  color: var(--text);
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 8px 14px;
-  cursor: pointer;
-}
-
 .brand-panel {
   max-width: 520px;
-  color: var(--text);
+  color: #fff4d0;
   margin-top: 260px;
 }
 
@@ -166,7 +139,7 @@ const onForgot = () => {
 .brand-panel p:not(.brand-kicker) {
   margin: 18px 0 0;
   max-width: 460px;
-  color: var(--text-soft);
+  color: rgba(255, 244, 208, 0.74);
   font-size: 16px;
   line-height: 1.7;
 }
@@ -175,9 +148,10 @@ const onForgot = () => {
   width: 100%;
   border: 1px solid rgba(214, 168, 45, 0.35);
   border-radius: 26px;
-  background: var(--surface-elevated);
-  color: var(--text);
-  box-shadow: var(--shadow-lg);
+  background: linear-gradient(180deg, rgba(32, 28, 18, 0.88), rgba(12, 11, 8, 0.9));
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.55),
+    0 0 45px rgba(214, 168, 45, 0.12);
   backdrop-filter: blur(16px);
   padding: 34px;
 }
@@ -193,7 +167,7 @@ const onForgot = () => {
 
 .auth-card h1 {
   margin: 0;
-  color: var(--text);
+  color: #fff8e6;
   font-size: 34px;
   line-height: 1.1;
   font-weight: 900;
@@ -201,12 +175,10 @@ const onForgot = () => {
 
 .login-subtitle {
   margin: 10px 0 28px;
-  color: var(--text-muted);
+  color: rgba(255, 248, 230, 0.72);
   font-size: 14px;
   line-height: 1.6;
 }
-
-:global(:root.dark-mode) .login-page { background-position: left center; }
 
 @media (max-width: 900px) {
   .login-page {
@@ -217,11 +189,6 @@ const onForgot = () => {
   .login-shell {
     grid-template-columns: 1fr;
     justify-items: center;
-  }
-
-  .theme-toggle-btn {
-    top: -10px;
-    right: 8px;
   }
 
   .brand-panel {

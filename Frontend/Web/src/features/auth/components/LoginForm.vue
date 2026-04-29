@@ -16,9 +16,8 @@ const emit = defineEmits<{
 <template>
   <form class="login-form" @submit.prevent="emit('submit')">
     <div class="form-group">
-      <label>Email or Phone</label>
-      <input v-model="model.email" type="text" placeholder="Email or UAE phone (e.g. +971501234567)" autocomplete="username" />
-      <small class="input-hint">You can sign in using either your email address or phone number.</small>
+      <label>Email</label>
+      <input v-model="model.email" type="email" placeholder="admin@goldwallet.com" autocomplete="email" />
     </div>
 
     <div class="form-group">
@@ -62,7 +61,7 @@ const emit = defineEmits<{
 }
 
 .form-group label {
-  color: var(--text);
+  color: #f8e7b0;
   font-size: 13px;
   font-weight: 700;
 }
@@ -70,27 +69,22 @@ const emit = defineEmits<{
 .form-group input {
   width: 100%;
   height: 46px;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(214, 168, 45, 0.3);
   border-radius: 12px;
-  background: var(--surface-solid);
-  color: var(--text);
+  background: rgba(18, 16, 10, 0.82);
+  color: #fff8e6;
   padding: 0 14px;
   font-size: 14px;
   outline: none;
   transition: 0.2s ease;
 }
 
-.input-hint {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
 .form-group input::placeholder {
-  color: var(--text-muted);
+  color: rgba(255, 248, 230, 0.45);
 }
 
 .form-group input:focus {
-  border-color: var(--primary);
+  border-color: #d6a82d;
   box-shadow: 0 0 0 3px rgba(214, 168, 45, 0.18);
 }
 
@@ -105,7 +99,7 @@ const emit = defineEmits<{
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-muted);
+  color: rgba(255, 248, 230, 0.82);
   font-size: 13px;
   cursor: pointer;
 }
@@ -113,13 +107,13 @@ const emit = defineEmits<{
 .remember input {
   width: 16px;
   height: 16px;
-  accent-color: var(--primary);
+  accent-color: #d6a82d;
 }
 
 .link-btn {
   border: 0;
   background: transparent;
-  color: var(--primary);
+  color: #f0c34a;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -127,7 +121,7 @@ const emit = defineEmits<{
 }
 
 .link-btn:hover {
-  color: var(--primary-strong);
+  color: #ffe08a;
   text-decoration: underline;
 }
 
@@ -157,7 +151,7 @@ const emit = defineEmits<{
 
 .register-text {
   margin: 4px 0 0;
-  color: var(--text-muted);
+  color: rgba(255, 248, 230, 0.78);
   font-size: 13px;
   text-align: center;
 }
