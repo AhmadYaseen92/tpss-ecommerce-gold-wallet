@@ -58,6 +58,12 @@
 
   --sidebar-bg: linear-gradient(180deg, #20180b 0%, #110d07 100%);
   --sidebar-border: rgba(245, 213, 111, 0.16);
+  --auth-bg-overlay: linear-gradient(90deg, color-mix(in srgb, var(--color-bg) 35%, transparent), color-mix(in srgb, var(--color-bg) 85%, transparent) 58%, color-mix(in srgb, var(--color-bg) 95%, transparent));
+  --auth-bg-position: left center;
+  --auth-input-bg: var(--surface-solid);
+  --auth-input-placeholder: var(--text-muted);
+  --auth-select-option-bg: var(--surface-solid);
+  --auth-date-indicator-filter: none;
   --app-letter-spacing: 0.2px;
   --app-line-height: 1.5;
 
@@ -101,6 +107,12 @@
 
   --sidebar-bg: linear-gradient(180deg, #171207 0%, #090806 100%);
   --sidebar-border: rgba(214, 168, 45, 0.2);
+  --auth-bg-overlay: linear-gradient(90deg, rgba(7, 7, 6, 0.48), rgba(10, 9, 7, 0.86) 58%, rgba(9, 8, 6, 0.98));
+  --auth-bg-position: left center;
+  --auth-input-bg: rgba(30, 25, 16, 0.95);
+  --auth-input-placeholder: rgba(255, 248, 230, 0.58);
+  --auth-select-option-bg: #21180d;
+  --auth-date-indicator-filter: invert(1) sepia(0.3) saturate(1.4);
   --app-letter-spacing: 0.35px;
   --app-line-height: 1.55;
 
