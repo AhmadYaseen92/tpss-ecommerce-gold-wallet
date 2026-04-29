@@ -2,6 +2,7 @@ using GoldWalletSystem.Application.Interfaces.Repositories;
 using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Application.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
+using GoldWalletSystem.Infrastructure.Database.Seed;
 using GoldWalletSystem.Infrastructure.Repositories;
 using GoldWalletSystem.Infrastructure.Services;
 using GoldWalletSystem.Infrastructure.Services.Security;
@@ -16,6 +17,7 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
         services.AddMemoryCache();
+        services.AddScoped<IDatabaseSeeder, DatabaseSeeder>();
 
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<ICartRepository, CartRepository>();

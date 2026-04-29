@@ -23,8 +23,13 @@ import type {
   EnumItemDto,
   WebDashboardDto,
   WebInvestorDto,
+  WebInvestorProfileDto,
+  WebUserCredentialsDto,
   WebNotificationDto,
   WebRequestDto,
+  WebInvoiceDto,
+  WebFeesDto,
+  WebFeeBreakdownReportRowDto,
   WebSellerDetailsDto,
   WebSellerDto,
   WalletDto
@@ -41,20 +46,6 @@ const toAbsoluteImageUrl = (value: unknown): string => {
   return path.startsWith("/") ? `${API_BASE_URL}${path}` : `${API_BASE_URL}/${path}`;
 };
 
-const fallbackCategories: EnumItemDto[] = [
-  { value: 1, name: "Gold" },
-  { value: 2, name: "Silver" },
-  { value: 3, name: "Diamond" },
-  { value: 4, name: "Jewelry" },
-  { value: 5, name: "Coins" }
-];
-
-const fallbackWeightUnits: EnumItemDto[] = [
-  { value: 1, name: "Gram" },
-  { value: 2, name: "Kilogram" },
-  { value: 3, name: "Ounce" }
-];
-
 let allowWebAdminInvestorsEndpoint = true;
 
 const mapSession = (dto: LoginResponseDto): UserSession => ({
@@ -66,9 +57,18 @@ const mapSession = (dto: LoginResponseDto): UserSession => ({
   displayName: dto.fullName ?? dto.sellerName ?? null
 });
 
+const normalizeSellerId = (value: unknown): string | undefined => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return undefined;
+  if (/^S\d{3,}$/i.test(raw)) return raw.toUpperCase();
+  const parsed = Number(raw);
+  if (Number.isFinite(parsed) && parsed > 0) return `S${String(Math.trunc(parsed)).padStart(3, "0")}`;
+  return raw;
+};
+
 const mapSeller = (dto: WebSellerDto): Seller => ({
   id: dto.id,
-  sellerId: Number(dto.id.replace("s-", "")) || 0,
+  sellerId: Number(String(dto.id).replace(/\D/g, "")) || 0,
   name: dto.name,
   email: dto.email,
   businessName: dto.businessName,
@@ -120,7 +120,7 @@ const mapInvestors = (items: WebInvestorDto[]): Investor[] =>
 const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
   items.map((item) => ({
     id: item.id,
-    sellerId: item.sellerId,
+    sellerId: normalizeSellerId(item.sellerId),
     sellerName: item.sellerName,
     investorId: item.investorId,
     investorName: item.investorName,
@@ -150,6 +150,18 @@ const mapWebRequests = (items: WebRequestDto[]): InvestorRequest[] =>
     createdAt: item.createdAt
   }));
 
+const mapWebInvoices = (items: WebInvoiceDto[]) =>
+  items.map((item) => ({
+    id: item.id,
+    sellerId: normalizeSellerId(item.sellerId) ?? item.sellerId,
+    investorName: item.investorName,
+    totalAmount: Number(item.totalAmount ?? 0),
+    issuedAt: item.issuedAt,
+    status: item.status,
+    paymentStatus: item.paymentStatus,
+    pdfUrl: item.pdfUrl
+  }));
+
 const mapWalletAssets = (wallet: WalletDto): WalletAssetItem[] =>
   (wallet.assets ?? []).map((item) => ({
     id: item.id,
@@ -176,7 +188,13 @@ const mapNotifications = (items: WebNotificationDto[]): NotificationItem[] =>
   }));
 
 export async function loginWithBackend(credentials: AuthCredentials): Promise<UserSession> {
-  const data = await postJson<LoginResponseDto, AuthCredentials>("/api/auth/login", credentials);
+  const payload = {
+    emailOrPhone: credentials.emailOrPhone,
+    email: credentials.emailOrPhone,
+    phoneNumber: credentials.emailOrPhone,
+    password: credentials.password
+  };
+  const data = await postJson<LoginResponseDto, typeof payload>("/api/auth/login", payload);
   allowWebAdminInvestorsEndpoint = true;
   return mapSession(data);
 }
@@ -233,6 +251,18 @@ export async function fetchAdminWorkspace(accessToken: string): Promise<AdminWor
   return getJson<AdminWorkspaceDto>("/api/admin/workspace", accessToken);
 }
 
+export interface PublicConfigurationDto {
+  configKey: string;
+  valueString?: string | null;
+  valueBool?: boolean | null;
+  valueInt?: number | null;
+}
+
+export async function fetchPublicConfigurations(keys: string[]): Promise<PublicConfigurationDto[]> {
+  const query = keys.map((key) => `keys=${encodeURIComponent(key)}`).join("&");
+  return getJson<PublicConfigurationDto[]>(`/api/mobile-app-configurations/public?${query}`);
+}
+
 export interface WalletSellConfigurationDto {
   mode: "locked_30_seconds" | "live_price";
   lockSeconds: number;
@@ -263,6 +293,34 @@ export async function fetchSellers(accessToken: string): Promise<Seller[]> {
 
 export async function fetchSellerDetailsByAdmin(accessToken: string, sellerId: string): Promise<WebSellerDetailsDto> {
   return getJson<WebSellerDetailsDto>(`/api/web-admin/sellers/${sellerId}`, accessToken);
+}
+
+export async function updateSellerLoginCredentialsByAdmin(
+  accessToken: string,
+  sellerId: string,
+  payload: { loginEmail?: string; loginPhone?: string; newPassword?: string }
+): Promise<WebUserCredentialsDto> {
+  return putJson<WebUserCredentialsDto, typeof payload>(
+    `/api/web-admin/sellers/${sellerId}/login-credentials`,
+    payload,
+    accessToken
+  );
+}
+
+export async function fetchInvestorDetailsByAdmin(accessToken: string, investorId: string): Promise<WebInvestorProfileDto> {
+  return getJson<WebInvestorProfileDto>(`/api/web-admin/investors/${investorId}`, accessToken);
+}
+
+export async function updateInvestorLoginCredentialsByAdmin(
+  accessToken: string,
+  investorId: string,
+  payload: { loginEmail?: string; loginPhone?: string; newPassword?: string }
+): Promise<WebUserCredentialsDto> {
+  return putJson<WebUserCredentialsDto, typeof payload>(
+    `/api/web-admin/investors/${investorId}/login-credentials`,
+    payload,
+    accessToken
+  );
 }
 
 export async function updateSellerKycStatusByAdmin(
@@ -305,6 +363,8 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     .catch(() => [] as WebNotificationDto[]);
 
   const webRequests = await getJson<WebRequestDto[]>("/api/web-admin/requests", session.accessToken);
+  const webInvoices = await getJson<WebInvoiceDto[]>("/api/web-admin/invoices", session.accessToken).catch(() => [] as WebInvoiceDto[]);
+  const webFees = await getJson<WebFeesDto>("/api/web-admin/fees", session.accessToken).catch(() => null as WebFeesDto | null);
   const webInvestors = session.role === "Admin" && allowWebAdminInvestorsEndpoint
     ? await getJson<WebInvestorDto[]>("/api/web-admin/investors", session.accessToken).catch((error) => {
         if (error instanceof HttpError && error.statusCode === 403) {
@@ -326,27 +386,7 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
 
   const products = productsResult.items.map(mapProduct);
 
-  let sellers: Seller[] = [];
-  try {
-    sellers = await fetchSellers(session.accessToken);
-  } catch {
-    sellers = Array.from(
-      new Map(
-        productsResult.items.map((item) => [
-          item.sellerId,
-          {
-            id: `s-${item.sellerId}`,
-            sellerId: item.sellerId,
-            name: item.sellerName,
-            email: `${item.sellerName.toLowerCase().replace(/\s+/g, ".")}@goldwallet.local`,
-            businessName: item.sellerName,
-            kycStatus: "approved" as const,
-            submittedAt: new Date().toISOString().split("T")[0]
-          }
-        ])
-      ).values()
-    );
-  }
+  const sellers = await fetchSellers(session.accessToken).catch(() => [] as Seller[]);
 
   return {
     sellers,
@@ -354,20 +394,11 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
     requests,
     products,
     walletAssets: wallet ? mapWalletAssets(wallet) : [],
-    invoices: products.slice(0, 5).map((product, index) => ({
-      id: `inv-${index + 1}`,
-      sellerId: product.sellerId,
-      investorName: `Investor ${index + 1}`,
-      totalAmount: product.unitPrice,
-      issuedAt: new Date().toISOString().split("T")[0],
-      status: index % 2 === 0 ? "Issued" : "Completed",
-      paymentStatus: index % 2 === 0 ? "Pending" : "Paid",
-      pdfUrl: undefined
-    })),
+    invoices: mapWebInvoices(webInvoices),
     fees: {
-      deliveryFee: 12,
-      storageFee: 4,
-      serviceChargePercent: 2.5
+      deliveryFee: Number(webFees?.deliveryFee ?? 0),
+      storageFee: Number(webFees?.storageFee ?? 0),
+      serviceChargePercent: Number(webFees?.serviceChargePercent ?? 0)
     },
     notifications: mapNotifications(notificationsResult),
     reports: dashboard ? mapReports(dashboard, requests.length) : [],
@@ -377,6 +408,18 @@ export async function fetchMarketplaceState(session: UserSession): Promise<Marke
 
 export async function fetchWebAdminDashboard(accessToken: string, period: "today" | "week" | "month"): Promise<WebDashboardDto> {
   return getJson<WebDashboardDto>(`/api/web-admin/dashboard?period=${period}`, accessToken);
+}
+
+export async function fetchWebFeeBreakdownReport(
+  accessToken: string,
+  feeGroup: "commission" | "premium" | "storage" | "delivery" | "service",
+  from?: string,
+  to?: string
+): Promise<WebFeeBreakdownReportRowDto[]> {
+  const params = new URLSearchParams({ feeGroup });
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  return getJson<WebFeeBreakdownReportRowDto[]>(`/api/web-admin/reports/fee-breakdowns?${params.toString()}`, accessToken);
 }
 
 export async function updateWebRequestStatus(
@@ -485,7 +528,7 @@ export async function fetchProductCategories(accessToken: string): Promise<EnumI
     const categories = await getJson<EnumItemDto[]>("/api/products/categories", accessToken);
     return categories.filter((item) => item.name.toLowerCase() !== "spotmr" && item.value !== 6);
   } catch {
-    return fallbackCategories;
+    return [];
   }
 }
 
@@ -493,7 +536,7 @@ export async function fetchWeightUnits(accessToken: string): Promise<EnumItemDto
   try {
     return await getJson<EnumItemDto[]>("/api/products/weight-units", accessToken);
   } catch {
-    return fallbackWeightUnits;
+    return [];
   }
 }
 

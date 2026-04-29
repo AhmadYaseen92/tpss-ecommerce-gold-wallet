@@ -8,7 +8,6 @@ export type UploadFileList = any[];
 
 export interface CompanyDocumentsModel {
   crDoc: UploadFileList;
-  articles: UploadFileList;
   proofOfAddress: UploadFileList;
   vatCert: UploadFileList;
   amlDoc: UploadFileList;
@@ -21,6 +20,7 @@ export interface CompanyInfoModel {
   vatNumber: string;
   businessActivity: string;
   establishedDate: string;
+  tradeLicenseExpiryDate: string;
   country: string;
   city: string;
   street: string;
@@ -76,6 +76,7 @@ export interface BankModel {
 
 export interface CredentialsModel {
   loginEmail: string;
+  loginPhone: string;
   password: string;
   confirmPassword: string;
 }
@@ -86,6 +87,9 @@ export interface RegisterFormModel {
   branches: BranchModel[];
   banks: BankModel[];
   credentials: CredentialsModel;
+  agreements: {
+    termsAccepted: boolean;
+  };
 }
 
 export function createEmptyBranch(): BranchModel {
@@ -129,6 +133,7 @@ export function createEmptyRegisterForm(): RegisterFormModel {
       vatNumber: "",
       businessActivity: "",
       establishedDate: "",
+      tradeLicenseExpiryDate: "",
       country: "",
       city: "",
       street: "",
@@ -140,7 +145,6 @@ export function createEmptyRegisterForm(): RegisterFormModel {
       description: "",
       documents: {
         crDoc: [],
-        articles: [],
         proofOfAddress: [],
         vatCert: [],
         amlDoc: [],
@@ -162,8 +166,12 @@ export function createEmptyRegisterForm(): RegisterFormModel {
     banks: [createEmptyBank()],
     credentials: {
       loginEmail: "",
+      loginPhone: "",
       password: "",
       confirmPassword: "",
+    },
+    agreements: {
+      termsAccepted: false,
     },
   };
 }

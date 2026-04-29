@@ -22,8 +22,10 @@ public class WebAdminController(
     AppDbContext dbContext,
     IWebAdminDashboardService dashboardService,
     INotificationService notificationService,
+    IPasswordHasher passwordHasher,
     IMarketplaceRealtimeNotifier realtimeNotifier,
-    IWebHostEnvironment environment) : ControllerBase
+    IWebHostEnvironment environment,
+    IMobileAppConfigurationService mobileAppConfigurationService) : ControllerBase
 {
 
     [HttpGet("summary")]
@@ -75,7 +77,7 @@ public class WebAdminController(
             .OrderByDescending(x => x.CreatedAtUtc)
             .Select(x => new WebSellerDto
             {
-                Id = $"s-{x.Id}",
+                Id = FormatSellerId(x.Id),
                 Name = x.CompanyName,
                 Email = x.CompanyEmail ?? dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
                 BusinessName = x.CompanyName,
@@ -98,7 +100,7 @@ public class WebAdminController(
     [HttpGet("sellers/{id}")]
     public async Task<IActionResult> GetSellerDetails(string id, CancellationToken cancellationToken)
     {
-        var sellerId = TryParsePrefixedId(id, "s-");
+        var sellerId = TryParsePrefixedId(id, "S");
         if (sellerId is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
 
         var sellerIdClaim = User.FindFirst("seller_id")?.Value;
@@ -126,7 +128,7 @@ public class WebAdminController(
 
         var details = new WebSellerDetailsDto
         {
-            Id = $"s-{seller.Id}",
+            Id = FormatSellerId(seller.Id),
             CompanyName = seller.CompanyName,
             CompanyCode = seller.CompanyCode,
             CommercialRegistrationNumber = seller.CommercialRegistrationNumber,
@@ -138,6 +140,7 @@ public class WebAdminController(
             Website = seller.Website,
             Description = seller.Description,
             LoginEmail = loginEmail,
+            LoginPhone = await dbContext.Users.Where(x => x.Id == seller.UserId).Select(x => x.PhoneNumber).FirstOrDefaultAsync(cancellationToken) ?? string.Empty,
             IsActive = seller.IsActive,
             KycStatus = seller.KycStatus.ToString().ToLowerInvariant(),
             ReviewNotes = seller.ReviewNotes,
@@ -226,10 +229,28 @@ public class WebAdminController(
         return Ok(ApiResponse<WebSellerDetailsDto>.Ok(details));
     }
 
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpPut("sellers/{id}/login-credentials")]
+    public async Task<IActionResult> UpdateSellerLoginCredentials(string id, [FromBody] UpdateWebUserCredentialsRequest request, CancellationToken cancellationToken)
+    {
+        var sellerId = TryParsePrefixedId(id, "S");
+        if (sellerId is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
+
+        var user = await dbContext.Sellers
+            .Where(x => x.Id == sellerId.Value)
+            .Select(x => x.User)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (user is null) return NotFound(ApiResponse<object>.Fail("Seller user not found", 404));
+
+        var dto = await UpdateUserCredentialsAsync(FormatSellerId(sellerId.Value), user, request, cancellationToken);
+        return Ok(ApiResponse<WebUserCredentialsDto>.Ok(dto));
+    }
+
     [HttpGet("sellers/{id}/documents/{documentId:int}/view")]
     public async Task<IActionResult> ViewSellerDocument(string id, int documentId, CancellationToken cancellationToken)
     {
-        var sellerId = TryParsePrefixedId(id, "s-");
+        var sellerId = TryParsePrefixedId(id, "S");
         if (sellerId is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
 
         var sellerIdClaim = User.FindFirst("seller_id")?.Value;
@@ -328,7 +349,7 @@ public class WebAdminController(
     [HttpPut("sellers/{id}/kyc-status")]
     public async Task<IActionResult> UpdateSellerKycStatus(string id, [FromBody] UpdateSellerKycRequest request, CancellationToken cancellationToken)
     {
-        var sellerId = TryParsePrefixedId(id, "s-");
+        var sellerId = TryParsePrefixedId(id, "S");
         if (sellerId is null) return NotFound(ApiResponse<object>.Fail("Seller not found", 404));
 
         var seller = await dbContext.Sellers.FirstOrDefaultAsync(x => x.Id == sellerId, cancellationToken);
@@ -354,7 +375,72 @@ public class WebAdminController(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var sellerAccount = await dbContext.Users.FirstOrDefaultAsync(x => x.Id == seller.UserId, cancellationToken);
+        if (sellerAccount is not null)
+        {
+            await SendKycDecisionMessagesAsync(seller, sellerAccount, request.ReviewNotes, cancellationToken);
+        }
+
         return Ok(ApiResponse<string>.Ok("updated"));
+    }
+
+    private async Task SendKycDecisionMessagesAsync(Domain.Entities.Seller seller, Domain.Entities.User sellerUser, string? reviewNotes, CancellationToken cancellationToken)
+    {
+        var isApproved = seller.KycStatus == KycStatus.Approved;
+        var emailTemplateKey = isApproved
+            ? MobileAppConfigurationKeys.SellerKycApproveEmailTemplate
+            : MobileAppConfigurationKeys.SellerKycRejectEmailTemplate;
+        var whatsappTemplateKey = isApproved
+            ? MobileAppConfigurationKeys.SellerKycApproveWhatsappTemplate
+            : MobileAppConfigurationKeys.SellerKycRejectWhatsappTemplate;
+
+        var emailTemplate = await mobileAppConfigurationService.GetStringAsync(emailTemplateKey, cancellationToken)
+            ?? (isApproved
+                ? "Hello {SellerName}, your KYC request was approved. Thank you for joining Gold Wallet."
+                : "Hello {SellerName}, your KYC request was rejected. Note: {ReviewNote}");
+        var whatsappTemplate = await mobileAppConfigurationService.GetStringAsync(whatsappTemplateKey, cancellationToken)
+            ?? (isApproved
+                ? "KYC approved for {SellerName}. You can now access seller services."
+                : "KYC rejected for {SellerName}. Note: {ReviewNote}");
+
+        var emailSenderName = await mobileAppConfigurationService.GetStringAsync(MobileAppConfigurationKeys.EmailSenderName, cancellationToken) ?? "Gold Wallet";
+        var emailSenderAddress = await mobileAppConfigurationService.GetStringAsync(MobileAppConfigurationKeys.EmailSenderAddress, cancellationToken) ?? "no-reply@goldwallet.local";
+        var whatsappSenderNumber = await mobileAppConfigurationService.GetStringAsync(MobileAppConfigurationKeys.WhatsappSenderNumber, cancellationToken) ?? "N/A";
+        var whatsappSenderBusinessName = await mobileAppConfigurationService.GetStringAsync(MobileAppConfigurationKeys.WhatsappSenderBusinessName, cancellationToken) ?? "Gold Wallet";
+
+        var placeholders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["SellerName"] = seller.CompanyName,
+            ["CompanyName"] = seller.CompanyName,
+            ["SellerCode"] = seller.CompanyCode,
+            ["ReviewNote"] = string.IsNullOrWhiteSpace(reviewNotes) ? "-" : reviewNotes.Trim(),
+            ["Status"] = seller.KycStatus.ToString()
+        };
+
+        var emailBody = ApplyTemplate(emailTemplate, placeholders);
+        var whatsappBody = ApplyTemplate(whatsappTemplate, placeholders);
+
+        dbContext.AppNotifications.Add(new Domain.Entities.AppNotification
+        {
+            UserId = sellerUser.Id,
+            Title = isApproved ? "KYC Approved" : "KYC Rejected",
+            Body = $"Email via {emailSenderName} <{emailSenderAddress}>: {emailBody}\nWhatsApp via {whatsappSenderBusinessName} ({whatsappSenderNumber}): {whatsappBody}",
+            Type = NotificationType.RequestUpdated
+        });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static string ApplyTemplate(string template, IReadOnlyDictionary<string, string> tokens)
+    {
+        var result = template;
+        foreach (var token in tokens)
+        {
+            result = result.Replace($"{{{token.Key}}}", token.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return result;
     }
 
     [Authorize(Roles = SystemRoles.Admin)]
@@ -366,7 +452,7 @@ public class WebAdminController(
             .Where(x => x.Role == SystemRoles.Investor)
             .Select(x => new WebInvestorDto
             {
-                Id = $"i-{x.Id}",
+                Id = FormatInvestorId(x.Id),
                 FullName = x.FullName,
                 Email = x.Email,
                 PhoneNumber = x.PhoneNumber ?? string.Empty,
@@ -382,13 +468,102 @@ public class WebAdminController(
     }
 
     [Authorize(Roles = SystemRoles.Admin)]
+    [HttpGet("investors/{id}")]
+    public async Task<IActionResult> GetInvestorDetails(string id, CancellationToken cancellationToken)
+    {
+        var userId = TryParsePrefixedId(id, "I");
+        if (!userId.HasValue)
+            return NotFound(ApiResponse<object>.Fail("Investor not found", 404));
+
+        var investor = await dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.Id == userId.Value && x.Role == SystemRoles.Investor)
+            .Select(x => new
+            {
+                User = x,
+                WalletBalance = dbContext.Wallets.Where(w => w.UserId == x.Id).Select(w => w.CashBalance).FirstOrDefault(),
+                TotalTransactions = dbContext.TransactionHistories.Count(th => th.UserId == x.Id)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (investor is null) return NotFound(ApiResponse<object>.Fail("Investor not found", 404));
+
+        var profile = await dbContext.UserProfiles
+            .AsNoTracking()
+            .Include(x => x.LinkedBankAccounts)
+            .Include(x => x.PaymentMethods)
+            .FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
+        var details = new WebInvestorProfileDto
+        {
+            Id = FormatInvestorId(investor.User.Id),
+            FullName = investor.User.FullName,
+            Email = investor.User.Email,
+            PhoneNumber = investor.User.PhoneNumber ?? string.Empty,
+            WalletBalance = investor.WalletBalance,
+            TotalTransactions = investor.TotalTransactions,
+            CreatedAt = investor.User.CreatedAtUtc,
+            UpdatedAt = investor.User.UpdatedAtUtc,
+            Status = investor.User.IsActive ? "active" : "blocked",
+            DateOfBirth = profile?.DateOfBirth,
+            Nationality = profile?.Nationality ?? string.Empty,
+            DocumentType = profile?.DocumentType ?? string.Empty,
+            IdNumber = profile?.IdNumber ?? string.Empty,
+            ProfilePhotoUrl = profile?.ProfilePhotoUrl ?? string.Empty,
+            PreferredLanguage = profile?.PreferredLanguage ?? "en",
+            PreferredTheme = profile?.PreferredTheme ?? "light",
+            BankAccounts = profile?.LinkedBankAccounts.Select(b => new WebLinkedBankAccountDto
+            {
+                BankName = b.BankName,
+                AccountHolderName = b.AccountHolderName,
+                AccountNumber = b.AccountNumber,
+                IbanMasked = b.IbanMasked,
+                SwiftCode = b.SwiftCode,
+                BranchName = b.BranchName,
+                BranchAddress = b.BranchAddress,
+                Country = b.Country,
+                City = b.City,
+                Currency = b.Currency,
+                IsVerified = b.IsVerified,
+                IsDefault = b.IsDefault
+            }).ToList() ?? new List<WebLinkedBankAccountDto>(),
+            PaymentMethods = profile?.PaymentMethods.Select(pm => new WebPaymentMethodDto
+            {
+                Type = pm.Type,
+                MaskedNumber = pm.MaskedNumber,
+                IsDefault = pm.IsDefault
+            }).ToList() ?? new List<WebPaymentMethodDto>()
+        };
+
+        return Ok(ApiResponse<WebInvestorProfileDto>.Ok(details));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpPut("investors/{id}/login-credentials")]
+    public async Task<IActionResult> UpdateInvestorLoginCredentials(string id, [FromBody] UpdateWebUserCredentialsRequest request, CancellationToken cancellationToken)
+    {
+        var userId = TryParsePrefixedId(id, "I");
+        if (userId is null) return NotFound(ApiResponse<object>.Fail("Investor not found", 404));
+
+        var user = await dbContext.Users.FirstOrDefaultAsync(
+            x => x.Id == userId.Value && x.Role == SystemRoles.Investor,
+            cancellationToken);
+
+        if (user is null) return NotFound(ApiResponse<object>.Fail("Investor not found", 404));
+
+        var dto = await UpdateUserCredentialsAsync(FormatInvestorId(user.Id), user, request, cancellationToken);
+        return Ok(ApiResponse<WebUserCredentialsDto>.Ok(dto));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
     [HttpPut("investors/{id}/status")]
     public async Task<IActionResult> UpdateInvestorStatus(string id, [FromBody] UpdateStatusRequest request, CancellationToken cancellationToken)
     {
-        if (!int.TryParse(id.Replace("i-", string.Empty), out var userId))
+        var userId = TryParsePrefixedId(id, "I");
+        if (!userId.HasValue)
             return NotFound(ApiResponse<object>.Fail("Investor not found", 404));
 
-        var investor = await dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId && x.Role == SystemRoles.Investor, cancellationToken);
+        var investor = await dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId.Value && x.Role == SystemRoles.Investor, cancellationToken);
         if (investor is null) return NotFound(ApiResponse<object>.Fail("Investor not found", 404));
 
         investor.IsActive = !request.Status.Equals("blocked", StringComparison.OrdinalIgnoreCase);
@@ -427,9 +602,9 @@ public class WebAdminController(
             .Select(x => new WebRequestDto
                 {
                     Id = $"r-{x.history.Id}",
-                    SellerId = x.history.SellerId.HasValue ? $"s-{x.history.SellerId.Value}" : string.Empty,
+                    SellerId = x.history.SellerId.HasValue ? FormatSellerId(x.history.SellerId.Value) : string.Empty,
                     SellerName = x.seller != null ? x.seller.CompanyName : string.Empty,
-                    InvestorId = $"i-{x.history.UserId}",
+                    InvestorId = FormatInvestorId(x.history.UserId),
                     InvestorName = x.user.FullName,
                     Type = x.history.TransactionType,
                     ProductName = x.history.Category,
@@ -652,7 +827,7 @@ public class WebAdminController(
                 (history, user) => new WebRequestDto
                 {
                     Id = $"r-{history.Id}",
-                    InvestorId = $"i-{history.UserId}",
+                    InvestorId = FormatInvestorId(history.UserId),
                     InvestorName = user.FullName,
                     Type = history.TransactionType,
                     ProductName = history.Category,
@@ -703,7 +878,7 @@ public class WebAdminController(
             .Select(x => new WebInvoiceDto
             {
                 Id = $"inv-{x.Id}",
-                SellerId = $"s-{(dbContext.Sellers.Where(s => s.UserId == x.SellerUserId).Select(s => (int?)s.Id).FirstOrDefault() ?? 0)}",
+                SellerId = FormatSellerId(dbContext.Sellers.Where(s => s.UserId == x.SellerUserId).Select(s => (int?)s.Id).FirstOrDefault() ?? 0),
                 InvestorName = dbContext.Users.Where(u => u.Id == x.InvestorUserId).Select(u => u.FullName).FirstOrDefault() ?? $"User {x.InvestorUserId}",
                 TotalAmount = x.TotalAmount,
                 IssuedAt = x.IssuedOnUtc,
@@ -719,11 +894,11 @@ public class WebAdminController(
     [HttpPost("invoices")]
     public async Task<IActionResult> AddInvoice([FromBody] WebInvoiceDto request, CancellationToken cancellationToken)
     {
-        var investorUserId = TryParsePrefixedId(request.InvestorName, "i-") ??
+        var investorUserId = TryParsePrefixedId(request.InvestorName, "I") ??
                              await dbContext.Users.Where(x => x.FullName == request.InvestorName).Select(x => (int?)x.Id).FirstOrDefaultAsync(cancellationToken) ??
                              await dbContext.Users.Where(x => x.Role == SystemRoles.Investor).Select(x => x.Id).FirstOrDefaultAsync(cancellationToken);
 
-        var requestSellerId = TryParsePrefixedId(request.SellerId, "s-");
+        var requestSellerId = TryParsePrefixedId(request.SellerId, "S");
         var sellerUserId = requestSellerId.HasValue
             ? await dbContext.Sellers.Where(x => x.Id == requestSellerId.Value).Select(x => (int?)x.UserId).FirstOrDefaultAsync(cancellationToken) ?? 0
             : await dbContext.Sellers.Select(x => (int?)x.UserId).FirstOrDefaultAsync(cancellationToken) ?? 0;
@@ -822,6 +997,107 @@ public class WebAdminController(
     {
         var fees = await ReadFeesAsync(cancellationToken);
         return Ok(ApiResponse<WebFeesDto>.Ok(fees));
+    }
+
+    [HttpGet("reports/fee-breakdowns")]
+    public async Task<IActionResult> GetFeeBreakdownReport(
+        [FromQuery] string feeGroup = "all",
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        var sellerScope = ResolveSellerScope();
+        var normalizedGroup = (feeGroup ?? "all").Trim().ToLowerInvariant();
+        var fromUtc = from?.Date;
+        var toUtc = to?.Date.AddDays(1).AddTicks(-1);
+
+        var query = dbContext.TransactionFeeBreakdowns
+            .AsNoTracking()
+            .Where(x => x.TransactionHistoryId.HasValue)
+            .Join(
+                dbContext.TransactionHistories.AsNoTracking(),
+                fee => fee.TransactionHistoryId!.Value,
+                history => history.Id,
+                (fee, history) => new { Fee = fee, History = history });
+
+        if (sellerScope.HasValue)
+        {
+            query = query.Where(x => x.Fee.SellerId == sellerScope.Value);
+        }
+
+        if (fromUtc.HasValue || toUtc.HasValue)
+        {
+            if (fromUtc.HasValue) query = query.Where(x => x.History.CreatedAtUtc >= fromUtc.Value);
+            if (toUtc.HasValue) query = query.Where(x => x.History.CreatedAtUtc <= toUtc.Value);
+        }
+
+        if (normalizedGroup != "all")
+        {
+            var tokens = normalizedGroup switch
+            {
+                "commission" => new[] { "commission_per_transaction", "commission" },
+                "premium" => new[] { "premium", "discount" },
+                "storage" => new[] { "storage", "custody" },
+                "delivery" => new[] { "delivery" },
+                "service" => new[] { "service" },
+                _ => Array.Empty<string>()
+            };
+
+            if (tokens.Length > 0)
+            {
+                query = query.Where(x => tokens.Any(token =>
+                    x.Fee.FeeCode.ToLower().Contains(token) || x.Fee.FeeName.ToLower().Contains(token)));
+            }
+        }
+
+        var sellers = await dbContext.Sellers
+            .AsNoTracking()
+            .Select(x => new { x.Id, Name = string.IsNullOrWhiteSpace(x.CompanyName) ? $"Seller {x.Id}" : x.CompanyName })
+            .ToListAsync(cancellationToken);
+        var sellerLookup = sellers.ToDictionary(x => x.Id, x => x.Name);
+
+        var rawRows = await query
+            .Select(x => new
+            {
+                SellerId = x.Fee.SellerId ?? 0,
+                x.Fee.FeeCode,
+                x.Fee.FeeName,
+                x.Fee.CalculationMode,
+                x.Fee.Currency,
+                x.Fee.AppliedRate,
+                x.Fee.AppliedValue,
+                x.History.TransactionType,
+                x.History.CreatedAtUtc,
+                TransactionHistoryId = x.History.Id
+            })
+            .ToListAsync(cancellationToken);
+
+        var rows = rawRows
+            .GroupBy(x => new { x.SellerId, x.FeeCode, x.FeeName, x.CalculationMode, x.Currency })
+            .Select(g => new WebFeeBreakdownReportRowDto
+            {
+                SellerId = FormatSellerId(g.Key.SellerId),
+                SellerName = string.Empty,
+                FeeCode = g.Key.FeeCode,
+                FeeName = g.Key.FeeName,
+                CalculationMode = g.Key.CalculationMode,
+                AppliedRate = g.Any(x => x.AppliedRate.HasValue) ? g.Where(x => x.AppliedRate.HasValue).Average(x => x.AppliedRate) : null,
+                TransactionsCount = g.Select(x => x.TransactionHistoryId).Distinct().Count(),
+                CollectedAmount = g.Sum(x => x.AppliedValue),
+                Currency = g.Key.Currency,
+                TransactionTypes = string.Join(", ", g.Select(x => x.TransactionType).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase)),
+                LatestTransactionAt = g.Max(x => (DateTime?)x.CreatedAtUtc)
+            })
+            .OrderByDescending(x => x.CollectedAmount)
+            .ToList();
+
+        foreach (var row in rows)
+        {
+            var sellerId = TryParsePrefixedId(row.SellerId, "S") ?? 0;
+            row.SellerName = sellerLookup.TryGetValue(sellerId, out var name) ? name : $"Seller {sellerId}";
+        }
+
+        return Ok(ApiResponse<List<WebFeeBreakdownReportRowDto>>.Ok(rows));
     }
 
     [HttpPut("fees")]
@@ -1149,10 +1425,27 @@ public class WebAdminController(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    private static string FormatSellerId(int id) => $"S{id:D3}";
+
+    private static string FormatInvestorId(int id) => $"{id:D3}";
+
     private static int? TryParsePrefixedId(string value, string prefix)
     {
-        var clean = value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? value[prefix.Length..] : value;
-        return int.TryParse(clean, out var id) ? id : null;
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var clean = value.Trim();
+        if (!string.IsNullOrWhiteSpace(prefix) && clean.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            clean = clean[prefix.Length..];
+        }
+
+        clean = clean.TrimStart('-', '_');
+        if (int.TryParse(clean, out var parsed))
+        {
+            return parsed;
+        }
+
+        var digits = new string(clean.Where(char.IsDigit).ToArray());
+        return int.TryParse(digits, out parsed) ? parsed : null;
     }
 
     private int? ResolveSellerScope()
@@ -1657,5 +1950,53 @@ public class WebAdminController(
         var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
         await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
         return $"/Certificats/{request.UserId}/{fileName}";
+    }
+
+    private async Task<WebUserCredentialsDto> UpdateUserCredentialsAsync(
+        string formattedUserId,
+        Domain.Entities.User user,
+        UpdateWebUserCredentialsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var hasEmailUpdate = !string.IsNullOrWhiteSpace(request.LoginEmail);
+        var hasPhoneUpdate = !string.IsNullOrWhiteSpace(request.LoginPhone);
+        var hasPasswordUpdate = !string.IsNullOrWhiteSpace(request.NewPassword);
+
+        if (!hasEmailUpdate && !hasPhoneUpdate && !hasPasswordUpdate)
+        {
+            throw new InvalidOperationException("At least one credential field must be provided.");
+        }
+
+        if (hasEmailUpdate)
+        {
+            var email = request.LoginEmail!.Trim();
+            var exists = await dbContext.Users.AnyAsync(x => x.Id != user.Id && x.Email == email, cancellationToken);
+            if (exists) throw new InvalidOperationException("Login email is already used by another user.");
+            user.Email = email;
+        }
+
+        if (hasPhoneUpdate)
+        {
+            var phone = request.LoginPhone!.Trim();
+            var exists = await dbContext.Users.AnyAsync(x => x.Id != user.Id && x.PhoneNumber == phone, cancellationToken);
+            if (exists) throw new InvalidOperationException("Login phone is already used by another user.");
+            user.PhoneNumber = phone;
+        }
+
+        if (hasPasswordUpdate)
+        {
+            user.PasswordHash = passwordHasher.Hash(request.NewPassword!.Trim());
+        }
+
+        user.UpdatedAtUtc = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new WebUserCredentialsDto
+        {
+            UserId = formattedUserId,
+            LoginEmail = user.Email,
+            LoginPhone = user.PhoneNumber ?? string.Empty,
+            UpdatedAt = user.UpdatedAtUtc
+        };
     }
 }

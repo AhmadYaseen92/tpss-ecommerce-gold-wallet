@@ -6,6 +6,7 @@ import AuthPage from "./features/auth/pages/AuthPage.vue";
 import DashboardFeaturePage from "./features/dashboard/pages/DashboardFeaturePage.vue";
 import ProductFeaturePage from "./features/products/pages/ProductFeaturePage.vue";
 import InvestorsFeaturePage from "./features/investors/pages/InvestorsFeaturePage.vue";
+import InvestorDetailsPage from "./features/investors/pages/InvestorDetailsPage.vue";
 import SellersFeaturePage from "./features/dashboard/pages/SellersFeaturePage.vue";
 import SellerDetailsPage from "./features/dashboard/pages/SellerDetailsPage.vue";
 import SettingsFeaturePage from "./features/dashboard/pages/SettingsFeaturePage.vue";
@@ -17,7 +18,8 @@ import { useMarketplace } from "./shared/app/store/useMarketplace";
 const marketplace = useMarketplace();
 
 const THEME_KEY = "goldwallet.web.theme";
-const isDark = ref(window.localStorage.getItem(THEME_KEY) === "dark");
+const savedTheme = window.localStorage.getItem(THEME_KEY);
+const isDark = ref(savedTheme !== "light");
 
 const ROUTE_BY_MENU: Partial<Record<NavigationKey, string>> = {
   overview: "/overview",
@@ -120,6 +122,7 @@ const activeComponent = computed(() => {
   }
 
   if (currentPath.value.startsWith("/products")) return ProductFeaturePage;
+  if (currentPath.value.startsWith("/investors/")) return marketplace.role.value === "Admin" ? InvestorDetailsPage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/investors")) return marketplace.role.value === "Admin" ? InvestorsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/sellers")) return marketplace.role.value === "Admin" ? SellersFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/settings")) return marketplace.role.value === "Admin" ? SettingsFeaturePage : DashboardFeaturePage;
@@ -158,6 +161,9 @@ watch(
 const handleMenuChange = (menu: NavigationKey) => {
   if (menu === "logout") {
     marketplace.logout();
+    if (window.location.hash) {
+      window.history.replaceState({}, "", window.location.pathname + window.location.search);
+    }
     window.history.pushState({}, "", "/overview");
     syncPath();
     return;
@@ -166,6 +172,9 @@ const handleMenuChange = (menu: NavigationKey) => {
   const target = ROUTE_BY_MENU[menu];
 
   if (target) {
+    if (window.location.hash) {
+      window.history.replaceState({}, "", window.location.pathname + window.location.search);
+    }
     window.history.pushState({}, "", target);
     syncPath();
   }
@@ -173,13 +182,21 @@ const handleMenuChange = (menu: NavigationKey) => {
 
 const handleLogout = () => {
   marketplace.logout();
+  if (window.location.hash) {
+    window.history.replaceState({}, "", window.location.pathname + window.location.search);
+  }
   window.history.pushState({}, "", "/overview");
   syncPath();
 };
 </script>
 
 <template>
-  <AuthPage v-if="!marketplace.session.value" :marketplace="marketplace" />
+  <AuthPage
+    v-if="!marketplace.session.value"
+    :marketplace="marketplace"
+    :is-dark="isDark"
+    @theme-toggle="isDark = !isDark"
+  />
 
   <AppLayout
     v-else

@@ -157,6 +157,13 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
       }));
   });
 
+  const pendingKycRequests = computed(() =>
+    marketplace.state.value.sellers.filter((seller: { kycStatus?: string }) => {
+      const status = String(seller.kycStatus ?? "").toLowerCase();
+      return status === "pending" || status === "underreview";
+    }).length
+  );
+
 
   watch(
     [() => marketplace.session.value?.accessToken, dashboardPeriod],
@@ -173,5 +180,5 @@ export function useDashboard(marketplace: ReturnTypeUseMarketplace) {
     }
   );
 
-  return { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions, categoryTransactionSeries, categoryCartSeries };
+  return { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions, categoryTransactionSeries, categoryCartSeries, pendingKycRequests };
 }

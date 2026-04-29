@@ -10,6 +10,9 @@ public class UserAuthRepository(AppDbContext dbContext) : IUserAuthRepository
     public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
         => dbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
 
+    public Task<User?> GetByPhoneAsync(string phoneNumber, CancellationToken cancellationToken = default)
+        => dbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.PhoneNumber == phoneNumber, cancellationToken);
+
     public Task<User?> GetByIdAsync(int userId, CancellationToken cancellationToken = default)
         => dbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
 

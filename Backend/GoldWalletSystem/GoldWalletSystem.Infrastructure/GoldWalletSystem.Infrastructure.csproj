@@ -35,4 +35,15 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Database\Seed\*.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Database\Seed\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Database\Seed\%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
 </Project>

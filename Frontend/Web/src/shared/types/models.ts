@@ -176,7 +176,7 @@ export interface MarketplaceState {
 }
 
 export interface AuthCredentials {
-  email: string;
+  emailOrPhone: string;
   password: string;
 }
 

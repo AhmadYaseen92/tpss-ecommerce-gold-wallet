@@ -5,6 +5,7 @@ namespace GoldWalletSystem.Application.Interfaces.Repositories;
 public interface IUserAuthRepository
 {
     Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<User?> GetByPhoneAsync(string phoneNumber, CancellationToken cancellationToken = default);
     Task<User?> GetByIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<Seller?> GetSellerByUserIdAsync(int userId, CancellationToken cancellationToken = default);
     Task<Seller?> GetSellerByIdAsync(int sellerId, CancellationToken cancellationToken = default);

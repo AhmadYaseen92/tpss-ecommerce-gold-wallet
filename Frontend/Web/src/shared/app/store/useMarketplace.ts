@@ -37,7 +37,6 @@ import {
   updateWalletSellConfiguration,
   updateWebRequestStatus
 } from "../../services/backendGateway";
-import { mockMarketplaceState } from "../../services/mockMarketplaceRepository";
 
 const SESSION_STORAGE_KEY = "goldwallet.web.session";
 
@@ -76,13 +75,30 @@ function readStoredSession(): UserSession | null {
 
 let marketplaceStore: any = null;
 
+const createEmptyMarketplaceState = (): MarketplaceState => ({
+  sellers: [],
+  investors: [],
+  requests: [],
+  products: [],
+  walletAssets: [],
+  invoices: [],
+  fees: {
+    deliveryFee: 0,
+    storageFee: 0,
+    serviceChargePercent: 0
+  },
+  notifications: [],
+  reports: [],
+  currentUserName: undefined
+});
+
 export function useMarketplace() {
   if (marketplaceStore) return marketplaceStore;
   const persistedSession = readStoredSession();
   const role = ref<UserRole>(persistedSession?.role ?? "Admin");
   const activeMenu = ref<NavigationKey>("overview");
   const session = ref<UserSession | null>(persistedSession);
-  const state = ref<MarketplaceState>(structuredClone(mockMarketplaceState));
+  const state = ref<MarketplaceState>(createEmptyMarketplaceState());
   const loading = ref(false);
   const error = ref("");
   const realtimeRefreshTick = ref(0);
@@ -223,17 +239,17 @@ export function useMarketplace() {
     }
   };
 
-  const approveKyc = async (sellerId: string) => {
+  const approveKyc = async (sellerId: string, reviewNotes?: string) => {
     state.value.sellers = updateSellerKycStatus(state.value.sellers, sellerId, "approved");
     if (session.value?.accessToken) {
-      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "approved");
+      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "approved", reviewNotes);
     }
   };
 
-  const rejectKyc = async (sellerId: string) => {
+  const rejectKyc = async (sellerId: string, reviewNotes?: string) => {
     state.value.sellers = updateSellerKycStatus(state.value.sellers, sellerId, "rejected");
     if (session.value?.accessToken) {
-      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "rejected");
+      await updateSellerKycStatusByAdmin(session.value.accessToken, sellerId, "rejected", reviewNotes);
     }
   };
 
@@ -318,6 +334,7 @@ export function useMarketplace() {
     session.value = null;
     role.value = "Admin";
     activeMenu.value = "overview";
+    state.value = createEmptyMarketplaceState();
     if (typeof window !== "undefined") {
       persistSession(null);
     }

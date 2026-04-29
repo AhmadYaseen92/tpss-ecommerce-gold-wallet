@@ -120,6 +120,7 @@ export interface WebSellerDetailsDto {
   website?: string;
   description?: string;
   loginEmail: string;
+  loginPhone: string;
   isActive: boolean;
   kycStatus: string;
   reviewNotes?: string;
@@ -234,6 +235,37 @@ export interface WebRequestDto {
   createdAt: string;
 }
 
+export interface WebInvoiceDto {
+  id: string;
+  sellerId: string;
+  investorName: string;
+  totalAmount: number;
+  issuedAt: string;
+  status: "Draft" | "Issued" | "Completed" | "Cancelled";
+  paymentStatus: "Pending" | "Paid" | "Failed" | "Cancelled";
+  pdfUrl?: string;
+}
+
+export interface WebFeesDto {
+  deliveryFee: number;
+  storageFee: number;
+  serviceChargePercent: number;
+}
+
+export interface WebFeeBreakdownReportRowDto {
+  sellerId: string;
+  sellerName: string;
+  feeCode: string;
+  feeName: string;
+  calculationMode: string;
+  appliedRate?: number | null;
+  transactionsCount: number;
+  collectedAmount: number;
+  currency: string;
+  transactionTypes: string;
+  latestTransactionAt?: string | null;
+}
+
 export interface WebInvestorDto {
   id: string;
   fullName: string;
@@ -244,6 +276,55 @@ export interface WebInvestorDto {
   totalTransactions: number;
   createdAt: string;
   status: string;
+}
+
+export interface WebLinkedBankAccountDto {
+  bankName: string;
+  accountHolderName: string;
+  accountNumber: string;
+  ibanMasked: string;
+  swiftCode: string;
+  branchName: string;
+  branchAddress: string;
+  country: string;
+  city: string;
+  currency: string;
+  isVerified: boolean;
+  isDefault: boolean;
+}
+
+export interface WebPaymentMethodDto {
+  type: string;
+  maskedNumber: string;
+  isDefault: boolean;
+}
+
+export interface WebInvestorProfileDto {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  walletBalance: number;
+  totalTransactions: number;
+  createdAt: string;
+  updatedAt?: string | null;
+  status: string;
+  dateOfBirth?: string | null;
+  nationality: string;
+  documentType: string;
+  idNumber: string;
+  profilePhotoUrl: string;
+  preferredLanguage: string;
+  preferredTheme: string;
+  bankAccounts: WebLinkedBankAccountDto[];
+  paymentMethods: WebPaymentMethodDto[];
+}
+
+export interface WebUserCredentialsDto {
+  userId: string;
+  loginEmail: string;
+  loginPhone: string;
+  updatedAt?: string | null;
 }
 
 

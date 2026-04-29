@@ -72,9 +72,10 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
     firstName: nameParts.firstName,
     middleName: nameParts.middleName,
     lastName: nameParts.lastName,
-    email: form.credentials.loginEmail,
+    email: form.credentials.loginEmail || form.ownerInfo.email,
     password: form.credentials.password,
     role: "Seller" as const,
+    phoneNumber: form.credentials.loginPhone || form.ownerInfo.mobile || form.companyInfo.phone,
     companyInfo: {
       companyName: form.companyInfo.companyName,
       companyCode: form.companyInfo.companyCode,
@@ -82,6 +83,7 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
       vatNumber: form.companyInfo.vatNumber,
       businessActivity: form.companyInfo.businessActivity,
       establishedDate: normalizeOptionalDate(form.companyInfo.establishedDate),
+      tradeLicenseExpiryDate: normalizeOptionalDate(form.companyInfo.tradeLicenseExpiryDate),
       country: form.companyInfo.country,
       city: form.companyInfo.city,
       street: form.companyInfo.street,
@@ -135,13 +137,6 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
         true,
         "Seller"),
       toDoc(
-        "ArticlesOfAssociation",
-        getSelectedFileName(form.companyInfo.documents.articles?.[0]),
-        getSelectedFilePath(form.companyInfo.documents.articles?.[0]),
-        getSelectedContentType(form.companyInfo.documents.articles?.[0]),
-        true,
-        "Seller"),
-      toDoc(
         "ProofOfAddress",
         getSelectedFileName(form.companyInfo.documents.proofOfAddress?.[0]),
         getSelectedFilePath(form.companyInfo.documents.proofOfAddress?.[0]),
@@ -153,7 +148,7 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
         getSelectedFileName(form.companyInfo.documents.vatCert?.[0]),
         getSelectedFilePath(form.companyInfo.documents.vatCert?.[0]),
         getSelectedContentType(form.companyInfo.documents.vatCert?.[0]),
-        true,
+        false,
         "Seller"),
       toDoc(
         "AmlDocumentation",
@@ -200,9 +195,9 @@ export function useAuthPage(marketplace: ReturnTypeUseMarketplace) {
   const authScreen = ref<"login" | "register">("login");
 
   const loginForm = reactive<LoginFormModel>({
-    email: "admin@goldwallet.com",
-    password: "AdminGW@2026",
-    rememberMe: true,
+    email: "",
+    password: "",
+    rememberMe: false,
   });
 
   const registerForm = reactive<RegisterFormModel>(createEmptyRegisterForm());

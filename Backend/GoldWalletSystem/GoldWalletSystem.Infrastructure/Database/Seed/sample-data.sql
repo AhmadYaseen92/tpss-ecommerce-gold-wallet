@@ -1,5 +1,6 @@
 /*
-Sample seed data for a fresh GoldWallet installation.
+Sample seed data for testing/demo environments.
+Not applied by default on fresh installation unless GW_SEED_SAMPLE_DATA=true.
 Keeps data small, clear, and safe to run multiple times.
 */
 
@@ -200,6 +201,12 @@ BEGIN TRY
     UPDATE [Sellers] SET [GoldPrice] = 432.00, [SilverPrice] = 37.00, [DiamondPrice] = 880.00, [UpdatedAtUtc] = @Now WHERE [Id] = @SellerGoldPal;
 
     -- 2) Users (sellers, admins, and investors).
+    -- Ensure fresh installations start user identity at 3 digits (first user => 100).
+    IF NOT EXISTS (SELECT 1 FROM [Users])
+    BEGIN
+        DBCC CHECKIDENT ('[Users]', RESEED, 99);
+    END
+
     DECLARE @Users TABLE (
         FullName nvarchar(150),
         Email nvarchar(200),
@@ -639,7 +646,17 @@ WHEN NOT MATCHED THEN
         (N'Otp_MaxResendCount', N'OTP Max Resend Count', N'Maximum number of OTP resend attempts', 3, NULL, 3, NULL, NULL, CAST(0 AS bit)),
         (N'Otp_MaxVerificationAttempts', N'OTP Max Verification Attempts', N'Maximum OTP verification attempts before lock', 3, NULL, 5, NULL, NULL, CAST(0 AS bit)),
         (N'Otp_ChannelPriority', N'OTP Channel Priority', N'Preferred OTP channels in order', 1, NULL, NULL, NULL, N'whatsapp,email', CAST(0 AS bit)),
-        (N'Otp_RequiredActions', N'OTP Required Actions', N'Actions that require OTP verification', 1, NULL, NULL, NULL, N'registration,reset_password,checkout,sell,transfer,gift,pickup,add_bank_account,edit_bank_account,remove_bank_account,add_payment_method,edit_payment_method,remove_payment_method,change_email,change_password,change_mobile_number', CAST(0 AS bit))
+        (N'Otp_RequiredActions', N'OTP Required Actions', N'Actions that require OTP verification', 1, NULL, NULL, NULL, N'registration,reset_password,checkout,sell,transfer,gift,pickup,add_bank_account,edit_bank_account,remove_bank_account,add_payment_method,edit_payment_method,remove_payment_method,change_email,change_password,change_mobile_number', CAST(0 AS bit)),
+        (N'Notifications_SellerKycApprove_EmailTemplate', N'Seller KYC Approve Email Template', N'Email template used when seller KYC is approved', 1, NULL, NULL, NULL, N'Hello {SellerName}, your KYC request was approved.', CAST(0 AS bit)),
+        (N'Notifications_SellerKycApprove_WhatsappTemplate', N'Seller KYC Approve WhatsApp Template', N'WhatsApp template used when seller KYC is approved', 1, NULL, NULL, NULL, N'KYC approved for {SellerName}.', CAST(0 AS bit)),
+        (N'Notifications_SellerKycReject_EmailTemplate', N'Seller KYC Reject Email Template', N'Email template used when seller KYC is rejected', 1, NULL, NULL, NULL, N'Hello {SellerName}, your KYC request was rejected. Note: {ReviewNote}', CAST(0 AS bit)),
+        (N'Notifications_SellerKycReject_WhatsappTemplate', N'Seller KYC Reject WhatsApp Template', N'WhatsApp template used when seller KYC is rejected', 1, NULL, NULL, NULL, N'KYC rejected for {SellerName}. Note: {ReviewNote}', CAST(0 AS bit)),
+        (N'Notifications_EmailSender_Name', N'Email Sender Name', N'Display name for outbound system email notifications', 1, NULL, NULL, NULL, N'Gold Wallet', CAST(0 AS bit)),
+        (N'Notifications_EmailSender_Address', N'Email Sender Address', N'Sender email address for outbound notifications', 1, NULL, NULL, NULL, N'no-reply@goldwallet.local', CAST(0 AS bit)),
+        (N'Notifications_WhatsappSender_Number', N'WhatsApp Sender Number', N'Configured sender number for outbound WhatsApp notifications', 1, NULL, NULL, NULL, N'+14155238886', CAST(0 AS bit)),
+        (N'Notifications_WhatsappSender_BusinessName', N'WhatsApp Sender Business Name', N'Configured sender business name for outbound WhatsApp notifications', 1, NULL, NULL, NULL, N'Gold Wallet', CAST(0 AS bit)),
+        (N'Terms_Seller_TermsAndConditions', N'Seller Terms and Conditions', N'Seller terms shown during seller registration', 1, NULL, NULL, NULL, N'Seller terms placeholder.', CAST(1 AS bit)),
+        (N'Terms_Investor_TermsAndConditions', N'Investor Terms and Conditions', N'Investor terms shown during investor registration', 1, NULL, NULL, NULL, N'Investor terms placeholder.', CAST(1 AS bit))
     ) AS S([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess])
     ON T.[ConfigKey] = S.[ConfigKey]
     WHEN MATCHED THEN
