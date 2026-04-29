@@ -167,7 +167,7 @@ const openPrivacyModal = async () => {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.68), rgba(246, 242, 232, 0.92) 58%, rgba(240, 234, 222, 0.98)),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-bg) 35%, transparent), color-mix(in srgb, var(--color-bg) 85%, transparent) 58%, color-mix(in srgb, var(--color-bg) 95%, transparent)),
     url("/images/gold-wallet-login.png");
   background-size: cover;
   background-position: left center;
@@ -175,12 +175,6 @@ const openPrivacyModal = async () => {
   align-items: center;
   justify-content: center;
   padding: 48px;
-}
-
-.login-page.dark-auth {
-  background:
-    linear-gradient(90deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.9) 58%, rgba(7, 7, 6, 0.98)),
-    url("/images/gold-wallet-login.png");
 }
 
 .auth-card-register {
@@ -206,15 +200,7 @@ const openPrivacyModal = async () => {
   cursor: pointer;
 }
 
-:global(:root.dark-mode) .auth-card-register {
-  background: linear-gradient(180deg, rgba(36, 30, 20, 0.95), rgba(17, 14, 9, 0.95));
-  border-color: rgba(214, 168, 45, 0.46);
-}
-
-:global(:root.dark-mode) .theme-toggle-btn {
-  background: rgba(8, 8, 8, 0.45);
-  color: #fff8e6;
-}
+.login-page.dark-auth { background-position: left center; }
 
 @media (max-width: 900px) {
   .auth-card-register {

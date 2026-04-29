@@ -96,7 +96,7 @@ const onForgot = () => {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.68), rgba(246, 242, 232, 0.92) 58%, rgba(240, 234, 222, 0.98)),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-bg) 35%, transparent), color-mix(in srgb, var(--color-bg) 85%, transparent) 58%, color-mix(in srgb, var(--color-bg) 95%, transparent)),
     url("/images/gold-wallet-login.png");
   background-size: cover;
   background-position: left center;
@@ -205,45 +205,7 @@ const onForgot = () => {
   line-height: 1.6;
 }
 
-:global(:root.dark-mode) .login-page {
-  background:
-    linear-gradient(90deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.9) 58%, rgba(7, 7, 6, 0.98)),
-    url("/images/gold-wallet-login.png");
-}
-
-.login-page.dark-auth {
-  background:
-    linear-gradient(90deg, rgba(7, 7, 6, 0.25), rgba(7, 7, 6, 0.9) 58%, rgba(7, 7, 6, 0.98)),
-    url("/images/gold-wallet-login.png");
-}
-
-:global(:root.dark-mode) .theme-toggle-btn {
-  background: rgba(8, 8, 8, 0.35);
-  color: #fff8e6;
-}
-
-:global(:root.dark-mode) .brand-panel {
-  color: #fff4d0;
-}
-
-:global(:root.dark-mode) .brand-panel p:not(.brand-kicker) {
-  color: rgba(255, 244, 208, 0.74);
-}
-
-:global(:root.dark-mode) .auth-card {
-  background: linear-gradient(180deg, rgba(32, 28, 18, 0.88), rgba(12, 11, 8, 0.9));
-  box-shadow:
-    0 28px 80px rgba(0, 0, 0, 0.55),
-    0 0 45px rgba(214, 168, 45, 0.12);
-}
-
-:global(:root.dark-mode) .auth-card h1 {
-  color: #fff8e6;
-}
-
-:global(:root.dark-mode) .login-subtitle {
-  color: rgba(255, 248, 230, 0.72);
-}
+.login-page.dark-auth { background-position: left center; }
 
 @media (max-width: 900px) {
   .login-page {
