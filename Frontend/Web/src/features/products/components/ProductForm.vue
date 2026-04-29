@@ -294,6 +294,7 @@ onBeforeUnmount(() => {
             :model-value="model.purityFactor"
             @update:model-value="model.purityFactor = Number($event)"
           >
+            <option :value="0.9999">9999</option>
             <option :value="0.999">999</option>
             <option :value="0.925">925</option>
           </Select>
