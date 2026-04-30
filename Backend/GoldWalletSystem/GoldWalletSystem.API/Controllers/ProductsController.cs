@@ -39,108 +39,14 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpGet("management")]
     public async Task<IActionResult> GetManagementList(CancellationToken cancellationToken = default)
     {
-        if (!IsSellerOrAdmin()) return Forbid();
-        var isAdmin = currentUser.IsInRole(SystemRoles.Admin);
-        var sellerIdClaim = int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var parsedSellerId)
-            ? parsedSellerId
-            : 0;
-
-        var query = dbContext.Products.AsNoTracking().AsQueryable();
-        if (!isAdmin && sellerIdClaim > 0)
-        {
-            query = query.Where(x => x.SellerId == sellerIdClaim);
-        }
-
-        var items = await query
-            .OrderByDescending(x => x.Id)
-            .Select(x => new ProductManagementDto
-            {
-                Id = x.Id,
-                Name = x.Name,
-                Sku = x.Sku,
-                Description = x.Description,
-                ImageUrl = x.ImageUrl,
-                VideoUrl = x.VideoUrl,
-                Category = x.Category,
-                MaterialType = x.MaterialType,
-                FormType = x.FormType,
-                DisplayCategoryLabel = $"{x.MaterialType} {x.FormType}",
-                PricingMode = x.PricingMode,
-                PurityKarat = x.PurityKarat,
-                PurityFactor = x.PurityFactor,
-                WeightValue = x.WeightValue,
-                WeightUnit = x.WeightUnit,
-                BaseMarketPrice = x.BaseMarketPrice,
-                AutoPrice = x.AutoPrice,
-                FixedPrice = x.FixedPrice,
-                SellPrice = x.SellPrice,
-                OfferPercent = x.OfferPercent,
-                OfferNewPrice = x.OfferNewPrice,
-                OfferType = x.OfferType,
-                IsHasOffer = x.IsHasOffer,
-                AvailableStock = x.AvailableStock,
-                IsActive = x.IsActive,
-                SellerId = x.SellerId
-            })
-            .ToListAsync(cancellationToken);
-
-        foreach (var item in items)
-        {
-            item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
-            item.VideoUrl = NormalizeRelativeVideoPath(item.VideoUrl);
-        }
+        var items = await productService.GetManagementListAsync(cancellationToken);
         return Ok(ApiResponse<List<ProductManagementDto>>.Ok(items));
     }
 
     [HttpGet("management/{id:int}")]
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
     {
-        if (!IsSellerOrAdmin()) return Forbid();
-        var sellerScope = ResolveSellerScope();
-
-        var query = dbContext.Products.AsNoTracking().Where(x => x.Id == id);
-        if (!currentUser.IsInRole(SystemRoles.Admin))
-        {
-            if (!sellerScope.HasValue) return Forbid();
-            query = query.Where(x => x.SellerId == sellerScope.Value);
-        }
-
-        var item = await query.Select(x => new ProductManagementDto
-        {
-            Id = x.Id,
-            Name = x.Name,
-            Sku = x.Sku,
-            Description = x.Description,
-            ImageUrl = x.ImageUrl,
-            VideoUrl = x.VideoUrl,
-            Category = x.Category,
-            MaterialType = x.MaterialType,
-            FormType = x.FormType,
-            DisplayCategoryLabel = $"{x.MaterialType} {x.FormType}",
-            PricingMode = x.PricingMode,
-            PurityKarat = x.PurityKarat,
-            PurityFactor = x.PurityFactor,
-            WeightValue = x.WeightValue,
-            WeightUnit = x.WeightUnit,
-            BaseMarketPrice = x.BaseMarketPrice,
-            AutoPrice = x.AutoPrice,
-            FixedPrice = x.FixedPrice,
-            SellPrice = x.SellPrice,
-            OfferPercent = x.OfferPercent,
-            OfferNewPrice = x.OfferNewPrice,
-            OfferType = x.OfferType,
-            IsHasOffer = x.IsHasOffer,
-            AvailableStock = x.AvailableStock,
-            IsActive = x.IsActive,
-            SellerId = x.SellerId
-        }).FirstOrDefaultAsync(cancellationToken);
-
-        if (item is not null)
-        {
-            item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
-            item.VideoUrl = NormalizeRelativeVideoPath(item.VideoUrl);
-        }
-
+        var item = await productService.GetManagementByIdAsync(id, cancellationToken);
         return item is null
             ? NotFound(ApiResponse<object>.Fail("Product not found", 404))
             : Ok(ApiResponse<ProductManagementDto>.Ok(item));
@@ -273,52 +179,52 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     }
 
     [HttpGet("categories")]
-    public IActionResult GetCategories()
+    public async Task<IActionResult> GetCategories()
     {
-        var data = Enum.GetValues<ProductCategory>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetCategoriesAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
     [HttpGet("weight-units")]
-    public IActionResult GetWeightUnits()
+    public async Task<IActionResult> GetWeightUnits()
     {
-        var data = Enum.GetValues<ProductWeightUnit>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetWeightUnitsAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
 
     [HttpGet("material-types")]
-    public IActionResult GetMaterialTypes()
+    public async Task<IActionResult> GetMaterialTypes()
     {
-        var data = Enum.GetValues<ProductMaterialType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetMaterialTypesAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
     [HttpGet("form-types")]
-    public IActionResult GetFormTypes()
+    public async Task<IActionResult> GetFormTypes()
     {
-        var data = Enum.GetValues<ProductFormType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetFormTypesAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
     [HttpGet("pricing-modes")]
-    public IActionResult GetPricingModes()
+    public async Task<IActionResult> GetPricingModes()
     {
-        var data = Enum.GetValues<ProductPricingMode>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetPricingModesAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
     [HttpGet("purity-karats")]
-    public IActionResult GetPurityKarats()
+    public async Task<IActionResult> GetPurityKarats()
     {
-        var data = Enum.GetValues<ProductPurityKarat>().Select(x => new EnumItemDto((int)x, x.ToString().Replace("K", "K ").Trim())).ToList();
+        var data = await productService.GetPurityKaratsAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
     [HttpGet("offer-types")]
-    public IActionResult GetOfferTypes()
+    public async Task<IActionResult> GetOfferTypes()
     {
-        var data = Enum.GetValues<ProductOfferType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetOfferTypesAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 

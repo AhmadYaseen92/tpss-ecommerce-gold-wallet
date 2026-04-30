@@ -32,7 +32,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IMobileAppConfigurationRepository, MobileAppConfigurationRepository>();
         services.AddScoped<IWalletRepository, WalletRepository>();
 
-        services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IProductService, ProductReadService>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ITransactionHistoryService, TransactionHistoryService>();
