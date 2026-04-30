@@ -1114,7 +1114,10 @@
         },
         "runtime": {
           "bin/placeholder/GoldWalletSystem.Infrastructure.dll": {}
-        }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
       }
     }
   },

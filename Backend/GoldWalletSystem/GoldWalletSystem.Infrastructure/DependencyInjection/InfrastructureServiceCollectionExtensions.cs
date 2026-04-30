@@ -3,6 +3,7 @@ using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Application.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.Database.Seed;
+using GoldWalletSystem.Infrastructure.FileStorage;
 using GoldWalletSystem.Infrastructure.Repositories;
 using GoldWalletSystem.Infrastructure.Services;
 using GoldWalletSystem.Infrastructure.Services.Security;
@@ -31,7 +32,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IMobileAppConfigurationRepository, MobileAppConfigurationRepository>();
         services.AddScoped<IWalletRepository, WalletRepository>();
 
-        services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IProductService, ProductReadService>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<ITransactionHistoryService, TransactionHistoryService>();
@@ -42,8 +43,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<INotificationRealtimePublisher, NotificationRealtimePublisher>();
         services.AddScoped<IPushNotificationSender, PushNotificationSender>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IRegistrationDocumentService, RegistrationDocumentFileStorageService>();
+        services.AddScoped<IProfileMediaService, ProfileMediaFileStorageService>();
         services.AddScoped<IMobileAppConfigurationService, MobileAppConfigurationService>();
         services.AddScoped<IWalletService, WalletService>();
+        services.AddScoped<ICheckoutService, CheckoutService>();
         services.AddScoped<IWalletActionValidationService, WalletActionValidationService>();
         services.AddScoped<IAdminWorkspaceService, AdminWorkspaceService>();
         services.AddScoped<ISellerWorkspaceService, SellerWorkspaceService>();
@@ -55,6 +59,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IOtpDeliveryService, OtpDeliveryService>();
         services.AddSingleton<IOtpSessionStore, OtpSessionMemoryStore>();
         services.AddScoped<IOtpService, OtpService>();
+        services.AddScoped<ICheckoutOtpOrchestrator, CheckoutOtpOrchestrator>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

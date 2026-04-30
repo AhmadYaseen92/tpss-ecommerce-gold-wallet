@@ -625,6 +625,22 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.MobileAppConfigurationsController",
+    "Method": "Public",
+    "RelativePath": "api/mobile-app-configurations/public",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "keys",
+        "Type": "System.String[]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.MobileAppConfigurationsController",
     "Method": "Upsert",
     "RelativePath": "api/mobile-app-configurations/upsert",
     "HttpMethod": "POST",
@@ -851,6 +867,21 @@
         "IsRequired": false
       },
       {
+        "Name": "Video",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "ExistingVideoUrl",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "VideoDurationSeconds",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
         "Name": "MaterialType",
         "Type": "GoldWalletSystem.Domain.Enums.ProductMaterialType",
         "IsRequired": false
@@ -975,6 +1006,21 @@
       {
         "Name": "ExistingImageUrl",
         "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Video",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "ExistingVideoUrl",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "VideoDurationSeconds",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "IsRequired": false
       },
       {
@@ -1536,6 +1582,43 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "GetInvestorDetails",
+    "RelativePath": "api/web-admin/investors/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "UpdateInvestorLoginCredentials",
+    "RelativePath": "api/web-admin/investors/{id}/login-credentials",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Admin.UpdateWebUserCredentialsRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
     "Method": "UpdateInvestorStatus",
     "RelativePath": "api/web-admin/investors/{id}/status",
     "HttpMethod": "PUT",
@@ -1656,6 +1739,32 @@
   },
   {
     "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "GetFeeBreakdownReport",
+    "RelativePath": "api/web-admin/reports/fee-breakdowns",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "feeGroup",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "from",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "to",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
     "Method": "GetRequests",
     "RelativePath": "api/web-admin/requests",
     "HttpMethod": "GET",
@@ -1764,6 +1873,27 @@
       {
         "Name": "request",
         "Type": "GoldWalletSystem.Application.DTOs.Admin.UpdateSellerKycRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "GoldWalletSystem.API.Controllers.WebAdminController",
+    "Method": "UpdateSellerLoginCredentials",
+    "RelativePath": "api/web-admin/sellers/{id}/login-credentials",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "GoldWalletSystem.Application.DTOs.Admin.UpdateWebUserCredentialsRequest",
         "IsRequired": true
       }
     ],

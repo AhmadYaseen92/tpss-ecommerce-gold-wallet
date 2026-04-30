@@ -333,4 +333,8 @@ C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\GoldWalletSystem.API.genruntimeconfig.cache
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\ref\GoldWalletSystem.API.dll
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\bin\Debug\net10.0\Database\Seed\cleanup-keep-users-sellers.sql
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\bin\Debug\net10.0\Database\Seed\sample-data.sql
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\bin\Debug\net10.0\Database\Seed\seed.sql
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\bin\Debug\net10.0\Database\Seed\baseline-data.sql
 D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.API\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

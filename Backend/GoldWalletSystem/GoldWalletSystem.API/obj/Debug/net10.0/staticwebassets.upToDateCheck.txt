@@ -25,14 +25,24 @@ wwwroot\Certificats\10\invoice-e6550b033a644b3580a111f03abec235.pdf
 wwwroot\Certificats\10\invoice-ee3e0defcbd946469def1eb6af6eb943.pdf
 wwwroot\Certificats\10\invoice-f4d0d32dc74842e5a207d7b46a6d80a4.pdf
 wwwroot\Certificats\10\invoice-f81cdb3a8efe4ba8b4274a41fc2a6f1a.pdf
+wwwroot\Certificats\5\invoice-05293d047b5e43bea6433a2cb84188d4.pdf
+wwwroot\Certificats\5\invoice-122b515c04134c2d967c18070e504686.pdf
+wwwroot\Certificats\5\invoice-3b370db1d0f048e792d4938218f9f99d.pdf
+wwwroot\Certificats\5\invoice-3d52549ba2474bc7aa38fd54c6c45317.pdf
+wwwroot\Certificats\5\invoice-3e55182f377948149649fea5179a374b.pdf
 wwwroot\Certificats\5\invoice-4ca650dc0067402db80f8ad7c058be71.pdf
+wwwroot\Certificats\5\invoice-540e60c8bd394e958e2128d7a8970f4f.pdf
 wwwroot\Certificats\5\invoice-545ad6bb8f5543c5a98e69ed0e44a080.pdf
 wwwroot\Certificats\5\invoice-5ad031e484eb4a0b9d845a6e3124d32b.pdf
+wwwroot\Certificats\5\invoice-6068cce522664abeb12dc325acf7ef0c.pdf
 wwwroot\Certificats\5\invoice-7d9c0395e38b443ea4a68f094234d2ed.pdf
 wwwroot\Certificats\5\invoice-80efcfe7625540019ce3f6ae1d90138f.pdf
 wwwroot\Certificats\5\invoice-871f7e3f2afa474d945c9e995d35d508.pdf
 wwwroot\Certificats\5\invoice-9fe342c224584d5ba2640837a9b06b88.pdf
+wwwroot\Certificats\5\invoice-a958b1719ff048ea85a3555f756cb8bb.pdf
+wwwroot\Certificats\5\invoice-af33f739f51d45a2a1e4268f8256fc0f.pdf
 wwwroot\Certificats\5\invoice-cf98682e4029469b81705db5758cf468.pdf
+wwwroot\Certificats\5\invoice-d8113939e6934c79b194f3f4d30abf41.pdf
 wwwroot\images\banners\.gitkeep
 wwwroot\images\products\.gitkeep
 wwwroot\images\products\gold-bar.png
@@ -45,15 +55,26 @@ wwwroot\images\products\jewelry5.jpg
 wwwroot\images\products\jewelry6.webp
 wwwroot\images\products\jewelry7.webp
 wwwroot\images\products\product-12ee0367370e4351853076f672b035f6.png
+wwwroot\images\products\product-18d35d1766554b379bc47a3ca10ba6ea.jpg
+wwwroot\images\products\product-26e28dc59c4d40f1a94fac480d025c5e.jpg
 wwwroot\images\products\product-26e4fb1ca8304b45bccb54a5f4f293ba.png
 wwwroot\images\products\product-2ce7ffae2ab24116871f40f0fde3236f.jpg
+wwwroot\images\products\product-3402e566462f498d80c711b590cfb6c7.jpg
 wwwroot\images\products\product-454606df349441669ae5b1ad1a5a0a83.webp
+wwwroot\images\products\product-490457a29ffd40ac8b6f0c7a06978465.png
+wwwroot\images\products\product-4a2f7567c6184d2eba10002453600364.png
+wwwroot\images\products\product-521081eca9964993ab1d4327f2c6ea1e.png
 wwwroot\images\products\product-56d2b1101c0b450e8d7679c070a0060d.png
 wwwroot\images\products\product-5b12295428bf4c1ea71e87d6e5c0da37.jpg
+wwwroot\images\products\product-6105e44941dc4e9fa40f0d57012fd6f7.png
+wwwroot\images\products\product-62cc2ae8654149ebaf3cc7f5c7ba186e.jpg
 wwwroot\images\products\product-99da46b30e8f4fe3ae02468b0717012c.jpg
+wwwroot\images\products\product-9d50017dbcfb4c0498a284fc8a4f639d.jpg
+wwwroot\images\products\product-b6a26835474c42028c8841267f64b10f.jpg
 wwwroot\images\products\product-b8f75d02f4df4b05b49f20052a524baf.webp
 wwwroot\images\products\product-bea87d4411274e8f9e690d084ebff4da.png
 wwwroot\images\products\product-c4d0e6b86e6944bcb653f72a6ae943fb.png
+wwwroot\images\products\product-ccb3a523dc7a492584da61464a11a8e0.jpg
 wwwroot\images\products\product-ce73300fcb144636bd8fad4735e255be.png
 wwwroot\images\products\product-d1379cc144d5480886bbc0b2b65b7a40.jpg
 wwwroot\images\products\product-dbd927062f2749109c4e09d6abc0ba30.jpg
@@ -62,7 +83,22 @@ wwwroot\images\products\product-f56b2c89ed004504b3114c488f2830bd.jpg
 wwwroot\images\products\product-f7db94bd31c647918af439396833645c.jpg
 wwwroot\images\products\silver-coin.avif
 wwwroot\images\products\silver.png
+wwwroot\images\profile\101\profile-27c84470aee844c4bc801947f2782338.jpg
 wwwroot\images\profiles\.gitkeep
+wwwroot\images\profiles\investor-main.png.jpg
+wwwroot\kyc\107\INV 1003.pdf
+wwwroot\kyc\107\b3c0fb98-61a8-4fa7-90d5-38e2a7e71827.pdf
+wwwroot\kyc\107\cr.pdf
+wwwroot\kyc\107\jewelry (1).jpg
+wwwroot\kyc\111\AGAOne_Feb_2026_invioce[281970].pdf
+wwwroot\kyc\111\INV 1003.pdf
+wwwroot\kyc\111\INV-1001.pdf
+wwwroot\kyc\111\cr.pdf
+wwwroot\kyc\111\invoice2.jpg
+wwwroot\kyc\111\login-bg.jpg
+wwwroot\kyc\124\i.pdf
+wwwroot\kyc\124\jewelry (1).jpg
+wwwroot\kyc\124\silver jewlery png.png
 wwwroot\kyc\goldtradepsscode\EIN00002 Digital invoice 9 2025.pdf
 wwwroot\kyc\goldtradepsscode\INV 1003.pdf
 wwwroot\kyc\goldtradepsscode\INV-1001.pdf
@@ -72,3 +108,18 @@ wwwroot\kyc\goldtradepsscode\invoice1.jpg
 wwwroot\kyc\goldtradepsscode\jewelry.jpg
 wwwroot\kyc\goldtradepsscode\tax-residency-certificate-uae.jpg
 wwwroot\kyc\imseeh\cr.pdf
+wwwroot\kyc\tradepss\INV 1003.pdf
+wwwroot\kyc\tradepss\INV-1001 (2).pdf
+wwwroot\kyc\tradepss\INV-1001.pdf
+wwwroot\kyc\tradepss\INV002.pdf
+wwwroot\kyc\tradepss\Jewelry2.jpg
+wwwroot\kyc\tradepss\b3c0fb98-61a8-4fa7-90d5-38e2a7e71827.pdf
+wwwroot\kyc\tradepss\diamond ring 18K.png
+wwwroot\kyc\tradepss\i.pdf
+wwwroot\kyc\tradepss\jewelry.jpg
+wwwroot\kyc\tradepss\jwelery001.png
+wwwroot\kyc\tradepss\silver 1 oz.jpg
+wwwroot\videos\products\product-video-51cd4654bdc04cf6a2ed59e781fb125e.mp4
+wwwroot\videos\products\product-video-553101cab2dc4df59aaf962b19a5c07f.mp4
+wwwroot\videos\products\product-video-9dab8139708e474dacc5a8604927f65b.mp4
+wwwroot\videos\products\product-video-b0b3c7976a8f467d894c698b5707d41f.mp4

@@ -4,16 +4,14 @@ using GoldWalletSystem.Application.Constants;
 using GoldWalletSystem.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.RegularExpressions;
 
 namespace GoldWalletSystem.API.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/profile")]
-public partial class ProfileController(IProfileService profileService, IOtpService otpService, ICurrentUserService currentUser, IWebHostEnvironment environment) : SecuredControllerBase(currentUser)
+public class ProfileController(IProfileService profileService, IOtpService otpService, IProfileMediaService profileMediaService, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
 {
-    private const string ProfilePhotosFolder = "images/profile";
 
     [HttpPost("by-user")]
     public async Task<IActionResult> GetByUser([FromBody] UserRequestDto request, CancellationToken cancellationToken = default)
@@ -57,7 +55,7 @@ public partial class ProfileController(IProfileService profileService, IOtpServi
                 cancellationToken);
         }
 
-        request.ProfilePhotoUrl = await PersistProfilePhotoIfBase64Async(request.UserId, request.ProfilePhotoUrl, cancellationToken);
+        request.ProfilePhotoUrl = await profileMediaService.ResolveProfilePhotoUrlAsync(request.UserId, request.ProfilePhotoUrl, cancellationToken);
 
         var data = await profileService.UpdatePersonalInfoAsync(request, cancellationToken);
         return Ok(ApiResponse<ProfileDto>.Ok(data, "Profile personal information updated"));
@@ -159,50 +157,4 @@ public partial class ProfileController(IProfileService profileService, IOtpServi
             cancellationToken);
     }
 
-    private async Task<string> PersistProfilePhotoIfBase64Async(int userId, string profilePhotoUrl, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(profilePhotoUrl)) return string.Empty;
-
-        var match = DataUrlRegex().Match(profilePhotoUrl.Trim());
-        if (!match.Success) return profilePhotoUrl.Trim();
-
-        var contentType = match.Groups["type"].Value;
-        var base64Payload = match.Groups["payload"].Value;
-
-        byte[] bytes;
-        try
-        {
-            bytes = Convert.FromBase64String(base64Payload);
-        }
-        catch (FormatException)
-        {
-            return profilePhotoUrl.Trim();
-        }
-
-        var extension = contentType.ToLowerInvariant() switch
-        {
-            "image/jpeg" => ".jpg",
-            "image/jpg" => ".jpg",
-            "image/png" => ".png",
-            "image/webp" => ".webp",
-            _ => ".bin"
-        };
-
-        var root = string.IsNullOrWhiteSpace(environment.WebRootPath)
-            ? Path.Combine(environment.ContentRootPath, "wwwroot")
-            : environment.WebRootPath;
-
-        var targetDirectory = Path.Combine(root, ProfilePhotosFolder, userId.ToString());
-        Directory.CreateDirectory(targetDirectory);
-
-        var fileName = $"profile-{Guid.NewGuid():N}{extension}";
-        var filePath = Path.Combine(targetDirectory, fileName);
-
-        await System.IO.File.WriteAllBytesAsync(filePath, bytes, cancellationToken);
-
-        return $"/{ProfilePhotosFolder}/{userId}/{fileName}";
-    }
-
-    [GeneratedRegex("^data:(?<type>image\\/[a-zA-Z0-9.+-]+);base64,(?<payload>.+)$", RegexOptions.Compiled)]
-    private static partial Regex DataUrlRegex();
 }

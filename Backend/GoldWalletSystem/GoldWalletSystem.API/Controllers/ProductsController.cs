@@ -11,7 +11,6 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using System.Text.Json;
 
 namespace GoldWalletSystem.API.Controllers;
@@ -19,7 +18,7 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/products")]
-public class ProductsController(IProductService productService, AppDbContext dbContext, IWebHostEnvironment environment, API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
+public class ProductsController(IProductService productService, API.Services.IProductWriteService productWriteService, AppDbContext dbContext, IWebHostEnvironment environment, API.Services.IMarketplaceRealtimeNotifier realtimeNotifier, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
 {
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] ProductSearchRequestDto request, CancellationToken cancellationToken = default)
@@ -40,109 +39,14 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpGet("management")]
     public async Task<IActionResult> GetManagementList(CancellationToken cancellationToken = default)
     {
-        if (!IsSellerOrAdmin()) return Forbid();
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
-        var sellerIdClaim = int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var parsedSellerId)
-            ? parsedSellerId
-            : 0;
-
-        var query = dbContext.Products.AsNoTracking().AsQueryable();
-        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase) && sellerIdClaim > 0)
-        {
-            query = query.Where(x => x.SellerId == sellerIdClaim);
-        }
-
-        var items = await query
-            .OrderByDescending(x => x.Id)
-            .Select(x => new ProductManagementDto
-            {
-                Id = x.Id,
-                Name = x.Name,
-                Sku = x.Sku,
-                Description = x.Description,
-                ImageUrl = x.ImageUrl,
-                VideoUrl = x.VideoUrl,
-                Category = x.Category,
-                MaterialType = x.MaterialType,
-                FormType = x.FormType,
-                DisplayCategoryLabel = $"{x.MaterialType} {x.FormType}",
-                PricingMode = x.PricingMode,
-                PurityKarat = x.PurityKarat,
-                PurityFactor = x.PurityFactor,
-                WeightValue = x.WeightValue,
-                WeightUnit = x.WeightUnit,
-                BaseMarketPrice = x.BaseMarketPrice,
-                AutoPrice = x.AutoPrice,
-                FixedPrice = x.FixedPrice,
-                SellPrice = x.SellPrice,
-                OfferPercent = x.OfferPercent,
-                OfferNewPrice = x.OfferNewPrice,
-                OfferType = x.OfferType,
-                IsHasOffer = x.IsHasOffer,
-                AvailableStock = x.AvailableStock,
-                IsActive = x.IsActive,
-                SellerId = x.SellerId
-            })
-            .ToListAsync(cancellationToken);
-
-        foreach (var item in items)
-        {
-            item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
-            item.VideoUrl = NormalizeRelativeVideoPath(item.VideoUrl);
-        }
+        var items = await productService.GetManagementListAsync(cancellationToken);
         return Ok(ApiResponse<List<ProductManagementDto>>.Ok(items));
     }
 
     [HttpGet("management/{id:int}")]
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
     {
-        if (!IsSellerOrAdmin()) return Forbid();
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
-        var sellerScope = ResolveSellerScope();
-
-        var query = dbContext.Products.AsNoTracking().Where(x => x.Id == id);
-        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
-        {
-            if (!sellerScope.HasValue) return Forbid();
-            query = query.Where(x => x.SellerId == sellerScope.Value);
-        }
-
-        var item = await query.Select(x => new ProductManagementDto
-        {
-            Id = x.Id,
-            Name = x.Name,
-            Sku = x.Sku,
-            Description = x.Description,
-            ImageUrl = x.ImageUrl,
-            VideoUrl = x.VideoUrl,
-            Category = x.Category,
-            MaterialType = x.MaterialType,
-            FormType = x.FormType,
-            DisplayCategoryLabel = $"{x.MaterialType} {x.FormType}",
-            PricingMode = x.PricingMode,
-            PurityKarat = x.PurityKarat,
-            PurityFactor = x.PurityFactor,
-            WeightValue = x.WeightValue,
-            WeightUnit = x.WeightUnit,
-            BaseMarketPrice = x.BaseMarketPrice,
-            AutoPrice = x.AutoPrice,
-            FixedPrice = x.FixedPrice,
-            SellPrice = x.SellPrice,
-            OfferPercent = x.OfferPercent,
-            OfferNewPrice = x.OfferNewPrice,
-            OfferType = x.OfferType,
-            IsHasOffer = x.IsHasOffer,
-            AvailableStock = x.AvailableStock,
-            IsActive = x.IsActive,
-            SellerId = x.SellerId
-        }).FirstOrDefaultAsync(cancellationToken);
-
-        if (item is not null)
-        {
-            item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
-            item.VideoUrl = NormalizeRelativeVideoPath(item.VideoUrl);
-        }
-
+        var item = await productService.GetManagementByIdAsync(id, cancellationToken);
         return item is null
             ? NotFound(ApiResponse<object>.Fail("Product not found", 404))
             : Ok(ApiResponse<ProductManagementDto>.Ok(item));
@@ -151,178 +55,71 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpPost("management")]
     public async Task<IActionResult> Create([FromForm] ProductUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        if (!IsSellerOrAdmin()) return Forbid();
-        if (await dbContext.Products.AnyAsync(x => x.Sku == request.Sku, cancellationToken))
-        {
-            return BadRequest(ApiResponse<object>.Fail("SKU already exists", 400));
-        }
-
-        var sellerId = ResolveSellerId(request.SellerId);
-
-        var product = new Product
-        {
-            Name = request.Name,
-            Sku = request.Sku,
-            Description = request.Description,
-            ImageUrl = await SaveImageAsync(request.Image, request.ExistingImageUrl, cancellationToken),
-            VideoUrl = await SaveVideoAsync(request.Video, request.ExistingVideoUrl, request.VideoDurationSeconds, cancellationToken),
-            Category = ToLegacyCategory(request.MaterialType),
-            MaterialType = request.MaterialType,
-            FormType = request.FormType,
-            PricingMode = request.PricingMode,
-            PurityKarat = request.PurityKarat,
-            PurityFactor = request.PurityFactor,
-            WeightValue = request.WeightValue,
-            WeightUnit = ProductWeightUnit.Gram,
-            BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, sellerId, cancellationToken),
-            FixedPrice = request.FixedPrice,
-            OfferPercent = request.OfferPercent,
-            OfferNewPrice = request.OfferNewPrice,
-            OfferType = request.OfferType,
-            IsHasOffer = request.OfferType != ProductOfferType.None,
-            AvailableStock = request.AvailableStock,
-            IsActive = request.IsActive,
-            SellerId = sellerId
-        };
-
-        dbContext.Products.Add(product);
-        RecalculateComputedPrices(product);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await realtimeNotifier.BroadcastRefreshHintAsync($"product:create:{product.Id}", cancellationToken);
-
-        return Ok(ApiResponse<string>.Ok("Created"));
+        var result = await productWriteService.CreateAsync(request, cancellationToken);
+        return Ok(ApiResponse<string>.Ok(result));
     }
 
     [HttpPut("management/{id:int}")]
     public async Task<IActionResult> Update(int id, [FromForm] ProductUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        if (!IsSellerOrAdmin()) return Forbid();
-        var product = await dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (product is null)
-        {
-            return NotFound(ApiResponse<object>.Fail("Product not found", 404));
-        }
-
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
-        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
-        {
-            var sellerScope = ResolveSellerScope();
-            if (!sellerScope.HasValue || product.SellerId != sellerScope.Value)
-            {
-                return Forbid();
-            }
-        }
-
-        if (!string.Equals(product.Sku, request.Sku, StringComparison.OrdinalIgnoreCase)
-            && await dbContext.Products.AnyAsync(x => x.Sku == request.Sku && x.Id != id, cancellationToken))
-        {
-            return BadRequest(ApiResponse<object>.Fail("SKU already exists", 400));
-        }
-
-        var nextSellerId = ResolveSellerId(request.SellerId, product.SellerId);
-
-        product.Name = request.Name;
-        product.Sku = request.Sku;
-        product.Description = request.Description;
-        product.ImageUrl = await SaveImageAsync(request.Image, request.ExistingImageUrl ?? product.ImageUrl, cancellationToken);
-        product.VideoUrl = await SaveVideoAsync(request.Video, request.ExistingVideoUrl ?? product.VideoUrl, request.VideoDurationSeconds, cancellationToken);
-        product.Category = ToLegacyCategory(request.MaterialType);
-        product.MaterialType = request.MaterialType;
-        product.FormType = request.FormType;
-        product.PricingMode = request.PricingMode;
-        product.PurityKarat = request.PurityKarat;
-        product.PurityFactor = request.PurityFactor;
-        product.WeightValue = request.WeightValue;
-        product.WeightUnit = ProductWeightUnit.Gram;
-        product.BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, nextSellerId, cancellationToken);
-        product.FixedPrice = request.FixedPrice;
-        product.OfferPercent = request.OfferPercent;
-        product.OfferNewPrice = request.OfferNewPrice;
-        product.OfferType = request.OfferType;
-        product.IsHasOffer = request.OfferType != ProductOfferType.None;
-        product.AvailableStock = request.AvailableStock;
-        product.IsActive = request.IsActive;
-        product.SellerId = nextSellerId;
-
-        RecalculateComputedPrices(product);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await realtimeNotifier.BroadcastRefreshHintAsync($"product:update:{product.Id}", cancellationToken);
-        return Ok(ApiResponse<string>.Ok("Updated"));
+        var result = await productWriteService.UpdateAsync(id, request, cancellationToken);
+        return Ok(ApiResponse<string>.Ok(result));
     }
 
     [HttpDelete("management/{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
     {
-        if (!IsSellerOrAdmin()) return Forbid();
-        var product = await dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (product is null)
-        {
-            return NotFound(ApiResponse<object>.Fail("Product not found", 404));
-        }
-
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
-        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
-        {
-            var sellerScope = ResolveSellerScope();
-            if (!sellerScope.HasValue || product.SellerId != sellerScope.Value)
-            {
-                return Forbid();
-            }
-        }
-
-        dbContext.Products.Remove(product);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await realtimeNotifier.BroadcastRefreshHintAsync($"product:delete:{id}", cancellationToken);
-        return Ok(ApiResponse<string>.Ok("Deleted"));
+        var result = await productWriteService.DeleteAsync(id, cancellationToken);
+        return Ok(ApiResponse<string>.Ok(result));
     }
 
     [HttpGet("categories")]
-    public IActionResult GetCategories()
+    public async Task<IActionResult> GetCategories()
     {
-        var data = Enum.GetValues<ProductCategory>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetCategoriesAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
     [HttpGet("weight-units")]
-    public IActionResult GetWeightUnits()
+    public async Task<IActionResult> GetWeightUnits()
     {
-        var data = Enum.GetValues<ProductWeightUnit>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetWeightUnitsAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
 
     [HttpGet("material-types")]
-    public IActionResult GetMaterialTypes()
+    public async Task<IActionResult> GetMaterialTypes()
     {
-        var data = Enum.GetValues<ProductMaterialType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetMaterialTypesAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
     [HttpGet("form-types")]
-    public IActionResult GetFormTypes()
+    public async Task<IActionResult> GetFormTypes()
     {
-        var data = Enum.GetValues<ProductFormType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetFormTypesAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
     [HttpGet("pricing-modes")]
-    public IActionResult GetPricingModes()
+    public async Task<IActionResult> GetPricingModes()
     {
-        var data = Enum.GetValues<ProductPricingMode>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetPricingModesAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
     [HttpGet("purity-karats")]
-    public IActionResult GetPurityKarats()
+    public async Task<IActionResult> GetPurityKarats()
     {
-        var data = Enum.GetValues<ProductPurityKarat>().Select(x => new EnumItemDto((int)x, x.ToString().Replace("K", "K ").Trim())).ToList();
+        var data = await productService.GetPurityKaratsAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
     [HttpGet("offer-types")]
-    public IActionResult GetOfferTypes()
+    public async Task<IActionResult> GetOfferTypes()
     {
-        var data = Enum.GetValues<ProductOfferType>().Select(x => new EnumItemDto((int)x, x.ToString())).ToList();
+        var data = await productService.GetOfferTypesAsync();
         return Ok(ApiResponse<List<EnumItemDto>>.Ok(data));
     }
 
@@ -446,130 +243,16 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
     private int? ResolveSellerScope()
     {
-        var role = GetRoleClaim();
-        if (string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        if (currentUser.IsInRole(SystemRoles.Admin))
         {
             return null;
         }
 
-        return int.TryParse(GetSellerIdClaim(), out var sellerId)
-            ? sellerId
-            : null;
+        return CurrentSellerId;
     }
 
     private bool IsSellerOrAdmin()
-    {
-        var role = GetRoleClaim();
-        return string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase)
-               || string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static ProductCategory ToLegacyCategory(ProductMaterialType materialType)
-    {
-        return materialType switch
-        {
-            ProductMaterialType.Gold => ProductCategory.Gold,
-            ProductMaterialType.Silver => ProductCategory.Silver,
-            ProductMaterialType.Diamond => ProductCategory.Diamond,
-            _ => ProductCategory.Gold
-        };
-    }
-
-    private int ResolveSellerId(int? requestedSellerId, int fallbackSellerId = 0)
-    {
-        var role = GetRoleClaim();
-        if (string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
-        {
-            var resolved = requestedSellerId ?? fallbackSellerId;
-            if (resolved <= 0) throw new InvalidOperationException("SellerId is required for admin operations.");
-            return resolved;
-        }
-
-        if (int.TryParse(GetSellerIdClaim(), out var sellerId) && sellerId > 0)
-            return sellerId;
-
-        throw new UnauthorizedAccessException("Seller scope is required.");
-    }
-
-    private string GetRoleClaim()
-        => User.Claims.FirstOrDefault(c => c.Type == "role")?.Value?.Trim()
-           ?? User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value?.Trim()
-           ?? string.Empty;
-
-    private string? GetSellerIdClaim()
-        => User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value?.Trim();
-
-    private async Task<string> SaveImageAsync(IFormFile? image, string? existingImageUrl, CancellationToken cancellationToken)
-    {
-        if (image is null || image.Length == 0)
-        {
-            return NormalizeRelativeImagePath(existingImageUrl);
-        }
-
-        var root = environment.WebRootPath;
-        if (string.IsNullOrWhiteSpace(root))
-        {
-            root = Path.Combine(environment.ContentRootPath, "wwwroot");
-        }
-
-        var targetDirectory = Path.Combine(root, "images", "products");
-        Directory.CreateDirectory(targetDirectory);
-
-        var extension = Path.GetExtension(image.FileName);
-        var fileName = $"product-{Guid.NewGuid():N}{extension}";
-        var fullPath = Path.Combine(targetDirectory, fileName);
-
-        await using var stream = System.IO.File.Create(fullPath);
-        await image.CopyToAsync(stream, cancellationToken);
-
-        return NormalizeRelativeImagePath($"/images/products/{fileName}");
-    }
-
-    private async Task<string> SaveVideoAsync(IFormFile? video, string? existingVideoUrl, int? durationSeconds, CancellationToken cancellationToken)
-    {
-        if (video is null || video.Length == 0)
-        {
-            return NormalizeRelativeVideoPath(existingVideoUrl);
-        }
-
-        var maxDuration = await ReadProductVideoMaxDurationSecondsAsync(cancellationToken);
-        if (durationSeconds is null || durationSeconds <= 0)
-        {
-            throw new InvalidOperationException("Video duration is required when uploading a product video.");
-        }
-
-        if (durationSeconds.Value > maxDuration)
-        {
-            throw new InvalidOperationException($"Product video exceeds max duration of {maxDuration} seconds.");
-        }
-
-        var root = environment.WebRootPath;
-        if (string.IsNullOrWhiteSpace(root))
-        {
-            root = Path.Combine(environment.ContentRootPath, "wwwroot");
-        }
-
-        var targetDirectory = Path.Combine(root, "videos", "products");
-        Directory.CreateDirectory(targetDirectory);
-
-        var extension = Path.GetExtension(video.FileName);
-        var fileName = $"product-video-{Guid.NewGuid():N}{extension}";
-        var fullPath = Path.Combine(targetDirectory, fileName);
-
-        await using var stream = System.IO.File.Create(fullPath);
-        await video.CopyToAsync(stream, cancellationToken);
-
-        return NormalizeRelativeVideoPath($"/videos/products/{fileName}");
-    }
-
-    private async Task<int> ReadProductVideoMaxDurationSecondsAsync(CancellationToken cancellationToken)
-    {
-        var config = await dbContext.MobileAppConfigurations.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ConfigKey == MobileAppConfigurationKeys.ProductVideoMaxDurationSeconds, cancellationToken);
-
-        var value = config?.ValueInt ?? 30;
-        return value <= 0 ? 30 : value;
-    }
+        => currentUser.IsInRole(SystemRoles.Admin) || currentUser.IsInRole(SystemRoles.Seller);
 
     private string NormalizeRelativeImagePath(string? path)
     {

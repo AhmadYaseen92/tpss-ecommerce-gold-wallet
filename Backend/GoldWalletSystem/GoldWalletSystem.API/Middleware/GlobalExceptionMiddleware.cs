@@ -1,4 +1,5 @@
 using GoldWalletSystem.Application.DTOs.Common;
+using GoldWalletSystem.Domain.Exceptions;
 using System.Net;
 using System.Text.Json;
 
@@ -11,6 +12,16 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
         try
         {
             await next(context);
+        }
+        catch (BusinessException ex)
+        {
+            logger.LogWarning(ex, "Handled business error {ErrorCode}", ex.ErrorCode);
+            await WriteError(
+                context,
+                (HttpStatusCode)ex.StatusCode,
+                userMessage: ex.SafeMessage,
+                errorCode: ex.ErrorCode,
+                technicalMessage: ex.Message);
         }
         catch (UnauthorizedAccessException ex)
         {

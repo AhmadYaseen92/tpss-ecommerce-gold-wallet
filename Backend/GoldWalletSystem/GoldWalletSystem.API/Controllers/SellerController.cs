@@ -10,16 +10,16 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize(Roles = SystemRoles.Seller)]
 [Route("api/seller")]
-public class SellerController(ISellerWorkspaceService sellerWorkspaceService) : ControllerBase
+public class SellerController(ISellerWorkspaceService sellerWorkspaceService, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
 {
     [HttpGet("workspace")]
     public async Task<IActionResult> GetWorkspace(CancellationToken cancellationToken = default)
     {
-        var sellerIdClaim = User.FindFirst("seller_id")?.Value;
-        if (!int.TryParse(sellerIdClaim, out var sellerId) || sellerId <= 0)
-            return BadRequest(ApiResponse<object>.Fail("Invalid seller scope", 400));
+        var sellerId = CurrentSellerId;
+        if (!sellerId.HasValue || sellerId.Value <= 0)
+            return InvalidSellerScopeResponse();
 
-        var data = await sellerWorkspaceService.BuildAsync(sellerId, cancellationToken);
+        var data = await sellerWorkspaceService.BuildAsync(sellerId.Value, cancellationToken);
         return Ok(ApiResponse<SellerWorkspaceDto>.Ok(data));
     }
 }
