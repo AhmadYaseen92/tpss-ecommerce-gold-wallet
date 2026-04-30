@@ -127,6 +127,16 @@ BEGIN TRY
             NULL,NULL,NULL,@Now,NULL
         );
 
+    -- Assign market type per seeded seller for market-specific currency/fee behavior.
+    UPDATE S
+    SET S.[MarketType] = CASE
+        WHEN S.[CompanyCode] = N'IMSEEH' THEN N'UAE'
+        WHEN S.[CompanyCode] = N'GOLDPAL' THEN N'KSA'
+        ELSE N'UAE'
+    END
+    FROM [Sellers] S
+    WHERE S.[CompanyCode] IN (N'IMSEEH', N'GOLDPAL');
+
     MERGE [SellerAddresses] AS T
     USING (
         SELECT S.Id AS SellerId, Seed.Country, Seed.City, Seed.Street, Seed.BuildingNumber, Seed.PostalCode
