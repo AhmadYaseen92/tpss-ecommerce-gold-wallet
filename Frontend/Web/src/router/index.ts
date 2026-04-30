@@ -11,6 +11,7 @@ const routes: Array<RouteRecordRaw> = [
   { path: '/settings', component: () => import('../features/auth/pages/LoginPage.vue') },
   { path: '/transactions', component: () => import('../features/auth/pages/LoginPage.vue') },
   { path: '/reports', component: () => import('../features/auth/pages/LoginPage.vue') },
+  { path: '/market', component: () => import('../features/auth/pages/LoginPage.vue') },
 ];
 
 const router = createRouter({

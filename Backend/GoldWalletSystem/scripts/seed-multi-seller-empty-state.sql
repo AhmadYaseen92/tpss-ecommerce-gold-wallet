@@ -83,6 +83,17 @@ BEGIN TRY
         INSERT ([UserId],[CompanyName],[CompanyCode],[CommercialRegistrationNumber],[VatNumber],[BusinessActivity],[CompanyPhone],[CompanyEmail],[IsActive],[KycStatus],[ReviewedAtUtc],[ReviewNotes],[CreatedAtUtc],[UpdatedAtUtc])
         VALUES ((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[CompanyEmail]),S.[CompanyName],S.[CompanyCode],S.[CommercialRegistrationNumber],S.[VatNumber],S.[BusinessActivity],S.[CompanyPhone],S.[CompanyEmail],1,2,@Now,N'Seeded as approved seller',@Now,NULL);
 
+    -- Market assignment per seller (used for currency conversions and market-level settings)
+    UPDATE S
+    SET S.[MarketType] = CASE
+        WHEN S.[CompanyCode] = N'IMSEEH' THEN N'UAE'
+        WHEN S.[CompanyCode] = N'GOLDPAL' THEN N'KSA'
+        WHEN S.[CompanyCode] = N'BULLION' THEN N'Jordan'
+        ELSE N'UAE'
+    END
+    FROM [Sellers] S
+    WHERE S.[CompanyCode] IN (N'IMSEEH', N'GOLDPAL', N'BULLION');
+
     MERGE [SellerAddresses] AS T
     USING (
         SELECT S1.Id AS SellerId, S2.Country,S2.City,S2.Street,S2.BuildingNumber,S2.PostalCode

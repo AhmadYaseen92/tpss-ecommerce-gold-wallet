@@ -32,6 +32,7 @@ import type {
   WebFeeBreakdownReportRowDto,
   WebSellerDetailsDto,
   WebSellerDto,
+  MarketTypeSettingsDto,
   WalletDto
 } from "../types/apiTypes";
 
@@ -82,6 +83,7 @@ const mapSeller = (dto: WebSellerDto): Seller => ({
   goldPrice: dto.goldPrice ?? null,
   silverPrice: dto.silverPrice ?? null,
   diamondPrice: dto.diamondPrice ?? null
+  ,marketType: dto.marketType
 });
 
 const mapProduct = (dto: ProductDto): Product => ({
@@ -91,8 +93,9 @@ const mapProduct = (dto: ProductDto): Product => ({
   category: dto.category,
   materialType: dto.materialType,
   formType: dto.formType,
-  unitPrice: Number(dto.sellPrice ?? dto.finalPrice ?? 0),
-  marketPrice: Number(dto.sellPrice ?? dto.finalPrice ?? 0),
+  unitPrice: Number(dto.sellPriceLocal ?? dto.sellPrice ?? dto.finalPrice ?? 0),
+  marketPrice: Number(dto.baseMarketPriceLocal ?? dto.baseMarketPrice ?? 0),
+  currencyCode: dto.currencyCode ?? "USD",
   stock: dto.availableStock,
   updatedAt: new Date().toISOString().split("T")[0]
 });
@@ -293,6 +296,15 @@ export async function fetchSellers(accessToken: string): Promise<Seller[]> {
 
 export async function fetchSellerDetailsByAdmin(accessToken: string, sellerId: string): Promise<WebSellerDetailsDto> {
   return getJson<WebSellerDetailsDto>(`/api/web-admin/sellers/${sellerId}`, accessToken);
+}
+
+export async function fetchMarketSettings(accessToken: string): Promise<MarketTypeSettingsDto[]> {
+  return getJson<MarketTypeSettingsDto[]>("/api/web-admin/market-types", accessToken);
+}
+
+export async function fetchMarketSellers(accessToken: string, marketType: string): Promise<Seller[]> {
+  const sellers = await getJson<WebSellerDto[]>(`/api/web-admin/market-types/${encodeURIComponent(marketType)}/sellers`, accessToken);
+  return sellers.map(mapSeller);
 }
 
 export async function updateSellerLoginCredentialsByAdmin(

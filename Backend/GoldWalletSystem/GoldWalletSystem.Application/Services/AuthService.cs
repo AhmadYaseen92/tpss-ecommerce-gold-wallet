@@ -16,6 +16,10 @@ public class AuthService(
     ITokenService tokenService,
     IOtpService otpService) : IAuthService
 {
+    private static readonly HashSet<string> AllowedMarketTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "UAE", "KSA", "Jordan", "Egypt", "India"
+    };
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default)
     {
         var loginIdentifier = request.ResolveLoginIdentifier();
@@ -288,6 +292,7 @@ public class AuthService(
             CompanyEmail = request.CompanyInfo.CompanyEmail.Trim(),
             Website = request.CompanyInfo.Website?.Trim(),
             Description = request.CompanyInfo.Description?.Trim(),
+            MarketType = request.CompanyInfo.MarketType.Trim().ToUpperInvariant(),
             IsActive = false,
             KycStatus = KycStatus.UnderReview,
             CreatedAtUtc = DateTime.UtcNow,
@@ -418,6 +423,7 @@ public class AuthService(
             ("CompanyInfo.PostalCode", company.PostalCode),
             ("CompanyInfo.CompanyPhone", company.CompanyPhone),
             ("CompanyInfo.CompanyEmail", company.CompanyEmail),
+            ("CompanyInfo.MarketType", company.MarketType),
             ("Manager.FullName", manager.FullName),
             ("Manager.PositionTitle", manager.PositionTitle),
             ("Manager.Nationality", manager.Nationality),
@@ -504,6 +510,9 @@ public class AuthService(
 
         if (!string.IsNullOrWhiteSpace(company.CompanyEmail) && !AuthInputValidation.IsValidEmail(company.CompanyEmail))
             throw new InvalidOperationException("Company email address format is invalid.");
+
+        if (!string.IsNullOrWhiteSpace(company.MarketType) && !AllowedMarketTypes.Contains(company.MarketType.Trim()))
+            throw new InvalidOperationException("Market type must be one of: UAE, KSA, Jordan, Egypt, India.");
 
         if (!string.IsNullOrWhiteSpace(request.PhoneNumber) && !AuthInputValidation.IsValidUaeMobile(request.PhoneNumber))
             throw new InvalidOperationException("Login phone number must be a valid UAE mobile format.");

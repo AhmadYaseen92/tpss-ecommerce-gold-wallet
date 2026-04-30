@@ -261,11 +261,36 @@ public class AdminTransactionFeeService(AppDbContext dbContext) : IAdminTransact
 
 public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationService
 {
+    private static readonly Dictionary<string, (string CurrencyCode, decimal ExchangeRate)> MarketCurrencyMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["UAE"] = ("AED", 3.67m),
+        ["KSA"] = ("SAR", 3.75m),
+        ["JORDAN"] = ("JOD", 0.71m),
+        ["EGYPT"] = ("EGP", 48.50m),
+        ["INDIA"] = ("INR", 83.20m),
+    };
+
     public async Task<FeeCalculationResultDto> CalculateAsync(FeeCalculationRequest request, CancellationToken cancellationToken = default)
     {
         var lines = new List<FeeLineDto>();
         var action = request.ActionType.ToLowerInvariant();
         var currency = "USD";
+        var exchangeRate = 1m;
+
+        if (request.SellerId.HasValue)
+        {
+            var sellerMarket = await dbContext.Sellers.AsNoTracking()
+                .Where(x => x.Id == request.SellerId.Value)
+                .Select(x => x.MarketType)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            var marketKey = string.IsNullOrWhiteSpace(sellerMarket) ? "UAE" : sellerMarket.Trim().ToUpperInvariant();
+            var marketInfo = MarketCurrencyMap.TryGetValue(marketKey, out var resolved)
+                ? resolved
+                : MarketCurrencyMap["UAE"];
+            currency = marketInfo.CurrencyCode;
+            exchangeRate = marketInfo.ExchangeRate;
+        }
 
         if (request.ProductId.HasValue && request.SellerId.HasValue)
         {
@@ -286,7 +311,7 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
                 if (!AppliesToAction(systemFee, action)) continue;
                 if (!IsActionCompatible(fee.FeeCode, action)) continue;
                 var line = CalculateSellerLine(fee, request, lines.Count + 1, currency);
-                if (line is not null) lines.Add(line);
+                if (line is not null) lines.Add(ConvertLineToMarketCurrency(line, exchangeRate, currency));
             }
         }
 
@@ -299,14 +324,23 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
             var amount = serviceFee.CalculationMode.Equals("percent", StringComparison.OrdinalIgnoreCase)
                 ? request.NotionalAmount * (serviceFee.RatePercent ?? 0m) / 100m
                 : (serviceFee.FixedAmount ?? 0m);
-            lines.Add(new FeeLineDto(FeeCodes.ServiceFee, "Service Fee", serviceFee.CalculationMode, request.NotionalAmount, request.Quantity, serviceFee.RatePercent, decimal.Round(amount, 2), false, currency, "AdminServiceFee", $"{{\"feeCode\":\"{FeeCodes.ServiceFee}\",\"mode\":\"{serviceFee.CalculationMode}\"}}", lines.Count + 1));
+            lines.Add(new FeeLineDto(FeeCodes.ServiceFee, "Service Fee", serviceFee.CalculationMode, decimal.Round(request.NotionalAmount * exchangeRate, 2), request.Quantity, serviceFee.RatePercent, decimal.Round(amount * exchangeRate, 2), false, currency, "AdminServiceFee", $"{{\"feeCode\":\"{FeeCodes.ServiceFee}\",\"mode\":\"{serviceFee.CalculationMode}\"}}", lines.Count + 1));
         }
 
         var totalFees = lines.Where(x => !x.IsDiscount).Sum(x => x.AppliedValue);
         var totalDiscounts = lines.Where(x => x.IsDiscount).Sum(x => x.AppliedValue);
-        var finalAmount = request.NotionalAmount + totalFees - totalDiscounts;
-        return new FeeCalculationResultDto(request.NotionalAmount, totalFees, totalDiscounts, finalAmount, currency, lines);
+        var notionalAmount = decimal.Round(request.NotionalAmount * exchangeRate, 2);
+        var finalAmount = notionalAmount + totalFees - totalDiscounts;
+        return new FeeCalculationResultDto(notionalAmount, totalFees, totalDiscounts, finalAmount, currency, lines);
     }
+
+    private static FeeLineDto ConvertLineToMarketCurrency(FeeLineDto line, decimal exchangeRate, string currencyCode) =>
+        line with
+        {
+            BaseAmount = decimal.Round(line.BaseAmount * exchangeRate, 2),
+            AppliedValue = decimal.Round(line.AppliedValue * exchangeRate, 2),
+            Currency = currencyCode
+        };
 
     private static FeeLineDto? CalculateSellerLine(SellerProductFee fee, FeeCalculationRequest request, int order, string currency)
     {

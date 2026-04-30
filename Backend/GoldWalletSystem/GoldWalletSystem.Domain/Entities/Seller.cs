@@ -15,6 +15,7 @@ public class Seller : BaseEntity
     public string CompanyEmail { get; set; } = string.Empty;
     public string? Website { get; set; }
     public string? Description { get; set; }
+    public string MarketType { get; set; } = "UAE";
     public bool IsActive { get; set; }
     public KycStatus KycStatus { get; set; } = KycStatus.UnderReview;
     public DateTime? ReviewedAtUtc { get; set; }

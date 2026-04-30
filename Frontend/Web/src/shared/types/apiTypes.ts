@@ -48,6 +48,7 @@ export interface WebSellerDto {
   goldPrice?: number | null;
   silverPrice?: number | null;
   diamondPrice?: number | null;
+  marketType?: string;
 }
 
 export interface WebSellerAddressDto {
@@ -129,11 +130,23 @@ export interface WebSellerDetailsDto {
   goldPrice?: number | null;
   silverPrice?: number | null;
   diamondPrice?: number | null;
+  marketType?: string;
   address?: WebSellerAddressDto;
   managers: WebSellerManagerDto[];
   branches: WebSellerBranchDto[];
   bankAccounts: WebSellerBankAccountDto[];
   documents: WebSellerDocumentDto[];
+}
+
+export interface MarketTypeSettingsDto {
+  marketType: string;
+  currency: string;
+  feesPercent: number;
+  paymentGateway: string;
+  enableSellerManagerField: boolean;
+  enableSellerBranchesField: boolean;
+  enableSellerBankAccountsField: boolean;
+  sellersCount: number;
 }
 
 export interface DashboardDto {
@@ -174,6 +187,9 @@ export interface ProductDto {
   sellerId: number;
   sellerName: string;
   finalPrice?: number;
+  currencyCode?: string;
+  baseMarketPriceLocal?: number;
+  sellPriceLocal?: number;
 }
 
 export interface AuditLogDto {

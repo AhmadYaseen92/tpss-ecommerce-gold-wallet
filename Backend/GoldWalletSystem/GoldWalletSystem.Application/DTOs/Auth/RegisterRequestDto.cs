@@ -41,6 +41,7 @@ public class SellerCompanyInfoDto
     public string CompanyEmail { get; set; } = string.Empty;
     public string? Website { get; set; }
     public string? Description { get; set; }
+    public string MarketType { get; set; } = "UAE";
 }
 
 public class SellerManagerDto

@@ -90,7 +90,8 @@ public class WebAdminController(
                 SubmittedAt = x.CreatedAtUtc,
                 GoldPrice = x.GoldPrice,
                 SilverPrice = x.SilverPrice,
-                DiamondPrice = x.DiamondPrice
+                DiamondPrice = x.DiamondPrice,
+                MarketType = x.MarketType
             })
             .ToListAsync(cancellationToken);
 
@@ -149,6 +150,7 @@ public class WebAdminController(
             GoldPrice = seller.GoldPrice,
             SilverPrice = seller.SilverPrice,
             DiamondPrice = seller.DiamondPrice,
+            MarketType = seller.MarketType,
             Address = seller.Address is null
                 ? null
                 : new WebSellerAddressDto
@@ -227,6 +229,58 @@ public class WebAdminController(
         };
 
         return Ok(ApiResponse<WebSellerDetailsDto>.Ok(details));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpGet("market-types")]
+    public async Task<IActionResult> GetMarketTypeSettings(CancellationToken cancellationToken)
+    {
+        var defaults = BuildDefaultMarketSettings();
+        var counts = await dbContext.Sellers.AsNoTracking()
+            .GroupBy(x => x.MarketType)
+            .Select(x => new { MarketType = x.Key, Count = x.Count() })
+            .ToListAsync(cancellationToken);
+
+        foreach (var row in counts)
+        {
+            var key = NormalizeMarketType(row.MarketType);
+            var item = defaults.FirstOrDefault(x => string.Equals(x.MarketType, key, StringComparison.OrdinalIgnoreCase));
+            if (item is not null) item.SellersCount = row.Count;
+        }
+
+        return Ok(ApiResponse<List<MarketTypeSettingsDto>>.Ok(defaults));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpGet("market-types/{marketType}/sellers")]
+    public async Task<IActionResult> GetSellersByMarketType(string marketType, CancellationToken cancellationToken)
+    {
+        var normalized = NormalizeMarketTypeOrThrow(marketType);
+        var sellers = await dbContext.Sellers
+            .AsNoTracking()
+            .Where(x => x.MarketType == normalized)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new WebSellerDto
+            {
+                Id = FormatSellerId(x.Id),
+                Name = x.CompanyName,
+                Email = x.CompanyEmail ?? string.Empty,
+                BusinessName = x.CompanyName,
+                CompanyCode = x.CompanyCode,
+                ContactPhone = x.CompanyPhone,
+                LoginEmail = dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
+                IsActive = x.IsActive,
+                ReviewedAt = x.ReviewedAtUtc,
+                KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
+                SubmittedAt = x.CreatedAtUtc,
+                GoldPrice = x.GoldPrice,
+                SilverPrice = x.SilverPrice,
+                DiamondPrice = x.DiamondPrice,
+                MarketType = x.MarketType
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(ApiResponse<List<WebSellerDto>>.Ok(sellers));
     }
 
     [Authorize(Roles = SystemRoles.Admin)]
@@ -1426,6 +1480,35 @@ public class WebAdminController(
     }
 
     private static string FormatSellerId(int id) => $"S{id:D3}";
+    private static List<MarketTypeSettingsDto> BuildDefaultMarketSettings() =>
+    [
+        new() { MarketType = "UAE", Currency = "AED", FeesPercent = 2.5m, PaymentGateway = "PayTabs" },
+        new() { MarketType = "KSA", Currency = "SAR", FeesPercent = 2.5m, PaymentGateway = "HyperPay" },
+        new() { MarketType = "Jordan", Currency = "JOD", FeesPercent = 2.0m, PaymentGateway = "MyFatoorah" },
+        new() { MarketType = "Egypt", Currency = "EGP", FeesPercent = 2.0m, PaymentGateway = "Paymob" },
+        new() { MarketType = "India", Currency = "INR", FeesPercent = 1.8m, PaymentGateway = "Razorpay" }
+    ];
+
+    private static string NormalizeMarketType(string? input)
+    {
+        return input?.Trim().ToUpperInvariant() switch
+        {
+            "UAE" => "UAE",
+            "KSA" => "KSA",
+            "JORDAN" => "Jordan",
+            "EGYPT" => "Egypt",
+            "INDIA" => "India",
+            _ => "UAE"
+        };
+    }
+
+    private static string NormalizeMarketTypeOrThrow(string? input)
+    {
+        var normalized = NormalizeMarketType(input);
+        if (string.IsNullOrWhiteSpace(input))
+            throw new InvalidOperationException("Market type is required.");
+        return normalized;
+    }
 
     private static string FormatInvestorId(int id) => $"{id:D3}";
 
