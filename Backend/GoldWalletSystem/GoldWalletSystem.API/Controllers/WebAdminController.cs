@@ -241,6 +241,7 @@ public class WebAdminController(
             item.Currency = await GetStringConfigurationAsync($"Market.{item.MarketType}.Currency", item.Currency, cancellationToken);
             item.PaymentGateway = await GetStringConfigurationAsync($"Market.{item.MarketType}.PaymentGateway", item.PaymentGateway, cancellationToken);
             item.FeesPercent = await GetDecimalConfigurationAsync($"Market.{item.MarketType}.FeesPercent", item.FeesPercent, cancellationToken);
+            item.UsdToLocalRate = await GetDecimalConfigurationAsync($"Market.{item.MarketType}.UsdToLocalRate", item.UsdToLocalRate, cancellationToken);
             item.EnableSellerManagerField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerManagerField", item.EnableSellerManagerField, cancellationToken);
             item.EnableSellerBranchesField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerBranchesField", item.EnableSellerBranchesField, cancellationToken);
             item.EnableSellerBankAccountsField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerBankAccountsField", item.EnableSellerBankAccountsField, cancellationToken);
@@ -268,6 +269,7 @@ public class WebAdminController(
         await UpsertStringConfigurationAsync($"Market.{normalized}.Currency", $"{normalized} Market Currency", request.Currency, $"{normalized} market currency", cancellationToken);
         await UpsertStringConfigurationAsync($"Market.{normalized}.PaymentGateway", $"{normalized} Market Payment Gateway", request.PaymentGateway, $"{normalized} payment gateway", cancellationToken);
         await UpsertDecimalConfigurationAsync($"Market.{normalized}.FeesPercent", $"{normalized} Market Fees Percent", request.FeesPercent, $"{normalized} default fees percent", cancellationToken);
+        await UpsertDecimalConfigurationAsync($"Market.{normalized}.UsdToLocalRate", $"{normalized} USD To Local Rate", request.UsdToLocalRate, $"{normalized} USD to local exchange rate", cancellationToken);
         await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerManagerField", $"{normalized} Registration Manager Field", request.EnableSellerManagerField, $"{normalized} seller registration manager section visibility", cancellationToken);
         await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerBranchesField", $"{normalized} Registration Branches Field", request.EnableSellerBranchesField, $"{normalized} seller registration branches section visibility", cancellationToken);
         await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerBankAccountsField", $"{normalized} Registration Bank Accounts Field", request.EnableSellerBankAccountsField, $"{normalized} seller registration bank accounts section visibility", cancellationToken);
@@ -1536,11 +1538,11 @@ public class WebAdminController(
     private static string FormatSellerId(int id) => $"S{id:D3}";
     private static List<MarketTypeSettingsDto> BuildDefaultMarketSettings() =>
     [
-        new() { MarketType = "UAE", Currency = "AED", FeesPercent = 2.5m, PaymentGateway = "PayTabs" },
-        new() { MarketType = "KSA", Currency = "SAR", FeesPercent = 2.5m, PaymentGateway = "HyperPay" },
-        new() { MarketType = "Jordan", Currency = "JOD", FeesPercent = 2.0m, PaymentGateway = "MyFatoorah" },
-        new() { MarketType = "Egypt", Currency = "EGP", FeesPercent = 2.0m, PaymentGateway = "Paymob" },
-        new() { MarketType = "India", Currency = "INR", FeesPercent = 1.8m, PaymentGateway = "Razorpay" }
+        new() { MarketType = "UAE", Currency = "AED", FeesPercent = 2.5m, UsdToLocalRate = 3.67m, PaymentGateway = "PayTabs" },
+        new() { MarketType = "KSA", Currency = "SAR", FeesPercent = 2.5m, UsdToLocalRate = 3.75m, PaymentGateway = "HyperPay" },
+        new() { MarketType = "Jordan", Currency = "JOD", FeesPercent = 2.0m, UsdToLocalRate = 0.71m, PaymentGateway = "MyFatoorah" },
+        new() { MarketType = "Egypt", Currency = "EGP", FeesPercent = 2.0m, UsdToLocalRate = 48.50m, PaymentGateway = "Paymob" },
+        new() { MarketType = "India", Currency = "INR", FeesPercent = 1.8m, UsdToLocalRate = 83.20m, PaymentGateway = "Razorpay" }
     ];
 
     private static string NormalizeMarketType(string? input)

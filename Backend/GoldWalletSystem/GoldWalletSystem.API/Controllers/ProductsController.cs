@@ -464,18 +464,28 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         var marketType = await dbContext.Sellers.AsNoTracking().Where(x => x.Id == product.SellerId).Select(x => x.MarketType).FirstOrDefaultAsync(cancellationToken);
         var marketKey = string.IsNullOrWhiteSpace(marketType) ? "UAE" : marketType.Trim().ToUpperInvariant();
         var marketInfo = MarketCurrencyMap.TryGetValue(marketKey, out var resolved) ? resolved : MarketCurrencyMap["UAE"];
+        var configuredRate = await dbContext.MobileAppConfigurations.AsNoTracking()
+            .Where(x => x.ConfigKey == $"Market.{NormalizeMarketKey(marketKey)}.UsdToLocalRate")
+            .Select(x => x.ValueDecimal)
+            .FirstOrDefaultAsync(cancellationToken);
+        var usdToLocalRate = configuredRate ?? marketInfo.ExchangeRate;
 
-        var autoPrice = ProductPricingCalculator.CalculateAutoPrice(
-            product.MaterialType,
-            product.BaseMarketPrice,
-            product.WeightValue,
-            product.PurityFactor);
+        var autoPrice = (product.BaseMarketPrice / 31.1035m) * product.WeightValue * product.PurityFactor * usdToLocalRate;
 
         product.CurrencyCode = marketInfo.CurrencyCode;
-        product.AutoPrice = decimal.Round(autoPrice * marketInfo.ExchangeRate, 2);
+        product.AutoPrice = decimal.Round(autoPrice, 2);
         var sourcePrice = product.PricingMode == ProductPricingMode.Manual ? product.FixedPrice : product.AutoPrice;
         product.SellPrice = ProductPricingCalculator.ApplyOffer(sourcePrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
     }
+
+    private static string NormalizeMarketKey(string marketKey) => marketKey switch
+    {
+        "JORDAN" => "Jordan",
+        "EGYPT" => "Egypt",
+        "INDIA" => "India",
+        "KSA" => "KSA",
+        _ => "UAE"
+    };
 
     private int? ResolveSellerScope()
     {

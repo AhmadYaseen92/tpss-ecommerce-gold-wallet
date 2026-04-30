@@ -90,6 +90,8 @@ onMounted(() => void load());
           <div v-if="activeTab === 'general'" class="ui-card">
             <label>Currency</label>
             <Input v-model="currentSettings.currency" />
+            <label>USD To Local Rate</label>
+            <Input v-model="currentSettings.usdToLocalRate" type="number" min="0" step="0.0001" />
             <label>Default Fees %</label>
             <Input v-model="currentSettings.feesPercent" type="number" min="0" step="0.01" />
           </div>
