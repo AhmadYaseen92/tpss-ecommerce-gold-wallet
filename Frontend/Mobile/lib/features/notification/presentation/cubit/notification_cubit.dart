@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/network/api_error_parser.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/entities/notification_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/get_notifications_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/mark_all_notifications_read_usecase.dart';
