@@ -38,3 +38,7 @@ C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Infrastructure\obj\Debug\net10.0\GoldWalletSystem.Infrastructure.pdb
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Infrastructure\obj\Debug\net10.0\GoldWalletSystem.Infrastructure.genruntimeconfig.cache
 C:\Users\obash\tpss_projects\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Infrastructure\obj\Debug\net10.0\ref\GoldWalletSystem.Infrastructure.dll
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Infrastructure\bin\Debug\net10.0\Database\Seed\cleanup-keep-users-sellers.sql
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Infrastructure\bin\Debug\net10.0\Database\Seed\sample-data.sql
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Infrastructure\bin\Debug\net10.0\Database\Seed\seed.sql
+D:\TPSS\tpss-ecommerce-gold-wallet\Backend\GoldWalletSystem\GoldWalletSystem.Infrastructure\bin\Debug\net10.0\Database\Seed\baseline-data.sql

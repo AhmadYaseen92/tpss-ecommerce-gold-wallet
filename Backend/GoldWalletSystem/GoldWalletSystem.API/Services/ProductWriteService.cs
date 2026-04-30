@@ -1,7 +1,6 @@
 using GoldWalletSystem.API.Models;
-using GoldWalletSystem.Application.Constants;
-using GoldWalletSystem.Application.DTOs.Common;
 using GoldWalletSystem.Application.Interfaces.Services;
+using GoldWalletSystem.Application.Services;
 using GoldWalletSystem.Domain.Constants;
 using GoldWalletSystem.Domain.Entities;
 using GoldWalletSystem.Domain.Enums;
