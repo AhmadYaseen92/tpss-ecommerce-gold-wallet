@@ -388,12 +388,14 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         if (seller is null)
             return NotFound(ApiResponse<object>.Fail("Seller not found.", 404));
 
-        seller.GoldPrice = request.GoldPerOunce;
-        seller.SilverPrice = request.SilverPerOunce;
+        seller.GoldPrice = request.GoldAskPerOunce;
+        seller.SilverPrice = request.SilverAskPerOunce;
         seller.DiamondPrice = request.DiamondPerCarat;
         seller.UpdatedAtUtc = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await UpsertSellerBidPriceAsync(seller.Id, "GoldBidPerOunce", request.GoldBidPerOunce, cancellationToken);
+        await UpsertSellerBidPriceAsync(seller.Id, "SilverBidPerOunce", request.SilverBidPerOunce, cancellationToken);
         await RecalculateAutoPricedProductsAsync(sellerId, cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"market-price:{sellerId}", cancellationToken);
         return Ok(ApiResponse<MarketPriceConfigDto>.Ok(request));
@@ -404,8 +406,8 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         var config = await GetMarketPriceConfigAsync(sellerId, cancellationToken);
         return materialType switch
         {
-            ProductMaterialType.Gold => config.GoldPerOunce,
-            ProductMaterialType.Silver => config.SilverPerOunce,
+            ProductMaterialType.Gold => config.GoldAskPerOunce,
+            ProductMaterialType.Silver => config.SilverAskPerOunce,
             ProductMaterialType.Diamond => config.DiamondPerCarat,
             _ => 0m
         };
@@ -422,10 +424,47 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
         return new MarketPriceConfigDto
         {
-            GoldPerOunce = seller.GoldPrice ?? 0m,
-            SilverPerOunce = seller.SilverPrice ?? 0m,
+            GoldAskPerOunce = seller.GoldPrice ?? 0m,
+            SilverAskPerOunce = seller.SilverPrice ?? 0m,
+            GoldBidPerOunce = await GetSellerBidPriceAsync(seller.Id, "GoldBidPerOunce", seller.GoldPrice ?? 0m, cancellationToken),
+            SilverBidPerOunce = await GetSellerBidPriceAsync(seller.Id, "SilverBidPerOunce", seller.SilverPrice ?? 0m, cancellationToken),
             DiamondPerCarat = seller.DiamondPrice ?? 0m
         };
+    }
+
+    private async Task<decimal> GetSellerBidPriceAsync(int sellerId, string field, decimal fallback, CancellationToken cancellationToken)
+    {
+        var value = await dbContext.MobileAppConfigurations.AsNoTracking()
+            .Where(x => x.ConfigKey == $"Seller.{sellerId}.{field}")
+            .Select(x => x.ValueDecimal)
+            .FirstOrDefaultAsync(cancellationToken);
+        return value ?? fallback;
+    }
+
+    private async Task UpsertSellerBidPriceAsync(int sellerId, string field, decimal value, CancellationToken cancellationToken)
+    {
+        var key = $"Seller.{sellerId}.{field}";
+        var existing = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        if (existing is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new MobileAppConfiguration
+            {
+                ConfigKey = key,
+                Name = $"{field} for seller {sellerId}",
+                Description = "Seller bid price",
+                ValueType = ConfigurationValueType.Decimal,
+                ValueDecimal = value,
+                SellerAccess = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            existing.ValueType = ConfigurationValueType.Decimal;
+            existing.ValueDecimal = value;
+            existing.UpdatedAtUtc = DateTime.UtcNow;
+        }
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private async Task RecalculateAutoPricedProductsAsync(int? scopeSellerId, CancellationToken cancellationToken)

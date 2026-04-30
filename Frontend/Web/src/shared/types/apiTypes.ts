@@ -441,8 +441,10 @@ export interface WebDashboardDto {
 
 
 export interface MarketPriceConfigDto {
-  goldPerOunce: number;
-  silverPerOunce: number;
+  goldBidPerOunce: number;
+  goldAskPerOunce: number;
+  silverBidPerOunce: number;
+  silverAskPerOunce: number;
   diamondPerCarat: number;
 }
 

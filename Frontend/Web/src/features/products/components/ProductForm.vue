@@ -20,8 +20,10 @@ const props = withDefaults(
   }>(),
   {
     marketPrices: () => ({
-      goldPerOunce: 0,
-      silverPerOunce: 0,
+      goldBidPerOunce: 0,
+      goldAskPerOunce: 0,
+      silverBidPerOunce: 0,
+      silverAskPerOunce: 0,
       diamondPerCarat: 0,
     }),
   }
@@ -172,8 +174,8 @@ const offerEnabled = computed({
 });
 
 const selectedMarketPrice = computed(() => {
-  if (isGold.value) return Number(props.marketPrices.goldPerOunce || props.model.baseMarketPrice || 0);
-  if (isSilver.value) return Number(props.marketPrices.silverPerOunce || props.model.baseMarketPrice || 0);
+  if (isGold.value) return Number(props.marketPrices.goldAskPerOunce || props.model.baseMarketPrice || 0);
+  if (isSilver.value) return Number(props.marketPrices.silverAskPerOunce || props.model.baseMarketPrice || 0);
   return Number(props.marketPrices.diamondPerCarat || props.model.baseMarketPrice || 0);
 });
 

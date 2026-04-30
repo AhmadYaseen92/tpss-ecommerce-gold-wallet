@@ -531,6 +531,7 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
       autoPrice: Number(row.autoPrice ?? row.AutoPrice ?? 0),
       fixedPrice: Number(row.fixedPrice ?? row.FixedPrice ?? 0),
       sellPrice: Number(row.sellPrice ?? row.SellPrice ?? 0),
+      currencyCode: String(row.currencyCode ?? row.CurrencyCode ?? "USD"),
       offerType: String(row.offerType ?? row.OfferType ?? "0"),
       isHasOffer: Boolean(row.isHasOffer ?? row.IsHasOffer ?? false),
       offerPercent: Number(row.offerPercent ?? row.OfferPercent ?? 0),

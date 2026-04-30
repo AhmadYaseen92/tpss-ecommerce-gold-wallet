@@ -37,7 +37,9 @@ public sealed class ProductManagementDto
 
 public sealed class MarketPriceConfigDto
 {
-    public decimal GoldPerOunce { get; set; }
-    public decimal SilverPerOunce { get; set; }
+    public decimal GoldBidPerOunce { get; set; }
+    public decimal GoldAskPerOunce { get; set; }
+    public decimal SilverBidPerOunce { get; set; }
+    public decimal SilverAskPerOunce { get; set; }
     public decimal DiamondPerCarat { get; set; }
 }
