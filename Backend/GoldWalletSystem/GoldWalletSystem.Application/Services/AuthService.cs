@@ -93,7 +93,8 @@ public class AuthService(
         }
 
         var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
-        var normalizedMarketType = NormalizeMarketTypeOrDefault(request.MarketType);
+        var requestedMarketType = request.CompanyInfo?.MarketType;
+        var normalizedMarketType = NormalizeMarketTypeOrDefault(requestedMarketType);
         var fullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  ", " ").Trim();
 
         var user = new User
@@ -122,7 +123,11 @@ public class AuthService(
             UpdatedAtUtc = DateTime.UtcNow,
         };
 
-        var seller = await BuildSellerEntityAsync(request with { MarketType = normalizedMarketType }, role, cancellationToken);
+        if (request.CompanyInfo is not null)
+        {
+            request.CompanyInfo.MarketType = normalizedMarketType;
+        }
+        var seller = await BuildSellerEntityAsync(request, role, cancellationToken);
         var createdResult = await userAuthRepository.AddWithOptionalSellerAsync(user, profile, seller, cancellationToken);
 
         var otp = await otpService.RequestAsync(new RequestOtpRequestDto
