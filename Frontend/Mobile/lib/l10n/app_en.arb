@@ -1,0 +1,16 @@
+{
+  "@@locale": "en",
+  "appTitle": "ECommerce Gold Wallet",
+  "language": "Language",
+  "edit": "Edit",
+  "cancel": "Cancel",
+  "languageSettings": "Language Settings",
+  "selectYourAppLanguage": "Select your app language.",
+  "applicationLanguage": "Application Language",
+  "saveChanges": "Save Changes",
+  "saved": "Saved",
+  "languageUpdatedSuccessfully": "Language updated successfully",
+  "validationError": "Validation Error",
+  "english": "English",
+  "arabic": "Arabic"
+}

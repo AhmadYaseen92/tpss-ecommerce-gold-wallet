@@ -1,0 +1,16 @@
+{
+  "@@locale": "ar",
+  "appTitle": "محفظة الذهب الإلكترونية",
+  "language": "اللغة",
+  "edit": "تعديل",
+  "cancel": "إلغاء",
+  "languageSettings": "إعدادات اللغة",
+  "selectYourAppLanguage": "اختر لغة التطبيق.",
+  "applicationLanguage": "لغة التطبيق",
+  "saveChanges": "حفظ التغييرات",
+  "saved": "تم الحفظ",
+  "languageUpdatedSuccessfully": "تم تحديث اللغة بنجاح",
+  "validationError": "خطأ في التحقق",
+  "english": "الإنجليزية",
+  "arabic": "العربية"
+}

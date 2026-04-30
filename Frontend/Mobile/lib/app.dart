@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
@@ -10,6 +11,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_router.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_state.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/security/presentation/pages/app_lock_page.dart';
@@ -175,11 +177,17 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
           return MaterialApp(
             navigatorKey: _rootNavigatorKey,
             debugShowCheckedModeBanner: false,
-            title: 'ECommerse Gold Wallet APP',
+            title: AppLocalizations.of(context).appTitle,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: state.themeMode,
             locale: state.locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             supportedLocales: const [
               Locale('en'),
               Locale('ar'),
