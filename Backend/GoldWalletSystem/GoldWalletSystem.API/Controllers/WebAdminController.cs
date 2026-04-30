@@ -236,6 +236,15 @@ public class WebAdminController(
     public async Task<IActionResult> GetMarketTypeSettings(CancellationToken cancellationToken)
     {
         var defaults = BuildDefaultMarketSettings();
+        foreach (var item in defaults)
+        {
+            item.Currency = await GetStringConfigurationAsync($"Market.{item.MarketType}.Currency", item.Currency, cancellationToken);
+            item.PaymentGateway = await GetStringConfigurationAsync($"Market.{item.MarketType}.PaymentGateway", item.PaymentGateway, cancellationToken);
+            item.FeesPercent = await GetDecimalConfigurationAsync($"Market.{item.MarketType}.FeesPercent", item.FeesPercent, cancellationToken);
+            item.EnableSellerManagerField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerManagerField", item.EnableSellerManagerField, cancellationToken);
+            item.EnableSellerBranchesField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerBranchesField", item.EnableSellerBranchesField, cancellationToken);
+            item.EnableSellerBankAccountsField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerBankAccountsField", item.EnableSellerBankAccountsField, cancellationToken);
+        }
         var counts = await dbContext.Sellers.AsNoTracking()
             .GroupBy(x => x.MarketType)
             .Select(x => new { MarketType = x.Key, Count = x.Count() })
@@ -249,6 +258,20 @@ public class WebAdminController(
         }
 
         return Ok(ApiResponse<List<MarketTypeSettingsDto>>.Ok(defaults));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpPut("market-types/{marketType}")]
+    public async Task<IActionResult> UpdateMarketTypeSettings(string marketType, [FromBody] MarketTypeSettingsDto request, CancellationToken cancellationToken)
+    {
+        var normalized = NormalizeMarketTypeOrThrow(marketType);
+        await UpsertStringConfigurationAsync($"Market.{normalized}.Currency", $"{normalized} Market Currency", request.Currency, $"{normalized} market currency", cancellationToken);
+        await UpsertStringConfigurationAsync($"Market.{normalized}.PaymentGateway", $"{normalized} Market Payment Gateway", request.PaymentGateway, $"{normalized} payment gateway", cancellationToken);
+        await UpsertDecimalConfigurationAsync($"Market.{normalized}.FeesPercent", $"{normalized} Market Fees Percent", request.FeesPercent, $"{normalized} default fees percent", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerManagerField", $"{normalized} Registration Manager Field", request.EnableSellerManagerField, $"{normalized} seller registration manager section visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerBranchesField", $"{normalized} Registration Branches Field", request.EnableSellerBranchesField, $"{normalized} seller registration branches section visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerBankAccountsField", $"{normalized} Registration Bank Accounts Field", request.EnableSellerBankAccountsField, $"{normalized} seller registration bank accounts section visibility", cancellationToken);
+        return Ok(ApiResponse<string>.Ok("Saved"));
     }
 
     [Authorize(Roles = SystemRoles.Admin)]
@@ -1509,6 +1532,15 @@ public class WebAdminController(
             throw new InvalidOperationException("Market type is required.");
         return normalized;
     }
+
+    private async Task<string> GetStringConfigurationAsync(string key, string fallback, CancellationToken cancellationToken)
+        => await dbContext.MobileAppConfigurations.AsNoTracking().Where(x => x.ConfigKey == key).Select(x => x.ValueString).FirstOrDefaultAsync(cancellationToken) ?? fallback;
+
+    private async Task<decimal> GetDecimalConfigurationAsync(string key, decimal fallback, CancellationToken cancellationToken)
+        => await dbContext.MobileAppConfigurations.AsNoTracking().Where(x => x.ConfigKey == key).Select(x => x.ValueDecimal).FirstOrDefaultAsync(cancellationToken) ?? fallback;
+
+    private async Task<bool> GetBoolConfigurationAsync(string key, bool fallback, CancellationToken cancellationToken)
+        => await dbContext.MobileAppConfigurations.AsNoTracking().Where(x => x.ConfigKey == key).Select(x => x.ValueBool).FirstOrDefaultAsync(cancellationToken) ?? fallback;
 
     private static string FormatInvestorId(int id) => $"{id:D3}";
 

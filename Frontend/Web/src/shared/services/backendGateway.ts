@@ -307,6 +307,14 @@ export async function fetchMarketSellers(accessToken: string, marketType: string
   return sellers.map(mapSeller);
 }
 
+export async function updateMarketSettings(
+  accessToken: string,
+  marketType: string,
+  payload: MarketTypeSettingsDto
+): Promise<void> {
+  await putJson<string, MarketTypeSettingsDto>(`/api/web-admin/market-types/${encodeURIComponent(marketType)}`, payload, accessToken);
+}
+
 export async function updateSellerLoginCredentialsByAdmin(
   accessToken: string,
   sellerId: string,
