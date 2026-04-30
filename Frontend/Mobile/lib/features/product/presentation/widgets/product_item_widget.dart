@@ -4,6 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dar
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/product_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/grams_hint_label.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class ProductItemWidget extends StatelessWidget {
   final Object cubit;
@@ -53,16 +54,16 @@ class ProductItemWidget extends StatelessWidget {
                             product.weight.trim().isNotEmpty)
                           _metaChip(
                             context,
-                            'W: ${GramsConverter.fromWeightText(product.weight)} g',
+                            '${AppLocalizations.of(context).weightPrefix} ${GramsConverter.fromWeightText(product.weight)} g',
                           ),
                         if (showPurity && product.purity.trim().isNotEmpty)
-                          _metaChip(context, 'P: ${product.purity}'),
+                          _metaChip(context, '${AppLocalizations.of(context).purity}: ${product.purity}'),
                       ],
                     ),
                     const SizedBox(height: 4),
                     if (AppReleaseConfig.showSellerUi)
                       Text(
-                        'Seller: ${product.sellerName}',
+                        '${AppLocalizations.of(context).sellerPrefix} ${product.sellerName}',
                         style: TextStyle(fontSize: 12, color: palette.primary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -70,8 +71,8 @@ class ProductItemWidget extends StatelessWidget {
                     if (hasOffer) ...[
                       Text(
                         product.offerType.toLowerCase().contains('percent')
-                            ? '${product.offerPercent.toStringAsFixed(0)}% OFF'
-                            : 'Special Offer',
+                            ? '${product.offerPercent.toStringAsFixed(0)}% ${AppLocalizations.of(context).percentOff}'
+                            : AppLocalizations.of(context).specialOffer,
                         style: TextStyle(
                           fontSize: 11,
                           color: palette.primary,

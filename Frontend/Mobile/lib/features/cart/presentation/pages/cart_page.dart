@@ -11,6 +11,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_s
 import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/cubit/cart_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/widgets/cart_item_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/widgets/cart_summary.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -63,10 +64,10 @@ class _CartPageState extends State<CartPage> {
                   if (cartProducts.isEmpty) {
                     return EmptyStateWidget(
                       icon: Icons.shopping_cart_outlined,
-                      title: 'Your Cart is Empty',
+                      title: AppLocalizations.of(context).yourCartIsEmpty,
                       message: AppReleaseConfig.showSellerUi
-                          ? 'No items from this seller yet. Start shopping to fill your cart!'
-                          : 'Looks like you haven\'t added anything to your cart. Explore our collection and find something you love!',
+                          ? AppLocalizations.of(context).noItemsFromSeller
+                          : AppLocalizations.of(context).cartExploreMessage,
                     );
                   }
                   return Column(
@@ -108,7 +109,7 @@ class _CartPageState extends State<CartPage> {
                               return Padding(
                                 padding: const EdgeInsets.only(right: 8),
                                 child: AppFilterChip(
-                                  label: category.label,
+                                  label: _localizedFilterLabel(context, category.label),
                                   selected: isSelected,
                                   onTap: () => cartCubit.setCategoryFilter(
                                     category.categoryId,

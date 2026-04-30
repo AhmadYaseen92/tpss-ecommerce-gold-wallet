@@ -11,6 +11,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product_details/presentation
 import 'package:tpss_ecommerce_gold_wallet/features/product_details/presentation/widgets/product_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product_details/presentation/widgets/product_specs_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product_details/presentation/widgets/product_video.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class ProductDetailWidget extends StatelessWidget {
   final ProductEntity product;
@@ -55,7 +56,7 @@ class ProductDetailWidget extends StatelessWidget {
                           if (AppReleaseConfig.showSellerUi)
                             Expanded(
                               child: Text(
-                                'Seller: ${product.sellerName}',
+                                '${AppLocalizations.of(context).sellerPrefix} ${product.sellerName}',
                                 style: TextStyle(fontSize: 13, color: palette.primary, fontWeight: FontWeight.w600),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -66,7 +67,7 @@ class ProductDetailWidget extends StatelessWidget {
                               margin: const EdgeInsetsDirectional.only(start: 8),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(color: palette.primary.withAlpha(24), borderRadius: BorderRadius.circular(8)),
-                              child: Text('Special Offer', style: TextStyle(color: palette.primary, fontWeight: FontWeight.w700)),
+                              child: Text(AppLocalizations.of(context).specialOffer, style: TextStyle(color: palette.primary, fontWeight: FontWeight.w700)),
                             ),
                         ],
                       ),
@@ -80,8 +81,8 @@ class ProductDetailWidget extends StatelessWidget {
                       if (hasOffer)
                         Text(
                           product.offerType.toLowerCase().contains('percent')
-                              ? '${product.offerPercent.toStringAsFixed(0)}% OFF'
-                              : 'Offer • Now \$${product.sellPrice.toStringAsFixed(2)}',
+                              ? '${product.offerPercent.toStringAsFixed(0)}% ${AppLocalizations.of(context).percentOff}'
+                              : '${AppLocalizations.of(context).offerNow} \$${product.sellPrice.toStringAsFixed(2)}',
                           style: TextStyle(fontSize: 12, color: palette.primary, fontWeight: FontWeight.w600),
                         ),
                       const SizedBox(height: 12),
@@ -111,16 +112,16 @@ class ProductDetailWidget extends StatelessWidget {
               if (!context.mounted) return;
               AppModalAlert.show(
                 context,
-                title: 'Added to Cart',
+                title: AppLocalizations.of(context).addedToCart,
                 message:
-                    '${product.name} x${productCubit.quantity} added to cart',
+                    '${product.name} x${productCubit.quantity} ${AppLocalizations.of(context).addedToCartMessage}',
                 variant: AppModalAlertVariant.success,
               );
             } catch (e) {
               if (!context.mounted) return;
               AppModalAlert.show(
                 context,
-                title: 'Add to Cart Failed',
+                title: AppLocalizations.of(context).addToCartFailed,
                 message: e.toString(),
                 variant: AppModalAlertVariant.failed,
               );
@@ -141,7 +142,7 @@ class ProductDetailWidget extends StatelessWidget {
               if (!context.mounted) return;
               AppModalAlert.show(
                 context,
-                title: 'Buy Now Failed',
+                title: AppLocalizations.of(context).buyNowFailed,
                 message: e.toString(),
                 variant: AppModalAlertVariant.failed,
               );

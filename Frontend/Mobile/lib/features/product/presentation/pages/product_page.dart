@@ -11,6 +11,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_s
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/catalog_tab_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/market_watch_tab_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class ProductPage extends StatelessWidget {
   const ProductPage({super.key});
@@ -61,8 +62,8 @@ class ProductPage extends StatelessWidget {
                             unselectedLabelColor: context.appPalette.textSecondary,
                             indicatorColor: context.appPalette.primary,
                             tabs: [
-                              Tab(text: 'Catalog'),
-                              Tab(text: 'Market Watch'),
+                              Tab(text: AppLocalizations.of(context).catalog),
+                              Tab(text: AppLocalizations.of(context).marketWatch),
                             ],
                           ),
                           const SizedBox(height: 10),

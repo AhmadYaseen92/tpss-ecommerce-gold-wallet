@@ -6,12 +6,15 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/form_header.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class LanguageSettingsPage extends StatelessWidget {
   const LanguageSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return BlocProvider(
       create: (_) => ProfileCubit(),
       child: BlocConsumer<ProfileCubit, ProfileState>(
@@ -21,14 +24,14 @@ class LanguageSettingsPage extends StatelessWidget {
           if (state is ProfileSaved) {
             await AppModalAlert.show(
               context,
-              title: 'Saved',
-              message: 'Language updated successfully',
+              title: l10n.saved,
+              message: l10n.languageUpdatedSuccessfully,
             );
           }
           if (state is ProfileError) {
             await AppModalAlert.show(
               context,
-              title: 'Validation Error',
+              title: l10n.validationError,
               message: state.message,
               variant: AppModalAlertVariant.failed,
             );
@@ -36,7 +39,7 @@ class LanguageSettingsPage extends StatelessWidget {
         },
         builder: (context, state) {
           final cubit = BlocProvider.of<ProfileCubit>(context);
-          final options = ['English', 'العربية'];
+          final options = [l10n.english, l10n.arabic];
           final palette = context.appPalette;
 
           return Scaffold(
@@ -44,7 +47,7 @@ class LanguageSettingsPage extends StatelessWidget {
             appBar: AppBar(
               centerTitle: true,
               title: Text(
-                'Language',
+                l10n.language,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: palette.primary,
@@ -54,7 +57,7 @@ class LanguageSettingsPage extends StatelessWidget {
                 TextButton.icon(
                   onPressed: cubit.toggleEdit,
                   icon: Icon(cubit.isEditing ? Icons.close : Icons.edit),
-                  label: Text(cubit.isEditing ? 'Cancel' : 'Edit'),
+                  label: Text(cubit.isEditing ? l10n.cancel : l10n.edit),
                 ),
               ],
             ),
@@ -69,12 +72,12 @@ class LanguageSettingsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const FormHeader(
-                      title: 'Language Settings',
-                      subtitle: 'Select your app language.',
+                    FormHeader(
+                      title: l10n.languageSettings,
+                      subtitle: l10n.selectYourAppLanguage,
                     ),
                     const SizedBox(height: 16),
-                    const FormSectionLabel(label: 'APPLICATION LANGUAGE'),
+                    FormSectionLabel(label: l10n.applicationLanguage.toUpperCase()),
                     ...options.map(
                       (option) => RadioListTile<String>(
                         value: option,
@@ -92,7 +95,7 @@ class LanguageSettingsPage extends StatelessWidget {
                     if (cubit.isEditing)
                       AppButton(
                         cubit: cubit,
-                        label: 'Save Changes',
+                        label: l10n.saveChanges,
                         onPressed: cubit.saveLanguageSettings,
                       ),
                   ],
@@ -107,8 +110,8 @@ class LanguageSettingsPage extends StatelessWidget {
 
   Locale? _localeFromSelection(String selected) {
     final normalized = selected.trim().toLowerCase();
-    if (normalized.startsWith('english')) return const Locale('en');
-    if (normalized.startsWith('العربية')) return const Locale('ar');
+    if (normalized == 'العربية' || normalized == 'arabic') return const Locale('ar');
+    if (normalized == 'english' || normalized == 'الإنجليزية') return const Locale('en');
     return null;
   }
 }

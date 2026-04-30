@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_form_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_filter_chip.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class ProductFilterBar extends StatelessWidget {
   final ProductCubit productCubit;
@@ -36,7 +37,7 @@ class ProductFilterBar extends StatelessWidget {
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: AppFilterChip(
-                        label: category.label,
+                        label: _localizedFilterLabel(context, category.label),
                         selected: isSelected,
                         onTap: () => productCubit.applyCategoryFilter(categoryId: category.categoryId),
                       ),
@@ -53,7 +54,7 @@ class ProductFilterBar extends StatelessWidget {
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: AppFilterChip(
-                        label: formLabel,
+                        label: _localizedFilterLabel(context, formLabel),
                         selected: isSelected,
                         onTap: () => productCubit.applyFormFilter(formLabel),
                       ),

@@ -7,6 +7,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/p
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/product_filter_bar.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/product_item_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/seller_filter_bar_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class CatalogTabWidget extends StatelessWidget {
   const CatalogTabWidget({super.key});
@@ -27,10 +28,10 @@ class CatalogTabWidget extends StatelessWidget {
               ProductFilterBar(productCubit: BlocProvider.of<ProductCubit>(context)),
               Expanded(
                 child: products.isEmpty
-                    ? const EmptyStateWidget(
+                    ? EmptyStateWidget(
                         icon: Icons.shopping_bag_outlined,
-                        title: 'No Products Found',
-                        message: 'No products match the selected filters. Try changing material type or product form.',
+                        title: AppLocalizations.of(context).noProductsFound,
+                        message: AppLocalizations.of(context).noProductsMatchFilters,
                       )
                     : ListView.builder(
                         itemCount: products.length,

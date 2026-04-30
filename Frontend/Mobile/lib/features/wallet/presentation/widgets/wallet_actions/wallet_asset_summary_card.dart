@@ -4,6 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/action_section_card.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_actions/readonly_info_row.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class WalletAssetSummaryCard extends StatelessWidget {
   final WalletTransactionEntity asset;
@@ -15,7 +16,7 @@ class WalletAssetSummaryCard extends StatelessWidget {
     final palette = context.appPalette;
 
     return ActionSectionCard(
-      title: 'Asset Summary',
+      title: AppLocalizations.of(context).assetSummary,
       child: Column(
         children: [
           Row(
@@ -46,12 +47,12 @@ class WalletAssetSummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          ReadonlyInfoRow(label: 'Purity', value: asset.purity),
+          ReadonlyInfoRow(label: AppLocalizations.of(context).purity, value: asset.purity),
           if (asset.status.toLowerCase().startsWith('pending') || asset.status.toLowerCase() == 'delivered')
-            ReadonlyInfoRow(label: 'Status', value: asset.status),
-          ReadonlyInfoRow(label: 'Quantity', value: '${asset.quantity}'),
-          ReadonlyInfoRow(label: 'Weight', value: '${asset.weightInGrams.toStringAsFixed(2)} g'),
-          ReadonlyInfoRow(label: 'Gross Amount', value: asset.displayValue),
+            ReadonlyInfoRow(label: AppLocalizations.of(context).status, value: asset.status),
+          ReadonlyInfoRow(label: AppLocalizations.of(context).quantity, value: '${asset.quantity}'),
+          ReadonlyInfoRow(label: AppLocalizations.of(context).weight, value: '${asset.weightInGrams.toStringAsFixed(2)} g'),
+          ReadonlyInfoRow(label: AppLocalizations.of(context).grossAmount, value: asset.displayValue),
         ],
       ),
     );

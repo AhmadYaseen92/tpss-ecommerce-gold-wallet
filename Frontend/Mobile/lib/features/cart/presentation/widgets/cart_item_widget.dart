@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dar
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/grams_hint_label.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/presentation/cubit/cart_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class CartItemWidget extends StatelessWidget {
   final CartCubit cartCubit;
@@ -59,7 +60,7 @@ class CartItemWidget extends StatelessWidget {
 
                       if (AppReleaseConfig.showSellerUi) ...[
                         Text(
-                          'Seller: ${product.sellerName}',
+                          '${AppLocalizations.of(context).seller}: ${product.sellerName}',
                           style: TextStyle(
                             fontSize: 12,
                             color: palette.primary,
@@ -82,7 +83,7 @@ class CartItemWidget extends StatelessWidget {
 
                       GramsHintLabel(
                         grams: GramsConverter.fromWeightText(product.weight),
-                        prefix: 'Weight:',
+                        prefix: AppLocalizations.of(context).weightPrefix,
                       ),
 
                       const SizedBox(height: 8),
@@ -177,7 +178,7 @@ class CartItemWidget extends StatelessWidget {
                           color: palette.primary,
                         ),
                         label: Text(
-                          'Remove',
+                          AppLocalizations.of(context).remove,
                           style: TextStyle(
                             fontSize: 12,
                             color: palette.primary,

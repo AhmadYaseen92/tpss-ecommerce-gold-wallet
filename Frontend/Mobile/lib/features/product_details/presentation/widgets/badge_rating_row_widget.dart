@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class BadgeRatingRow extends StatelessWidget {
   final Color colorText;
@@ -19,7 +20,7 @@ class BadgeRatingRow extends StatelessWidget {
             border: Border.all(color: colorText.withOpacity(0.35)),
           ),
           child: Text(
-            'BEST SELLER',
+            AppLocalizations.of(context).bestSeller,
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w800,
@@ -40,7 +41,7 @@ class BadgeRatingRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 4),
-        Text('(128 reviews)', style: TextStyle(fontSize: 12, color: textMuted)),
+        Text(AppLocalizations.of(context).reviewsCount, style: TextStyle(fontSize: 12, color: textMuted)),
       ],
     );
   }

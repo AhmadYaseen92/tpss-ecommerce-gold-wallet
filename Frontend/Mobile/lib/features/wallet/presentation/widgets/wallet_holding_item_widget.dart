@@ -3,6 +3,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class WalletHoldingItemWidget extends StatelessWidget {
   final WalletTransactionEntity item;
@@ -87,16 +88,16 @@ class WalletHoldingItemWidget extends StatelessWidget {
                         Text(item.subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.textSecondary), maxLines: 2, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 4),
                         if (AppReleaseConfig.showSellerUi) ...[
-                          Text('Seller: ${item.sellerName}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.primary, fontWeight: FontWeight.w600)),
+                          Text('${AppLocalizations.of(context).seller}: ${item.sellerName}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.primary, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 6),
                         ],
                         Wrap(
                           spacing: 8,
                           runSpacing: 6,
                           children: [
-                            _miniTag(context, 'Form: ${item.productFormLabel}'),
-                            _miniTag(context, 'Qty: ${item.quantity}'),
-                            _miniTag(context, 'Purity: ${item.purity}'),
+                            _miniTag(context, '${AppLocalizations.of(context).form}: ${item.productFormLabel}'),
+                            _miniTag(context, '${AppLocalizations.of(context).qty}: ${item.quantity}'),
+                            _miniTag(context, '${AppLocalizations.of(context).purity}: ${item.purity}'),
                             _miniTag(context, '${item.weightInGrams.toStringAsFixed(2)} g'),
                           ],
                         ),
@@ -113,7 +114,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
                         ],
                         Row(
                           children: [
-                            Text('Current Value:', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.textSecondary)),
+                            Text(AppLocalizations.of(context).currentValue, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: palette.textSecondary)),
                             const SizedBox(width: 6),
                             Text(item.marketValue, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: palette.textPrimary)),
                           ],
@@ -150,7 +151,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
                       child: _actionButton(
                         context,
                         icon: Icons.cancel_outlined,
-                        label: 'Cancel Request',
+                        label: AppLocalizations.of(context).cancelRequest,
                         onTap: onCancelRequest,
                         isDisabled: false,
                         iconColor: Colors.red.shade700,
@@ -161,17 +162,17 @@ class WalletHoldingItemWidget extends StatelessWidget {
               else ...[
                 Row(
                   children: [
-                    Expanded(child: _actionButton(context, label: 'Sell', icon: Icons.sell_outlined, onTap: onSell, isDisabled: isActionBlocked)),
+                    Expanded(child: _actionButton(context, label: AppLocalizations.of(context).sell, icon: Icons.sell_outlined, onTap: onSell, isDisabled: isActionBlocked)),
                     const SizedBox(width: 16),
-                    Expanded(child: _actionButton(context, label: 'Gift', icon: Icons.wallet_giftcard, onTap: onGiftTransfer, isDisabled: isActionBlocked)),
+                    Expanded(child: _actionButton(context, label: AppLocalizations.of(context).gift, icon: Icons.wallet_giftcard, onTap: onGiftTransfer, isDisabled: isActionBlocked)),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _actionButton(context, icon: Icons.local_shipping_outlined, label: 'Pickup', onTap: onPickup, isDisabled: isActionBlocked)),
+                    Expanded(child: _actionButton(context, icon: Icons.local_shipping_outlined, label: AppLocalizations.of(context).pickup, onTap: onPickup, isDisabled: isActionBlocked)),
                     const SizedBox(width: 16),
-                    Expanded(child: _actionButton(context, icon: Icons.file_present, label: 'Tax Invoice', onTap: onGenerateTaxInvoice, isDisabled: isActionBlocked)),
+                    Expanded(child: _actionButton(context, icon: Icons.file_present, label: AppLocalizations.of(context).taxInvoice, onTap: onGenerateTaxInvoice, isDisabled: isActionBlocked)),
                   ],
                 ),
               ],
