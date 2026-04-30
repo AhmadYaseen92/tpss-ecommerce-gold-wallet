@@ -322,8 +322,8 @@ public class CheckoutController(
     {
         var askPerOunce = product.MaterialType switch
         {
-            ProductMaterialType.Gold => dbContext.Sellers.Where(s => s.Id == product.SellerId).Select(s => s.GoldPrice).FirstOrDefault(),
-            ProductMaterialType.Silver => dbContext.Sellers.Where(s => s.Id == product.SellerId).Select(s => s.SilverPrice).FirstOrDefault(),
+            ProductMaterialType.Gold => dbContext.Sellers.Where(s => s.Id == product.SellerId).Select(s => s.GoldAskPrice).FirstOrDefault(),
+            ProductMaterialType.Silver => dbContext.Sellers.Where(s => s.Id == product.SellerId).Select(s => s.SilverAskPrice).FirstOrDefault(),
             _ => null
         };
 

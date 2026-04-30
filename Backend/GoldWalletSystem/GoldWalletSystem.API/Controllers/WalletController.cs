@@ -1102,22 +1102,14 @@ public class WalletController(
 
         var seller = await dbContext.Sellers.AsNoTracking()
             .Where(x => x.Id == asset.SellerId)
-            .Select(x => new { x.GoldPrice, x.SilverPrice })
+            .Select(x => new { x.GoldBidPrice, x.SilverBidPrice })
             .FirstOrDefaultAsync(cancellationToken);
         if (seller is null)
         {
             return asset.CurrentMarketPrice;
         }
 
-        var bidField = asset.AssetType == AssetType.Silver ? "SilverBidPerOunce" : "GoldBidPerOunce";
-        var bidConfigValue = await dbContext.MobileAppConfigurations.AsNoTracking()
-            .Where(x => x.ConfigKey == $"Seller_{asset.SellerId}_{bidField}")
-            .Select(x => x.ValueDecimal)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var bidPerOunce = bidConfigValue.GetValueOrDefault() > 0
-            ? bidConfigValue.GetValueOrDefault()
-            : (asset.AssetType == AssetType.Silver ? seller.SilverPrice : seller.GoldPrice).GetValueOrDefault();
+        var bidPerOunce = (asset.AssetType == AssetType.Silver ? seller.SilverBidPrice : seller.GoldBidPrice).GetValueOrDefault();
 
         if (bidPerOunce <= 0)
         {

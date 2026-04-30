@@ -155,9 +155,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Description).HasMaxLength(2000);
             entity.Property(x => x.KycStatus).HasConversion<int>();
             entity.Property(x => x.ReviewNotes).HasMaxLength(1000);
-            entity.Property(x => x.GoldPrice).HasPrecision(18, 2);
-            entity.Property(x => x.SilverPrice).HasPrecision(18, 2);
-            entity.Property(x => x.DiamondPrice).HasPrecision(18, 2);
+            entity.Property(x => x.GoldAskPrice).HasPrecision(18, 2);
+            entity.Property(x => x.GoldBidPrice).HasPrecision(18, 2);
+            entity.Property(x => x.SilverAskPrice).HasPrecision(18, 2);
+            entity.Property(x => x.SilverBidPrice).HasPrecision(18, 2);
+            entity.Property(x => x.DiamondAskPrice).HasPrecision(18, 2);
+            entity.Property(x => x.DiamondBidPrice).HasPrecision(18, 2);
+            entity.Property(x => x.MarketCurrencyCode).HasMaxLength(8).HasDefaultValue("USD");
             entity.HasIndex(x => x.CompanyCode).IsUnique();
             entity.HasIndex(x => x.UserId).IsUnique();
             entity.HasIndex(x => x.CompanyName);

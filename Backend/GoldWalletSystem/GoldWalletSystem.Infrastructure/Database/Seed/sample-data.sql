@@ -119,7 +119,7 @@ BEGIN TRY
         INSERT (
             [UserId],[CompanyName],[CompanyCode],[CommercialRegistrationNumber],[VatNumber],[BusinessActivity],[EstablishedDate],
             [CompanyPhone],[CompanyEmail],[Website],[Description],[IsActive],[KycStatus],[ReviewedAtUtc],[ReviewNotes],
-            [GoldPrice],[SilverPrice],[DiamondPrice],[MarketType],[CreatedAtUtc],[UpdatedAtUtc]
+            [GoldAskPrice],[SilverAskPrice],[DiamondAskPrice],[MarketType],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES (
             (SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[SellerEmail]),
@@ -137,49 +137,6 @@ BEGIN TRY
     END
     FROM [Sellers] S
     WHERE S.[CompanyCode] IN (N'IMSEEH', N'GOLDPAL');
-
-    ;WITH SellerBidSeed AS (
-        SELECT
-            CONCAT(N'Seller_', S.[Id], N'_GoldBidPerOunce') AS [ConfigKey],
-            CONCAT(N'Seller ', S.[Id], N' Gold Bid Per Ounce') AS [Name],
-            N'Seller-specific gold bid price per ounce used by wallet sell flow' AS [Description],
-            CAST(4 AS int) AS [ValueType],
-            CAST(NULL AS bit) AS [ValueBool],
-            CAST(NULL AS int) AS [ValueInt],
-            CAST(ROUND(CASE WHEN ISNULL(S.[GoldPrice], 0) > 0 THEN S.[GoldPrice] * 0.995 ELSE 0 END, 2) AS decimal(18,2)) AS [ValueDecimal],
-            CAST(NULL AS nvarchar(max)) AS [ValueString],
-            CAST(0 AS bit) AS [SellerAccess]
-        FROM [Sellers] S
-        UNION ALL
-        SELECT
-            CONCAT(N'Seller_', S.[Id], N'_SilverBidPerOunce') AS [ConfigKey],
-            CONCAT(N'Seller ', S.[Id], N' Silver Bid Per Ounce') AS [Name],
-            N'Seller-specific silver bid price per ounce used by wallet sell flow' AS [Description],
-            CAST(4 AS int) AS [ValueType],
-            CAST(NULL AS bit) AS [ValueBool],
-            CAST(NULL AS int) AS [ValueInt],
-            CAST(ROUND(CASE WHEN ISNULL(S.[SilverPrice], 0) > 0 THEN S.[SilverPrice] * 0.995 ELSE 0 END, 2) AS decimal(18,2)) AS [ValueDecimal],
-            CAST(NULL AS nvarchar(max)) AS [ValueString],
-            CAST(0 AS bit) AS [SellerAccess]
-        FROM [Sellers] S
-    )
-    MERGE [SystemConfigration] AS T
-    USING SellerBidSeed AS S
-    ON T.[ConfigKey] = S.[ConfigKey]
-    WHEN MATCHED THEN
-        UPDATE SET
-            T.[Name] = S.[Name],
-            T.[Description] = S.[Description],
-            T.[ValueType] = S.[ValueType],
-            T.[ValueBool] = S.[ValueBool],
-            T.[ValueInt] = S.[ValueInt],
-            T.[ValueDecimal] = S.[ValueDecimal],
-            T.[ValueString] = S.[ValueString],
-            T.[SellerAccess] = S.[SellerAccess],
-            T.[UpdatedAtUtc] = @Now
-    WHEN NOT MATCHED THEN
-        INSERT ([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES (S.[ConfigKey],S.[Name],S.[Description],S.[ValueType],S.[ValueBool],S.[ValueInt],S.[ValueDecimal],S.[ValueString],S.[SellerAccess],@Now,NULL);
 
     MERGE [SellerAddresses] AS T
     USING (
@@ -251,8 +208,8 @@ BEGIN TRY
     DECLARE @SellerImseeh int  = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [CompanyCode] = N'IMSEEH');
     DECLARE @SellerGoldPal int = (SELECT TOP 1 [Id] FROM [Sellers] WHERE [CompanyCode] = N'GOLDPAL');
 
-    UPDATE [Sellers] SET [GoldPrice] = 430.00, [SilverPrice] = 36.00, [DiamondPrice] = 920.00, [UpdatedAtUtc] = @Now WHERE [Id] = @SellerImseeh;
-    UPDATE [Sellers] SET [GoldPrice] = 432.00, [SilverPrice] = 37.00, [DiamondPrice] = 880.00, [UpdatedAtUtc] = @Now WHERE [Id] = @SellerGoldPal;
+    UPDATE [Sellers] SET [GoldAskPrice] = 430.00, [GoldBidPrice] = 428.00, [SilverAskPrice] = 36.00, [SilverBidPrice] = 35.50, [DiamondAskPrice] = 920.00, [DiamondBidPrice] = 910.00, [MarketCurrencyCode] = N'AED', [UpdatedAtUtc] = @Now WHERE [Id] = @SellerImseeh;
+    UPDATE [Sellers] SET [GoldAskPrice] = 432.00, [GoldBidPrice] = 430.00, [SilverAskPrice] = 37.00, [SilverBidPrice] = 36.50, [DiamondAskPrice] = 880.00, [DiamondBidPrice] = 870.00, [MarketCurrencyCode] = N'SAR', [UpdatedAtUtc] = @Now WHERE [Id] = @SellerGoldPal;
 
     -- 2) Users (sellers, admins, and investors).
     -- Ensure fresh installations start user identity at 3 digits (first user => 100).

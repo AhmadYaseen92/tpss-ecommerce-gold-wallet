@@ -88,9 +88,9 @@ public class WebAdminController(
                 ReviewedAt = x.ReviewedAtUtc,
                 KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
                 SubmittedAt = x.CreatedAtUtc,
-                GoldPrice = x.GoldPrice,
-                SilverPrice = x.SilverPrice,
-                DiamondPrice = x.DiamondPrice,
+                GoldPrice = x.GoldAskPrice,
+                SilverPrice = x.SilverAskPrice,
+                DiamondPrice = x.DiamondAskPrice,
                 MarketType = x.MarketType
             })
             .ToListAsync(cancellationToken);
@@ -147,9 +147,9 @@ public class WebAdminController(
             ReviewNotes = seller.ReviewNotes,
             SubmittedAt = seller.CreatedAtUtc,
             ReviewedAt = seller.ReviewedAtUtc,
-            GoldPrice = seller.GoldPrice,
-            SilverPrice = seller.SilverPrice,
-            DiamondPrice = seller.DiamondPrice,
+            GoldPrice = seller.GoldAskPrice,
+            SilverPrice = seller.SilverAskPrice,
+            DiamondPrice = seller.DiamondAskPrice,
             MarketType = seller.MarketType,
             Address = seller.Address is null
                 ? null
@@ -298,9 +298,9 @@ public class WebAdminController(
                 ReviewedAt = x.ReviewedAtUtc,
                 KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
                 SubmittedAt = x.CreatedAtUtc,
-                GoldPrice = x.GoldPrice,
-                SilverPrice = x.SilverPrice,
-                DiamondPrice = x.DiamondPrice,
+                GoldPrice = x.GoldAskPrice,
+                SilverPrice = x.SilverAskPrice,
+                DiamondPrice = x.DiamondAskPrice,
                 MarketType = x.MarketType
             })
             .ToListAsync(cancellationToken);

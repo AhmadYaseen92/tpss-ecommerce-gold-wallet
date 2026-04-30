@@ -20,9 +20,13 @@ public class Seller : BaseEntity
     public KycStatus KycStatus { get; set; } = KycStatus.UnderReview;
     public DateTime? ReviewedAtUtc { get; set; }
     public string? ReviewNotes { get; set; }
-    public decimal? GoldPrice { get; set; }
-    public decimal? SilverPrice { get; set; }
-    public decimal? DiamondPrice { get; set; }
+    public decimal? GoldAskPrice { get; set; }
+    public decimal? GoldBidPrice { get; set; }
+    public decimal? SilverAskPrice { get; set; }
+    public decimal? SilverBidPrice { get; set; }
+    public decimal? DiamondAskPrice { get; set; }
+    public decimal? DiamondBidPrice { get; set; }
+    public string MarketCurrencyCode { get; set; } = "USD";
 
     public User User { get; set; } = null!;
     public SellerAddress? Address { get; set; }
