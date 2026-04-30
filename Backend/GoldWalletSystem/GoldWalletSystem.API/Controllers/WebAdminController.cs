@@ -1471,6 +1471,37 @@ public class WebAdminController(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    private async Task UpsertBoolConfigurationAsync(string key, string name, bool value, string description, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = key,
+                Name = name,
+                ValueType = ConfigurationValueType.Bool,
+                ValueBool = value,
+                Description = description,
+                SellerAccess = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            config.Name = name;
+            config.ValueType = ConfigurationValueType.Bool;
+            config.ValueString = null;
+            config.ValueBool = value;
+            config.ValueInt = null;
+            config.ValueDecimal = null;
+            config.Description = description;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private async Task UpsertDecimalConfigurationAsync(string key, string name, decimal value, string description, CancellationToken cancellationToken)
     {
         var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);

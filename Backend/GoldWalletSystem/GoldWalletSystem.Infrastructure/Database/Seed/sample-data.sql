@@ -529,13 +529,14 @@ WHEN MATCHED THEN
         T.[PricingMode] = 1,
         T.[PurityKarat] = CASE WHEN S.[Name] LIKE N'%22K%' THEN 22 ELSE CASE WHEN S.[Category] = 3 THEN 0 ELSE 24 END END,
         T.[PurityFactor] = CASE WHEN S.[Category] = 2 THEN 0.999 ELSE 1.0 END,
-        T.[BaseMarketPrice] = S.[Price],
-        T.[AutoPrice] = S.[Price],
-        T.[FixedPrice] = S.[Price],
+        T.[BaseMarketPrice] = ROUND(S.[Price] * CASE WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'UAE' THEN 3.67 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'KSA' THEN 3.75 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Jordan' THEN 0.71 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Egypt' THEN 48.50 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'India' THEN 83.20 ELSE 1.0 END, 2),
+        T.[AutoPrice] = ROUND(S.[Price] * CASE WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'UAE' THEN 3.67 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'KSA' THEN 3.75 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Jordan' THEN 0.71 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Egypt' THEN 48.50 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'India' THEN 83.20 ELSE 1.0 END, 2),
+        T.[FixedPrice] = ROUND(S.[Price] * CASE WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'UAE' THEN 3.67 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'KSA' THEN 3.75 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Jordan' THEN 0.71 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Egypt' THEN 48.50 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'India' THEN 83.20 ELSE 1.0 END, 2),
+        T.[CurrencyCode] = CASE WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'UAE' THEN N'AED' WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'KSA' THEN N'SAR' WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Jordan' THEN N'JOD' WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Egypt' THEN N'EGP' WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'India' THEN N'INR' ELSE N'USD' END,
         T.[SellPrice] = CASE
             WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004') THEN ROUND(S.[Price] * 0.88, 2)
             WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN ROUND(S.[Price] * 0.93, 2)
-            ELSE S.[Price]
+            ELSE ROUND(S.[Price] * CASE WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'UAE' THEN 3.67 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'KSA' THEN 3.75 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Jordan' THEN 0.71 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Egypt' THEN 48.50 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'India' THEN 83.20 ELSE 1.0 END, 2)
         END,
         T.[OfferPercent] = CASE
             WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004') THEN 12
@@ -582,6 +583,7 @@ WHEN NOT MATCHED THEN
         [OfferNewPrice],
         [OfferType],
         [IsHasOffer],
+        [CurrencyCode],
         [Category],
         [ImageUrl],
         [VideoUrl],
@@ -602,13 +604,13 @@ WHEN NOT MATCHED THEN
         1,
         CASE WHEN S.[Name] LIKE N'%22K%' THEN 22 ELSE CASE WHEN S.[Category] = 3 THEN 0 ELSE 24 END END,
         CASE WHEN S.[Category] = 2 THEN 0.999 ELSE 1.0 END,
-        S.[Price],
-        S.[Price],
-        S.[Price],
+        ROUND(S.[Price] * CASE WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'UAE' THEN 3.67 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'KSA' THEN 3.75 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Jordan' THEN 0.71 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Egypt' THEN 48.50 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'India' THEN 83.20 ELSE 1.0 END, 2),
+        ROUND(S.[Price] * CASE WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'UAE' THEN 3.67 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'KSA' THEN 3.75 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Jordan' THEN 0.71 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Egypt' THEN 48.50 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'India' THEN 83.20 ELSE 1.0 END, 2),
+        ROUND(S.[Price] * CASE WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'UAE' THEN 3.67 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'KSA' THEN 3.75 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Jordan' THEN 0.71 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Egypt' THEN 48.50 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'India' THEN 83.20 ELSE 1.0 END, 2),
         CASE
             WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004') THEN ROUND(S.[Price] * 0.88, 2)
             WHEN S.[Sku] IN (N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN ROUND(S.[Price] * 0.93, 2)
-            ELSE S.[Price]
+            ELSE ROUND(S.[Price] * CASE WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'UAE' THEN 3.67 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'KSA' THEN 3.75 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Jordan' THEN 0.71 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Egypt' THEN 48.50 WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'India' THEN 83.20 ELSE 1.0 END, 2)
         END,
         CASE
             WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004') THEN 12
@@ -628,6 +630,7 @@ WHEN NOT MATCHED THEN
             WHEN S.[Sku] IN (N'IMSEEH-PRD-001', N'GOLDPAL-PRD-004', N'IMSEEH-PRD-003', N'GOLDPAL-PRD-002') THEN 1
             ELSE 0
         END,
+        CASE WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'UAE' THEN N'AED' WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'KSA' THEN N'SAR' WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Jordan' THEN N'JOD' WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'Egypt' THEN N'EGP' WHEN (SELECT TOP 1 [MarketType] FROM [Sellers] WHERE [Id] = S.[SellerId]) = N'India' THEN N'INR' ELSE N'USD' END,
         S.[Category],
         S.[ImageUrl],
         N'',
