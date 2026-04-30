@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Hosting;
 using GoldWalletSystem.Application.Interfaces.Services;
 using System.Text.RegularExpressions;
 
