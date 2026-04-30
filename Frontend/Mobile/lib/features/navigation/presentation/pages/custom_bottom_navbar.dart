@@ -15,6 +15,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/home/presentation/pages/home
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/pages/product_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/presentation/pages/transaction_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/pages/gold_wallet_page.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class CustomeBottomNavbar extends StatefulWidget {
   const CustomeBottomNavbar({super.key});
@@ -22,8 +23,6 @@ class CustomeBottomNavbar extends StatefulWidget {
   @override
   State<CustomeBottomNavbar> createState() => _CustomeBottomNavbarState();
 }
-
-const _tabTitles = ['Gold Wallet', 'Shop', 'My Wallet', 'My Cart', 'Transactions'];
 
 class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
   late final CartCubit cartCubit;
@@ -63,8 +62,9 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
       final nextCount = await _getUnreadCount();
       if (!mounted) return;
       if (showToastOnIncrease && nextCount > _unreadCount) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You have a new notification')),
+          SnackBar(content: Text(l10n.youHaveNewNotification)),
         );
       }
       setState(() => _unreadCount = nextCount);
@@ -76,6 +76,7 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
+    final l10n = AppLocalizations.of(context);
     final seller = context.watch<AppCubit>().state.selectedSeller;
     if (cartCubit.state is CartInitial) {
       cartCubit.loadCartProducts(sellerFilter: seller);
@@ -96,7 +97,7 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
         appBar: AppBar(
           centerTitle: true,
           title: Text(
-            _tabTitles[_currentTabIndex],
+[l10n.goldWallet, l10n.shop, l10n.myWallet, l10n.myCart, l10n.transactions][_currentTabIndex],
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
               color: palette.primary,
@@ -107,7 +108,7 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
               IconButton(
                 onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.accountSummaryRoute),
                 icon: Icon(Icons.account_balance_wallet_outlined, color: palette.primary),
-                tooltip: 'My Account Summary',
+                tooltip: l10n.myAccountSummary,
               ),
             IconButton(
               onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.profileRoute),
@@ -159,12 +160,12 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
               cartCubit.loadCartProducts(sellerFilter: currentSeller);
             }
           },
-          items: const [
-            BottomNavigationBarItem(icon: Icon(CupertinoIcons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(CupertinoIcons.bag), label: 'Product'),
-            BottomNavigationBarItem(icon: Icon(CupertinoIcons.creditcard), label: 'Wallet'),
-            BottomNavigationBarItem(icon: Icon(CupertinoIcons.shopping_cart), label: 'Cart'),
-            BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'History'),
+          items: [
+            BottomNavigationBarItem(icon: const Icon(CupertinoIcons.home), label: l10n.home),
+            BottomNavigationBarItem(icon: const Icon(CupertinoIcons.bag), label: l10n.product),
+            BottomNavigationBarItem(icon: const Icon(CupertinoIcons.creditcard), label: l10n.wallet),
+            BottomNavigationBarItem(icon: const Icon(CupertinoIcons.shopping_cart), label: l10n.cart),
+            BottomNavigationBarItem(icon: const Icon(Icons.list_alt), label: l10n.history),
           ],
         ),
       ),

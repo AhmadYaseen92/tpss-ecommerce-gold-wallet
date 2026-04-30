@@ -38,6 +38,18 @@ abstract class AppLocalizations {
   String get validationError;
   String get english;
   String get arabic;
+  String get goldWallet;
+  String get shop;
+  String get myWallet;
+  String get myCart;
+  String get transactions;
+  String get youHaveNewNotification;
+  String get myAccountSummary;
+  String get home;
+  String get product;
+  String get wallet;
+  String get cart;
+  String get history;
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -55,6 +67,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validationError => 'Validation Error';
   String get english => 'English';
   String get arabic => 'Arabic';
+  String get goldWallet => 'Gold Wallet';
+  String get shop => 'Shop';
+  String get myWallet => 'My Wallet';
+  String get myCart => 'My Cart';
+  String get transactions => 'Transactions';
+  String get youHaveNewNotification => 'You have a new notification';
+  String get myAccountSummary => 'My Account Summary';
+  String get home => 'Home';
+  String get product => 'Product';
+  String get wallet => 'Wallet';
+  String get cart => 'Cart';
+  String get history => 'History';
 }
 
 class AppLocalizationsAr extends AppLocalizations {
@@ -72,6 +96,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get validationError => 'خطأ في التحقق';
   String get english => 'الإنجليزية';
   String get arabic => 'العربية';
+  String get goldWallet => 'محفظة الذهب';
+  String get shop => 'المتجر';
+  String get myWallet => 'محفظتي';
+  String get myCart => 'سلتي';
+  String get transactions => 'المعاملات';
+  String get youHaveNewNotification => 'لديك إشعار جديد';
+  String get myAccountSummary => 'ملخص حسابي';
+  String get home => 'الرئيسية';
+  String get product => 'المنتجات';
+  String get wallet => 'المحفظة';
+  String get cart => 'السلة';
+  String get history => 'السجل';
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

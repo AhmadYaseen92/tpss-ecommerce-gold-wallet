@@ -12,5 +12,17 @@
   "languageUpdatedSuccessfully": "Language updated successfully",
   "validationError": "Validation Error",
   "english": "English",
-  "arabic": "Arabic"
+  "arabic": "Arabic",
+  "goldWallet": "Gold Wallet",
+  "shop": "Shop",
+  "myWallet": "My Wallet",
+  "myCart": "My Cart",
+  "transactions": "Transactions",
+  "youHaveNewNotification": "You have a new notification",
+  "myAccountSummary": "My Account Summary",
+  "home": "Home",
+  "product": "Product",
+  "wallet": "Wallet",
+  "cart": "Cart",
+  "history": "History"
 }

@@ -12,5 +12,17 @@
   "languageUpdatedSuccessfully": "تم تحديث اللغة بنجاح",
   "validationError": "خطأ في التحقق",
   "english": "الإنجليزية",
-  "arabic": "العربية"
+  "arabic": "العربية",
+  "goldWallet": "محفظة الذهب",
+  "shop": "المتجر",
+  "myWallet": "محفظتي",
+  "myCart": "سلتي",
+  "transactions": "المعاملات",
+  "youHaveNewNotification": "لديك إشعار جديد",
+  "myAccountSummary": "ملخص حسابي",
+  "home": "الرئيسية",
+  "product": "المنتجات",
+  "wallet": "المحفظة",
+  "cart": "السلة",
+  "history": "السجل"
 }
