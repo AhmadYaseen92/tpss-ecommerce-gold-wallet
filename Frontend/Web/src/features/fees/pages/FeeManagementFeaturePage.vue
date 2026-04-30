@@ -67,6 +67,17 @@ const feeSearchTerm = ref("");
 const feeMaterialTypeFilter = ref("all");
 const feeFormTypeFilter = ref("all");
 
+const normalizeTaxonomyFilterValue = (value: string | undefined, options: Array<{ value: string; aliases: string[] }>) => {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!normalized) return "";
+  const exactMatch = options.find((option) => option.aliases.includes(normalized));
+  if (exactMatch) return exactMatch.value;
+
+  const tokens = normalized.split(/[^a-z0-9]+/).filter(Boolean);
+  const tokenMatch = options.find((option) => option.aliases.some((alias) => tokens.includes(alias)));
+  return tokenMatch?.value ?? normalized;
+};
+
 const isAdmin = computed(() => marketplace.role.value === "Admin");
 const successModalOpen = ref(false);
 const successMessage = ref("Saved successfully");
@@ -180,8 +191,10 @@ const filteredSellerRows = computed(() => {
   return sellerTableRows.value.filter((row) => {
     const matchedSearch = !query || row.productName.toLowerCase().includes(query) || String(row.productId).includes(query);
     const feeRow = sellerProducts.value.find((x) => x.id === row.productId);
-    const matchedMaterial = feeMaterialTypeFilter.value === "all" || (feeRow?.materialType?.toLowerCase() ?? "") === feeMaterialTypeFilter.value.toLowerCase();
-    const matchedForm = feeFormTypeFilter.value === "all" || (feeRow?.formType?.toLowerCase() ?? "") === feeFormTypeFilter.value.toLowerCase();
+    const materialKey = normalizeTaxonomyFilterValue(feeRow?.materialType, MATERIAL_TYPE_OPTIONS);
+    const formKey = normalizeTaxonomyFilterValue(feeRow?.formType, PRODUCT_FORM_OPTIONS);
+    const matchedMaterial = feeMaterialTypeFilter.value === "all" || materialKey === feeMaterialTypeFilter.value.toLowerCase();
+    const matchedForm = feeFormTypeFilter.value === "all" || formKey === feeFormTypeFilter.value.toLowerCase();
     return matchedSearch && matchedMaterial && matchedForm;
   });
 });
