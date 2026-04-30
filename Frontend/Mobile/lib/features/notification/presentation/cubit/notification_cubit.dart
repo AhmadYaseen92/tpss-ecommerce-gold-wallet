@@ -28,7 +28,7 @@ class NotificationCubit extends Cubit<NotificationState> {
       _allNotifications = await _getNotificationsUseCase(pageNumber: 1, pageSize: 100);
       _emitLoaded();
     } catch (e) {
-      emit(NotificationError('Failed to load notifications: $e'));
+      emit(NotificationError('Failed to load notifications: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 
@@ -45,7 +45,7 @@ class NotificationCubit extends Cubit<NotificationState> {
           .toList();
       _emitLoaded();
     } catch (e) {
-      emit(NotificationError('Failed to mark notification as read: $e'));
+      emit(NotificationError('Failed to mark notification as read: ${ApiErrorParser.friendlyFromAny(e)}'));
       _emitLoaded();
     }
   }
@@ -56,7 +56,7 @@ class NotificationCubit extends Cubit<NotificationState> {
       _allNotifications = _allNotifications.map((item) => item.copyWith(isRead: true)).toList();
       _emitLoaded();
     } catch (e) {
-      emit(NotificationError('Failed to mark all notifications as read: $e'));
+      emit(NotificationError('Failed to mark all notifications as read: ${ApiErrorParser.friendlyFromAny(e)}'));
       _emitLoaded();
     }
   }

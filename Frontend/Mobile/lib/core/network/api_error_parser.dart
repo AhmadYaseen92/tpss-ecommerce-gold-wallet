@@ -5,26 +5,22 @@ class ApiError {
   final String? errorCode;
   final List<String> errors;
 
-  ApiError({
-    required this.message,
-    this.errorCode,
-    this.errors = const [],
-  });
+  ApiError({required this.message, this.errorCode, this.errors = const []});
 
   factory ApiError.fromJson(Map<String, dynamic> json) {
-    final errors = (json['errors'] as List?)?.map((e) => e.toString()).toList() ?? [];
+    final errorsRaw = json['errors'] ?? json['Errors'];
+    final errors = (errorsRaw as List?)?.map((e) => e.toString()).toList() ?? [];
 
+    final messageRaw = json['message'] ?? json['Message'];
     final message = errors.isNotEmpty
         ? errors.first
-        : (json['message']?.toString().isNotEmpty == true
-              ? json['message'].toString()
+        : (messageRaw?.toString().isNotEmpty == true
+              ? messageRaw.toString()
               : 'Something went wrong. Please try again later.');
 
-    return ApiError(
-      message: message,
-      errorCode: json['errorCode']?.toString(),
-      errors: errors,
-    );
+    final errorCodeRaw = json['errorCode'] ?? json['ErrorCode'];
+
+    return ApiError(message: message, errorCode: errorCodeRaw?.toString(), errors: errors);
   }
 }
 
@@ -45,13 +41,14 @@ class ApiErrorParser {
     return ApiError(message: 'Something went wrong. Please try again later.');
   }
 
-  static String friendlyMessage(
-    DioException error, {
-    String fallback = 'Something went wrong. Please try again later.',
-  }) {
+  static String friendlyMessage(DioException error, {String fallback = 'Something went wrong. Please try again later.'}) {
     final parsed = parse(error);
-    if (parsed.message.trim().isNotEmpty) {
-      return parsed.message.trim();
+    return parsed.message.trim().isNotEmpty ? parsed.message.trim() : fallback;
+  }
+
+  static String friendlyFromAny(Object error, {String fallback = 'Something went wrong. Please try again later.'}) {
+    if (error is DioException) {
+      return friendlyMessage(error, fallback: fallback);
     }
     return fallback;
   }
