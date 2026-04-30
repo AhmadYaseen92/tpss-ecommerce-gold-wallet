@@ -102,6 +102,14 @@ abstract class AppLocalizations {
   String get transfer;
   String get convert;
   String get noOfferProducts;
+  String get all;
+  String get gold;
+  String get silver;
+  String get diamond;
+  String get jewelry;
+  String get coin;
+  String get bar;
+  String get allSellers;
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -183,7 +191,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addedToCartMessage => 'added to cart';
   String get addToCartFailed => 'Add to Cart Failed';
   String get buyNowFailed => 'Buy Now Failed';
-  String get percentOff => 'OFF';}
+  String get percentOff => 'OFF';
+  String get all => 'All';
+  String get gold => 'Gold';
+  String get silver => 'Silver';
+  String get diamond => 'Diamond';
+  String get jewelry => 'Jewelry';
+  String get coin => 'Coin';
+  String get bar => 'Bar';
+  String get allSellers => 'All Sellers';}
 
 class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr() : super('ar');
@@ -264,7 +280,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addedToCartMessage => 'تمت إضافته إلى السلة';
   String get addToCartFailed => 'فشل الإضافة إلى السلة';
   String get buyNowFailed => 'فشل الشراء الآن';
-  String get percentOff => 'خصم';}
+  String get percentOff => 'خصم';
+  String get all => 'الكل';
+  String get gold => 'ذهب';
+  String get silver => 'فضة';
+  String get diamond => 'ألماس';
+  String get jewelry => 'مجوهرات';
+  String get coin => 'عملات';
+  String get bar => 'سبائك';
+  String get allSellers => 'كل البائعين';}
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();

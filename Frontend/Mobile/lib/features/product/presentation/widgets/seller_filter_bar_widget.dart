@@ -4,6 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dar
 import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_filter_chip.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class SellerFilterBarWidget extends StatelessWidget {
   const SellerFilterBarWidget({super.key});
@@ -36,7 +37,7 @@ class SellerFilterBarWidget extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: AppFilterChip(
-                label: seller,
+                label: _displaySellerLabel(context, seller),
                 selected: isSelected,
                 onTap: () => context.read<AppCubit>().setSeller(seller),
               ),

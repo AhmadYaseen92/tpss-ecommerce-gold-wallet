@@ -76,5 +76,13 @@
   "addedToCartMessage": "تمت إضافته إلى السلة",
   "addToCartFailed": "فشل الإضافة إلى السلة",
   "buyNowFailed": "فشل الشراء الآن",
-  "percentOff": "خصم"
+  "percentOff": "خصم",
+  "all": "الكل",
+  "gold": "ذهب",
+  "silver": "فضة",
+  "diamond": "ألماس",
+  "jewelry": "مجوهرات",
+  "coin": "عملات",
+  "bar": "سبائك",
+  "allSellers": "كل البائعين"
 }

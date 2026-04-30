@@ -76,5 +76,13 @@
   "addedToCartMessage": "added to cart",
   "addToCartFailed": "Add to Cart Failed",
   "buyNowFailed": "Buy Now Failed",
-  "percentOff": "OFF"
+  "percentOff": "OFF",
+  "all": "All",
+  "gold": "Gold",
+  "silver": "Silver",
+  "diamond": "Diamond",
+  "jewelry": "Jewelry",
+  "coin": "Coin",
+  "bar": "Bar",
+  "allSellers": "All Sellers"
 }
