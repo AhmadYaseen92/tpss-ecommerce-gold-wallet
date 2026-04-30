@@ -140,6 +140,15 @@ abstract class AppLocalizations {
   String get fee;
   String get assetSummary;
   String get status;
+  String get yourCartIsEmpty;
+  String get noItemsFromSeller;
+  String get cartExploreMessage;
+  String get remove;
+  String get subtotal;
+  String get discount;
+  String get totalAmount;
+  String get includesAllDuties;
+  String get proceedToCheckout;
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -259,7 +268,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get grossAmount => 'Gross Amount';
   String get fee => 'Fee';
   String get assetSummary => 'Asset Summary';
-  String get status => 'Status';}
+  String get status => 'Status';
+  String get yourCartIsEmpty => 'Your Cart is Empty';
+  String get noItemsFromSeller => 'No items from this seller yet. Start shopping to fill your cart!';
+  String get cartExploreMessage => 'Looks like you haven't added anything to your cart. Explore our collection and find something you love!';
+  String get remove => 'Remove';
+  String get subtotal => 'Subtotal';
+  String get discount => 'Discount';
+  String get totalAmount => 'Total Amount';
+  String get includesAllDuties => 'Includes all duties';
+  String get proceedToCheckout => 'Proceed to Checkout';}
 
 class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr() : super('ar');
@@ -378,7 +396,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get grossAmount => 'المبلغ الإجمالي';
   String get fee => 'الرسوم';
   String get assetSummary => 'ملخص الأصل';
-  String get status => 'الحالة';}
+  String get status => 'الحالة';
+  String get yourCartIsEmpty => 'سلتك فارغة';
+  String get noItemsFromSeller => 'لا توجد عناصر من هذا البائع بعد. ابدأ التسوق لملء سلتك!';
+  String get cartExploreMessage => 'يبدو أنك لم تضف أي شيء إلى سلتك بعد. استكشف مجموعتنا واعثر على ما يعجبك!';
+  String get remove => 'إزالة';
+  String get subtotal => 'الإجمالي الفرعي';
+  String get discount => 'الخصم';
+  String get totalAmount => 'الإجمالي';
+  String get includesAllDuties => 'يشمل جميع الرسوم';
+  String get proceedToCheckout => 'المتابعة إلى الدفع';}
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();

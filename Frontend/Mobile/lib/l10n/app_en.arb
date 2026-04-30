@@ -114,5 +114,14 @@
   "grossAmount": "Gross Amount",
   "fee": "Fee",
   "assetSummary": "Asset Summary",
-  "status": "Status"
+  "status": "Status",
+  "yourCartIsEmpty": "Your Cart is Empty",
+  "noItemsFromSeller": "No items from this seller yet. Start shopping to fill your cart!",
+  "cartExploreMessage": "Looks like you haven't added anything to your cart. Explore our collection and find something you love!",
+  "remove": "Remove",
+  "subtotal": "Subtotal",
+  "discount": "Discount",
+  "totalAmount": "Total Amount",
+  "includesAllDuties": "Includes all duties",
+  "proceedToCheckout": "Proceed to Checkout"
 }

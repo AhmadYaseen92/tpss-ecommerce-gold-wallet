@@ -6,6 +6,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/services/action_summary_builder.
 import 'package:tpss_ecommerce_gold_wallet/features/checkout/domain/entities/checkout_route_args.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/cart/domain/entities/cart_item_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class CartSummary extends StatelessWidget {
   final CartSummaryEntity summary;
@@ -37,7 +38,7 @@ class CartSummary extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Opacity(opacity: 0.9, child: Text('Subtotal', style: TextStyle(color: palette.textSecondary))),
+              Opacity(opacity: 0.9, child: Text(AppLocalizations.of(context).subtotal, style: TextStyle(color: palette.textSecondary))),
               Text(ActionSummaryBuilder.formatMoney(summary.subtotal, currency: currency), style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
             ],
           ),
@@ -57,7 +58,7 @@ class CartSummary extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Opacity(opacity: 0.9, child: Text('Discount', style: TextStyle(color: palette.textSecondary))),
+              Opacity(opacity: 0.9, child: Text(AppLocalizations.of(context).discount, style: TextStyle(color: palette.textSecondary))),
               Text('-${ActionSummaryBuilder.formatMoney(summary.discountAmount, currency: currency)}', style: TextStyle(fontWeight: FontWeight.w600, color: palette.textPrimary)),
             ],
           ),
@@ -68,8 +69,8 @@ class CartSummary extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Opacity(opacity: 0.9, child: Text('Total Amount', style: TextStyle(color: palette.textSecondary))),
-                  Opacity(opacity: 0.75, child: Text('Includes all duties', style: TextStyle(fontSize: 12, color: palette.textSecondary))),
+                  Opacity(opacity: 0.9, child: Text(AppLocalizations.of(context).totalAmount, style: TextStyle(color: palette.textSecondary))),
+                  Opacity(opacity: 0.75, child: Text(AppLocalizations.of(context).includesAllDuties, style: TextStyle(fontSize: 12, color: palette.textSecondary))),
                 ],
               ),
               Text(ActionSummaryBuilder.formatMoney(summary.total, currency: currency), style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: palette.textPrimary)),
@@ -80,7 +81,7 @@ class CartSummary extends StatelessWidget {
             width: double.infinity,
             height: 56,
             child: AppButton(
-              label: 'Proceed to Checkout',
+              label: AppLocalizations.of(context).proceedToCheckout,
               onPressed: () async {
                 final parsedProductIds = cartProductIds
                     .map(int.tryParse)

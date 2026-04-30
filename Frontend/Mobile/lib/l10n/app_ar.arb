@@ -114,5 +114,14 @@
   "grossAmount": "المبلغ الإجمالي",
   "fee": "الرسوم",
   "assetSummary": "ملخص الأصل",
-  "status": "الحالة"
+  "status": "الحالة",
+  "yourCartIsEmpty": "سلتك فارغة",
+  "noItemsFromSeller": "لا توجد عناصر من هذا البائع بعد. ابدأ التسوق لملء سلتك!",
+  "cartExploreMessage": "يبدو أنك لم تضف أي شيء إلى سلتك بعد. استكشف مجموعتنا واعثر على ما يعجبك!",
+  "remove": "إزالة",
+  "subtotal": "الإجمالي الفرعي",
+  "discount": "الخصم",
+  "totalAmount": "الإجمالي",
+  "includesAllDuties": "يشمل جميع الرسوم",
+  "proceedToCheckout": "المتابعة إلى الدفع"
 }
