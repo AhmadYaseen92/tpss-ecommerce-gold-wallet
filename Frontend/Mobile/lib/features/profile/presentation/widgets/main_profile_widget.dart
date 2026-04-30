@@ -10,6 +10,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/utils/server_url_resolver.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/profile_remote_datasource.dart';
 
@@ -172,11 +173,12 @@ class _MainProfileWidgetState extends State<MainProfileWidget> {
       }
     }
 
-    final photoUri = Uri.tryParse(profilePhoto);
+    final resolvedPhotoUrl = resolveServerUrl(profilePhoto);
+    final photoUri = Uri.tryParse(resolvedPhotoUrl);
     final hasValidPhotoUrl =
         photoUri != null && (photoUri.scheme == 'http' || photoUri.scheme == 'https') && photoUri.host.isNotEmpty;
 
-    return hasValidPhotoUrl ? NetworkImage(profilePhoto) : null;
+    return hasValidPhotoUrl ? NetworkImage(resolvedPhotoUrl) : null;
   }
 
   Future<void> _showImageSourcePicker(ProfileRemoteModel profile) async {
