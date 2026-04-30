@@ -45,7 +45,7 @@ class AuthenticityButton extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         AppLocalizations.of(context).authenticityCertificate,
                         style: TextStyle(
                           fontSize: 13,

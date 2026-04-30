@@ -35,7 +35,7 @@ class MarketWatchTabWidget extends StatelessWidget {
             children: [
               const SellerFilterBarWidget(),
               TabBar(
-                tabs: const [
+                tabs: [
                   Tab(text: AppLocalizations.of(context).tickers),
                   Tab(text: AppLocalizations.of(context).orders),
                 ],

@@ -78,7 +78,7 @@ class _ProductVideoState extends State<ProductVideo> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           AppLocalizations.of(context).productVideo,
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
