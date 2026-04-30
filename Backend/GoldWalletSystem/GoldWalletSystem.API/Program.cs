@@ -143,9 +143,9 @@ app.UseExceptionHandler(errorApp =>
                 StatusCodes.Status401Unauthorized,
                 string.IsNullOrWhiteSpace(ex.Message) ? "Invalid credentials. Please try again." : ex.Message,
                 "INVALID_CREDENTIALS"),
-            InvalidOperationException => (
+            InvalidOperationException ex => (
                 StatusCodes.Status400BadRequest,
-                "Invalid request. Please review your input and try again.",
+                string.IsNullOrWhiteSpace(ex.Message) ? "Invalid request. Please review your input and try again." : ex.Message,
                 "INVALID_OPERATION"),
             BadHttpRequestException => (
                 StatusCodes.Status400BadRequest,
