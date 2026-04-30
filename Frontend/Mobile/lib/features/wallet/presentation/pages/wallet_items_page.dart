@@ -11,6 +11,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/walle
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/presentation/widgets/wallet_holding_item_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wallet_action_models.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/domain/repositories/wallet_action_repository.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class WalletItemsPage extends StatefulWidget {
   final List<WalletTransactionEntity> transactions;
@@ -121,7 +122,7 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          'Wallet Items',
+          AppLocalizations.of(context).walletItems,
           style:
               Theme.of(context)
                   .textTheme
@@ -144,9 +145,9 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
       body: _transactions.isEmpty
           ? const EmptyStateWidget(
               icon: Icons.diamond_outlined,
-              title: 'No Items in Wallet',
+              title: AppLocalizations.of(context).noItemsInWallet,
               message:
-                  'Your wallet is empty. Start by adding your first gold item to view it here.',
+                  AppLocalizations.of(context).walletEmptyMessage,
             )
           : Column(
               children: [
@@ -173,8 +174,8 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
                   child: filteredTransactions.isEmpty
                       ? const EmptyStateWidget(
                           icon: Icons.inventory_2_outlined,
-                          title: 'No Items for Selected Form',
-                          message: 'Try changing the product form filter to see wallet items.',
+                          title: AppLocalizations.of(context).noItemsForSelectedForm,
+                          message: AppLocalizations.of(context).tryChangingProductForm,
                         )
                       : ListView.builder(
                           itemCount: filteredTransactions.length,
@@ -187,8 +188,8 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
                                 final summary = WalletActionSummary(
                                   asset: item,
                                   actionType: WalletActionType.sell,
-                                  title: 'Sell Gold',
-                                  primaryValue: '${item.quantity} Units',
+                                  title: AppLocalizations.of(context).sellGold,
+                                  primaryValue: '${item.quantity} ${AppLocalizations.of(context).units}',
                                   summary: ActionSummaryBuilder.fromBackendData({
                                     'subTotalAmount': 0,
                                     'totalFeesAmount': 0,
@@ -197,8 +198,8 @@ class _WalletItemsPageState extends State<WalletItemsPage> {
                                     'currency': 'USD',
                                     'feeBreakdowns': const [],
                                   }),
-                                  destinationLabel: 'Payout',
-                                  destinationValue: 'Wallet Cash',
+                                  destinationLabel: AppLocalizations.of(context).payout,
+                                  destinationValue: AppLocalizations.of(context).walletCash,
                                   note: '',
                                   referenceNumber: '',
                                   createdAt: DateTime.now(),

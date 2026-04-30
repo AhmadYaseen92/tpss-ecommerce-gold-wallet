@@ -3,6 +3,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class WalletCardWidget extends StatelessWidget {
   final String walletName;
@@ -86,7 +87,7 @@ class WalletCardWidget extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
-                          'Verified',
+                          AppLocalizations.of(context).verified,
                           style: Theme.of(context).textTheme.labelMedium
                               ?.copyWith(
                                 color: AppColors.green,
@@ -108,7 +109,7 @@ class WalletCardWidget extends StatelessWidget {
                   );
                 },
                 child: Text(
-                  'View Details',
+                  AppLocalizations.of(context).viewDetails,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: palette.primary,
                     fontWeight: FontWeight.w600,
@@ -119,7 +120,7 @@ class WalletCardWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16.0),
           Text(
-            'Total Weight',
+            AppLocalizations.of(context).totalWeight,
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(color: palette.textSecondary),
@@ -143,9 +144,9 @@ class WalletCardWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          _infoRow(context, 'Total Price Value', totalMarketValue),
+          _infoRow(context, AppLocalizations.of(context).totalPriceValue, totalMarketValue),
           const SizedBox(height: 10),
-          _infoRow(context, 'Total Holdings', '$totalHoldings Assets'),
+          _infoRow(context, AppLocalizations.of(context).totalHoldings, '$totalHoldings ${AppLocalizations.of(context).assets}'),
           if (note != null && note!.trim().isNotEmpty) ...[
             const SizedBox(height: 14.0),
             Container(

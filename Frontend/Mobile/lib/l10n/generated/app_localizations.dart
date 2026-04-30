@@ -110,6 +110,36 @@ abstract class AppLocalizations {
   String get coin;
   String get bar;
   String get allSellers;
+  String get walletItems;
+  String get noItemsInWallet;
+  String get walletEmptyMessage;
+  String get noItemsForSelectedForm;
+  String get tryChangingProductForm;
+  String get sellGold;
+  String get units;
+  String get payout;
+  String get walletCash;
+  String get seller;
+  String get form;
+  String get qty;
+  String get investment;
+  String get currentValue;
+  String get livePrice;
+  String get cancelRequest;
+  String get gift;
+  String get pickup;
+  String get taxInvoice;
+  String get verified;
+  String get viewDetails;
+  String get totalWeight;
+  String get totalPriceValue;
+  String get totalHoldings;
+  String get assets;
+  String get summary;
+  String get grossAmount;
+  String get fee;
+  String get assetSummary;
+  String get status;
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -199,7 +229,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jewelry => 'Jewelry';
   String get coin => 'Coin';
   String get bar => 'Bar';
-  String get allSellers => 'All Sellers';}
+  String get allSellers => 'All Sellers';
+  String get walletItems => 'Wallet Items';
+  String get noItemsInWallet => 'No Items in Wallet';
+  String get walletEmptyMessage => 'Your wallet is empty. Start by adding your first gold item to view it here.';
+  String get noItemsForSelectedForm => 'No Items for Selected Form';
+  String get tryChangingProductForm => 'Try changing the product form filter to see wallet items.';
+  String get sellGold => 'Sell Gold';
+  String get units => 'Units';
+  String get payout => 'Payout';
+  String get walletCash => 'Wallet Cash';
+  String get seller => 'Seller';
+  String get form => 'Form';
+  String get qty => 'Qty';
+  String get investment => 'Investment';
+  String get currentValue => 'Current Value:';
+  String get livePrice => 'Live Price:';
+  String get cancelRequest => 'Cancel Request';
+  String get gift => 'Gift';
+  String get pickup => 'Pickup';
+  String get taxInvoice => 'Tax Invoice';
+  String get verified => 'Verified';
+  String get viewDetails => 'View Details';
+  String get totalWeight => 'Total Weight';
+  String get totalPriceValue => 'Total Price Value';
+  String get totalHoldings => 'Total Holdings';
+  String get assets => 'Assets';
+  String get summary => 'Summary';
+  String get grossAmount => 'Gross Amount';
+  String get fee => 'Fee';
+  String get assetSummary => 'Asset Summary';
+  String get status => 'Status';}
 
 class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr() : super('ar');
@@ -288,7 +348,37 @@ class AppLocalizationsAr extends AppLocalizations {
   String get jewelry => 'مجوهرات';
   String get coin => 'عملات';
   String get bar => 'سبائك';
-  String get allSellers => 'كل البائعين';}
+  String get allSellers => 'كل البائعين';
+  String get walletItems => 'عناصر المحفظة';
+  String get noItemsInWallet => 'لا توجد عناصر في المحفظة';
+  String get walletEmptyMessage => 'محفظتك فارغة. ابدأ بإضافة أول عنصر ذهب لعرضه هنا.';
+  String get noItemsForSelectedForm => 'لا توجد عناصر للشكل المحدد';
+  String get tryChangingProductForm => 'جرّب تغيير فلتر شكل المنتج لعرض عناصر المحفظة.';
+  String get sellGold => 'بيع الذهب';
+  String get units => 'وحدات';
+  String get payout => 'التحصيل';
+  String get walletCash => 'نقد المحفظة';
+  String get seller => 'البائع';
+  String get form => 'الشكل';
+  String get qty => 'الكمية';
+  String get investment => 'الاستثمار';
+  String get currentValue => 'القيمة الحالية:';
+  String get livePrice => 'السعر المباشر:';
+  String get cancelRequest => 'إلغاء الطلب';
+  String get gift => 'هدية';
+  String get pickup => 'استلام';
+  String get taxInvoice => 'فاتورة ضريبية';
+  String get verified => 'موثّق';
+  String get viewDetails => 'عرض التفاصيل';
+  String get totalWeight => 'إجمالي الوزن';
+  String get totalPriceValue => 'إجمالي قيمة السعر';
+  String get totalHoldings => 'إجمالي الحيازات';
+  String get assets => 'أصول';
+  String get summary => 'الملخص';
+  String get grossAmount => 'المبلغ الإجمالي';
+  String get fee => 'الرسوم';
+  String get assetSummary => 'ملخص الأصل';
+  String get status => 'الحالة';}
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
