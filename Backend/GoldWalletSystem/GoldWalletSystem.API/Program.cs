@@ -6,6 +6,7 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.Database.Seed;
 using GoldWalletSystem.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -132,15 +133,32 @@ app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
     {
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         context.Response.ContentType = "application/json";
 
-        var response = GoldWalletSystem.Application.DTOs.Common.ApiResponse<object>.Fail(
-            "Something went wrong. Please try again later.",
-            StatusCodes.Status500InternalServerError,
-            "GENERAL_ERROR"
-        );
+        var exception = context.Features.Get<IExceptionHandlerPathFeature>()?.Error;
 
+        var (statusCode, message, errorCode) = exception switch
+        {
+            UnauthorizedAccessException => (
+                StatusCodes.Status401Unauthorized,
+                "Invalid credentials. Please try again.",
+                "INVALID_CREDENTIALS"),
+            InvalidOperationException => (
+                StatusCodes.Status400BadRequest,
+                "Invalid request. Please review your input and try again.",
+                "INVALID_OPERATION"),
+            BadHttpRequestException => (
+                StatusCodes.Status400BadRequest,
+                "Invalid request. Please review your input and try again.",
+                "BAD_REQUEST"),
+            _ => (
+                StatusCodes.Status500InternalServerError,
+                "Something went wrong. Please try again later.",
+                "GENERAL_ERROR")
+        };
+
+        context.Response.StatusCode = statusCode;
+        var response = GoldWalletSystem.Application.DTOs.Common.ApiResponse<object>.Fail(message, statusCode, errorCode);
         await context.Response.WriteAsJsonAsync(response);
     });
 });
