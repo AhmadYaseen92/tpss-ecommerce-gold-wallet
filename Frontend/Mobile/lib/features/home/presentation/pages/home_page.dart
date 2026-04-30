@@ -4,6 +4,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/home/presentation/widgets/Po
 import 'package:tpss_ecommerce_gold_wallet/features/home/presentation/widgets/home_carousel_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/presentation/widgets/summary_transaction_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/wallet/domain/entities/wallet_entity.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key, required this.onViewAllHistory});
@@ -12,6 +13,8 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: SingleChildScrollView(
@@ -41,7 +44,7 @@ class HomePage extends StatelessWidget {
                 final totalCash = wallets.isNotEmpty ? wallets.first.cashBalance : r'$0.00';
 
                 return PortfolioCardWidget(
-                  title: 'Total Portfolio Value',
+                  title: l10n.totalPortfolioValue,
                   value: '\$ ${totalMarket.toStringAsFixed(2)}',
                   change: '${avgChange >= 0 ? '+' : ''}${avgChange.toStringAsFixed(2)}%',
                   availableCash: totalCash,

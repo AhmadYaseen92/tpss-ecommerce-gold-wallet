@@ -8,12 +8,13 @@ import 'package:tpss_ecommerce_gold_wallet/core/network/dio_factory.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/presentation/widgets/recent_transactions_common_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class SummaryTransactionWidget extends StatefulWidget {
   const SummaryTransactionWidget({
     super.key,
     required this.onViewAllHistory,
-    this.title = 'Recent Transactions',
+    this.title = '',
     this.maxItems = 3,
   });
 
@@ -154,7 +155,7 @@ class _SummaryTransactionWidgetState
         height: 140,
         child: Center(
           child: Text(
-            'No transactions yet',
+            AppLocalizations.of(context).noTransactionsYet,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: palette.textSecondary,
                 ),
@@ -185,7 +186,7 @@ class _SummaryTransactionWidgetState
     }).toList();
 
     return RecentTransactionsCommonWidget(
-      title: widget.title,
+      title: widget.title.isEmpty ? AppLocalizations.of(context).recentTransactions : widget.title,
       transactions: items,
       onViewAllHistory: widget.onViewAllHistory,
       maxItems: widget.maxItems,

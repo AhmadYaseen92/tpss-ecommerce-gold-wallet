@@ -6,6 +6,7 @@ import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/data/datasources/home_remote_datasource.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/home/data/models/home_carousel_Item_model.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class HomeCarouselWidget extends StatefulWidget {
   const HomeCarouselWidget({super.key});
@@ -70,7 +71,7 @@ class _HomeCarouselWidgetState extends State<HomeCarouselWidget> {
           borderRadius: BorderRadius.circular(12),
           color: Colors.black.withAlpha(10),
         ),
-        child: const Text('No offer products available right now.'),
+        child: Text(AppLocalizations.of(context).noOfferProducts),
       );
     }
 

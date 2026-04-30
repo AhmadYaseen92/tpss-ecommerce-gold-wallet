@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_server_image.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class RecentTransactionViewModel {
   const RecentTransactionViewModel({
@@ -77,7 +78,7 @@ class RecentTransactionsCommonWidget extends StatelessWidget {
                 ),
                 onPressed: onViewAllHistory,
                 child: Text(
-                  'View All',
+                  AppLocalizations.of(context).viewAll,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: viewAllColor ?? palette.primary,
                     fontWeight: FontWeight.w600,
@@ -96,7 +97,7 @@ class RecentTransactionsCommonWidget extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.all(12),
                       child: Text(
-                        'No transactions found.',
+                        AppLocalizations.of(context).noTransactionsFound,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: palette.textSecondary,

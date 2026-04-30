@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class PortfolioCardWidget extends StatelessWidget {
   const PortfolioCardWidget({
@@ -69,7 +70,7 @@ class PortfolioCardWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Available cash balance:', style: TextStyle(color: palette.textSecondary)),
+                Text(AppLocalizations.of(context).availableCashBalance, style: TextStyle(color: palette.textSecondary)),
                 Text(
                   availableCash!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -86,7 +87,7 @@ class PortfolioCardWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Gold Investment: ', style: TextStyle(color: palette.textSecondary)),
+                Text(AppLocalizations.of(context).goldInvestment, style: TextStyle(color: palette.textSecondary)),
                 Text(
                   change,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -99,7 +100,7 @@ class PortfolioCardWidget extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Silver Investment: ', style: TextStyle(color: palette.textSecondary)),
+                Text(AppLocalizations.of(context).silverInvestment, style: TextStyle(color: palette.textSecondary)),
                 Text(
                   change,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.red),

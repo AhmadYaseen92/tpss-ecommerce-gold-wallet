@@ -24,5 +24,19 @@
   "product": "المنتجات",
   "wallet": "المحفظة",
   "cart": "السلة",
-  "history": "السجل"
+  "history": "السجل",
+  "totalPortfolioValue": "إجمالي قيمة المحفظة",
+  "availableCashBalance": "الرصيد النقدي المتاح:",
+  "goldInvestment": "استثمار الذهب:",
+  "silverInvestment": "استثمار الفضة:",
+  "recentTransactions": "أحدث المعاملات",
+  "noTransactionsYet": "لا توجد معاملات بعد",
+  "viewAll": "عرض الكل",
+  "noTransactionsFound": "لم يتم العثور على معاملات.",
+  "quickActions": "إجراءات سريعة",
+  "buy": "شراء",
+  "sell": "بيع",
+  "transfer": "تحويل",
+  "convert": "تحويل عملة",
+  "noOfferProducts": "لا توجد منتجات عروض متاحة حالياً."
 }

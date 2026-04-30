@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class HomeQuickActionsWidget extends StatelessWidget {
   const HomeQuickActionsWidget({super.key});
@@ -14,7 +15,7 @@ class HomeQuickActionsWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Actions',
+          AppLocalizations.of(context).quickActions,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: palette.textPrimary,
@@ -24,10 +25,10 @@ class HomeQuickActionsWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildActionItem(context, Icons.wallet_sharp, 'Buy', AppRoutes.productRoute),
-            _buildActionItem(context, Icons.sell_outlined, 'Sell', AppRoutes.sellRoute),
-            _buildActionItem(context, Icons.wallet_giftcard, 'Transfer', AppRoutes.transferGiftRoute),
-            _buildActionItem(context, Icons.attach_money, 'Convert', AppRoutes.convertRoute),
+            _buildActionItem(context, Icons.wallet_sharp, AppLocalizations.of(context).buy, AppRoutes.productRoute),
+            _buildActionItem(context, Icons.sell_outlined, AppLocalizations.of(context).sell, AppRoutes.sellRoute),
+            _buildActionItem(context, Icons.wallet_giftcard, AppLocalizations.of(context).transfer, AppRoutes.transferGiftRoute),
+            _buildActionItem(context, Icons.attach_money, AppLocalizations.of(context).convert, AppRoutes.convertRoute),
           ],
         ),
       ],

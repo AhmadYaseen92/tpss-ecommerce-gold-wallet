@@ -50,6 +50,20 @@ abstract class AppLocalizations {
   String get wallet;
   String get cart;
   String get history;
+  String get totalPortfolioValue;
+  String get availableCashBalance;
+  String get goldInvestment;
+  String get silverInvestment;
+  String get recentTransactions;
+  String get noTransactionsYet;
+  String get viewAll;
+  String get noTransactionsFound;
+  String get quickActions;
+  String get buy;
+  String get sell;
+  String get transfer;
+  String get convert;
+  String get noOfferProducts;
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -79,6 +93,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wallet => 'Wallet';
   String get cart => 'Cart';
   String get history => 'History';
+  String get totalPortfolioValue => 'Total Portfolio Value';
+  String get availableCashBalance => 'Available cash balance:';
+  String get goldInvestment => 'Gold Investment:';
+  String get silverInvestment => 'Silver Investment:';
+  String get recentTransactions => 'Recent Transactions';
+  String get noTransactionsYet => 'No transactions yet';
+  String get viewAll => 'View All';
+  String get noTransactionsFound => 'No transactions found.';
+  String get quickActions => 'Quick Actions';
+  String get buy => 'Buy';
+  String get sell => 'Sell';
+  String get transfer => 'Transfer';
+  String get convert => 'Convert';
+  String get noOfferProducts => 'No offer products available right now.';
 }
 
 class AppLocalizationsAr extends AppLocalizations {
@@ -108,6 +136,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wallet => 'المحفظة';
   String get cart => 'السلة';
   String get history => 'السجل';
+  String get totalPortfolioValue => 'إجمالي قيمة المحفظة';
+  String get availableCashBalance => 'الرصيد النقدي المتاح:';
+  String get goldInvestment => 'استثمار الذهب:';
+  String get silverInvestment => 'استثمار الفضة:';
+  String get recentTransactions => 'أحدث المعاملات';
+  String get noTransactionsYet => 'لا توجد معاملات بعد';
+  String get viewAll => 'عرض الكل';
+  String get noTransactionsFound => 'لم يتم العثور على معاملات.';
+  String get quickActions => 'إجراءات سريعة';
+  String get buy => 'شراء';
+  String get sell => 'بيع';
+  String get transfer => 'تحويل';
+  String get convert => 'تحويل عملة';
+  String get noOfferProducts => 'لا توجد منتجات عروض متاحة حالياً.';
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

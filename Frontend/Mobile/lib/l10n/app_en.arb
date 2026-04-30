@@ -24,5 +24,19 @@
   "product": "Product",
   "wallet": "Wallet",
   "cart": "Cart",
-  "history": "History"
+  "history": "History",
+  "totalPortfolioValue": "Total Portfolio Value",
+  "availableCashBalance": "Available cash balance:",
+  "goldInvestment": "Gold Investment:",
+  "silverInvestment": "Silver Investment:",
+  "recentTransactions": "Recent Transactions",
+  "noTransactionsYet": "No transactions yet",
+  "viewAll": "View All",
+  "noTransactionsFound": "No transactions found.",
+  "quickActions": "Quick Actions",
+  "buy": "Buy",
+  "sell": "Sell",
+  "transfer": "Transfer",
+  "convert": "Convert",
+  "noOfferProducts": "No offer products available right now."
 }
