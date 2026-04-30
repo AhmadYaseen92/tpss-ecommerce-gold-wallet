@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/network/api_error_parser.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/profile/data/datasources/profile_remote_datasource.dart';
 
@@ -163,7 +164,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       emit(ProfileLoaded());
     } catch (e) {
-      emit(ProfileError('Failed to load profile: $e'));
+      emit(ProfileError('Failed to load profile: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 
@@ -222,7 +223,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         await loadProfile();
       }
     } catch (e) {
-      emit(ProfileError('Failed to save personal info: $e'));
+      emit(ProfileError('Failed to save personal info: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 
@@ -235,7 +236,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       isEditing = false;
       emit(ProfileSaved());
     } catch (e) {
-      emit(ProfileError('Failed to save language settings: $e'));
+      emit(ProfileError('Failed to save language settings: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 
@@ -249,7 +250,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(ProfileSaved());
       await loadProfile();
     } catch (e) {
-      emit(ProfileError('Failed to save theme settings: $e'));
+      emit(ProfileError('Failed to save theme settings: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 
@@ -283,7 +284,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(ProfileSaved());
       await loadProfile();
     } catch (e) {
-      emit(ProfileError('Failed to save payment method: $e'));
+      emit(ProfileError('Failed to save payment method: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 
@@ -315,7 +316,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(ProfileSaved());
       await loadProfile();
     } catch (e) {
-      emit(ProfileError('Failed to save linked bank account: $e'));
+      emit(ProfileError('Failed to save linked bank account: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 

@@ -6,7 +6,9 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.Database.Seed;
 using GoldWalletSystem.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -15,7 +17,27 @@ using System.Text;
 System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var validationErrors = context.ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .SelectMany(x => x.Value!.Errors)
+                .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Invalid input." : e.ErrorMessage)
+                .Distinct()
+                .ToArray();
+
+            var response = GoldWalletSystem.Application.DTOs.Common.ApiResponse<object>.Fail(
+                message: "Validation failed.",
+                statusCode: StatusCodes.Status400BadRequest,
+                errorCode: "VALIDATION_ERROR",
+                errors: validationErrors);
+
+            return new BadRequestObjectResult(response);
+        };
+    });
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddOpenApi();
 
@@ -107,7 +129,39 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.ContentType = "application/json";
+
+        var exception = context.Features.Get<IExceptionHandlerPathFeature>()?.Error;
+
+        var (statusCode, message, errorCode) = exception switch
+        {
+            UnauthorizedAccessException ex => (
+                StatusCodes.Status401Unauthorized,
+                string.IsNullOrWhiteSpace(ex.Message) ? "Invalid credentials. Please try again." : ex.Message,
+                "INVALID_CREDENTIALS"),
+            InvalidOperationException ex => (
+                StatusCodes.Status400BadRequest,
+                string.IsNullOrWhiteSpace(ex.Message) ? "Invalid request. Please review your input and try again." : ex.Message,
+                "INVALID_OPERATION"),
+            BadHttpRequestException => (
+                StatusCodes.Status400BadRequest,
+                "Invalid request. Please review your input and try again.",
+                "BAD_REQUEST"),
+            _ => (
+                StatusCodes.Status500InternalServerError,
+                "Something went wrong. Please try again later.",
+                "GENERAL_ERROR")
+        };
+
+        context.Response.StatusCode = statusCode;
+        var response = GoldWalletSystem.Application.DTOs.Common.ApiResponse<object>.Fail(message, statusCode, errorCode);
+        await context.Response.WriteAsJsonAsync(response);
+    });
+});
 app.UseStaticFiles();
 app.UseCors("WebApp");
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/network/api_error_parser.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_form_filter.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
@@ -76,7 +77,7 @@ class ProductCubit extends Cubit<ProductState> {
       await syncMarketWatchWithConfig();
       await _startProductAutoRefresh();
     } catch (e) {
-      emit(ProductError('Failed to load products: $e'));
+      emit(ProductError('Failed to load products: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 
@@ -119,7 +120,7 @@ class ProductCubit extends Cubit<ProductState> {
       _currentDetailProduct = product;
       emit(ProductDetailLoaded(product));
     } catch (e) {
-      emit(ProductDetailError('Failed to load product detail: $e'));
+      emit(ProductDetailError('Failed to load product detail: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 

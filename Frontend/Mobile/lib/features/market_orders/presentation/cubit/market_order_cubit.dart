@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/network/api_error_parser.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/domain/entities/market_order_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/domain/repositories/market_order_repository.dart';
@@ -69,7 +70,7 @@ class MarketOrderCubit extends Cubit<MarketOrderState> {
         ),
       );
     } catch (e) {
-      emit(MarketOrderError('Failed to load market orders: $e'));
+      emit(MarketOrderError('Failed to load market orders: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 

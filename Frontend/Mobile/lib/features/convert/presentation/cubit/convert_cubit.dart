@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/network/api_error_parser.dart';
 
 part 'convert_state.dart';
 
@@ -55,7 +56,7 @@ class ConvertCubit extends Cubit<ConvertState> {
         fromCurrency: fromCurrency,
       ));
     } catch (e) {
-      emit(ConvertError('Failed to load convert data: $e'));
+      emit(ConvertError('Failed to load convert data: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 

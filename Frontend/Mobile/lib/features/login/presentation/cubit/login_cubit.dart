@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/api_config.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/network/api_error_parser.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/auth/domain/usecases/login_usecase.dart';
@@ -151,7 +152,7 @@ class LoginCubit extends Cubit<LoginState> {
       );
       emit(LoginSuccess());
     } on DioException catch (e) {
-      emit(LoginError(_extractMessage(e)));
+      emit(LoginError(ApiErrorParser.friendlyMessage(e)));
     } catch (e) {
       emit(LoginError('Login failed: $e'));
     }
@@ -167,7 +168,7 @@ class LoginCubit extends Cubit<LoginState> {
         ),
       );
     } on DioException catch (e) {
-      emit(LoginServerCheckResult(success: false, message: _extractMessage(e)));
+      emit(LoginServerCheckResult(success: false, message: ApiErrorParser.friendlyMessage(e)));
     }
   }
 
@@ -193,36 +194,5 @@ class LoginCubit extends Cubit<LoginState> {
     }
   }
 
-  String _extractMessage(DioException e) {
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.sendTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      return 'Request timeout after ${ApiConfig.timeoutSeconds}s. '
-          'Check server IP/port, same Wi-Fi network, and firewall settings.';
-    }
 
-    if (e.type == DioExceptionType.connectionError) {
-      return 'Cannot connect to ${ApiConfig.baseUrl}. '
-          'Make sure backend is running and phone can reach your machine.';
-    }
-
-    final payload = e.response?.data;
-    if (payload is Map<String, dynamic>) {
-      final errors = payload['errors'];
-      if (errors is List && errors.isNotEmpty) {
-        return errors.first.toString();
-      }
-
-      final message = payload['message'];
-      if (message is String && message.trim().isNotEmpty) {
-        return message;
-      }
-    }
-
-    if (e.error is String && (e.error as String).trim().isNotEmpty) {
-      return e.error as String;
-    }
-
-    return 'Login failed. Please check your credentials and backend URL.';
-  }
 }

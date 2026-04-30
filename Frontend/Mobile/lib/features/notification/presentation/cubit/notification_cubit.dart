@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/network/api_error_parser.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/entities/notification_entity.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/get_notifications_usecase.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/notification/domain/usecases/mark_all_notifications_read_usecase.dart';
@@ -28,7 +29,7 @@ class NotificationCubit extends Cubit<NotificationState> {
       _allNotifications = await _getNotificationsUseCase(pageNumber: 1, pageSize: 100);
       _emitLoaded();
     } catch (e) {
-      emit(NotificationError('Failed to load notifications: $e'));
+      emit(NotificationError('Failed to load notifications: ${ApiErrorParser.friendlyFromAny(e)}'));
     }
   }
 
@@ -45,7 +46,7 @@ class NotificationCubit extends Cubit<NotificationState> {
           .toList();
       _emitLoaded();
     } catch (e) {
-      emit(NotificationError('Failed to mark notification as read: $e'));
+      emit(NotificationError('Failed to mark notification as read: ${ApiErrorParser.friendlyFromAny(e)}'));
       _emitLoaded();
     }
   }
@@ -56,7 +57,7 @@ class NotificationCubit extends Cubit<NotificationState> {
       _allNotifications = _allNotifications.map((item) => item.copyWith(isRead: true)).toList();
       _emitLoaded();
     } catch (e) {
-      emit(NotificationError('Failed to mark all notifications as read: $e'));
+      emit(NotificationError('Failed to mark all notifications as read: ${ApiErrorParser.friendlyFromAny(e)}'));
       _emitLoaded();
     }
   }
