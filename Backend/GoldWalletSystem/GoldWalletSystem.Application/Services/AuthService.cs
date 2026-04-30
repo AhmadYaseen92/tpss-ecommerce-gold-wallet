@@ -22,7 +22,11 @@ public class AuthService(
         if (string.IsNullOrWhiteSpace(loginIdentifier) || string.IsNullOrWhiteSpace(request.Password))
             throw new UnauthorizedAccessException("Invalid credentials.");
 
-        var user = await ValidateCredentialsAsync(loginIdentifier, request.Password, cancellationToken);
+        var normalizedLoginIdentifier = loginIdentifier.Trim();
+        if (!AuthInputValidation.IsValidEmail(normalizedLoginIdentifier) && !AuthInputValidation.IsValidUaeMobile(normalizedLoginIdentifier))
+            throw new UnauthorizedAccessException("Invalid credentials.");
+
+        var user = await ValidateCredentialsAsync(normalizedLoginIdentifier, request.Password, cancellationToken);
         return await BuildLoginResponseAsync(user, cancellationToken);
     }
 
@@ -449,6 +453,10 @@ public class AuthService(
                 if (string.IsNullOrWhiteSpace(branch.Country)) missingFields.Add($"Branches[{i}].Country");
                 if (string.IsNullOrWhiteSpace(branch.City)) missingFields.Add($"Branches[{i}].City");
                 if (string.IsNullOrWhiteSpace(branch.FullAddress)) missingFields.Add($"Branches[{i}].FullAddress");
+                if (!string.IsNullOrWhiteSpace(branch.PostalCode) && !AuthInputValidation.IsNumericOnly(branch.PostalCode))
+                    throw new InvalidOperationException($"Branch #{i + 1} postal code must be numeric.");
+                if (!string.IsNullOrWhiteSpace(branch.PhoneNumber) && !AuthInputValidation.IsValidInternationalPhone(branch.PhoneNumber))
+                    throw new InvalidOperationException($"Branch #{i + 1} phone number format is invalid.");
             }
         }
 
@@ -463,6 +471,10 @@ public class AuthService(
                 if (string.IsNullOrWhiteSpace(bank.AccountHolderName)) missingFields.Add($"BankAccounts[{i}].AccountHolderName");
                 if (string.IsNullOrWhiteSpace(bank.AccountNumber)) missingFields.Add($"BankAccounts[{i}].AccountNumber");
                 if (string.IsNullOrWhiteSpace(bank.Iban)) missingFields.Add($"BankAccounts[{i}].Iban");
+                if (!string.IsNullOrWhiteSpace(bank.Iban) && !AuthInputValidation.IsValidIban(bank.Iban))
+                    throw new InvalidOperationException($"Bank account #{i + 1} IBAN format is invalid.");
+                if (!string.IsNullOrWhiteSpace(bank.SwiftCode) && !AuthInputValidation.IsValidSwift(bank.SwiftCode))
+                    throw new InvalidOperationException($"Bank account #{i + 1} SWIFT format is invalid.");
             }
         }
 
@@ -481,6 +493,31 @@ public class AuthService(
 
         var missingDocs = requiredDocs.Where(x => !providedDocTypes.Contains(x)).ToList();
         missingFields.AddRange(missingDocs.Select(x => $"Documents:{x}"));
+
+
+        if (!string.IsNullOrWhiteSpace(company.CommercialRegistrationNumber) && !AuthInputValidation.IsNumericOnly(company.CommercialRegistrationNumber))
+            throw new InvalidOperationException("Company trade license number must be numeric.");
+
+        if (!string.IsNullOrWhiteSpace(company.VatNumber) && !AuthInputValidation.IsNumericOnly(company.VatNumber))
+            throw new InvalidOperationException("Company VAT number must be numeric.");
+
+        if (!string.IsNullOrWhiteSpace(company.PostalCode) && !AuthInputValidation.IsNumericOnly(company.PostalCode))
+            throw new InvalidOperationException("Company postal code must be numeric.");
+
+        if (!string.IsNullOrWhiteSpace(company.CompanyPhone) && !AuthInputValidation.IsValidInternationalPhone(company.CompanyPhone))
+            throw new InvalidOperationException("Company phone number format is invalid.");
+
+        if (!string.IsNullOrWhiteSpace(manager.MobileNumber) && !AuthInputValidation.IsValidInternationalPhone(manager.MobileNumber))
+            throw new InvalidOperationException("Manager mobile number format is invalid.");
+
+        if (!string.IsNullOrWhiteSpace(manager.EmailAddress) && !AuthInputValidation.IsValidEmail(manager.EmailAddress))
+            throw new InvalidOperationException("Manager email address format is invalid.");
+
+        if (!string.IsNullOrWhiteSpace(company.CompanyEmail) && !AuthInputValidation.IsValidEmail(company.CompanyEmail))
+            throw new InvalidOperationException("Company email address format is invalid.");
+
+        if (!string.IsNullOrWhiteSpace(request.PhoneNumber) && !AuthInputValidation.IsValidUaeMobile(request.PhoneNumber))
+            throw new InvalidOperationException("Login phone number must be a valid UAE mobile format.");
 
         if (missingFields.Count > 0)
             throw new InvalidOperationException($"All required seller registration fields must be provided. Missing: {string.Join(", ", missingFields)}");

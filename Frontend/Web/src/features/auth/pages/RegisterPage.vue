@@ -9,6 +9,7 @@ import {
 import { buildRegisterSellerPayload } from "../store/useAuthPage";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 import { fetchPublicConfigurations } from "../../../shared/services/backendGateway";
+import { isEmail, isInternationalPhone, isNumericOnly, isUaeMobile, isValidIban, isValidSwift } from "../services/authValidation";
 
 const emit = defineEmits<{ toLogin: []; themeToggle: [] }>();
 const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
@@ -42,9 +43,6 @@ void fetchPublicConfigurations(["Terms_Seller_TermsAndConditions", "Terms_Invest
   })
   .catch(() => undefined);
 
-const isEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
-const uaePhoneRegex = /^(?:\+971|0)?5\d{8}$/;
-const isValidUaePhone = (value: string) => uaePhoneRegex.test(value.trim());
 const showModal = (title: string, message: string) =>
   ElMessageBox.alert(message, title, { confirmButtonText: "OK", type: "warning" });
 const showInfoModal = (title: string, message: string) =>
@@ -99,14 +97,56 @@ const onSubmit = async () => {
     return;
   }
 
-  if (model.ownerInfo.mobile.trim() && !isValidUaePhone(model.ownerInfo.mobile)) {
+  if (model.ownerInfo.mobile.trim() && !isInternationalPhone(model.ownerInfo.mobile)) {
     await showModal("Validation Error", "Manager mobile number must match UAE format (for example: +971501234567).");
     return;
   }
 
-  if (model.credentials.loginPhone.trim() && !isValidUaePhone(model.credentials.loginPhone)) {
+  if (model.credentials.loginPhone.trim() && !isUaeMobile(model.credentials.loginPhone)) {
     await showModal("Validation Error", "Login phone number must match UAE format (for example: +971501234567).");
     return;
+  }
+
+  if (model.companyInfo.crNumber.trim() && !isNumericOnly(model.companyInfo.crNumber)) {
+    await showModal("Validation Error", "Trade License Number must be numeric.");
+    return;
+  }
+
+  if (model.companyInfo.vatNumber.trim() && !isNumericOnly(model.companyInfo.vatNumber)) {
+    await showModal("Validation Error", "VAT Number must be numeric.");
+    return;
+  }
+
+  if (model.companyInfo.postalCode.trim() && !isNumericOnly(model.companyInfo.postalCode)) {
+    await showModal("Validation Error", "Company Postal Code must be numeric.");
+    return;
+  }
+
+  if (model.companyInfo.phone.trim() && !isInternationalPhone(model.companyInfo.phone)) {
+    await showModal("Validation Error", "Company phone number format is invalid.");
+    return;
+  }
+
+  for (const [idx, branch] of model.branches.entries()) {
+    if (branch.postalCode.trim() && !isNumericOnly(branch.postalCode)) {
+      await showModal("Validation Error", `Branch #${idx + 1} postal code must be numeric.`);
+      return;
+    }
+    if (branch.phone.trim() && !isInternationalPhone(branch.phone)) {
+      await showModal("Validation Error", `Branch #${idx + 1} phone number format is invalid.`);
+      return;
+    }
+  }
+
+  for (const [idx, bank] of model.banks.entries()) {
+    if (bank.iban.trim() && !isValidIban(bank.iban)) {
+      await showModal("Validation Error", `Bank account #${idx + 1} IBAN format is invalid.`);
+      return;
+    }
+    if (bank.swift.trim() && !isValidSwift(bank.swift)) {
+      await showModal("Validation Error", `Bank account #${idx + 1} SWIFT format is invalid.`);
+      return;
+    }
   }
 
   if (model.companyInfo.tradeLicenseExpiryDate) {
