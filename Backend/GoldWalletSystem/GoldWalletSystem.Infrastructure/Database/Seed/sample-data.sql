@@ -114,18 +114,22 @@ BEGIN TRY
             T.[ReviewedAtUtc] = @Now,
             T.[ReviewNotes] = N'Seeded as approved seller',
             T.[IsActive] = 1,
+            T.[MarketCurrencyCode] = CASE WHEN S.[CompanyCode] = N'IMSEEH' THEN N'AED' WHEN S.[CompanyCode] = N'GOLDPAL' THEN N'SAR' ELSE N'AED' END,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
         INSERT (
             [UserId],[CompanyName],[CompanyCode],[CommercialRegistrationNumber],[VatNumber],[BusinessActivity],[EstablishedDate],
             [CompanyPhone],[CompanyEmail],[Website],[Description],[IsActive],[KycStatus],[ReviewedAtUtc],[ReviewNotes],
-            [GoldAskPrice],[SilverAskPrice],[DiamondAskPrice],[MarketType],[CreatedAtUtc],[UpdatedAtUtc]
+            [GoldAskPrice],[GoldBidPrice],[SilverAskPrice],[SilverBidPrice],[DiamondAskPrice],[DiamondBidPrice],[MarketType],[MarketCurrencyCode],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES (
             (SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[SellerEmail]),
             S.[CompanyName],S.[CompanyCode],S.[CommercialRegistrationNumber],S.[VatNumber],S.[BusinessActivity],NULL,
             S.[CompanyPhone],S.[CompanyEmail],NULL,NULL,1,2,@Now,N'Seeded as approved seller',
-            NULL,NULL,NULL,CASE WHEN S.[CompanyCode] = N'IMSEEH' THEN N'UAE' WHEN S.[CompanyCode] = N'GOLDPAL' THEN N'KSA' ELSE N'UAE' END,@Now,NULL
+            NULL,NULL,NULL,NULL,NULL,NULL,
+            CASE WHEN S.[CompanyCode] = N'IMSEEH' THEN N'UAE' WHEN S.[CompanyCode] = N'GOLDPAL' THEN N'KSA' ELSE N'UAE' END,
+            CASE WHEN S.[CompanyCode] = N'IMSEEH' THEN N'AED' WHEN S.[CompanyCode] = N'GOLDPAL' THEN N'SAR' ELSE N'AED' END,
+            @Now,NULL
         );
 
     -- Assign market type per seeded seller for market-specific currency/fee behavior.
