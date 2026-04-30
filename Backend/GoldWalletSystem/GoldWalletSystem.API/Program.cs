@@ -1,11 +1,13 @@
 using GoldWalletSystem.API.Extensions;
 using GoldWalletSystem.API.Hubs;
+using GoldWalletSystem.API.Middleware;
 using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.Database.Seed;
 using GoldWalletSystem.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
