@@ -323,6 +323,7 @@ class TransactionPage extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
+        final palette = ctx.appPalette;
         final updatedText = _dateFormat.format(
           transaction.displayDate.toLocal(),
         );
@@ -336,8 +337,8 @@ class TransactionPage extends StatelessWidget {
           maxChildSize: 0.95,
           builder: (_, controller) {
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: palette.surface,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Column(
@@ -349,7 +350,7 @@ class TransactionPage extends StatelessWidget {
                     width: 44,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: palette.border,
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
@@ -372,13 +373,13 @@ class TransactionPage extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w800,
-                                    color: Colors.grey.shade900,
+                                    color: palette.textPrimary,
                                   ),
                                 ),
                               ),
                               IconButton(
                                 onPressed: () => Navigator.pop(context),
-                                icon: const Icon(Icons.close_rounded),
+                                icon: Icon(Icons.close_rounded, color: palette.textSecondary),
                               ),
                             ],
                           ),
@@ -476,9 +477,10 @@ class TransactionPage extends StatelessWidget {
                             spacing: 10,
                             runSpacing: 10,
                             children: [
-                              _modernChip(
+                                  _modernChip(
                                 Icons.sync_alt,
                                 transaction.transactionType,
+                                context: ctx,
                               ),
 
                               _modernChip(
@@ -494,46 +496,53 @@ class TransactionPage extends StatelessWidget {
                               _modernChip(
                                 Icons.inventory_2_outlined,
                                 'Qty ${transaction.quantity}',
+                                context: ctx,
                               ),
 
                               _modernChip(
                                 Icons.scale_outlined,
                                 '${transaction.weight.toStringAsFixed(3)} ${transaction.unit}',
+                                context: ctx,
                               ),
 
                               if (transaction.isGiftReceived)
-                                _modernChip(Icons.card_giftcard, 'Gift'),
+                                _modernChip(Icons.card_giftcard, 'Gift', context: ctx),
                             ],
                           ),
 
                           const SizedBox(height: 22),
 
-                          _sectionTitle('Information'),
+                          _sectionTitle('Information', context: ctx),
 
                           _modernDetailTile(
                             Icons.tag,
                             'Transaction ID',
                             '${transaction.id}',
+                            context: ctx,
                           ),
                           _modernDetailTile(
                             Icons.person_outline,
                             'User ID',
                             '${transaction.userId}',
+                            context: ctx,
                           ),
                           _modernDetailTile(
                             Icons.storefront_outlined,
                             'Seller ID',
                             '${transaction.sellerId ?? '-'}',
+                            context: ctx,
                           ),
                           _modernDetailTile(
                             Icons.attach_money,
                             'Unit Price',
                             transaction.unitPrice.toStringAsFixed(2),
+                            context: ctx,
                           ),
                           _modernDetailTile(
                             Icons.workspace_premium_outlined,
                             'Purity',
                             transaction.purity.toStringAsFixed(2),
+                            context: ctx,
                           ),
 
                           if (transaction.isTransferOrGift) ...[
@@ -541,45 +550,53 @@ class TransactionPage extends StatelessWidget {
                               Icons.call_received,
                               'Transfer From',
                               transaction.transferFromLabel,
+                              context: ctx,
                             ),
                             _modernDetailTile(
                               Icons.call_made,
                               'Transfer To',
                               transaction.transferToLabel,
+                              context: ctx,
                             ),
                           ],
 
                           const SizedBox(height: 20),
 
-                          _sectionTitle('Timeline'),
+                          _sectionTitle('Timeline', context: ctx),
 
                           _modernDetailTile(
                             Icons.calendar_today_outlined,
                             'Created',
                             createdText,
+                            context: ctx,
                           ),
                           _modernDetailTile(
                             Icons.update_outlined,
                             'Updated',
                             updatedText,
+                            context: ctx,
                           ),
 
                           const SizedBox(height: 20),
 
-                          _sectionTitle('Notes'),
+                          _sectionTitle('Notes', context: ctx),
 
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
+                              color: palette.surfaceMuted,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(
                               transaction.notes.isEmpty
                                   ? 'No notes available'
                                   : transaction.notes,
-                              style: const TextStyle(fontSize: 14, height: 1.4),
+                              style: TextStyle(
+                                fontSize: 14,
+                                height: 1.4,
+                                color: palette.textSecondary,
+                              ),
                             ),
                           ),
 
@@ -594,8 +611,11 @@ class TransactionPage extends StatelessWidget {
                                     Navigator.pop(context);
                                   }
                                 },
-                                icon: const Icon(Icons.cancel_outlined, color: Colors.red),
-                                label: const Text('Cancel Request', style: TextStyle(color: Colors.red)),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: palette.danger),
+                                ),
+                                icon: Icon(Icons.cancel_outlined, color: palette.danger),
+                                label: Text('Cancel Request', style: TextStyle(color: palette.danger)),
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -627,7 +647,8 @@ class TransactionPage extends StatelessWidget {
   }
 
   /// SECTION TITLE
-  Widget _sectionTitle(String title) {
+  Widget _sectionTitle(String title, {required BuildContext context}) {
+    final palette = context.appPalette;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
@@ -635,21 +656,27 @@ class TransactionPage extends StatelessWidget {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w800,
-          color: Colors.grey.shade900,
+          color: palette.textPrimary,
         ),
       ),
     );
   }
 
   /// MODERN DETAIL TILE
-  Widget _modernDetailTile(IconData icon, String title, String value) {
+  Widget _modernDetailTile(
+    IconData icon,
+    String title,
+    String value, {
+    BuildContext? context,
+  }) {
+    final palette = context?.appPalette;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: palette?.surfaceMuted ?? Colors.grey.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: palette?.border ?? Colors.grey.shade200),
       ),
       child: Row(
         children: [
@@ -657,10 +684,10 @@ class TransactionPage extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(.04),
+              color: (palette?.textPrimary ?? Colors.black).withOpacity(.08),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 20),
+            child: Icon(icon, size: 20, color: palette?.textSecondary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -669,14 +696,15 @@ class TransactionPage extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12, color: palette?.textSecondary ?? Colors.grey.shade600),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
+                    color: palette?.textPrimary,
                   ),
                 ),
               ],
@@ -705,27 +733,29 @@ class TransactionPage extends StatelessWidget {
   Widget _modernChip(
     IconData icon,
     String label, {
+    BuildContext? context,
     Color? backgroundColor,
     Color? textColor,
     Color? iconColor,
   }) {
+    final palette = context?.appPalette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: backgroundColor ?? Colors.grey.shade100,
+        color: backgroundColor ?? palette?.surfaceMuted ?? Colors.grey.shade100,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: iconColor ?? Colors.black87),
+          Icon(icon, size: 16, color: iconColor ?? palette?.textPrimary ?? Colors.black87),
           const SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 13,
-              color: textColor ?? Colors.black87,
+              color: textColor ?? palette?.textPrimary ?? Colors.black87,
             ),
           ),
         ],
