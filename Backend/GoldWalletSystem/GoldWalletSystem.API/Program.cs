@@ -139,9 +139,9 @@ app.UseExceptionHandler(errorApp =>
 
         var (statusCode, message, errorCode) = exception switch
         {
-            UnauthorizedAccessException => (
+            UnauthorizedAccessException ex => (
                 StatusCodes.Status401Unauthorized,
-                "Invalid credentials. Please try again.",
+                string.IsNullOrWhiteSpace(ex.Message) ? "Invalid credentials. Please try again." : ex.Message,
                 "INVALID_CREDENTIALS"),
             InvalidOperationException => (
                 StatusCodes.Status400BadRequest,
