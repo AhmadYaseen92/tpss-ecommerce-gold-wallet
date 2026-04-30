@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/signup/presentation/cubit/signup_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_text_field.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/password_requirements_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/terms_row.dart';
@@ -41,6 +42,17 @@ class _SignupStep2FormState extends State<SignupStep2Form> {
   }
 
   @override
+
+  Future<void> _showTermsModal(String title, String message) async {
+    await AppModalAlert.show(
+      context,
+      title: title,
+      message: message,
+      buttonText: 'Close',
+      variant: AppModalAlertVariant.warning,
+    );
+  }
+
   Widget build(BuildContext context) {
     final palette = context.appPalette;
 
@@ -161,6 +173,14 @@ class _SignupStep2FormState extends State<SignupStep2Form> {
               connectorText: ' and ',
               secondHighlightedText: 'Privacy Policy',
               suffixText: '.',
+              onHighlightedTap: () => _showTermsModal(
+                'Terms & Conditions',
+                'By creating an account, you agree to follow platform terms, security policies, and responsible usage requirements.',
+              ),
+              onSecondHighlightedTap: () => _showTermsModal(
+                'Privacy Policy',
+                'We process your registration data to verify identity, secure your account, and provide wallet services according to applicable privacy laws.',
+              ),
             ),
           ),
           const SizedBox(height: 32),

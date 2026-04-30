@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 
@@ -9,6 +10,8 @@ class TermsRow extends StatelessWidget {
   final String suffixText;
   final String? connectorText;
   final String? secondHighlightedText;
+  final VoidCallback? onHighlightedTap;
+  final VoidCallback? onSecondHighlightedTap;
 
   const TermsRow({
     super.key,
@@ -19,6 +22,8 @@ class TermsRow extends StatelessWidget {
     this.suffixText = ' for this transfer. Once confirmed, this action cannot be undone.',
     this.connectorText,
     this.secondHighlightedText,
+    this.onHighlightedTap,
+    this.onSecondHighlightedTap,
   });
 
   @override
@@ -52,6 +57,9 @@ class TermsRow extends StatelessWidget {
                       color: palette.primary,
                       fontWeight: FontWeight.w600,
                     ),
+                    recognizer: onHighlightedTap == null
+                        ? null
+                        : (TapGestureRecognizer()..onTap = onHighlightedTap),
                   ),
                   if (connectorText != null && secondHighlightedText != null) ...
                     [
@@ -62,6 +70,10 @@ class TermsRow extends StatelessWidget {
                           color: palette.primary,
                           fontWeight: FontWeight.w600,
                         ),
+                        recognizer: onSecondHighlightedTap == null
+                            ? null
+                            : (TapGestureRecognizer()
+                              ..onTap = onSecondHighlightedTap),
                       ),
                     ],
                   TextSpan(text: suffixText),
