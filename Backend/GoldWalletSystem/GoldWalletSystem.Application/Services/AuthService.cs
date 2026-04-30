@@ -14,7 +14,8 @@ public class AuthService(
     IUserAuthRepository userAuthRepository,
     IPasswordHasher passwordHasher,
     ITokenService tokenService,
-    IOtpService otpService) : IAuthService
+    IOtpService otpService,
+    IRegistrationDocumentService registrationDocumentService) : IAuthService
 {
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default)
     {
@@ -85,10 +86,12 @@ public class AuthService(
         var existing = await userAuthRepository.GetByEmailAsync(request.Email.Trim(), cancellationToken);
         if (existing is not null)
         {
-            throw new InvalidOperationException("Email is already registered.");
+            throw new GoldWalletSystem.Domain.Exceptions.BusinessException("AUTH_EMAIL_EXISTS", "Email is already registered.");
         }
 
         var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
+
+        await registrationDocumentService.PersistSellerDocumentsAsync(request, cancellationToken);
         var fullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  ", " ").Trim();
 
         var user = new User
@@ -240,7 +243,7 @@ public class AuthService(
             ?? throw new UnauthorizedAccessException("User not found.");
 
         if (!user.IsActive)
-            throw new UnauthorizedAccessException("User is not active.");
+            throw new GoldWalletSystem.Domain.Exceptions.BusinessException("AUTH_USER_INACTIVE", "Your account is inactive. Please contact support.", 401);
 
         if (!passwordHasher.Verify(password, user.PasswordHash))
             throw new UnauthorizedAccessException("Credential error.");

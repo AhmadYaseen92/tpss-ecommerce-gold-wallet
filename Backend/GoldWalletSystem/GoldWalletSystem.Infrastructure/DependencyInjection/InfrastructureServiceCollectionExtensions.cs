@@ -3,6 +3,7 @@ using GoldWalletSystem.Application.Interfaces.Services;
 using GoldWalletSystem.Application.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.Database.Seed;
+using GoldWalletSystem.Infrastructure.FileStorage;
 using GoldWalletSystem.Infrastructure.Repositories;
 using GoldWalletSystem.Infrastructure.Services;
 using GoldWalletSystem.Infrastructure.Services.Security;
@@ -42,6 +43,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<INotificationRealtimePublisher, NotificationRealtimePublisher>();
         services.AddScoped<IPushNotificationSender, PushNotificationSender>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IRegistrationDocumentService, RegistrationDocumentFileStorageService>();
+        services.AddScoped<IProfileMediaService, ProfileMediaFileStorageService>();
         services.AddScoped<IMobileAppConfigurationService, MobileAppConfigurationService>();
         services.AddScoped<IWalletService, WalletService>();
         services.AddScoped<IWalletActionValidationService, WalletActionValidationService>();
@@ -55,6 +58,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IOtpDeliveryService, OtpDeliveryService>();
         services.AddSingleton<IOtpSessionStore, OtpSessionMemoryStore>();
         services.AddScoped<IOtpService, OtpService>();
+        services.AddScoped<ICheckoutOtpOrchestrator, CheckoutOtpOrchestrator>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

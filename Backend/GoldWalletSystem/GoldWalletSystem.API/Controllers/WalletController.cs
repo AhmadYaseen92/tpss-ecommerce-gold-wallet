@@ -25,7 +25,8 @@ public class WalletController(
     IFeeCalculationService feeCalculationService,
     AppDbContext dbContext,
     IWebHostEnvironment environment,
-    API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
+    API.Services.IMarketplaceRealtimeNotifier realtimeNotifier,
+    API.Services.IInvoiceDocumentService invoiceDocumentService) : SecuredControllerBase(currentUser)
 {
     [HttpPost("by-user")]
     public async Task<IActionResult> GetByUser([FromBody] UserRequestDto request, CancellationToken cancellationToken = default)
@@ -104,7 +105,7 @@ public class WalletController(
                     IsDelivered = status == "Delivered",
                     StatusDetails = resolvedDetailsWithFallback,
                     InvoiceId = invoiceMeta.InvoiceId == 0 ? null : invoiceMeta.InvoiceId,
-                    CertificateUrl = ToAbsoluteFileUrl(invoiceMeta.PdfUrl),
+                    CertificateUrl = invoiceDocumentService.ToAbsoluteUrl(HttpContext.Request, invoiceMeta.PdfUrl),
                     ProductName = asset.ProductName,
                     ProductSku = asset.ProductSku,
                     SourceInvestorName = sourceInvestorName
@@ -159,7 +160,7 @@ public class WalletController(
         }
 
         var pdfUrl = invoice.PdfUrl;
-        var fileExists = !string.IsNullOrWhiteSpace(pdfUrl) && InvoiceFileExists(pdfUrl);
+        var fileExists = !string.IsNullOrWhiteSpace(pdfUrl) && invoiceDocumentService.Exists(pdfUrl);
         if (!fileExists)
         {
             var walletAsset = await dbContext.WalletAssets
@@ -198,7 +199,7 @@ public class WalletController(
         {
             InvoiceId = invoice.Id,
             InvoiceNumber = invoice.InvoiceNumber,
-            PdfUrl = ToAbsoluteFileUrl(invoice.PdfUrl)
+            PdfUrl = invoiceDocumentService.ToAbsoluteUrl(HttpContext.Request, invoice.PdfUrl)
         }));
     }
 
@@ -1367,33 +1368,7 @@ public class WalletController(
         decimal amount,
         CancellationToken cancellationToken)
     {
-        var root = environment.WebRootPath;
-        if (string.IsNullOrWhiteSpace(root))
-        {
-            root = Path.Combine(environment.ContentRootPath, "wwwroot");
-        }
-
-        var folder = Path.Combine(root, "Certificats", investorUserId.ToString());
-        Directory.CreateDirectory(folder);
-
-        var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
-        var filePath = Path.Combine(folder, fileName);
-        var lines = new (string Label, string Value)[]
-        {
-            ("Date (UTC)", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")),
-            ("Action", actionType),
-            ("Investor User Id", investorUserId.ToString()),
-            ("Asset Id", asset.Id.ToString()),
-            ("Asset Type", asset.AssetType.ToString()),
-            ("Category", asset.Category.ToString()),
-            ("Quantity", quantity.ToString()),
-            ("Weight", $"{asset.Weight} {asset.Unit}"),
-            ("Purity", asset.Purity.ToString()),
-            ("Amount", amount.ToString())
-        };
-        var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
-        await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
-        return $"/Certificats/{investorUserId}/{fileName}";
+        return await invoiceDocumentService.SaveWalletInvoiceAsync(investorUserId, actionType, asset, quantity, amount, cancellationToken);
     }
 
     private static int CalculateDaysHeld(DateTime walletAssetCreatedAtUtc)
@@ -1402,27 +1377,7 @@ public class WalletController(
         return Math.Max(0, heldDays);
     }
 
-    private string? ToAbsoluteFileUrl(string? fileUrl)
-    {
-        if (string.IsNullOrWhiteSpace(fileUrl)) return null;
-        if (Uri.TryCreate(fileUrl, UriKind.Absolute, out _)) return fileUrl;
 
-        var request = HttpContext.Request;
-        var normalized = fileUrl.StartsWith('/') ? fileUrl : $"/{fileUrl}";
-        return $"{request.Scheme}://{request.Host}{normalized}";
-    }
 
-    private bool InvoiceFileExists(string? fileUrl)
-    {
-        if (string.IsNullOrWhiteSpace(fileUrl)) return false;
-        var root = environment.WebRootPath;
-        if (string.IsNullOrWhiteSpace(root))
-        {
-            root = Path.Combine(environment.ContentRootPath, "wwwroot");
-        }
 
-        var relative = fileUrl.Trim().TrimStart('/');
-        var physicalPath = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
-        return System.IO.File.Exists(physicalPath);
-    }
 }

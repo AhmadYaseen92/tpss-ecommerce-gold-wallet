@@ -20,6 +20,7 @@ public class CheckoutController(
     AppDbContext dbContext,
     ICurrentUserService currentUser,
     IOtpService otpService,
+    ICheckoutOtpOrchestrator checkoutOtpOrchestrator,
     INotificationService notificationService,
     IFeeCalculationService feeCalculationService,
     API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : SecuredControllerBase(currentUser)
@@ -29,14 +30,7 @@ public class CheckoutController(
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
 
-        var actionReference = BuildCheckoutActionReference(request.UserId, request.ProductIds, request.ProductId, request.Quantity);
-        var data = await otpService.RequestAsync(new RequestOtpRequestDto
-        {
-            UserId = request.UserId,
-            ActionType = OtpActionTypes.Buy,
-            ActionReferenceId = actionReference,
-            ForceEmailFallback = request.ForceEmailFallback
-        }, cancellationToken);
+        var data = await checkoutOtpOrchestrator.RequestAsync(request.UserId, request.ProductIds, request.ProductId, request.Quantity, request.ForceEmailFallback, cancellationToken);
 
         return Ok(ApiResponse<OtpDispatchResponseDto>.Ok(data, "Checkout OTP sent"));
     }
@@ -75,7 +69,7 @@ public class CheckoutController(
     public async Task<IActionResult> Confirm([FromBody] CheckoutConfirmRequest request, CancellationToken cancellationToken = default)
     {
         if (!HasUserAccess(request.UserId)) return ForbidApiResponse();
-        await EnsureCheckoutOtpVerifiedAsync(request, cancellationToken);
+        await checkoutOtpOrchestrator.EnsureOtpVerifiedAsync(request.UserId, request.ProductIds, request.ProductId, request.Quantity, request.OtpVerificationToken, request.OtpActionReferenceId, request.OtpRequestId, request.OtpCode, cancellationToken);
         var isDirectCheckout = request.ProductId.HasValue && request.Quantity.HasValue && request.Quantity.Value > 0;
         var fromCart = !isDirectCheckout;
 
@@ -377,84 +371,4 @@ public class CheckoutController(
         public string OtpCode { get; set; } = string.Empty;
     }
 
-    private async Task EnsureCheckoutOtpVerifiedAsync(CheckoutConfirmRequest request, CancellationToken cancellationToken)
-    {
-        var checkoutOtpRequired = await otpService.IsActionProtectedAsync(OtpActionTypes.Checkout, cancellationToken);
-        var buyOtpRequired = await otpService.IsActionProtectedAsync(OtpActionTypes.Buy, cancellationToken);
-        if (!checkoutOtpRequired && !buyOtpRequired) return;
-
-        var actionReference = string.IsNullOrWhiteSpace(request.OtpActionReferenceId)
-            ? BuildCheckoutActionReference(request.UserId, request.ProductIds, request.ProductId, request.Quantity)
-            : request.OtpActionReferenceId;
-
-        if (!string.IsNullOrWhiteSpace(request.OtpVerificationToken))
-        {
-            await ConsumeCheckoutOrBuyGrantAsync(request.UserId, actionReference, request.OtpVerificationToken, cancellationToken);
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(request.OtpRequestId) || string.IsNullOrWhiteSpace(request.OtpCode))
-            throw new InvalidOperationException("Checkout OTP is required. Call /api/checkout/otp/request then verify with /api/checkout/otp/verify.");
-
-        var verified = await otpService.VerifyAsync(new VerifyOtpRequestDto
-        {
-            UserId = request.UserId,
-            OtpRequestId = request.OtpRequestId,
-            OtpCode = request.OtpCode
-        }, cancellationToken);
-
-        var verifiedAction = verified.ActionType.Trim().ToLowerInvariant();
-        if (verifiedAction is not (OtpActionTypes.Checkout or OtpActionTypes.Buy))
-            throw new InvalidOperationException("OTP action is invalid for checkout.");
-
-        await otpService.ConsumeVerificationGrantAsync(
-            request.UserId,
-            verified.ActionType,
-            string.IsNullOrWhiteSpace(verified.ActionReferenceId) ? actionReference : verified.ActionReferenceId,
-            verified.VerificationToken,
-            cancellationToken);
-    }
-
-    private static string BuildCheckoutActionReference(int userId, IReadOnlyCollection<int>? productIds, int? productId, int? quantity)
-    {
-        if (productId.HasValue && quantity.HasValue && quantity.Value > 0)
-            return $"checkout:{userId}:product:{productId.Value}:qty:{quantity.Value}";
-
-        if (productIds is { Count: > 0 })
-        {
-            var sorted = productIds.OrderBy(x => x).ToArray();
-            return $"checkout:{userId}:cart:{string.Join('-', sorted)}";
-        }
-
-        return $"checkout:{userId}:cart:all";
-    }
-
-    private async Task ConsumeCheckoutOrBuyGrantAsync(int userId, string actionReference, string verificationToken, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await otpService.ConsumeVerificationGrantAsync(
-                userId,
-                OtpActionTypes.Checkout,
-                actionReference,
-                verificationToken,
-                cancellationToken);
-            return;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            // Try Buy action for mobile flows that label checkout OTP as "buy".
-        }
-        catch (InvalidOperationException)
-        {
-            // Try Buy action for mobile flows that label checkout OTP as "buy".
-        }
-
-        await otpService.ConsumeVerificationGrantAsync(
-            userId,
-            OtpActionTypes.Buy,
-            actionReference,
-            verificationToken,
-            cancellationToken);
-    }
 }

@@ -11,7 +11,6 @@ using GoldWalletSystem.Infrastructure.Database.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using System.Text.Json;
 
 namespace GoldWalletSystem.API.Controllers;
@@ -19,7 +18,7 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/products")]
-public class ProductsController(IProductService productService, AppDbContext dbContext, IWebHostEnvironment environment, API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
+public class ProductsController(IProductService productService, AppDbContext dbContext, IWebHostEnvironment environment, API.Services.IMarketplaceRealtimeNotifier realtimeNotifier, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
 {
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] ProductSearchRequestDto request, CancellationToken cancellationToken = default)
@@ -41,13 +40,12 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     public async Task<IActionResult> GetManagementList(CancellationToken cancellationToken = default)
     {
         if (!IsSellerOrAdmin()) return Forbid();
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
         var sellerIdClaim = int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var parsedSellerId)
             ? parsedSellerId
             : 0;
 
         var query = dbContext.Products.AsNoTracking().AsQueryable();
-        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase) && sellerIdClaim > 0)
+        if (!isAdmin && sellerIdClaim > 0)
         {
             query = query.Where(x => x.SellerId == sellerIdClaim);
         }
@@ -97,11 +95,10 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
     {
         if (!IsSellerOrAdmin()) return Forbid();
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
         var sellerScope = ResolveSellerScope();
 
         var query = dbContext.Products.AsNoTracking().Where(x => x.Id == id);
-        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        if (!currentUser.IsInRole(SystemRoles.Admin))
         {
             if (!sellerScope.HasValue) return Forbid();
             query = query.Where(x => x.SellerId == sellerScope.Value);
@@ -203,8 +200,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             return NotFound(ApiResponse<object>.Fail("Product not found", 404));
         }
 
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
-        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        if (!currentUser.IsInRole(SystemRoles.Admin))
         {
             var sellerScope = ResolveSellerScope();
             if (!sellerScope.HasValue || product.SellerId != sellerScope.Value)
@@ -260,8 +256,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             return NotFound(ApiResponse<object>.Fail("Product not found", 404));
         }
 
-        var role = User.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? string.Empty;
-        if (!string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        if (!currentUser.IsInRole(SystemRoles.Admin))
         {
             var sellerScope = ResolveSellerScope();
             if (!sellerScope.HasValue || product.SellerId != sellerScope.Value)
@@ -446,23 +441,16 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
     private int? ResolveSellerScope()
     {
-        var role = GetRoleClaim();
-        if (string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        if (currentUser.IsInRole(SystemRoles.Admin))
         {
             return null;
         }
 
-        return int.TryParse(GetSellerIdClaim(), out var sellerId)
-            ? sellerId
-            : null;
+        return CurrentSellerId;
     }
 
     private bool IsSellerOrAdmin()
-    {
-        var role = GetRoleClaim();
-        return string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase)
-               || string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
-    }
+        => currentUser.IsInRole(SystemRoles.Admin) || currentUser.IsInRole(SystemRoles.Seller);
 
     private static ProductCategory ToLegacyCategory(ProductMaterialType materialType)
     {
@@ -477,27 +465,18 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
     private int ResolveSellerId(int? requestedSellerId, int fallbackSellerId = 0)
     {
-        var role = GetRoleClaim();
-        if (string.Equals(role, SystemRoles.Admin, StringComparison.OrdinalIgnoreCase))
+        if (currentUser.IsInRole(SystemRoles.Admin))
         {
             var resolved = requestedSellerId ?? fallbackSellerId;
             if (resolved <= 0) throw new InvalidOperationException("SellerId is required for admin operations.");
             return resolved;
         }
 
-        if (int.TryParse(GetSellerIdClaim(), out var sellerId) && sellerId > 0)
-            return sellerId;
+        if (CurrentSellerId.HasValue && CurrentSellerId.Value > 0)
+            return CurrentSellerId.Value;
 
         throw new UnauthorizedAccessException("Seller scope is required.");
     }
-
-    private string GetRoleClaim()
-        => User.Claims.FirstOrDefault(c => c.Type == "role")?.Value?.Trim()
-           ?? User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value?.Trim()
-           ?? string.Empty;
-
-    private string? GetSellerIdClaim()
-        => User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value?.Trim();
 
     private async Task<string> SaveImageAsync(IFormFile? image, string? existingImageUrl, CancellationToken cancellationToken)
     {

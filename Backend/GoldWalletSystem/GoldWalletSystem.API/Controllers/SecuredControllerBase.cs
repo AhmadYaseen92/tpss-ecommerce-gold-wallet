@@ -11,4 +11,10 @@ public abstract class SecuredControllerBase(ICurrentUserService currentUser) : C
 
     protected IActionResult ForbidApiResponse()
         => StatusCode(StatusCodes.Status403Forbidden, GoldWalletSystem.Application.DTOs.Common.ApiResponse<object>.Fail("Forbidden", StatusCodes.Status403Forbidden));
+
+    protected int? CurrentUserId => currentUser.UserId;
+    protected int? CurrentSellerId => currentUser.SellerId;
+
+    protected IActionResult InvalidSellerScopeResponse()
+        => BadRequest(GoldWalletSystem.Application.DTOs.Common.ApiResponse<object>.Fail("Invalid seller scope", StatusCodes.Status400BadRequest));
 }

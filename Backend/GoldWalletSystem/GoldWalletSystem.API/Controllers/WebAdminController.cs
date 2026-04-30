@@ -25,6 +25,7 @@ public class WebAdminController(
     IPasswordHasher passwordHasher,
     IMarketplaceRealtimeNotifier realtimeNotifier,
     IWebHostEnvironment environment,
+    API.Services.IInvoiceDocumentService invoiceDocumentService,
     IMobileAppConfigurationService mobileAppConfigurationService) : ControllerBase
 {
 
@@ -1926,30 +1927,7 @@ public class WebAdminController(
 
     private async Task<string?> SaveInvoiceDocumentAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
     {
-        var root = environment.WebRootPath;
-        if (string.IsNullOrWhiteSpace(root))
-        {
-            root = Path.Combine(environment.ContentRootPath, "wwwroot");
-        }
-
-        var folder = Path.Combine(root, "Certificats", request.UserId.ToString());
-        Directory.CreateDirectory(folder);
-
-        var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
-        var filePath = Path.Combine(folder, fileName);
-        var lines = new (string Label, string Value)[]
-        {
-            ("Date (UTC)", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")),
-            ("Action", request.TransactionType),
-            ("Investor User Id", request.UserId.ToString()),
-            ("Quantity", request.Quantity.ToString()),
-            ("Weight", $"{request.Weight} {request.Unit}"),
-            ("Purity", request.Purity.ToString()),
-            ("Amount", request.Amount.ToString())
-        };
-        var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
-        await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
-        return $"/Certificats/{request.UserId}/{fileName}";
+        return await invoiceDocumentService.SaveTransactionInvoiceAsync(request, cancellationToken);
     }
 
     private async Task<WebUserCredentialsDto> UpdateUserCredentialsAsync(
