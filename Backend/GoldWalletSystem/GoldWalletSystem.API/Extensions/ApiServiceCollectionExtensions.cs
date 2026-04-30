@@ -9,6 +9,7 @@ public static class ApiServiceCollectionExtensions
     {
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IInvoiceDocumentService, InvoiceDocumentService>();
+        services.AddScoped<IProductWriteService, ProductWriteService>();
         return services;
     }
 }

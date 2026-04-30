@@ -18,7 +18,7 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/products")]
-public class ProductsController(IProductService productService, AppDbContext dbContext, IWebHostEnvironment environment, API.Services.IMarketplaceRealtimeNotifier realtimeNotifier, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
+public class ProductsController(IProductService productService, API.Services.IProductWriteService productWriteService, AppDbContext dbContext, IWebHostEnvironment environment, API.Services.IMarketplaceRealtimeNotifier realtimeNotifier, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
 {
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] ProductSearchRequestDto request, CancellationToken cancellationToken = default)
@@ -55,127 +55,22 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     [HttpPost("management")]
     public async Task<IActionResult> Create([FromForm] ProductUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        if (!IsSellerOrAdmin()) return Forbid();
-        if (await dbContext.Products.AnyAsync(x => x.Sku == request.Sku, cancellationToken))
-        {
-            return BadRequest(ApiResponse<object>.Fail("SKU already exists", 400));
-        }
-
-        var sellerId = ResolveSellerId(request.SellerId);
-
-        var product = new Product
-        {
-            Name = request.Name,
-            Sku = request.Sku,
-            Description = request.Description,
-            ImageUrl = await SaveImageAsync(request.Image, request.ExistingImageUrl, cancellationToken),
-            VideoUrl = await SaveVideoAsync(request.Video, request.ExistingVideoUrl, request.VideoDurationSeconds, cancellationToken),
-            Category = ToLegacyCategory(request.MaterialType),
-            MaterialType = request.MaterialType,
-            FormType = request.FormType,
-            PricingMode = request.PricingMode,
-            PurityKarat = request.PurityKarat,
-            PurityFactor = request.PurityFactor,
-            WeightValue = request.WeightValue,
-            WeightUnit = ProductWeightUnit.Gram,
-            BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, sellerId, cancellationToken),
-            FixedPrice = request.FixedPrice,
-            OfferPercent = request.OfferPercent,
-            OfferNewPrice = request.OfferNewPrice,
-            OfferType = request.OfferType,
-            IsHasOffer = request.OfferType != ProductOfferType.None,
-            AvailableStock = request.AvailableStock,
-            IsActive = request.IsActive,
-            SellerId = sellerId
-        };
-
-        dbContext.Products.Add(product);
-        RecalculateComputedPrices(product);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await realtimeNotifier.BroadcastRefreshHintAsync($"product:create:{product.Id}", cancellationToken);
-
-        return Ok(ApiResponse<string>.Ok("Created"));
+        var result = await productWriteService.CreateAsync(request, cancellationToken);
+        return Ok(ApiResponse<string>.Ok(result));
     }
 
     [HttpPut("management/{id:int}")]
     public async Task<IActionResult> Update(int id, [FromForm] ProductUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        if (!IsSellerOrAdmin()) return Forbid();
-        var product = await dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (product is null)
-        {
-            return NotFound(ApiResponse<object>.Fail("Product not found", 404));
-        }
-
-        if (!currentUser.IsInRole(SystemRoles.Admin))
-        {
-            var sellerScope = ResolveSellerScope();
-            if (!sellerScope.HasValue || product.SellerId != sellerScope.Value)
-            {
-                return Forbid();
-            }
-        }
-
-        if (!string.Equals(product.Sku, request.Sku, StringComparison.OrdinalIgnoreCase)
-            && await dbContext.Products.AnyAsync(x => x.Sku == request.Sku && x.Id != id, cancellationToken))
-        {
-            return BadRequest(ApiResponse<object>.Fail("SKU already exists", 400));
-        }
-
-        var nextSellerId = ResolveSellerId(request.SellerId, product.SellerId);
-
-        product.Name = request.Name;
-        product.Sku = request.Sku;
-        product.Description = request.Description;
-        product.ImageUrl = await SaveImageAsync(request.Image, request.ExistingImageUrl ?? product.ImageUrl, cancellationToken);
-        product.VideoUrl = await SaveVideoAsync(request.Video, request.ExistingVideoUrl ?? product.VideoUrl, request.VideoDurationSeconds, cancellationToken);
-        product.Category = ToLegacyCategory(request.MaterialType);
-        product.MaterialType = request.MaterialType;
-        product.FormType = request.FormType;
-        product.PricingMode = request.PricingMode;
-        product.PurityKarat = request.PurityKarat;
-        product.PurityFactor = request.PurityFactor;
-        product.WeightValue = request.WeightValue;
-        product.WeightUnit = ProductWeightUnit.Gram;
-        product.BaseMarketPrice = await ResolveMarketPriceByMaterialAsync(request.MaterialType, nextSellerId, cancellationToken);
-        product.FixedPrice = request.FixedPrice;
-        product.OfferPercent = request.OfferPercent;
-        product.OfferNewPrice = request.OfferNewPrice;
-        product.OfferType = request.OfferType;
-        product.IsHasOffer = request.OfferType != ProductOfferType.None;
-        product.AvailableStock = request.AvailableStock;
-        product.IsActive = request.IsActive;
-        product.SellerId = nextSellerId;
-
-        RecalculateComputedPrices(product);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await realtimeNotifier.BroadcastRefreshHintAsync($"product:update:{product.Id}", cancellationToken);
-        return Ok(ApiResponse<string>.Ok("Updated"));
+        var result = await productWriteService.UpdateAsync(id, request, cancellationToken);
+        return Ok(ApiResponse<string>.Ok(result));
     }
 
     [HttpDelete("management/{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
     {
-        if (!IsSellerOrAdmin()) return Forbid();
-        var product = await dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (product is null)
-        {
-            return NotFound(ApiResponse<object>.Fail("Product not found", 404));
-        }
-
-        if (!currentUser.IsInRole(SystemRoles.Admin))
-        {
-            var sellerScope = ResolveSellerScope();
-            if (!sellerScope.HasValue || product.SellerId != sellerScope.Value)
-            {
-                return Forbid();
-            }
-        }
-
-        dbContext.Products.Remove(product);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await realtimeNotifier.BroadcastRefreshHintAsync($"product:delete:{id}", cancellationToken);
-        return Ok(ApiResponse<string>.Ok("Deleted"));
+        var result = await productWriteService.DeleteAsync(id, cancellationToken);
+        return Ok(ApiResponse<string>.Ok(result));
     }
 
     [HttpGet("categories")]
