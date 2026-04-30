@@ -22,6 +22,23 @@ public class UserAuthRepository(AppDbContext dbContext) : IUserAuthRepository
     public Task<Seller?> GetSellerByIdAsync(int sellerId, CancellationToken cancellationToken = default)
         => dbContext.Sellers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == sellerId, cancellationToken);
 
+    public async Task<string> GenerateNextCompanyCodeAsync(CancellationToken cancellationToken = default)
+    {
+        var codes = await dbContext.Sellers.AsNoTracking()
+            .Select(x => x.CompanyCode)
+            .Where(x => x != null && x != string.Empty)
+            .ToListAsync(cancellationToken);
+
+        var max = 99;
+        foreach (var code in codes)
+        {
+            if (int.TryParse(code?.Trim(), out var parsed) && parsed > max)
+                max = parsed;
+        }
+
+        return (max + 1).ToString();
+    }
+
     public async Task<Seller> AddSellerProfileAsync(Seller seller, CancellationToken cancellationToken = default)
     {
         dbContext.Sellers.Add(seller);

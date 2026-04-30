@@ -187,6 +187,7 @@ export interface SellerRegistration {
   email: string;
   password: string;
   role: "Seller";
+  phoneNumber?: string;
   companyInfo: {
     companyName: string;
     companyCode: string;

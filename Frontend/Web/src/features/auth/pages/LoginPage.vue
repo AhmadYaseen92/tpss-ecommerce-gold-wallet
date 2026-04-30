@@ -4,6 +4,7 @@ import { ElMessageBox } from "element-plus";
 import LoginForm from "../components/LoginForm.vue";
 import type { LoginFormModel } from "../types/authTypes";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
+import { isEmail, isUaeMobile } from "../services/authValidation";
 
 const emit = defineEmits<{ toRegister: []; themeToggle: [] }>();
 const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
@@ -28,8 +29,17 @@ const onSubmit = async () => {
     return;
   }
 
+  const identifier = model.email.trim();
+  if (!isEmail(identifier) && !isUaeMobile(identifier)) {
+    await ElMessageBox.alert("Use a valid email or UAE phone number (for example: +971501234567).", "Validation Error", {
+      confirmButtonText: "OK",
+      type: "warning",
+    });
+    return;
+  }
+
   await marketplace.login({
-    emailOrPhone: model.email,
+    emailOrPhone: identifier,
     password: model.password,
   });
 

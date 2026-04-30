@@ -207,7 +207,7 @@ export async function registerSellerWithBackend(registration: SellerRegistration
     email: registration.email,
     password: registration.password,
     role: registration.role,
-    phoneNumber: registration.manager.mobileNumber || registration.companyInfo.companyPhone,
+    phoneNumber: registration.phoneNumber || registration.manager.mobileNumber || registration.companyInfo.companyPhone,
     dateOfBirth: null,
     nationality: registration.manager.nationality,
     documentType: registration.manager.idType,
