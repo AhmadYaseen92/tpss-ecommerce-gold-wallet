@@ -22,19 +22,6 @@ const loading = computed(() => marketplace.loading.value);
 const sellerTerms = computed(() => marketTerms.seller || defaultSellerTerms);
 const marketTerms = reactive<{ seller: string; investor: string }>({ seller: "", investor: "" });
 const defaultSellerTerms = "By registering as a seller, you agree to the platform terms and compliance requirements.";
-const COMPANY_CODE_COUNTER_KEY = "goldwallet.companyCode.counter";
-
-const nextCompanyCode = () => {
-  const saved = Number(window.localStorage.getItem(COMPANY_CODE_COUNTER_KEY) ?? "99");
-  const next = Number.isFinite(saved) && saved >= 99 ? saved + 1 : 100;
-  window.localStorage.setItem(COMPANY_CODE_COUNTER_KEY, String(next));
-  return String(next);
-};
-
-if (!model.companyInfo.companyCode.trim()) {
-  model.companyInfo.companyCode = nextCompanyCode();
-}
-
 void fetchPublicConfigurations(["Terms_Seller_TermsAndConditions", "Terms_Investor_TermsAndConditions"])
   .then((items) => {
     const byKey = new Map(items.map((x) => [x.configKey, x.valueString ?? ""]));

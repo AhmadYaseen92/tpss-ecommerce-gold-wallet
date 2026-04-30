@@ -116,7 +116,7 @@ public class AuthService(
             UpdatedAtUtc = DateTime.UtcNow,
         };
 
-        var seller = BuildSellerEntity(request, role);
+        var seller = await BuildSellerEntityAsync(request, role, cancellationToken);
         var createdResult = await userAuthRepository.AddWithOptionalSellerAsync(user, profile, seller, cancellationToken);
 
         var otp = await otpService.RequestAsync(new RequestOtpRequestDto
@@ -268,7 +268,7 @@ public class AuthService(
         }
     }
 
-    private Seller? BuildSellerEntity(RegisterRequestDto request, string role)
+    private async Task<Seller?> BuildSellerEntityAsync(RegisterRequestDto request, string role, CancellationToken cancellationToken)
     {
         var isSeller = string.Equals(role, SystemRoles.Seller, StringComparison.OrdinalIgnoreCase);
         if (!isSeller)
@@ -279,7 +279,7 @@ public class AuthService(
         var seller = new Seller
         {
             CompanyName = request.CompanyInfo.CompanyName.Trim(),
-            CompanyCode = BuildSellerCode(request),
+            CompanyCode = await BuildSellerCodeAsync(request, cancellationToken),
             CommercialRegistrationNumber = request.CompanyInfo.CommercialRegistrationNumber.Trim(),
             VatNumber = request.CompanyInfo.VatNumber.Trim(),
             BusinessActivity = request.CompanyInfo.BusinessActivity.Trim(),
@@ -361,20 +361,9 @@ public class AuthService(
         return seller;
     }
 
-    private static string BuildSellerCode(RegisterRequestDto request)
+    private async Task<string> BuildSellerCodeAsync(RegisterRequestDto request, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(request.CompanyInfo.CompanyCode))
-            return request.CompanyInfo.CompanyCode.Trim().ToUpperInvariant();
-
-        var companySeed = string.IsNullOrWhiteSpace(request.CompanyInfo.CompanyName)
-            ? "SELL"
-            : new string(request.CompanyInfo.CompanyName.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
-
-        if (companySeed.Length > 6)
-            companySeed = companySeed[..6];
-
-        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
-        return $"{companySeed}-{timestamp[^6..]}";
+        return await userAuthRepository.GenerateNextCompanyCodeAsync(cancellationToken);
     }
 
 
