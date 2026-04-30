@@ -198,7 +198,7 @@ public partial class ProfileController(IProfileService profileService, IOtpServi
         var fileName = $"profile-{Guid.NewGuid():N}{extension}";
         var filePath = Path.Combine(targetDirectory, fileName);
 
-        await File.WriteAllBytesAsync(filePath, bytes, cancellationToken);
+        await System.IO.File.WriteAllBytesAsync(filePath, bytes, cancellationToken);
 
         return $"/{ProfilePhotosFolder}/{userId}/{fileName}";
     }
