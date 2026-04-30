@@ -331,6 +331,8 @@ export function useMarketplace() {
     signalRConnected.value = false;
     stopFallbackPolling();
     stopReconnectAttempts();
+    loading.value = false;
+    error.value = "";
     session.value = null;
     role.value = "Admin";
     activeMenu.value = "overview";
