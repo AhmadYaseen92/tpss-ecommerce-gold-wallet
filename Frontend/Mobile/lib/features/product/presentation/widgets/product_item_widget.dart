@@ -116,7 +116,8 @@ class ProductItemWidget extends StatelessWidget {
   }
 
   bool _showPurity(ProductEntity product) =>
-      product.materialTypeLabel.toLowerCase() == 'gold';
+      product.materialTypeLabel.toLowerCase() == 'gold' ||
+      product.materialTypeLabel.toLowerCase() == 'silver';
 
   Widget _metaChip(BuildContext context, String label) {
     final palette = context.appPalette;
