@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_date_formats.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
 
 class TransactionDetailsBottomSheet {
-  static final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
-
   static Future<void> show(BuildContext context, TransactionModel transaction) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -13,8 +11,8 @@ class TransactionDetailsBottomSheet {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         final palette = ctx.appPalette;
-        final updatedText = _dateFormat.format(transaction.displayDate.toLocal());
-        final createdText = _dateFormat.format(transaction.createdAtUtc.toLocal());
+        final updatedText = AppDateFormats.transactionDateTime.format(transaction.displayDate.toLocal());
+        final createdText = AppDateFormats.transactionDateTime.format(transaction.createdAtUtc.toLocal());
 
         return DraggableScrollableSheet(
           initialChildSize: 0.78,

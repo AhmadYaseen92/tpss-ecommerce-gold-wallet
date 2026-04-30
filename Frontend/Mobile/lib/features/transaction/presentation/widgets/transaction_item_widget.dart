@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_date_formats.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/presentation/widgets/transaction_icon_widget.dart';
@@ -72,7 +72,7 @@ class TransactionItemWidget extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Updated: ${DateFormat('dd MMM yyyy, hh:mm a').format(transaction.displayDate.toLocal())}',
+                            'Updated: ${AppDateFormats.readableDateTime.format(transaction.displayDate.toLocal())}',
                             style: TextStyle(fontSize: 12, color: palette.textSecondary),
                           ),
                         ],

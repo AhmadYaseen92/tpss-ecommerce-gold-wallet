@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_date_formats.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/otp_input_widget.dart';
@@ -146,7 +146,7 @@ class _ActionConfirmationPageState extends State<ActionConfirmationPage> {
                         ReadonlyInfoRow(label: 'Reference', value: widget.summary.referenceNumber),
                         ReadonlyInfoRow(
                           label: 'Date',
-                          value: DateFormat('dd MMM yyyy, hh:mm a').format(widget.summary.createdAt),
+                          value: AppDateFormats.readableDateTime.format(widget.summary.createdAt),
                         ),
                       ],
                     ),

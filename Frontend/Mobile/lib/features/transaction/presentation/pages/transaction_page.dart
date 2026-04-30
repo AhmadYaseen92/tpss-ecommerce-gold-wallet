@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_date_formats.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_filter_chip.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/empty_state_widget.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/helpers/product_category_filter.dart';
@@ -226,7 +227,7 @@ class TransactionPage extends StatelessWidget {
                                   ),
                                   DataCell(
                                     Text(
-                                      _dateFormat.format(
+                                      AppDateFormats.transactionDateTime.format(
                                         transaction.displayDate.toLocal(),
                                       ),
                                     ),
