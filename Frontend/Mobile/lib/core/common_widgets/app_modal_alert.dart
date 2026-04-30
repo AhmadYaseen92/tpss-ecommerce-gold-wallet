@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 
-enum AppModalAlertVariant { success, failed, warning }
+enum AppModalAlertVariant { success, failed, warning, information }
 
 class AppModalAlert {
   static Future<void> show(
@@ -16,63 +17,66 @@ class AppModalAlert {
       useRootNavigator: true,
       barrierDismissible: true,
       builder: (ctx) {
-        final theme = Theme.of(ctx);
-        final isFailed = variant == AppModalAlertVariant.failed;
-        final colors = switch (variant) {
-          AppModalAlertVariant.success => (
-            border: const Color(0xFF2E7D32),
-            button: theme.colorScheme.primary,
-            titleColor: const Color(0xFF111827),
-            title: 'Success',
-          ),
-          AppModalAlertVariant.failed => (
-            border: Colors.transparent,
-            button: const Color(0xFFC62828),
-            titleColor: const Color(0xFFC62828),
-            title: 'Failed',
-          ),
-          AppModalAlertVariant.warning => (
-            border: const Color(0xFFEF6C00),
-            button: const Color(0xFFEF6C00),
-            titleColor: const Color(0xFF111827),
-            title: 'Warning',
-          ),
-        };
+        final palette = ctx.appPalette;
+        final colors = _variantColors(ctx, variant);
 
         return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
+          backgroundColor: palette.surface,
+          surfaceTintColor: palette.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: colors.border, width: 1.4),
           ),
           title: Text(
             title ?? colors.title,
             textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.w700, color: colors.titleColor),
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: palette.textPrimary,
+            ),
           ),
-          content: Text(message, textAlign: TextAlign.center),
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: palette.textSecondary),
+          ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
-            isFailed
-                ? TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: Text(
-                      buttonText,
-                      style: const TextStyle(
-                        color: Color(0xFFC62828),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  )
-                : FilledButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    style: FilledButton.styleFrom(backgroundColor: colors.button),
-                    child: Text(buttonText),
-                  ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.button,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(buttonText),
+            ),
           ],
         );
       },
     );
+  }
+
+  static ({String title, Color button}) _variantColors(
+    BuildContext context,
+    AppModalAlertVariant variant,
+  ) {
+    final palette = context.appPalette;
+    return switch (variant) {
+      AppModalAlertVariant.success => (
+          title: 'Success',
+          button: const Color(0xFF2E7D32),
+        ),
+      AppModalAlertVariant.failed => (
+          title: 'Error',
+          button: const Color(0xFFC62828),
+        ),
+      AppModalAlertVariant.warning => (
+          title: 'Warning',
+          button: const Color(0xFFEF6C00),
+        ),
+      AppModalAlertVariant.information => (
+          title: 'Information',
+          button: palette.primary,
+        ),
+    };
   }
 }
