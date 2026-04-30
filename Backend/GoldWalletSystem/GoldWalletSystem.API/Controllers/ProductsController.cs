@@ -21,6 +21,14 @@ namespace GoldWalletSystem.API.Controllers;
 [Route("api/products")]
 public class ProductsController(IProductService productService, AppDbContext dbContext, IWebHostEnvironment environment, API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
 {
+    private static readonly Dictionary<string, (string CurrencyCode, decimal ExchangeRate)> MarketCurrencyMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["UAE"] = ("AED", 3.67m),
+        ["KSA"] = ("SAR", 3.75m),
+        ["JORDAN"] = ("JOD", 0.71m),
+        ["EGYPT"] = ("EGP", 48.50m),
+        ["INDIA"] = ("INR", 83.20m),
+    };
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] ProductSearchRequestDto request, CancellationToken cancellationToken = default)
     {
@@ -186,7 +194,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         };
 
         dbContext.Products.Add(product);
-        RecalculateComputedPrices(product);
+        await RecalculateComputedPricesAsync(product, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"product:create:{product.Id}", cancellationToken);
 
@@ -244,7 +252,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.IsActive = request.IsActive;
         product.SellerId = nextSellerId;
 
-        RecalculateComputedPrices(product);
+        await RecalculateComputedPricesAsync(product, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"product:update:{product.Id}", cancellationToken);
         return Ok(ApiResponse<string>.Ok("Updated"));
@@ -420,7 +428,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
             product.BaseMarketPrice = marketPrice;
             product.AutoPrice = autoPrice;
-            RecalculateComputedPrices(product);
+            await RecalculateComputedPricesAsync(product, cancellationToken);
             product.UpdatedAtUtc = DateTime.UtcNow;
         }
 
@@ -431,15 +439,20 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     }
 
 
-    private static void RecalculateComputedPrices(Product product)
+    private async Task RecalculateComputedPricesAsync(Product product, CancellationToken cancellationToken)
     {
+        var marketType = await dbContext.Sellers.AsNoTracking().Where(x => x.Id == product.SellerId).Select(x => x.MarketType).FirstOrDefaultAsync(cancellationToken);
+        var marketKey = string.IsNullOrWhiteSpace(marketType) ? "UAE" : marketType.Trim().ToUpperInvariant();
+        var marketInfo = MarketCurrencyMap.TryGetValue(marketKey, out var resolved) ? resolved : MarketCurrencyMap["UAE"];
+
         var autoPrice = ProductPricingCalculator.CalculateAutoPrice(
             product.MaterialType,
             product.BaseMarketPrice,
             product.WeightValue,
             product.PurityFactor);
 
-        product.AutoPrice = autoPrice;
+        product.CurrencyCode = marketInfo.CurrencyCode;
+        product.AutoPrice = decimal.Round(autoPrice * marketInfo.ExchangeRate, 2);
         var sourcePrice = product.PricingMode == ProductPricingMode.Manual ? product.FixedPrice : product.AutoPrice;
         product.SellPrice = ProductPricingCalculator.ApplyOffer(sourcePrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
     }

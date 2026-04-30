@@ -12,14 +12,6 @@ namespace GoldWalletSystem.Infrastructure.Repositories;
 
 public class ProductRepository(AppDbContext dbContext, ICurrentUserService currentUser) : IProductRepository
 {
-    private static readonly Dictionary<string, (string CurrencyCode, decimal ExchangeRate)> MarketCurrencyMap = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["UAE"] = ("AED", 3.67m),
-        ["KSA"] = ("SAR", 3.75m),
-        ["JORDAN"] = ("JOD", 0.71m),
-        ["EGYPT"] = ("EGP", 48.50m),
-        ["INDIA"] = ("INR", 83.20m),
-    };
     public async Task<PagedResult<ProductDto>> GetPagedAsync(int pageNumber, int pageSize, ProductCategory? category = null, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Products.AsNoTracking().Where(x => x.IsActive);
@@ -66,16 +58,12 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.IsActive,
                 x.SellerId,
                 SellerName = x.Seller.CompanyName,
-                MarketType = x.Seller.MarketType
+                x.CurrencyCode
             })
             .ToListAsync(cancellationToken);
 
         var items = rows.Select(x =>
         {
-            var marketKey = string.IsNullOrWhiteSpace(x.MarketType) ? "UAE" : x.MarketType.Trim().ToUpperInvariant();
-            var marketInfo = MarketCurrencyMap.TryGetValue(marketKey, out var resolved)
-                ? resolved
-                : MarketCurrencyMap["UAE"];
             return new ProductDto(
                 x.Id,
                 x.Name,
@@ -104,9 +92,9 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.IsActive,
                 x.SellerId,
                 x.SellerName,
-                marketInfo.CurrencyCode,
-                decimal.Round(x.BaseMarketPrice * marketInfo.ExchangeRate, 2),
-                decimal.Round(x.SellPrice * marketInfo.ExchangeRate, 2));
+                x.CurrencyCode,
+                x.BaseMarketPrice,
+                x.SellPrice);
         }).ToList();
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
         return new PagedResult<ProductDto>(items, totalCount, pageNumber, pageSize, totalPages);
