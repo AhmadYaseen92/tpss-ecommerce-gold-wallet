@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_date_formats.dart';
 import 'package:dio/dio.dart';
-import 'package:intl/intl.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/auth/auth_session_store.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
@@ -98,7 +98,7 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
 
   @override
   Widget build(BuildContext context) {
-    final dateText = selectedDate == null ? 'Select date' : DateFormat('EEE, dd MMM yyyy').format(selectedDate!);
+    final dateText = selectedDate == null ? 'Select date' : AppDateFormats.readableDate.format(selectedDate!);
     final timeText = selectedTime == null ? 'Select time' : selectedTime!.format(context);
 
     return Scaffold(

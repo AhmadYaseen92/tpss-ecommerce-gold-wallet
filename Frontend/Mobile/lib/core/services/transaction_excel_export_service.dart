@@ -2,14 +2,14 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:excel/excel.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_date_formats.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/transaction/data/models/transaction_model.dart';
 
 class TransactionExcelExportService {
-  static final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
+  static final _dateFormat = AppDateFormats.transactionDateTime;
 
   Future<Uint8List> buildExcelBytes({
     required List<TransactionModel> transactions,

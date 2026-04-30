@@ -179,6 +179,11 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: state.themeMode,
+            locale: state.locale,
+            supportedLocales: const [
+              Locale('en'),
+              Locale('ar'),
+            ],
             onGenerateRoute: AppRouter.onGenerateRoute,
             builder: (context, child) {
               if (!_ready) {
