@@ -352,7 +352,9 @@ public class WalletController(
         if (asset is null)
             return NotFound(ApiResponse<object>.Fail("Wallet asset not found.", 404));
 
-        var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
+        var unitPrice = request.UnitPrice > 0
+            ? request.UnitPrice
+            : await ResolveDefaultUnitPriceAsync(actionType, asset, cancellationToken);
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
         var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset, cancellationToken);
         // Days-held source: WalletAssets.CreatedAtUtc (the asset acquisition/create timestamp in wallet).
@@ -442,7 +444,9 @@ public class WalletController(
         if (requestedWeight <= 0)
             return BadRequest(ApiResponse<object>.Fail("Weight must be greater than zero.", 400));
 
-        var unitPrice = request.UnitPrice > 0 ? request.UnitPrice : asset.CurrentMarketPrice;
+        var unitPrice = request.UnitPrice > 0
+            ? request.UnitPrice
+            : await ResolveDefaultUnitPriceAsync(actionType, asset, cancellationToken);
         var grossAmount = request.Amount > 0 ? request.Amount : unitPrice * request.Quantity;
         var resolvedProductId = await ResolveWalletAssetProductIdAsync(request.UserId, asset, cancellationToken);
         // Days-held source: WalletAssets.CreatedAtUtc (the asset acquisition/create timestamp in wallet).
@@ -1087,6 +1091,47 @@ public class WalletController(
             Mode = mode,
             LockSeconds = Math.Clamp(lockSeconds, 5, 300)
         };
+    }
+
+    private async Task<decimal> ResolveDefaultUnitPriceAsync(string actionType, WalletAsset asset, CancellationToken cancellationToken)
+    {
+        if (!string.Equals(actionType, "sell", StringComparison.OrdinalIgnoreCase) || asset.SellerId <= 0)
+        {
+            return asset.CurrentMarketPrice;
+        }
+
+        var seller = await dbContext.Sellers.AsNoTracking()
+            .Where(x => x.Id == asset.SellerId)
+            .Select(x => new { x.GoldPrice, x.SilverPrice })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (seller is null)
+        {
+            return asset.CurrentMarketPrice;
+        }
+
+        var bidField = asset.AssetType == AssetType.Silver ? "SilverBidPerOunce" : "GoldBidPerOunce";
+        var bidConfigValue = await dbContext.MobileAppConfigurations.AsNoTracking()
+            .Where(x => x.ConfigKey == $"Seller_{asset.SellerId}_{bidField}")
+            .Select(x => x.ValueDecimal)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var bidPerOunce = bidConfigValue.GetValueOrDefault() > 0
+            ? bidConfigValue.GetValueOrDefault()
+            : (asset.AssetType == AssetType.Silver ? seller.SilverPrice : seller.GoldPrice).GetValueOrDefault();
+
+        if (bidPerOunce <= 0)
+        {
+            return asset.CurrentMarketPrice;
+        }
+
+        var perUnitWeightInGrams = asset.Quantity > 0 ? asset.Weight / asset.Quantity : 0m;
+        if (perUnitWeightInGrams <= 0)
+        {
+            return asset.CurrentMarketPrice;
+        }
+
+        var bidUnitPrice = (bidPerOunce / 31.1035m) * perUnitWeightInGrams;
+        return bidUnitPrice > 0 ? Math.Round(bidUnitPrice, 2, MidpointRounding.AwayFromZero) : asset.CurrentMarketPrice;
     }
 
     public sealed class WalletActionRequest
