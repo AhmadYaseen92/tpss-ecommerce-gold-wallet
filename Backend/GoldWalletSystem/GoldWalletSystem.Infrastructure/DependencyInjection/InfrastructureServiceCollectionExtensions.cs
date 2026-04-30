@@ -47,6 +47,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IProfileMediaService, ProfileMediaFileStorageService>();
         services.AddScoped<IMobileAppConfigurationService, MobileAppConfigurationService>();
         services.AddScoped<IWalletService, WalletService>();
+        services.AddScoped<ICheckoutService, CheckoutService>();
         services.AddScoped<IWalletActionValidationService, WalletActionValidationService>();
         services.AddScoped<IAdminWorkspaceService, AdminWorkspaceService>();
         services.AddScoped<ISellerWorkspaceService, SellerWorkspaceService>();
