@@ -12,7 +12,45 @@ abstract class AppLocalizations {
 
   static AppLocalizations of(BuildContext context) {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
-  }
+    String get catalog;
+  String get marketWatch;
+  String get noProductsFound;
+  String get noProductsMatchFilters;
+  String get tickers;
+  String get orders;
+  String get weightPrefix;
+  String get sellerPrefix;
+  String get updatedPrefix;
+  String get lastOneMinute;
+  String get ask;
+  String get bid;
+  String get high;
+  String get low;
+  String get placeOrder;
+  String get productDetail;
+  String get material;
+  String get weight;
+  String get purity;
+  String get description;
+  String get bestSeller;
+  String get reviewsCount;
+  String get quantity;
+  String get addToCart;
+  String get buyNow;
+  String get authenticityCertificate;
+  String get verifiedByImseeh;
+  String get videoNotSupported;
+  String get videoDeviceLoadError;
+  String get videoLoadError;
+  String get productVideo;
+  String get specialOffer;
+  String get offerNow;
+  String get addedToCart;
+  String get addedToCartMessage;
+  String get addToCartFailed;
+  String get buyNowFailed;
+  String get percentOff;
+}
 
   static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
 
@@ -107,7 +145,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transfer => 'Transfer';
   String get convert => 'Convert';
   String get noOfferProducts => 'No offer products available right now.';
-}
+
+  String get catalog => 'Catalog';
+  String get marketWatch => 'Market Watch';
+  String get noProductsFound => 'No Products Found';
+  String get noProductsMatchFilters => 'No products match the selected filters. Try changing material type or product form.';
+  String get tickers => 'Tickers';
+  String get orders => 'Orders';
+  String get weightPrefix => 'Weight:';
+  String get sellerPrefix => 'Seller:';
+  String get updatedPrefix => 'Updated:';
+  String get lastOneMinute => 'Last: 1m';
+  String get ask => 'Ask';
+  String get bid => 'Bid';
+  String get high => 'High';
+  String get low => 'Low';
+  String get placeOrder => 'Place Order';
+  String get productDetail => 'Product Detail';
+  String get material => 'Material';
+  String get weight => 'Weight';
+  String get purity => 'Purity';
+  String get description => 'Description';
+  String get bestSeller => 'BEST SELLER';
+  String get reviewsCount => '(128 reviews)';
+  String get quantity => 'Quantity';
+  String get addToCart => 'Add to Cart';
+  String get buyNow => 'Buy Now';
+  String get authenticityCertificate => 'Authenticity Certificate';
+  String get verifiedByImseeh => 'Verified by Imseeh';
+  String get videoNotSupported => 'Video preview is not supported on this device.';
+  String get videoDeviceLoadError => 'Unable to load product video on this device.';
+  String get videoLoadError => 'Unable to load product video.';
+  String get productVideo => 'Product Video';
+  String get specialOffer => 'Special Offer';
+  String get offerNow => 'Offer • Now';
+  String get addedToCart => 'Added to Cart';
+  String get addedToCartMessage => 'added to cart';
+  String get addToCartFailed => 'Add to Cart Failed';
+  String get buyNowFailed => 'Buy Now Failed';
+  String get percentOff => 'OFF';}
 
 class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr() : super('ar');
@@ -150,7 +226,45 @@ class AppLocalizationsAr extends AppLocalizations {
   String get transfer => 'تحويل';
   String get convert => 'تحويل عملة';
   String get noOfferProducts => 'لا توجد منتجات عروض متاحة حالياً.';
-}
+
+  String get catalog => 'الكتالوج';
+  String get marketWatch => 'مراقبة السوق';
+  String get noProductsFound => 'لا توجد منتجات';
+  String get noProductsMatchFilters => 'لا توجد منتجات تطابق الفلاتر المحددة. جرّب تغيير نوع المادة أو شكل المنتج.';
+  String get tickers => 'الأسعار';
+  String get orders => 'الطلبات';
+  String get weightPrefix => 'الوزن:';
+  String get sellerPrefix => 'البائع:';
+  String get updatedPrefix => 'آخر تحديث:';
+  String get lastOneMinute => 'آخر: 1 د';
+  String get ask => 'طلب';
+  String get bid => 'عرض';
+  String get high => 'الأعلى';
+  String get low => 'الأدنى';
+  String get placeOrder => 'إضافة طلب';
+  String get productDetail => 'تفاصيل المنتج';
+  String get material => 'المادة';
+  String get weight => 'الوزن';
+  String get purity => 'النقاء';
+  String get description => 'الوصف';
+  String get bestSeller => 'الأكثر مبيعًا';
+  String get reviewsCount => '(128 مراجعة)';
+  String get quantity => 'الكمية';
+  String get addToCart => 'أضف إلى السلة';
+  String get buyNow => 'اشترِ الآن';
+  String get authenticityCertificate => 'شهادة الأصالة';
+  String get verifiedByImseeh => 'موثق بواسطة Imseeh';
+  String get videoNotSupported => 'معاينة الفيديو غير مدعومة على هذا الجهاز.';
+  String get videoDeviceLoadError => 'تعذّر تحميل فيديو المنتج على هذا الجهاز.';
+  String get videoLoadError => 'تعذّر تحميل فيديو المنتج.';
+  String get productVideo => 'فيديو المنتج';
+  String get specialOffer => 'عرض خاص';
+  String get offerNow => 'عرض • الآن';
+  String get addedToCart => 'تمت الإضافة إلى السلة';
+  String get addedToCartMessage => 'تمت إضافته إلى السلة';
+  String get addToCartFailed => 'فشل الإضافة إلى السلة';
+  String get buyNowFailed => 'فشل الشراء الآن';
+  String get percentOff => 'خصم';}
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();

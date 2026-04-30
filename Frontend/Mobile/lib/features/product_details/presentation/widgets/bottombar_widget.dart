@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class BottomBar extends StatelessWidget {
   final VoidCallback onAddToCart;
@@ -35,7 +36,7 @@ class BottomBar extends StatelessWidget {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Quantity', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: palette.textPrimary)),
+                    Text(AppLocalizations.of(context).quantity, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: palette.textPrimary)),
                     Container(
                       decoration: BoxDecoration(
                         color: palette.surface,
@@ -65,7 +66,7 @@ class BottomBar extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onAddToCart,
                     icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                    label: const Text('Add to Cart', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    label: Text(AppLocalizations.of(context).addToCart, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: palette.textPrimary,
                       side: BorderSide(color: palette.border),
@@ -76,7 +77,7 @@ class BottomBar extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(child: SizedBox(height: 48, child: AppButton(label: 'Buy Now', cubit: productCubit, onPressed: onBuyNow))),
+              Expanded(child: SizedBox(height: 48, child: AppButton(label: AppLocalizations.of(context).buyNow, cubit: productCubit, onPressed: onBuyNow))),
             ],
           ),
           const SizedBox(height: 15),

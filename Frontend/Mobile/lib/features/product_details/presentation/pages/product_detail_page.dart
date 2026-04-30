@@ -6,6 +6,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/domain/entities/prod
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
 import '../widgets/product_detail_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class ProductDetailPage extends StatelessWidget {
   final ProductEntity product;
@@ -35,7 +36,7 @@ class ProductDetailPage extends StatelessWidget {
           PreferredSizeWidget appBar() => AppBar(
                 centerTitle: true,
                 title: Text(
-                  'Product Detail',
+                  AppLocalizations.of(context).productDetail,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: palette.primary,

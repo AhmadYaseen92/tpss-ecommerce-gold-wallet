@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class ProductVideo extends StatefulWidget {
   const ProductVideo({super.key, required this.videoUrl});
@@ -31,7 +32,7 @@ class _ProductVideoState extends State<ProductVideo> {
     if (!isSupportedRuntime) {
       if (!mounted) return;
       setState(() {
-        _initError = 'Video preview is not supported on this device.';
+        _initError = AppLocalizations.of(context).videoNotSupported;
       });
       return;
     }
@@ -44,12 +45,12 @@ class _ProductVideoState extends State<ProductVideo> {
     } on PlatformException catch (_) {
       if (!mounted) return;
       setState(() {
-        _initError = 'Unable to load product video on this device.';
+        _initError = AppLocalizations.of(context).videoDeviceLoadError;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _initError = 'Unable to load product video.';
+        _initError = AppLocalizations.of(context).videoLoadError;
       });
     }
   }
@@ -78,7 +79,7 @@ class _ProductVideoState extends State<ProductVideo> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Product Video',
+          AppLocalizations.of(context).productVideo,
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),

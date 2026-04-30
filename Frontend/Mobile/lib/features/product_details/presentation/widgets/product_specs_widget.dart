@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class ProductSpecsWidget extends StatelessWidget {
   final String purity;
@@ -18,12 +19,12 @@ class ProductSpecsWidget extends StatelessWidget {
     final showPurity = (normalizedMaterial == 'gold' || normalizedMaterial == 'silver') && purity.trim().isNotEmpty;
     return Row(
       children: [
-        Expanded(child: _productSpecsCard(context, label: 'Material', value: materialType)),
+        Expanded(child: _productSpecsCard(context, label: AppLocalizations.of(context).material, value: materialType)),
         const SizedBox(width: 10),
-        Expanded(child: _productSpecsCard(context, label: 'Weight', value: weight)),
+        Expanded(child: _productSpecsCard(context, label: AppLocalizations.of(context).weight, value: weight)),
         if (showPurity) ...[
           const SizedBox(width: 10),
-          Expanded(child: _productSpecsCard(context, label: 'Purity', value: purity)),
+          Expanded(child: _productSpecsCard(context, label: AppLocalizations.of(context).purity, value: purity)),
         ],
       ],
     );

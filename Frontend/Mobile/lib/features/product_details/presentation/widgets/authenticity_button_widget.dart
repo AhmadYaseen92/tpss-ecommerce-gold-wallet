@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_colors.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/product_cubit.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class AuthenticityButton extends StatelessWidget {
   final Color color;
@@ -45,7 +46,7 @@ class AuthenticityButton extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Authenticity Certificate',
+                        AppLocalizations.of(context).authenticityCertificate,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -54,7 +55,7 @@ class AuthenticityButton extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Verified by Imseeh',
+                        AppLocalizations.of(context).verifiedByImseeh,
                         style: TextStyle(fontSize: 11, color: textMuted),
                       ),
                     ],

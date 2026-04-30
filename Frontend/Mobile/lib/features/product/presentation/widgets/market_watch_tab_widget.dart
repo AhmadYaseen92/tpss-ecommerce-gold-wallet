@@ -12,6 +12,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/cubit/p
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/grams_hint_label.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/market_orders/presentation/pages/market_order_list_page.dart';
 import 'package:tpss_ecommerce_gold_wallet/features/product/presentation/widgets/seller_filter_bar_widget.dart';
+import 'package:tpss_ecommerce_gold_wallet/l10n/generated/app_localizations.dart';
 
 class MarketWatchTabWidget extends StatelessWidget {
   const MarketWatchTabWidget({super.key});
@@ -35,8 +36,8 @@ class MarketWatchTabWidget extends StatelessWidget {
               const SellerFilterBarWidget(),
               TabBar(
                 tabs: const [
-                  Tab(text: 'Tickers'),
-                  Tab(text: 'Orders'),
+                  Tab(text: AppLocalizations.of(context).tickers),
+                  Tab(text: AppLocalizations.of(context).orders),
                 ],
               ),
               const SizedBox(height: 8),
@@ -91,13 +92,13 @@ class MarketWatchTabWidget extends StatelessWidget {
                                                         GramsConverter.fromSymbol(
                                                           item.symbol,
                                                         ),
-                                                    prefix: 'Weight:',
+                                                    prefix: AppLocalizations.of(context).weightPrefix,
                                                   ),
                                                 if (AppReleaseConfig
                                                     .showSellerUi) ...[
                                                   const SizedBox(height: 4),
                                                   Text(
-                                                    'Seller: ${item.sellerName}',
+                                                    '${AppLocalizations.of(context).sellerPrefix} ${item.sellerName}',
                                                     style: const TextStyle(
                                                       fontSize: 12,
                                                       color: AppColors.darkGold,
@@ -106,7 +107,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                                                 ],
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  'Updated: ${_formatUpdatedTime(DateTime.now())}',
+                                                  '${AppLocalizations.of(context).updatedPrefix} ${_formatUpdatedTime(DateTime.now())}',
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     color: context
@@ -116,7 +117,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                                                 ),
                                                 const SizedBox(height: 2),
                                                 Text(
-                                                  'Last: 1m',
+                                                  AppLocalizations.of(context).lastOneMinute,
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     color: context
@@ -136,28 +137,28 @@ class MarketWatchTabWidget extends StatelessWidget {
                                               children: [
                                                 _marketValueLine(
                                                   context,
-                                                  label: 'Ask',
+                                                  label: AppLocalizations.of(context).ask,
                                                   value: _ask(
                                                     item,
                                                   ).toStringAsFixed(2),
                                                 ),
                                                 _marketValueLine(
                                                   context,
-                                                  label: 'Bid',
+                                                  label: AppLocalizations.of(context).bid,
                                                   value: _bid(
                                                     item,
                                                   ).toStringAsFixed(2),
                                                 ),
                                                 _marketValueLine(
                                                   context,
-                                                  label: 'High',
+                                                  label: AppLocalizations.of(context).high,
                                                   value: _high(
                                                     item,
                                                   ).toStringAsFixed(2),
                                                 ),
                                                 _marketValueLine(
                                                   context,
-                                                  label: 'Low',
+                                                  label: AppLocalizations.of(context).low,
                                                   value: _low(
                                                     item,
                                                   ).toStringAsFixed(2),
@@ -193,7 +194,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                               }
                             },
                             icon: const Icon(Icons.add_card),
-                            label: const Text('Place Order'),
+                            label: Text(AppLocalizations.of(context).placeOrder),
                           ),
                         ),
                       ],
@@ -268,17 +269,17 @@ class MarketWatchTabWidget extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     AppReleaseConfig.showSellerUi
-                        ? '${item.name} • Seller: ${item.sellerName}'
+                        ? '${item.name} • ${AppLocalizations.of(context).sellerPrefix} ${item.sellerName}'
                         : item.name,
                   ),
                   if (AppReleaseConfig.showWeightInGrams)
                     GramsHintLabel(
                       grams: GramsConverter.fromSymbol(item.symbol),
-                      prefix: 'Weight:',
+                      prefix: AppLocalizations.of(context).weightPrefix,
                     ),
                   const SizedBox(height: 8),
                   Text(
-                    'X: Pricing   |   Y: Time',
+                    'X: ${AppLocalizations.of(context).ask}/${AppLocalizations.of(context).bid}   |   Y: Time',
                     style: TextStyle(
                       fontSize: 12,
                       color: context.appPalette.textSecondary,
@@ -308,7 +309,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                               Row(
                                 children: [
                                   Text(
-                                    'Last 1m',
+                                    AppLocalizations.of(context).lastOneMinute,
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: context.appPalette.textSecondary,
@@ -374,7 +375,7 @@ class MarketWatchTabWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Updated: ${_formatUpdatedTime(DateTime.now())}',
+                    '${AppLocalizations.of(context).updatedPrefix} ${_formatUpdatedTime(DateTime.now())}',
                     style: TextStyle(color: context.appPalette.textSecondary),
                   ),
                   const SizedBox(height: 16),
