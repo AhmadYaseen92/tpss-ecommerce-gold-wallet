@@ -94,10 +94,21 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             })
             .ToListAsync(cancellationToken);
 
+        var sellerCurrencyMap = await dbContext.Sellers.AsNoTracking()
+            .Select(x => new { x.Id, x.MarketType })
+            .ToDictionaryAsync(x => x.Id, x => ResolveCurrencyCodeByMarketType(x.MarketType), cancellationToken);
+
         foreach (var item in items)
         {
             item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
             item.VideoUrl = NormalizeRelativeVideoPath(item.VideoUrl);
+            if (string.IsNullOrWhiteSpace(item.CurrencyCode) || string.Equals(item.CurrencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            {
+                if (sellerCurrencyMap.TryGetValue(item.SellerId, out var sellerCurrency))
+                {
+                    item.CurrencyCode = sellerCurrency;
+                }
+            }
         }
         return Ok(ApiResponse<List<ProductManagementDto>>.Ok(items));
     }
@@ -151,6 +162,13 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         {
             item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
             item.VideoUrl = NormalizeRelativeVideoPath(item.VideoUrl);
+            if (string.IsNullOrWhiteSpace(item.CurrencyCode) || string.Equals(item.CurrencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            {
+                item.CurrencyCode = await dbContext.Sellers.AsNoTracking()
+                    .Where(x => x.Id == item.SellerId)
+                    .Select(x => ResolveCurrencyCodeByMarketType(x.MarketType))
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
         }
 
         return item is null
@@ -487,6 +505,19 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             ProductMaterialType.Silver => ProductCategory.Silver,
             ProductMaterialType.Diamond => ProductCategory.Diamond,
             _ => ProductCategory.Gold
+        };
+    }
+
+    private static string ResolveCurrencyCodeByMarketType(string? marketType)
+    {
+        return marketType?.Trim().ToUpperInvariant() switch
+        {
+            "UAE" => "AED",
+            "KSA" => "SAR",
+            "JORDAN" => "JOD",
+            "EGYPT" => "EGP",
+            "INDIA" => "INR",
+            _ => "USD"
         };
     }
 

@@ -58,12 +58,25 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.IsActive,
                 x.SellerId,
                 SellerName = x.Seller.CompanyName,
-                x.CurrencyCode
+                x.CurrencyCode,
+                MarketType = x.Seller.MarketType
             })
             .ToListAsync(cancellationToken);
 
         var items = rows.Select(x =>
         {
+            var fallbackCurrency = x.MarketType?.Trim().ToUpperInvariant() switch
+            {
+                "UAE" => "AED",
+                "KSA" => "SAR",
+                "JORDAN" => "JOD",
+                "EGYPT" => "EGP",
+                "INDIA" => "INR",
+                _ => "USD"
+            };
+            var effectiveCurrency = string.IsNullOrWhiteSpace(x.CurrencyCode) || string.Equals(x.CurrencyCode, "USD", StringComparison.OrdinalIgnoreCase)
+                ? fallbackCurrency
+                : x.CurrencyCode;
             return new ProductDto(
                 x.Id,
                 x.Name,
@@ -92,7 +105,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.IsActive,
                 x.SellerId,
                 x.SellerName,
-                x.CurrencyCode,
+                effectiveCurrency,
                 x.BaseMarketPrice,
                 x.SellPrice);
         }).ToList();
