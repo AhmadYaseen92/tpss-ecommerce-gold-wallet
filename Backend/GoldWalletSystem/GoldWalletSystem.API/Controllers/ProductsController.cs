@@ -40,6 +40,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     public async Task<IActionResult> GetManagementList(CancellationToken cancellationToken = default)
     {
         if (!IsSellerOrAdmin()) return Forbid();
+        var isAdmin = currentUser.IsInRole(SystemRoles.Admin);
         var sellerIdClaim = int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "seller_id")?.Value, out var parsedSellerId)
             ? parsedSellerId
             : 0;
