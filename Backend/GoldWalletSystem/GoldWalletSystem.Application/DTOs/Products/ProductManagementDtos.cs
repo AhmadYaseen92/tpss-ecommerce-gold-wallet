@@ -25,6 +25,7 @@ public sealed class ProductManagementDto
     public decimal AutoPrice { get; set; }
     public decimal FixedPrice { get; set; }
     public decimal SellPrice { get; set; }
+    public string CurrencyCode { get; set; } = "USD";
     public decimal OfferPercent { get; set; }
     public decimal OfferNewPrice { get; set; }
     public ProductOfferType OfferType { get; set; }

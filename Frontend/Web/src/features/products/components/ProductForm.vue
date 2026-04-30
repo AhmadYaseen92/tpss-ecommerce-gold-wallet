@@ -392,9 +392,9 @@ onBeforeUnmount(() => {
       <div v-else class="ui-state">
         Auto price uses selected seller market price, weight in grams, and purity factor.
         <br />
-        Market source value: <strong>{{ selectedMarketPrice.toFixed(2) }}</strong>
+        Market source value (USD): <strong>{{ selectedMarketPrice.toFixed(2) }}</strong>
         <br />
-        Auto calculated price: <strong>{{ autoCalculatedPrice.toFixed(2) }}</strong>
+        Auto calculated price (local market currency): <strong>{{ autoCalculatedPrice.toFixed(2) }}</strong>
       </div>
     </Card>
 

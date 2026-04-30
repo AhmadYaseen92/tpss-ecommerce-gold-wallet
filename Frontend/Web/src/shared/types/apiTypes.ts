@@ -178,6 +178,7 @@ export interface ProductDto {
   autoPrice: number;
   fixedPrice: number;
   sellPrice: number;
+  currencyCode?: string;
   offerPercent: number;
   offerNewPrice: number;
   offerType: string;
@@ -187,7 +188,6 @@ export interface ProductDto {
   sellerId: number;
   sellerName: string;
   finalPrice?: number;
-  currencyCode?: string;
   baseMarketPriceLocal?: number;
   sellPriceLocal?: number;
 }
@@ -364,6 +364,7 @@ export interface ProductManagementDto {
   autoPrice: number;
   fixedPrice: number;
   sellPrice: number;
+  currencyCode?: string;
 
   offerPercent: number;
   offerNewPrice: number;

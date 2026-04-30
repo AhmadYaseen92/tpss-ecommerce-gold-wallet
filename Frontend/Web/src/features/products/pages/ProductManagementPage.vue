@@ -235,6 +235,7 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                   <th>Form</th>
                   <th>Weight</th>
                   <th>Sell Price</th>
+                  <th>Currency</th>
                   <th>Stock</th>
                   <th>Status</th>
                   <th class="text-right">Actions</th>
@@ -276,6 +277,7 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                   <td>{{ product.formType }}</td>
                   <td>{{ product.weightValue }} g</td>
                   <td>{{ formatMoney(product.sellPrice) }}</td>
+                  <td>{{ product.currencyCode || "USD" }}</td>
                   <td>{{ product.availableStock }}</td>
                   <td>
                     <StatusBadge :status="product.isActive ? 'Active' : 'Inactive'" />
