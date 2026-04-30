@@ -108,6 +108,7 @@ BEGIN TRY
             T.[BusinessActivity] = S.[BusinessActivity],
             T.[CompanyPhone] = S.[CompanyPhone],
             T.[CompanyEmail] = S.[CompanyEmail],
+            T.[MarketType] = CASE WHEN S.[CompanyCode] = N'IMSEEH' THEN N'UAE' WHEN S.[CompanyCode] = N'GOLDPAL' THEN N'KSA' ELSE N'UAE' END,
             T.[UserId] = COALESCE((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[SellerEmail]), T.[UserId]),
             T.[KycStatus] = 2,
             T.[ReviewedAtUtc] = @Now,
@@ -118,13 +119,13 @@ BEGIN TRY
         INSERT (
             [UserId],[CompanyName],[CompanyCode],[CommercialRegistrationNumber],[VatNumber],[BusinessActivity],[EstablishedDate],
             [CompanyPhone],[CompanyEmail],[Website],[Description],[IsActive],[KycStatus],[ReviewedAtUtc],[ReviewNotes],
-            [GoldPrice],[SilverPrice],[DiamondPrice],[CreatedAtUtc],[UpdatedAtUtc]
+            [GoldPrice],[SilverPrice],[DiamondPrice],[MarketType],[CreatedAtUtc],[UpdatedAtUtc]
         )
         VALUES (
             (SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[SellerEmail]),
             S.[CompanyName],S.[CompanyCode],S.[CommercialRegistrationNumber],S.[VatNumber],S.[BusinessActivity],NULL,
             S.[CompanyPhone],S.[CompanyEmail],NULL,NULL,1,2,@Now,N'Seeded as approved seller',
-            NULL,NULL,NULL,@Now,NULL
+            NULL,NULL,NULL,CASE WHEN S.[CompanyCode] = N'IMSEEH' THEN N'UAE' WHEN S.[CompanyCode] = N'GOLDPAL' THEN N'KSA' ELSE N'UAE' END,@Now,NULL
         );
 
     -- Assign market type per seeded seller for market-specific currency/fee behavior.

@@ -74,14 +74,15 @@ BEGIN TRY
             T.[CommercialRegistrationNumber] = S.[CommercialRegistrationNumber],
             T.[VatNumber] = S.[VatNumber],
             T.[BusinessActivity] = S.[BusinessActivity],
+            T.[MarketType] = CASE WHEN S.[CompanyCode] = N'IMSEEH' THEN N'UAE' WHEN S.[CompanyCode] = N'GOLDPAL' THEN N'KSA' WHEN S.[CompanyCode] = N'BULLION' THEN N'Jordan' ELSE N'UAE' END,
             T.[UserId] = COALESCE((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[CompanyEmail]), T.[UserId]),
             T.[KycStatus] = 2,
             T.[IsActive] = 1,
             T.[ReviewedAtUtc] = @Now,
             T.[UpdatedAtUtc] = @Now
     WHEN NOT MATCHED THEN
-        INSERT ([UserId],[CompanyName],[CompanyCode],[CommercialRegistrationNumber],[VatNumber],[BusinessActivity],[CompanyPhone],[CompanyEmail],[IsActive],[KycStatus],[ReviewedAtUtc],[ReviewNotes],[CreatedAtUtc],[UpdatedAtUtc])
-        VALUES ((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[CompanyEmail]),S.[CompanyName],S.[CompanyCode],S.[CommercialRegistrationNumber],S.[VatNumber],S.[BusinessActivity],S.[CompanyPhone],S.[CompanyEmail],1,2,@Now,N'Seeded as approved seller',@Now,NULL);
+        INSERT ([UserId],[CompanyName],[CompanyCode],[CommercialRegistrationNumber],[VatNumber],[BusinessActivity],[CompanyPhone],[CompanyEmail],[IsActive],[KycStatus],[ReviewedAtUtc],[ReviewNotes],[MarketType],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES ((SELECT TOP 1 U.[Id] FROM [Users] U WHERE U.[Email] = S.[CompanyEmail]),S.[CompanyName],S.[CompanyCode],S.[CommercialRegistrationNumber],S.[VatNumber],S.[BusinessActivity],S.[CompanyPhone],S.[CompanyEmail],1,2,@Now,N'Seeded as approved seller',CASE WHEN S.[CompanyCode] = N'IMSEEH' THEN N'UAE' WHEN S.[CompanyCode] = N'GOLDPAL' THEN N'KSA' WHEN S.[CompanyCode] = N'BULLION' THEN N'Jordan' ELSE N'UAE' END,@Now,NULL);
 
     -- Market assignment per seller (used for currency conversions and market-level settings)
     UPDATE S
