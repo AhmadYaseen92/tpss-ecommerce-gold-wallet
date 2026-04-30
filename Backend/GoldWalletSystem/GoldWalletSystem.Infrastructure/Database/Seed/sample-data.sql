@@ -138,6 +138,49 @@ BEGIN TRY
     FROM [Sellers] S
     WHERE S.[CompanyCode] IN (N'IMSEEH', N'GOLDPAL');
 
+    ;WITH SellerBidSeed AS (
+        SELECT
+            CONCAT(N'Seller_', S.[Id], N'_GoldBidPerOunce') AS [ConfigKey],
+            CONCAT(N'Seller ', S.[Id], N' Gold Bid Per Ounce') AS [Name],
+            N'Seller-specific gold bid price per ounce used by wallet sell flow' AS [Description],
+            CAST(4 AS int) AS [ValueType],
+            CAST(NULL AS bit) AS [ValueBool],
+            CAST(NULL AS int) AS [ValueInt],
+            CAST(ROUND(CASE WHEN ISNULL(S.[GoldPrice], 0) > 0 THEN S.[GoldPrice] * 0.995 ELSE 0 END, 2) AS decimal(18,2)) AS [ValueDecimal],
+            CAST(NULL AS nvarchar(max)) AS [ValueString],
+            CAST(0 AS bit) AS [SellerAccess]
+        FROM [Sellers] S
+        UNION ALL
+        SELECT
+            CONCAT(N'Seller_', S.[Id], N'_SilverBidPerOunce') AS [ConfigKey],
+            CONCAT(N'Seller ', S.[Id], N' Silver Bid Per Ounce') AS [Name],
+            N'Seller-specific silver bid price per ounce used by wallet sell flow' AS [Description],
+            CAST(4 AS int) AS [ValueType],
+            CAST(NULL AS bit) AS [ValueBool],
+            CAST(NULL AS int) AS [ValueInt],
+            CAST(ROUND(CASE WHEN ISNULL(S.[SilverPrice], 0) > 0 THEN S.[SilverPrice] * 0.995 ELSE 0 END, 2) AS decimal(18,2)) AS [ValueDecimal],
+            CAST(NULL AS nvarchar(max)) AS [ValueString],
+            CAST(0 AS bit) AS [SellerAccess]
+        FROM [Sellers] S
+    )
+    MERGE [SystemConfigration] AS T
+    USING SellerBidSeed AS S
+    ON T.[ConfigKey] = S.[ConfigKey]
+    WHEN MATCHED THEN
+        UPDATE SET
+            T.[Name] = S.[Name],
+            T.[Description] = S.[Description],
+            T.[ValueType] = S.[ValueType],
+            T.[ValueBool] = S.[ValueBool],
+            T.[ValueInt] = S.[ValueInt],
+            T.[ValueDecimal] = S.[ValueDecimal],
+            T.[ValueString] = S.[ValueString],
+            T.[SellerAccess] = S.[SellerAccess],
+            T.[UpdatedAtUtc] = @Now
+    WHEN NOT MATCHED THEN
+        INSERT ([ConfigKey],[Name],[Description],[ValueType],[ValueBool],[ValueInt],[ValueDecimal],[ValueString],[SellerAccess],[CreatedAtUtc],[UpdatedAtUtc])
+        VALUES (S.[ConfigKey],S.[Name],S.[Description],S.[ValueType],S.[ValueBool],S.[ValueInt],S.[ValueDecimal],S.[ValueString],S.[SellerAccess],@Now,NULL);
+
     MERGE [SellerAddresses] AS T
     USING (
         SELECT S.Id AS SellerId, Seed.Country, Seed.City, Seed.Street, Seed.BuildingNumber, Seed.PostalCode
