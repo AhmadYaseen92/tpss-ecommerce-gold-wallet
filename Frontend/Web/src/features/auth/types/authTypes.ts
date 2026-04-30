@@ -95,7 +95,7 @@ export interface RegisterFormModel {
 export function createEmptyBranch(): BranchModel {
   return {
     branchName: "",
-    country: "",
+    country: "UAE",
     city: "",
     address: "",
     buildingNumber: "",
@@ -113,7 +113,7 @@ export function createEmptyBank(): BankModel {
     accountNumber: "",
     iban: "",
     swift: "",
-    country: "",
+    country: "UAE",
     city: "",
     branchName: "",
     branchAddress: "",
@@ -134,7 +134,7 @@ export function createEmptyRegisterForm(): RegisterFormModel {
       businessActivity: "",
       establishedDate: "",
       tradeLicenseExpiryDate: "",
-      country: "",
+      country: "UAE",
       city: "",
       street: "",
       buildingNumber: "",

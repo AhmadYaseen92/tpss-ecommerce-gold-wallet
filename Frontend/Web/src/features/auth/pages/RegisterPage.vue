@@ -43,6 +43,8 @@ void fetchPublicConfigurations(["Terms_Seller_TermsAndConditions", "Terms_Invest
   .catch(() => undefined);
 
 const isEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
+const uaePhoneRegex = /^(?:\+971|0)?5\d{8}$/;
+const isValidUaePhone = (value: string) => uaePhoneRegex.test(value.trim());
 const showModal = (title: string, message: string) =>
   ElMessageBox.alert(message, title, { confirmButtonText: "OK", type: "warning" });
 const showInfoModal = (title: string, message: string) =>
@@ -97,7 +99,12 @@ const onSubmit = async () => {
     return;
   }
 
-  if (model.credentials.loginPhone.trim() && !/^(\+971|0)?5[0-9]{8}$/.test(model.credentials.loginPhone.trim())) {
+  if (model.ownerInfo.mobile.trim() && !isValidUaePhone(model.ownerInfo.mobile)) {
+    await showModal("Validation Error", "Manager mobile number must match UAE format (for example: +971501234567).");
+    return;
+  }
+
+  if (model.credentials.loginPhone.trim() && !isValidUaePhone(model.credentials.loginPhone)) {
     await showModal("Validation Error", "Login phone number must match UAE format (for example: +971501234567).");
     return;
   }

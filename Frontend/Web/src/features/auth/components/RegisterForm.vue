@@ -20,7 +20,7 @@ const emit = defineEmits<{
 
 const steps = [
   "Company Info",
-  "Owner",
+  "Manager",
   "Branches",
   "Bank Details",
   "Login",
@@ -71,7 +71,6 @@ const validateStep = (step: number) => {
   if (step === 0) {
     const missing: string[] = [];
     if (!props.model.companyInfo.companyName?.trim()) missing.push("Company Name");
-    if (!props.model.companyInfo.companyCode?.trim()) missing.push("Company Code");
     if (!props.model.companyInfo.crNumber?.trim()) missing.push("Trade License Number");
     if (!props.model.companyInfo.tradeLicenseExpiryDate?.trim()) missing.push("Trade License Expiration Date");
     if (!props.model.companyInfo.vatNumber?.trim()) missing.push("VAT Number");
@@ -79,7 +78,7 @@ const validateStep = (step: number) => {
     if (!props.model.companyInfo.country?.trim()) missing.push("Country");
     if (!props.model.companyInfo.city?.trim()) missing.push("City");
     if (!props.model.companyInfo.street?.trim()) missing.push("Street");
-    if (!props.model.companyInfo.buildingNumber?.trim()) missing.push("Building Number");
+    if (!props.model.companyInfo.buildingNumber?.trim()) missing.push("Building Name - Number");
     if (!props.model.companyInfo.postalCode?.trim()) missing.push("Postal Code");
     if (!props.model.companyInfo.phone?.trim()) missing.push("Company Phone");
     if (!props.model.companyInfo.email?.trim()) missing.push("Company Email");
@@ -200,7 +199,7 @@ function goToStep(idx: number) {
 <template>
   <section class="register-wizard">
     <h1>Create Seller Account</h1>
-    <p class="subtitle">Register company information, owner details, branches, bank accounts, and login credentials.</p>
+    <p class="subtitle">Register company information, manager details, branches, bank accounts, and login credentials.</p>
 
     <p v-if="stepError" class="error-banner">{{ stepError }}</p>
 
@@ -220,15 +219,13 @@ function goToStep(idx: number) {
     <div v-if="activeStep === 0" :ref="(el) => (stepRefs[0] = el as HTMLElement)" class="form-grid">
       <h2>Company Information</h2>
       <label>Company Name <input v-model="model.companyInfo.companyName" required /></label>
-      <label>Company Code <input v-model="model.companyInfo.companyCode" required readonly /></label>
-      <label>Trade License Number <input v-model="model.companyInfo.crNumber" required /></label>
+            <label>Trade License Number <input v-model="model.companyInfo.crNumber" required /></label>
       <label>Company trade license expiration date <input v-model="model.companyInfo.tradeLicenseExpiryDate" type="date" required /></label>
       <label>Tax / VAT Number <input v-model="model.companyInfo.vatNumber" required /></label>
       <label>Business Activity / Industry Type <input v-model="model.companyInfo.businessActivity" /></label>
       <label>Established Date <input v-model="model.companyInfo.establishedDate" type="date" /></label>
       <label>Country
         <select v-model="model.companyInfo.country" required @change="() => { if (!getCityOptions(model.companyInfo.country).includes(model.companyInfo.city)) model.companyInfo.city = ''; }">
-          <option value="">Select country</option>
           <option v-for="country in countryOptions" :key="country" :value="country">{{ country }}</option>
         </select>
       </label>
@@ -239,17 +236,17 @@ function goToStep(idx: number) {
         </select>
       </label>
       <label>Street <input v-model="model.companyInfo.street" required /></label>
-      <label>Building Number <input v-model="model.companyInfo.buildingNumber" /></label>
+      <label>Building Name - Number <input v-model="model.companyInfo.buildingNumber" /></label>
       <label>Postal Code <input v-model="model.companyInfo.postalCode" /></label>
       <label>Company Phone <input v-model="model.companyInfo.phone" required /></label>
       <label>Company Email <input v-model="model.companyInfo.email" type="email" required /></label>
       <label>Website (optional) <input v-model="model.companyInfo.website" /></label>
       <label class="full">Description (optional) <textarea v-model="model.companyInfo.description" rows="3" /></label>
 
-      <label>Trade License Number Document <input type="file" @change="setSingleFile(model.companyInfo.documents.crDoc, $event)" /></label>
-      <label>Proof of Address <input type="file" @change="setSingleFile(model.companyInfo.documents.proofOfAddress, $event)" /></label>
+      <label>Trade License Number Document <input type="file" required @change="setSingleFile(model.companyInfo.documents.crDoc, $event)" /></label>
+      <label>Proof of Address <input type="file" required @change="setSingleFile(model.companyInfo.documents.proofOfAddress, $event)" /></label>
       <label>VAT Certificate (optional) <input type="file" @change="setSingleFile(model.companyInfo.documents.vatCert, $event)" /></label>
-      <label>AML Documentation <input type="file" @change="setSingleFile(model.companyInfo.documents.amlDoc, $event)" /></label>
+      <label>AML Documentation <input type="file" required @change="setSingleFile(model.companyInfo.documents.amlDoc, $event)" /></label>
     </div>
 
     <div v-if="activeStep === 1" :ref="(el) => (stepRefs[1] = el as HTMLElement)" class="form-grid">
@@ -346,7 +343,7 @@ function goToStep(idx: number) {
     <div v-if="activeStep === 5" class="form-grid">
       <h2>Order Summary</h2>
       <p><strong>Company:</strong> {{ model.companyInfo.companyName || '-' }}</p>
-      <p><strong>Owner/Manager:</strong> {{ model.ownerInfo.name || '-' }}</p>
+      <p><strong>Manager:</strong> {{ model.ownerInfo.name || '-' }}</p>
       <p><strong>Branches:</strong> {{ model.branches.length }}</p>
       <p><strong>Bank Accounts:</strong> {{ model.banks.length }}</p>
       <p><strong>Login Email:</strong> {{ model.credentials.loginEmail || '-' }}</p>
