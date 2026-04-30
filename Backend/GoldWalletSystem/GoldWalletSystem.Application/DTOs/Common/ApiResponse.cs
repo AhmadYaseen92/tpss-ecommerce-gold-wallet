@@ -13,5 +13,25 @@ public class ApiResponse<T>
         => new() { Success = true, StatusCode = statusCode, Message = message, Data = data };
 
     public static ApiResponse<T> Fail(string message, int statusCode, string? errorCode = null, params string[] errors)
-        => new() { Success = false, StatusCode = statusCode, Message = message, ErrorCode = errorCode, Errors = errors };
+        => new()
+        {
+            Success = false,
+            StatusCode = statusCode,
+            Message = message,
+            ErrorCode = string.IsNullOrWhiteSpace(errorCode) ? DefaultErrorCode(statusCode) : errorCode,
+            Errors = errors
+        };
+
+    private static string DefaultErrorCode(int statusCode)
+        => statusCode switch
+        {
+            400 => "BAD_REQUEST",
+            401 => "UNAUTHORIZED",
+            403 => "FORBIDDEN",
+            404 => "NOT_FOUND",
+            409 => "CONFLICT",
+            422 => "VALIDATION_ERROR",
+            _ when statusCode >= 500 => "GENERAL_ERROR",
+            _ => "GENERAL_ERROR"
+        };
 }

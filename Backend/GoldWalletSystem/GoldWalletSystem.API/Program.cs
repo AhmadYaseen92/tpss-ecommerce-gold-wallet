@@ -1,6 +1,5 @@
 using GoldWalletSystem.API.Extensions;
 using GoldWalletSystem.API.Hubs;
-using GoldWalletSystem.API.Middleware;
 using GoldWalletSystem.API.Services;
 using GoldWalletSystem.Infrastructure.Database.Context;
 using GoldWalletSystem.Infrastructure.Database.Seed;
@@ -15,7 +14,27 @@ using System.Text;
 System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var validationErrors = context.ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .SelectMany(x => x.Value!.Errors)
+                .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Invalid input." : e.ErrorMessage)
+                .Distinct()
+                .ToArray();
+
+            var response = GoldWalletSystem.Application.DTOs.Common.ApiResponse<object>.Fail(
+                message: "Validation failed.",
+                statusCode: StatusCodes.Status400BadRequest,
+                errorCode: "VALIDATION_ERROR",
+                errors: validationErrors);
+
+            return new BadRequestObjectResult(response);
+        };
+    });
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddOpenApi();
 
@@ -107,7 +126,22 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        var response = GoldWalletSystem.Application.DTOs.Common.ApiResponse<object>.Fail(
+            "Something went wrong. Please try again later.",
+            StatusCodes.Status500InternalServerError,
+            "GENERAL_ERROR"
+        );
+
+        await context.Response.WriteAsJsonAsync(response);
+    });
+});
 app.UseStaticFiles();
 app.UseCors("WebApp");
 
