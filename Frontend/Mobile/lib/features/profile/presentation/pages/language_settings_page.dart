@@ -110,8 +110,8 @@ class LanguageSettingsPage extends StatelessWidget {
 
   Locale? _localeFromSelection(String selected) {
     final normalized = selected.trim().toLowerCase();
-    if (normalized == AppLocalizationsEn().english.toLowerCase()) return const Locale('en');
-    if (normalized == AppLocalizationsAr().arabic.toLowerCase()) return const Locale('ar');
+    if (normalized == 'العربية' || normalized == 'arabic') return const Locale('ar');
+    if (normalized == 'english' || normalized == 'الإنجليزية') return const Locale('en');
     return null;
   }
 }

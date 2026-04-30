@@ -177,7 +177,7 @@ class _GoldWalletAppState extends State<GoldWalletApp> with WidgetsBindingObserv
           return MaterialApp(
             navigatorKey: _rootNavigatorKey,
             debugShowCheckedModeBanner: false,
-            title: AppLocalizations.of(context).appTitle,
+            onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: state.themeMode,
