@@ -14,7 +14,8 @@ class ProductSpecsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showPurity = materialType.trim().toLowerCase() == 'gold' && purity.trim().isNotEmpty;
+    final normalizedMaterial = materialType.trim().toLowerCase();
+    final showPurity = (normalizedMaterial == 'gold' || normalizedMaterial == 'silver') && purity.trim().isNotEmpty;
     return Row(
       children: [
         Expanded(child: _productSpecsCard(context, label: 'Material', value: materialType)),

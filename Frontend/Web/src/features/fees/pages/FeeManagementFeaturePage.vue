@@ -18,6 +18,7 @@ import {
   type SellerProductFeePayload,
   type SystemFeeTypePayload
 } from "../../../shared/services/backendGateway";
+import { MATERIAL_TYPE_OPTIONS, PRODUCT_FORM_OPTIONS } from "../../../shared/constants/productTaxonomy";
 
 const { marketplace } = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
 const loading = ref(false);
@@ -38,7 +39,7 @@ const serviceFee = reactive<AdminServiceFeePayload>({
 
 const sellerTabs = ref<SystemFeeTypePayload[]>([]);
 const activeSellerTab = ref("");
-const sellerProducts = ref<Array<{ id: number; name: string }>>([]);
+const sellerProducts = ref<Array<{ id: number; name: string; materialType: string; formType: string }>>([]);
 const sellerFeeRows = ref<SellerProductFeePayload[]>([]);
 
 interface BulkConfig {
@@ -62,6 +63,9 @@ const savedRowSnapshot = reactive<Record<number, string>>({});
 const savingAll = ref(false);
 const pageSize = ref(10);
 const pageIndex = ref(1);
+const feeSearchTerm = ref("");
+const feeMaterialTypeFilter = ref("all");
+const feeFormTypeFilter = ref("all");
 
 const isAdmin = computed(() => marketplace.role.value === "Admin");
 const successModalOpen = ref(false);
@@ -171,10 +175,21 @@ const sellerTableRows = computed(() =>
   }))
 );
 
-const totalPages = computed(() => Math.max(1, Math.ceil(sellerTableRows.value.length / pageSize.value)));
+const filteredSellerRows = computed(() => {
+  const query = feeSearchTerm.value.trim().toLowerCase();
+  return sellerTableRows.value.filter((row) => {
+    const matchedSearch = !query || row.productName.toLowerCase().includes(query) || String(row.productId).includes(query);
+    const feeRow = sellerProducts.value.find((x) => x.id === row.productId);
+    const matchedMaterial = feeMaterialTypeFilter.value === "all" || (feeRow?.materialType?.toLowerCase() ?? "") === feeMaterialTypeFilter.value.toLowerCase();
+    const matchedForm = feeFormTypeFilter.value === "all" || (feeRow?.formType?.toLowerCase() ?? "") === feeFormTypeFilter.value.toLowerCase();
+    return matchedSearch && matchedMaterial && matchedForm;
+  });
+});
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredSellerRows.value.length / pageSize.value)));
 const pagedSellerRows = computed(() => {
   const start = (pageIndex.value - 1) * pageSize.value;
-  return sellerTableRows.value.slice(start, start + pageSize.value);
+  return filteredSellerRows.value.slice(start, start + pageSize.value);
 });
 const dirtyRows = computed(() => sellerTableRows.value.filter((x) => x.dirty));
 const adminDirty = computed(() => JSON.stringify({ systemFees: systemFees.value, serviceFee }) !== adminSnapshot.value);
@@ -255,7 +270,12 @@ const load = async () => {
     }
 
     sellerTabs.value = await fetchSellerFeeTabs(token);
-    sellerProducts.value = (await fetchManagedProducts(token)).map((p) => ({ id: p.id, name: p.name }));
+    sellerProducts.value = (await fetchManagedProducts(token)).map((p) => ({
+      id: p.id,
+      name: p.name,
+      materialType: p.materialType,
+      formType: p.formType
+    }));
     if (!activeSellerTab.value && sellerTabs.value.length > 0) activeSellerTab.value = sellerTabs.value[0].feeCode;
     await loadSellerRows();
   } catch (e) {
@@ -268,6 +288,9 @@ const load = async () => {
 onMounted(load);
 watch(activeSellerTab, loadSellerRows);
 watch(activeSellerTab, () => {
+  pageIndex.value = 1;
+});
+watch([feeSearchTerm, feeMaterialTypeFilter, feeFormTypeFilter], () => {
   pageIndex.value = 1;
 });
 
@@ -406,6 +429,15 @@ const saveAllChanges = async () => {
       <div class="tabs">
         <button v-for="tab in sellerTabs" :key="tab.feeCode" :class="{ active: activeSellerTab === tab.feeCode }" @click="activeSellerTab = tab.feeCode">{{ tab.name }}</button>
       </div>
+      <div class="grid">
+        <input v-model="feeSearchTerm" type="text" placeholder="Search by product name or ID..." />
+        <select v-model="feeMaterialTypeFilter">
+          <option v-for="option in MATERIAL_TYPE_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
+        </select>
+        <select v-model="feeFormTypeFilter">
+          <option v-for="option in PRODUCT_FORM_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
+        </select>
+      </div>
 
       <div class="bulk-setup" v-if="activeSellerTab">
         <h4>Bulk Setup ({{ activeSellerTab.replace(/_/g, ' ') }})</h4>
@@ -486,7 +518,7 @@ const saveAllChanges = async () => {
         </tbody>
       </table>
       <div class="pager">
-        <span>Rows {{ (pageIndex - 1) * pageSize + 1 }} - {{ Math.min(pageIndex * pageSize, sellerTableRows.length) }} of {{ sellerTableRows.length }}</span>
+        <span>Rows {{ filteredSellerRows.length === 0 ? 0 : (pageIndex - 1) * pageSize + 1 }} - {{ Math.min(pageIndex * pageSize, filteredSellerRows.length) }} of {{ filteredSellerRows.length }}</span>
         <button :disabled="pageIndex <= 1" @click="pageIndex--">&lt;</button>
         <span>{{ pageIndex }} / {{ totalPages }}</span>
         <button :disabled="pageIndex >= totalPages" @click="pageIndex++">&gt;</button>

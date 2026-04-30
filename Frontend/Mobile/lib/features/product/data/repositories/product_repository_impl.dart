@@ -182,15 +182,22 @@ class ProductRepositoryImpl implements IProductRepository {
 
   String _resolvePurity(ProductRemoteModel model) {
     final material = model.materialType.trim().toLowerCase();
+    final isSilver = material == 'silver' || material == '2';
+    final isDiamond = material == 'diamond' || material == '3';
 
-    if (material == 'diamond') {
+    if (isDiamond) {
       return '';
     }
 
-    if (material == 'silver') {
-      if (model.purityFactor >= 0.999) return 'Fine Silver (.999)';
-      if (model.purityFactor >= 0.925) return 'Sterling Silver (.925)';
-      return model.purityFactor > 0 ? 'Silver (${model.purityFactor.toStringAsFixed(3)})' : '';
+    if (isSilver) {
+      if (model.purityFactor <= 0) return '';
+      if ((model.purityFactor - 0.9999).abs() < 0.00001) return '9999';
+      if ((model.purityFactor - 0.999).abs() < 0.00001) return '999';
+      if ((model.purityFactor - 0.925).abs() < 0.00001) return '925';
+      final scaled = model.purityFactor >= 0.99
+          ? (model.purityFactor * 10000).round()
+          : (model.purityFactor * 1000).round();
+      return scaled.toString();
     }
 
     final karatValue = model.purityKarat.trim().toUpperCase();

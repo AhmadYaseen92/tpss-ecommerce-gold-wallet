@@ -36,6 +36,7 @@ const emit = defineEmits<{
 const tab = ref<"basics" | "pricing" | "offer" | "stock" | "fees">("basics");
 const lastGoldKarat = ref(3);
 const lastSilverPurity = ref(0.999);
+const silverPurityValues = [0.9999, 0.999, 0.925];
 const imagePreviewUrl = ref("");
 const videoPreviewUrl = ref("");
 
@@ -70,7 +71,8 @@ const resetCoreProductInfoByMaterial = (nextMaterial: number) => {
 
   if (nextMaterial === 2) {
     props.model.purityKarat = 0;
-    props.model.purityFactor = lastSilverPurity.value;
+    props.model.purityFactor = 0.999;
+    lastSilverPurity.value = 0.999;
     return;
   }
 
@@ -122,7 +124,7 @@ watch(
       if (props.model.purityFactor > 0) {
         lastSilverPurity.value = Number(props.model.purityFactor);
       }
-      if (![0.999, 0.925].includes(Number(props.model.purityFactor))) {
+      if (!silverPurityValues.includes(Number(props.model.purityFactor))) {
         props.model.purityFactor = lastSilverPurity.value;
       }
       props.model.purityKarat = 0;
@@ -151,7 +153,7 @@ watch(
 watch(
   () => props.model.purityFactor,
   (next) => {
-    if (isSilver.value && [0.999, 0.925].includes(Number(next))) {
+    if (isSilver.value && silverPurityValues.includes(Number(next))) {
       lastSilverPurity.value = Number(next);
     }
   }
@@ -294,6 +296,7 @@ onBeforeUnmount(() => {
             :model-value="model.purityFactor"
             @update:model-value="model.purityFactor = Number($event)"
           >
+            <option :value="0.9999">9999</option>
             <option :value="0.999">999</option>
             <option :value="0.925">925</option>
           </Select>
