@@ -15,6 +15,14 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
     public async Task<PagedResult<ProductDto>> GetPagedAsync(int pageNumber, int pageSize, ProductCategory? category = null, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Products.AsNoTracking().Where(x => x.IsActive);
+        if (!currentUser.IsInRole("Admin") && !currentUser.IsInRole("Seller") && currentUser.UserId.HasValue)
+        {
+            var investorMarketType = await dbContext.UserProfiles.AsNoTracking()
+                .Where(x => x.UserId == currentUser.UserId.Value)
+                .Select(x => x.MarketType)
+                .FirstOrDefaultAsync(cancellationToken) ?? "UAE";
+            query = query.Where(x => x.Seller.MarketType == investorMarketType);
+        }
         if (!currentUser.IsInRole("Admin") && currentUser.SellerId.HasValue)
         {
             query = query.Where(x => x.SellerId == currentUser.SellerId.Value);

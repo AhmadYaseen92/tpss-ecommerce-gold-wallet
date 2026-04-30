@@ -68,6 +68,7 @@ public class MarketTypeSettingsDto
     public string MarketType { get; set; } = string.Empty;
     public string Currency { get; set; } = "USD";
     public decimal FeesPercent { get; set; }
+    public decimal VatRatePercent { get; set; }
     public decimal UsdToLocalRate { get; set; }
     public string PaymentGateway { get; set; } = string.Empty;
     public bool EnableSellerManagerField { get; set; } = true;

@@ -289,6 +289,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.ProfilePhotoUrl).HasColumnType("nvarchar(max)");
             entity.Property(x => x.PreferredLanguage).HasMaxLength(10);
             entity.Property(x => x.PreferredTheme).HasMaxLength(20);
+            entity.Property(x => x.MarketType).HasMaxLength(20).HasDefaultValue("UAE");
             entity.HasIndex(x => x.UserId).IsUnique();
             entity.HasOne(x => x.User).WithOne().HasForeignKey<UserProfile>(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });

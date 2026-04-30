@@ -93,6 +93,7 @@ public class AuthService(
         }
 
         var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
+        var normalizedMarketType = NormalizeMarketTypeOrDefault(request.MarketType);
         var fullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  ", " ").Trim();
 
         var user = new User
@@ -116,11 +117,12 @@ public class AuthService(
             ProfilePhotoUrl = request.ProfilePhotoUrl,
             PreferredLanguage = string.IsNullOrWhiteSpace(request.PreferredLanguage) ? "en" : request.PreferredLanguage,
             PreferredTheme = string.IsNullOrWhiteSpace(request.PreferredTheme) ? "light" : request.PreferredTheme,
+            MarketType = normalizedMarketType,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
         };
 
-        var seller = await BuildSellerEntityAsync(request, role, cancellationToken);
+        var seller = await BuildSellerEntityAsync(request with { MarketType = normalizedMarketType }, role, cancellationToken);
         var createdResult = await userAuthRepository.AddWithOptionalSellerAsync(user, profile, seller, cancellationToken);
 
         var otp = await otpService.RequestAsync(new RequestOtpRequestDto
@@ -520,4 +522,12 @@ public class AuthService(
         if (missingFields.Count > 0)
             throw new InvalidOperationException($"All required seller registration fields must be provided. Missing: {string.Join(", ", missingFields)}");
     }
+
+
+    private static string NormalizeMarketTypeOrDefault(string? marketType)
+    {
+        if (string.IsNullOrWhiteSpace(marketType)) return "UAE";
+        return AllowedMarketTypes.FirstOrDefault(x => x.Equals(marketType.Trim(), StringComparison.OrdinalIgnoreCase)) ?? "UAE";
+    }
+
 }

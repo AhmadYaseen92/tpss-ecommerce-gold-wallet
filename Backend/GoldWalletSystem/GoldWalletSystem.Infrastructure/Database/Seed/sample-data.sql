@@ -250,8 +250,8 @@ BEGIN TRY
         VALUES (S.[FullName],S.[Email],S.[PasswordHash],S.[Role],S.[PhoneNumber],1,@Now,NULL);
 
     -- 3) Profiles, wallets, and carts.
-    INSERT INTO [UserProfiles] ([UserId],[DateOfBirth],[Nationality],[PreferredLanguage],[PreferredTheme],[DocumentType],[IdNumber],[ProfilePhotoUrl],[CreatedAtUtc],[UpdatedAtUtc])
-    SELECT U.[Id], NULL, N'Unknown', N'en', N'light', N'', N'', N'/images/profiles/default-user.png', @Now, NULL
+    INSERT INTO [UserProfiles] ([UserId],[DateOfBirth],[Nationality],[PreferredLanguage],[PreferredTheme],[MarketType],[DocumentType],[IdNumber],[ProfilePhotoUrl],[CreatedAtUtc],[UpdatedAtUtc])
+    SELECT U.[Id], NULL, N'Unknown', N'en', N'light', N'UAE', N'', N'', N'/images/profiles/default-user.png', @Now, NULL
     FROM [Users] U
     WHERE U.[Email] IN (SELECT [Email] FROM @Users)
       AND NOT EXISTS (SELECT 1 FROM [UserProfiles] P WHERE P.[UserId] = U.[Id]);
