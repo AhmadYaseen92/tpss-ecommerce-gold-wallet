@@ -5,6 +5,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/profile/presentation/cubit/p
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_button.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/app_modal_alert.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/common_widgets/form_header.dart';
+import 'package:tpss_ecommerce_gold_wallet/features/app/presentation/cubit/app_cubit.dart';
 
 class LanguageSettingsPage extends StatelessWidget {
   const LanguageSettingsPage({super.key});
@@ -15,6 +16,8 @@ class LanguageSettingsPage extends StatelessWidget {
       create: (_) => ProfileCubit(),
       child: BlocConsumer<ProfileCubit, ProfileState>(
         listener: (context, state) async {
+          final selected = context.read<ProfileCubit>().selectedLanguage;
+          context.read<AppCubit>().setLocale(_localeFromSelection(selected));
           if (state is ProfileSaved) {
             await AppModalAlert.show(
               context,
@@ -33,7 +36,7 @@ class LanguageSettingsPage extends StatelessWidget {
         },
         builder: (context, state) {
           final cubit = BlocProvider.of<ProfileCubit>(context);
-          final options = ['English', 'العربية', 'Türkçe'];
+          final options = ['English', 'العربية'];
           final palette = context.appPalette;
 
           return Scaffold(
@@ -100,5 +103,12 @@ class LanguageSettingsPage extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Locale? _localeFromSelection(String selected) {
+    final normalized = selected.trim().toLowerCase();
+    if (normalized.startsWith('english')) return const Locale('en');
+    if (normalized.startsWith('العربية')) return const Locale('ar');
+    return null;
   }
 }
