@@ -256,7 +256,7 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                   <th>Category</th>
                   <th>Form</th>
                   <th>Weight</th>
-                  <th>Sell Price</th>
+                  <th>Ask Price</th>
                   <th>Currency</th>
                   <th>Stock</th>
                   <th>Status</th>
@@ -298,7 +298,7 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                   <td>{{ product.category }}</td>
                   <td>{{ product.formType }}</td>
                   <td>{{ product.weightValue }} g</td>
-                  <td>{{ formatMoney(product.sellPrice) }}</td>
+                  <td>{{ formatMoney(product.askPrice) }}</td>
                   <td>{{ product.currencyCode || "USD" }}</td>
                   <td>{{ product.availableStock }}</td>
                   <td>

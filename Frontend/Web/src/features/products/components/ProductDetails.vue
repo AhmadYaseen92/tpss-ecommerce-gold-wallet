@@ -98,7 +98,7 @@ const offerTypeLabelMap: Record<string, string> = {
           <FormField label="Base Market Price"><div>{{ formatMoney(product.baseMarketPrice) }}</div></FormField>
           <FormField label="Auto Price"><div>{{ formatMoney(product.autoPrice) }}</div></FormField>
           <FormField label="Fixed Price"><div>{{ formatMoney(product.fixedPrice) }}</div></FormField>
-          <FormField label="Sell Price"><div>{{ formatMoney(product.sellPrice) }} {{ product.currencyCode || "USD" }}</div></FormField>
+          <FormField label="Ask Price"><div>{{ formatMoney(product.askPrice) }} {{ product.currencyCode || "USD" }}</div></FormField>
           <FormField label="Currency"><div>{{ product.currencyCode || "USD" }}</div></FormField>
         </div>
       </Card>
