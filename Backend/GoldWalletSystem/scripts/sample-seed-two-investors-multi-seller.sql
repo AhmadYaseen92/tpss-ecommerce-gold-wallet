@@ -116,6 +116,10 @@ BEGIN
     RETURN;
 END;
 
+-- Assign different markets for multi-seller currency conversion samples.
+UPDATE [Sellers] SET [MarketType] = N'UAE' WHERE [Id] = @SellerA;
+UPDATE [Sellers] SET [MarketType] = N'India' WHERE [Id] = @SellerB;
+
 DECLARE @ProductSeed TABLE
 (
     SellerId int,

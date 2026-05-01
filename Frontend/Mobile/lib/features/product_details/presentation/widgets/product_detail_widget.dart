@@ -73,15 +73,15 @@ class ProductDetailWidget extends StatelessWidget {
                       const SizedBox(height: 8),
                       if (hasOffer && inactivePrice != null)
                         Text(
-                          '\$${inactivePrice.toStringAsFixed(2)}',
+                          '${product.currencyCode} ${inactivePrice.toStringAsFixed(2)}',
                           style: TextStyle(fontSize: 14, color: palette.textSecondary, decoration: TextDecoration.lineThrough),
                         ),
-                      Text('\$${product.sellPrice.toStringAsFixed(2)}', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: palette.primary)),
+                      Text('${product.currencyCode} ${product.sellPrice.toStringAsFixed(2)}', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: palette.primary)),
                       if (hasOffer)
                         Text(
                           product.offerType.toLowerCase().contains('percent')
                               ? '${product.offerPercent.toStringAsFixed(0)}% OFF'
-                              : 'Offer • Now \$${product.sellPrice.toStringAsFixed(2)}',
+                              : 'Offer • Now ${product.currencyCode} ${product.sellPrice.toStringAsFixed(2)}',
                           style: TextStyle(fontSize: 12, color: palette.primary, fontWeight: FontWeight.w600),
                         ),
                       const SizedBox(height: 12),

@@ -88,9 +88,10 @@ public class WebAdminController(
                 ReviewedAt = x.ReviewedAtUtc,
                 KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
                 SubmittedAt = x.CreatedAtUtc,
-                GoldPrice = x.GoldPrice,
-                SilverPrice = x.SilverPrice,
-                DiamondPrice = x.DiamondPrice
+                GoldPrice = x.GoldAskPrice,
+                SilverPrice = x.SilverAskPrice,
+                DiamondPrice = x.DiamondAskPrice,
+                MarketType = x.MarketType
             })
             .ToListAsync(cancellationToken);
 
@@ -146,9 +147,10 @@ public class WebAdminController(
             ReviewNotes = seller.ReviewNotes,
             SubmittedAt = seller.CreatedAtUtc,
             ReviewedAt = seller.ReviewedAtUtc,
-            GoldPrice = seller.GoldPrice,
-            SilverPrice = seller.SilverPrice,
-            DiamondPrice = seller.DiamondPrice,
+            GoldPrice = seller.GoldAskPrice,
+            SilverPrice = seller.SilverAskPrice,
+            DiamondPrice = seller.DiamondAskPrice,
+            MarketType = seller.MarketType,
             Address = seller.Address is null
                 ? null
                 : new WebSellerAddressDto
@@ -227,6 +229,85 @@ public class WebAdminController(
         };
 
         return Ok(ApiResponse<WebSellerDetailsDto>.Ok(details));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpGet("market-types")]
+    public async Task<IActionResult> GetMarketTypeSettings(CancellationToken cancellationToken)
+    {
+        var defaults = BuildDefaultMarketSettings();
+        foreach (var item in defaults)
+        {
+            item.Currency = await GetStringConfigurationAsync($"Market.{item.MarketType}.Currency", item.Currency, cancellationToken);
+            item.PaymentGateway = await GetStringConfigurationAsync($"Market.{item.MarketType}.PaymentGateway", item.PaymentGateway, cancellationToken);
+            item.FeesPercent = await GetDecimalConfigurationAsync($"Market.{item.MarketType}.FeesPercent", item.FeesPercent, cancellationToken);
+            item.VatRatePercent = await GetDecimalConfigurationAsync($"Market.{item.MarketType}.VatRatePercent", item.VatRatePercent, cancellationToken);
+            item.UsdToLocalRate = await GetDecimalConfigurationAsync($"Market.{item.MarketType}.UsdToLocalRate", item.UsdToLocalRate, cancellationToken);
+            item.EnableSellerManagerField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerManagerField", item.EnableSellerManagerField, cancellationToken);
+            item.EnableSellerBranchesField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerBranchesField", item.EnableSellerBranchesField, cancellationToken);
+            item.EnableSellerBankAccountsField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerBankAccountsField", item.EnableSellerBankAccountsField, cancellationToken);
+        }
+        var counts = await dbContext.Sellers.AsNoTracking()
+            .GroupBy(x => x.MarketType)
+            .Select(x => new { MarketType = x.Key, Count = x.Count() })
+            .ToListAsync(cancellationToken);
+
+        foreach (var row in counts)
+        {
+            var key = NormalizeMarketType(row.MarketType);
+            var item = defaults.FirstOrDefault(x => string.Equals(x.MarketType, key, StringComparison.OrdinalIgnoreCase));
+            if (item is not null) item.SellersCount = row.Count;
+        }
+
+        return Ok(ApiResponse<List<MarketTypeSettingsDto>>.Ok(defaults));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpPut("market-types/{marketType}")]
+    public async Task<IActionResult> UpdateMarketTypeSettings(string marketType, [FromBody] MarketTypeSettingsDto request, CancellationToken cancellationToken)
+    {
+        var normalized = NormalizeMarketTypeOrThrow(marketType);
+        await UpsertStringConfigurationAsync($"Market.{normalized}.Currency", $"{normalized} Market Currency", request.Currency, $"{normalized} market currency", cancellationToken);
+        await UpsertStringConfigurationAsync($"Market.{normalized}.PaymentGateway", $"{normalized} Market Payment Gateway", request.PaymentGateway, $"{normalized} payment gateway", cancellationToken);
+        await UpsertDecimalConfigurationAsync($"Market.{normalized}.FeesPercent", $"{normalized} Market Fees Percent", request.FeesPercent, $"{normalized} default fees percent", cancellationToken);
+        await UpsertDecimalConfigurationAsync($"Market.{normalized}.VatRatePercent", $"{normalized} Market VAT Percent", request.VatRatePercent, $"{normalized} default vat percent", cancellationToken);
+        await UpsertDecimalConfigurationAsync($"Market.{normalized}.UsdToLocalRate", $"{normalized} USD To Local Rate", request.UsdToLocalRate, $"{normalized} USD to local exchange rate", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerManagerField", $"{normalized} Registration Manager Field", request.EnableSellerManagerField, $"{normalized} seller registration manager section visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerBranchesField", $"{normalized} Registration Branches Field", request.EnableSellerBranchesField, $"{normalized} seller registration branches section visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerBankAccountsField", $"{normalized} Registration Bank Accounts Field", request.EnableSellerBankAccountsField, $"{normalized} seller registration bank accounts section visibility", cancellationToken);
+        return Ok(ApiResponse<string>.Ok("Saved"));
+    }
+
+    [Authorize(Roles = SystemRoles.Admin)]
+    [HttpGet("market-types/{marketType}/sellers")]
+    public async Task<IActionResult> GetSellersByMarketType(string marketType, CancellationToken cancellationToken)
+    {
+        var normalized = NormalizeMarketTypeOrThrow(marketType);
+        var sellers = await dbContext.Sellers
+            .AsNoTracking()
+            .Where(x => x.MarketType == normalized)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new WebSellerDto
+            {
+                Id = FormatSellerId(x.Id),
+                Name = x.CompanyName,
+                Email = x.CompanyEmail ?? string.Empty,
+                BusinessName = x.CompanyName,
+                CompanyCode = x.CompanyCode,
+                ContactPhone = x.CompanyPhone,
+                LoginEmail = dbContext.Users.Where(u => u.Id == x.UserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
+                IsActive = x.IsActive,
+                ReviewedAt = x.ReviewedAtUtc,
+                KycStatus = x.KycStatus.ToString().ToLowerInvariant(),
+                SubmittedAt = x.CreatedAtUtc,
+                GoldPrice = x.GoldAskPrice,
+                SilverPrice = x.SilverAskPrice,
+                DiamondPrice = x.DiamondAskPrice,
+                MarketType = x.MarketType
+            })
+            .ToListAsync(cancellationToken);
+
+        return Ok(ApiResponse<List<WebSellerDto>>.Ok(sellers));
     }
 
     [Authorize(Roles = SystemRoles.Admin)]
@@ -1394,6 +1475,37 @@ public class WebAdminController(
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    private async Task UpsertBoolConfigurationAsync(string key, string name, bool value, string description, CancellationToken cancellationToken)
+    {
+        var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
+        if (config is null)
+        {
+            dbContext.MobileAppConfigurations.Add(new Domain.Entities.MobileAppConfiguration
+            {
+                ConfigKey = key,
+                Name = name,
+                ValueType = ConfigurationValueType.Bool,
+                ValueBool = value,
+                Description = description,
+                SellerAccess = false,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            config.Name = name;
+            config.ValueType = ConfigurationValueType.Bool;
+            config.ValueString = null;
+            config.ValueBool = value;
+            config.ValueInt = null;
+            config.ValueDecimal = null;
+            config.Description = description;
+            config.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private async Task UpsertDecimalConfigurationAsync(string key, string name, decimal value, string description, CancellationToken cancellationToken)
     {
         var config = await dbContext.MobileAppConfigurations.FirstOrDefaultAsync(x => x.ConfigKey == key, cancellationToken);
@@ -1426,6 +1538,44 @@ public class WebAdminController(
     }
 
     private static string FormatSellerId(int id) => $"S{id:D3}";
+    private static List<MarketTypeSettingsDto> BuildDefaultMarketSettings() =>
+    [
+        new() { MarketType = "UAE", Currency = "AED", FeesPercent = 2.5m, VatRatePercent = 5m, UsdToLocalRate = 3.67m, PaymentGateway = "PayTabs" },
+        new() { MarketType = "KSA", Currency = "SAR", FeesPercent = 2.5m, VatRatePercent = 15m, UsdToLocalRate = 3.75m, PaymentGateway = "HyperPay" },
+        new() { MarketType = "Jordan", Currency = "JOD", FeesPercent = 2.0m, VatRatePercent = 16m, UsdToLocalRate = 0.71m, PaymentGateway = "MyFatoorah" },
+        new() { MarketType = "Egypt", Currency = "EGP", FeesPercent = 2.0m, VatRatePercent = 14m, UsdToLocalRate = 48.50m, PaymentGateway = "Paymob" },
+        new() { MarketType = "India", Currency = "INR", FeesPercent = 1.8m, VatRatePercent = 18m, UsdToLocalRate = 83.20m, PaymentGateway = "Razorpay" }
+    ];
+
+    private static string NormalizeMarketType(string? input)
+    {
+        return input?.Trim().ToUpperInvariant() switch
+        {
+            "UAE" => "UAE",
+            "KSA" => "KSA",
+            "JORDAN" => "Jordan",
+            "EGYPT" => "Egypt",
+            "INDIA" => "India",
+            _ => "UAE"
+        };
+    }
+
+    private static string NormalizeMarketTypeOrThrow(string? input)
+    {
+        var normalized = NormalizeMarketType(input);
+        if (string.IsNullOrWhiteSpace(input))
+            throw new InvalidOperationException("Market type is required.");
+        return normalized;
+    }
+
+    private async Task<string> GetStringConfigurationAsync(string key, string fallback, CancellationToken cancellationToken)
+        => await dbContext.MobileAppConfigurations.AsNoTracking().Where(x => x.ConfigKey == key).Select(x => x.ValueString).FirstOrDefaultAsync(cancellationToken) ?? fallback;
+
+    private async Task<decimal> GetDecimalConfigurationAsync(string key, decimal fallback, CancellationToken cancellationToken)
+        => await dbContext.MobileAppConfigurations.AsNoTracking().Where(x => x.ConfigKey == key).Select(x => x.ValueDecimal).FirstOrDefaultAsync(cancellationToken) ?? fallback;
+
+    private async Task<bool> GetBoolConfigurationAsync(string key, bool fallback, CancellationToken cancellationToken)
+        => await dbContext.MobileAppConfigurations.AsNoTracking().Where(x => x.ConfigKey == key).Select(x => x.ValueBool).FirstOrDefaultAsync(cancellationToken) ?? fallback;
 
     private static string FormatInvestorId(int id) => $"{id:D3}";
 

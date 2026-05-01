@@ -68,6 +68,7 @@ class ProductRemoteModel {
     required this.isHasOffer,
     required this.purityKarat,
     required this.purityFactor,
+    required this.currencyCode,
   });
 
   final int id;
@@ -95,6 +96,7 @@ class ProductRemoteModel {
   final bool isHasOffer;
   final String purityKarat;
   final double purityFactor;
+  final String currencyCode;
 
   factory ProductRemoteModel.fromJson(Map<String, dynamic> json) {
     return ProductRemoteModel(
@@ -123,6 +125,7 @@ class ProductRemoteModel {
       isHasOffer: _asBool(json['isHasOffer'] ?? json['IsHasOffer']),
       purityKarat: (json['purityKarat'] ?? '').toString(),
       purityFactor: (json['purityFactor'] as num?)?.toDouble() ?? 0,
+      currencyCode: (json['currencyCode'] ?? 'USD').toString(),
     );
   }
 

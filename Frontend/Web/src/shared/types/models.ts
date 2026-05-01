@@ -13,6 +13,7 @@ export type NavigationKey =
   | "fees"
   | "inventory"
   | "reports"
+  | "market"
   | "notifications"
   | "logout";
 
@@ -39,6 +40,7 @@ export interface Seller {
   goldPrice?: number | null;
   silverPrice?: number | null;
   diamondPrice?: number | null;
+  marketType?: string;
 }
 
 export interface Investor {
@@ -103,6 +105,7 @@ export interface Product {
   unitPrice: number;
   stock: number;
   marketPrice: number;
+  currencyCode?: string;
   updatedAt: string;
 }
 

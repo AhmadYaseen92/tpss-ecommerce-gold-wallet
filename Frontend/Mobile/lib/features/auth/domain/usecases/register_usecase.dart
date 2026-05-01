@@ -19,6 +19,7 @@ class RegisterUseCase {
     String? profilePhotoUrl,
     String? preferredLanguage,
     String? preferredTheme,
+    String marketType = 'UAE',
     int sellerId = 0,
   }) {
     return _repository.register(
@@ -35,6 +36,7 @@ class RegisterUseCase {
       profilePhotoUrl: profilePhotoUrl,
       preferredLanguage: preferredLanguage,
       preferredTheme: preferredTheme,
+      marketType: marketType,
       sellerId: sellerId,
     );
   }

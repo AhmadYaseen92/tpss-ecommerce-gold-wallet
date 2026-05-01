@@ -40,6 +40,7 @@ class AuthRepositoryImpl implements IAuthRepository {
     String? profilePhotoUrl,
     String? preferredLanguage,
     String? preferredTheme,
+    String marketType = 'UAE',
     int sellerId = 0,
   }) {
     return _remoteDataSource.register(
@@ -57,6 +58,7 @@ class AuthRepositoryImpl implements IAuthRepository {
         profilePhotoUrl: profilePhotoUrl,
         preferredLanguage: preferredLanguage,
         preferredTheme: preferredTheme,
+        marketType: marketType,
         sellerId: sellerId,
       ),
     );
