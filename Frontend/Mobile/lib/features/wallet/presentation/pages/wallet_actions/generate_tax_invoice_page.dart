@@ -423,7 +423,11 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
   String _fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  String _currency(double v) => '\$${v.toStringAsFixed(2)}';
+  String _currency(double v) {
+    final code = (_preview?.currency ?? widget.asset.currencyCode).trim();
+    final normalized = code.isEmpty ? 'USD' : code;
+    return '$normalized ${v.toStringAsFixed(2)}';
+  }
 
   String _leftPartyName(String type) =>
       widget.asset.sellerName.isEmpty ? 'N/A' : widget.asset.sellerName;

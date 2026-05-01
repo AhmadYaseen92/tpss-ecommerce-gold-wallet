@@ -88,7 +88,7 @@ class ProductRepositoryImpl implements IProductRepository {
       baseMarketPrice: model.baseMarketPrice,
       autoPrice: model.autoPrice,
       fixedPrice: model.fixedPrice,
-      sellPrice: model.sellPrice,
+      askPrice: model.askPrice,
       availableStock: model.availableStock,
       imageUrl: normalizedImageUrl,
       videoUrl: normalizedVideoUrl,

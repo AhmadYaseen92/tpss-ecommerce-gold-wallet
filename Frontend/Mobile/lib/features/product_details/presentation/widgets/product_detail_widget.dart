@@ -76,12 +76,12 @@ class ProductDetailWidget extends StatelessWidget {
                           '${product.currencyCode} ${inactivePrice.toStringAsFixed(2)}',
                           style: TextStyle(fontSize: 14, color: palette.textSecondary, decoration: TextDecoration.lineThrough),
                         ),
-                      Text('${product.currencyCode} ${product.sellPrice.toStringAsFixed(2)}', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: palette.primary)),
+                      Text('${product.currencyCode} ${product.askPrice.toStringAsFixed(2)}', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: palette.primary)),
                       if (hasOffer)
                         Text(
                           product.offerType.toLowerCase().contains('percent')
                               ? '${product.offerPercent.toStringAsFixed(0)}% OFF'
-                              : 'Offer • Now ${product.currencyCode} ${product.sellPrice.toStringAsFixed(2)}',
+                              : 'Offer • Now ${product.currencyCode} ${product.askPrice.toStringAsFixed(2)}',
                           style: TextStyle(fontSize: 12, color: palette.primary, fontWeight: FontWeight.w600),
                         ),
                       const SizedBox(height: 12),
@@ -161,7 +161,7 @@ class ProductDetailWidget extends StatelessWidget {
           : product.fixedPrice,
     ];
     final price = candidates.firstWhere(
-      (value) => value > 0 && value > product.sellPrice,
+      (value) => value > 0 && value > product.askPrice,
       orElse: () => 0,
     );
     return price > 0 ? price : null;
