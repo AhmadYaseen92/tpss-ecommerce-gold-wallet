@@ -320,22 +320,8 @@ public class CheckoutController(
 
     private decimal ResolveProductUnitPrice(Product product)
     {
-        var askPerOunce = product.MaterialType switch
-        {
-            ProductMaterialType.Gold => dbContext.Sellers.Where(s => s.Id == product.SellerId).Select(s => s.GoldAskPrice).FirstOrDefault(),
-            ProductMaterialType.Silver => dbContext.Sellers.Where(s => s.Id == product.SellerId).Select(s => s.SilverAskPrice).FirstOrDefault(),
-            _ => null
-        };
-
-        if (askPerOunce.HasValue && askPerOunce.Value > 0 && product.WeightValue > 0 && product.PurityFactor > 0)
-        {
-            var askUnitPrice = (askPerOunce.Value / 31.1035m) * product.WeightValue * product.PurityFactor;
-            if (askUnitPrice > 0)
-            {
-                return Math.Round(askUnitPrice, 2, MidpointRounding.AwayFromZero);
-            }
-        }
-
+        // Product.AskPrice is the persisted, market-aware final unit price shown to users.
+        // Checkout must use this exact value to avoid summary mismatches vs product details.
         return product.AskPrice;
     }
 
