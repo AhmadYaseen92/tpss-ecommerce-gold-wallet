@@ -15,6 +15,7 @@ public class RegisterRequestDto
     public string ProfilePhotoUrl { get; set; } = string.Empty;
     public string PreferredLanguage { get; set; } = "en";
     public string PreferredTheme { get; set; } = "light";
+    public string MarketType { get; set; } = "UAE";
     public string Role { get; set; } = GoldWalletSystem.Domain.Constants.SystemRoles.Investor;
 
     public SellerCompanyInfoDto CompanyInfo { get; set; } = new();

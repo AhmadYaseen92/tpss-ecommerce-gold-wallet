@@ -29,6 +29,7 @@ RegisterRequestModel _$RegisterRequestModelFromJson(Map<String, dynamic> json) =
       profilePhotoUrl: json['profilePhotoUrl'] as String?,
       preferredLanguage: json['preferredLanguage'] as String?,
       preferredTheme: json['preferredTheme'] as String?,
+      marketType: json['marketType'] as String? ?? 'UAE',
       sellerId: (json['sellerId'] as num?)?.toInt() ?? 0,
     );
 
@@ -48,6 +49,7 @@ Map<String, dynamic> _$RegisterRequestModelToJson(
   'profilePhotoUrl': instance.profilePhotoUrl,
   'preferredLanguage': instance.preferredLanguage,
   'preferredTheme': instance.preferredTheme,
+  'marketType': instance.marketType,
   'sellerId': instance.sellerId,
 };
 

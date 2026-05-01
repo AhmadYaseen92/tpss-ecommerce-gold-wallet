@@ -93,7 +93,9 @@ public class AuthService(
         }
 
         var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
-        var requestedMarketType = request.CompanyInfo?.MarketType;
+        var requestedMarketType = string.IsNullOrWhiteSpace(request.MarketType)
+            ? request.CompanyInfo?.MarketType
+            : request.MarketType;
         var normalizedMarketType = NormalizeMarketTypeOrDefault(requestedMarketType);
         var fullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  ", " ").Trim();
 
