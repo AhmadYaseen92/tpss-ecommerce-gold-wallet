@@ -59,7 +59,6 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.FixedPrice,
                 x.AskPrice,
                 x.BidPrice,
-                x.SellPrice,
                 x.OfferPercent,
                 x.OfferNewPrice,
                 x.OfferType,
