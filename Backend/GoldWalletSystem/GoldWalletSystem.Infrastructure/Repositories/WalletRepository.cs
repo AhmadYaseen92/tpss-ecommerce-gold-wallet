@@ -15,10 +15,16 @@ public class WalletRepository(AppDbContext dbContext) : IWalletRepository
 
     public async Task<Wallet> CreateForUserAsync(int userId, CancellationToken cancellationToken = default)
     {
+        var marketType = await dbContext.UserProfiles
+            .AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .Select(x => x.MarketType)
+            .FirstOrDefaultAsync(cancellationToken);
+
         var wallet = new Wallet
         {
             UserId = userId,
-            CurrencyCode = "USD",
+            CurrencyCode = MarketTypeToCurrencyCode(marketType),
             CashBalance = 0,
             CreatedAtUtc = DateTime.UtcNow,
         };
@@ -28,4 +34,15 @@ public class WalletRepository(AppDbContext dbContext) : IWalletRepository
 
         return wallet;
     }
+
+    private static string MarketTypeToCurrencyCode(string? marketType)
+        => (marketType ?? string.Empty).Trim().ToUpperInvariant() switch
+        {
+            "UAE" => "AED",
+            "KSA" => "SAR",
+            "JORDAN" => "JOD",
+            "EGYPT" => "EGP",
+            "INDIA" => "INR",
+            _ => "USD"
+        };
 }
