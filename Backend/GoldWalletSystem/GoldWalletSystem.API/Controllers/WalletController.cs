@@ -1100,6 +1100,19 @@ public class WalletController(
             return asset.CurrentMarketPrice;
         }
 
+        if (asset.ProductId.HasValue && asset.ProductId.Value > 0)
+        {
+            var productBidPrice = await dbContext.Products.AsNoTracking()
+                .Where(x => x.Id == asset.ProductId.Value)
+                .Select(x => x.BidPrice)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (productBidPrice > 0)
+            {
+                return Math.Round(productBidPrice, 2, MidpointRounding.AwayFromZero);
+            }
+        }
+
         var seller = await dbContext.Sellers.AsNoTracking()
             .Where(x => x.Id == asset.SellerId)
             .Select(x => new { x.GoldBidPrice, x.SilverBidPrice })
