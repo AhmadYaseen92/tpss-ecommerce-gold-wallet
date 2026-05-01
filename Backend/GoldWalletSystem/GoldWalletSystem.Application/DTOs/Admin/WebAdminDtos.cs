@@ -29,6 +29,7 @@ public class WebSellerDto
     public decimal? GoldPrice { get; set; }
     public decimal? SilverPrice { get; set; }
     public decimal? DiamondPrice { get; set; }
+    public string MarketType { get; set; } = "UAE";
 }
 
 public class WebSellerDetailsDto
@@ -54,11 +55,26 @@ public class WebSellerDetailsDto
     public decimal? GoldPrice { get; set; }
     public decimal? SilverPrice { get; set; }
     public decimal? DiamondPrice { get; set; }
+    public string MarketType { get; set; } = "UAE";
     public WebSellerAddressDto? Address { get; set; }
     public List<WebSellerManagerDto> Managers { get; set; } = [];
     public List<WebSellerBranchDto> Branches { get; set; } = [];
     public List<WebSellerBankAccountDto> BankAccounts { get; set; } = [];
     public List<WebSellerDocumentDto> Documents { get; set; } = [];
+}
+
+public class MarketTypeSettingsDto
+{
+    public string MarketType { get; set; } = string.Empty;
+    public string Currency { get; set; } = "USD";
+    public decimal FeesPercent { get; set; }
+    public decimal VatRatePercent { get; set; }
+    public decimal UsdToLocalRate { get; set; }
+    public string PaymentGateway { get; set; } = string.Empty;
+    public bool EnableSellerManagerField { get; set; } = true;
+    public bool EnableSellerBranchesField { get; set; } = true;
+    public bool EnableSellerBankAccountsField { get; set; } = true;
+    public int SellersCount { get; set; }
 }
 
 public class UpdateWebUserCredentialsRequest

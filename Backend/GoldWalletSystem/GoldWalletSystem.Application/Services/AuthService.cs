@@ -16,6 +16,10 @@ public class AuthService(
     ITokenService tokenService,
     IOtpService otpService) : IAuthService
 {
+    private static readonly HashSet<string> AllowedMarketTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "UAE", "KSA", "Jordan", "Egypt", "India"
+    };
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request, CancellationToken cancellationToken = default)
     {
         var loginIdentifier = request.ResolveLoginIdentifier();
@@ -89,6 +93,10 @@ public class AuthService(
         }
 
         var role = string.IsNullOrWhiteSpace(request.Role) ? SystemRoles.Investor : request.Role.Trim();
+        var requestedMarketType = string.IsNullOrWhiteSpace(request.MarketType)
+            ? request.CompanyInfo?.MarketType
+            : request.MarketType;
+        var normalizedMarketType = NormalizeMarketTypeOrDefault(requestedMarketType);
         var fullName = $"{request.FirstName.Trim()} {request.MiddleName.Trim()} {request.LastName.Trim()}".Replace("  ", " ").Trim();
 
         var user = new User
@@ -112,10 +120,15 @@ public class AuthService(
             ProfilePhotoUrl = request.ProfilePhotoUrl,
             PreferredLanguage = string.IsNullOrWhiteSpace(request.PreferredLanguage) ? "en" : request.PreferredLanguage,
             PreferredTheme = string.IsNullOrWhiteSpace(request.PreferredTheme) ? "light" : request.PreferredTheme,
+            MarketType = normalizedMarketType,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
         };
 
+        if (request.CompanyInfo is not null)
+        {
+            request.CompanyInfo.MarketType = normalizedMarketType;
+        }
         var seller = await BuildSellerEntityAsync(request, role, cancellationToken);
         var createdResult = await userAuthRepository.AddWithOptionalSellerAsync(user, profile, seller, cancellationToken);
 
@@ -288,6 +301,7 @@ public class AuthService(
             CompanyEmail = request.CompanyInfo.CompanyEmail.Trim(),
             Website = request.CompanyInfo.Website?.Trim(),
             Description = request.CompanyInfo.Description?.Trim(),
+            MarketType = request.CompanyInfo.MarketType.Trim().ToUpperInvariant(),
             IsActive = false,
             KycStatus = KycStatus.UnderReview,
             CreatedAtUtc = DateTime.UtcNow,
@@ -418,6 +432,7 @@ public class AuthService(
             ("CompanyInfo.PostalCode", company.PostalCode),
             ("CompanyInfo.CompanyPhone", company.CompanyPhone),
             ("CompanyInfo.CompanyEmail", company.CompanyEmail),
+            ("CompanyInfo.MarketType", company.MarketType),
             ("Manager.FullName", manager.FullName),
             ("Manager.PositionTitle", manager.PositionTitle),
             ("Manager.Nationality", manager.Nationality),
@@ -505,10 +520,21 @@ public class AuthService(
         if (!string.IsNullOrWhiteSpace(company.CompanyEmail) && !AuthInputValidation.IsValidEmail(company.CompanyEmail))
             throw new InvalidOperationException("Company email address format is invalid.");
 
+        if (!string.IsNullOrWhiteSpace(company.MarketType) && !AllowedMarketTypes.Contains(company.MarketType.Trim()))
+            throw new InvalidOperationException("Market type must be one of: UAE, KSA, Jordan, Egypt, India.");
+
         if (!string.IsNullOrWhiteSpace(request.PhoneNumber) && !AuthInputValidation.IsValidUaeMobile(request.PhoneNumber))
             throw new InvalidOperationException("Login phone number must be a valid UAE mobile format.");
 
         if (missingFields.Count > 0)
             throw new InvalidOperationException($"All required seller registration fields must be provided. Missing: {string.Join(", ", missingFields)}");
     }
+
+
+    private static string NormalizeMarketTypeOrDefault(string? marketType)
+    {
+        if (string.IsNullOrWhiteSpace(marketType)) return "UAE";
+        return AllowedMarketTypes.FirstOrDefault(x => x.Equals(marketType.Trim(), StringComparison.OrdinalIgnoreCase)) ?? "UAE";
+    }
+
 }

@@ -48,6 +48,7 @@ export interface WebSellerDto {
   goldPrice?: number | null;
   silverPrice?: number | null;
   diamondPrice?: number | null;
+  marketType?: string;
 }
 
 export interface WebSellerAddressDto {
@@ -129,11 +130,24 @@ export interface WebSellerDetailsDto {
   goldPrice?: number | null;
   silverPrice?: number | null;
   diamondPrice?: number | null;
+  marketType?: string;
   address?: WebSellerAddressDto;
   managers: WebSellerManagerDto[];
   branches: WebSellerBranchDto[];
   bankAccounts: WebSellerBankAccountDto[];
   documents: WebSellerDocumentDto[];
+}
+
+export interface MarketTypeSettingsDto {
+  marketType: string;
+  currency: string;
+  feesPercent: number;
+  usdToLocalRate: number;
+  paymentGateway: string;
+  enableSellerManagerField: boolean;
+  enableSellerBranchesField: boolean;
+  enableSellerBankAccountsField: boolean;
+  sellersCount: number;
 }
 
 export interface DashboardDto {
@@ -165,6 +179,7 @@ export interface ProductDto {
   autoPrice: number;
   fixedPrice: number;
   sellPrice: number;
+  currencyCode?: string;
   offerPercent: number;
   offerNewPrice: number;
   offerType: string;
@@ -174,6 +189,8 @@ export interface ProductDto {
   sellerId: number;
   sellerName: string;
   finalPrice?: number;
+  baseMarketPriceLocal?: number;
+  sellPriceLocal?: number;
 }
 
 export interface AuditLogDto {
@@ -348,6 +365,7 @@ export interface ProductManagementDto {
   autoPrice: number;
   fixedPrice: number;
   sellPrice: number;
+  currencyCode?: string;
 
   offerPercent: number;
   offerNewPrice: number;
@@ -423,8 +441,10 @@ export interface WebDashboardDto {
 
 
 export interface MarketPriceConfigDto {
-  goldPerOunce: number;
-  silverPerOunce: number;
+  goldBidPerOunce: number;
+  goldAskPerOunce: number;
+  silverBidPerOunce: number;
+  silverAskPerOunce: number;
   diamondPerCarat: number;
 }
 

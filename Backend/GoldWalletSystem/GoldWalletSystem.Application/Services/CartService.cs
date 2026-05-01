@@ -151,6 +151,6 @@ public class CartService(ICartRepository cartRepository, IProductRepository prod
 
     private static decimal ResolveProductUnitPrice(Product product)
     {
-        return product.SellPrice;
+        return product.AskPrice;
     }
 }

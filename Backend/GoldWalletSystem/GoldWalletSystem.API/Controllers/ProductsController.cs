@@ -21,6 +21,14 @@ namespace GoldWalletSystem.API.Controllers;
 [Route("api/products")]
 public class ProductsController(IProductService productService, AppDbContext dbContext, IWebHostEnvironment environment, API.Services.IMarketplaceRealtimeNotifier realtimeNotifier) : ControllerBase
 {
+    private static readonly Dictionary<string, (string CurrencyCode, decimal ExchangeRate)> MarketCurrencyMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["UAE"] = ("AED", 3.67m),
+        ["KSA"] = ("SAR", 3.75m),
+        ["JORDAN"] = ("JOD", 0.71m),
+        ["EGYPT"] = ("EGP", 48.50m),
+        ["INDIA"] = ("INR", 83.20m),
+    };
     [HttpPost("search")]
     public async Task<IActionResult> Search([FromBody] ProductSearchRequestDto request, CancellationToken cancellationToken = default)
     {
@@ -74,7 +82,8 @@ public class ProductsController(IProductService productService, AppDbContext dbC
                 BaseMarketPrice = x.BaseMarketPrice,
                 AutoPrice = x.AutoPrice,
                 FixedPrice = x.FixedPrice,
-                SellPrice = x.SellPrice,
+                SellPrice = x.AskPrice,
+                CurrencyCode = x.CurrencyCode,
                 OfferPercent = x.OfferPercent,
                 OfferNewPrice = x.OfferNewPrice,
                 OfferType = x.OfferType,
@@ -85,10 +94,21 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             })
             .ToListAsync(cancellationToken);
 
+        var sellerCurrencyMap = await dbContext.Sellers.AsNoTracking()
+            .Select(x => new { x.Id, x.MarketType })
+            .ToDictionaryAsync(x => x.Id, x => ResolveCurrencyCodeByMarketType(x.MarketType), cancellationToken);
+
         foreach (var item in items)
         {
             item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
             item.VideoUrl = NormalizeRelativeVideoPath(item.VideoUrl);
+            if (string.IsNullOrWhiteSpace(item.CurrencyCode) || string.Equals(item.CurrencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            {
+                if (sellerCurrencyMap.TryGetValue(item.SellerId, out var sellerCurrency))
+                {
+                    item.CurrencyCode = sellerCurrency;
+                }
+            }
         }
         return Ok(ApiResponse<List<ProductManagementDto>>.Ok(items));
     }
@@ -127,7 +147,8 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             BaseMarketPrice = x.BaseMarketPrice,
             AutoPrice = x.AutoPrice,
             FixedPrice = x.FixedPrice,
-            SellPrice = x.SellPrice,
+            SellPrice = x.AskPrice,
+            CurrencyCode = x.CurrencyCode,
             OfferPercent = x.OfferPercent,
             OfferNewPrice = x.OfferNewPrice,
             OfferType = x.OfferType,
@@ -141,6 +162,13 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         {
             item.ImageUrl = NormalizeRelativeImagePath(item.ImageUrl);
             item.VideoUrl = NormalizeRelativeVideoPath(item.VideoUrl);
+            if (string.IsNullOrWhiteSpace(item.CurrencyCode) || string.Equals(item.CurrencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            {
+                item.CurrencyCode = await dbContext.Sellers.AsNoTracking()
+                    .Where(x => x.Id == item.SellerId)
+                    .Select(x => ResolveCurrencyCodeByMarketType(x.MarketType))
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
         }
 
         return item is null
@@ -186,7 +214,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         };
 
         dbContext.Products.Add(product);
-        RecalculateComputedPrices(product);
+        await RecalculateComputedPricesAsync(product, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"product:create:{product.Id}", cancellationToken);
 
@@ -244,7 +272,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.IsActive = request.IsActive;
         product.SellerId = nextSellerId;
 
-        RecalculateComputedPrices(product);
+        await RecalculateComputedPricesAsync(product, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"product:update:{product.Id}", cancellationToken);
         return Ok(ApiResponse<string>.Ok("Updated"));
@@ -360,12 +388,14 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         if (seller is null)
             return NotFound(ApiResponse<object>.Fail("Seller not found.", 404));
 
-        seller.GoldPrice = request.GoldPerOunce;
-        seller.SilverPrice = request.SilverPerOunce;
-        seller.DiamondPrice = request.DiamondPerCarat;
+        seller.GoldAskPrice = request.GoldAskPerOunce;
+        seller.SilverAskPrice = request.SilverAskPerOunce;
+        seller.DiamondAskPrice = request.DiamondPerCarat;
         seller.UpdatedAtUtc = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        seller.GoldBidPrice = request.GoldBidPerOunce;
+        seller.SilverBidPrice = request.SilverBidPerOunce;
         await RecalculateAutoPricedProductsAsync(sellerId, cancellationToken);
         await realtimeNotifier.BroadcastRefreshHintAsync($"market-price:{sellerId}", cancellationToken);
         return Ok(ApiResponse<MarketPriceConfigDto>.Ok(request));
@@ -376,8 +406,8 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         var config = await GetMarketPriceConfigAsync(sellerId, cancellationToken);
         return materialType switch
         {
-            ProductMaterialType.Gold => config.GoldPerOunce,
-            ProductMaterialType.Silver => config.SilverPerOunce,
+            ProductMaterialType.Gold => config.GoldAskPerOunce,
+            ProductMaterialType.Silver => config.SilverAskPerOunce,
             ProductMaterialType.Diamond => config.DiamondPerCarat,
             _ => 0m
         };
@@ -394,9 +424,11 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
         return new MarketPriceConfigDto
         {
-            GoldPerOunce = seller.GoldPrice ?? 0m,
-            SilverPerOunce = seller.SilverPrice ?? 0m,
-            DiamondPerCarat = seller.DiamondPrice ?? 0m
+            GoldAskPerOunce = seller.GoldAskPrice ?? 0m,
+            SilverAskPerOunce = seller.SilverAskPrice ?? 0m,
+            GoldBidPerOunce = seller.GoldBidPrice ?? (seller.GoldAskPrice ?? 0m),
+            SilverBidPerOunce = seller.SilverBidPrice ?? (seller.SilverAskPrice ?? 0m),
+            DiamondPerCarat = seller.DiamondAskPrice ?? 0m
         };
     }
 
@@ -420,7 +452,7 @@ public class ProductsController(IProductService productService, AppDbContext dbC
 
             product.BaseMarketPrice = marketPrice;
             product.AutoPrice = autoPrice;
-            RecalculateComputedPrices(product);
+            await RecalculateComputedPricesAsync(product, cancellationToken);
             product.UpdatedAtUtc = DateTime.UtcNow;
         }
 
@@ -431,18 +463,54 @@ public class ProductsController(IProductService productService, AppDbContext dbC
     }
 
 
-    private static void RecalculateComputedPrices(Product product)
+    private async Task RecalculateComputedPricesAsync(Product product, CancellationToken cancellationToken)
     {
-        var autoPrice = ProductPricingCalculator.CalculateAutoPrice(
-            product.MaterialType,
-            product.BaseMarketPrice,
-            product.WeightValue,
-            product.PurityFactor);
+        var sellerPricing = await dbContext.Sellers.AsNoTracking()
+            .Where(x => x.Id == product.SellerId)
+            .Select(x => new
+            {
+                x.MarketType,
+                x.GoldBidPrice,
+                x.SilverBidPrice,
+                x.DiamondBidPrice
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        var marketType = sellerPricing?.MarketType;
+        var marketKey = string.IsNullOrWhiteSpace(marketType) ? "UAE" : marketType.Trim().ToUpperInvariant();
+        var marketInfo = MarketCurrencyMap.TryGetValue(marketKey, out var resolved) ? resolved : MarketCurrencyMap["UAE"];
+        var configuredRate = await dbContext.MobileAppConfigurations.AsNoTracking()
+            .Where(x => x.ConfigKey == $"Market.{NormalizeMarketKey(marketKey)}.UsdToLocalRate")
+            .Select(x => x.ValueDecimal)
+            .FirstOrDefaultAsync(cancellationToken);
+        var usdToLocalRate = configuredRate ?? marketInfo.ExchangeRate;
 
-        product.AutoPrice = autoPrice;
+        var autoPrice = (product.BaseMarketPrice / 31.1035m) * product.WeightValue * product.PurityFactor * usdToLocalRate;
+
+        product.CurrencyCode = marketInfo.CurrencyCode;
+        product.AutoPrice = decimal.Round(autoPrice, 2);
         var sourcePrice = product.PricingMode == ProductPricingMode.Manual ? product.FixedPrice : product.AutoPrice;
-        product.SellPrice = ProductPricingCalculator.ApplyOffer(sourcePrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
+        product.AskPrice = ProductPricingCalculator.ApplyOffer(sourcePrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
+        var bidPerOunce = product.MaterialType switch
+        {
+            ProductMaterialType.Gold => sellerPricing?.GoldBidPrice ?? 0m,
+            ProductMaterialType.Silver => sellerPricing?.SilverBidPrice ?? 0m,
+            ProductMaterialType.Diamond => sellerPricing?.DiamondBidPrice ?? 0m,
+            _ => 0m
+        };
+        product.BidPrice = bidPerOunce > 0
+            ? decimal.Round((bidPerOunce / 31.1035m) * product.WeightValue * product.PurityFactor * usdToLocalRate, 2)
+            : product.AskPrice;
+        
     }
+
+    private static string NormalizeMarketKey(string marketKey) => marketKey switch
+    {
+        "JORDAN" => "Jordan",
+        "EGYPT" => "Egypt",
+        "INDIA" => "India",
+        "KSA" => "KSA",
+        _ => "UAE"
+    };
 
     private int? ResolveSellerScope()
     {
@@ -472,6 +540,19 @@ public class ProductsController(IProductService productService, AppDbContext dbC
             ProductMaterialType.Silver => ProductCategory.Silver,
             ProductMaterialType.Diamond => ProductCategory.Diamond,
             _ => ProductCategory.Gold
+        };
+    }
+
+    private static string ResolveCurrencyCodeByMarketType(string? marketType)
+    {
+        return marketType?.Trim().ToUpperInvariant() switch
+        {
+            "UAE" => "AED",
+            "KSA" => "SAR",
+            "JORDAN" => "JOD",
+            "EGYPT" => "EGP",
+            "INDIA" => "INR",
+            _ => "USD"
         };
     }
 

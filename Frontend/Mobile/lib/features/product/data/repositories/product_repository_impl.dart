@@ -107,6 +107,7 @@ class ProductRepositoryImpl implements IProductRepository {
       offerNewPrice: model.offerNewPrice,
       isHasOffer: model.isHasOffer,
       pricingModeLabel: _pricingModeLabel(model.pricingMode),
+      currencyCode: model.currencyCode,
     );
   }
 

@@ -26,6 +26,7 @@ class ProductEntity {
     required this.offerNewPrice,
     required this.isHasOffer,
     required this.pricingModeLabel,
+    required this.currencyCode,
   });
 
   final String id;
@@ -54,6 +55,7 @@ class ProductEntity {
   final double offerNewPrice;
   final bool isHasOffer;
   final String pricingModeLabel;
+  final String currencyCode;
 
   ProductEntity copyWith({
     String? id,
@@ -82,6 +84,7 @@ class ProductEntity {
     double? offerNewPrice,
     bool? isHasOffer,
     String? pricingModeLabel,
+    String? currencyCode,
   }) {
     return ProductEntity(
       id: id ?? this.id,
@@ -110,6 +113,7 @@ class ProductEntity {
       offerNewPrice: offerNewPrice ?? this.offerNewPrice,
       isHasOffer: isHasOffer ?? this.isHasOffer,
       pricingModeLabel: pricingModeLabel ?? this.pricingModeLabel,
+      currencyCode: currencyCode ?? this.currencyCode,
     );
   }
 }

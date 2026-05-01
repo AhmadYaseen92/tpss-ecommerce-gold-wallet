@@ -31,6 +31,7 @@ class RegisterRequestModel {
     this.profilePhotoUrl,
     this.preferredLanguage,
     this.preferredTheme,
+    this.marketType = 'UAE',
     this.sellerId = 0,
   });
 
@@ -47,6 +48,7 @@ class RegisterRequestModel {
   final String? profilePhotoUrl;
   final String? preferredLanguage;
   final String? preferredTheme;
+  final String marketType;
   final int sellerId;
 
   Map<String, dynamic> toJson() => _$RegisterRequestModelToJson(this);

@@ -25,6 +25,7 @@ public sealed class ProductManagementDto
     public decimal AutoPrice { get; set; }
     public decimal FixedPrice { get; set; }
     public decimal SellPrice { get; set; }
+    public string CurrencyCode { get; set; } = "USD";
     public decimal OfferPercent { get; set; }
     public decimal OfferNewPrice { get; set; }
     public ProductOfferType OfferType { get; set; }
@@ -36,7 +37,9 @@ public sealed class ProductManagementDto
 
 public sealed class MarketPriceConfigDto
 {
-    public decimal GoldPerOunce { get; set; }
-    public decimal SilverPerOunce { get; set; }
+    public decimal GoldBidPerOunce { get; set; }
+    public decimal GoldAskPerOunce { get; set; }
+    public decimal SilverBidPerOunce { get; set; }
+    public decimal SilverAskPerOunce { get; set; }
     public decimal DiamondPerCarat { get; set; }
 }
