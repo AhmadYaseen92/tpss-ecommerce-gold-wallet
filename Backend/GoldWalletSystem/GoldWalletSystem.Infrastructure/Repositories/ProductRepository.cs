@@ -57,6 +57,8 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.BaseMarketPrice,
                 x.AutoPrice,
                 x.FixedPrice,
+                x.AskPrice,
+                x.BidPrice,
                 x.SellPrice,
                 x.OfferPercent,
                 x.OfferNewPrice,
@@ -104,7 +106,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.BaseMarketPrice,
                 x.AutoPrice,
                 x.FixedPrice,
-                x.SellPrice,
+                x.AskPrice > 0 ? x.AskPrice : x.SellPrice,
                 x.OfferPercent,
                 x.OfferNewPrice,
                 x.OfferType,
@@ -115,7 +117,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.SellerName,
                 effectiveCurrency,
                 x.BaseMarketPrice,
-                x.SellPrice);
+                x.AskPrice > 0 ? x.AskPrice : x.SellPrice);
         }).ToList();
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
         return new PagedResult<ProductDto>(items, totalCount, pageNumber, pageSize, totalPages);

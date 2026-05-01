@@ -417,6 +417,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.BaseMarketPrice).HasPrecision(18, 2);
             entity.Property(x => x.AutoPrice).HasPrecision(18, 2);
             entity.Property(x => x.FixedPrice).HasPrecision(18, 2);
+            entity.Property(x => x.AskPrice).HasPrecision(18, 2);
+            entity.Property(x => x.BidPrice).HasPrecision(18, 2);
             entity.Property(x => x.SellPrice).HasPrecision(18, 2);
             entity.Property(x => x.CurrencyCode).IsRequired().HasMaxLength(10).HasDefaultValue("USD");
             entity.Property(x => x.OfferPercent).HasPrecision(8, 3);

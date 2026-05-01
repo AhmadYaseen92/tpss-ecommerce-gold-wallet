@@ -20,6 +20,8 @@ public class Product : BaseEntity
     public decimal BaseMarketPrice { get; set; }
     public decimal AutoPrice { get; set; }
     public decimal FixedPrice { get; set; }
+    public decimal AskPrice { get; set; }
+    public decimal BidPrice { get; set; }
     public decimal SellPrice { get; set; }
     public string CurrencyCode { get; set; } = "USD";
     public decimal OfferPercent { get; set; }

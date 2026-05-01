@@ -479,7 +479,9 @@ public class ProductsController(IProductService productService, AppDbContext dbC
         product.CurrencyCode = marketInfo.CurrencyCode;
         product.AutoPrice = decimal.Round(autoPrice, 2);
         var sourcePrice = product.PricingMode == ProductPricingMode.Manual ? product.FixedPrice : product.AutoPrice;
-        product.SellPrice = ProductPricingCalculator.ApplyOffer(sourcePrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
+        product.AskPrice = ProductPricingCalculator.ApplyOffer(sourcePrice, product.OfferType, product.OfferPercent, product.OfferNewPrice);
+        product.BidPrice = product.AskPrice;
+        product.SellPrice = product.AskPrice;
     }
 
     private static string NormalizeMarketKey(string marketKey) => marketKey switch
