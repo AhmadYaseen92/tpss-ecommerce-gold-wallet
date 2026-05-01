@@ -276,7 +276,7 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
         var action = request.ActionType.ToLowerInvariant();
         var currency = "USD";
         var exchangeRate = 1m;
-        var shouldConvertFromUsd = action != "buy";
+        var shouldConvertFromUsd = action != "buy" && !request.ProductId.HasValue;
 
         if (request.SellerId.HasValue)
         {
