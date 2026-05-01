@@ -276,6 +276,7 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
         var action = request.ActionType.ToLowerInvariant();
         var currency = "USD";
         var exchangeRate = 1m;
+        var shouldConvertFromUsd = action != "buy";
 
         if (request.SellerId.HasValue)
         {
@@ -289,7 +290,7 @@ public class FeeCalculationService(AppDbContext dbContext) : IFeeCalculationServ
                 ? resolved
                 : MarketCurrencyMap["UAE"];
             currency = marketInfo.CurrencyCode;
-            exchangeRate = marketInfo.ExchangeRate;
+            exchangeRate = shouldConvertFromUsd ? marketInfo.ExchangeRate : 1m;
         }
 
         if (request.ProductId.HasValue && request.SellerId.HasValue)
