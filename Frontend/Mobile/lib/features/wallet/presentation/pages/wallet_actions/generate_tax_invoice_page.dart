@@ -424,7 +424,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   String _currency(double v) {
-    final code = (_preview?.currency ?? widget.asset.currencyCode).trim();
+    final code = (_preview?.currency ?? '').trim();
     final normalized = code.isEmpty ? 'USD' : code;
     return '$normalized ${v.toStringAsFixed(2)}';
   }
