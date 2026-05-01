@@ -20,6 +20,7 @@ abstract class IAuthRepository {
     String? profilePhotoUrl,
     String? preferredLanguage,
     String? preferredTheme,
+    String marketType = 'UAE',
     int sellerId = 0,
   });
 }

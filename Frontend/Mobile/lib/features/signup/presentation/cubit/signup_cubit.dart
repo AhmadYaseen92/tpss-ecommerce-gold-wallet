@@ -35,6 +35,7 @@ class SignupCubit extends Cubit<SignupState> {
 
   String nationality = 'Jordanian';
   String documentType = 'National ID';
+  String marketType = 'UAE';
   String idNumber = '';
   String password = '';
   String confirmPassword = '';
@@ -42,6 +43,7 @@ class SignupCubit extends Cubit<SignupState> {
 
   void updateNationality(String value) { nationality = value; emit(SignupNationalityChanged(nationality: value)); }
   void updateDocumentType(String value) { documentType = value; emit(SignupDocumentTypeChanged(documentType: value)); }
+  void updateMarketType(String value) { marketType = value; emit(SignupStepChanged(step: currentStep)); }
   void updateIdNumber(String value) { idNumber = value; }
   void updatePassword(String value) { password = value; final result = calculateStrength(value); emit(SignupPasswordStrengthChanged(strength: result.strength, strengthLabel: result.label)); }
   void updateConfirmPassword(String value) { confirmPassword = value; }
@@ -68,7 +70,7 @@ class SignupCubit extends Cubit<SignupState> {
     try {
       final message = await _registerUseCase(
         firstName: firstName,middleName: middleName,lastName: lastName,email: email,phoneNumber: '$phoneCode$phoneNumber',password: password,
-        dateOfBirth: dateOfBirth?.toIso8601String().split('T').first,nationality: nationality,documentType: documentType,idNumber: idNumber,profilePhotoUrl: '',preferredLanguage: 'en',preferredTheme: 'light',sellerId: 0,
+        dateOfBirth: dateOfBirth?.toIso8601String().split('T').first,nationality: nationality,documentType: documentType,idNumber: idNumber,profilePhotoUrl: '',preferredLanguage: 'en',preferredTheme: 'light',marketType: marketType,sellerId: 0,
       );
       emit(SignupSuccess(message));
     } on DioException catch (e) {

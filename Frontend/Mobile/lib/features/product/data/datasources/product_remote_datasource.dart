@@ -52,7 +52,7 @@ class ProductRemoteModel {
     required this.baseMarketPrice,
     required this.autoPrice,
     required this.fixedPrice,
-    required this.sellPrice,
+    required this.askPrice,
     required this.availableStock,
     required this.categoryId,
     required this.weightValue,
@@ -68,6 +68,7 @@ class ProductRemoteModel {
     required this.isHasOffer,
     required this.purityKarat,
     required this.purityFactor,
+    required this.currencyCode,
   });
 
   final int id;
@@ -79,7 +80,7 @@ class ProductRemoteModel {
   final double baseMarketPrice;
   final double autoPrice;
   final double fixedPrice;
-  final double sellPrice;
+  final double askPrice;
   final int availableStock;
   final int categoryId;
   final double weightValue;
@@ -95,6 +96,7 @@ class ProductRemoteModel {
   final bool isHasOffer;
   final String purityKarat;
   final double purityFactor;
+  final String currencyCode;
 
   factory ProductRemoteModel.fromJson(Map<String, dynamic> json) {
     return ProductRemoteModel(
@@ -107,7 +109,7 @@ class ProductRemoteModel {
       baseMarketPrice: (json['baseMarketPrice'] as num?)?.toDouble() ?? 0,
       autoPrice: (json['autoPrice'] as num?)?.toDouble() ?? 0,
       fixedPrice: (json['fixedPrice'] as num?)?.toDouble() ?? 0,
-      sellPrice: (json['sellPrice'] as num?)?.toDouble() ?? (json['finalPrice'] as num?)?.toDouble() ?? (json['price'] as num?)?.toDouble() ?? 0,
+      askPrice: (json['askPrice'] as num?)?.toDouble() ?? (json['sellPrice'] as num?)?.toDouble() ?? (json['finalPrice'] as num?)?.toDouble() ?? (json['price'] as num?)?.toDouble() ?? 0,
       availableStock: (json['availableStock'] as num?)?.toInt() ?? 0,
       categoryId: _parseCategoryId(json['category']),
       weightValue: (json['weightValue'] as num?)?.toDouble() ?? 0,
@@ -123,6 +125,7 @@ class ProductRemoteModel {
       isHasOffer: _asBool(json['isHasOffer'] ?? json['IsHasOffer']),
       purityKarat: (json['purityKarat'] ?? '').toString(),
       purityFactor: (json['purityFactor'] as num?)?.toDouble() ?? 0,
+      currencyCode: (json['currencyCode'] ?? 'USD').toString(),
     );
   }
 

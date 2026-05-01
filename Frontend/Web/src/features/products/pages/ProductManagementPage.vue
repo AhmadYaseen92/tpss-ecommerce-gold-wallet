@@ -64,7 +64,7 @@ const emit = defineEmits<{
   "update:seller-filter": [value: string];
   "save-market-prices": [];
   "update-market-price": [
-    field: "goldPerOunce" | "silverPerOunce" | "diamondPerCarat",
+    field: "goldBidPerOunce" | "goldAskPerOunce" | "silverBidPerOunce" | "silverAskPerOunce" | "diamondPerCarat",
     value: number
   ];
   "manage-fees": [];
@@ -91,7 +91,7 @@ watch(
 );
 
 const updateMarketPrice = (
-  field: "goldPerOunce" | "silverPerOunce" | "diamondPerCarat",
+  field: "goldBidPerOunce" | "goldAskPerOunce" | "silverBidPerOunce" | "silverAskPerOunce" | "diamondPerCarat",
   value: string
 ) => {
   emit("update-market-price", field, Number(value || 0));
@@ -134,29 +134,51 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
             </Select>
           </FormField>
 
-          <FormField label="Gold Price / Ounce">
+          <FormField label="Gold Bid (USD / Ounce)">
             <Input
               type="number"
               min="0"
               step="0.01"
-              :model-value="marketPrices.goldPerOunce"
+              :model-value="marketPrices.goldBidPerOunce"
               :disabled="role === 'Admin' && !isSingleSellerSelected"
-              @update:model-value="updateMarketPrice('goldPerOunce', $event)"
+              @update:model-value="updateMarketPrice('goldBidPerOunce', $event)"
             />
           </FormField>
 
-          <FormField label="Silver Price / Ounce">
+          <FormField label="Gold Ask (USD / Ounce)">
             <Input
               type="number"
               min="0"
               step="0.01"
-              :model-value="marketPrices.silverPerOunce"
+              :model-value="marketPrices.goldAskPerOunce"
               :disabled="role === 'Admin' && !isSingleSellerSelected"
-              @update:model-value="updateMarketPrice('silverPerOunce', $event)"
+              @update:model-value="updateMarketPrice('goldAskPerOunce', $event)"
             />
           </FormField>
 
-          <FormField label="Diamond Price / Carat">
+          <FormField label="Silver Bid (USD / Ounce)">
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              :model-value="marketPrices.silverBidPerOunce"
+              :disabled="role === 'Admin' && !isSingleSellerSelected"
+              @update:model-value="updateMarketPrice('silverBidPerOunce', $event)"
+            />
+          </FormField>
+
+          <FormField label="Silver Ask (USD / Ounce)">
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              :model-value="marketPrices.silverAskPerOunce"
+              :disabled="role === 'Admin' && !isSingleSellerSelected"
+              @update:model-value="updateMarketPrice('silverAskPerOunce', $event)"
+            />
+          </FormField>
+
+          <FormField label="Diamond Price (USD / Carat)">
             <Input
               type="number"
               min="0"
@@ -234,7 +256,8 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                   <th>Category</th>
                   <th>Form</th>
                   <th>Weight</th>
-                  <th>Sell Price</th>
+                  <th>Ask Price</th>
+                  <th>Currency</th>
                   <th>Stock</th>
                   <th>Status</th>
                   <th class="text-right">Actions</th>
@@ -275,7 +298,8 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
                   <td>{{ product.category }}</td>
                   <td>{{ product.formType }}</td>
                   <td>{{ product.weightValue }} g</td>
-                  <td>{{ formatMoney(product.sellPrice) }}</td>
+                  <td>{{ formatMoney(product.askPrice) }}</td>
+                  <td>{{ product.currencyCode || "USD" }}</td>
                   <td>{{ product.availableStock }}</td>
                   <td>
                     <StatusBadge :status="product.isActive ? 'Active' : 'Inactive'" />

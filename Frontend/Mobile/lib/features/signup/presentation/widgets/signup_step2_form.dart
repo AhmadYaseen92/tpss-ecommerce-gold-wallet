@@ -80,6 +80,22 @@ class _SignupStep2FormState extends State<SignupStep2Form> {
             ),
           ),
           const SizedBox(height: 16),
+          const FormSectionLabel(label: 'MARKET TYPE'),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: widget.cubit.marketType,
+            decoration: const InputDecoration(
+              hintText: 'Select market',
+              border: OutlineInputBorder(),
+            ),
+            items: const ['UAE', 'KSA', 'Jordan', 'Egypt', 'India']
+                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .toList(),
+            onChanged: (value) {
+              if (value != null) widget.cubit.updateMarketType(value);
+            },
+          ),
+          const SizedBox(height: 16),
           const FormSectionLabel(label: 'DOCUMENT TYPE'),
           const SizedBox(height: 8),
           BlocBuilder<SignupCubit, SignupState>(

@@ -5,8 +5,9 @@ class HomeCarsouleItemModel {
   final String sellerName;
   final String materialType;
   final String pricingModeLabel;
+  final String currencyCode;
   final double sourcePrice;
-  final double sellPrice;
+  final double askPrice;
   final String? offerLabel;
 
   HomeCarsouleItemModel({
@@ -16,8 +17,9 @@ class HomeCarsouleItemModel {
     required this.sellerName,
     required this.materialType,
     required this.pricingModeLabel,
+    required this.currencyCode,
     required this.sourcePrice,
-    required this.sellPrice,
+    required this.askPrice,
     this.offerLabel,
   });
 }

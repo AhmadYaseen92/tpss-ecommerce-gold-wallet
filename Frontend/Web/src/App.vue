@@ -13,6 +13,7 @@ import SettingsFeaturePage from "./features/dashboard/pages/SettingsFeaturePage.
 import TransactionsFeaturePage from "./features/transactions/pages/TransactionsFeaturePage.vue";
 import ReportsFeaturePage from "./features/reports/pages/ReportsFeaturePage.vue";
 import FeeManagementFeaturePage from "./features/fees/pages/FeeManagementFeaturePage.vue";
+import MarketFeaturePage from "./features/dashboard/pages/MarketFeaturePage.vue";
 import { useMarketplace } from "./shared/app/store/useMarketplace";
 
 const marketplace = useMarketplace();
@@ -32,6 +33,7 @@ const ROUTE_BY_MENU: Partial<Record<NavigationKey, string>> = {
   requests: "/transactions",
   reports: "/reports",
   fees: "/fees",
+  market: "/market",
 };
 
 const applyTheme = (dark: boolean) => {
@@ -89,6 +91,7 @@ const menuItems = computed<Array<{ key: NavigationKey; label: string }>>(() => {
       { key: "investors" as NavigationKey, label: "Investors" },
       { key: "sellers" as NavigationKey, label: "Sellers" },
       { key: "settings" as NavigationKey, label: "System Settings" },
+      { key: "market" as NavigationKey, label: "Market" },
       common[2],
       common[3],
       common[4],
@@ -106,6 +109,7 @@ const activeMenu = computed<NavigationKey>(() => {
   if (currentPath.value.startsWith("/settings")) return "settings";
   if (currentPath.value.startsWith("/transactions")) return "requests";
   if (currentPath.value.startsWith("/fees")) return "fees" as NavigationKey;
+  if (currentPath.value.startsWith("/market")) return "market" as NavigationKey;
   if (currentPath.value.startsWith("/reports")) return "reports";
   return "overview";
 });
@@ -130,6 +134,7 @@ const activeComponent = computed(() => {
   if (currentPath.value.startsWith("/settings")) return marketplace.role.value === "Admin" ? SettingsFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/transactions")) return TransactionsFeaturePage;
   if (currentPath.value.startsWith("/fees")) return FeeManagementFeaturePage;
+  if (currentPath.value.startsWith("/market")) return marketplace.role.value === "Admin" ? MarketFeaturePage : DashboardFeaturePage;
   if (currentPath.value.startsWith("/reports")) return ReportsFeaturePage;
 
   return DashboardFeaturePage;

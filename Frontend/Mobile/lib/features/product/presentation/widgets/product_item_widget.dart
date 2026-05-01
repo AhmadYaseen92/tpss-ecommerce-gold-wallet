@@ -87,7 +87,7 @@ class ProductItemWidget extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: Text(
-                              '\$${inactivePrice.toStringAsFixed(2)}',
+                              '${product.currencyCode} ${inactivePrice.toStringAsFixed(2)}',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: palette.textSecondary,
@@ -96,7 +96,7 @@ class ProductItemWidget extends StatelessWidget {
                             ),
                           ),
                         Text(
-                          '\$${product.sellPrice.toStringAsFixed(2)}',
+                          '${product.currencyCode} ${product.askPrice.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -150,7 +150,7 @@ class ProductItemWidget extends StatelessWidget {
     ];
 
     final price = candidates.firstWhere(
-      (value) => value > 0 && value > product.sellPrice,
+      (value) => value > 0 && value > product.askPrice,
       orElse: () => 0,
     );
     return price > 0 ? price : null;

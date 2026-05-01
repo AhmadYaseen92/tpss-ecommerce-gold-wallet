@@ -15,6 +15,14 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
     public async Task<PagedResult<ProductDto>> GetPagedAsync(int pageNumber, int pageSize, ProductCategory? category = null, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Products.AsNoTracking().Where(x => x.IsActive);
+        if (!currentUser.IsInRole("Admin") && !currentUser.IsInRole("Seller") && currentUser.UserId.HasValue)
+        {
+            var investorMarketType = await dbContext.UserProfiles.AsNoTracking()
+                .Where(x => x.UserId == currentUser.UserId.Value)
+                .Select(x => x.MarketType)
+                .FirstOrDefaultAsync(cancellationToken) ?? "UAE";
+            query = query.Where(x => x.Seller.MarketType == investorMarketType);
+        }
         if (!currentUser.IsInRole("Admin") && currentUser.SellerId.HasValue)
         {
             query = query.Where(x => x.SellerId == currentUser.SellerId.Value);
@@ -49,7 +57,8 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.BaseMarketPrice,
                 x.AutoPrice,
                 x.FixedPrice,
-                x.SellPrice,
+                x.AskPrice,
+                x.BidPrice,
                 x.OfferPercent,
                 x.OfferNewPrice,
                 x.OfferType,
@@ -57,12 +66,26 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.AvailableStock,
                 x.IsActive,
                 x.SellerId,
-                SellerName = x.Seller.CompanyName
+                SellerName = x.Seller.CompanyName,
+                x.CurrencyCode,
+                MarketType = x.Seller.MarketType
             })
             .ToListAsync(cancellationToken);
 
         var items = rows.Select(x =>
         {
+            var fallbackCurrency = x.MarketType?.Trim().ToUpperInvariant() switch
+            {
+                "UAE" => "AED",
+                "KSA" => "SAR",
+                "JORDAN" => "JOD",
+                "EGYPT" => "EGP",
+                "INDIA" => "INR",
+                _ => "USD"
+            };
+            var effectiveCurrency = string.IsNullOrWhiteSpace(x.CurrencyCode) || string.Equals(x.CurrencyCode, "USD", StringComparison.OrdinalIgnoreCase)
+                ? fallbackCurrency
+                : x.CurrencyCode;
             return new ProductDto(
                 x.Id,
                 x.Name,
@@ -82,7 +105,7 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.BaseMarketPrice,
                 x.AutoPrice,
                 x.FixedPrice,
-                x.SellPrice,
+                x.AskPrice,
                 x.OfferPercent,
                 x.OfferNewPrice,
                 x.OfferType,
@@ -90,7 +113,10 @@ public class ProductRepository(AppDbContext dbContext, ICurrentUserService curre
                 x.AvailableStock,
                 x.IsActive,
                 x.SellerId,
-                x.SellerName);
+                x.SellerName,
+                effectiveCurrency,
+                x.BaseMarketPrice,
+                x.AskPrice);
         }).ToList();
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
         return new PagedResult<ProductDto>(items, totalCount, pageNumber, pageSize, totalPages);

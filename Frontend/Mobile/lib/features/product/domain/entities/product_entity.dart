@@ -7,7 +7,7 @@ class ProductEntity {
     required this.baseMarketPrice,
     required this.autoPrice,
     required this.fixedPrice,
-    required this.sellPrice,
+    required this.askPrice,
     required this.availableStock,
     required this.imageUrl,
     required this.videoUrl,
@@ -26,6 +26,7 @@ class ProductEntity {
     required this.offerNewPrice,
     required this.isHasOffer,
     required this.pricingModeLabel,
+    required this.currencyCode,
   });
 
   final String id;
@@ -35,7 +36,7 @@ class ProductEntity {
   final double baseMarketPrice;
   final double autoPrice;
   final double fixedPrice;
-  final double sellPrice;
+  final double askPrice;
   final int availableStock;
   final String imageUrl;
   final String videoUrl;
@@ -54,6 +55,7 @@ class ProductEntity {
   final double offerNewPrice;
   final bool isHasOffer;
   final String pricingModeLabel;
+  final String currencyCode;
 
   ProductEntity copyWith({
     String? id,
@@ -63,7 +65,7 @@ class ProductEntity {
     double? baseMarketPrice,
     double? autoPrice,
     double? fixedPrice,
-    double? sellPrice,
+    double? askPrice,
     int? availableStock,
     String? imageUrl,
     String? videoUrl,
@@ -82,6 +84,7 @@ class ProductEntity {
     double? offerNewPrice,
     bool? isHasOffer,
     String? pricingModeLabel,
+    String? currencyCode,
   }) {
     return ProductEntity(
       id: id ?? this.id,
@@ -91,7 +94,7 @@ class ProductEntity {
       baseMarketPrice: baseMarketPrice ?? this.baseMarketPrice,
       autoPrice: autoPrice ?? this.autoPrice,
       fixedPrice: fixedPrice ?? this.fixedPrice,
-      sellPrice: sellPrice ?? this.sellPrice,
+      askPrice: askPrice ?? this.askPrice,
       availableStock: availableStock ?? this.availableStock,
       imageUrl: imageUrl ?? this.imageUrl,
       videoUrl: videoUrl ?? this.videoUrl,
@@ -110,6 +113,7 @@ class ProductEntity {
       offerNewPrice: offerNewPrice ?? this.offerNewPrice,
       isHasOffer: isHasOffer ?? this.isHasOffer,
       pricingModeLabel: pricingModeLabel ?? this.pricingModeLabel,
+      currencyCode: currencyCode ?? this.currencyCode,
     );
   }
 }

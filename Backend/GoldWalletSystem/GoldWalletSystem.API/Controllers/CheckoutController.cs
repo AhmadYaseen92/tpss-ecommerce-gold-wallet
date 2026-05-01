@@ -318,9 +318,11 @@ public class CheckoutController(
         _ => weightValue
     };
 
-    private static decimal ResolveProductUnitPrice(Product product)
+    private decimal ResolveProductUnitPrice(Product product)
     {
-        return product.SellPrice;
+        // Product.AskPrice is the persisted, market-aware final unit price shown to users.
+        // Checkout must use this exact value to avoid summary mismatches vs product details.
+        return product.AskPrice;
     }
 
     private static AssetType ToAssetType(ProductCategory category) => category switch

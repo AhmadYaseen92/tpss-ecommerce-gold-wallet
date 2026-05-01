@@ -155,9 +155,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Description).HasMaxLength(2000);
             entity.Property(x => x.KycStatus).HasConversion<int>();
             entity.Property(x => x.ReviewNotes).HasMaxLength(1000);
-            entity.Property(x => x.GoldPrice).HasPrecision(18, 2);
-            entity.Property(x => x.SilverPrice).HasPrecision(18, 2);
-            entity.Property(x => x.DiamondPrice).HasPrecision(18, 2);
+            entity.Property(x => x.GoldAskPrice).HasPrecision(18, 2);
+            entity.Property(x => x.GoldBidPrice).HasPrecision(18, 2);
+            entity.Property(x => x.SilverAskPrice).HasPrecision(18, 2);
+            entity.Property(x => x.SilverBidPrice).HasPrecision(18, 2);
+            entity.Property(x => x.DiamondAskPrice).HasPrecision(18, 2);
+            entity.Property(x => x.DiamondBidPrice).HasPrecision(18, 2);
+            entity.Property(x => x.MarketCurrencyCode).HasMaxLength(8).HasDefaultValue("USD");
             entity.HasIndex(x => x.CompanyCode).IsUnique();
             entity.HasIndex(x => x.UserId).IsUnique();
             entity.HasIndex(x => x.CompanyName);
@@ -285,6 +289,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.ProfilePhotoUrl).HasColumnType("nvarchar(max)");
             entity.Property(x => x.PreferredLanguage).HasMaxLength(10);
             entity.Property(x => x.PreferredTheme).HasMaxLength(20);
+            entity.Property(x => x.MarketType).HasMaxLength(20).HasDefaultValue("UAE");
             entity.HasIndex(x => x.UserId).IsUnique();
             entity.HasOne(x => x.User).WithOne().HasForeignKey<UserProfile>(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -412,7 +417,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.BaseMarketPrice).HasPrecision(18, 2);
             entity.Property(x => x.AutoPrice).HasPrecision(18, 2);
             entity.Property(x => x.FixedPrice).HasPrecision(18, 2);
-            entity.Property(x => x.SellPrice).HasPrecision(18, 2);
+            entity.Property(x => x.AskPrice).HasPrecision(18, 2);
+            entity.Property(x => x.BidPrice).HasPrecision(18, 2);
+            entity.Property(x => x.CurrencyCode).IsRequired().HasMaxLength(10).HasDefaultValue("USD");
             entity.Property(x => x.OfferPercent).HasPrecision(8, 3);
             entity.Property(x => x.OfferNewPrice).HasPrecision(18, 2);
             entity.Property(x => x.OfferType).HasConversion<int>();

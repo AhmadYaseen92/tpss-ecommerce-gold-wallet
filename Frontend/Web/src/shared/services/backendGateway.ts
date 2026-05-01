@@ -32,6 +32,7 @@ import type {
   WebFeeBreakdownReportRowDto,
   WebSellerDetailsDto,
   WebSellerDto,
+  MarketTypeSettingsDto,
   WalletDto
 } from "../types/apiTypes";
 
@@ -82,6 +83,7 @@ const mapSeller = (dto: WebSellerDto): Seller => ({
   goldPrice: dto.goldPrice ?? null,
   silverPrice: dto.silverPrice ?? null,
   diamondPrice: dto.diamondPrice ?? null
+  ,marketType: dto.marketType
 });
 
 const mapProduct = (dto: ProductDto): Product => ({
@@ -91,8 +93,9 @@ const mapProduct = (dto: ProductDto): Product => ({
   category: dto.category,
   materialType: dto.materialType,
   formType: dto.formType,
-  unitPrice: Number(dto.sellPrice ?? dto.finalPrice ?? 0),
-  marketPrice: Number(dto.sellPrice ?? dto.finalPrice ?? 0),
+  unitPrice: Number(dto.askPriceLocal ?? dto.askPrice ?? dto.finalPrice ?? 0),
+  marketPrice: Number(dto.baseMarketPriceLocal ?? dto.baseMarketPrice ?? 0),
+  currencyCode: dto.currencyCode ?? "USD",
   stock: dto.availableStock,
   updatedAt: new Date().toISOString().split("T")[0]
 });
@@ -293,6 +296,23 @@ export async function fetchSellers(accessToken: string): Promise<Seller[]> {
 
 export async function fetchSellerDetailsByAdmin(accessToken: string, sellerId: string): Promise<WebSellerDetailsDto> {
   return getJson<WebSellerDetailsDto>(`/api/web-admin/sellers/${sellerId}`, accessToken);
+}
+
+export async function fetchMarketSettings(accessToken: string): Promise<MarketTypeSettingsDto[]> {
+  return getJson<MarketTypeSettingsDto[]>("/api/web-admin/market-types", accessToken);
+}
+
+export async function fetchMarketSellers(accessToken: string, marketType: string): Promise<Seller[]> {
+  const sellers = await getJson<WebSellerDto[]>(`/api/web-admin/market-types/${encodeURIComponent(marketType)}/sellers`, accessToken);
+  return sellers.map(mapSeller);
+}
+
+export async function updateMarketSettings(
+  accessToken: string,
+  marketType: string,
+  payload: MarketTypeSettingsDto
+): Promise<void> {
+  await putJson<string, MarketTypeSettingsDto>(`/api/web-admin/market-types/${encodeURIComponent(marketType)}`, payload, accessToken);
 }
 
 export async function updateSellerLoginCredentialsByAdmin(
@@ -510,7 +530,8 @@ export async function fetchManagedProducts(accessToken: string): Promise<Product
       baseMarketPrice: Number(row.baseMarketPrice ?? row.BaseMarketPrice ?? 0),
       autoPrice: Number(row.autoPrice ?? row.AutoPrice ?? 0),
       fixedPrice: Number(row.fixedPrice ?? row.FixedPrice ?? 0),
-      sellPrice: Number(row.sellPrice ?? row.SellPrice ?? 0),
+      askPrice: Number(row.askPrice ?? row.AskPrice ?? row.sellPrice ?? row.SellPrice ?? 0),
+      currencyCode: String(row.currencyCode ?? row.CurrencyCode ?? "USD"),
       offerType: String(row.offerType ?? row.OfferType ?? "0"),
       isHasOffer: Boolean(row.isHasOffer ?? row.IsHasOffer ?? false),
       offerPercent: Number(row.offerPercent ?? row.OfferPercent ?? 0),

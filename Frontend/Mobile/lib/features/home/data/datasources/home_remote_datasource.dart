@@ -26,10 +26,10 @@ class HomeRemoteDataSource {
             final isHasOffer = _asBool(item['isHasOffer'] ?? item['IsHasOffer']);
             final offerPercent = (item['offerPercent'] as num?)?.toDouble() ?? 0;
             final offerType = (item['offerType'] ?? '').toString();
-            final sellPrice = (item['sellPrice'] as num?)?.toDouble() ?? 0;
+            final askPrice = (item['askPrice'] as num?)?.toDouble() ?? (item['sellPrice'] as num?)?.toDouble() ?? 0;
             final pricingMode = (item['pricingMode'] ?? '').toString().toLowerCase();
             final sourcePrice = _inactivePrice(
-              sellPrice: sellPrice,
+              askPrice: askPrice,
               baseMarketPrice: (item['baseMarketPrice'] as num?)?.toDouble() ?? 0,
               autoPrice: (item['autoPrice'] as num?)?.toDouble() ?? 0,
               fixedPrice: (item['fixedPrice'] as num?)?.toDouble() ?? 0,
@@ -44,13 +44,15 @@ class HomeRemoteDataSource {
               materialType: _materialTypeLabel(item['materialType']),
               pricingModeLabel: pricingMode.contains('auto') ? 'Auto Price' : 'Manual Price',
               sourcePrice: sourcePrice,
-              sellPrice: sellPrice,
+              askPrice: askPrice,
               offerLabel: _offerLabel(
                 isHasOffer: isHasOffer,
                 offerPercent: offerPercent,
                 offerType: offerType,
-                sellPrice: sellPrice,
+                askPrice: askPrice,
+                currencyCode: (item['currencyCode'] ?? 'USD').toString(),
               ),
+              currencyCode: (item['currencyCode'] ?? 'USD').toString(),
             );
           })
           .where((item) => item.imgUrl.trim().isNotEmpty)
@@ -80,7 +82,8 @@ class HomeRemoteDataSource {
     required bool isHasOffer,
     required double offerPercent,
     required String offerType,
-    required double sellPrice,
+    required double askPrice,
+    required String currencyCode,
   }) {
     if (!isHasOffer) {
       return null;
@@ -89,13 +92,13 @@ class HomeRemoteDataSource {
       return '${offerPercent.toStringAsFixed(0)}% OFF';
     }
     if (offerType.toLowerCase() != 'none') {
-      return 'Offer • Now ${sellPrice.toStringAsFixed(2)} JOD';
+      return 'Offer • Now ${currencyCode.isEmpty ? 'USD' : currencyCode} ${askPrice.toStringAsFixed(2)}';
     }
     return null;
   }
 
   double _inactivePrice({
-    required double sellPrice,
+    required double askPrice,
     required double baseMarketPrice,
     required double autoPrice,
     required double fixedPrice,
@@ -104,18 +107,18 @@ class HomeRemoteDataSource {
   }) {
     final candidates = <double>[baseMarketPrice, autoPrice, fixedPrice, offerNewPrice];
     final direct = candidates.firstWhere(
-      (price) => price > 0 && price > sellPrice,
+      (price) => price > 0 && price > askPrice,
       orElse: () => 0,
     );
     if (direct > 0) return direct;
 
-    if (offerPercent > 0 && offerPercent < 100 && sellPrice > 0) {
-      final calculated = sellPrice / (1 - (offerPercent / 100));
-      if (calculated > sellPrice) {
+    if (offerPercent > 0 && offerPercent < 100 && askPrice > 0) {
+      final calculated = askPrice / (1 - (offerPercent / 100));
+      if (calculated > askPrice) {
         return calculated;
       }
     }
-    return sellPrice;
+    return askPrice;
   }
 
   String _materialTypeLabel(dynamic rawMaterialType) {

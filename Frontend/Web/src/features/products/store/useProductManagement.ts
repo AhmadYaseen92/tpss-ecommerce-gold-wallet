@@ -114,7 +114,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const materialTypeFilter = ref("all");
   const formTypeFilter = ref("all");
   const sellerFilter = ref("all");
-  const marketPrices = reactive<MarketPriceConfigDto>({ goldPerOunce: 0, silverPerOunce: 0, diamondPerCarat: 0 });
+  const marketPrices = reactive<MarketPriceConfigDto>({ goldBidPerOunce: 0, goldAskPerOunce: 0, silverBidPerOunce: 0, silverAskPerOunce: 0, diamondPerCarat: 0 });
   const marketPricesDirty = ref(false);
   const productFeeDraft = ref<SellerProductFeePayload | null>(null);
 
@@ -123,7 +123,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   const applySelectedSellerMarketPrices = () => {
     if (!isAdmin.value) return;
     if (sellerFilter.value === "all") {
-      Object.assign(marketPrices, { goldPerOunce: 0, silverPerOunce: 0, diamondPerCarat: 0 });
+      Object.assign(marketPrices, { goldBidPerOunce: 0, goldAskPerOunce: 0, silverBidPerOunce: 0, silverAskPerOunce: 0, diamondPerCarat: 0 });
       return;
     }
 
@@ -132,8 +132,10 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     );
 
     Object.assign(marketPrices, {
-      goldPerOunce: Number(seller?.goldPrice ?? 0),
-      silverPerOunce: Number(seller?.silverPrice ?? 0),
+      goldBidPerOunce: Number(seller?.goldPrice ?? 0),
+      goldAskPerOunce: Number(seller?.goldPrice ?? 0),
+      silverBidPerOunce: Number(seller?.silverPrice ?? 0),
+      silverAskPerOunce: Number(seller?.silverPrice ?? 0),
       diamondPerCarat: Number(seller?.diamondPrice ?? 0)
     });
   };
@@ -395,7 +397,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     }
   };
 
-  const updateMarketPriceField = (field: "goldPerOunce" | "silverPerOunce" | "diamondPerCarat", value: number) => {
+  const updateMarketPriceField = (field: "goldBidPerOunce" | "goldAskPerOunce" | "silverBidPerOunce" | "silverAskPerOunce" | "diamondPerCarat", value: number) => {
     marketPricesDirty.value = true;
     marketPrices[field] = Number.isFinite(value) ? value : 0;
   };
@@ -415,8 +417,8 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
           (x: Seller) => String(x.sellerId ?? x.id) === sellerFilter.value
         );
         if (seller) {
-          seller.goldPrice = marketPrices.goldPerOunce;
-          seller.silverPrice = marketPrices.silverPerOunce;
+          seller.goldPrice = marketPrices.goldAskPerOunce;
+          seller.silverPrice = marketPrices.silverAskPerOunce;
           seller.diamondPrice = marketPrices.diamondPerCarat;
         }
       } else {

@@ -88,7 +88,7 @@ class ProductRepositoryImpl implements IProductRepository {
       baseMarketPrice: model.baseMarketPrice,
       autoPrice: model.autoPrice,
       fixedPrice: model.fixedPrice,
-      sellPrice: model.sellPrice,
+      askPrice: model.askPrice,
       availableStock: model.availableStock,
       imageUrl: normalizedImageUrl,
       videoUrl: normalizedVideoUrl,
@@ -107,6 +107,7 @@ class ProductRepositoryImpl implements IProductRepository {
       offerNewPrice: model.offerNewPrice,
       isHasOffer: model.isHasOffer,
       pricingModeLabel: _pricingModeLabel(model.pricingMode),
+      currencyCode: model.currencyCode,
     );
   }
 

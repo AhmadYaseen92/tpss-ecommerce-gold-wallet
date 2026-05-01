@@ -21,7 +21,7 @@ public sealed record ProductDto(
     decimal BaseMarketPrice,
     decimal AutoPrice,
     decimal FixedPrice,
-    decimal SellPrice,
+    decimal AskPrice,
     decimal OfferPercent,
     decimal OfferNewPrice,
     ProductOfferType OfferType,
@@ -29,4 +29,7 @@ public sealed record ProductDto(
     int AvailableStock,
     bool isActive,
     int SellerId,
-    string SellerName);
+    string SellerName,
+    string CurrencyCode,
+    decimal BaseMarketPriceLocal,
+    decimal AskPriceLocal);
