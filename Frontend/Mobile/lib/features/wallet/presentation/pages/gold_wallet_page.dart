@@ -61,6 +61,7 @@ class GoldWalletPage extends StatelessWidget {
               }
               final wallet = state.wallets.first;
               final totalPortfolioValue = state.totalPortfolioValue;
+              final currencyCode = _extractCurrencyCode(wallet.totalMarketValue);
               return RefreshIndicator(
                 onRefresh: () => context.read<WalletCubit>().loadWallets(),
                 child: SingleChildScrollView(
@@ -72,7 +73,7 @@ class GoldWalletPage extends StatelessWidget {
                       const SizedBox(height: 12),
                       PortfolioCardWidget(
                         title: 'Total Portfolio Value',
-                        value: '\$${totalPortfolioValue.toStringAsFixed(2)}',
+                        value: '$currencyCode ${totalPortfolioValue.toStringAsFixed(2)}',
                         change: '',
                         availableCash: wallet.cashBalance,
                       ),
@@ -150,4 +151,11 @@ class GoldWalletPage extends StatelessWidget {
       ),
     );
   }
+}
+
+String _extractCurrencyCode(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) return 'USD';
+  final firstToken = trimmed.split(RegExp(r'\s+')).first.trim().toUpperCase();
+  return firstToken.length == 3 ? firstToken : 'USD';
 }

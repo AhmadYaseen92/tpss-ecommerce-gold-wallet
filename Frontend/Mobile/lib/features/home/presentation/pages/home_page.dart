@@ -38,11 +38,12 @@ class HomePage extends StatelessWidget {
                               .map((wallet) => double.tryParse(wallet.change.replaceAll('%', '').replaceAll('+', '')) ?? 0)
                               .reduce((a, b) => a + b) /
                           wallets.length;
-                final totalCash = wallets.isNotEmpty ? wallets.first.cashBalance : r'$0.00';
+                final currencyCode = wallets.isNotEmpty ? _extractCurrencyCode(wallets.first.totalMarketValue) : 'USD';
+                final totalCash = wallets.isNotEmpty ? wallets.first.cashBalance : '$currencyCode 0.00';
 
                 return PortfolioCardWidget(
                   title: 'Total Portfolio Value',
-                  value: '\$ ${totalMarket.toStringAsFixed(2)}',
+                  value: '$currencyCode ${totalMarket.toStringAsFixed(2)}',
                   change: '${avgChange >= 0 ? '+' : ''}${avgChange.toStringAsFixed(2)}%',
                   availableCash: totalCash,
                 );
@@ -54,5 +55,12 @@ class HomePage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _extractCurrencyCode(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return 'USD';
+    final firstToken = trimmed.split(RegExp(r'\s+')).first.trim().toUpperCase();
+    return firstToken.length == 3 ? firstToken : 'USD';
   }
 }
