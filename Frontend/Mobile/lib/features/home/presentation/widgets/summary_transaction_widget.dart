@@ -175,7 +175,7 @@ class _SummaryTransactionWidgetState
         subtitle:
             '${tx.transactionType} • ${tx.status}',
         amountText:
-            '${isPositive ? '+' : '-'} \$${absAmount.toStringAsFixed(2)}',
+            '${isPositive ? '+' : '-'} ${_normalizeCurrencyCode(tx.currency)} ${absAmount.toStringAsFixed(2)}',
         isPositive: isPositive,
         imageUrl: tx.productImageUrl,
         secondaryText: tx.isTransferOrGift
@@ -190,5 +190,10 @@ class _SummaryTransactionWidgetState
       onViewAllHistory: widget.onViewAllHistory,
       maxItems: widget.maxItems,
     );
+  }
+
+  String _normalizeCurrencyCode(String raw) {
+    final normalized = raw.trim().toUpperCase();
+    return normalized.isEmpty ? 'USD' : normalized;
   }
 }
