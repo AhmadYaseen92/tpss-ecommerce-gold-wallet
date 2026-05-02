@@ -22,7 +22,7 @@ const onSubmit = async () => {
   try {
     await confirmPasswordReset({ email: email.value, otp: otp.value, newPassword: newPassword.value });
     await ElMessageBox.alert("Password reset successful. You can now log in.", "Success", { confirmButtonText: "OK", type: "success" });
-    window.location.href = "/login";
+    window.location.href = "/Login";
   } catch (e: any) {
     await ElMessageBox.alert(e?.message || "Failed to reset password.", "Error", { confirmButtonText: "OK", type: "error" });
   } finally {

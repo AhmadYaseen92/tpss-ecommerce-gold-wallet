@@ -17,6 +17,7 @@ const emit = defineEmits<{
   themeToggle: [];
   notificationRead: [notificationId: string];
   notificationsReadAll: [];
+  passwordChange: [payload: { currentPassword: string; newPassword: string }];
 }>();
 
 const openNotifications = ref(false);
@@ -54,11 +55,24 @@ const submitPasswordChange = () => {
     return;
   }
 
-  passwordMessage.value = "Password updated successfully.";
+  emit("passwordChange", {
+    currentPassword: passwordForm.currentPassword,
+    newPassword: passwordForm.newPassword,
+  });
+};
+
+const resetPasswordForm = () => {
   passwordForm.currentPassword = "";
   passwordForm.newPassword = "";
   passwordForm.confirmPassword = "";
 };
+
+watch(openSettings, (value) => {
+  if (!value) {
+    passwordMessage.value = "";
+    resetPasswordForm();
+  }
+});
 
 const formatLocalDateTime = (iso: string) => {
   const value = new Date(iso);
