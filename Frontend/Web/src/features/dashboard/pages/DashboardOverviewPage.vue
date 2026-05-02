@@ -31,6 +31,21 @@ const normalizeCardTitle = (title: string) => title.trim().toLowerCase();
 const handleMetricCardClick = (title: string) => {
   const key = normalizeCardTitle(title);
 
+  if (key === "total sales") {
+    emit("navigate", "/reports?reportType=sales");
+    return;
+  }
+
+  if (key === "active products") {
+    emit("navigate", "/products?active=active");
+    return;
+  }
+
+  if (key === "out of stock") {
+    emit("navigate", "/products?active=out_of_stock");
+    return;
+  }
+
   if (key.includes("transaction")) {
     emit("navigate", "/transactions");
     return;

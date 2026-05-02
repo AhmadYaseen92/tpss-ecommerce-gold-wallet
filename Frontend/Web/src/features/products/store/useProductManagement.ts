@@ -110,7 +110,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
   });
   const validationErrors = reactive<Record<string, string>>({});
   const productSearchTerm = ref("");
-  const activeFilter = ref<"all" | "active" | "inactive">("all");
+  const activeFilter = ref<"all" | "active" | "inactive" | "out_of_stock">("all");
   const materialTypeFilter = ref("all");
   const formTypeFilter = ref("all");
   const sellerFilter = ref("all");
@@ -277,6 +277,7 @@ export function useProductManagement(marketplace: ReturnTypeUseMarketplace) {
     managedProducts.value.filter((product) => {
       if (activeFilter.value === "active" && !product.isActive) return false;
       if (activeFilter.value === "inactive" && product.isActive) return false;
+      if (activeFilter.value === "out_of_stock" && Number(product.availableStock) > 0) return false;
       const materialLabel = toMaterialTypeKey(product.materialType);
       const formLabel = toFormTypeKey(product.formType);
       const allowedFormsForMaterial = (PRODUCT_FORMS_BY_MATERIAL[materialLabel] ?? PRODUCT_FORMS_BY_MATERIAL.all)

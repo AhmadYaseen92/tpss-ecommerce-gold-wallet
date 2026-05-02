@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from "vue";
 import type { ReturnTypeUseMarketplace } from "../../../shared/app/store/useMarketplace";
 import { useProductManagement } from "../store/useProductManagement";
 import ProductManagementPage from "./ProductManagementPage.vue";
@@ -8,6 +9,19 @@ const props = defineProps<{
 }>();
 
 const pm = useProductManagement(props.marketplace);
+
+const applyFiltersFromQuery = () => {
+  const params = new URLSearchParams(window.location.search);
+  const active = (params.get("active") ?? "").toLowerCase();
+
+  if (active === "active" || active === "inactive" || active === "out_of_stock") {
+    pm.activeFilter.value = active;
+  }
+};
+
+onMounted(() => {
+  applyFiltersFromQuery();
+});
 
 const openManageFees = () => {
   window.history.pushState({}, "", "/fees");
