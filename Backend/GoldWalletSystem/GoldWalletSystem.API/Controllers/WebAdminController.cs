@@ -2095,7 +2095,7 @@ public class WebAdminController(
             ? await dbContext.WalletAssets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.WalletItemId.Value, cancellationToken)
             : null;
 
-        var invoiceCurrency = await ResolveInvoiceCurrencyAsync(request, walletAsset, cancellationToken);
+        var invoiceCurrency = await ResolveInvoiceCurrencyAsync(request, cancellationToken);
 
         var feeDetails = feeRows.Count == 0
             ? "-"
@@ -2129,10 +2129,8 @@ public class WebAdminController(
         return $"/Certificats/{request.UserId}/{fileName}";
     }
 
-    private async Task<string> ResolveInvoiceCurrencyAsync(Domain.Entities.TransactionHistory request, Domain.Entities.WalletAsset? walletAsset, CancellationToken cancellationToken)
+    private async Task<string> ResolveInvoiceCurrencyAsync(Domain.Entities.TransactionHistory request, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(walletAsset?.CurrencyCode)) return walletAsset.CurrencyCode.Trim().ToUpperInvariant();
-
         if (request.SellerId.HasValue)
         {
             var sellerCurrency = await dbContext.Sellers.AsNoTracking()
