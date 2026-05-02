@@ -2095,9 +2095,11 @@ public class WebAdminController(
             ? await dbContext.WalletAssets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.WalletItemId.Value, cancellationToken)
             : null;
 
+        var invoiceCurrency = await ResolveInvoiceCurrencyAsync(request, walletAsset, cancellationToken);
+
         var feeDetails = feeRows.Count == 0
             ? "-"
-            : string.Join(" | ", feeRows.Select(x => $"{(string.IsNullOrWhiteSpace(x.FeeName) ? x.FeeCode : x.FeeName)}: {request.Currency} {x.AppliedValue:0.00}"));
+            : string.Join(" | ", feeRows.Select(x => $"{(string.IsNullOrWhiteSpace(x.FeeName) ? x.FeeCode : x.FeeName)} - {invoiceCurrency} {x.AppliedValue:0.00}"));
 
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
@@ -2115,10 +2117,9 @@ public class WebAdminController(
             ("Quantity", request.Quantity.ToString()),
             ("Weight", $"{request.Weight} {request.Unit}"),
             ("Purity", request.Purity.ToString()),
-            ("Currency", request.Currency),
-            ("Unit Price", request.UnitPrice.ToString("0.##")),
-            ("SubTotal", request.SubTotalAmount.ToString("0.##")),
-            ("Fees", request.TotalFeesAmount.ToString("0.##")),
+            ("Currency", invoiceCurrency),
+            ("Unit Price", $"{invoiceCurrency} {request.UnitPrice:0.##}"),
+            ("SubTotal", $"{invoiceCurrency} {request.SubTotalAmount:0.##}"),
             ("Fee Details", feeDetails),
             ("Discount", request.DiscountAmount.ToString("0.##")),
             ("Amount", request.FinalAmount > 0 ? request.FinalAmount.ToString("0.##") : request.Amount.ToString("0.##"))
@@ -2126,6 +2127,23 @@ public class WebAdminController(
         var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
         await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
         return $"/Certificats/{request.UserId}/{fileName}";
+    }
+
+    private async Task<string> ResolveInvoiceCurrencyAsync(Domain.Entities.TransactionHistory request, Domain.Entities.WalletAsset? walletAsset, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(walletAsset?.CurrencyCode)) return walletAsset.CurrencyCode.Trim().ToUpperInvariant();
+
+        if (request.SellerId.HasValue)
+        {
+            var sellerCurrency = await dbContext.Sellers.AsNoTracking()
+                .Where(x => x.Id == request.SellerId.Value)
+                .Select(x => x.MarketCurrencyCode)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(sellerCurrency)) return sellerCurrency.Trim().ToUpperInvariant();
+        }
+
+        return string.IsNullOrWhiteSpace(request.Currency) ? "USD" : request.Currency.Trim().ToUpperInvariant();
     }
 
     private async Task<WebUserCredentialsDto> UpdateUserCredentialsAsync(
