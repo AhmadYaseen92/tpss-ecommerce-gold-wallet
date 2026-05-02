@@ -44,7 +44,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
   @override
   Widget build(BuildContext context) {
     final issueDate = DateTime.now();
-    final actionType = _resolveActionType();
+    final actionType = _resolveActionTypeLabel();
     final (leftLabel, rightLabel) = _partyLabels(actionType);
 
     final baseAmount = widget.asset.actionBaseAmount;
@@ -264,7 +264,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
         data: {
           'userId': AuthSessionStore.userId,
           'walletAssetId': widget.asset.id,
-          'actionType': _resolveActionType().toLowerCase(),
+          'actionType': _resolvePreviewActionType(),
           'quantity': quantity,
           'unitPrice': unitPrice,
           'weight': widget.asset.weightInGrams,
@@ -292,7 +292,15 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
           feeBreakdowns: feeBreakdowns,
         );
       });
-    } catch (_) {}
+    } catch (error) {
+      if (!mounted) return;
+      AppModalAlert.show(
+        context,
+        title: 'Warning',
+        message: 'Unable to load fee preview. Showing fallback values. (${error.toString()})',
+        variant: AppModalAlertVariant.warning,
+      );
+    }
   }
 
   // ---------- UI HELPERS ----------
@@ -403,12 +411,26 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
 
   // ---------- LOGIC (UNCHANGED) ----------
 
-  String _resolveActionType() {
-    final status = widget.asset.status.toLowerCase();
-    if (status.contains('sell')) return 'Sold';
-    if (status.contains('gift')) return 'Gift';
-    if (status.contains('transfer')) return 'Transfer';
-    return 'Bought';
+  String _resolvePreviewActionType() {
+    final status = widget.asset.status.trim().toLowerCase();
+    final details = (widget.asset.statusDetails ?? '').trim().toLowerCase();
+    final combined = '$status $details';
+
+    if (combined.contains('pickup')) return 'pickup';
+    if (combined.contains('sell') || combined.contains('sold')) return 'sell';
+    if (combined.contains('gift')) return 'gift';
+    if (combined.contains('transfer')) return 'transfer';
+    return 'buy';
+  }
+
+  String _resolveActionTypeLabel() {
+    return switch (_resolvePreviewActionType()) {
+      'sell' => 'Sold',
+      'gift' => 'Gift',
+      'transfer' => 'Transfer',
+      'pickup' => 'Pickup',
+      _ => 'Bought',
+    };
   }
 
   (String, String) _partyLabels(String type) {
@@ -495,7 +517,15 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
       final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
       final ensuredUrl = (data['pdfUrl'] ?? '').toString();
       if (ensuredUrl.isNotEmpty) return ensuredUrl;
-    } catch (_) {}
+    } catch (error) {
+      if (!mounted) return;
+      AppModalAlert.show(
+        context,
+        title: 'Warning',
+        message: 'Unable to load fee preview. Showing fallback values. (${error.toString()})',
+        variant: AppModalAlertVariant.warning,
+      );
+    }
 
     final fallback = widget.asset.certificateUrl;
     if (fallback == null || fallback.isEmpty) return null;
