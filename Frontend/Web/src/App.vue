@@ -3,6 +3,8 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import type { NavigationKey } from "./shared/types/models";
 import AppLayout from "./shared/components/ui/AppLayout.vue";
 import AuthPage from "./features/auth/pages/AuthPage.vue";
+import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage.vue";
+import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage.vue";
 import DashboardFeaturePage from "./features/dashboard/pages/DashboardFeaturePage.vue";
 import ProductFeaturePage from "./features/products/pages/ProductFeaturePage.vue";
 import InvestorsFeaturePage from "./features/investors/pages/InvestorsFeaturePage.vue";
@@ -15,6 +17,8 @@ import ReportsFeaturePage from "./features/reports/pages/ReportsFeaturePage.vue"
 import FeeManagementFeaturePage from "./features/fees/pages/FeeManagementFeaturePage.vue";
 import MarketFeaturePage from "./features/dashboard/pages/MarketFeaturePage.vue";
 import { useMarketplace } from "./shared/app/store/useMarketplace";
+import { changePassword } from "./features/auth/services/authService";
+import { ElMessageBox } from "element-plus";
 
 const marketplace = useMarketplace();
 
@@ -140,6 +144,12 @@ const activeComponent = computed(() => {
   return DashboardFeaturePage;
 });
 
+const activePublicComponent = computed(() => {
+  if (currentPath.value.startsWith("/forgot-password")) return ForgotPasswordPage;
+  if (currentPath.value.startsWith("/reset-password")) return ResetPasswordPage;
+  return AuthPage;
+});
+
 const welcomeText = computed(() => {
   if (!marketplace.session.value) return "Welcome";
 
@@ -206,11 +216,38 @@ const handleDashboardNavigate = (path: string) => {
   window.history.pushState({}, "", path);
   syncPath();
 };
+
+const handlePasswordChange = async (payload: { currentPassword: string; newPassword: string }) => {
+  const session = marketplace.session.value;
+  if (!session?.accessToken || !session.userId) {
+    await ElMessageBox.alert("Your session has expired. Please log in again.", "Session Expired", { confirmButtonText: "OK", type: "warning" });
+    marketplace.logout();
+    window.history.pushState({}, "", "/Login");
+    syncPath();
+    return;
+  }
+
+  try {
+    await changePassword({
+      userId: session.userId,
+      oldPassword: payload.currentPassword,
+      newPassword: payload.newPassword,
+      accessToken: session.accessToken
+    });
+    await ElMessageBox.alert("Password changed successfully. Please sign in again.", "Success", { confirmButtonText: "OK", type: "success" });
+    marketplace.logout();
+    window.history.pushState({}, "", "/Login");
+    syncPath();
+  } catch (error: any) {
+    await ElMessageBox.alert(error?.message || "Failed to change password.", "Error", { confirmButtonText: "OK", type: "error" });
+  }
+};
 </script>
 
 <template>
-  <AuthPage
+  <component
     v-if="!marketplace.session.value"
+    :is="activePublicComponent"
     :marketplace="marketplace"
     :is-dark="isDark"
     @theme-toggle="isDark = !isDark"
@@ -229,6 +266,7 @@ const handleDashboardNavigate = (path: string) => {
     @theme-toggle="isDark = !isDark"
     @notification-read="marketplace.readNotification"
     @notifications-read-all="marketplace.readAllNotifications"
+    @password-change="handlePasswordChange"
   >
     <component :is="activeComponent" :marketplace="marketplace" @navigate="handleDashboardNavigate" />
   </AppLayout>
