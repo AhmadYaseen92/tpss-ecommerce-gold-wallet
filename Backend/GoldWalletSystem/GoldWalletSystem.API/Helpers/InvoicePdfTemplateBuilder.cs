@@ -94,12 +94,13 @@ internal static class InvoicePdfTemplateBuilder
         content.AppendLine("44 186 507 212 re S");
         WriteText(content, 58, 372, 15, "Item Details", 0.12, 0.12, 0.12);
         WriteText(content, 58, 348, 12, $"Product SKU: {Get("SKU", Get("Product SKU", "-"))}", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 326, 12, $"Wallet Item Id: {Get("Wallet Item Id", Get("Asset Id", "-"))}", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 304, 12, $"Product Name: {Get("Product Name", "Gold Item")}", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 282, 12, $"Category / Material: {Get("Category", "GOLD")}", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 260, 12, $"Weight: {Get("Weight", "-")}", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 238, 12, $"Purity / Karat: {Get("Purity", "N/A")}", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 216, 12, $"Quantity: {quantity}", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 336, 10, $"Product Image: {Get("Product Image Url", "-")}", 0.28, 0.28, 0.28);
+        WriteText(content, 58, 322, 12, $"Wallet Item Id: {Get("Wallet Item Id", Get("Asset Id", "-"))}", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 300, 12, $"Product Name: {Get("Product Name", "Gold Item")}", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 278, 12, $"Category / Material: {Get("Category", "GOLD")}", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 256, 12, $"Weight: {Get("Weight", "-")}", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 234, 12, $"Purity / Karat: {Get("Purity", "N/A")}", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 212, 12, $"Quantity: {quantity}", 0.12, 0.12, 0.12);
 
         // Amount summary
         content.AppendLine("0.93 0.93 0.93 rg");
@@ -108,11 +109,17 @@ internal static class InvoicePdfTemplateBuilder
         content.AppendLine("44 66 507 110 re S");
         WriteText(content, 58, 152, 16, "Amount Summary", 0.12, 0.12, 0.12);
         WriteText(content, 58, 130, 13, $"Sub Total: {currency} {Get("SubTotal", amount)}", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 110, 13, $"Fees: {currency} {Get("Fees", "0.00")}", 0.12, 0.12, 0.12);
         var feeDetailLines = Wrap(Get("Fee Details", "-"), 72);
-        for (var i = 0; i < Math.Min(2, feeDetailLines.Count); i++)
+        if (feeDetailLines.Count == 1 && feeDetailLines[0] == "-")
         {
-            WriteText(content, 170, 110 - (i * 12), 10, feeDetailLines[i], 0.28, 0.28, 0.28);
+            WriteText(content, 58, 110, 13, $"Fees: {currency} 0.00", 0.12, 0.12, 0.12);
+        }
+        else
+        {
+            for (var i = 0; i < Math.Min(2, feeDetailLines.Count); i++)
+            {
+                WriteText(content, 58, 110 - (i * 12), 11, feeDetailLines[i], 0.12, 0.12, 0.12);
+            }
         }
         WriteText(content, 58, 90, 13, $"VAT / Tax: {currency} {Get("Tax", "0.00")}", 0.12, 0.12, 0.12);
         WriteText(content, 300, 90, 13, $"Discount: {currency} {Get("Discount", "0.00")}", 0.12, 0.12, 0.12);

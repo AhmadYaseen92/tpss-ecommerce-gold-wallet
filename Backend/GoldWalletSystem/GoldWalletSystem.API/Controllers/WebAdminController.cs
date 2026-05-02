@@ -2110,6 +2110,7 @@ public class WebAdminController(
             ("Wallet Item Id", request.WalletItemId?.ToString() ?? "-"),
             ("Product Name", walletAsset?.ProductName ?? request.Category),
             ("SKU", walletAsset?.ProductSku ?? "-"),
+            ("Product Image Url", walletAsset?.ProductImageUrl ?? "-"),
             ("Category", request.Category),
             ("Quantity", request.Quantity.ToString()),
             ("Weight", $"{request.Weight} {request.Unit}"),
