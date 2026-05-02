@@ -186,6 +186,8 @@ public class WalletController(
                 asset: fallbackAsset,
                 quantity: Math.Max(1, invoice.Quantity),
                 amount: invoice.TotalAmount > 0 ? invoice.TotalAmount : invoice.SubTotal,
+                invoiceId: invoice.Id,
+                transactionHistoryId: invoice.RelatedTransactionId,
                 cancellationToken);
 
             invoice.PdfUrl = pdfUrl;
@@ -605,6 +607,8 @@ public class WalletController(
                 asset,
                 quantity: request.Quantity,
                 amount: grossAmount,
+                invoiceId: null,
+                transactionHistoryId: history.Id,
                 cancellationToken);
 
             createdInvoice = new Invoice
@@ -625,7 +629,7 @@ public class WalletController(
                 PaymentStatus = actionType is "sell" ? "Paid" : "Pending",
                 PaymentTransactionId = null,
                 WalletItemId = asset.Id,
-                ProductName = asset.Category.ToString(),
+                ProductName = string.IsNullOrWhiteSpace(asset.ProductName) ? asset.Category.ToString() : asset.ProductName,
                 Quantity = request.Quantity,
                 UnitPrice = unitPrice,
                 Weight = requestedWeight,
@@ -1415,6 +1419,8 @@ public class WalletController(
         WalletAsset asset,
         int quantity,
         decimal amount,
+        int? invoiceId,
+        int? transactionHistoryId,
         CancellationToken cancellationToken)
     {
         var root = environment.WebRootPath;
@@ -1426,21 +1432,63 @@ public class WalletController(
         var folder = Path.Combine(root, "Certificats", investorUserId.ToString());
         Directory.CreateDirectory(folder);
 
+        var invoice = invoiceId.HasValue
+            ? await dbContext.Invoices.AsNoTracking().FirstOrDefaultAsync(x => x.Id == invoiceId.Value, cancellationToken)
+            : null;
+
+        var history = transactionHistoryId.HasValue
+            ? await dbContext.TransactionHistories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == transactionHistoryId.Value, cancellationToken)
+            : null;
+
+        var feeRows = history is null
+            ? []
+            : await dbContext.TransactionFeeBreakdowns.AsNoTracking()
+                .Where(x => x.TransactionHistoryId == history.Id)
+                .OrderBy(x => x.DisplayOrder)
+                .ThenBy(x => x.Id)
+                .ToListAsync(cancellationToken);
+
+        var resolvedCurrency = invoice?.Currency;
+        if (string.IsNullOrWhiteSpace(resolvedCurrency)) resolvedCurrency = history?.Currency;
+        if (string.IsNullOrWhiteSpace(resolvedCurrency))
+        {
+            resolvedCurrency = await dbContext.Wallets.AsNoTracking().Where(x => x.UserId == investorUserId).Select(x => x.CurrencyCode).FirstOrDefaultAsync(cancellationToken);
+        }
+        resolvedCurrency = string.IsNullOrWhiteSpace(resolvedCurrency) ? "USD" : resolvedCurrency;
+
+        var feeDetails = feeRows.Count == 0
+            ? "-"
+            : string.Join(" | ", feeRows.Select(x => $"{(string.IsNullOrWhiteSpace(x.FeeName) ? x.FeeCode : x.FeeName)}: {resolvedCurrency} {x.AppliedValue:0.00}"));
+
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
-        var lines = new (string Label, string Value)[]
+        var lines = new List<(string Label, string Value)>
         {
-            ("Date (UTC)", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")),
-            ("Action", actionType),
+            ("Date (UTC)", (invoice?.IssuedOnUtc ?? DateTime.UtcNow).ToString("yyyy-MM-dd HH:mm:ss")),
+            ("Action", invoice?.InvoiceCategory ?? actionType),
+            ("Status", invoice?.Status ?? history?.Status ?? "Issued"),
             ("Investor User Id", investorUserId.ToString()),
             ("Asset Id", asset.Id.ToString()),
-            ("Asset Type", asset.AssetType.ToString()),
+            ("Wallet Item Id", (invoice?.WalletItemId ?? history?.WalletItemId ?? asset.Id).ToString()),
+            ("Product Name", string.IsNullOrWhiteSpace(invoice?.ProductName) ? asset.ProductName : invoice!.ProductName),
+            ("SKU", asset.ProductSku ?? TryExtractSku(history?.Notes) ?? "-"),
+            ("Product Image Url", asset.ProductImageUrl ?? "-"),
             ("Category", asset.Category.ToString()),
-            ("Quantity", quantity.ToString()),
-            ("Weight", $"{asset.Weight} {asset.Unit}"),
-            ("Purity", asset.Purity.ToString()),
-            ("Amount", amount.ToString())
+            ("Quantity", (invoice?.Quantity > 0 ? invoice.Quantity : quantity).ToString()),
+            ("Weight", $"{(invoice?.Weight > 0 ? invoice.Weight : asset.Weight):0.###} {asset.Unit}"),
+            ("Purity", (invoice?.Purity ?? asset.Purity).ToString("0.##")),
+            ("Currency", resolvedCurrency),
+            ("Unit Price", (invoice?.UnitPrice > 0 ? invoice.UnitPrice : history?.UnitPrice ?? asset.AverageBuyPrice).ToString("0.##")),
+            ("SubTotal", (invoice?.SubTotal > 0 ? invoice.SubTotal : history?.SubTotalAmount ?? amount).ToString("0.##")),
+            ("Fees", (invoice?.FeesAmount > 0 ? invoice.FeesAmount : history?.TotalFeesAmount ?? 0m).ToString("0.##")),
+            ("Fee Details", feeDetails),
+            ("Tax", (invoice?.TaxAmount ?? 0m).ToString("0.##")),
+            ("Discount", (invoice?.DiscountAmount > 0 ? invoice.DiscountAmount : history?.DiscountAmount ?? 0m).ToString("0.##")),
+            ("Amount", (invoice?.TotalAmount > 0 ? invoice.TotalAmount : history?.FinalAmount > 0 ? history.FinalAmount : amount).ToString("0.##")),
+            ("Invoice Number", invoice?.InvoiceNumber ?? "-"),
+            ("External Reference", invoice?.ExternalReference ?? "-")
         };
+
         var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
         await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
         return $"/Certificats/{investorUserId}/{fileName}";

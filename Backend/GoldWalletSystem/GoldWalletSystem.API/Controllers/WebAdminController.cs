@@ -2085,17 +2085,43 @@ public class WebAdminController(
         var folder = Path.Combine(root, "Certificats", request.UserId.ToString());
         Directory.CreateDirectory(folder);
 
+        var feeRows = await dbContext.TransactionFeeBreakdowns.AsNoTracking()
+            .Where(x => x.TransactionHistoryId == request.Id)
+            .OrderBy(x => x.DisplayOrder)
+            .ThenBy(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        var walletAsset = request.WalletItemId.HasValue
+            ? await dbContext.WalletAssets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.WalletItemId.Value, cancellationToken)
+            : null;
+
+        var feeDetails = feeRows.Count == 0
+            ? "-"
+            : string.Join(" | ", feeRows.Select(x => $"{(string.IsNullOrWhiteSpace(x.FeeName) ? x.FeeCode : x.FeeName)}: {request.Currency} {x.AppliedValue:0.00}"));
+
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
         var lines = new (string Label, string Value)[]
         {
             ("Date (UTC)", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")),
             ("Action", request.TransactionType),
+            ("Status", request.Status),
             ("Investor User Id", request.UserId.ToString()),
+            ("Wallet Item Id", request.WalletItemId?.ToString() ?? "-"),
+            ("Product Name", walletAsset?.ProductName ?? request.Category),
+            ("SKU", walletAsset?.ProductSku ?? "-"),
+            ("Product Image Url", walletAsset?.ProductImageUrl ?? "-"),
+            ("Category", request.Category),
             ("Quantity", request.Quantity.ToString()),
             ("Weight", $"{request.Weight} {request.Unit}"),
             ("Purity", request.Purity.ToString()),
-            ("Amount", request.Amount.ToString())
+            ("Currency", request.Currency),
+            ("Unit Price", request.UnitPrice.ToString("0.##")),
+            ("SubTotal", request.SubTotalAmount.ToString("0.##")),
+            ("Fees", request.TotalFeesAmount.ToString("0.##")),
+            ("Fee Details", feeDetails),
+            ("Discount", request.DiscountAmount.ToString("0.##")),
+            ("Amount", request.FinalAmount > 0 ? request.FinalAmount.ToString("0.##") : request.Amount.ToString("0.##"))
         };
         var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
         await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
