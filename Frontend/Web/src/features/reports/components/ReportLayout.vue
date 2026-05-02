@@ -17,6 +17,11 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{ sort: [key: string]; page: [delta: number] }>();
+
+const isUrlValue = (value: unknown) => {
+  if (typeof value !== "string") return false;
+  return value.startsWith("http://") || value.startsWith("https://");
+};
 </script>
 
 <template>
@@ -37,7 +42,16 @@ const emit = defineEmits<{ sort: [key: string]; page: [delta: number] }>();
         </thead>
         <tbody>
           <tr v-for="(row, rowIndex) in table.rows" :key="rowIndex">
-            <td v-for="header in table.headers" :key="`${rowIndex}-${header}`">{{ row[header] ?? "-" }}</td>
+            <td v-for="header in table.headers" :key="`${rowIndex}-${header}`">
+              <template v-if="isUrlValue(row[header])">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <img :src="String(row[header])" alt="Invoice template thumbnail" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #ddd;" />
+                  <a :href="String(row[header])" target="_blank" rel="noopener">Open</a>
+                  <a :href="String(row[header])" download>Download</a>
+                </div>
+              </template>
+              <template v-else>{{ row[header] ?? "-" }}</template>
+            </td>
           </tr>
           <tr class="totals-row">
             <td v-for="header in table.headers" :key="`total-${header}`">{{ table.totalsRow[header] ?? "" }}</td>
