@@ -36,47 +36,14 @@ const toAbsoluteUrl = (value: string) => {
   return `${API_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
 };
 
-const SESSION_STORAGE_KEY = "goldwallet.web.session";
-
-const readAccessToken = () => {
-  if (typeof window === "undefined") return "";
-  const raw = window.localStorage.getItem(SESSION_STORAGE_KEY) ?? window.sessionStorage.getItem(SESSION_STORAGE_KEY);
-  if (!raw) return "";
-  try {
-    const parsed = JSON.parse(raw) as { accessToken?: string };
-    return parsed.accessToken ?? "";
-  } catch {
-    return "";
-  }
-};
-
-const openInvoiceViewer = async (value: string) => {
+const openInvoiceViewer = (value: string) => {
   const fileUrl = toAbsoluteUrl(value);
-  const accessToken = readAccessToken();
-
-  const response = await fetch(fileUrl, {
-    method: "GET",
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to open invoice template.");
-  }
-
-  const fileBlob = await response.blob();
-  if (selectedInvoiceUrl.value?.startsWith("blob:")) {
-    URL.revokeObjectURL(selectedInvoiceUrl.value);
-  }
-
   const pathPart = value.split("/").filter(Boolean).pop();
   selectedInvoiceName.value = pathPart || "invoice.pdf";
-  selectedInvoiceUrl.value = URL.createObjectURL(fileBlob);
+  selectedInvoiceUrl.value = fileUrl;
 };
 
 const closeInvoiceViewer = () => {
-  if (selectedInvoiceUrl.value?.startsWith("blob:")) {
-    URL.revokeObjectURL(selectedInvoiceUrl.value);
-  }
   selectedInvoiceUrl.value = null;
 };
 
