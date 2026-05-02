@@ -16,6 +16,8 @@ const ADMIN_REPORTS: ReportTypeCard[] = [
   { key: "sales", label: "Sales Report", description: "Sales, orders, quantity and seller/product/category/date splits", audience: "Admin" },
   { key: "sellerPerformance", label: "Seller Performance", description: "Seller revenue and request performance", audience: "Admin" },
   { key: "investorActivity", label: "Investor Activity", description: "Investor onboarding and operations", audience: "Admin" },
+  { key: "statementsInvestor", label: "Statement of Account (Investor)", description: "Account statement by investor period", audience: "Admin" },
+  { key: "statementsSeller", label: "Statement of Account (Seller)", description: "Account statement by seller period", audience: "Admin" },
   { key: "walletTransactions", label: "Wallet Transactions", description: "Wallet activity by action + status", audience: "Admin" },
   { key: "invoices", label: "Invoices", description: "Invoices, payment and status details", audience: "Both" },
   { key: "operations", label: "Requests / Operations", description: "System request flow and trends", audience: "Admin" },
@@ -32,8 +34,7 @@ const SELLER_REPORTS: ReportTypeCard[] = [
   { key: "stock", label: "Product Stock", description: "Stock health and inactive items", audience: "Seller" },
   { key: "requests", label: "Requests", description: "Own investor requests by status/type", audience: "Seller" },
   { key: "invoices", label: "Invoices", description: "Own invoices and payment state", audience: "Both" },
-  { key: "fulfillment", label: "Wallet Pickup / Fulfillment", description: "Pickups, delivery, completion times", audience: "Seller" },
-  { key: "customers", label: "Customer / Investor", description: "Investor interactions and value", audience: "Seller" },
+  { key: "statementsSeller", label: "Statement of Account", description: "Account statement by seller period", audience: "Seller" },
   { key: "feeCommission", label: "Commission Per Transaction", description: "Your commission fee activity", audience: "Seller" },
   { key: "feePremium", label: "Premium / Discount", description: "Your premium/discount fee activity", audience: "Seller" },
   { key: "feeStorage", label: "Storage / Custody Fee", description: "Your storage/custody fee activity", audience: "Seller" },
@@ -267,7 +268,7 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
             }));
           break;
         case "investorActivity":
-        case "customers":
+        case "statementsInvestor":
           rows = stateSnapshot.value.investors
             .filter((investor) => reportService.matchInvestor(investor, criteria))
             .map((investor) => {
@@ -288,7 +289,7 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
         case "walletTransactions":
         case "requests":
         case "operations":
-        case "fulfillment":
+        case "statementsSeller":
           rows = visibleRequests.value
             .filter((request) => reportService.matchRequest(request, criteria, investorsMap))
             .filter((request) => {
@@ -324,7 +325,8 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
               "Paid Amount": invoice.paymentStatus === "Paid" ? invoice.totalAmount : 0,
               "Unpaid Amount": invoice.paymentStatus === "Paid" ? 0 : invoice.totalAmount,
               Status: invoice.status,
-              "Payment Status": invoice.paymentStatus
+              "Payment Status": invoice.paymentStatus,
+              "Invoice Template": invoice.pdfUrl ?? "-"
             }));
           break;
         case "kyc":

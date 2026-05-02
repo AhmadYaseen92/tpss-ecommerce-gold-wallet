@@ -22,9 +22,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{ refresh: []; reset: []; typeSelected: [type: string] }>();
 
-const isInvestorReport = computed(() => props.filters.reportType.includes("investor") || props.filters.reportType === "customers");
+const isInvestorReport = computed(() => props.filters.reportType.includes("investor"));
 const isSalesReport = computed(() => ["sales", "sellerPerformance", "walletTransactions", "invoices", "sellerSales", "stock"].includes(props.filters.reportType));
-const isRequestOpsReport = computed(() => ["requestsOps", "kycOnboarding", "operations", "requests", "fulfillment"].includes(props.filters.reportType));
+const isRequestOpsReport = computed(() => ["requestsOps", "kycOnboarding", "operations", "requests", "statementsSeller"].includes(props.filters.reportType));
 </script>
 
 <template>
