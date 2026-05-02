@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
@@ -22,7 +23,13 @@ class CustomeBottomNavbar extends StatefulWidget {
   State<CustomeBottomNavbar> createState() => _CustomeBottomNavbarState();
 }
 
-const _tabTitles = ['Gold Wallet', 'Shop', 'My Wallet', 'My Cart', 'Transactions'];
+const _tabTitles = [
+  'Gold Wallet',
+  'Shop',
+  'My Wallet',
+  'My Cart',
+  'Transactions',
+];
 
 class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
   late final CartCubit cartCubit;
@@ -42,12 +49,17 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
       getCartItemsUseCase: InjectionContainer.getCartItemsUseCase(),
       addCartProductUseCase: InjectionContainer.addCartProductUseCase(),
       removeCartProductUseCase: InjectionContainer.removeCartProductUseCase(),
-      updateCartProductQuantityUseCase: InjectionContainer.updateCartProductQuantityUseCase(),
+      updateCartProductQuantityUseCase:
+          InjectionContainer.updateCartProductQuantityUseCase(),
       cartRepository: InjectionContainer.cartRepository(),
     );
-    _getUnreadCount = InjectionContainer.getUnreadNotificationsCountUseCase().call;
+    _getUnreadCount =
+        InjectionContainer.getUnreadNotificationsCountUseCase().call;
     _refreshUnreadCount();
-    _unreadTimer = Timer.periodic(const Duration(seconds: 20), (_) => _refreshUnreadCount(showToastOnIncrease: true));
+    _unreadTimer = Timer.periodic(
+      const Duration(seconds: 20),
+      (_) => _refreshUnreadCount(showToastOnIncrease: true),
+    );
   }
 
   @override
@@ -89,8 +101,10 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
     ];
 
     return BlocListener<AppCubit, AppState>(
-      listenWhen: (previous, current) => previous.selectedSeller != current.selectedSeller,
-      listener: (context, state) => cartCubit.loadCartProducts(sellerFilter: state.selectedSeller),
+      listenWhen: (previous, current) =>
+          previous.selectedSeller != current.selectedSeller,
+      listener: (context, state) =>
+          cartCubit.loadCartProducts(sellerFilter: state.selectedSeller),
       child: Scaffold(
         appBar: AppBar(
           centerTitle: true,
@@ -102,18 +116,30 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
             ),
           ),
           actions: [
+            if (AppReleaseConfig.myAccountSummaryEnabled)
+              IconButton(
+                onPressed: () => Navigator.of(
+                  context,
+                  rootNavigator: true,
+                ).pushNamed(AppRoutes.accountSummaryRoute),
+                icon: Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: palette.primary,
+                ),
+                tooltip: 'My Account Summary',
+              ),
             IconButton(
-              onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.accountSummaryRoute),
-              icon: Icon(Icons.receipt_long_outlined, color: palette.primary),
-              tooltip: 'Statements of Account',
-            ),
-            IconButton(
-              onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.profileRoute),
+              onPressed: () => Navigator.of(
+                context,
+                rootNavigator: true,
+              ).pushNamed(AppRoutes.profileRoute),
               icon: Icon(Icons.person_outline, color: palette.primary),
             ),
             IconButton(
               onPressed: () async {
-                await Navigator.of(context).pushNamed(AppRoutes.notificationRoute);
+                await Navigator.of(
+                  context,
+                ).pushNamed(AppRoutes.notificationRoute);
                 await _refreshUnreadCount();
               },
               icon: Stack(
@@ -125,7 +151,10 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
                       right: -6,
                       top: -4,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(10),
@@ -134,7 +163,11 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
                         child: Text(
                           _unreadCount > 99 ? '99+' : '$_unreadCount',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
@@ -153,16 +186,34 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
           onTap: (index) {
             setState(() => _currentTabIndex = index);
             if (index == 3) {
-              final currentSeller = context.read<AppCubit>().state.selectedSeller;
+              final currentSeller = context
+                  .read<AppCubit>()
+                  .state
+                  .selectedSeller;
               cartCubit.loadCartProducts(sellerFilter: currentSeller);
             }
           },
           items: const [
-            BottomNavigationBarItem(icon: Icon(CupertinoIcons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(CupertinoIcons.bag), label: 'Product'),
-            BottomNavigationBarItem(icon: Icon(CupertinoIcons.creditcard), label: 'Wallet'),
-            BottomNavigationBarItem(icon: Icon(CupertinoIcons.shopping_cart), label: 'Cart'),
-            BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'History'),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.bag),
+              label: 'Product',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.creditcard),
+              label: 'Wallet',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.shopping_cart),
+              label: 'Cart',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.list_alt),
+              label: 'History',
+            ),
           ],
         ),
       ),
