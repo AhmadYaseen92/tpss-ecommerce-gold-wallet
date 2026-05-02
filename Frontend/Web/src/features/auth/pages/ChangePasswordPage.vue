@@ -2,11 +2,13 @@
 import { ref } from "vue";
 import { ElMessageBox } from "element-plus";
 import { changePassword } from "../services/authService";
+import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 
 const oldPassword = ref("");
 const newPassword = ref("");
 const confirmPassword = ref("");
 const loading = ref(false);
+const marketplace = useMarketplace();
 
 const onSubmit = async () => {
   if (!oldPassword.value.trim() || !newPassword.value.trim() || !confirmPassword.value.trim()) {
@@ -19,9 +21,19 @@ const onSubmit = async () => {
   }
   loading.value = true;
   try {
-    await changePassword({ oldPassword: oldPassword.value, newPassword: newPassword.value });
+    const session = marketplace.session.value;
+    if (!session?.accessToken || !session.userId) {
+      throw new Error("Your session has expired. Please log in again.");
+    }
+    await changePassword({
+      userId: session.userId,
+      oldPassword: oldPassword.value,
+      newPassword: newPassword.value,
+      accessToken: session.accessToken
+    });
     await ElMessageBox.alert("Password changed successfully.", "Success", { confirmButtonText: "OK", type: "success" });
-    window.location.href = "/overview";
+    marketplace.logout();
+    window.location.href = "/Login";
   } catch (e: any) {
     await ElMessageBox.alert(e?.message || "Failed to change password.", "Error", { confirmButtonText: "OK", type: "error" });
   } finally {
