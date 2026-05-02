@@ -154,6 +154,23 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
             x => (x.Name, x.ImageUrl),
             EqualityComparer<(int SellerId, string Sku)>.Default);
 
+        var sellerCurrencyLookup = sellerIds.Count == 0
+            ? new Dictionary<int, string>()
+            : await dbContext.Sellers
+                .AsNoTracking()
+                .Where(x => sellerIds.Contains(x.Id))
+                .Select(x => new { x.Id, x.MarketCurrencyCode, x.MarketType })
+                .ToDictionaryAsync(x => x.Id, x => NormalizeCurrencyCode(x.MarketCurrencyCode, x.MarketType), cancellationToken);
+
+        var userIds = rows.Select(x => x.history.UserId).Distinct().ToList();
+        var investorCurrencyLookup = userIds.Count == 0
+            ? new Dictionary<int, string>()
+            : await dbContext.UserProfiles
+                .AsNoTracking()
+                .Where(x => userIds.Contains(x.UserId))
+                .Select(x => new { x.UserId, x.MarketType })
+                .ToDictionaryAsync(x => x.UserId, x => MarketTypeToCurrencyCode(x.MarketType), cancellationToken);
+
         var items = rows
             .Select(row =>
             {
@@ -166,6 +183,12 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
                     walletAssetLookup,
                     productsById,
                     productLookup);
+                var effectiveCurrency = ResolveEffectiveCurrency(row.history.SellerId, row.history.UserId, row.history.Currency, sellerCurrencyLookup, investorCurrencyLookup);
+
+                var feeLines = feeBreakdownLookup.TryGetValue(row.history.Id, out var mappedFeeLines)
+                    ? mappedFeeLines.Select(line => line with { Currency = effectiveCurrency }).ToList()
+                    : [];
+
                 return new TransactionHistoryDto(
                     row.history.Id,
                     row.history.UserId,
@@ -185,14 +208,14 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
                     row.history.TotalFeesAmount,
                     row.history.DiscountAmount,
                     row.history.FinalAmount,
-                    row.history.Currency,
+                    effectiveCurrency,
                     row.history.WalletItemId,
                     row.history.InvoiceId,
                     row.history.InvoiceId.HasValue && invoiceLookup.TryGetValue(row.history.InvoiceId.Value, out var pdfUrl) ? pdfUrl : null,
                     row.history.Notes,
                     row.history.CreatedAtUtc,
                     productImageUrl,
-                    feeBreakdownLookup.TryGetValue(row.history.Id, out var feeLines) ? feeLines : []);
+                    feeLines);
             })
             .ToList();
 
@@ -258,6 +281,38 @@ public class TransactionHistoryRepository(AppDbContext dbContext) : ITransaction
         string? Sku,
         string Name,
         string? ImageUrl);
+
+    private static string ResolveEffectiveCurrency(int? sellerId, int userId, string? fallbackCurrency, IReadOnlyDictionary<int, string> sellerCurrencyLookup, IReadOnlyDictionary<int, string> investorCurrencyLookup)
+    {
+        if (sellerId.HasValue && sellerCurrencyLookup.TryGetValue(sellerId.Value, out var sellerCurrency) && !string.IsNullOrWhiteSpace(sellerCurrency))
+            return sellerCurrency;
+
+        if (investorCurrencyLookup.TryGetValue(userId, out var investorCurrency) && !string.IsNullOrWhiteSpace(investorCurrency))
+            return investorCurrency;
+
+        return string.IsNullOrWhiteSpace(fallbackCurrency) ? "USD" : fallbackCurrency.Trim().ToUpperInvariant();
+    }
+
+    private static string NormalizeCurrencyCode(string? currencyCode, string? marketType)
+    {
+        if (!string.IsNullOrWhiteSpace(currencyCode))
+            return currencyCode.Trim().ToUpperInvariant();
+
+        return MarketTypeToCurrencyCode(marketType);
+    }
+
+    private static string MarketTypeToCurrencyCode(string? marketType)
+    {
+        return (marketType ?? string.Empty).Trim().ToUpperInvariant() switch
+        {
+            "UAE" => "AED",
+            "KSA" => "SAR",
+            "JORDAN" => "JOD",
+            "EGYPT" => "EGP",
+            "INDIA" => "INR",
+            _ => "USD"
+        };
+    }
 
     private static string? TryExtractSku(string? notes)
     {

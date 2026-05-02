@@ -103,7 +103,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
                         const SizedBox(height: 8),
                         if (showMarketWidgets) ...[
                           Text(
-                            'Investment: \$${item.investmentValue.toStringAsFixed(2)}',
+                            'Investment: ${item.displayValue}',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: palette.textSecondary,
                                   fontWeight: FontWeight.w600,
@@ -121,7 +121,7 @@ class WalletHoldingItemWidget extends StatelessWidget {
                         if (showMarketWidgets) ...[
                           const SizedBox(height: 4),
                           Text(
-                            'Live Price: \$${item.marketPricePerGram.toStringAsFixed(2)}/g',
+                            'Live Price: ${item.marketPricePerGram.toStringAsFixed(2)}/g',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: palette.textSecondary,
                                 ),

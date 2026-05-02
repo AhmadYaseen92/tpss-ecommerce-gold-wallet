@@ -76,7 +76,20 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
     return const <WalletActionPreviewFeeLine>[];
   }
 
-  String formatCurrency(double value) => NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(value);
+  String formatCurrency(double value) {
+    final code = _resolvedCurrencyCode;
+    final formatted = NumberFormat('#,##0.00').format(value);
+    return '$code $formatted';
+  }
+
+  String get _resolvedCurrencyCode {
+    final current = state;
+    if (current is SellAssetActionUpdated && current.preview != null) {
+      final code = current.preview!.currency.trim().toUpperCase();
+      if (code.isNotEmpty) return code;
+    }
+    return 'USD';
+  }
 
   String? validateQuantity(String? value) {
     final qty = int.tryParse((value ?? '').trim());
@@ -117,14 +130,13 @@ class SellAssetActionCubit extends Cubit<SellAssetActionState> {
       final lockedPrice = await _repository.lockUnitPrice(unitPrice);
       final quantityToSell = quantity;
       final requestedWeight = maxQuantity == 0 ? 0.0 : (initialAsset.asset.weightInGrams / maxQuantity) * quantityToSell;
-      final grossAmount = unitPrice * quantityToSell;
       final preview = await _repository.previewWalletAction(
         actionType: WalletActionType.sell,
         walletAssetId: initialAsset.asset.id,
         quantity: quantityToSell,
-        unitPrice: unitPrice,
+        unitPrice: 0,
         weight: requestedWeight,
-        amount: grossAmount,
+        amount: 0,
       );
 
       final result = SellAssetResultEntity(

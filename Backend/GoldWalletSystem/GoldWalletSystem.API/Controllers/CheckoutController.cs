@@ -85,15 +85,26 @@ public class CheckoutController(
 
         if (wallet is null)
         {
+            var currencyCode = await ResolveUserMarketCurrencyCodeAsync(request.UserId, cancellationToken);
             wallet = new Wallet
             {
                 UserId = request.UserId,
-                CurrencyCode = "USD",
+                CurrencyCode = currencyCode,
                 CashBalance = 0,
                 CreatedAtUtc = DateTime.UtcNow,
             };
             dbContext.Wallets.Add(wallet);
             await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        else
+        {
+            var currencyCode = await ResolveUserMarketCurrencyCodeAsync(request.UserId, cancellationToken);
+            if (!string.Equals(wallet.CurrencyCode, currencyCode, StringComparison.OrdinalIgnoreCase))
+            {
+                wallet.CurrencyCode = currencyCode;
+                wallet.UpdatedAtUtc = DateTime.UtcNow;
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
         }
 
         var lines = new List<(Product Product, int Quantity)>();
@@ -182,7 +193,7 @@ public class CheckoutController(
                 TotalFeesAmount = feeResult.TotalFeesAmount,
                 DiscountAmount = feeResult.DiscountAmount,
                 FinalAmount = feeResult.FinalAmount,
-                Currency = wallet.CurrencyCode,
+                Currency = feeResult.Currency,
                 CreatedAtUtc = DateTime.UtcNow,
             };
             dbContext.TransactionHistories.Add(requestHistory);
@@ -458,5 +469,23 @@ public class CheckoutController(
             actionReference,
             verificationToken,
             cancellationToken);
+    }
+
+    private async Task<string> ResolveUserMarketCurrencyCodeAsync(int userId, CancellationToken cancellationToken)
+    {
+        var marketType = await dbContext.UserProfiles.AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .Select(x => x.MarketType)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return (marketType ?? string.Empty).Trim().ToUpperInvariant() switch
+        {
+            "UAE" => "AED",
+            "KSA" => "SAR",
+            "JORDAN" => "JOD",
+            "EGYPT" => "EGP",
+            "INDIA" => "INR",
+            _ => "USD"
+        };
     }
 }

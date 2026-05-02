@@ -72,12 +72,14 @@ onMounted(() => void load());
 
     <template v-else>
       <Card title="Market Type Settings">
+        <div class="market-actions-row">
+          <Button size="sm" :loading="saving" @click="saveCurrent">Save Settings</Button>
+        </div>
         <div class="market-filter-row">
           <label>Market</label>
           <Select v-model="selectedMarket">
             <option v-for="item in settings" :key="item.marketType" :value="item.marketType">{{ item.marketType }}</option>
           </Select>
-          <Button size="sm" :loading="saving" @click="saveCurrent">Save Settings</Button>
         </div>
 
         <div class="market-tabs">
@@ -94,6 +96,8 @@ onMounted(() => void load());
             <Input v-model="currentSettings.usdToLocalRate" type="number" min="0" step="0.0001" />
             <label>Default Fees %</label>
             <Input v-model="currentSettings.feesPercent" type="number" min="0" step="0.01" />
+            <label>Tax Fee %</label>
+            <Input v-model="currentSettings.vatRatePercent" type="number" min="0" step="0.01" />
           </div>
 
           <div v-if="activeTab === 'registration'" class="ui-card">
@@ -127,3 +131,17 @@ onMounted(() => void load());
     </template>
   </section>
 </template>
+
+<style scoped>
+.market-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.market-tabs {
+  display: flex;
+  gap: 12px;
+  margin: 14px 0;
+}
+</style>

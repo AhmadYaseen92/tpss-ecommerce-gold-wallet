@@ -56,7 +56,7 @@ class WalletRepositoryImpl implements IWalletRepository {
     return categories.map((category) {
       final assets = byCategory[category] ?? const <WalletAssetRemoteModel>[];
       final transactions = assets
-          .map((asset) => _toTransactionEntity(category, asset, snapshots[asset.id]))
+          .map((asset) => _toTransactionEntity(category, asset, snapshots[asset.id], wallet.currencyCode))
           .toList();
       final totalWeightInGrams = transactions.fold<double>(0, (sum, tx) => sum + tx.weightInGrams);
       final totalMarket = transactions.fold<double>(0, (sum, tx) => sum + tx.marketValueAmount);
@@ -65,6 +65,7 @@ class WalletRepositoryImpl implements IWalletRepository {
       final signed = changePercent >= 0 ? '+' : '';
       final isEmptyCategory = transactions.isEmpty;
 
+      final walletCurrencyCode = _normalizeCurrencyCode(wallet.currencyCode);
       return wallet_entity.WalletEntity(
         category: category,
         tabLabel: _tabLabel(category),
@@ -72,8 +73,8 @@ class WalletRepositoryImpl implements IWalletRepository {
         isVerified: !isEmptyCategory,
         icon: _walletIcon(category),
         totalWeightInGrams: totalWeightInGrams,
-        totalMarketValue: '\$${totalMarket.toStringAsFixed(2)}',
-        cashBalance: '\$${wallet.cashBalance.toStringAsFixed(2)}',
+        totalMarketValue: _formatMoney(totalMarket, walletCurrencyCode),
+        cashBalance: _formatMoney(wallet.cashBalance, walletCurrencyCode),
         totalHoldings: transactions.length,
         change: '$signed${changePercent.toStringAsFixed(2)}%',
         transactions: transactions,
@@ -88,6 +89,7 @@ class WalletRepositoryImpl implements IWalletRepository {
     wallet_entity.WalletCategory category,
     WalletAssetRemoteModel asset,
     WalletPurchaseSnapshot? snapshot,
+    String walletCurrencyCode,
   ) {
     final totalWeightInGrams = _toGrams(asset.weight, asset.unit);
     final liveMarketTotal = asset.currentMarketPrice * asset.quantity;
@@ -117,6 +119,7 @@ class WalletRepositoryImpl implements IWalletRepository {
     final purchaseValue = buyUnitPriceWithFees > 0
         ? buyUnitPriceWithFees * asset.quantity
         : totalBuy;
+    final currencyCode = _normalizeCurrencyCode(snapshot?.currency ?? walletCurrencyCode);
     final resolvedAssetType = _toAssetType(asset.assetType);
     final productFormLabel = _resolveProductFormLabel(
       assetType: resolvedAssetType,
@@ -137,8 +140,8 @@ class WalletRepositoryImpl implements IWalletRepository {
         snapshot != null && snapshot.purity > 0 ? snapshot.purity : asset.purity,
       ),
       quantity: asset.quantity,
-      marketValue: '\$${totalValue.toStringAsFixed(2)}',
-      displayValue: '\$${purchaseValue.toStringAsFixed(2)}',
+      marketValue: _formatMoney(totalValue, currencyCode),
+      displayValue: _formatMoney(purchaseValue, currencyCode),
       change: '$signed${changePercent.toStringAsFixed(2)}%',
       investmentValue: purchaseValue,
       profitOrLossValue: profitOrLossValue,
@@ -153,6 +156,13 @@ class WalletRepositoryImpl implements IWalletRepository {
       sourceInvestorName: asset.sourceInvestorName,
     );
   }
+
+  String _normalizeCurrencyCode(String? code) {
+    final normalized = (code ?? '').trim().toUpperCase();
+    return normalized.isEmpty ? 'USD' : normalized;
+  }
+
+  String _formatMoney(double value, String currencyCode) => '$currencyCode ${value.toStringAsFixed(2)}';
 
   String _toDisplayName(String assetType) {
     final normalized = assetType.trim();

@@ -98,6 +98,20 @@ const updateMarketPrice = (
 };
 
 const formatMoney = (value: number | string | null | undefined) => Number(value ?? 0).toFixed(2);
+
+const formCurrencyCode = computed(() => {
+  if (props.selectedProduct?.currencyCode) return props.selectedProduct.currencyCode;
+  if (props.productForm.sellerId) {
+    const seller = props.sellers.find((s) => s.sellerId === props.productForm.sellerId);
+    const market = (seller?.marketType ?? "").trim().toUpperCase();
+    if (market === "UAE") return "AED";
+    if (market === "KSA") return "SAR";
+    if (market === "JORDAN") return "JOD";
+    if (market === "EGYPT") return "EGP";
+    if (market === "INDIA") return "INR";
+  }
+  return "USD";
+});
 </script>
 
 <template>
@@ -360,6 +374,7 @@ const formatMoney = (value: number | string | null | undefined) => Number(value 
         :units="weightUnits"
         :errors="validationErrors"
         :market-prices="marketPrices"
+        :currency-code="formCurrencyCode"
         @save="emit('save')"
         @image="emit('image', $event)"
         @video="emit('video', $event)"
