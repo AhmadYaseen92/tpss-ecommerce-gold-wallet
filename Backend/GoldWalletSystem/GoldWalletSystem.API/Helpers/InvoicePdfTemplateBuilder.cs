@@ -109,6 +109,11 @@ internal static class InvoicePdfTemplateBuilder
         WriteText(content, 58, 152, 16, "Amount Summary", 0.12, 0.12, 0.12);
         WriteText(content, 58, 130, 13, $"Sub Total: {currency} {Get("SubTotal", amount)}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 110, 13, $"Fees: {currency} {Get("Fees", "0.00")}", 0.12, 0.12, 0.12);
+        var feeDetailLines = Wrap(Get("Fee Details", "-"), 72);
+        for (var i = 0; i < Math.Min(2, feeDetailLines.Count); i++)
+        {
+            WriteText(content, 170, 110 - (i * 12), 10, feeDetailLines[i], 0.28, 0.28, 0.28);
+        }
         WriteText(content, 58, 90, 13, $"VAT / Tax: {currency} {Get("Tax", "0.00")}", 0.12, 0.12, 0.12);
         WriteText(content, 300, 90, 13, $"Discount: {currency} {Get("Discount", "0.00")}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 70, 14, $"Grand Total: {currency} {amount}", 0.10, 0.10, 0.10);
