@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tpss_ecommerce_gold_wallet/core/constants/app_release_config.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/constants/app_theme.dart';
 import 'package:tpss_ecommerce_gold_wallet/core/routes/app_routes.dart';
 import 'package:tpss_ecommerce_gold_wallet/di/injection_container.dart';
@@ -102,11 +103,12 @@ class _CustomeBottomNavbarState extends State<CustomeBottomNavbar> {
             ),
           ),
           actions: [
-            IconButton(
-              onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.accountSummaryRoute),
-              icon: Icon(Icons.receipt_long_outlined, color: palette.primary),
-              tooltip: 'Statements of Account',
-            ),
+            if (AppReleaseConfig.myAccountSummaryEnabled)
+              IconButton(
+                onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.accountSummaryRoute),
+                icon: Icon(Icons.account_balance_wallet_outlined, color: palette.primary),
+                tooltip: 'My Account Summary',
+              ),
             IconButton(
               onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed(AppRoutes.profileRoute),
               icon: Icon(Icons.person_outline, color: palette.primary),

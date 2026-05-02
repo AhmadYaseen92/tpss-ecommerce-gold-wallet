@@ -27,6 +27,8 @@ class TransactionCubit extends Cubit<TransactionState> {
   StreamSubscription<String>? _realtimeSubscription;
   bool _isLoading = false;
 
+  List<TransactionModel> get allTransactions => List.unmodifiable(_allTransactions);
+
   TransactionCubit() : super(TransactionInitial()) {
     unawaited(_startRealtimeRefresh());
   }

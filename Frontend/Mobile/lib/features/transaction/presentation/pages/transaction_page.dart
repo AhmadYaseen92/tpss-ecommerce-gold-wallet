@@ -110,21 +110,38 @@ class TransactionPage extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        OutlinedButton.icon(
-                          onPressed: state.transactions.isEmpty
-                              ? null
-                              : () {
-                                  _showExportPreview(
-                                    context,
-                                    transactions: state.transactions,
-                                    cubit: context.read<TransactionCubit>(),
-                                  );
-                                },
-                          icon: const Icon(
-                            Icons.table_chart_outlined,
-                            size: 18,
-                          ),
-                          label: const Text('Export to Excel'),
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: state.transactions.isEmpty
+                                  ? null
+                                  : () {
+                                      _showExportPreview(
+                                        context,
+                                        transactions: state.transactions,
+                                        cubit: context.read<TransactionCubit>(),
+                                      );
+                                    },
+                              icon: const Icon(
+                                Icons.table_chart_outlined,
+                                size: 18,
+                              ),
+                              label: const Text('Export to Excel'),
+                            ),
+                            FilledButton.icon(
+                              onPressed: context.read<TransactionCubit>().allTransactions.isEmpty
+                                  ? null
+                                  : () {
+                                      _generateInvestorStatement(
+                                        context,
+                                        cubit: context.read<TransactionCubit>(),
+                                      );
+                                    },
+                              icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                              label: const Text('Investor Statement'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -171,6 +188,46 @@ class TransactionPage extends StatelessWidget {
     );
   }
 
+
+  Future<void> _generateInvestorStatement(
+    BuildContext context, {
+    required TransactionCubit cubit,
+  }) async {
+    final excelService = TransactionExcelExportService();
+
+    try {
+      final bytes = await excelService.buildExcelBytes(
+        transactions: cubit.allTransactions,
+        selectedPeriod: 'All Periods (Full Data)',
+        selectedType: 'All Types',
+        selectedStatus: 'All Statuses',
+        selectedSeller: cubit.activeSeller,
+      );
+
+      final path = await excelService.saveExcel(
+        bytes: bytes,
+        fileName: 'investor-statement-of-account-${DateTime.now().millisecondsSinceEpoch}',
+      );
+
+      if (path != null && path.isNotEmpty && !kIsWeb) {
+        await OpenFilex.open(path);
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Investor Statement of Account generated successfully.')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppModalAlert.show(
+          context,
+          title: 'Statement Generation Failed',
+          message: e.toString(),
+        );
+      }
+    }
+  }
   Future<void> _showExportPreview(
     BuildContext context, {
     required List<TransactionModel> transactions,
