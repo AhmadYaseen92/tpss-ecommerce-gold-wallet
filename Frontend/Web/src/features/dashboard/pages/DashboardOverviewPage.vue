@@ -22,6 +22,60 @@ defineProps<{
   pendingKycRequests: number;
 }>();
 
+const emit = defineEmits<{
+  navigate: [path: string];
+}>();
+
+const normalizeCardTitle = (title: string) => title.trim().toLowerCase();
+
+const handleMetricCardClick = (title: string) => {
+  const key = normalizeCardTitle(title);
+
+  if (key === "total sales") {
+    emit("navigate", "/reports?reportType=sales");
+    return;
+  }
+
+  if (key === "active products") {
+    emit("navigate", "/products?active=active");
+    return;
+  }
+
+  if (key === "out of stock") {
+    emit("navigate", "/products?active=out_of_stock");
+    return;
+  }
+
+  if (key.includes("transaction")) {
+    emit("navigate", "/transactions");
+    return;
+  }
+
+  if (key.includes("seller")) {
+    emit("navigate", "/sellers");
+    return;
+  }
+
+  if (key.includes("investor")) {
+    emit("navigate", "/investors");
+    return;
+  }
+
+  if (key.includes("product") || key.includes("item")) {
+    emit("navigate", "/products");
+    return;
+  }
+
+  if (key.includes("report")) {
+    emit("navigate", "/reports");
+    return;
+  }
+};
+
+const goToPendingKyc = () => {
+  emit("navigate", "/sellers?kyc=pending");
+};
+
 const ringBackground = (segments: Array<{ color: string; percent: number }>) => {
   let current = 0;
   return `conic-gradient(${segments
@@ -46,12 +100,22 @@ const barHeight = (value: number, max: number) => {
         v-if="isAdmin"
         class="metric-interactive-card kyc-widget"
         :class="{ alert: pendingKycRequests > 0 }"
+        role="button"
+        tabindex="0"
+        @click="goToPendingKyc"
       >
         <p>KYC Seller Requests</p>
         <strong>{{ pendingKycRequests }}</strong>
         <small>{{ pendingKycRequests > 0 ? "Action required" : "No pending requests" }}</small>
       </div>
-      <div v-for="card in dashboardCards" :key="card.title" class="metric-interactive-card">
+      <div
+        v-for="card in dashboardCards"
+        :key="card.title"
+        class="metric-interactive-card"
+        role="button"
+        tabindex="0"
+        @click="handleMetricCardClick(card.title)"
+      >
         <p>{{ card.title }}</p>
         <strong>{{ card.value }}</strong>
         <small>{{ card.trend }}</small>

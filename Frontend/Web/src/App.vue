@@ -195,6 +195,17 @@ const handleLogout = () => {
   window.history.pushState({}, "", "/overview");
   syncPath();
 };
+
+const handleDashboardNavigate = (path: string) => {
+  if (!path.startsWith("/")) return;
+
+  if (window.location.hash) {
+    window.history.replaceState({}, "", window.location.pathname + window.location.search);
+  }
+
+  window.history.pushState({}, "", path);
+  syncPath();
+};
 </script>
 
 <template>
@@ -219,6 +230,6 @@ const handleLogout = () => {
     @notification-read="marketplace.readNotification"
     @notifications-read-all="marketplace.readAllNotifications"
   >
-    <component :is="activeComponent" :marketplace="marketplace" />
+    <component :is="activeComponent" :marketplace="marketplace" @navigate="handleDashboardNavigate" />
   </AppLayout>
 </template>

@@ -31,7 +31,9 @@ onMounted(async () => {
   if (props.marketplace.role.value === "Admin") {
     await props.marketplace.refreshMarketplaceState();
   }
-  const initialType = reportTypeCards.value[0]?.key ?? "sales";
+  const reportTypeFromQuery = new URLSearchParams(window.location.search).get("reportType")?.trim();
+  const hasReportType = reportTypeCards.value.some((card) => card.key === reportTypeFromQuery);
+  const initialType = hasReportType ? (reportTypeFromQuery as string) : (reportTypeCards.value[0]?.key ?? "sales");
   selectReportType(initialType);
 });
 </script>

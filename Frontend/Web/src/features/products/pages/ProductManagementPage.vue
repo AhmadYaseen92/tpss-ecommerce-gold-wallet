@@ -38,7 +38,7 @@ const props = defineProps<{
   weightUnits: EnumItemDto[];
   validationErrors: Record<string, string>;
   searchTerm: string;
-  activeFilter: "all" | "active" | "inactive";
+  activeFilter: "all" | "active" | "inactive" | "out_of_stock";
   materialTypeFilter: string;
   formTypeFilter: string;
   sellerFilter: string;
@@ -58,7 +58,7 @@ const emit = defineEmits<{
   image: [event: Event];
   video: [event: Event];
   "update:search-term": [value: string];
-  "update:active-filter": [value: "all" | "active" | "inactive"];
+  "update:active-filter": [value: "all" | "active" | "inactive" | "out_of_stock"];
   "update:material-type-filter": [value: string];
   "update:form-type-filter": [value: string];
   "update:seller-filter": [value: string];
@@ -229,11 +229,12 @@ const formCurrencyCode = computed(() => {
 
           <Select
             :model-value="activeFilter"
-            @update:model-value="emit('update:active-filter', $event as 'all' | 'active' | 'inactive')"
+            @update:model-value="emit('update:active-filter', $event as 'all' | 'active' | 'inactive' | 'out_of_stock')"
           >
             <option value="all">All statuses</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
+            <option value="out_of_stock">Out of stock</option>
           </Select>
 
           <Select

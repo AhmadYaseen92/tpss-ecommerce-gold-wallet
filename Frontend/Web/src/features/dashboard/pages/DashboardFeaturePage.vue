@@ -5,6 +5,7 @@ import { useDashboard } from "../store/useDashboard";
 import DashboardOverviewPage from "./DashboardOverviewPage.vue";
 
 const props = defineProps<{ marketplace: ReturnTypeUseMarketplace }>();
+const emit = defineEmits<{ navigate: [path: string] }>();
 const { dashboardPeriod, dashboardCards, statusSummary, categorySummary, statusRing, categoryRing, recentTransactions, categoryTransactionSeries, categoryCartSeries, pendingKycRequests } = useDashboard(props.marketplace);
 
 onMounted(() => {
@@ -25,5 +26,6 @@ onMounted(() => {
     :category-cart-series="categoryCartSeries"
     :recent-transactions="recentTransactions"
     :pending-kyc-requests="pendingKycRequests"
+    @navigate="emit('navigate', $event)"
   />
 </template>
