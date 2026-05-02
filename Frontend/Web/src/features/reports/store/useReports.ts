@@ -309,26 +309,40 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
               "Completion Hrs": request.updatedAt ? reportService.diffHours(request.createdAt, request.updatedAt) : "-"
             }));
           break;
-        case "invoices":
+        case "invoices": {
+          // Build a map of marketType to currency from settings
+          const marketTypeCurrencyMap = new Map<string, string>();
+          if (stateSnapshot.value.marketTypeSettings) {
+            for (const s of stateSnapshot.value.marketTypeSettings) {
+              marketTypeCurrencyMap.set(s.marketType, s.currency);
+            }
+          }
           rows = visibleInvoices.value
             .filter((invoice) => reportService.matchInvoice(invoice, criteria))
-            .map((invoice) => ({
-              Date: reportService.dateLabel(invoice.issuedAt),
-              Invoice: invoice.id,
-              Seller: sellersMap.get(invoice.sellerId)?.name ?? "N/A",
-              Investor: invoice.investorName,
-              Subtotal: invoice.totalAmount,
-              Fees: Number((invoice.totalAmount * stateSnapshot.value.fees.serviceChargePercent) / 100).toFixed(2),
-              VAT: Number(invoice.totalAmount * 0.15).toFixed(2),
-              Discount: 0,
-              "Grand Total": invoice.totalAmount,
-              "Paid Amount": invoice.paymentStatus === "Paid" ? invoice.totalAmount : 0,
-              "Unpaid Amount": invoice.paymentStatus === "Paid" ? 0 : invoice.totalAmount,
-              Status: invoice.status,
-              "Payment Status": invoice.paymentStatus,
-              "Invoice Template": invoice.pdfUrl ?? "-"
-            }));
+            .map((invoice) => {
+              const seller = sellersMap.get(invoice.sellerId);
+              const marketType = seller?.marketType || "";
+              const currency = marketTypeCurrencyMap.get(marketType) || "USD";
+              return {
+                Date: reportService.dateLabel(invoice.issuedAt),
+                Invoice: invoice.id,
+                Seller: seller?.name ?? "N/A",
+                Investor: invoice.investorName,
+                Subtotal: invoice.totalAmount,
+                Fees: Number((invoice.totalAmount * stateSnapshot.value.fees.serviceChargePercent) / 100).toFixed(2),
+                VAT: Number(invoice.totalAmount * 0.15).toFixed(2),
+                Discount: 0,
+                "Grand Total": invoice.totalAmount,
+                Currency: currency,
+                "Paid Amount": invoice.paymentStatus === "Paid" ? invoice.totalAmount : 0,
+                "Unpaid Amount": invoice.paymentStatus === "Paid" ? 0 : invoice.totalAmount,
+                Status: invoice.status,
+                "Payment Status": invoice.paymentStatus,
+                "Invoice Template": invoice.pdfUrl ?? "-"
+              };
+            });
           break;
+        }
         case "kyc":
           rows = stateSnapshot.value.sellers.map((seller) => ({
             Seller: seller.name,
@@ -377,7 +391,7 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
     void generateReports();
   };
 
-  
+
 
   const resetFiltersForType = (type: string) => {
     reportFilters.reportType = type;

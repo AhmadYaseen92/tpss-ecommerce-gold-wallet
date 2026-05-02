@@ -362,6 +362,23 @@ public class WalletController(
         // Days-held source: WalletAssets.CreatedAtUtc (the asset acquisition/create timestamp in wallet).
         var daysHeld = CalculateDaysHeld(asset.CreatedAtUtc);
 
+        // Enforce SellerId presence
+        if (!asset.SellerId.HasValue || asset.SellerId.Value <= 0)
+        {
+            return BadRequest(ApiResponse<object>.Fail("SellerId is required for accurate currency mapping.", 400));
+        }
+
+        // Fetch seller and validate MarketType
+        var seller = await dbContext.Sellers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == asset.SellerId.Value, cancellationToken);
+        if (seller == null)
+        {
+            return BadRequest(ApiResponse<object>.Fail("Seller not found for asset.", 400));
+        }
+        if (string.IsNullOrWhiteSpace(seller.MarketType))
+        {
+            return BadRequest(ApiResponse<object>.Fail("Seller MarketType is required for accurate currency mapping.", 400));
+        }
+
         var feeResult = await feeCalculationService.CalculateAsync(
             new Application.DTOs.Fees.FeeCalculationRequest(
                 ActionType: actionType,
@@ -376,13 +393,30 @@ public class WalletController(
             ? Math.Max(0, feeResult.SubTotalAmount - Math.Abs(feeResult.TotalFeesAmount) + feeResult.DiscountAmount)
             : feeResult.FinalAmount;
 
+        // If currency is missing or USD, but seller has a valid MarketType, map it
+        var currency = feeResult.Currency;
+        if (string.IsNullOrWhiteSpace(currency) || currency == "USD")
+        {
+            // Use the same mapping as FeeCalculationService
+            var marketKey = seller.MarketType.Trim().ToUpperInvariant();
+            var marketCurrencyMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["UAE"] = "AED",
+                ["KSA"] = "SAR",
+                ["JORDAN"] = "JOD",
+                ["EGYPT"] = "EGP",
+                ["INDIA"] = "INR",
+            };
+            currency = marketCurrencyMap.TryGetValue(marketKey, out var mapped) ? mapped : "USD";
+        }
+
         return Ok(ApiResponse<object>.Ok(new
         {
             subTotalAmount = feeResult.SubTotalAmount,
             totalFeesAmount = feeResult.TotalFeesAmount,
             discountAmount = feeResult.DiscountAmount,
             finalAmount = resolvedFinalAmount,
-            currency = feeResult.Currency,
+            currency,
             feeBreakdowns = feeResult.Lines
         }));
     }
