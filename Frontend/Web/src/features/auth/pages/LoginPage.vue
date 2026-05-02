@@ -1,10 +1,12 @@
 <script setup lang="ts">
+
 import { reactive, computed } from "vue";
 import { ElMessageBox } from "element-plus";
 import LoginForm from "../components/LoginForm.vue";
 import type { LoginFormModel } from "../types/authTypes";
 import { useMarketplace } from "../../../shared/app/store/useMarketplace";
 import { isEmail, isUaeMobile } from "../services/authValidation";
+import { useRouter } from "vue-router";
 
 const emit = defineEmits<{ toRegister: []; themeToggle: [] }>();
 const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
@@ -57,8 +59,9 @@ const onSubmit = async () => {
   }
 };
 
+const router = useRouter();
 const onForgot = () => {
-  console.log("Forgot password clicked");
+  router.push({ name: "ForgotPassword" });
 };
 </script>
 

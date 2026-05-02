@@ -12,6 +12,9 @@ const routes: Array<RouteRecordRaw> = [
   { path: '/transactions', component: () => import('../features/auth/pages/LoginPage.vue') },
   { path: '/reports', component: () => import('../features/auth/pages/LoginPage.vue') },
   { path: '/market', component: () => import('../features/auth/pages/LoginPage.vue') },
+  { path: '/forgot-password', name: 'ForgotPassword', component: () => import('../features/auth/pages/ForgotPasswordPage.vue') },
+  { path: '/reset-password', name: 'ResetPassword', component: () => import('../features/auth/pages/ResetPasswordPage.vue') },
+  { path: '/change-password', name: 'ChangePassword', component: () => import('../features/auth/pages/ChangePasswordPage.vue') },
 ];
 
 const router = createRouter({

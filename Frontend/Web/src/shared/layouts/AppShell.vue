@@ -167,16 +167,14 @@ const formatLocalDateTime = (iso: string) => {
 
       <aside v-if="openSettings" class="vertical-modal right settings">
         <div class="modal-head">
-          <h4>Change Password</h4>
+          <h4>Account Settings</h4>
           <button class="ghost" @click="openSettings = false">✕</button>
         </div>
-        <form class="settings-list" @submit.prevent="submitPasswordChange">
-          <input v-model="passwordForm.currentPassword" type="password" placeholder="Current password" />
-          <input v-model="passwordForm.newPassword" type="password" placeholder="New password" />
-          <input v-model="passwordForm.confirmPassword" type="password" placeholder="Confirm new password" />
-          <button type="submit">Update Password</button>
-          <p v-if="passwordMessage" class="settings-message">{{ passwordMessage }}</p>
-        </form>
+        <div class="settings-list">
+          <button class="settings-link" @click="$router.push({ name: 'ChangePassword' }); openSettings = false;">
+            Change Password
+          </button>
+        </div>
       </aside>
 
       <slot />
