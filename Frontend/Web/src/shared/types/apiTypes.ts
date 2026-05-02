@@ -142,6 +142,7 @@ export interface MarketTypeSettingsDto {
   marketType: string;
   currency: string;
   feesPercent: number;
+  vatRatePercent: number;
   usdToLocalRate: number;
   paymentGateway: string;
   enableSellerManagerField: boolean;
