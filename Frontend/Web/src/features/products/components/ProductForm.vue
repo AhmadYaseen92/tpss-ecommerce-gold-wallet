@@ -187,11 +187,13 @@ const autoCalculatedPrice = computed(() => {
 
   if (weight <= 0 || market <= 0) return 0;
 
-  if (isDiamond.value) {
-    return (weight / 0.2) * market;
-  }
+  const usdPrice = isDiamond.value
+    ? (weight / 0.2) * market
+    : (weight / 31.1035) * market * purity;
 
-  return (weight / 31.1035) * market * purity;
+  const code = (props.currencyCode || "USD").toUpperCase();
+  const fx = code === "AED" ? 3.67 : code === "SAR" ? 3.75 : code === "JOD" ? 0.71 : code === "EGP" ? 48.5 : code === "INR" ? 83.2 : 1;
+  return usdPrice * fx;
 });
 
 const finalPrice = computed(() => {
