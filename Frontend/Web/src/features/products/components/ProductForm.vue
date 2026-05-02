@@ -17,6 +17,7 @@ const props = withDefaults(
     units: EnumItemDto[];
     errors: Record<string, string>;
     marketPrices?: MarketPriceConfigDto;
+    currencyCode?: string;
   }>(),
   {
     marketPrices: () => ({
@@ -57,7 +58,7 @@ const resetCoreProductInfoByMaterial = (nextMaterial: number) => {
   props.model.formType = 1;
   props.model.weightValue = 0;
   props.model.pricingMode = 1;
-  props.model.availableStock = 0;
+  props.model.availableStock = 1;
 
   // Reset pricing / offer values tied to core info.
   props.model.manualSellPrice = 0;
@@ -327,7 +328,7 @@ onBeforeUnmount(() => {
         </FormField>
 
         <FormField label="Final Sell Price" class="field-full">
-          <Input :model-value="finalPrice.toFixed(2)" readonly />
+          <Input :model-value="`${(currencyCode || 'USD').toUpperCase()} ${finalPrice.toFixed(2)}`" readonly />
         </FormField>
       </div>
     </Card>
@@ -394,7 +395,7 @@ onBeforeUnmount(() => {
       <div v-else class="ui-state">
         Auto price uses selected seller market price, weight in grams, and purity factor.
         <br />
-        Market source value (USD): <strong>{{ selectedMarketPrice.toFixed(2) }}</strong>
+        Market source value ({{ (currencyCode || "USD").toUpperCase() }}): <strong>{{ selectedMarketPrice.toFixed(2) }}</strong>
         <br />
         Auto calculated price (local market currency): <strong>{{ autoCalculatedPrice.toFixed(2) }}</strong>
       </div>
