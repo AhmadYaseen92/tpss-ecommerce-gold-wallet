@@ -37,12 +37,6 @@ internal static class InvoicePdfTemplateBuilder
         var referenceValue = FirstNonEmpty(Get("External Reference"), Get("Invoice Number"), Get("Ref"), "-");
         WriteText(content, 120, 720, 10, $"Ref: {referenceValue}", 0.30, 0.30, 0.30);
 
-        content.AppendLine("0.90 0.90 0.90 rg");
-        content.AppendLine("42 704 68 48 re f");
-        content.AppendLine("0.80 0.80 0.80 RG");
-        content.AppendLine("42 704 68 48 re S");
-        WriteText(content, 62, 726, 10, "IMAGE", 0.45, 0.45, 0.45);
-
         content.AppendLine("0.86 0.86 0.86 RG");
         content.AppendLine("42 694 m 551 694 l S");
 
