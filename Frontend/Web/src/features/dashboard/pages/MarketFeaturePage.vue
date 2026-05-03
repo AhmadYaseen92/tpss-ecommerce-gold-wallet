@@ -20,6 +20,79 @@ const settings = ref<MarketTypeSettingsDto[]>([]);
 const sellers = ref<Seller[]>([]);
 const selectedMarket = ref("UAE");
 const activeTab = ref<"general" | "registration" | "gateway">("general");
+const activeRegistrationTab = ref<"company" | "manager" | "branches" | "bank" | "login">("company");
+
+type RegistrationSectionTab = {
+  key: "company" | "manager" | "branches" | "bank" | "login";
+  label: string;
+  sectionToggle: { key: keyof MarketTypeSettingsDto; label: string };
+  fieldToggles: Array<{ key: keyof MarketTypeSettingsDto; label: string }>;
+};
+
+const registrationSectionTabs: RegistrationSectionTab[] = [
+  {
+    key: "company",
+    label: "Company Info",
+    sectionToggle: { key: "enableSellerCompanyInfoField", label: "Enable Company Info Section" },
+    fieldToggles: [
+      { key: "enableCompanyNameField", label: "Company Name Field" },
+      { key: "enableCompanyCrNumberField", label: "Trade License Number Field" },
+      { key: "enableCompanyVatNumberField", label: "VAT Number Field" },
+      { key: "enableCompanyBusinessActivityField", label: "Business Activity Field" },
+    ],
+  },
+  {
+    key: "manager",
+    label: "Manager",
+    sectionToggle: { key: "enableSellerManagerField", label: "Enable Manager Section" },
+    fieldToggles: [
+      { key: "enableManagerNameField", label: "Manager Name Field" },
+      { key: "enableManagerMobileField", label: "Manager Mobile Field" },
+      { key: "enableManagerEmailField", label: "Manager Email Field" },
+    ],
+  },
+  {
+    key: "branches",
+    label: "Branches",
+    sectionToggle: { key: "enableSellerBranchesField", label: "Enable Branches Section" },
+    fieldToggles: [
+      { key: "enableBranchNameField", label: "Branch Name Field" },
+      { key: "enableBranchAddressField", label: "Branch Address Field" },
+      { key: "enableBranchPhoneField", label: "Branch Phone Field" },
+    ],
+  },
+  {
+    key: "bank",
+    label: "Bank Accounts",
+    sectionToggle: { key: "enableSellerBankAccountsField", label: "Enable Bank Accounts Section" },
+    fieldToggles: [
+      { key: "enableBankNameField", label: "Bank Name Field" },
+      { key: "enableBankAccountNumberField", label: "Bank Account Number Field" },
+      { key: "enableBankIbanField", label: "Bank IBAN Field" },
+    ],
+  },
+  {
+    key: "login",
+    label: "Login Credentials",
+    sectionToggle: { key: "enableSellerLoginCredentialsField", label: "Enable Login Credentials Section" },
+    fieldToggles: [
+      { key: "enableLoginEmailField", label: "Login Email Field" },
+      { key: "enableLoginPhoneField", label: "Login Phone Field" },
+      { key: "enablePasswordField", label: "Password/Confirm Password Fields" },
+    ],
+  },
+];
+
+const activeRegistrationSection = computed(
+  () => registrationSectionTabs.find((tab) => tab.key === activeRegistrationTab.value) ?? registrationSectionTabs[0],
+);
+
+const readSetting = (key: keyof MarketTypeSettingsDto) => Boolean(currentSettings.value?.[key]);
+
+const updateSetting = (key: keyof MarketTypeSettingsDto, value: boolean) => {
+  if (!currentSettings.value) return;
+  (currentSettings.value as MarketTypeSettingsDto)[key] = value as never;
+};
 
 const currentSettings = computed(() => settings.value.find((x) => x.marketType === selectedMarket.value));
 
@@ -101,28 +174,32 @@ onMounted(() => void load());
           </div>
 
           <div v-if="activeTab === 'registration'" class="ui-card">
-            <Checkbox v-model="currentSettings.enableSellerCompanyInfoField" label="Company Info Section Enabled" />
-            <Checkbox v-model="currentSettings.enableSellerManagerField" label="Manager Section Enabled" />
-            <Checkbox v-model="currentSettings.enableSellerBranchesField" label="Branches Section Enabled" />
-            <Checkbox v-model="currentSettings.enableSellerBankAccountsField" label="Bank Accounts Section Enabled" />
-            <Checkbox v-model="currentSettings.enableSellerLoginCredentialsField" label="Login Credentials Section Enabled" />
-            <hr />
-            <Checkbox v-model="currentSettings.enableCompanyNameField" label="Company Name Field" />
-            <Checkbox v-model="currentSettings.enableCompanyCrNumberField" label="Trade License Number Field" />
-            <Checkbox v-model="currentSettings.enableCompanyVatNumberField" label="VAT Number Field" />
-            <Checkbox v-model="currentSettings.enableCompanyBusinessActivityField" label="Business Activity Field" />
-            <Checkbox v-model="currentSettings.enableManagerNameField" label="Manager Name Field" />
-            <Checkbox v-model="currentSettings.enableManagerMobileField" label="Manager Mobile Field" />
-            <Checkbox v-model="currentSettings.enableManagerEmailField" label="Manager Email Field" />
-            <Checkbox v-model="currentSettings.enableBranchNameField" label="Branch Name Field" />
-            <Checkbox v-model="currentSettings.enableBranchAddressField" label="Branch Address Field" />
-            <Checkbox v-model="currentSettings.enableBranchPhoneField" label="Branch Phone Field" />
-            <Checkbox v-model="currentSettings.enableBankNameField" label="Bank Name Field" />
-            <Checkbox v-model="currentSettings.enableBankAccountNumberField" label="Bank Account Number Field" />
-            <Checkbox v-model="currentSettings.enableBankIbanField" label="Bank IBAN Field" />
-            <Checkbox v-model="currentSettings.enableLoginEmailField" label="Login Email Field" />
-            <Checkbox v-model="currentSettings.enableLoginPhoneField" label="Login Phone Field" />
-            <Checkbox v-model="currentSettings.enablePasswordField" label="Password/Confirm Password Fields" />
+            <div class="section-tabs">
+              <button
+                v-for="section in registrationSectionTabs"
+                :key="section.key"
+                :class="{ active: activeRegistrationTab === section.key }"
+                @click="activeRegistrationTab = section.key"
+              >
+                {{ section.label }}
+              </button>
+            </div>
+
+            <div class="section-settings">
+              <Checkbox
+                :model-value="readSetting(activeRegistrationSection.sectionToggle.key)"
+                :label="activeRegistrationSection.sectionToggle.label"
+                @update:model-value="(value) => updateSetting(activeRegistrationSection.sectionToggle.key, value)"
+              />
+              <hr />
+              <Checkbox
+                v-for="field in activeRegistrationSection.fieldToggles"
+                :key="field.key"
+                :model-value="readSetting(field.key)"
+                :label="field.label"
+                @update:model-value="(value) => updateSetting(field.key, value)"
+              />
+            </div>
           </div>
 
           <div v-if="activeTab === 'gateway'" class="ui-card">
@@ -162,5 +239,17 @@ onMounted(() => void load());
   display: flex;
   gap: 12px;
   margin: 14px 0;
+}
+
+.section-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.section-settings {
+  display: grid;
+  gap: 8px;
 }
 </style>
