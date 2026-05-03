@@ -13,6 +13,13 @@ public class Invoice : BaseEntity
     public decimal DiscountAmount { get; set; }
     public decimal TaxAmount { get; set; }
     public decimal TotalAmount { get; set; }
+
+    // Fee breakdown fields
+    public decimal CommissionFee { get; set; }
+    public decimal DeliveryFee { get; set; }
+    public decimal ServiceFee { get; set; }
+    public decimal StorageFee { get; set; }
+    public decimal PremiumDiscount { get; set; }
     public string Currency { get; set; } = "USD";
     public string PaymentMethod { get; set; } = "Unknown";
     public string PaymentStatus { get; set; } = "Pending";
