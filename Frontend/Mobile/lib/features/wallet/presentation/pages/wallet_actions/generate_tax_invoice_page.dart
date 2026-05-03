@@ -19,10 +19,7 @@ import 'package:tpss_ecommerce_gold_wallet/features/wallet_action/data/models/wa
 class GenerateTaxInvoicePage extends StatefulWidget {
   final WalletTransactionEntity asset;
 
-  const GenerateTaxInvoicePage({
-    super.key,
-    required this.asset,
-  });
+  const GenerateTaxInvoicePage({super.key, required this.asset});
 
   @override
   State<GenerateTaxInvoicePage> createState() => _GenerateTaxInvoicePageState();
@@ -52,7 +49,8 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
     final fees = _preview?.totalFeesAmount ?? 0;
     const vat = 0.0;
     final discount = _preview?.discountAmount ?? 0;
-    final grandTotal = _preview?.finalAmount ?? (subTotal + fees + vat - discount);
+    final grandTotal =
+        _preview?.finalAmount ?? (subTotal + fees + vat - discount);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -79,7 +77,10 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                   const Center(
                     child: Text(
                       'TAX INVOICE',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 22,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -98,8 +99,9 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                             : Image.network(
                                 widget.asset.imageUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    const Icon(Icons.image_not_supported_outlined),
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.image_not_supported_outlined,
+                                ),
                               ),
                       ),
                       const SizedBox(width: 10),
@@ -136,7 +138,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                           textAlign: TextAlign.end,
                           style: const TextStyle(fontSize: 12),
                         ),
-                      )
+                      ),
                     ],
                   ),
 
@@ -178,13 +180,22 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                   _buildBox(
                     title: 'Item Details',
                     children: [
-                      _metaRow('Product SKU', widget.asset.productSku?.trim().isNotEmpty == true ? widget.asset.productSku! : 'N/A'),
+                      _metaRow(
+                        'Product SKU',
+                        widget.asset.productSku?.trim().isNotEmpty == true
+                            ? widget.asset.productSku!
+                            : 'N/A',
+                      ),
                       _metaRow('Wallet Item Id', '${widget.asset.id}'),
                       _metaRow('Product Name', widget.asset.name),
-                      _metaRow('Category / Material',
-                          widget.asset.category.name.toUpperCase()),
-                      _metaRow('Weight',
-                          '${widget.asset.weightInGrams.toStringAsFixed(3)} g'),
+                      _metaRow(
+                        'Category / Material',
+                        widget.asset.category.name.toUpperCase(),
+                      ),
+                      _metaRow(
+                        'Weight',
+                        '${widget.asset.weightInGrams.toStringAsFixed(3)} g',
+                      ),
                       _metaRow('Purity / Karat', widget.asset.purity),
                       _metaRow('Quantity', '${widget.asset.quantity}'),
                     ],
@@ -201,15 +212,22 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
                           '${line.isDiscount ? '-' : ''}${_currency(line.appliedValue)}',
                         ),
                       ),
-                      if ((_preview?.feeBreakdowns.length ?? 0) > 0) const Divider(),
+                      if ((_preview?.feeBreakdowns.length ?? 0) > 0)
+                        const Divider(),
                       _metaRow('Sub Total', _currency(subTotal)),
                       _metaRow('Fees', _currency(fees)),
                       _metaRow('VAT / Tax', _currency(vat)),
-                      if (!(_preview?.feeBreakdowns.any((line) => line.isDiscount) ?? false))
+                      if (!(_preview?.feeBreakdowns.any(
+                            (line) => line.isDiscount,
+                          ) ??
+                          false))
                         _metaRow('Discount', _currency(discount)),
                       const Divider(),
-                      _metaRow('Grand Total', _currency(grandTotal),
-                          bold: true),
+                      _metaRow(
+                        'Grand Total',
+                        _currency(grandTotal),
+                        bold: true,
+                      ),
                     ],
                   ),
 
@@ -235,8 +253,9 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
               child: SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed:
-                      _downloading ? null : () => _downloadInvoice(context),
+                  onPressed: _downloading
+                      ? null
+                      : () => _downloadInvoice(context),
                   icon: _downloading
                       ? const SizedBox(
                           width: 16,
@@ -271,20 +290,26 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
           'amount': amount,
         },
       );
-      final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      final data =
+          (response.data as Map<String, dynamic>)['data']
+              as Map<String, dynamic>? ??
+          {};
       final feeBreakdowns = (data['feeBreakdowns'] as List<dynamic>? ?? [])
           .whereType<Map<String, dynamic>>()
-          .map((line) => WalletActionPreviewFeeLine(
-                feeName: (line['feeName'] ?? '').toString(),
-                appliedValue: (line['appliedValue'] as num?)?.toDouble() ?? 0,
-                isDiscount: (line['isDiscount'] as bool?) ?? false,
-              ))
+          .map(
+            (line) => WalletActionPreviewFeeLine(
+              feeName: (line['feeName'] ?? '').toString(),
+              appliedValue: (line['appliedValue'] as num?)?.toDouble() ?? 0,
+              isDiscount: (line['isDiscount'] as bool?) ?? false,
+            ),
+          )
           .toList();
 
       if (!mounted) return;
       setState(() {
         _preview = WalletActionPreviewResult(
-          subTotalAmount: (data['subTotalAmount'] as num?)?.toDouble() ?? amount,
+          subTotalAmount:
+              (data['subTotalAmount'] as num?)?.toDouble() ?? amount,
           totalFeesAmount: (data['totalFeesAmount'] as num?)?.toDouble() ?? 0,
           discountAmount: (data['discountAmount'] as num?)?.toDouble() ?? 0,
           finalAmount: (data['finalAmount'] as num?)?.toDouble() ?? amount,
@@ -297,7 +322,8 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
       AppModalAlert.show(
         context,
         title: 'Warning',
-        message: 'Unable to load fee preview. Showing fallback values. (${error.toString()})',
+        message:
+            'Unable to load fee preview. Showing fallback values. (${error.toString()})',
         variant: AppModalAlertVariant.warning,
       );
     }
@@ -326,25 +352,31 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
             Padding(padding: EdgeInsets.all(6), child: Text('Total')),
           ],
         ),
-        TableRow(children: [
-          const Padding(padding: EdgeInsets.all(6), child: Text('1')),
-          Padding(
+        TableRow(
+          children: [
+            const Padding(padding: EdgeInsets.all(6), child: Text('1')),
+            Padding(
               padding: const EdgeInsets.all(6),
               child: Text(
                 widget.asset.name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-              )),
-          Padding(
+              ),
+            ),
+            Padding(
               padding: const EdgeInsets.all(6),
-              child: Text(_currency(widget.asset.actionUnitPrice))),
-          Padding(
+              child: Text(_currency(widget.asset.actionUnitPrice)),
+            ),
+            Padding(
               padding: const EdgeInsets.all(6),
-              child: Text('${widget.asset.quantity}')),
-          Padding(
+              child: Text('${widget.asset.quantity}'),
+            ),
+            Padding(
               padding: const EdgeInsets.all(6),
-              child: Text(_currency(widget.asset.actionBaseAmount))),
-        ]),
+              child: Text(_currency(widget.asset.actionBaseAmount)),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -377,8 +409,10 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+          ),
           const SizedBox(height: 4),
           Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
           Text(role, style: const TextStyle(fontSize: 12)),
@@ -387,16 +421,26 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
     );
   }
 
-  Widget _metaRow(String label, String value,
-      {bool bold = false, bool selectable = false}) {
+  Widget _metaRow(
+    String label,
+    String value, {
+    bool bold = false,
+    bool selectable = false,
+  }) {
     final valueWidget = selectable
-        ? SelectableText(value,
-            style:
-                TextStyle(fontWeight: bold ? FontWeight.w800 : FontWeight.w600))
-        : Text(value,
+        ? SelectableText(
+            value,
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
+            ),
+          )
+        : Text(
+            value,
             overflow: TextOverflow.ellipsis,
-            style:
-                TextStyle(fontWeight: bold ? FontWeight.w800 : FontWeight.w600));
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
+            ),
+          );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
@@ -514,15 +558,19 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
       final response = await InjectionContainer.dio().get(
         '/wallet/wallet-items/${widget.asset.id}/certificate',
       );
-      final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? {};
+      final data =
+          (response.data as Map<String, dynamic>)['data']
+              as Map<String, dynamic>? ??
+          {};
       final ensuredUrl = (data['pdfUrl'] ?? '').toString();
       if (ensuredUrl.isNotEmpty) return ensuredUrl;
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) return null;
       AppModalAlert.show(
         context,
         title: 'Warning',
-        message: 'Unable to load fee preview. Showing fallback values. (${error.toString()})',
+        message:
+            'Unable to load fee preview. Showing fallback values. (${error.toString()})',
         variant: AppModalAlertVariant.warning,
       );
     }
