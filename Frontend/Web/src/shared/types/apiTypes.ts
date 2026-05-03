@@ -148,6 +148,24 @@ export interface MarketTypeSettingsDto {
   enableSellerManagerField: boolean;
   enableSellerBranchesField: boolean;
   enableSellerBankAccountsField: boolean;
+  enableSellerCompanyInfoField: boolean;
+  enableSellerLoginCredentialsField: boolean;
+  enableCompanyNameField: boolean;
+  enableCompanyCrNumberField: boolean;
+  enableCompanyVatNumberField: boolean;
+  enableCompanyBusinessActivityField: boolean;
+  enableManagerNameField: boolean;
+  enableManagerMobileField: boolean;
+  enableManagerEmailField: boolean;
+  enableBranchNameField: boolean;
+  enableBranchAddressField: boolean;
+  enableBranchPhoneField: boolean;
+  enableBankNameField: boolean;
+  enableBankAccountNumberField: boolean;
+  enableBankIbanField: boolean;
+  enableLoginEmailField: boolean;
+  enableLoginPhoneField: boolean;
+  enablePasswordField: boolean;
   sellersCount: number;
 }
 

@@ -9,6 +9,30 @@ import {
 const props = defineProps<{
   model: RegisterFormModel;
   loading: boolean;
+  marketOptions?: string[];
+  registrationSettings?: {
+    companySectionEnabled: boolean;
+    managerSectionEnabled: boolean;
+    branchesSectionEnabled: boolean;
+    bankAccountsSectionEnabled: boolean;
+    loginSectionEnabled: boolean;
+    enableCompanyNameField: boolean;
+    enableCompanyCrNumberField: boolean;
+    enableCompanyVatNumberField: boolean;
+    enableCompanyBusinessActivityField: boolean;
+    enableManagerNameField: boolean;
+    enableManagerMobileField: boolean;
+    enableManagerEmailField: boolean;
+    enableBranchNameField: boolean;
+    enableBranchAddressField: boolean;
+    enableBranchPhoneField: boolean;
+    enableBankNameField: boolean;
+    enableBankAccountNumberField: boolean;
+    enableBankIbanField: boolean;
+    enableLoginEmailField: boolean;
+    enableLoginPhoneField: boolean;
+    enablePasswordField: boolean;
+  };
 }>();
 
 const emit = defineEmits<{
@@ -19,6 +43,7 @@ const emit = defineEmits<{
 }>();
 
 const steps = [
+  "Market",
   "Company Info",
   "Manager",
   "Branches",
@@ -26,6 +51,38 @@ const steps = [
   "Login",
   "Summary",
 ];
+const visibleMarketOptions = () => (props.marketOptions?.length ? props.marketOptions : ["UAE", "KSA", "Jordan", "Egypt", "India"]);
+const sectionSettings = () => props.registrationSettings ?? {
+  companySectionEnabled: true,
+  managerSectionEnabled: true,
+  branchesSectionEnabled: true,
+  bankAccountsSectionEnabled: true,
+  loginSectionEnabled: true,
+  enableCompanyNameField: true,
+  enableCompanyCrNumberField: true,
+  enableCompanyVatNumberField: true,
+  enableCompanyBusinessActivityField: true,
+  enableManagerNameField: true,
+  enableManagerMobileField: true,
+  enableManagerEmailField: true,
+  enableBranchNameField: true,
+  enableBranchAddressField: true,
+  enableBranchPhoneField: true,
+  enableBankNameField: true,
+  enableBankAccountNumberField: true,
+  enableBankIbanField: true,
+  enableLoginEmailField: true,
+  enableLoginPhoneField: true,
+  enablePasswordField: true,
+};
+const isStepVisible = (step: number) => {
+  if (step === 1) return sectionSettings().companySectionEnabled;
+  if (step === 2) return sectionSettings().managerSectionEnabled;
+  if (step === 3) return sectionSettings().branchesSectionEnabled;
+  if (step === 4) return sectionSettings().bankAccountsSectionEnabled;
+  if (step === 5) return sectionSettings().loginSectionEnabled;
+  return true;
+};
 const countryCityMap: Record<string, string[]> = {
   Jordan: ["Amman", "Zarqa", "Irbid", "Aqaba", "Mafraq", "Salt", "Madaba", "Jerash", "Ajloun", "Karak", "Tafilah", "Ma'an"],
   "Saudi Arabia": ["Riyadh", "Jeddah", "Mecca", "Medina", "Dammam", "Khobar", "Tabuk", "Abha", "Buraidah", "Hail", "Jizan", "Najran"],
@@ -69,12 +126,15 @@ const setSingleFile = (listRef: any[], event: Event) => {
 
 const validateStep = (step: number) => {
   if (step === 0) {
+    if (!props.model.marketType?.trim()) return "Please select market type to continue.";
+  }
+  if (step === 1) {
     const missing: string[] = [];
-    if (!props.model.companyInfo.companyName?.trim()) missing.push("Company Name");
-    if (!props.model.companyInfo.crNumber?.trim()) missing.push("Trade License Number");
+    if (sectionSettings().enableCompanyNameField && !props.model.companyInfo.companyName?.trim()) missing.push("Company Name");
+    if (sectionSettings().enableCompanyCrNumberField && !props.model.companyInfo.crNumber?.trim()) missing.push("Trade License Number");
     if (!props.model.companyInfo.tradeLicenseExpiryDate?.trim()) missing.push("Trade License Expiration Date");
-    if (!props.model.companyInfo.vatNumber?.trim()) missing.push("VAT Number");
-    if (!props.model.companyInfo.businessActivity?.trim()) missing.push("Business Activity");
+    if (sectionSettings().enableCompanyVatNumberField && !props.model.companyInfo.vatNumber?.trim()) missing.push("VAT Number");
+    if (sectionSettings().enableCompanyBusinessActivityField && !props.model.companyInfo.businessActivity?.trim()) missing.push("Business Activity");
     if (!props.model.companyInfo.country?.trim()) missing.push("Country");
     if (!props.model.companyInfo.city?.trim()) missing.push("City");
     if (!props.model.companyInfo.street?.trim()) missing.push("Street");
@@ -87,27 +147,27 @@ const validateStep = (step: number) => {
     if (!props.model.companyInfo.documents.amlDoc.length) missing.push("AML Documentation");
     if (missing.length > 0) return `Company Information missing required fields: ${missing.join(", ")}.`;
   }
-  if (step === 1) {
+  if (step === 2) {
     const missing: string[] = [];
-    if (!props.model.ownerInfo.name?.trim()) missing.push("Manager Name");
+    if (sectionSettings().enableManagerNameField && !props.model.ownerInfo.name?.trim()) missing.push("Manager Name");
     if (!props.model.ownerInfo.position?.trim()) missing.push("Position / Job Title");
     if (!props.model.ownerInfo.nationality?.trim()) missing.push("Nationality");
-    if (!props.model.ownerInfo.mobile?.trim()) missing.push("Mobile Number");
-    if (!props.model.ownerInfo.email?.trim()) missing.push("Email Address");
+    if (sectionSettings().enableManagerMobileField && !props.model.ownerInfo.mobile?.trim()) missing.push("Mobile Number");
+    if (sectionSettings().enableManagerEmailField && !props.model.ownerInfo.email?.trim()) missing.push("Email Address");
     if (!props.model.ownerInfo.idType?.trim()) missing.push("ID Type");
     if (!props.model.ownerInfo.idNumber?.trim()) missing.push("ID Number");
     if (!props.model.ownerInfo.idCopy.length) missing.push("Manager ID Copy");
     if (missing.length > 0) return `Manager tab is missing: ${missing.join(", ")}.`;
   }
-  if (step === 2) {
+  if (step === 3) {
     const invalidBranch = props.model.branches.findIndex((x) => !x.branchName || !x.country || !x.city || !x.address);
     if (invalidBranch >= 0) return `Branch #${invalidBranch + 1} is missing required fields: Branch Name, Country, City, or Full Address.`;
   }
-  if (step === 3) {
+  if (step === 4) {
     const invalidBank = props.model.banks.findIndex((x) => !x.bankName || !x.accountHolder || !x.accountNumber || !x.iban || !x.country || !x.city || !x.currency);
     if (invalidBank >= 0) return `Bank Account #${invalidBank + 1} is missing required fields: Bank Name, Account Holder, Account Number, or IBAN.`;
   }
-  if (step === 4) {
+  if (step === 5) {
     const required = [props.model.credentials.password, props.model.credentials.confirmPassword];
     if (required.some((x) => !x?.trim())) return "Please complete login credentials before continuing.";
     if (!props.model.credentials.loginEmail?.trim() && !props.model.credentials.loginPhone?.trim()) {
@@ -115,7 +175,7 @@ const validateStep = (step: number) => {
     }
     if (props.model.credentials.password !== props.model.credentials.confirmPassword) return "Password and Confirm Password do not match.";
   }
-  if (step === 5) {
+  if (step === 6) {
     if (!props.model.agreements.termsAccepted) return "You must accept Terms & Conditions and Privacy Policy to continue.";
   }
   return "";
@@ -144,12 +204,16 @@ function nextStep() {
   const error = validateStep(activeStep.value);
   stepError.value = error;
   if (error) return;
-  if (activeStep.value < steps.length - 1) activeStep.value++;
+  let next = activeStep.value + 1;
+  while (next < steps.length && !isStepVisible(next)) next++;
+  if (next < steps.length) activeStep.value = next;
 }
 
 function prevStep() {
   stepError.value = "";
-  if (activeStep.value > 0) activeStep.value--;
+  let prev = activeStep.value - 1;
+  while (prev >= 0 && !isStepVisible(prev)) prev--;
+  if (prev >= 0) activeStep.value = prev;
 }
 
 function addBranch() {
@@ -181,6 +245,7 @@ function setMainBank(idx: number) {
 }
 
 function goToStep(idx: number) {
+  if (!isStepVisible(idx)) return;
   if (idx <= activeStep.value) {
     activeStep.value = idx;
     return;
@@ -216,13 +281,22 @@ function goToStep(idx: number) {
       </button>
     </div>
 
-    <div v-if="activeStep === 0" :ref="(el) => (stepRefs[0] = el as HTMLElement)" class="form-grid">
+    <div v-if="activeStep === 0" :ref="(el) => (stepRefs[0] = el as HTMLElement)" class="form-grid login-step">
+      <h2>Market Type</h2>
+      <label>Select Market Type
+        <select v-model="model.marketType" required>
+          <option v-for="market in visibleMarketOptions()" :key="market" :value="market">{{ market }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div v-if="activeStep === 1 && sectionSettings().companySectionEnabled" :ref="(el) => (stepRefs[1] = el as HTMLElement)" class="form-grid">
       <h2>Company Information</h2>
-      <label>Company Name <input v-model="model.companyInfo.companyName" required /></label>
-            <label>Trade License Number <input v-model="model.companyInfo.crNumber" required /></label>
+      <label v-if="sectionSettings().enableCompanyNameField">Company Name <input v-model="model.companyInfo.companyName" required /></label>
+      <label v-if="sectionSettings().enableCompanyCrNumberField">Trade License Number <input v-model="model.companyInfo.crNumber" required /></label>
       <label>Company trade license expiration date <input v-model="model.companyInfo.tradeLicenseExpiryDate" type="date" required /></label>
-      <label>Tax / VAT Number <input v-model="model.companyInfo.vatNumber" required /></label>
-      <label>Business Activity / Industry Type <input v-model="model.companyInfo.businessActivity" /></label>
+      <label v-if="sectionSettings().enableCompanyVatNumberField">Tax / VAT Number <input v-model="model.companyInfo.vatNumber" required /></label>
+      <label v-if="sectionSettings().enableCompanyBusinessActivityField">Business Activity / Industry Type <input v-model="model.companyInfo.businessActivity" /></label>
       <label>Established Date <input v-model="model.companyInfo.establishedDate" type="date" /></label>
       <label>Country
         <select v-model="model.companyInfo.country" required @change="() => { if (!getCityOptions(model.companyInfo.country).includes(model.companyInfo.city)) model.companyInfo.city = ''; }">
@@ -249,13 +323,13 @@ function goToStep(idx: number) {
       <label>AML Documentation <input type="file" required @change="setSingleFile(model.companyInfo.documents.amlDoc, $event)" /></label>
     </div>
 
-    <div v-if="activeStep === 1" :ref="(el) => (stepRefs[1] = el as HTMLElement)" class="form-grid">
+    <div v-if="activeStep === 2 && sectionSettings().managerSectionEnabled" :ref="(el) => (stepRefs[2] = el as HTMLElement)" class="form-grid">
       <h2>Company Manager</h2>
-      <label>Manager Name <input v-model="model.ownerInfo.name" required /></label>
+      <label v-if="sectionSettings().enableManagerNameField">Manager Name <input v-model="model.ownerInfo.name" required /></label>
       <label>Position / Job Title <input v-model="model.ownerInfo.position" required /></label>
       <label>Nationality <input v-model="model.ownerInfo.nationality" /></label>
-      <label>Mobile Number <input v-model="model.ownerInfo.mobile" required /></label>
-      <label>Email Address <input v-model="model.ownerInfo.email" type="email" required /></label>
+      <label v-if="sectionSettings().enableManagerMobileField">Mobile Number <input v-model="model.ownerInfo.mobile" required /></label>
+      <label v-if="sectionSettings().enableManagerEmailField">Email Address <input v-model="model.ownerInfo.email" type="email" required /></label>
       <label>ID Type
         <select v-model="model.ownerInfo.idType" required>
           <option value="">Select</option>
@@ -269,11 +343,11 @@ function goToStep(idx: number) {
       <label>Authorization Letter (if applicable) <input type="file" @change="setSingleFile(model.ownerInfo.authLetter, $event)" /></label>
     </div>
 
-    <div v-if="activeStep === 2" :ref="(el) => (stepRefs[2] = el as HTMLElement)" class="form-grid">
+    <div v-if="activeStep === 3 && sectionSettings().branchesSectionEnabled" :ref="(el) => (stepRefs[3] = el as HTMLElement)" class="form-grid">
       <div class="title-row"><h2>Company Branches / Locations</h2><button type="button" @click="addBranch">Add Branch</button></div>
       <div v-for="(branch, idx) in model.branches" :key="idx" class="card full">
         <div class="title-row"><strong>Branch {{ idx + 1 }}</strong><button type="button" @click="removeBranch(idx)">Remove</button></div>
-        <label>Branch Name <input v-model="branch.branchName" required /></label>
+        <label v-if="sectionSettings().enableBranchNameField">Branch Name <input v-model="branch.branchName" required /></label>
         <label>Country
           <select v-model="branch.country" required @change="() => { if (!getCityOptions(branch.country).includes(branch.city)) branch.city = ''; }">
             <option value="">Select country</option>
@@ -286,23 +360,23 @@ function goToStep(idx: number) {
             <option v-for="city in getCityOptions(branch.country)" :key="`branch-city-${branch.country}-${city}`" :value="city">{{ city }}</option>
           </select>
         </label>
-        <label>Full Address <input v-model="branch.address" required /></label>
+        <label v-if="sectionSettings().enableBranchAddressField">Full Address <input v-model="branch.address" required /></label>
         <label>Building Name & Number <input v-model="branch.buildingNumber" /></label>
         <label>Postal Code <input v-model="branch.postalCode" /></label>
-        <label>Phone Number <input v-model="branch.phone" /></label>
+        <label v-if="sectionSettings().enableBranchPhoneField">Phone Number <input v-model="branch.phone" /></label>
         <label>Email <input v-model="branch.email" type="email" /></label>
         <label class="inline-check"><input type="checkbox" :checked="branch.isMain" @change="setMainBranch(idx)" /> Is Main Branch</label>
       </div>
     </div>
 
-    <div v-if="activeStep === 3" :ref="(el) => (stepRefs[3] = el as HTMLElement)" class="form-grid">
+    <div v-if="activeStep === 4 && sectionSettings().bankAccountsSectionEnabled" :ref="(el) => (stepRefs[4] = el as HTMLElement)" class="form-grid">
       <div class="title-row"><h2>Bank Details</h2><button type="button" @click="addBank">Add Bank Account</button></div>
       <div v-for="(bank, idx) in model.banks" :key="idx" class="card full">
         <div class="title-row"><strong>Bank Account {{ idx + 1 }}</strong><button type="button" @click="removeBank(idx)">Remove</button></div>
-        <label>Bank Name <input v-model="bank.bankName" required /></label>
+        <label v-if="sectionSettings().enableBankNameField">Bank Name <input v-model="bank.bankName" required /></label>
         <label>Account Holder Name <input v-model="bank.accountHolder" required /></label>
-        <label>Account Number <input v-model="bank.accountNumber" required /></label>
-        <label>IBAN <input v-model="bank.iban" required /></label>
+        <label v-if="sectionSettings().enableBankAccountNumberField">Account Number <input v-model="bank.accountNumber" required /></label>
+        <label v-if="sectionSettings().enableBankIbanField">IBAN <input v-model="bank.iban" required /></label>
         <label>SWIFT Code <input v-model="bank.swift" /></label>
         <label>Bank Country
           <select v-model="bank.country">
@@ -330,17 +404,17 @@ function goToStep(idx: number) {
       </div>
     </div>
 
-    <div v-if="activeStep === 4" :ref="(el) => (stepRefs[4] = el as HTMLElement)" class="form-grid login-step">
+    <div v-if="activeStep === 5 && sectionSettings().loginSectionEnabled" :ref="(el) => (stepRefs[5] = el as HTMLElement)" class="form-grid login-step">
       <h2>Login Credentials</h2>
-      <label>Login Email <input v-model="model.credentials.loginEmail" type="email" placeholder="Example: seller@example.com" /></label>
+      <label v-if="sectionSettings().enableLoginEmailField">Login Email <input v-model="model.credentials.loginEmail" type="email" placeholder="Example: seller@example.com" /></label>
       <p class="full login-hint">Use a valid email address if you want to login by email.</p>
-      <label>Login Phone Number <input v-model="model.credentials.loginPhone" type="tel" placeholder="UAE example: +971501234567" /></label>
+      <label v-if="sectionSettings().enableLoginPhoneField">Login Phone Number <input v-model="model.credentials.loginPhone" type="tel" placeholder="UAE example: +971501234567" /></label>
       <p class="full login-hint">Use UAE format (+9715XXXXXXXX) if you want to login by phone.</p>
-      <label>Password <input v-model="model.credentials.password" type="password" required /></label>
-      <label>Confirm Password <input v-model="model.credentials.confirmPassword" type="password" required /></label>
+      <label v-if="sectionSettings().enablePasswordField">Password <input v-model="model.credentials.password" type="password" required /></label>
+      <label v-if="sectionSettings().enablePasswordField">Confirm Password <input v-model="model.credentials.confirmPassword" type="password" required /></label>
     </div>
 
-    <div v-if="activeStep === 5" class="form-grid">
+    <div v-if="activeStep === 6" class="form-grid">
       <h2>Order Summary</h2>
       <p><strong>Company:</strong> {{ model.companyInfo.companyName || '-' }}</p>
       <p><strong>Manager:</strong> {{ model.ownerInfo.name || '-' }}</p>

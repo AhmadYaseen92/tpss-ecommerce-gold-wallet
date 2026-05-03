@@ -101,9 +101,28 @@ onMounted(() => void load());
           </div>
 
           <div v-if="activeTab === 'registration'" class="ui-card">
+            <Checkbox v-model="currentSettings.enableSellerCompanyInfoField" label="Company Info Section Enabled" />
             <Checkbox v-model="currentSettings.enableSellerManagerField" label="Manager Section Enabled" />
             <Checkbox v-model="currentSettings.enableSellerBranchesField" label="Branches Section Enabled" />
             <Checkbox v-model="currentSettings.enableSellerBankAccountsField" label="Bank Accounts Section Enabled" />
+            <Checkbox v-model="currentSettings.enableSellerLoginCredentialsField" label="Login Credentials Section Enabled" />
+            <hr />
+            <Checkbox v-model="currentSettings.enableCompanyNameField" label="Company Name Field" />
+            <Checkbox v-model="currentSettings.enableCompanyCrNumberField" label="Trade License Number Field" />
+            <Checkbox v-model="currentSettings.enableCompanyVatNumberField" label="VAT Number Field" />
+            <Checkbox v-model="currentSettings.enableCompanyBusinessActivityField" label="Business Activity Field" />
+            <Checkbox v-model="currentSettings.enableManagerNameField" label="Manager Name Field" />
+            <Checkbox v-model="currentSettings.enableManagerMobileField" label="Manager Mobile Field" />
+            <Checkbox v-model="currentSettings.enableManagerEmailField" label="Manager Email Field" />
+            <Checkbox v-model="currentSettings.enableBranchNameField" label="Branch Name Field" />
+            <Checkbox v-model="currentSettings.enableBranchAddressField" label="Branch Address Field" />
+            <Checkbox v-model="currentSettings.enableBranchPhoneField" label="Branch Phone Field" />
+            <Checkbox v-model="currentSettings.enableBankNameField" label="Bank Name Field" />
+            <Checkbox v-model="currentSettings.enableBankAccountNumberField" label="Bank Account Number Field" />
+            <Checkbox v-model="currentSettings.enableBankIbanField" label="Bank IBAN Field" />
+            <Checkbox v-model="currentSettings.enableLoginEmailField" label="Login Email Field" />
+            <Checkbox v-model="currentSettings.enableLoginPhoneField" label="Login Phone Field" />
+            <Checkbox v-model="currentSettings.enablePasswordField" label="Password/Confirm Password Fields" />
           </div>
 
           <div v-if="activeTab === 'gateway'" class="ui-card">

@@ -82,6 +82,7 @@ export interface CredentialsModel {
 }
 
 export interface RegisterFormModel {
+  marketType: string;
   companyInfo: CompanyInfoModel;
   ownerInfo: OwnerInfoModel;
   branches: BranchModel[];
@@ -126,6 +127,7 @@ export function createEmptyBank(): BankModel {
 
 export function createEmptyRegisterForm(): RegisterFormModel {
   return {
+    marketType: "UAE",
     companyInfo: {
       companyName: "",
       companyCode: "",

@@ -74,6 +74,24 @@ public class MarketTypeSettingsDto
     public bool EnableSellerManagerField { get; set; } = true;
     public bool EnableSellerBranchesField { get; set; } = true;
     public bool EnableSellerBankAccountsField { get; set; } = true;
+    public bool EnableSellerCompanyInfoField { get; set; } = true;
+    public bool EnableSellerLoginCredentialsField { get; set; } = true;
+    public bool EnableCompanyNameField { get; set; } = true;
+    public bool EnableCompanyCrNumberField { get; set; } = true;
+    public bool EnableCompanyVatNumberField { get; set; } = true;
+    public bool EnableCompanyBusinessActivityField { get; set; } = true;
+    public bool EnableManagerNameField { get; set; } = true;
+    public bool EnableManagerMobileField { get; set; } = true;
+    public bool EnableManagerEmailField { get; set; } = true;
+    public bool EnableBranchNameField { get; set; } = true;
+    public bool EnableBranchAddressField { get; set; } = true;
+    public bool EnableBranchPhoneField { get; set; } = true;
+    public bool EnableBankNameField { get; set; } = true;
+    public bool EnableBankAccountNumberField { get; set; } = true;
+    public bool EnableBankIbanField { get; set; } = true;
+    public bool EnableLoginEmailField { get; set; } = true;
+    public bool EnableLoginPhoneField { get; set; } = true;
+    public bool EnablePasswordField { get; set; } = true;
     public int SellersCount { get; set; }
 }
 

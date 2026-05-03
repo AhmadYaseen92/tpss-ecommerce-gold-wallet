@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, computed } from "vue";
+import { reactive, computed, watch } from "vue";
 import { ElMessageBox } from "element-plus";
 import RegisterForm from "../components/RegisterForm.vue";
 import {
@@ -18,6 +18,30 @@ const props = withDefaults(defineProps<{ isDark?: boolean }>(), {
 const marketplace = useMarketplace();
 
 const model = reactive<RegisterFormModel>(createEmptyRegisterForm());
+const marketOptions = ["UAE", "KSA", "Jordan", "Egypt", "India"];
+const registrationSettings = reactive({
+  companySectionEnabled: true,
+  managerSectionEnabled: true,
+  branchesSectionEnabled: true,
+  bankAccountsSectionEnabled: true,
+  loginSectionEnabled: true,
+  enableCompanyNameField: true,
+  enableCompanyCrNumberField: true,
+  enableCompanyVatNumberField: true,
+  enableCompanyBusinessActivityField: true,
+  enableManagerNameField: true,
+  enableManagerMobileField: true,
+  enableManagerEmailField: true,
+  enableBranchNameField: true,
+  enableBranchAddressField: true,
+  enableBranchPhoneField: true,
+  enableBankNameField: true,
+  enableBankAccountNumberField: true,
+  enableBankIbanField: true,
+  enableLoginEmailField: true,
+  enableLoginPhoneField: true,
+  enablePasswordField: true,
+});
 const loading = computed(() => marketplace.loading.value);
 const sellerTerms = computed(() => marketTerms.seller || defaultSellerTerms);
 const marketTerms = reactive<{ seller: string; investor: string }>({ seller: "", investor: "" });
@@ -29,6 +53,59 @@ void fetchPublicConfigurations(["Terms_Seller_TermsAndConditions", "Terms_Invest
     marketTerms.investor = byKey.get("Terms_Investor_TermsAndConditions") ?? "";
   })
   .catch(() => undefined);
+
+const loadRegistrationSettingsForMarket = async (marketType: string) => {
+  const keys = [
+    `Market.${marketType}.EnableSellerManagerField`,
+    `Market.${marketType}.EnableSellerBranchesField`,
+    `Market.${marketType}.EnableSellerBankAccountsField`,
+    `Market.${marketType}.EnableSellerCompanyInfoField`,
+    `Market.${marketType}.EnableSellerLoginCredentialsField`,
+    `Market.${marketType}.EnableCompanyNameField`,
+    `Market.${marketType}.EnableCompanyCrNumberField`,
+    `Market.${marketType}.EnableCompanyVatNumberField`,
+    `Market.${marketType}.EnableCompanyBusinessActivityField`,
+    `Market.${marketType}.EnableManagerNameField`,
+    `Market.${marketType}.EnableManagerMobileField`,
+    `Market.${marketType}.EnableManagerEmailField`,
+    `Market.${marketType}.EnableBranchNameField`,
+    `Market.${marketType}.EnableBranchAddressField`,
+    `Market.${marketType}.EnableBranchPhoneField`,
+    `Market.${marketType}.EnableBankNameField`,
+    `Market.${marketType}.EnableBankAccountNumberField`,
+    `Market.${marketType}.EnableBankIbanField`,
+    `Market.${marketType}.EnableLoginEmailField`,
+    `Market.${marketType}.EnableLoginPhoneField`,
+    `Market.${marketType}.EnablePasswordField`,
+  ];
+  const items = await fetchPublicConfigurations(keys).catch(() => []);
+  const byKey = new Map(items.map((x) => [x.configKey, x.valueBool]));
+  registrationSettings.managerSectionEnabled = byKey.get(keys[0]) ?? true;
+  registrationSettings.branchesSectionEnabled = byKey.get(keys[1]) ?? true;
+  registrationSettings.bankAccountsSectionEnabled = byKey.get(keys[2]) ?? true;
+  registrationSettings.companySectionEnabled = byKey.get(keys[3]) ?? true;
+  registrationSettings.loginSectionEnabled = byKey.get(keys[4]) ?? true;
+  registrationSettings.enableCompanyNameField = byKey.get(keys[5]) ?? true;
+  registrationSettings.enableCompanyCrNumberField = byKey.get(keys[6]) ?? true;
+  registrationSettings.enableCompanyVatNumberField = byKey.get(keys[7]) ?? true;
+  registrationSettings.enableCompanyBusinessActivityField = byKey.get(keys[8]) ?? true;
+  registrationSettings.enableManagerNameField = byKey.get(keys[9]) ?? true;
+  registrationSettings.enableManagerMobileField = byKey.get(keys[10]) ?? true;
+  registrationSettings.enableManagerEmailField = byKey.get(keys[11]) ?? true;
+  registrationSettings.enableBranchNameField = byKey.get(keys[12]) ?? true;
+  registrationSettings.enableBranchAddressField = byKey.get(keys[13]) ?? true;
+  registrationSettings.enableBranchPhoneField = byKey.get(keys[14]) ?? true;
+  registrationSettings.enableBankNameField = byKey.get(keys[15]) ?? true;
+  registrationSettings.enableBankAccountNumberField = byKey.get(keys[16]) ?? true;
+  registrationSettings.enableBankIbanField = byKey.get(keys[17]) ?? true;
+  registrationSettings.enableLoginEmailField = byKey.get(keys[18]) ?? true;
+  registrationSettings.enableLoginPhoneField = byKey.get(keys[19]) ?? true;
+  registrationSettings.enablePasswordField = byKey.get(keys[20]) ?? true;
+};
+
+watch(() => model.marketType, (marketType) => {
+  void loadRegistrationSettingsForMarket(marketType || "UAE");
+}, { immediate: true });
 
 const showModal = (title: string, message: string) =>
   ElMessageBox.alert(message, title, { confirmButtonText: "OK", type: "warning" });
@@ -186,6 +263,8 @@ const openPrivacyModal = async () => {
       <RegisterForm
         :model="model"
         :loading="loading"
+        :market-options="marketOptions"
+        :registration-settings="registrationSettings"
         @submit="onSubmit"
         @to-login="emit('toLogin')"
         @open-terms="openTermsModal"
