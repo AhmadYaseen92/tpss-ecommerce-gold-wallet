@@ -246,6 +246,24 @@ public class WebAdminController(
             item.EnableSellerManagerField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerManagerField", item.EnableSellerManagerField, cancellationToken);
             item.EnableSellerBranchesField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerBranchesField", item.EnableSellerBranchesField, cancellationToken);
             item.EnableSellerBankAccountsField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerBankAccountsField", item.EnableSellerBankAccountsField, cancellationToken);
+            item.EnableSellerCompanyInfoField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerCompanyInfoField", item.EnableSellerCompanyInfoField, cancellationToken);
+            item.EnableSellerLoginCredentialsField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableSellerLoginCredentialsField", item.EnableSellerLoginCredentialsField, cancellationToken);
+            item.EnableCompanyNameField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableCompanyNameField", item.EnableCompanyNameField, cancellationToken);
+            item.EnableCompanyCrNumberField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableCompanyCrNumberField", item.EnableCompanyCrNumberField, cancellationToken);
+            item.EnableCompanyVatNumberField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableCompanyVatNumberField", item.EnableCompanyVatNumberField, cancellationToken);
+            item.EnableCompanyBusinessActivityField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableCompanyBusinessActivityField", item.EnableCompanyBusinessActivityField, cancellationToken);
+            item.EnableManagerNameField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableManagerNameField", item.EnableManagerNameField, cancellationToken);
+            item.EnableManagerMobileField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableManagerMobileField", item.EnableManagerMobileField, cancellationToken);
+            item.EnableManagerEmailField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableManagerEmailField", item.EnableManagerEmailField, cancellationToken);
+            item.EnableBranchNameField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableBranchNameField", item.EnableBranchNameField, cancellationToken);
+            item.EnableBranchAddressField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableBranchAddressField", item.EnableBranchAddressField, cancellationToken);
+            item.EnableBranchPhoneField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableBranchPhoneField", item.EnableBranchPhoneField, cancellationToken);
+            item.EnableBankNameField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableBankNameField", item.EnableBankNameField, cancellationToken);
+            item.EnableBankAccountNumberField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableBankAccountNumberField", item.EnableBankAccountNumberField, cancellationToken);
+            item.EnableBankIbanField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableBankIbanField", item.EnableBankIbanField, cancellationToken);
+            item.EnableLoginEmailField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableLoginEmailField", item.EnableLoginEmailField, cancellationToken);
+            item.EnableLoginPhoneField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnableLoginPhoneField", item.EnableLoginPhoneField, cancellationToken);
+            item.EnablePasswordField = await GetBoolConfigurationAsync($"Market.{item.MarketType}.EnablePasswordField", item.EnablePasswordField, cancellationToken);
         }
         var counts = await dbContext.Sellers.AsNoTracking()
             .GroupBy(x => x.MarketType)
@@ -275,6 +293,24 @@ public class WebAdminController(
         await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerManagerField", $"{normalized} Registration Manager Field", request.EnableSellerManagerField, $"{normalized} seller registration manager section visibility", cancellationToken);
         await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerBranchesField", $"{normalized} Registration Branches Field", request.EnableSellerBranchesField, $"{normalized} seller registration branches section visibility", cancellationToken);
         await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerBankAccountsField", $"{normalized} Registration Bank Accounts Field", request.EnableSellerBankAccountsField, $"{normalized} seller registration bank accounts section visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerCompanyInfoField", $"{normalized} Registration Company Info Field", request.EnableSellerCompanyInfoField, $"{normalized} seller registration company info section visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableSellerLoginCredentialsField", $"{normalized} Registration Login Credentials Field", request.EnableSellerLoginCredentialsField, $"{normalized} seller registration login credentials section visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableCompanyNameField", $"{normalized} Registration Company Name Field", request.EnableCompanyNameField, $"{normalized} registration company name field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableCompanyCrNumberField", $"{normalized} Registration Company CR Field", request.EnableCompanyCrNumberField, $"{normalized} registration company CR field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableCompanyVatNumberField", $"{normalized} Registration Company VAT Field", request.EnableCompanyVatNumberField, $"{normalized} registration company VAT field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableCompanyBusinessActivityField", $"{normalized} Registration Company Business Activity Field", request.EnableCompanyBusinessActivityField, $"{normalized} registration company business activity field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableManagerNameField", $"{normalized} Registration Manager Name Field", request.EnableManagerNameField, $"{normalized} registration manager name field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableManagerMobileField", $"{normalized} Registration Manager Mobile Field", request.EnableManagerMobileField, $"{normalized} registration manager mobile field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableManagerEmailField", $"{normalized} Registration Manager Email Field", request.EnableManagerEmailField, $"{normalized} registration manager email field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableBranchNameField", $"{normalized} Registration Branch Name Field", request.EnableBranchNameField, $"{normalized} registration branch name field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableBranchAddressField", $"{normalized} Registration Branch Address Field", request.EnableBranchAddressField, $"{normalized} registration branch address field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableBranchPhoneField", $"{normalized} Registration Branch Phone Field", request.EnableBranchPhoneField, $"{normalized} registration branch phone field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableBankNameField", $"{normalized} Registration Bank Name Field", request.EnableBankNameField, $"{normalized} registration bank name field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableBankAccountNumberField", $"{normalized} Registration Bank Account Number Field", request.EnableBankAccountNumberField, $"{normalized} registration bank account number field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableBankIbanField", $"{normalized} Registration Bank IBAN Field", request.EnableBankIbanField, $"{normalized} registration bank iban field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableLoginEmailField", $"{normalized} Registration Login Email Field", request.EnableLoginEmailField, $"{normalized} registration login email field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnableLoginPhoneField", $"{normalized} Registration Login Phone Field", request.EnableLoginPhoneField, $"{normalized} registration login phone field visibility", cancellationToken);
+        await UpsertBoolConfigurationAsync($"Market.{normalized}.EnablePasswordField", $"{normalized} Registration Password Field", request.EnablePasswordField, $"{normalized} registration password field visibility", cancellationToken);
         return Ok(ApiResponse<string>.Ok("Saved"));
     }
 

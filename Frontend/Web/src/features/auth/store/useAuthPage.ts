@@ -69,6 +69,7 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
   const nameParts = splitFullName(form.ownerInfo.name);
 
   return {
+    marketType: form.marketType || "UAE",
     firstName: nameParts.firstName,
     middleName: nameParts.middleName,
     lastName: nameParts.lastName,
@@ -93,6 +94,7 @@ export function buildRegisterSellerPayload(form: RegisterFormModel) {
       companyEmail: form.companyInfo.email,
       website: form.companyInfo.website,
       description: form.companyInfo.description,
+      marketType: form.marketType || "UAE",
     },
     manager: {
       fullName: form.ownerInfo.name,
