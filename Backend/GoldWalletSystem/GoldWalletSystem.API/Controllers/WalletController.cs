@@ -1532,9 +1532,9 @@ public class WalletController(
             ? "-"
             : string.Join(" | ", feeRows.Select(x => $"{(string.IsNullOrWhiteSpace(x.FeeName) ? x.FeeCode : x.FeeName)} - {resolvedCurrency} {x.AppliedValue:0.00}"));
 
-        var resolvedProductName = string.IsNullOrWhiteSpace(invoice?.ProductName) ? asset.ProductName : invoice!.ProductName;
-        var resolvedSku = asset.ProductSku ?? TryExtractSku(history?.Notes) ?? invoice?.ProductSku ?? "-";
-        var resolvedProductImage = asset.ProductImageUrl ?? invoice?.ProductImageUrl ?? "-";
+        var resolvedProductName = string.IsNullOrWhiteSpace(invoice?.ProductName) ? (asset.ProductName ?? "-") : invoice!.ProductName;
+        var resolvedSku = asset.ProductSku ?? TryExtractSku(history?.Notes) ?? "-";
+        var resolvedProductImage = asset.ProductImageUrl ?? "-";
 
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
