@@ -118,6 +118,15 @@ export interface Invoice {
   status: "Draft" | "Issued" | "Completed" | "Cancelled";
   paymentStatus: "Pending" | "Paid" | "Failed" | "Cancelled";
   pdfUrl?: string;
+  commissionFee?: number;
+  deliveryFee?: number;
+  serviceFee?: number;
+  storageFee?: number;
+  premiumDiscount?: number;
+  subTotal?: number;
+  feesAmount?: number;
+  discountAmount?: number;
+  taxAmount?: number;
 }
 
 

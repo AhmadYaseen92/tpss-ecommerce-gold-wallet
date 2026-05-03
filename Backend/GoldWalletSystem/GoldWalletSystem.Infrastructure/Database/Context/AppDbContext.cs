@@ -624,6 +624,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.DiscountAmount).HasPrecision(18, 2);
             entity.Property(x => x.TaxAmount).HasPrecision(18, 2);
             entity.Property(x => x.TotalAmount).HasPrecision(18, 2);
+            entity.Property(x => x.CommissionFee).HasPrecision(18, 2);
+            entity.Property(x => x.DeliveryFee).HasPrecision(18, 2);
+            entity.Property(x => x.ServiceFee).HasPrecision(18, 2);
+            entity.Property(x => x.StorageFee).HasPrecision(18, 2);
+            entity.Property(x => x.PremiumDiscount).HasPrecision(18, 2);
             entity.HasIndex(x => x.InvoiceNumber).IsUnique();
             entity.HasIndex(x => x.InvestorUserId);
             entity.HasIndex(x => x.SellerUserId);

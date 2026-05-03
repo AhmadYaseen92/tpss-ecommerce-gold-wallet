@@ -13,6 +13,11 @@ public sealed record InvoiceDto(
     decimal DiscountAmount,
     decimal TaxAmount,
     decimal TotalAmount,
+    decimal CommissionFee,
+    decimal DeliveryFee,
+    decimal ServiceFee,
+    decimal StorageFee,
+    decimal PremiumDiscount,
     string Currency,
     string PaymentMethod,
     string PaymentStatus,
@@ -47,6 +52,11 @@ public class CreateInvoiceRequestDto
     public decimal FeesAmount { get; set; }
     public decimal DiscountAmount { get; set; }
     public decimal TaxAmount { get; set; }
+    public decimal CommissionFee { get; set; }
+    public decimal DeliveryFee { get; set; }
+    public decimal ServiceFee { get; set; }
+    public decimal StorageFee { get; set; }
+    public decimal PremiumDiscount { get; set; }
     public string Currency { get; set; } = "USD";
     public string PaymentMethod { get; set; } = "Unknown";
     public string PaymentStatus { get; set; } = "Pending";

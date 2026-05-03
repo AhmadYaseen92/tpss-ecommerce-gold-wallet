@@ -2,6 +2,7 @@ wwwroot\Certificats\104\invoice-08248e8c3661491998f422a140901bc5.pdf
 wwwroot\Certificats\104\invoice-2ad7cfaf5b934e82ab53e17ba34e0828.pdf
 wwwroot\Certificats\104\invoice-47d8e7e0f8324009b0cb4dbe33d036c5.pdf
 wwwroot\Certificats\104\invoice-5386a5f7fd7c4adb8566f298bef00e62.pdf
+wwwroot\Certificats\104\invoice-55e8a025bbff4b9f9fdd8af831c55ba4.pdf
 wwwroot\Certificats\104\invoice-902f91cf155244dba328f3f4a798de2d.pdf
 wwwroot\Certificats\104\invoice-a1881090b2c24984b2021e6393c939f4.pdf
 wwwroot\Certificats\104\invoice-a92fc404950e4fe5889e6978b4ec1be4.pdf
@@ -60,6 +61,7 @@ wwwroot\images\products\jewelry7.webp
 wwwroot\images\products\product-12ee0367370e4351853076f672b035f6.png
 wwwroot\images\products\product-26e4fb1ca8304b45bccb54a5f4f293ba.png
 wwwroot\images\products\product-2ce7ffae2ab24116871f40f0fde3236f.jpg
+wwwroot\images\products\product-4519355c7eaf437a946eb2fe35eb13a2.png
 wwwroot\images\products\product-454606df349441669ae5b1ad1a5a0a83.webp
 wwwroot\images\products\product-56d2b1101c0b450e8d7679c070a0060d.png
 wwwroot\images\products\product-5b12295428bf4c1ea71e87d6e5c0da37.jpg
@@ -97,3 +99,4 @@ wwwroot\kyc\tpss2\silver jewlery png.png
 wwwroot\videos\products\product-video-120ee2e696104623b3e826f900133024.mp4
 wwwroot\videos\products\product-video-274896bbf83d4b0cb32ee67c90ea60b6.mp4
 wwwroot\videos\products\product-video-75cee33e88e8493f872959617c466be2.mp4
+wwwroot\videos\products\product-video-9b8fe49afb8949a99a9923871ff2defe.mp4

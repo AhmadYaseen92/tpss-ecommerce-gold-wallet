@@ -162,7 +162,16 @@ const mapWebInvoices = (items: WebInvoiceDto[]) =>
     issuedAt: item.issuedAt,
     status: item.status,
     paymentStatus: item.paymentStatus,
-    pdfUrl: item.pdfUrl
+    pdfUrl: item.pdfUrl,
+    commissionFee: item.commissionFee ?? 0,
+    deliveryFee: item.deliveryFee ?? 0,
+    serviceFee: item.serviceFee ?? 0,
+    storageFee: item.storageFee ?? 0,
+    premiumDiscount: item.premiumDiscount ?? 0,
+    subTotal: item.subTotal ?? 0,
+    feesAmount: item.feesAmount ?? 0,
+    discountAmount: item.discountAmount ?? 0,
+    taxAmount: item.taxAmount ?? 0
   }));
 
 const mapWalletAssets = (wallet: WalletDto): WalletAssetItem[] =>
