@@ -159,42 +159,49 @@ public class WalletController(
         }
 
         var pdfUrl = invoice.PdfUrl;
-        var fileExists = !string.IsNullOrWhiteSpace(pdfUrl) && InvoiceFileExists(pdfUrl);
-        if (!fileExists)
+
+        var walletAsset = await dbContext.WalletAssets
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == walletItemId, cancellationToken);
+
+        var sourceProduct = invoice.ProductId.HasValue
+            ? await dbContext.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == invoice.ProductId.Value, cancellationToken)
+            : null;
+
+        var fallbackAsset = walletAsset ?? new WalletAsset
         {
-            var walletAsset = await dbContext.WalletAssets
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == walletItemId, cancellationToken);
+            Id = walletItemId,
+            ProductId = invoice.ProductId,
+            ProductName = !string.IsNullOrWhiteSpace(invoice.ProductName) ? invoice.ProductName : sourceProduct?.Name ?? "Wallet Item",
+            ProductSku = sourceProduct?.Sku,
+            ProductImageUrl = sourceProduct?.ImageUrl,
+            PurityDisplayName = invoice.Purity > 0 ? invoice.Purity.ToString("0.##") : "N/A",
+            SellerId = null,
+            Category = sourceProduct?.Category ?? ParseProductCategory(invoice.InvoiceCategory),
+            Weight = invoice.Weight > 0 ? invoice.Weight : 0.001m,
+            Unit = "gram",
+            Purity = invoice.Purity,
+            Quantity = invoice.Quantity > 0 ? invoice.Quantity : 1,
+            AverageBuyPrice = invoice.UnitPrice,
+            CurrentMarketPrice = invoice.UnitPrice,
+            SellerName = string.IsNullOrWhiteSpace(invoice.FromPartyType) ? "Wallet" : invoice.FromPartyType
+        };
 
-            var fallbackAsset = walletAsset ?? new WalletAsset
-            {
-                Id = walletItemId,
-                SellerId = null,
-                Category = ParseProductCategory(invoice.InvoiceCategory),
-                Weight = invoice.Weight > 0 ? invoice.Weight : 0.001m,
-                Unit = "gram",
-                Purity = invoice.Purity,
-                Quantity = invoice.Quantity > 0 ? invoice.Quantity : 1,
-                AverageBuyPrice = invoice.UnitPrice,
-                CurrentMarketPrice = invoice.UnitPrice,
-                SellerName = string.IsNullOrWhiteSpace(invoice.FromPartyType) ? "Wallet" : invoice.FromPartyType
-            };
+        // Always regenerate so saved certificate stays aligned with current mobile template/data.
+        pdfUrl = await SaveInvoiceDocumentAsync(
+            investorUserId: invoice.InvestorUserId,
+            actionType: invoice.InvoiceCategory,
+            asset: fallbackAsset,
+            quantity: Math.Max(1, invoice.Quantity),
+            amount: invoice.TotalAmount > 0 ? invoice.TotalAmount : invoice.SubTotal,
+            invoiceId: invoice.Id,
+            transactionHistoryId: invoice.RelatedTransactionId,
+            cancellationToken);
 
-            pdfUrl = await SaveInvoiceDocumentAsync(
-                investorUserId: invoice.InvestorUserId,
-                actionType: invoice.InvoiceCategory,
-                asset: fallbackAsset,
-                quantity: Math.Max(1, invoice.Quantity),
-                amount: invoice.TotalAmount > 0 ? invoice.TotalAmount : invoice.SubTotal,
-                invoiceId: invoice.Id,
-                transactionHistoryId: invoice.RelatedTransactionId,
-                cancellationToken);
-
-            invoice.PdfUrl = pdfUrl;
-            invoice.InvoiceQrCode = pdfUrl ?? invoice.InvoiceQrCode;
-            invoice.UpdatedAtUtc = DateTime.UtcNow;
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
+        invoice.PdfUrl = pdfUrl;
+        invoice.InvoiceQrCode = pdfUrl ?? invoice.InvoiceQrCode;
+        invoice.UpdatedAtUtc = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Ok(ApiResponse<EnsureWalletItemCertificateResponse>.Ok(new EnsureWalletItemCertificateResponse
         {
