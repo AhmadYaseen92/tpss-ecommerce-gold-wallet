@@ -990,38 +990,61 @@ public class WebAdminController(
                 .Any(s => s.UserId == x.SellerUserId && s.Id == sellerScope.Value));
         }
 
-        var invoices = await invoicesQuery
+        var invoiceEntities = await invoicesQuery
             .OrderByDescending(x => x.IssuedOnUtc)
-            .Select(x => new WebInvoiceDto
-            {
-                Id = $"inv-{x.Id}",
-                SellerId = FormatSellerId(dbContext.Sellers.Where(s => s.UserId == x.SellerUserId).Select(s => (int?)s.Id).FirstOrDefault() ?? 0),
-                InvestorName = dbContext.Users.Where(u => u.Id == x.InvestorUserId).Select(u => u.FullName).FirstOrDefault() ?? $"User {x.InvestorUserId}",
-                InvoiceNumber = string.IsNullOrWhiteSpace(x.InvoiceNumber) ? $"inv-{x.Id}" : x.InvoiceNumber,
-                ActionType = ResolveInvoiceActionLabel(x.InvoiceCategory),
-                TotalAmount = x.TotalAmount,
-                IssuedAt = x.IssuedOnUtc,
-                Status = x.Status,
-                PaymentStatus = x.PaymentStatus,
-                Currency = string.IsNullOrWhiteSpace(x.Currency) ? "USD" : x.Currency,
-                SubTotal = x.SubTotal,
-                FeesAmount = x.FeesAmount,
-                DiscountAmount = x.DiscountAmount,
-                TaxAmount = x.TaxAmount,
-                ProductImageUrl = dbContext.Products.Where(p => p.Id == x.ProductId).Select(p => p.ImageUrl).FirstOrDefault() ?? string.Empty,
-                ProductName = x.ProductName ?? string.Empty,
-                ProductSku = dbContext.Products.Where(p => p.Id == x.ProductId).Select(p => p.Sku).FirstOrDefault() ?? string.Empty,
-                Weight = x.Weight,
-                Category = dbContext.Products.Where(p => p.Id == x.ProductId).Select(p => p.Category.ToString()).FirstOrDefault() ?? string.Empty,
-                Quantity = x.Quantity,
-                Purity = x.Purity > 0 ? x.Purity.ToString("0.##") : "N/A",
-                WalletItemId = x.WalletItemId,
-                FeeDetails = string.Empty,
-                PdfUrl = x.PdfUrl
-            })
             .ToListAsync(cancellationToken);
 
+        foreach (var invoice in invoiceEntities)
+        {
+            invoice.PdfUrl = await RegenerateInvoicePdfIfPossibleAsync(invoice, cancellationToken) ?? invoice.PdfUrl;
+        }
+
+        var invoices = invoiceEntities.Select(x => new WebInvoiceDto
+        {
+            Id = $"inv-{x.Id}",
+            SellerId = FormatSellerId(dbContext.Sellers.Where(s => s.UserId == x.SellerUserId).Select(s => (int?)s.Id).FirstOrDefault() ?? 0),
+            InvestorName = dbContext.Users.Where(u => u.Id == x.InvestorUserId).Select(u => u.FullName).FirstOrDefault() ?? $"User {x.InvestorUserId}",
+            InvoiceNumber = string.IsNullOrWhiteSpace(x.InvoiceNumber) ? $"inv-{x.Id}" : x.InvoiceNumber,
+            ActionType = ResolveInvoiceActionLabel(x.InvoiceCategory),
+            TotalAmount = x.TotalAmount,
+            IssuedAt = x.IssuedOnUtc,
+            Status = x.Status,
+            PaymentStatus = x.PaymentStatus,
+            Currency = string.IsNullOrWhiteSpace(x.Currency) ? "USD" : x.Currency,
+            SubTotal = x.SubTotal,
+            FeesAmount = x.FeesAmount,
+            DiscountAmount = x.DiscountAmount,
+            TaxAmount = x.TaxAmount,
+            ProductImageUrl = dbContext.Products.Where(p => p.Id == x.ProductId).Select(p => p.ImageUrl).FirstOrDefault() ?? string.Empty,
+            ProductName = x.ProductName ?? string.Empty,
+            ProductSku = dbContext.Products.Where(p => p.Id == x.ProductId).Select(p => p.Sku).FirstOrDefault() ?? string.Empty,
+            Weight = x.Weight,
+            Category = dbContext.Products.Where(p => p.Id == x.ProductId).Select(p => p.Category.ToString()).FirstOrDefault() ?? string.Empty,
+            Quantity = x.Quantity,
+            Purity = x.Purity > 0 ? x.Purity.ToString("0.##") : "N/A",
+            WalletItemId = x.WalletItemId,
+            FeeDetails = string.Empty,
+            PdfUrl = x.PdfUrl
+        }).ToList();
+
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ApiResponse<List<WebInvoiceDto>>.Ok(invoices));
+    }
+
+    private async Task<string?> RegenerateInvoicePdfIfPossibleAsync(Domain.Entities.Invoice invoice, CancellationToken cancellationToken)
+    {
+        if (!invoice.RelatedTransactionId.HasValue) return invoice.PdfUrl;
+        var history = await dbContext.TransactionHistories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == invoice.RelatedTransactionId.Value, cancellationToken);
+        if (history is null) return invoice.PdfUrl;
+        var pdfUrl = await SaveInvoiceDocumentAsync(history, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(pdfUrl))
+        {
+            invoice.PdfUrl = pdfUrl;
+            invoice.InvoiceQrCode = pdfUrl;
+            invoice.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        return invoice.PdfUrl;
     }
 
     private static string ResolveInvoiceActionLabel(string? actionType)
