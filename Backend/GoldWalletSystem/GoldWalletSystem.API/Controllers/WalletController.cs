@@ -1496,6 +1496,10 @@ public class WalletController(
             ? await dbContext.TransactionHistories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == transactionHistoryId.Value, cancellationToken)
             : null;
 
+        var sourceProduct = asset.ProductId.HasValue
+            ? await dbContext.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == asset.ProductId.Value, cancellationToken)
+            : null;
+
         var feeRows = history is null
             ? []
             : await dbContext.TransactionFeeBreakdowns.AsNoTracking()
@@ -1532,9 +1536,9 @@ public class WalletController(
             ? "-"
             : string.Join(" | ", feeRows.Select(x => $"{(string.IsNullOrWhiteSpace(x.FeeName) ? x.FeeCode : x.FeeName)} - {resolvedCurrency} {x.AppliedValue:0.00}"));
 
-        var resolvedProductName = string.IsNullOrWhiteSpace(invoice?.ProductName) ? (asset.ProductName ?? "-") : invoice!.ProductName;
-        var resolvedSku = asset.ProductSku ?? TryExtractSku(history?.Notes) ?? "-";
-        var resolvedProductImage = asset.ProductImageUrl ?? "-";
+        var resolvedProductName = !string.IsNullOrWhiteSpace(invoice?.ProductName) ? invoice!.ProductName : !string.IsNullOrWhiteSpace(asset.ProductName) ? asset.ProductName : sourceProduct?.Name ?? "-";
+        var resolvedSku = asset.ProductSku ?? sourceProduct?.Sku ?? TryExtractSku(history?.Notes) ?? "-";
+        var resolvedProductImage = asset.ProductImageUrl ?? sourceProduct?.ImageUrl ?? "-";
 
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
@@ -1542,7 +1546,7 @@ public class WalletController(
         {
             ("Date (UTC)", (invoice?.IssuedOnUtc ?? DateTime.UtcNow).ToString("yyyy-MM-dd HH:mm:ss")),
             ("Action", ResolveInvoiceActionLabel(invoice?.InvoiceCategory ?? actionType)),
-            ("Status", invoice?.Status ?? history?.Status ?? "Issued"),
+            ("Status", ResolveInvoiceActionLabel(invoice?.InvoiceCategory ?? actionType)),
             ("Investor User Id", investorUserId.ToString()),
             ("Asset Id", asset.Id.ToString()),
             ("Wallet Item Id", (invoice?.WalletItemId ?? history?.WalletItemId ?? asset.Id).ToString()),
@@ -1552,7 +1556,7 @@ public class WalletController(
             ("Category", asset.Category.ToString().ToUpperInvariant()),
             ("Quantity", (invoice?.Quantity > 0 ? invoice.Quantity : quantity).ToString()),
             ("Weight", $"{(invoice?.Weight > 0 ? invoice.Weight : asset.Weight):0.###} {asset.Unit}"),
-            ("Purity", (invoice?.Purity ?? asset.Purity) > 0 ? (invoice?.Purity ?? asset.Purity).ToString("0.##") : "N/A"),
+            ("Purity", !string.IsNullOrWhiteSpace(asset.PurityDisplayName) ? asset.PurityDisplayName! : (invoice?.Purity ?? asset.Purity) > 0 ? (invoice?.Purity ?? asset.Purity).ToString("0.##") : "N/A"),
             ("Currency", resolvedCurrency),
             ("Unit Price", unitPriceValue.ToString("0.##")),
             ("SubTotal", subTotalValue.ToString("0.##")),
@@ -1561,8 +1565,8 @@ public class WalletController(
             ("Tax", taxValue.ToString("0.##")),
             ("Discount", discountValue.ToString("0.##")),
             ("Amount", amountValue.ToString("0.##")),
-            ("Invoice Number", string.IsNullOrWhiteSpace(invoice?.InvoiceNumber) ? BuildInvoiceReference(asset.ProductName) : invoice!.InvoiceNumber),
-            ("External Reference", string.IsNullOrWhiteSpace(invoice?.ExternalReference) ? BuildInvoiceReference(asset.ProductName) : invoice!.ExternalReference!),
+            ("Invoice Number", string.IsNullOrWhiteSpace(invoice?.InvoiceNumber) ? BuildInvoiceReference(resolvedProductName) : invoice!.InvoiceNumber),
+            ("External Reference", string.IsNullOrWhiteSpace(invoice?.ExternalReference) ? BuildInvoiceReference(resolvedProductName) : invoice!.ExternalReference!),
             ("Seller Name", string.IsNullOrWhiteSpace(invoice?.FromPartyType) ? (asset.SellerName ?? "N/A") : invoice!.FromPartyType!),
             ("Buyer Name", "Wallet User")
         };
