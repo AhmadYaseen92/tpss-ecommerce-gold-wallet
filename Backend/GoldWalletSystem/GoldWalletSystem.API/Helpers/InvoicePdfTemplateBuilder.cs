@@ -16,9 +16,9 @@ internal static class InvoicePdfTemplateBuilder
         string actionType = Get("Action", Get("Action Type", "Bought"));
         var (leftPartyLabel, rightPartyLabel) = ResolvePartyLabels(actionType);
         string quantity = Get("Quantity", "1");
-        string unitPrice = Get("Unit Price", Get("Price", "-"));
-        string amount = Get("Amount", Get("Grand Total", "-"));
         string currency = Get("Currency", "USD");
+        string unitPrice = NormalizeMoneyValue(Get("Unit Price", Get("Price", "-")), currency);
+        string amount = NormalizeMoneyValue(Get("Amount", Get("Grand Total", "-")), currency);
 
         var content = new StringBuilder();
 
@@ -49,7 +49,7 @@ internal static class InvoicePdfTemplateBuilder
         WriteText(content, 44, 670, 12, "Tax Invoice #:", 0.12, 0.12, 0.12);
         WriteText(content, 188, 670, 12, Get("Invoice Number", Get("Ref", "-")), 0.12, 0.12, 0.12);
         WriteText(content, 44, 646, 12, "Action Type:", 0.12, 0.12, 0.12);
-        WriteText(content, 188, 646, 12, actionType, 0.12, 0.12, 0.12);
+        WriteText(content, 188, 646, 12, ToTitleCase(actionType), 0.12, 0.12, 0.12);
         WriteText(content, 44, 622, 12, "Issue Date:", 0.12, 0.12, 0.12);
         WriteText(content, 188, 622, 12, Get("Date (UTC)").Split(' ').FirstOrDefault() ?? "-", 0.12, 0.12, 0.12);
         WriteText(content, 44, 598, 12, "Status:", 0.12, 0.12, 0.12);
@@ -131,6 +131,30 @@ internal static class InvoicePdfTemplateBuilder
         return BuildPdf(content.ToString());
     }
 
+
+
+    private static string ToTitleCase(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "-";
+        var normalized = value.Trim().ToLowerInvariant();
+        return char.ToUpperInvariant(normalized[0]) + normalized[1..];
+    }
+
+    private static string NormalizeMoneyValue(string value, string currency)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "0.00";
+        var normalized = value.Trim();
+        if (!string.IsNullOrWhiteSpace(currency))
+        {
+            normalized = normalized.Replace(currency + " ", string.Empty, StringComparison.OrdinalIgnoreCase)
+                                 .Replace(currency, string.Empty, StringComparison.OrdinalIgnoreCase)
+                                 .Trim();
+        }
+
+        return decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed.ToString("0.##", CultureInfo.InvariantCulture)
+            : normalized;
+    }
 
     private static (string LeftLabel, string RightLabel) ResolvePartyLabels(string actionType)
     {

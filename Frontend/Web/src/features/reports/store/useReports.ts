@@ -323,6 +323,10 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
               const seller = sellersMap.get(invoice.sellerId);
               const marketType = seller?.marketType || "";
               const currency = marketTypeCurrencyMap.get(marketType) || "USD";
+              const fees = invoice.feesAmount ?? ((invoice.commissionFee ?? 0) + (invoice.deliveryFee ?? 0) + (invoice.serviceFee ?? 0) + (invoice.storageFee ?? 0));
+              const tax = invoice.taxAmount ?? 0;
+              const discount = invoice.discountAmount ?? 0;
+              const subTotal = (invoice.subTotal ?? 0) > 0 ? (invoice.subTotal ?? 0) : Math.max(0, invoice.totalAmount - fees - tax + discount);
               return {
                 "Tax Invoice #": invoice.id,
                 "Action Type": "Bought",
@@ -330,10 +334,10 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
                 Status: invoice.status,
                 Seller: seller?.name ?? "N/A",
                 Buyer: invoice.investorName,
-                "Sub Total": invoice.subTotal ?? 0,
-                Fees: invoice.feesAmount ?? 0,
-                "VAT / Tax": invoice.taxAmount ?? 0,
-                Discount: invoice.discountAmount ?? 0,
+                "Sub Total": subTotal,
+                Fees: fees,
+                "VAT / Tax": tax,
+                Discount: discount,
                 "Grand Total": invoice.totalAmount,
                 Currency: currency,
                 "Payment Status": invoice.paymentStatus,
