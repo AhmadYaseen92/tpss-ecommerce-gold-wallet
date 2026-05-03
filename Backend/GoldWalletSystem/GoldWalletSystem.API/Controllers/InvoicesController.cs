@@ -9,7 +9,7 @@ namespace GoldWalletSystem.API.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/invoices")]
-public class InvoicesController(IInvoiceService invoiceService, ICurrentUserService currentUser) : SecuredControllerBase(currentUser)
+public class InvoicesController(IInvoiceService invoiceService, ICurrentUserService currentUser, IFeeCalculationService feeCalculationService) : SecuredControllerBase(currentUser)
 {
     private static readonly HashSet<string> AllowedCategories = ["Buy", "Sell", "Transfer", "Gift", "Pickup"];
     private static readonly HashSet<string> AllowedPaymentStatuses = ["Pending", "Paid", "Failed", "Cancelled"];
@@ -36,6 +36,26 @@ public class InvoicesController(IInvoiceService invoiceService, ICurrentUserServ
 
         if (request.Quantity <= 0)
             return BadRequest(ApiResponse<object>.Fail("Invoice quantity must be greater than zero", 400));
+
+        // --- Canonical fee/tax/subtotal calculation ---
+        // Use the same logic as wallet action preview/mobile
+        var feeRequest = new GoldWalletSystem.Application.DTOs.Fees.FeeCalculationRequest(
+            ActionType: request.InvoiceCategory,
+            ProductId: request.ProductId,
+            SellerId: request.SellerUserId,
+            NotionalAmount: request.SubTotal > 0 ? request.SubTotal : request.UnitPrice * request.Quantity,
+            Quantity: request.Quantity,
+            ClosePrice: request.UnitPrice,
+            DaysHeldAfterGrace: 0
+        );
+        var feeResult = await feeCalculationService.CalculateAsync(feeRequest, cancellationToken);
+
+        request.SubTotal = feeResult.SubTotalAmount;
+        request.FeesAmount = feeResult.TotalFeesAmount;
+        request.DiscountAmount = feeResult.DiscountAmount;
+        // request.TotalAmount = feeResult.FinalAmount; // Removed: property does not exist
+        request.Currency = feeResult.Currency;
+        // Optionally, map breakdowns to specific fields if needed
 
         var data = await invoiceService.CreateAsync(request, cancellationToken);
         return Ok(ApiResponse<InvoiceDto>.Ok(data, "Invoice generated"));
