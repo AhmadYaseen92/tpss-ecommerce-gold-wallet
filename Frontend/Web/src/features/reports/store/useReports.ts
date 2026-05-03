@@ -322,14 +322,14 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
             .map((invoice) => {
               const seller = sellersMap.get(invoice.sellerId);
               const marketType = seller?.marketType || "";
-              const currency = marketTypeCurrencyMap.get(marketType) || "USD";
-              const fees = invoice.feesAmount ?? ((invoice.commissionFee ?? 0) + (invoice.deliveryFee ?? 0) + (invoice.serviceFee ?? 0) + (invoice.storageFee ?? 0));
+              const currency = invoice.currency || marketTypeCurrencyMap.get(marketType) || "USD";
+              const fees = invoice.feesAmount ?? 0;
               const tax = invoice.taxAmount ?? 0;
               const discount = invoice.discountAmount ?? 0;
               const subTotal = (invoice.subTotal ?? 0) > 0 ? (invoice.subTotal ?? 0) : Math.max(0, invoice.totalAmount - fees - tax + discount);
               return {
-                "Tax Invoice #": invoice.id,
-                "Action Type": "Bought",
+                "Tax Invoice #": invoice.invoiceNumber ?? invoice.id,
+                "Action Type": invoice.actionType ?? "Bought",
                 "Issue Date": reportService.dateLabel(invoice.issuedAt),
                 Status: invoice.status,
                 Seller: seller?.name ?? "N/A",

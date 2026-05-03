@@ -997,15 +997,34 @@ public class WebAdminController(
                 Id = $"inv-{x.Id}",
                 SellerId = FormatSellerId(dbContext.Sellers.Where(s => s.UserId == x.SellerUserId).Select(s => (int?)s.Id).FirstOrDefault() ?? 0),
                 InvestorName = dbContext.Users.Where(u => u.Id == x.InvestorUserId).Select(u => u.FullName).FirstOrDefault() ?? $"User {x.InvestorUserId}",
+                InvoiceNumber = string.IsNullOrWhiteSpace(x.InvoiceNumber) ? $"inv-{x.Id}" : x.InvoiceNumber,
+                ActionType = ResolveInvoiceActionLabel(x.InvoiceCategory),
                 TotalAmount = x.TotalAmount,
                 IssuedAt = x.IssuedOnUtc,
                 Status = x.Status,
-                PdfUrl = x.PdfUrl,
-                PaymentStatus = x.PaymentStatus
+                PaymentStatus = x.PaymentStatus,
+                Currency = string.IsNullOrWhiteSpace(x.Currency) ? "USD" : x.Currency,
+                SubTotal = x.SubTotal,
+                FeesAmount = x.FeesAmount,
+                DiscountAmount = x.DiscountAmount,
+                TaxAmount = x.TaxAmount,
+                PdfUrl = x.PdfUrl
             })
             .ToListAsync(cancellationToken);
 
         return Ok(ApiResponse<List<WebInvoiceDto>>.Ok(invoices));
+    }
+
+    private static string ResolveInvoiceActionLabel(string? actionType)
+    {
+        return (actionType ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "sell" or "sold" => "Sold",
+            "gift" => "Gift",
+            "transfer" => "Transfer",
+            "pickup" => "Pickup",
+            _ => "Bought"
+        };
     }
 
     [HttpPost("invoices")]

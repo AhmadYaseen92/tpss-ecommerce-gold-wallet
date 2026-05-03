@@ -265,10 +265,17 @@ public class WebInvoiceDto
     public string Id { get; set; } = string.Empty;
     public string SellerId { get; set; } = string.Empty;
     public string InvestorName { get; set; } = string.Empty;
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public string ActionType { get; set; } = "Bought";
     public decimal TotalAmount { get; set; }
     public DateTime IssuedAt { get; set; }
     public string Status { get; set; } = "Draft";
     public string PaymentStatus { get; set; } = "Pending";
+    public string Currency { get; set; } = "USD";
+    public decimal SubTotal { get; set; }
+    public decimal FeesAmount { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public decimal TaxAmount { get; set; }
     public string? PdfUrl { get; set; }
 }
 
