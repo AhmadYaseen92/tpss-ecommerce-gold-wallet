@@ -96,7 +96,6 @@ internal static class InvoicePdfTemplateBuilder
         content.AppendLine("44 186 507 212 re S");
         WriteText(content, 58, 372, 15, "Item Details", 0.12, 0.12, 0.12);
         WriteText(content, 58, 348, 12, $"Product SKU: {Get("SKU", Get("Product SKU", "-"))}", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 326, 12, $"Wallet Item Id: {Get("Wallet Item Id", Get("Asset Id", "-"))}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 300, 12, $"Product Name: {Get("Product Name", "Gold Item")}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 278, 12, $"Category / Material: {Get("Category", "GOLD")}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 256, 12, $"Weight: {Get("Weight", "-")}", 0.12, 0.12, 0.12);
