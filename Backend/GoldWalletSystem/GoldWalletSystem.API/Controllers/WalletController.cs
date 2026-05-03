@@ -288,17 +288,39 @@ public class WalletController(
             }
             else
             {
-                if (!request.ProductId.HasValue || request.Quantity <= 0)
+                var resolvedProductId = request.ProductId;
+                var resolvedQuantity = request.Quantity;
+
+                if ((!resolvedProductId.HasValue || resolvedQuantity <= 0) && request.WalletAssetId > 0)
+                {
+                    var walletAsset = await dbContext.WalletAssets.AsNoTracking()
+                        .FirstOrDefaultAsync(x => x.Id == request.WalletAssetId, cancellationToken);
+
+                    if (walletAsset is not null)
+                    {
+                        if (!resolvedProductId.HasValue && walletAsset.ProductId.HasValue)
+                        {
+                            resolvedProductId = walletAsset.ProductId.Value;
+                        }
+
+                        if (resolvedQuantity <= 0)
+                        {
+                            resolvedQuantity = walletAsset.Quantity > 0 ? walletAsset.Quantity : 1;
+                        }
+                    }
+                }
+
+                if (!resolvedProductId.HasValue || resolvedQuantity <= 0)
                     return BadRequest(ApiResponse<object>.Fail("ProductId and Quantity are required for direct buy preview.", 400));
 
                 var product = await dbContext.Products
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.Id == request.ProductId.Value && x.IsActive, cancellationToken);
+                    .FirstOrDefaultAsync(x => x.Id == resolvedProductId.Value && x.IsActive, cancellationToken);
 
                 if (product is null)
                     return NotFound(ApiResponse<object>.Fail("Product not found.", 404));
 
-                lines.Add((product, request.Quantity));
+                lines.Add((product, resolvedQuantity));
             }
 
             if (lines.Count == 0)
