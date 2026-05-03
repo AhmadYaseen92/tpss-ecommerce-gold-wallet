@@ -276,6 +276,15 @@ public class WebInvoiceDto
     public decimal FeesAmount { get; set; }
     public decimal DiscountAmount { get; set; }
     public decimal TaxAmount { get; set; }
+    public string ProductImageUrl { get; set; } = string.Empty;
+    public string ProductName { get; set; } = string.Empty;
+    public string ProductSku { get; set; } = string.Empty;
+    public decimal Weight { get; set; }
+    public string Category { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public string Purity { get; set; } = string.Empty;
+    public int? WalletItemId { get; set; }
+    public string FeeDetails { get; set; } = string.Empty;
     public string? PdfUrl { get; set; }
 }
 

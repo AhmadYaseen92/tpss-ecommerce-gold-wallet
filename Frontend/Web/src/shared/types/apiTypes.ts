@@ -287,6 +287,15 @@ export interface WebInvoiceDto {
   feesAmount?: number;
   discountAmount?: number;
   taxAmount?: number;
+  productImageUrl?: string;
+  productName?: string;
+  productSku?: string;
+  weight?: number;
+  category?: string;
+  quantity?: number;
+  purity?: string;
+  walletItemId?: number;
+  feeDetails?: string;
 }
 
 export interface WebFeesDto {

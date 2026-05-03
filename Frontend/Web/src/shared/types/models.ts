@@ -132,6 +132,15 @@ export interface Invoice {
   discountAmount?: number;
   taxAmount?: number;
   currency?: string;
+  productImageUrl?: string;
+  productName?: string;
+  productSku?: string;
+  weight?: number;
+  category?: string;
+  quantity?: number;
+  purity?: string;
+  walletItemId?: number;
+  feeDetails?: string;
 }
 
 

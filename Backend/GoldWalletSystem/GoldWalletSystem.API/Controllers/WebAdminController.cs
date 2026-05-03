@@ -1008,6 +1008,15 @@ public class WebAdminController(
                 FeesAmount = x.FeesAmount,
                 DiscountAmount = x.DiscountAmount,
                 TaxAmount = x.TaxAmount,
+                ProductImageUrl = x.ProductImageUrl ?? string.Empty,
+                ProductName = x.ProductName ?? string.Empty,
+                ProductSku = x.ProductSku ?? string.Empty,
+                Weight = x.Weight,
+                Category = x.ProductCategory ?? string.Empty,
+                Quantity = x.Quantity,
+                Purity = x.Purity > 0 ? x.Purity.ToString("0.##") : "N/A",
+                WalletItemId = x.WalletItemId,
+                FeeDetails = string.Empty,
                 PdfUrl = x.PdfUrl
             })
             .ToListAsync(cancellationToken);

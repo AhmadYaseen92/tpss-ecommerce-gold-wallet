@@ -1532,6 +1532,10 @@ public class WalletController(
             ? "-"
             : string.Join(" | ", feeRows.Select(x => $"{(string.IsNullOrWhiteSpace(x.FeeName) ? x.FeeCode : x.FeeName)} - {resolvedCurrency} {x.AppliedValue:0.00}"));
 
+        var resolvedProductName = string.IsNullOrWhiteSpace(invoice?.ProductName) ? asset.ProductName : invoice!.ProductName;
+        var resolvedSku = asset.ProductSku ?? TryExtractSku(history?.Notes) ?? invoice?.ProductSku ?? "-";
+        var resolvedProductImage = asset.ProductImageUrl ?? invoice?.ProductImageUrl ?? "-";
+
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
         var lines = new List<(string Label, string Value)>
@@ -1542,9 +1546,9 @@ public class WalletController(
             ("Investor User Id", investorUserId.ToString()),
             ("Asset Id", asset.Id.ToString()),
             ("Wallet Item Id", (invoice?.WalletItemId ?? history?.WalletItemId ?? asset.Id).ToString()),
-            ("Product Name", string.IsNullOrWhiteSpace(invoice?.ProductName) ? asset.ProductName : invoice!.ProductName),
-            ("SKU", asset.ProductSku ?? TryExtractSku(history?.Notes) ?? "-"),
-            ("Product Image Url", asset.ProductImageUrl ?? "-"),
+            ("Product Name", resolvedProductName),
+            ("SKU", resolvedSku),
+            ("Product Image Url", resolvedProductImage),
             ("Category", asset.Category.ToString()),
             ("Quantity", (invoice?.Quantity > 0 ? invoice.Quantity : quantity).ToString()),
             ("Weight", $"{(invoice?.Weight > 0 ? invoice.Weight : asset.Weight):0.###} {asset.Unit}"),
