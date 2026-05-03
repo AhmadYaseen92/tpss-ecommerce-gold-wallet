@@ -61,6 +61,8 @@ export interface InvestorRequest {
   sellerName?: string;
   investorId: string;
   investorName: string;
+  invoiceNumber?: string;
+  actionType?: string;
   type: "withdrawal" | "pickup" | "sell" | "transfer" | "buy" | "gift";
   productName: string;
   productImageUrl?: string;
@@ -113,6 +115,8 @@ export interface Invoice {
   id: string;
   sellerId: string;
   investorName: string;
+  invoiceNumber?: string;
+  actionType?: string;
   totalAmount: number;
   issuedAt: string;
   status: "Draft" | "Issued" | "Completed" | "Cancelled";
@@ -127,6 +131,16 @@ export interface Invoice {
   feesAmount?: number;
   discountAmount?: number;
   taxAmount?: number;
+  currency?: string;
+  productImageUrl?: string;
+  productName?: string;
+  productSku?: string;
+  weight?: number;
+  category?: string;
+  quantity?: number;
+  purity?: string;
+  walletItemId?: number;
+  feeDetails?: string;
 }
 
 

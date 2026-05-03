@@ -159,42 +159,49 @@ public class WalletController(
         }
 
         var pdfUrl = invoice.PdfUrl;
-        var fileExists = !string.IsNullOrWhiteSpace(pdfUrl) && InvoiceFileExists(pdfUrl);
-        if (!fileExists)
+
+        var walletAsset = await dbContext.WalletAssets
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == walletItemId, cancellationToken);
+
+        var sourceProduct = invoice.ProductId.HasValue
+            ? await dbContext.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == invoice.ProductId.Value, cancellationToken)
+            : null;
+
+        var fallbackAsset = walletAsset ?? new WalletAsset
         {
-            var walletAsset = await dbContext.WalletAssets
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == walletItemId, cancellationToken);
+            Id = walletItemId,
+            ProductId = invoice.ProductId,
+            ProductName = !string.IsNullOrWhiteSpace(invoice.ProductName) ? invoice.ProductName : sourceProduct?.Name ?? "Wallet Item",
+            ProductSku = sourceProduct?.Sku,
+            ProductImageUrl = sourceProduct?.ImageUrl,
+            PurityDisplayName = invoice.Purity > 0 ? invoice.Purity.ToString("0.##") : "N/A",
+            SellerId = null,
+            Category = sourceProduct?.Category ?? ParseProductCategory(invoice.InvoiceCategory),
+            Weight = invoice.Weight > 0 ? invoice.Weight : 0.001m,
+            Unit = "gram",
+            Purity = invoice.Purity,
+            Quantity = invoice.Quantity > 0 ? invoice.Quantity : 1,
+            AverageBuyPrice = invoice.UnitPrice,
+            CurrentMarketPrice = invoice.UnitPrice,
+            SellerName = string.IsNullOrWhiteSpace(invoice.FromPartyType) ? "Wallet" : invoice.FromPartyType
+        };
 
-            var fallbackAsset = walletAsset ?? new WalletAsset
-            {
-                Id = walletItemId,
-                SellerId = null,
-                Category = ParseProductCategory(invoice.InvoiceCategory),
-                Weight = invoice.Weight > 0 ? invoice.Weight : 0.001m,
-                Unit = "gram",
-                Purity = invoice.Purity,
-                Quantity = invoice.Quantity > 0 ? invoice.Quantity : 1,
-                AverageBuyPrice = invoice.UnitPrice,
-                CurrentMarketPrice = invoice.UnitPrice,
-                SellerName = string.IsNullOrWhiteSpace(invoice.FromPartyType) ? "Wallet" : invoice.FromPartyType
-            };
+        // Always regenerate so saved certificate stays aligned with current mobile template/data.
+        pdfUrl = await SaveInvoiceDocumentAsync(
+            investorUserId: invoice.InvestorUserId,
+            actionType: invoice.InvoiceCategory,
+            asset: fallbackAsset,
+            quantity: Math.Max(1, invoice.Quantity),
+            amount: invoice.TotalAmount > 0 ? invoice.TotalAmount : invoice.SubTotal,
+            invoiceId: invoice.Id,
+            transactionHistoryId: invoice.RelatedTransactionId,
+            cancellationToken);
 
-            pdfUrl = await SaveInvoiceDocumentAsync(
-                investorUserId: invoice.InvestorUserId,
-                actionType: invoice.InvoiceCategory,
-                asset: fallbackAsset,
-                quantity: Math.Max(1, invoice.Quantity),
-                amount: invoice.TotalAmount > 0 ? invoice.TotalAmount : invoice.SubTotal,
-                invoiceId: invoice.Id,
-                transactionHistoryId: invoice.RelatedTransactionId,
-                cancellationToken);
-
-            invoice.PdfUrl = pdfUrl;
-            invoice.InvoiceQrCode = pdfUrl ?? invoice.InvoiceQrCode;
-            invoice.UpdatedAtUtc = DateTime.UtcNow;
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
+        invoice.PdfUrl = pdfUrl;
+        invoice.InvoiceQrCode = pdfUrl ?? invoice.InvoiceQrCode;
+        invoice.UpdatedAtUtc = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Ok(ApiResponse<EnsureWalletItemCertificateResponse>.Ok(new EnsureWalletItemCertificateResponse
         {
@@ -1496,6 +1503,10 @@ public class WalletController(
             ? await dbContext.TransactionHistories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == transactionHistoryId.Value, cancellationToken)
             : null;
 
+        var sourceProduct = asset.ProductId.HasValue
+            ? await dbContext.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == asset.ProductId.Value, cancellationToken)
+            : null;
+
         var feeRows = history is null
             ? []
             : await dbContext.TransactionFeeBreakdowns.AsNoTracking()
@@ -1532,23 +1543,27 @@ public class WalletController(
             ? "-"
             : string.Join(" | ", feeRows.Select(x => $"{(string.IsNullOrWhiteSpace(x.FeeName) ? x.FeeCode : x.FeeName)} - {resolvedCurrency} {x.AppliedValue:0.00}"));
 
+        var resolvedProductName = !string.IsNullOrWhiteSpace(invoice?.ProductName) ? invoice!.ProductName : !string.IsNullOrWhiteSpace(asset.ProductName) ? asset.ProductName : sourceProduct?.Name ?? "-";
+        var resolvedSku = asset.ProductSku ?? sourceProduct?.Sku ?? TryExtractSku(history?.Notes) ?? "-";
+        var resolvedProductImage = asset.ProductImageUrl ?? sourceProduct?.ImageUrl ?? "-";
+
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
         var lines = new List<(string Label, string Value)>
         {
             ("Date (UTC)", (invoice?.IssuedOnUtc ?? DateTime.UtcNow).ToString("yyyy-MM-dd HH:mm:ss")),
-            ("Action", invoice?.InvoiceCategory ?? actionType),
-            ("Status", invoice?.Status ?? history?.Status ?? "Issued"),
+            ("Action", ResolveInvoiceActionLabel(invoice?.InvoiceCategory ?? actionType)),
+            ("Status", ResolveInvoiceActionLabel(invoice?.InvoiceCategory ?? actionType)),
             ("Investor User Id", investorUserId.ToString()),
             ("Asset Id", asset.Id.ToString()),
             ("Wallet Item Id", (invoice?.WalletItemId ?? history?.WalletItemId ?? asset.Id).ToString()),
-            ("Product Name", string.IsNullOrWhiteSpace(invoice?.ProductName) ? asset.ProductName : invoice!.ProductName),
-            ("SKU", asset.ProductSku ?? TryExtractSku(history?.Notes) ?? "-"),
-            ("Product Image Url", asset.ProductImageUrl ?? "-"),
-            ("Category", asset.Category.ToString()),
+            ("Product Name", resolvedProductName),
+            ("SKU", resolvedSku),
+            ("Product Image Url", resolvedProductImage),
+            ("Category", asset.Category.ToString().ToUpperInvariant()),
             ("Quantity", (invoice?.Quantity > 0 ? invoice.Quantity : quantity).ToString()),
             ("Weight", $"{(invoice?.Weight > 0 ? invoice.Weight : asset.Weight):0.###} {asset.Unit}"),
-            ("Purity", (invoice?.Purity ?? asset.Purity).ToString("0.##")),
+            ("Purity", !string.IsNullOrWhiteSpace(asset.PurityDisplayName) ? asset.PurityDisplayName! : (invoice?.Purity ?? asset.Purity) > 0 ? (invoice?.Purity ?? asset.Purity).ToString("0.##") : "N/A"),
             ("Currency", resolvedCurrency),
             ("Unit Price", unitPriceValue.ToString("0.##")),
             ("SubTotal", subTotalValue.ToString("0.##")),
@@ -1557,13 +1572,35 @@ public class WalletController(
             ("Tax", taxValue.ToString("0.##")),
             ("Discount", discountValue.ToString("0.##")),
             ("Amount", amountValue.ToString("0.##")),
-            ("Invoice Number", invoice?.InvoiceNumber ?? "-"),
-            ("External Reference", invoice?.ExternalReference ?? "-")
+            ("Invoice Number", string.IsNullOrWhiteSpace(invoice?.InvoiceNumber) ? BuildInvoiceReference(resolvedProductName) : invoice!.InvoiceNumber),
+            ("External Reference", string.IsNullOrWhiteSpace(invoice?.ExternalReference) ? BuildInvoiceReference(resolvedProductName) : invoice!.ExternalReference!),
+            ("Seller Name", string.IsNullOrWhiteSpace(invoice?.FromPartyType) ? (asset.SellerName ?? "N/A") : invoice!.FromPartyType!),
+            ("Buyer Name", "Wallet User")
         };
 
         var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
         await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
         return $"/Certificats/{investorUserId}/{fileName}";
+    }
+
+    private static string ResolveInvoiceActionLabel(string? actionType)
+    {
+        return (actionType ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "sell" or "sold" => "Sold",
+            "gift" => "Gift",
+            "transfer" => "Transfer",
+            "pickup" => "Pickup",
+            _ => "Bought"
+        };
+    }
+
+    private static string BuildInvoiceReference(string? productName)
+    {
+        var compactName = string.IsNullOrWhiteSpace(productName)
+            ? "ITEM"
+            : new string(productName.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
+        return $"INV-{compactName}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
     }
 
     private static int CalculateDaysHeld(DateTime walletAssetCreatedAtUtc)

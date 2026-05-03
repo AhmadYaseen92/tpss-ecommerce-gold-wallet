@@ -990,22 +990,73 @@ public class WebAdminController(
                 .Any(s => s.UserId == x.SellerUserId && s.Id == sellerScope.Value));
         }
 
-        var invoices = await invoicesQuery
+        var invoiceEntities = await invoicesQuery
             .OrderByDescending(x => x.IssuedOnUtc)
-            .Select(x => new WebInvoiceDto
-            {
-                Id = $"inv-{x.Id}",
-                SellerId = FormatSellerId(dbContext.Sellers.Where(s => s.UserId == x.SellerUserId).Select(s => (int?)s.Id).FirstOrDefault() ?? 0),
-                InvestorName = dbContext.Users.Where(u => u.Id == x.InvestorUserId).Select(u => u.FullName).FirstOrDefault() ?? $"User {x.InvestorUserId}",
-                TotalAmount = x.TotalAmount,
-                IssuedAt = x.IssuedOnUtc,
-                Status = x.Status,
-                PdfUrl = x.PdfUrl,
-                PaymentStatus = x.PaymentStatus
-            })
             .ToListAsync(cancellationToken);
 
+        foreach (var invoice in invoiceEntities)
+        {
+            invoice.PdfUrl = await RegenerateInvoicePdfIfPossibleAsync(invoice, cancellationToken) ?? invoice.PdfUrl;
+        }
+
+        var invoices = invoiceEntities.Select(x => new WebInvoiceDto
+        {
+            Id = $"inv-{x.Id}",
+            SellerId = FormatSellerId(dbContext.Sellers.Where(s => s.UserId == x.SellerUserId).Select(s => (int?)s.Id).FirstOrDefault() ?? 0),
+            InvestorName = dbContext.Users.Where(u => u.Id == x.InvestorUserId).Select(u => u.FullName).FirstOrDefault() ?? $"User {x.InvestorUserId}",
+            InvoiceNumber = string.IsNullOrWhiteSpace(x.InvoiceNumber) ? $"inv-{x.Id}" : x.InvoiceNumber,
+            ActionType = ResolveInvoiceActionLabel(x.InvoiceCategory),
+            TotalAmount = x.TotalAmount,
+            IssuedAt = x.IssuedOnUtc,
+            Status = x.Status,
+            PaymentStatus = x.PaymentStatus,
+            Currency = string.IsNullOrWhiteSpace(x.Currency) ? "USD" : x.Currency,
+            SubTotal = x.SubTotal,
+            FeesAmount = x.FeesAmount,
+            DiscountAmount = x.DiscountAmount,
+            TaxAmount = x.TaxAmount,
+            ProductImageUrl = dbContext.Products.Where(p => p.Id == x.ProductId).Select(p => p.ImageUrl).FirstOrDefault() ?? dbContext.WalletAssets.Where(w => w.Id == x.WalletItemId).Select(w => w.ProductImageUrl).FirstOrDefault() ?? string.Empty,
+            ProductName = x.ProductName ?? string.Empty,
+            ProductSku = dbContext.Products.Where(p => p.Id == x.ProductId).Select(p => p.Sku).FirstOrDefault() ?? dbContext.WalletAssets.Where(w => w.Id == x.WalletItemId).Select(w => w.ProductSku).FirstOrDefault() ?? string.Empty,
+            Weight = x.Weight,
+            Category = dbContext.Products.Where(p => p.Id == x.ProductId).Select(p => p.Category.ToString()).FirstOrDefault() ?? dbContext.WalletAssets.Where(w => w.Id == x.WalletItemId).Select(w => w.Category.ToString()).FirstOrDefault() ?? string.Empty,
+            Quantity = x.Quantity,
+            Purity = x.Purity > 0 ? x.Purity.ToString("0.##") : "N/A",
+            WalletItemId = x.WalletItemId ?? (x.RelatedTransactionId.HasValue ? dbContext.TransactionHistories.Where(t => t.Id == x.RelatedTransactionId.Value).Select(t => t.WalletItemId).FirstOrDefault() : null),
+            FeeDetails = x.ServiceFee > 0 ? $"Service Fee - {x.Currency} {x.ServiceFee:0.##}" : x.CommissionFee > 0 ? $"Commission - {x.Currency} {x.CommissionFee:0.##}" : string.Empty,
+            PdfUrl = x.PdfUrl
+        }).ToList();
+
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ApiResponse<List<WebInvoiceDto>>.Ok(invoices));
+    }
+
+    private async Task<string?> RegenerateInvoicePdfIfPossibleAsync(Domain.Entities.Invoice invoice, CancellationToken cancellationToken)
+    {
+        if (!invoice.RelatedTransactionId.HasValue) return invoice.PdfUrl;
+        var history = await dbContext.TransactionHistories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == invoice.RelatedTransactionId.Value, cancellationToken);
+        if (history is null) return invoice.PdfUrl;
+        var pdfUrl = await SaveInvoiceDocumentAsync(history, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(pdfUrl))
+        {
+            invoice.PdfUrl = pdfUrl;
+            invoice.InvoiceQrCode = pdfUrl;
+            invoice.UpdatedAtUtc = DateTime.UtcNow;
+        }
+
+        return invoice.PdfUrl;
+    }
+
+    private static string ResolveInvoiceActionLabel(string? actionType)
+    {
+        return (actionType ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "sell" or "sold" => "Sold",
+            "gift" => "Gift",
+            "transfer" => "Transfer",
+            "pickup" => "Pickup",
+            _ => "Bought"
+        };
     }
 
     [HttpPost("invoices")]
@@ -2130,6 +2181,11 @@ public class WebAdminController(
         var walletAsset = request.WalletItemId.HasValue
             ? await dbContext.WalletAssets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.WalletItemId.Value, cancellationToken)
             : null;
+        var sourceProductId = walletAsset?.ProductId ?? request.ProductId;
+        var sourceProduct = sourceProductId.HasValue
+            ? await dbContext.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == sourceProductId.Value, cancellationToken)
+            : null;
+        var linkedInvoice = await dbContext.Invoices.AsNoTracking().FirstOrDefaultAsync(x => x.RelatedTransactionId == request.Id, cancellationToken);
 
         var invoiceCurrency = await ResolveInvoiceCurrencyAsync(request, cancellationToken);
 
@@ -2139,26 +2195,40 @@ public class WebAdminController(
 
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
+        var resolvedProductName = !string.IsNullOrWhiteSpace(walletAsset?.ProductName) ? walletAsset!.ProductName : sourceProduct?.Name ?? request.Category;
+        var resolvedSku = walletAsset?.ProductSku ?? sourceProduct?.Sku ?? "-";
+        var resolvedPurity = !string.IsNullOrWhiteSpace(walletAsset?.PurityDisplayName)
+            ? walletAsset!.PurityDisplayName!
+            : request.Purity > 0 ? request.Purity.ToString("0.##") : "N/A";
+        var resolvedReference = !string.IsNullOrWhiteSpace(linkedInvoice?.InvoiceNumber)
+            ? linkedInvoice!.InvoiceNumber
+            : $"INV-{new string((resolvedProductName ?? "ITEM").Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant()}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+        var actionLabel = ResolveInvoiceActionLabel(request.TransactionType);
+
         var lines = new (string Label, string Value)[]
         {
             ("Date (UTC)", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")),
-            ("Action", request.TransactionType),
-            ("Status", request.Status),
+            ("Action", actionLabel),
+            ("Status", actionLabel),
             ("Investor User Id", request.UserId.ToString()),
-            ("Wallet Item Id", request.WalletItemId?.ToString() ?? "-"),
-            ("Product Name", walletAsset?.ProductName ?? request.Category),
-            ("SKU", walletAsset?.ProductSku ?? "-"),
-            ("Product Image Url", walletAsset?.ProductImageUrl ?? "-"),
-            ("Category", request.Category),
+            ("Wallet Item Id", (request.WalletItemId ?? ExtractWalletAssetId(request.Notes))?.ToString() ?? "-"),
+            ("Product Name", resolvedProductName),
+            ("SKU", resolvedSku),
+            ("Product Image Url", walletAsset?.ProductImageUrl ?? sourceProduct?.ImageUrl ?? "-"),
+            ("Category", request.Category.ToUpperInvariant()),
             ("Quantity", request.Quantity.ToString()),
-            ("Weight", $"{request.Weight} {request.Unit}"),
-            ("Purity", request.Purity.ToString()),
+            ("Weight", $"{request.Weight:0.###} {request.Unit}"),
+            ("Purity", resolvedPurity),
             ("Currency", invoiceCurrency),
-            ("Unit Price", $"{invoiceCurrency} {request.UnitPrice:0.##}"),
-            ("SubTotal", $"{invoiceCurrency} {request.SubTotalAmount:0.##}"),
+            ("Unit Price", request.UnitPrice.ToString("0.##")),
+            ("SubTotal", request.SubTotalAmount.ToString("0.##")),
+            ("Fees", request.TotalFeesAmount.ToString("0.##")),
             ("Fee Details", feeDetails),
+            ("Tax", "0.00"),
             ("Discount", request.DiscountAmount.ToString("0.##")),
-            ("Amount", request.FinalAmount > 0 ? request.FinalAmount.ToString("0.##") : request.Amount.ToString("0.##"))
+            ("Amount", request.FinalAmount > 0 ? request.FinalAmount.ToString("0.##") : request.Amount.ToString("0.##")),
+            ("Invoice Number", resolvedReference),
+            ("External Reference", resolvedReference)
         };
         var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
         await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);

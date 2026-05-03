@@ -14,10 +14,11 @@ internal static class InvoicePdfTemplateBuilder
         string Get(string key, string fallback = "-") => map.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : fallback;
 
         string actionType = Get("Action", Get("Action Type", "Bought"));
+        var (leftPartyLabel, rightPartyLabel) = ResolvePartyLabels(actionType);
         string quantity = Get("Quantity", "1");
-        string unitPrice = Get("Unit Price", Get("Price", "-"));
-        string amount = Get("Amount", Get("Grand Total", "-"));
         string currency = Get("Currency", "USD");
+        string unitPrice = NormalizeMoneyValue(Get("Unit Price", Get("Price", "-")), currency);
+        string amount = NormalizeMoneyValue(Get("Amount", Get("Grand Total", "-")), currency);
 
         var content = new StringBuilder();
 
@@ -32,8 +33,9 @@ internal static class InvoicePdfTemplateBuilder
 
         WriteText(content, 205, 776, 18, "TAX INVOICE", 0.10, 0.10, 0.10);
         WriteText(content, 120, 742, 17, Get("Product Name", Get("Category", "Gold Wallet Item")), 0.12, 0.12, 0.12);
-        WriteText(content, 440, 744, 11, $"Type: {actionType}", 0.18, 0.18, 0.18);
-        WriteText(content, 120, 720, 10, $"Ref: {Get("External Reference", Get("Invoice Number", "-"))}", 0.30, 0.30, 0.30);
+        WriteText(content, 440, 744, 11, $"Type: {ToTitleCase(actionType)}", 0.18, 0.18, 0.18);
+        var referenceValue = FirstNonEmpty(Get("External Reference"), Get("Invoice Number"), Get("Ref"), "-");
+        WriteText(content, 120, 720, 10, $"Ref: {referenceValue}", 0.30, 0.30, 0.30);
 
         content.AppendLine("0.90 0.90 0.90 rg");
         content.AppendLine("42 704 68 48 re f");
@@ -46,9 +48,9 @@ internal static class InvoicePdfTemplateBuilder
 
         // Meta
         WriteText(content, 44, 670, 12, "Tax Invoice #:", 0.12, 0.12, 0.12);
-        WriteText(content, 188, 670, 12, Get("Invoice Number", Get("Ref", "-")), 0.12, 0.12, 0.12);
+        WriteText(content, 188, 670, 12, FirstNonEmpty(Get("Invoice Number"), referenceValue, "-"), 0.12, 0.12, 0.12);
         WriteText(content, 44, 646, 12, "Action Type:", 0.12, 0.12, 0.12);
-        WriteText(content, 188, 646, 12, actionType, 0.12, 0.12, 0.12);
+        WriteText(content, 188, 646, 12, ToTitleCase(actionType), 0.12, 0.12, 0.12);
         WriteText(content, 44, 622, 12, "Issue Date:", 0.12, 0.12, 0.12);
         WriteText(content, 188, 622, 12, Get("Date (UTC)").Split(' ').FirstOrDefault() ?? "-", 0.12, 0.12, 0.12);
         WriteText(content, 44, 598, 12, "Status:", 0.12, 0.12, 0.12);
@@ -61,10 +63,10 @@ internal static class InvoicePdfTemplateBuilder
         content.AppendLine("0.80 0.80 0.80 RG");
         content.AppendLine("44 505 248 80 re S");
         content.AppendLine("302 505 248 80 re S");
-        WriteText(content, 58, 560, 13, "Seller", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 560, 13, leftPartyLabel, 0.12, 0.12, 0.12);
         WriteText(content, 58, 538, 12, Get("Seller Name", "Imseeh Precious Metals LLC"), 0.12, 0.12, 0.12);
         WriteText(content, 58, 518, 11, Get("Seller Note", "Linked wallet party"), 0.28, 0.28, 0.28);
-        WriteText(content, 316, 560, 13, "Buyer", 0.12, 0.12, 0.12);
+        WriteText(content, 316, 560, 13, rightPartyLabel, 0.12, 0.12, 0.12);
         WriteText(content, 316, 538, 12, Get("Buyer Name", "Wallet User"), 0.12, 0.12, 0.12);
         WriteText(content, 316, 518, 11, Get("Buyer Note", "Linked wallet owner"), 0.28, 0.28, 0.28);
 
@@ -94,8 +96,6 @@ internal static class InvoicePdfTemplateBuilder
         content.AppendLine("44 186 507 212 re S");
         WriteText(content, 58, 372, 15, "Item Details", 0.12, 0.12, 0.12);
         WriteText(content, 58, 348, 12, $"Product SKU: {Get("SKU", Get("Product SKU", "-"))}", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 336, 10, $"Product Image: {Get("Product Image Url", "-")}", 0.28, 0.28, 0.28);
-        WriteText(content, 58, 322, 12, $"Wallet Item Id: {Get("Wallet Item Id", Get("Asset Id", "-"))}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 300, 12, $"Product Name: {Get("Product Name", "Gold Item")}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 278, 12, $"Category / Material: {Get("Category", "GOLD")}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 256, 12, $"Weight: {Get("Weight", "-")}", 0.12, 0.12, 0.12);
@@ -108,7 +108,7 @@ internal static class InvoicePdfTemplateBuilder
         content.AppendLine("0.80 0.80 0.80 RG");
         content.AppendLine("44 66 507 110 re S");
         WriteText(content, 58, 152, 16, "Amount Summary", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 130, 13, $"Sub Total: {currency} {Get("SubTotal", amount)}", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 130, 13, $"Sub Total: {currency} {NormalizeMoneyValue(Get("SubTotal", amount), currency)}", 0.12, 0.12, 0.12);
         var feeDetailLines = Wrap(Get("Fee Details", "-"), 72);
         if (feeDetailLines.Count == 1 && feeDetailLines[0] == "-")
         {
@@ -130,6 +130,55 @@ internal static class InvoicePdfTemplateBuilder
         return BuildPdf(content.ToString());
     }
 
+
+
+
+    private static string FirstNonEmpty(params string[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value) && value.Trim() != "-")
+            {
+                return value.Trim();
+            }
+        }
+
+        return "-";
+    }
+
+    private static string ToTitleCase(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "-";
+        var normalized = value.Trim().ToLowerInvariant();
+        return char.ToUpperInvariant(normalized[0]) + normalized[1..];
+    }
+
+    private static string NormalizeMoneyValue(string value, string currency)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "0.00";
+        var normalized = value.Trim();
+        if (!string.IsNullOrWhiteSpace(currency))
+        {
+            normalized = normalized.Replace(currency + " ", string.Empty, StringComparison.OrdinalIgnoreCase)
+                                 .Replace(currency, string.Empty, StringComparison.OrdinalIgnoreCase)
+                                 .Trim();
+        }
+
+        return decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed.ToString("0.##", CultureInfo.InvariantCulture)
+            : normalized;
+    }
+
+    private static (string LeftLabel, string RightLabel) ResolvePartyLabels(string actionType)
+    {
+        return actionType.Trim().ToLowerInvariant() switch
+        {
+            "sold" => ("Investor Seller", "Receiving Seller"),
+            "gift" => ("Sender", "Recipient"),
+            "transfer" => ("From", "To"),
+            _ => ("Seller", "Buyer")
+        };
+    }
     private static List<string> Wrap(string text, int maxCharsPerLine)
     {
         if (string.IsNullOrWhiteSpace(text))

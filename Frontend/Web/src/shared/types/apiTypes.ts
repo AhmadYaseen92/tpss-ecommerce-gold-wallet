@@ -275,20 +275,27 @@ export interface WebInvoiceDto {
   id: string;
   sellerId: string;
   investorName: string;
+  invoiceNumber?: string;
+  actionType?: string;
   totalAmount: number;
   issuedAt: string;
   status: "Draft" | "Issued" | "Completed" | "Cancelled";
   paymentStatus: "Pending" | "Paid" | "Failed" | "Cancelled";
+  currency?: string;
   pdfUrl?: string;
-  commissionFee?: number;
-  deliveryFee?: number;
-  serviceFee?: number;
-  storageFee?: number;
-  premiumDiscount?: number;
   subTotal?: number;
   feesAmount?: number;
   discountAmount?: number;
   taxAmount?: number;
+  productImageUrl?: string;
+  productName?: string;
+  productSku?: string;
+  weight?: number;
+  category?: string;
+  quantity?: number;
+  purity?: string;
+  walletItemId?: number;
+  feeDetails?: string;
 }
 
 export interface WebFeesDto {

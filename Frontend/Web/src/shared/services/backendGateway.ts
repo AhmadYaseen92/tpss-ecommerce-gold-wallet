@@ -158,20 +158,27 @@ const mapWebInvoices = (items: WebInvoiceDto[]) =>
     id: item.id,
     sellerId: normalizeSellerId(item.sellerId) ?? item.sellerId,
     investorName: item.investorName,
+    invoiceNumber: item.invoiceNumber ?? item.id,
+    actionType: item.actionType ?? "Bought",
     totalAmount: Number(item.totalAmount ?? 0),
     issuedAt: item.issuedAt,
     status: item.status,
     paymentStatus: item.paymentStatus,
     pdfUrl: item.pdfUrl,
-    commissionFee: item.commissionFee ?? 0,
-    deliveryFee: item.deliveryFee ?? 0,
-    serviceFee: item.serviceFee ?? 0,
-    storageFee: item.storageFee ?? 0,
-    premiumDiscount: item.premiumDiscount ?? 0,
+    currency: item.currency ?? "USD",
     subTotal: item.subTotal ?? 0,
     feesAmount: item.feesAmount ?? 0,
     discountAmount: item.discountAmount ?? 0,
-    taxAmount: item.taxAmount ?? 0
+    taxAmount: item.taxAmount ?? 0,
+    productImageUrl: item.productImageUrl ?? "",
+    productName: item.productName ?? "",
+    productSku: item.productSku ?? "",
+    weight: item.weight ?? 0,
+    category: item.category ?? "",
+    quantity: item.quantity ?? 0,
+    purity: item.purity ?? "N/A",
+    walletItemId: item.walletItemId,
+    feeDetails: item.feeDetails ?? ""
   }));
 
 const mapWalletAssets = (wallet: WalletDto): WalletAssetItem[] =>
