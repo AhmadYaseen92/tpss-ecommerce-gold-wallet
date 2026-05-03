@@ -324,24 +324,18 @@ export function useReports(marketplace: ReturnTypeUseMarketplace) {
               const marketType = seller?.marketType || "";
               const currency = marketTypeCurrencyMap.get(marketType) || "USD";
               return {
-                Date: reportService.dateLabel(invoice.issuedAt),
-                Invoice: invoice.id,
+                "Tax Invoice #": invoice.id,
+                "Action Type": "Bought",
+                "Issue Date": reportService.dateLabel(invoice.issuedAt),
+                Status: invoice.status,
                 Seller: seller?.name ?? "N/A",
-                Investor: invoice.investorName,
-                Subtotal: invoice.subTotal ?? 0,
-                "Commission Fee": invoice.commissionFee ?? 0,
-                "Delivery Fee": invoice.deliveryFee ?? 0,
-                "Service Fee": invoice.serviceFee ?? 0,
-                "Storage Fee": invoice.storageFee ?? 0,
-                "Premium/Discount": invoice.premiumDiscount ?? 0,
+                Buyer: invoice.investorName,
+                "Sub Total": invoice.subTotal ?? 0,
                 Fees: invoice.feesAmount ?? 0,
-                VAT: invoice.taxAmount ?? 0,
+                "VAT / Tax": invoice.taxAmount ?? 0,
                 Discount: invoice.discountAmount ?? 0,
                 "Grand Total": invoice.totalAmount,
                 Currency: currency,
-                "Paid Amount": invoice.paymentStatus === "Paid" ? invoice.totalAmount : 0,
-                "Unpaid Amount": invoice.paymentStatus === "Paid" ? 0 : invoice.totalAmount,
-                Status: invoice.status,
                 "Payment Status": invoice.paymentStatus,
                 "Invoice Template": invoice.pdfUrl ?? "-"
               };

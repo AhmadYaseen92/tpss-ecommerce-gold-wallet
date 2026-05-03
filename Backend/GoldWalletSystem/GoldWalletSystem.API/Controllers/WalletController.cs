@@ -1537,7 +1537,7 @@ public class WalletController(
         var lines = new List<(string Label, string Value)>
         {
             ("Date (UTC)", (invoice?.IssuedOnUtc ?? DateTime.UtcNow).ToString("yyyy-MM-dd HH:mm:ss")),
-            ("Action", invoice?.InvoiceCategory ?? actionType),
+            ("Action", ResolveInvoiceActionLabel(invoice?.InvoiceCategory ?? actionType)),
             ("Status", invoice?.Status ?? history?.Status ?? "Issued"),
             ("Investor User Id", investorUserId.ToString()),
             ("Asset Id", asset.Id.ToString()),
@@ -1557,13 +1557,35 @@ public class WalletController(
             ("Tax", taxValue.ToString("0.##")),
             ("Discount", discountValue.ToString("0.##")),
             ("Amount", amountValue.ToString("0.##")),
-            ("Invoice Number", invoice?.InvoiceNumber ?? "-"),
-            ("External Reference", invoice?.ExternalReference ?? "-")
+            ("Invoice Number", invoice?.InvoiceNumber ?? BuildInvoiceReference(asset.ProductName)),
+            ("External Reference", invoice?.ExternalReference ?? BuildInvoiceReference(asset.ProductName)),
+            ("Seller Name", string.IsNullOrWhiteSpace(invoice?.FromPartyType) ? (asset.SellerName ?? "N/A") : invoice!.FromPartyType!),
+            ("Buyer Name", "Wallet User")
         };
 
         var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
         await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
         return $"/Certificats/{investorUserId}/{fileName}";
+    }
+
+    private static string ResolveInvoiceActionLabel(string? actionType)
+    {
+        return (actionType ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "sell" or "sold" => "Sold",
+            "gift" => "Gift",
+            "transfer" => "Transfer",
+            "pickup" => "Pickup",
+            _ => "Bought"
+        };
+    }
+
+    private static string BuildInvoiceReference(string? productName)
+    {
+        var compactName = string.IsNullOrWhiteSpace(productName)
+            ? "ITEM"
+            : new string(productName.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
+        return $"INV-{compactName}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
     }
 
     private static int CalculateDaysHeld(DateTime walletAssetCreatedAtUtc)

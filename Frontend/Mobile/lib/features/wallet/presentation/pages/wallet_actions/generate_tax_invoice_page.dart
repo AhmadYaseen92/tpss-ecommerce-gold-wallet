@@ -513,7 +513,7 @@ class _GenerateTaxInvoicePageState extends State<GenerateTaxInvoicePage> {
 
       if (kIsWeb) {
         await FileSaver.instance.saveFile(
-          name: fileName,
+          name: fileName.replaceAll('.pdf', ''),
           bytes: bytes,
           fileExtension: 'pdf',
           mimeType: MimeType.pdf,

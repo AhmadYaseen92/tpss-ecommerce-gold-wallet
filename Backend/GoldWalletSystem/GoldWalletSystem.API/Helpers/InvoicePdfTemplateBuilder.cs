@@ -14,6 +14,7 @@ internal static class InvoicePdfTemplateBuilder
         string Get(string key, string fallback = "-") => map.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : fallback;
 
         string actionType = Get("Action", Get("Action Type", "Bought"));
+        var (leftPartyLabel, rightPartyLabel) = ResolvePartyLabels(actionType);
         string quantity = Get("Quantity", "1");
         string unitPrice = Get("Unit Price", Get("Price", "-"));
         string amount = Get("Amount", Get("Grand Total", "-"));
@@ -61,10 +62,10 @@ internal static class InvoicePdfTemplateBuilder
         content.AppendLine("0.80 0.80 0.80 RG");
         content.AppendLine("44 505 248 80 re S");
         content.AppendLine("302 505 248 80 re S");
-        WriteText(content, 58, 560, 13, "Seller", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 560, 13, leftPartyLabel, 0.12, 0.12, 0.12);
         WriteText(content, 58, 538, 12, Get("Seller Name", "Imseeh Precious Metals LLC"), 0.12, 0.12, 0.12);
         WriteText(content, 58, 518, 11, Get("Seller Note", "Linked wallet party"), 0.28, 0.28, 0.28);
-        WriteText(content, 316, 560, 13, "Buyer", 0.12, 0.12, 0.12);
+        WriteText(content, 316, 560, 13, rightPartyLabel, 0.12, 0.12, 0.12);
         WriteText(content, 316, 538, 12, Get("Buyer Name", "Wallet User"), 0.12, 0.12, 0.12);
         WriteText(content, 316, 518, 11, Get("Buyer Note", "Linked wallet owner"), 0.28, 0.28, 0.28);
 
@@ -130,6 +131,17 @@ internal static class InvoicePdfTemplateBuilder
         return BuildPdf(content.ToString());
     }
 
+
+    private static (string LeftLabel, string RightLabel) ResolvePartyLabels(string actionType)
+    {
+        return actionType.Trim().ToLowerInvariant() switch
+        {
+            "sold" => ("Investor Seller", "Receiving Seller"),
+            "gift" => ("Sender", "Recipient"),
+            "transfer" => ("From", "To"),
+            _ => ("Seller", "Buyer")
+        };
+    }
     private static List<string> Wrap(string text, int maxCharsPerLine)
     {
         if (string.IsNullOrWhiteSpace(text))
