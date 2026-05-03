@@ -1549,10 +1549,10 @@ public class WalletController(
             ("Product Name", resolvedProductName),
             ("SKU", resolvedSku),
             ("Product Image Url", resolvedProductImage),
-            ("Category", asset.Category.ToString()),
+            ("Category", asset.Category.ToString().ToUpperInvariant()),
             ("Quantity", (invoice?.Quantity > 0 ? invoice.Quantity : quantity).ToString()),
             ("Weight", $"{(invoice?.Weight > 0 ? invoice.Weight : asset.Weight):0.###} {asset.Unit}"),
-            ("Purity", (invoice?.Purity ?? asset.Purity).ToString("0.##")),
+            ("Purity", (invoice?.Purity ?? asset.Purity) > 0 ? (invoice?.Purity ?? asset.Purity).ToString("0.##") : "N/A"),
             ("Currency", resolvedCurrency),
             ("Unit Price", unitPriceValue.ToString("0.##")),
             ("SubTotal", subTotalValue.ToString("0.##")),
@@ -1561,8 +1561,8 @@ public class WalletController(
             ("Tax", taxValue.ToString("0.##")),
             ("Discount", discountValue.ToString("0.##")),
             ("Amount", amountValue.ToString("0.##")),
-            ("Invoice Number", invoice?.InvoiceNumber ?? BuildInvoiceReference(asset.ProductName)),
-            ("External Reference", invoice?.ExternalReference ?? BuildInvoiceReference(asset.ProductName)),
+            ("Invoice Number", string.IsNullOrWhiteSpace(invoice?.InvoiceNumber) ? BuildInvoiceReference(asset.ProductName) : invoice!.InvoiceNumber),
+            ("External Reference", string.IsNullOrWhiteSpace(invoice?.ExternalReference) ? BuildInvoiceReference(asset.ProductName) : invoice!.ExternalReference!),
             ("Seller Name", string.IsNullOrWhiteSpace(invoice?.FromPartyType) ? (asset.SellerName ?? "N/A") : invoice!.FromPartyType!),
             ("Buyer Name", "Wallet User")
         };

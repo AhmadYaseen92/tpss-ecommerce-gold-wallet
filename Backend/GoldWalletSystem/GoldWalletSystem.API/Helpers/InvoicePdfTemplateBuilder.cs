@@ -33,8 +33,9 @@ internal static class InvoicePdfTemplateBuilder
 
         WriteText(content, 205, 776, 18, "TAX INVOICE", 0.10, 0.10, 0.10);
         WriteText(content, 120, 742, 17, Get("Product Name", Get("Category", "Gold Wallet Item")), 0.12, 0.12, 0.12);
-        WriteText(content, 440, 744, 11, $"Type: {actionType}", 0.18, 0.18, 0.18);
-        WriteText(content, 120, 720, 10, $"Ref: {Get("External Reference", Get("Invoice Number", "-"))}", 0.30, 0.30, 0.30);
+        WriteText(content, 440, 744, 11, $"Type: {ToTitleCase(actionType)}", 0.18, 0.18, 0.18);
+        var referenceValue = FirstNonEmpty(Get("External Reference"), Get("Invoice Number"), Get("Ref"), "-");
+        WriteText(content, 120, 720, 10, $"Ref: {referenceValue}", 0.30, 0.30, 0.30);
 
         content.AppendLine("0.90 0.90 0.90 rg");
         content.AppendLine("42 704 68 48 re f");
@@ -47,7 +48,7 @@ internal static class InvoicePdfTemplateBuilder
 
         // Meta
         WriteText(content, 44, 670, 12, "Tax Invoice #:", 0.12, 0.12, 0.12);
-        WriteText(content, 188, 670, 12, Get("Invoice Number", Get("Ref", "-")), 0.12, 0.12, 0.12);
+        WriteText(content, 188, 670, 12, FirstNonEmpty(Get("Invoice Number"), referenceValue, "-"), 0.12, 0.12, 0.12);
         WriteText(content, 44, 646, 12, "Action Type:", 0.12, 0.12, 0.12);
         WriteText(content, 188, 646, 12, ToTitleCase(actionType), 0.12, 0.12, 0.12);
         WriteText(content, 44, 622, 12, "Issue Date:", 0.12, 0.12, 0.12);
@@ -95,8 +96,7 @@ internal static class InvoicePdfTemplateBuilder
         content.AppendLine("44 186 507 212 re S");
         WriteText(content, 58, 372, 15, "Item Details", 0.12, 0.12, 0.12);
         WriteText(content, 58, 348, 12, $"Product SKU: {Get("SKU", Get("Product SKU", "-"))}", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 336, 10, $"Product Image: {Get("Product Image Url", "-")}", 0.28, 0.28, 0.28);
-        WriteText(content, 58, 322, 12, $"Wallet Item Id: {Get("Wallet Item Id", Get("Asset Id", "-"))}", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 326, 12, $"Wallet Item Id: {Get("Wallet Item Id", Get("Asset Id", "-"))}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 300, 12, $"Product Name: {Get("Product Name", "Gold Item")}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 278, 12, $"Category / Material: {Get("Category", "GOLD")}", 0.12, 0.12, 0.12);
         WriteText(content, 58, 256, 12, $"Weight: {Get("Weight", "-")}", 0.12, 0.12, 0.12);
@@ -109,7 +109,7 @@ internal static class InvoicePdfTemplateBuilder
         content.AppendLine("0.80 0.80 0.80 RG");
         content.AppendLine("44 66 507 110 re S");
         WriteText(content, 58, 152, 16, "Amount Summary", 0.12, 0.12, 0.12);
-        WriteText(content, 58, 130, 13, $"Sub Total: {currency} {Get("SubTotal", amount)}", 0.12, 0.12, 0.12);
+        WriteText(content, 58, 130, 13, $"Sub Total: {currency} {NormalizeMoneyValue(Get("SubTotal", amount), currency)}", 0.12, 0.12, 0.12);
         var feeDetailLines = Wrap(Get("Fee Details", "-"), 72);
         if (feeDetailLines.Count == 1 && feeDetailLines[0] == "-")
         {
@@ -132,6 +132,20 @@ internal static class InvoicePdfTemplateBuilder
     }
 
 
+
+
+    private static string FirstNonEmpty(params string[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value) && value.Trim() != "-")
+            {
+                return value.Trim();
+            }
+        }
+
+        return "-";
+    }
 
     private static string ToTitleCase(string value)
     {
