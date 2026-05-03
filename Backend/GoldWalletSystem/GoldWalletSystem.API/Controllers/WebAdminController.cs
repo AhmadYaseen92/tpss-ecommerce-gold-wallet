@@ -2158,6 +2158,11 @@ public class WebAdminController(
         var walletAsset = request.WalletItemId.HasValue
             ? await dbContext.WalletAssets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.WalletItemId.Value, cancellationToken)
             : null;
+        var sourceProductId = walletAsset?.ProductId ?? request.ProductId;
+        var sourceProduct = sourceProductId.HasValue
+            ? await dbContext.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == sourceProductId.Value, cancellationToken)
+            : null;
+        var linkedInvoice = await dbContext.Invoices.AsNoTracking().FirstOrDefaultAsync(x => x.RelatedTransactionId == request.Id, cancellationToken);
 
         var invoiceCurrency = await ResolveInvoiceCurrencyAsync(request, cancellationToken);
 
@@ -2167,26 +2172,40 @@ public class WebAdminController(
 
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
+        var resolvedProductName = !string.IsNullOrWhiteSpace(walletAsset?.ProductName) ? walletAsset!.ProductName : sourceProduct?.Name ?? request.Category;
+        var resolvedSku = walletAsset?.ProductSku ?? sourceProduct?.Sku ?? "-";
+        var resolvedPurity = !string.IsNullOrWhiteSpace(walletAsset?.PurityDisplayName)
+            ? walletAsset!.PurityDisplayName!
+            : request.Purity > 0 ? request.Purity.ToString("0.##") : "N/A";
+        var resolvedReference = !string.IsNullOrWhiteSpace(linkedInvoice?.InvoiceNumber)
+            ? linkedInvoice!.InvoiceNumber
+            : $"INV-{new string((resolvedProductName ?? "ITEM").Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant()}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+        var actionLabel = ResolveInvoiceActionLabel(request.TransactionType);
+
         var lines = new (string Label, string Value)[]
         {
             ("Date (UTC)", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")),
-            ("Action", request.TransactionType),
-            ("Status", request.Status),
+            ("Action", actionLabel),
+            ("Status", actionLabel),
             ("Investor User Id", request.UserId.ToString()),
             ("Wallet Item Id", request.WalletItemId?.ToString() ?? "-"),
-            ("Product Name", walletAsset?.ProductName ?? request.Category),
-            ("SKU", walletAsset?.ProductSku ?? "-"),
-            ("Product Image Url", walletAsset?.ProductImageUrl ?? "-"),
-            ("Category", request.Category),
+            ("Product Name", resolvedProductName),
+            ("SKU", resolvedSku),
+            ("Product Image Url", walletAsset?.ProductImageUrl ?? sourceProduct?.ImageUrl ?? "-"),
+            ("Category", request.Category.ToUpperInvariant()),
             ("Quantity", request.Quantity.ToString()),
-            ("Weight", $"{request.Weight} {request.Unit}"),
-            ("Purity", request.Purity.ToString()),
+            ("Weight", $"{request.Weight:0.###} {request.Unit}"),
+            ("Purity", resolvedPurity),
             ("Currency", invoiceCurrency),
-            ("Unit Price", $"{invoiceCurrency} {request.UnitPrice:0.##}"),
-            ("SubTotal", $"{invoiceCurrency} {request.SubTotalAmount:0.##}"),
+            ("Unit Price", request.UnitPrice.ToString("0.##")),
+            ("SubTotal", request.SubTotalAmount.ToString("0.##")),
+            ("Fees", request.TotalFeesAmount.ToString("0.##")),
             ("Fee Details", feeDetails),
+            ("Tax", "0.00"),
             ("Discount", request.DiscountAmount.ToString("0.##")),
-            ("Amount", request.FinalAmount > 0 ? request.FinalAmount.ToString("0.##") : request.Amount.ToString("0.##"))
+            ("Amount", request.FinalAmount > 0 ? request.FinalAmount.ToString("0.##") : request.Amount.ToString("0.##")),
+            ("Invoice Number", resolvedReference),
+            ("External Reference", resolvedReference)
         };
         var pdfBytes = InvoicePdfTemplateBuilder.Build("Gold Wallet Invoice", lines);
         await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
