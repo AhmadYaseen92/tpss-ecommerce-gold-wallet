@@ -1173,6 +1173,30 @@
         }
       }
     },
+    "/api/mobile-app-configurations/public": {
+      "get": {
+        "tags": [
+          "MobileAppConfigurations"
+        ],
+        "parameters": [
+          {
+            "name": "keys",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/mobile-app-configurations/list": {
       "post": {
         "tags": [
@@ -1565,6 +1589,20 @@
                   "ExistingImageUrl": {
                     "type": "string"
                   },
+                  "Video": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  },
+                  "ExistingVideoUrl": {
+                    "type": "string"
+                  },
+                  "VideoDurationSeconds": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)$",
+                    "type": [
+                      "integer",
+                      "string"
+                    ],
+                    "format": "int32"
+                  },
                   "MaterialType": {
                     "$ref": "#/components/schemas/ProductMaterialType"
                   },
@@ -1714,6 +1752,20 @@
                   },
                   "ExistingImageUrl": {
                     "type": "string"
+                  },
+                  "Video": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  },
+                  "ExistingVideoUrl": {
+                    "type": "string"
+                  },
+                  "VideoDurationSeconds": {
+                    "pattern": "^-?(?:0|[1-9]\\d*)$",
+                    "type": [
+                      "integer",
+                      "string"
+                    ],
+                    "format": "int32"
                   },
                   "MaterialType": {
                     "$ref": "#/components/schemas/ProductMaterialType"
@@ -2597,6 +2649,124 @@
         }
       }
     },
+    "/api/web-admin/market-types": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/market-types/{marketType}": {
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "marketType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketTypeSettingsDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketTypeSettingsDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketTypeSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/market-types/{marketType}/sellers": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "marketType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/sellers/{id}/login-credentials": {
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebUserCredentialsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebUserCredentialsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebUserCredentialsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/web-admin/sellers/{id}/documents/{documentId}/view": {
       "get": {
         "tags": [
@@ -2676,6 +2846,70 @@
         "tags": [
           "WebAdmin"
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/investors/{id}": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/investors/{id}/login-credentials": {
+      "put": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebUserCredentialsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebUserCredentialsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebUserCredentialsRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -2940,6 +3174,44 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/web-admin/reports/fee-breakdowns": {
+      "get": {
+        "tags": [
+          "WebAdmin"
+        ],
+        "parameters": [
+          {
+            "name": "feeGroup",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "all"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -3855,6 +4127,12 @@
           "email": {
             "type": "string"
           },
+          "emailOrPhone": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
           "password": {
             "type": "string"
           }
@@ -3931,7 +4209,7 @@
       "MarketPriceConfigDto": {
         "type": "object",
         "properties": {
-          "goldPerOunce": {
+          "goldBidPerOunce": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "number",
@@ -3939,7 +4217,23 @@
             ],
             "format": "double"
           },
-          "silverPerOunce": {
+          "goldAskPerOunce": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "silverBidPerOunce": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "silverAskPerOunce": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "number",
@@ -3954,6 +4248,61 @@
               "string"
             ],
             "format": "double"
+          }
+        }
+      },
+      "MarketTypeSettingsDto": {
+        "type": "object",
+        "properties": {
+          "marketType": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "feesPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "vatRatePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "usdToLocalRate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "paymentGateway": {
+            "type": "string"
+          },
+          "enableSellerManagerField": {
+            "type": "boolean"
+          },
+          "enableSellerBranchesField": {
+            "type": "boolean"
+          },
+          "enableSellerBankAccountsField": {
+            "type": "boolean"
+          },
+          "sellersCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -4173,6 +4522,9 @@
             "type": "string"
           },
           "preferredTheme": {
+            "type": "string"
+          },
+          "marketType": {
             "type": "string"
           },
           "role": {
@@ -4498,6 +4850,9 @@
               "null",
               "string"
             ]
+          },
+          "marketType": {
+            "type": "string"
           }
         }
       },
@@ -4939,6 +5294,29 @@
         "properties": {
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "UpdateWebUserCredentialsRequest": {
+        "type": "object",
+        "properties": {
+          "loginEmail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "loginPhone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "newPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

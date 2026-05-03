@@ -288,17 +288,39 @@ public class WalletController(
             }
             else
             {
-                if (!request.ProductId.HasValue || request.Quantity <= 0)
+                var productIdToUse = request.ProductId;
+                var resolvedQuantity = request.Quantity;
+
+                if ((!productIdToUse.HasValue || resolvedQuantity <= 0) && request.WalletAssetId > 0)
+                {
+                    var walletAsset = await dbContext.WalletAssets.AsNoTracking()
+                        .FirstOrDefaultAsync(x => x.Id == request.WalletAssetId, cancellationToken);
+
+                    if (walletAsset is not null)
+                    {
+                        if (!productIdToUse.HasValue && walletAsset.ProductId.HasValue)
+                        {
+                            productIdToUse = walletAsset.ProductId.Value;
+                        }
+
+                        if (resolvedQuantity <= 0)
+                        {
+                            resolvedQuantity = walletAsset.Quantity > 0 ? walletAsset.Quantity : 1;
+                        }
+                    }
+                }
+
+                if (!productIdToUse.HasValue || resolvedQuantity <= 0)
                     return BadRequest(ApiResponse<object>.Fail("ProductId and Quantity are required for direct buy preview.", 400));
 
                 var product = await dbContext.Products
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.Id == request.ProductId.Value && x.IsActive, cancellationToken);
+                    .FirstOrDefaultAsync(x => x.Id == productIdToUse.Value && x.IsActive, cancellationToken);
 
                 if (product is null)
                     return NotFound(ApiResponse<object>.Fail("Product not found.", 404));
 
-                lines.Add((product, request.Quantity));
+                lines.Add((product, resolvedQuantity));
             }
 
             if (lines.Count == 0)
@@ -1482,17 +1504,33 @@ public class WalletController(
                 .ThenBy(x => x.Id)
                 .ToListAsync(cancellationToken);
 
-        var resolvedCurrency = invoice?.Currency;
+        var sellerId = history?.SellerId ?? asset.SellerId;
+        var sellerCurrency = sellerId.HasValue
+            ? await dbContext.Sellers.AsNoTracking()
+                .Where(x => x.Id == sellerId.Value)
+                .Select(x => x.MarketCurrencyCode)
+                .FirstOrDefaultAsync(cancellationToken)
+            : null;
+
+        var resolvedCurrency = sellerCurrency;
+        if (string.IsNullOrWhiteSpace(resolvedCurrency)) resolvedCurrency = invoice?.Currency;
         if (string.IsNullOrWhiteSpace(resolvedCurrency)) resolvedCurrency = history?.Currency;
         if (string.IsNullOrWhiteSpace(resolvedCurrency))
         {
             resolvedCurrency = await dbContext.Wallets.AsNoTracking().Where(x => x.UserId == investorUserId).Select(x => x.CurrencyCode).FirstOrDefaultAsync(cancellationToken);
         }
-        resolvedCurrency = string.IsNullOrWhiteSpace(resolvedCurrency) ? "USD" : resolvedCurrency;
+        resolvedCurrency = string.IsNullOrWhiteSpace(resolvedCurrency) ? "USD" : resolvedCurrency.Trim().ToUpperInvariant();
+
+        var subTotalValue = history?.SubTotalAmount ?? (invoice?.SubTotal > 0 ? invoice.SubTotal : amount);
+        var feesValue = history?.TotalFeesAmount ?? (invoice?.FeesAmount ?? 0m);
+        var discountValue = history?.DiscountAmount ?? (invoice?.DiscountAmount ?? 0m);
+        var taxValue = invoice?.TaxAmount ?? 0m;
+        var amountValue = history?.FinalAmount > 0 ? history.FinalAmount : (invoice?.TotalAmount > 0 ? invoice.TotalAmount : amount);
+        var unitPriceValue = history?.UnitPrice ?? (invoice?.UnitPrice > 0 ? invoice.UnitPrice : asset.AverageBuyPrice);
 
         var feeDetails = feeRows.Count == 0
             ? "-"
-            : string.Join(" | ", feeRows.Select(x => $"{(string.IsNullOrWhiteSpace(x.FeeName) ? x.FeeCode : x.FeeName)}: {resolvedCurrency} {x.AppliedValue:0.00}"));
+            : string.Join(" | ", feeRows.Select(x => $"{(string.IsNullOrWhiteSpace(x.FeeName) ? x.FeeCode : x.FeeName)} - {resolvedCurrency} {x.AppliedValue:0.00}"));
 
         var fileName = $"invoice-{Guid.NewGuid():N}.pdf";
         var filePath = Path.Combine(folder, fileName);
@@ -1512,13 +1550,13 @@ public class WalletController(
             ("Weight", $"{(invoice?.Weight > 0 ? invoice.Weight : asset.Weight):0.###} {asset.Unit}"),
             ("Purity", (invoice?.Purity ?? asset.Purity).ToString("0.##")),
             ("Currency", resolvedCurrency),
-            ("Unit Price", (invoice?.UnitPrice > 0 ? invoice.UnitPrice : history?.UnitPrice ?? asset.AverageBuyPrice).ToString("0.##")),
-            ("SubTotal", (invoice?.SubTotal > 0 ? invoice.SubTotal : history?.SubTotalAmount ?? amount).ToString("0.##")),
-            ("Fees", (invoice?.FeesAmount > 0 ? invoice.FeesAmount : history?.TotalFeesAmount ?? 0m).ToString("0.##")),
+            ("Unit Price", unitPriceValue.ToString("0.##")),
+            ("SubTotal", subTotalValue.ToString("0.##")),
+            ("Fees", feesValue.ToString("0.##")),
             ("Fee Details", feeDetails),
-            ("Tax", (invoice?.TaxAmount ?? 0m).ToString("0.##")),
-            ("Discount", (invoice?.DiscountAmount > 0 ? invoice.DiscountAmount : history?.DiscountAmount ?? 0m).ToString("0.##")),
-            ("Amount", (invoice?.TotalAmount > 0 ? invoice.TotalAmount : history?.FinalAmount > 0 ? history.FinalAmount : amount).ToString("0.##")),
+            ("Tax", taxValue.ToString("0.##")),
+            ("Discount", discountValue.ToString("0.##")),
+            ("Amount", amountValue.ToString("0.##")),
             ("Invoice Number", invoice?.InvoiceNumber ?? "-"),
             ("External Reference", invoice?.ExternalReference ?? "-")
         };
